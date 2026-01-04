@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/context.js');
 const contextRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof contextRoutesJS === 'function' || (contextRoutesJS && typeof contextR
     router.use(contextRoutesJS);
 } else {
     // Fallback or error
-    console.error('context.js did not export a valid router');
+    logger.error('context.js did not export a valid router');
 }
 
 export default router;

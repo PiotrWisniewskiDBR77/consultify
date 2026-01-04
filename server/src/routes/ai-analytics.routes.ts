@@ -10,6 +10,7 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -21,7 +22,7 @@ try {
     const module = loggerModule.default || loggerModule;
     aiLogger = module.aiLogger || module;
 } catch {
-    console.warn('[AI Analytics Routes] aiLogger not available');
+    logger.warn('[AI Analytics Routes] aiLogger not available');
 }
 
 // All routes require authentication

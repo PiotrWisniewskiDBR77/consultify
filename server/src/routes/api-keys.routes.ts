@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/api-keys.js');
 const api_keysRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof api_keysRoutesJS === 'function' || (api_keysRoutesJS && typeof api_ke
     router.use(api_keysRoutesJS);
 } else {
     // Fallback or error
-    console.error('api-keys.js did not export a valid router');
+    logger.error('api-keys.js did not export a valid router');
 }
 
 export default router;

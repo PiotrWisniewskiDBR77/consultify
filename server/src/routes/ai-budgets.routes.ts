@@ -10,6 +10,7 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -80,7 +81,7 @@ try {
     const budgetModule = await import('../../services/aiBudgetService.js');
     aiBudgetService = (budgetModule.default || budgetModule) as AIBudgetServiceInterface;
 } catch {
-    console.warn('[AI Budgets Routes] aiBudgetService not available');
+    logger.warn('[AI Budgets Routes] aiBudgetService not available');
 }
 
 // ====== BUDGET MANAGEMENT ======
@@ -116,7 +117,7 @@ router.get(
                 data: budgets,
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] List budgets error:', error);
+            logger.error('[AI Budgets] List budgets error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to list budgets',
@@ -186,7 +187,7 @@ router.post(
                 message: 'Budget created successfully',
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Create budget error:', error);
+            logger.error('[AI Budgets] Create budget error:', error);
             res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Failed to create budget',
@@ -223,7 +224,7 @@ router.get(
                 data: budget,
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Get budget error:', error);
+            logger.error('[AI Budgets] Get budget error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to get budget',
@@ -260,7 +261,7 @@ router.put(
                 message: 'Budget updated successfully',
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Update budget error:', error);
+            logger.error('[AI Budgets] Update budget error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to update budget',
@@ -297,7 +298,7 @@ router.delete(
                 message: 'Budget deleted successfully',
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Delete budget error:', error);
+            logger.error('[AI Budgets] Delete budget error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to delete budget',
@@ -335,7 +336,7 @@ router.post(
                 message: 'Budget reset successfully',
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Reset budget error:', error);
+            logger.error('[AI Budgets] Reset budget error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to reset budget',
@@ -377,7 +378,7 @@ router.get(
                 data: result,
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Check budget error:', error);
+            logger.error('[AI Budgets] Check budget error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to check budget',
@@ -419,7 +420,7 @@ router.post(
                 data: result,
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Record usage error:', error);
+            logger.error('[AI Budgets] Record usage error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to record usage',
@@ -460,7 +461,7 @@ router.get(
                 data: stats,
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Get stats error:', error);
+            logger.error('[AI Budgets] Get stats error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to get statistics',
@@ -504,7 +505,7 @@ router.get(
                 data: alerts,
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] List alerts error:', error);
+            logger.error('[AI Budgets] List alerts error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to list alerts',
@@ -546,7 +547,7 @@ router.post(
                 message: 'Alert acknowledged',
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Acknowledge alert error:', error);
+            logger.error('[AI Budgets] Acknowledge alert error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to acknowledge alert',
@@ -583,7 +584,7 @@ router.post(
                 message: 'Alert dismissed',
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Dismiss alert error:', error);
+            logger.error('[AI Budgets] Dismiss alert error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to dismiss alert',
@@ -626,7 +627,7 @@ router.get(
                 data: permissions,
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] List model permissions error:', error);
+            logger.error('[AI Budgets] List model permissions error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to list model permissions',
@@ -692,7 +693,7 @@ router.post(
                 message: 'Model permission set successfully',
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Set model permission error:', error);
+            logger.error('[AI Budgets] Set model permission error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to set model permission',
@@ -737,7 +738,7 @@ router.get(
                 data: result,
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Check model access error:', error);
+            logger.error('[AI Budgets] Check model access error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to check model access',
@@ -774,7 +775,7 @@ router.delete(
                 message: 'Model permission deleted successfully',
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Delete model permission error:', error);
+            logger.error('[AI Budgets] Delete model permission error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to delete model permission',
@@ -802,7 +803,7 @@ router.get(
                 data: costs,
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Get model costs error:', error);
+            logger.error('[AI Budgets] Get model costs error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to get model costs',
@@ -838,7 +839,7 @@ router.post(
                 },
             });
         } catch (error: unknown) {
-            console.error('[AI Budgets] Estimate cost error:', error);
+            logger.error('[AI Budgets] Estimate cost error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to estimate cost',

@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/raid.js');
 const raidRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof raidRoutesJS === 'function' || (raidRoutesJS && typeof raidRoutesJS.h
     router.use(raidRoutesJS);
 } else {
     // Fallback or error
-    console.error('raid.js did not export a valid router');
+    logger.error('raid.js did not export a valid router');
 }
 
 export default router;

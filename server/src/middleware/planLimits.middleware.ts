@@ -10,6 +10,7 @@ import { NextFunction, Response } from 'express';
 import { getDatabase } from '../database/Database.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -109,7 +110,7 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
 
             if (limitValue === undefined) {
                 // Limit not defined for this plan? Allow or Log warning.
-                console.warn(`Limit key ${limitKey} not found for plan ${plan}`);
+                logger.warn(`Limit key ${limitKey} not found for plan ${plan}`);
                 next();
                 return;
             }
@@ -141,7 +142,7 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
 
             next();
         } catch (error: unknown) {
-            console.error('Plan limit check error:', error);
+            logger.error('Plan limit check error:', error);
             res.status(500).json({ error: 'Failed to verify plan limits' });
         }
     };

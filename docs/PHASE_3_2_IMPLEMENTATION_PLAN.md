@@ -397,3 +397,4 @@ Po zakończeniu wszystkich batchów:
 
 
 
+

@@ -9,6 +9,7 @@
 import type { RedisClientType } from 'redis';
 
 import { getRedisClient, isRedisConnected } from '../services/ai/redisClient.js';
+import logger from './Logger.js';
 
 // ==========================================
 // TYPES
@@ -53,7 +54,7 @@ export class RedisStore {
                 return value;
             }
         } catch (error: unknown) {
-            console.warn(`[RedisStore] Redis get error for key ${fullKey}:`, error);
+            logger.warn(`[RedisStore] Redis get error for key ${fullKey}:`, error);
         }
 
         // Fallback to in-memory
@@ -86,7 +87,7 @@ export class RedisStore {
                 return;
             }
         } catch (error: unknown) {
-            console.warn(`[RedisStore] Redis set error for key ${fullKey}:`, error);
+            logger.warn(`[RedisStore] Redis set error for key ${fullKey}:`, error);
         }
 
         // Fallback to in-memory
@@ -113,7 +114,7 @@ export class RedisStore {
                 return result;
             }
         } catch (error: unknown) {
-            console.warn(`[RedisStore] Redis increment error for key ${fullKey}:`, error);
+            logger.warn(`[RedisStore] Redis increment error for key ${fullKey}:`, error);
         }
 
         // Fallback to in-memory
@@ -145,7 +146,7 @@ export class RedisStore {
                 return await client.decr(fullKey);
             }
         } catch (error: unknown) {
-            console.warn(`[RedisStore] Redis decrement error for key ${fullKey}:`, error);
+            logger.warn(`[RedisStore] Redis decrement error for key ${fullKey}:`, error);
         }
 
         // Fallback to in-memory
@@ -187,7 +188,7 @@ export class RedisStore {
                 return result === 1;
             }
         } catch (error: unknown) {
-            console.warn(`[RedisStore] Redis expire error for key ${fullKey}:`, error);
+            logger.warn(`[RedisStore] Redis expire error for key ${fullKey}:`, error);
         }
 
         // Fallback to in-memory
@@ -213,7 +214,7 @@ export class RedisStore {
                 return result > 0;
             }
         } catch (error: unknown) {
-            console.warn(`[RedisStore] Redis delete error for key ${fullKey}:`, error);
+            logger.warn(`[RedisStore] Redis delete error for key ${fullKey}:`, error);
         }
 
         // Fallback to in-memory
@@ -243,7 +244,7 @@ export class RedisStore {
                 return keys.map((key) => key.replace(this.prefix, ''));
             }
         } catch (error: unknown) {
-            console.warn(`[RedisStore] Redis keys error for pattern ${fullPattern}:`, error);
+            logger.warn(`[RedisStore] Redis keys error for pattern ${fullPattern}:`, error);
         }
 
         // Fallback: return in-memory keys matching pattern
@@ -266,7 +267,7 @@ export class RedisStore {
                 }
             }
         } catch (error: unknown) {
-            console.warn(`[RedisStore] Redis clear error:`, error);
+            logger.warn(`[RedisStore] Redis clear error:`, error);
         }
 
         // Clear in-memory store
@@ -308,4 +309,5 @@ export class RedisStore {
 }
 
 export default RedisStore;
+
 

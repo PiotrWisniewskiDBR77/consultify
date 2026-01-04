@@ -12,6 +12,7 @@ import { getDatabase } from '../database/Database.js';
 import StatusMachine from '../services/statusMachine.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -251,7 +252,7 @@ export const logStatusChange = (entityType: string) => {
                     ]);
                 } catch (err: unknown) {
                     // Log error but don't fail the request
-                    console.error('[PMO Validation] Failed to log status change:', err);
+                    logger.error('[PMO Validation] Failed to log status change:', err);
                 }
             }
 

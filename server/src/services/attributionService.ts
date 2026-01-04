@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -165,7 +166,7 @@ export async function recordAttribution(params: RecordAttributionParams): Promis
         ],
     );
 
-    console.log(
+    logger.info(
         `[AttributionService] Attribution recorded: ${sourceType} for org ${organizationId}${partnerCode ? ` (partner: ${partnerCode})` : ''}`,
     );
 

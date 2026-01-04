@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -23,7 +24,7 @@ try {
     const documentModule = await import('../../services/documentService.js');
     DocumentService = documentModule.default || documentModule;
 } catch {
-    console.warn('[Documents] DocumentService not available');
+    logger.warn('[Documents] DocumentService not available');
 }
 
 // Get directory paths
@@ -90,7 +91,7 @@ router.get(
             const documents = await DocumentService.getProjectDocuments(projectId);
             res.json(documents);
         } catch (error: any) {
-            console.error('[Documents] Error fetching project documents:', error);
+            logger.error('[Documents] Error fetching project documents:', error);
             res.status(500).json({ error: error.message });
         }
     }),
@@ -118,7 +119,7 @@ router.get(
             const documents = await DocumentService.getUserDocuments(userId, organizationId);
             res.json(documents);
         } catch (error: any) {
-            console.error('[Documents] Error fetching user documents:', error);
+            logger.error('[Documents] Error fetching user documents:', error);
             res.status(500).json({ error: error.message });
         }
     }),
@@ -151,7 +152,7 @@ router.get(
             );
             res.json(documents);
         } catch (error: any) {
-            console.error('[Documents] Error fetching documents:', error);
+            logger.error('[Documents] Error fetching documents:', error);
             res.status(500).json({ error: error.message });
         }
     }),
@@ -184,7 +185,7 @@ router.get(
             );
             res.json(documents);
         } catch (error: any) {
-            console.error('[Documents] Error fetching documents:', error);
+            logger.error('[Documents] Error fetching documents:', error);
             res.status(500).json({ error: error.message });
         }
     }),
@@ -209,7 +210,7 @@ router.get(
             }
             res.json(document);
         } catch (error: any) {
-            console.error('[Documents] Error fetching document:', error);
+            logger.error('[Documents] Error fetching document:', error);
             res.status(500).json({ error: error.message });
         }
     }),
@@ -240,7 +241,7 @@ router.get(
 
             res.download(filePath, document.originalName || document.filename);
         } catch (error: any) {
-            console.error('[Documents] Error downloading document:', error);
+            logger.error('[Documents] Error downloading document:', error);
             res.status(500).json({ error: error.message });
         }
     }),
@@ -277,7 +278,7 @@ router.post(
                 return res.status(400).json({ error: 'Project ID required for project scope' });
             }
 
-            console.log(`[Documents] Upload: ${req.file.originalname}, scope: ${scope}, owner: ${ownerId}`);
+            logger.info(`[Documents] Upload: ${req.file.originalname}, scope: ${scope}, owner: ${ownerId}`);
 
             const document = await DocumentService.uploadDocument(req.file, {
                 organizationId,
@@ -293,7 +294,7 @@ router.post(
                 document,
             });
         } catch (error: any) {
-            console.error('[Documents] Upload error:', error);
+            logger.error('[Documents] Upload error:', error);
             res.status(500).json({ error: error.message || 'Upload failed' });
         }
     }),
@@ -329,7 +330,7 @@ router.put(
                 document,
             });
         } catch (error: any) {
-            console.error('[Documents] Move error:', error);
+            logger.error('[Documents] Move error:', error);
             res.status(500).json({ error: error.message });
         }
     }),
@@ -361,7 +362,7 @@ router.delete(
 
             res.json({ message: 'Document deleted' });
         } catch (error: any) {
-            console.error('[Documents] Delete error:', error);
+            logger.error('[Documents] Delete error:', error);
             res.status(500).json({ error: error.message });
         }
     }),

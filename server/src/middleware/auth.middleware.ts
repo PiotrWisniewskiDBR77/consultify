@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -209,7 +210,7 @@ const checkTokenRevocation = async (
         // Token is valid
         await attachUser(decoded, req, next);
     } catch (dbErr) {
-        console.error('Error checking revoked tokens:', dbErr);
+        logger.error('Error checking revoked tokens:', dbErr);
         // Continue anyway - don't block on DB errors
         await attachUser(decoded, req, next);
     }
@@ -258,7 +259,7 @@ export const verifyToken = asyncHandler(async (req: AuthRequest, res: Response, 
 
         await checkTokenRevocation(decoded, req, res, next);
     } catch (err: any) {
-        console.error('[AuthMiddleware] Verification failed:', err.message);
+        logger.error('[AuthMiddleware] Verification failed:', err.message);
         if (err.name === 'TokenExpiredError') {
             res.status(401).json({ error: 'Token expired' });
             return;

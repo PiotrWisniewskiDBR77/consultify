@@ -11,6 +11,7 @@ import { Router } from 'express';
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../../middleware/superAdmin.middleware.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.get('/', async (req, res) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        console.error('[BackupRoutes] Error listing backups:', err);
+        logger.error('[BackupRoutes] Error listing backups:', err);
         res.status(500).json({
             error: 'Failed to list backups',
             message: err.message,
@@ -73,7 +74,7 @@ router.get('/status', async (req, res) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        console.error('[BackupRoutes] Error getting backup status:', err);
+        logger.error('[BackupRoutes] Error getting backup status:', err);
         res.status(500).json({
             error: 'Failed to get backup status',
             message: err.message,
@@ -117,7 +118,7 @@ router.get('/:id/status', async (req, res) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        console.error('[BackupRoutes] Error getting backup status:', err);
+        logger.error('[BackupRoutes] Error getting backup status:', err);
         res.status(500).json({
             error: 'Failed to get backup status',
             message: err.message,
@@ -156,7 +157,7 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        console.error('[BackupRoutes] Error restoring backup:', err);
+        logger.error('[BackupRoutes] Error restoring backup:', err);
         res.status(500).json({
             error: 'Failed to restore backup',
             message: err.message,
@@ -181,7 +182,7 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        console.error('[BackupRoutes] Error deleting backup:', err);
+        logger.error('[BackupRoutes] Error deleting backup:', err);
         res.status(500).json({
             error: 'Failed to delete backup',
             message: err.message,
@@ -208,7 +209,7 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        console.error('[BackupRoutes] Error triggering manual backup:', err);
+        logger.error('[BackupRoutes] Error triggering manual backup:', err);
         res.status(500).json({
             error: 'Failed to trigger manual backup',
             message: err.message,
@@ -217,4 +218,5 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
 });
 
 export default router;
+
 

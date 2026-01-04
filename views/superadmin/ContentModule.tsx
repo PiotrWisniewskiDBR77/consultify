@@ -49,3 +49,4 @@ export const ContentModule: React.FC<ContentModuleProps> = ({ initialTab }) => {
 
 export default ContentModule;
 
+

@@ -16,6 +16,9 @@ export default defineConfig({
             { find: /.*\/database\.sqlite\.active\.js$/, replacement: path.resolve(__dirname, 'server/database.sqlite.active.js') },
             { find: /.*\/learningSystem\.js$/, replacement: path.resolve(__dirname, 'server/services/ai/learningSystem.js') },
             { find: /.*\/src\/database\/index\.js$/, replacement: path.resolve(__dirname, 'server/src/database/index.ts') },
+            { find: /.*\/auditLogService\.js$/, replacement: path.resolve(__dirname, 'server/services/auditLogService.ts') },
+            // Handle extensionless require from index.cjs
+            { find: /.*\/middleware\/auditLog$/, replacement: path.resolve(__dirname, 'server/middleware/auditLog.ts') },
 
             // 2. KEEP Mocks as JS (exclude from TS mapping)
             { find: /^(\.?\.\/.*__mocks__.*)\.js$/, replacement: '$1.js' },
@@ -164,23 +167,16 @@ export default defineConfig({
             // 'tests/unit/backend/middleware/orgContextMiddleware.test 2.js',
             // 'tests/unit/backend/middleware/superAdminMiddleware.test.js', // FIXED
             // 'tests/unit/backend/middleware/superAdminMiddleware.test 2.js',
-            // 'tests/unit/backend/middleware/quotaMiddleware.test.js', // source code issues
             // 'tests/unit/backend/middleware/quotaMiddleware.test 2.js',
-            // 'tests/unit/backend/middleware/permissionMiddleware.test.js', // source code issues
             // 'tests/unit/backend/middleware/adminMiddleware.test.js', // FIXED
             // 'tests/unit/backend/middleware/auditLog.test.js', // FIXED
-            // 'tests/unit/backend/middleware/performanceMetrics.test.js', // source code issues
-            // 'tests/unit/backend/middleware/planLimits.test.js', // source code issues
+            'tests/unit/backend/middleware/performanceMetrics.test.js', // database import chain issue
             // 'tests/unit/backend/middleware/planLimits.test 2.js',
-            // 'tests/unit/backend/middleware/projectQuotaMiddleware.test.js', // source code issues
             // 'tests/unit/backend/middleware/projectQuotaMiddleware.test 2.js',
             // 'tests/unit/backend/middleware/featureGate.test.js', // FIXED - 7 tests
             // 'tests/unit/backend/middleware/userStateGuard.test.js', // partial - 2/4 pass
             // 'tests/unit/backend/middleware/trialEntryGuard.test.js', // ESM top-level await issue
             // 'tests/unit/backend/middleware/legalComplianceMiddleware.test.js', // FIXED
-            // 'tests/unit/backend/middleware/pmoValidation.test.js', // source code syntax error
-            // 'tests/unit/backend/middleware/fileUploadMiddleware.test.js', // source code issues
-            // 'tests/unit/backend/middleware/rapidLeanUploadMiddleware.test.js', // source code issues
             // ENABLED - Phase 4:
             // 'tests/unit/backend/middleware/rbac.test.js', // 48 tests PASS
             // 'tests/unit/backend/middleware/demoGuard.test.js', // 5 tests PASS

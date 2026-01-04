@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/pmoDomains.js');
 const pmoDomainsRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(pmoDomainsRoutesJS);
 } else {
     // Fallback or error
-    console.error('pmoDomains.js did not export a valid router');
+    logger.error('pmoDomains.js did not export a valid router');
 }
 
 export default router;

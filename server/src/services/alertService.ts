@@ -1,4 +1,5 @@
 /**
+import logger from '../utils/Logger.js';
  * Service to handle active alerting based on performance metrics.
  */
 
@@ -95,7 +96,7 @@ const AlertService = {
 
         for (const alert of alerts) {
             if (alert.type === 'CRITICAL') {
-                console.error(`[ALERT SERVICE] ${alert.message}`);
+                logger.error(`[ALERT SERVICE] ${alert.message}`);
 
                 try {
                     // Create system alert notification
@@ -112,10 +113,10 @@ const AlertService = {
                         });
                     }
                 } catch (error) {
-                    console.error('[ALERT SERVICE] Failed to dispatch notification:', error);
+                    logger.error('[ALERT SERVICE] Failed to dispatch notification:', error);
                 }
             } else {
-                console.warn(`[ALERT SERVICE] ${alert.message}`);
+                logger.warn(`[ALERT SERVICE] ${alert.message}`);
             }
         }
     },

@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/task-advisor.js');
 const task_advisorRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(task_advisorRoutesJS);
 } else {
     // Fallback or error
-    console.error('task-advisor.js did not export a valid router');
+    logger.error('task-advisor.js did not export a valid router');
 }
 
 export default router;

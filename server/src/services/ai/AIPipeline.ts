@@ -7,6 +7,7 @@
  */
 
 import type {
+import logger from '../../utils/Logger.js';
     _ResponseMetadata,
     _StreamChunk,
     AIArtifact,
@@ -402,7 +403,7 @@ export class AIPipeline {
         traceId: string,
     ): Promise<void> {
         // TODO: Implement logging
-        console.log(`[AI Pipeline] ${request.capability} completed in ${latency}ms (trace: ${traceId})`);
+        logger.info(`[AI Pipeline] ${request.capability} completed in ${latency}ms (trace: ${traceId})`);
     }
 
     private async logError(
@@ -411,7 +412,7 @@ export class AIPipeline {
         _latency: number,
         traceId: string,
     ): Promise<void> {
-        console.error(`[AI Pipeline] ${request.capability} failed: ${error.message} (trace: ${traceId})`);
+        logger.error(`[AI Pipeline] ${request.capability} failed: ${error.message} (trace: ${traceId})`);
     }
 
     private handleError(error: unknown): AIError {

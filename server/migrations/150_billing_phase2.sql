@@ -433,3 +433,4 @@ ALTER TABLE invoices ADD COLUMN auto_advance INTEGER DEFAULT 1; -- Auto-finalize
 
 
 
+

@@ -99,3 +99,4 @@ export type MFADisableRequest = z.infer<typeof MFADisableRequestSchema>;
 export type RevokeAllTokensRequest = z.infer<typeof RevokeAllTokensRequestSchema>;
 export type SessionIdParam = z.infer<typeof SessionIdParamSchema>;
 
+

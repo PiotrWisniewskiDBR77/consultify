@@ -10,6 +10,7 @@
  */
 
 import type { NextFunction, Request, Response } from 'express';
+import logger from '../utils/Logger.js';
 
 // Dynamic import for NotificationService to avoid circular dependencies
 let NotificationService: {
@@ -52,7 +53,7 @@ const alertWatchdog = async (
 
         // Only alert on 500-level errors (server errors), ignore 4xx (client errors)
         if (statusCode >= 500) {
-            console.error('[AlertWatchdog] Detected Server Error:', err.message);
+            logger.error('[AlertWatchdog] Detected Server Error:', err.message);
 
             // Avoid alerting for expected "operational" errors if marked so (optional pattern)
             // if (err.isOperational) return next(err);
@@ -77,12 +78,12 @@ const alertWatchdog = async (
                     });
                 })
                 .catch((noteErr) => {
-                    console.error('[AlertWatchdog] Failed to create notification:', noteErr);
+                    logger.error('[AlertWatchdog] Failed to create notification:', noteErr);
                 });
         }
     } catch (watchdogErr) {
         // Safety net: ensure watchdog failure doesn't crash the request or hide the original error
-        console.error('[AlertWatchdog] Internal Error:', watchdogErr);
+        logger.error('[AlertWatchdog] Internal Error:', watchdogErr);
     }
 
     // Always pass to the next error handler (which sends the response)

@@ -9,6 +9,7 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -26,7 +27,7 @@ try {
     const executionModule = await import('../../services/executionService.js');
     ExecutionService = (executionModule.default || executionModule) as ExecutionServiceInterface;
 } catch {
-    console.warn('[Execution Routes] ExecutionService not available');
+    logger.warn('[Execution Routes] ExecutionService not available');
 }
 
 /**

@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-contact.js');
 const user_contactRoutesJS = module.default || module;
@@ -24,7 +25,7 @@ if (
     router.use(user_contactRoutesJS);
 } else {
     // Fallback or error if not a valid router
-    console.error('user-contact.js did not export a valid router');
+    logger.error('user-contact.js did not export a valid router');
 }
 
 export default router;

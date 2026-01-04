@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/stabilization.js');
 const stabilizationRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(stabilizationRoutesJS);
 } else {
     // Fallback or error
-    console.error('stabilization.js did not export a valid router');
+    logger.error('stabilization.js did not export a valid router');
 }
 
 export default router;

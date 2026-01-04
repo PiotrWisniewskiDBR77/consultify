@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/security.js');
 const securityRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof securityRoutesJS === 'function' || (securityRoutesJS && typeof securi
     router.use(securityRoutesJS);
 } else {
     // Fallback or error
-    console.error('security.js did not export a valid router');
+    logger.error('security.js did not export a valid router');
 }
 
 export default router;

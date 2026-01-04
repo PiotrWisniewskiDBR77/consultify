@@ -11,6 +11,7 @@ import TaskController from '../controllers/TaskController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
+import logger from '../utils/Logger.js';
     AddTaskCommentSchema,
     AssignTaskSchema,
     CreateTaskSchema,
@@ -33,7 +34,7 @@ router.use(verifyToken);
  * GET /api/tasks
  * Get all tasks with filters
  */
-router.get('/', (req, res, next) => { console.log('[TasksRoute] GET / matched'); next(); }, TaskController.getTasks);
+router.get('/', (req, res, next) => { logger.info('[TasksRoute] GET / matched'); next(); }, TaskController.getTasks);
 
 /**
  * POST /api/tasks

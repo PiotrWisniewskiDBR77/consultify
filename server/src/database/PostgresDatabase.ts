@@ -8,8 +8,9 @@
 
 import { Pool, type PoolClient, type PoolConfig } from 'pg';
 
-import databaseConfig from '../config/DatabaseConfig.js';
-import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
+import databaseConfig from '../config/DatabaseConfig.ts';
+import type { IDatabase, QueryResult, RunResult } from './IDatabase.ts';
+import logger from '../utils/Logger.js';
 
 let pool: Pool | null = null;
 let readPool: Pool | null = null;
@@ -17,11 +18,11 @@ const SLOW_QUERY_THRESHOLD_MS = 1000;
 
 function getPool(): Pool {
     if (!pool) {
-        console.log('[Postgres] Initializing connection pool...');
+        logger.info('[Postgres] Initializing connection pool...');
         // Ensure config is treated as valid PoolConfig or undefined
         const config = databaseConfig.postgres as PoolConfig | undefined;
 
-        console.log('[Postgres] Config:', {
+        logger.info('[Postgres] Config:', {
             host: config?.host,
             database: config?.database,
             max: config?.max,
@@ -29,25 +30,25 @@ function getPool(): Pool {
         pool = new Pool(config);
 
         pool.on('error', (err: Error, _client: PoolClient) => {
-            console.error('[Postgres] Unexpected error on idle client:', err.message);
+            logger.error('[Postgres] Unexpected error on idle client:', err.message);
         });
 
         pool.on('connect', (_client: PoolClient) => {
-            console.log('[Postgres] Client connected');
+            logger.info('[Postgres] Client connected');
         });
 
         // Initialize schema lazily if needed
         if (process.env.NODE_ENV !== 'test') {
             initDb()
                 .then(() => {
-                    console.log('[Postgres] Schema initialization completed successfully');
+                    logger.info('[Postgres] Schema initialization completed successfully');
                 })
                 .catch((err: Error | null) => {
-                    console.error('[Postgres] Failed to initialize database:', err);
+                    logger.error('[Postgres] Failed to initialize database:', err);
                     // In production, this is critical - log but don't crash immediately
                     // The DatabaseInitializer will catch this and handle it
                     if (process.env.NODE_ENV === 'production') {
-                        console.error('[Postgres] CRITICAL: Schema initialization failed in production!');
+                        logger.error('[Postgres] CRITICAL: Schema initialization failed in production!');
                     }
                 });
         }
@@ -61,12 +62,12 @@ function getReadPool(): Pool {
     // Check if read replica is configured
     if (databaseConfig.readReplica) {
         if (!readPool) {
-            console.log('[Postgres] Initializing READ REPLICA pool...');
+            logger.info('[Postgres] Initializing READ REPLICA pool...');
             const config = databaseConfig.readReplica as PoolConfig;
             readPool = new Pool(config);
 
             readPool.on('error', (err: Error) => {
-                console.error('[Postgres] Unexpected error on READ REPLICA client:', err.message);
+                logger.error('[Postgres] Unexpected error on READ REPLICA client:', err.message);
             });
         }
         return readPool;
@@ -89,14 +90,14 @@ async function executeWithLogging<T>(
 
         const duration = Date.now() - start;
         if (duration > SLOW_QUERY_THRESHOLD_MS) {
-            console.warn(`[Postgres] SLOW QUERY (${duration}ms) [${method}]: ${sql.substring(0, 200)}...`);
+            logger.warn(`[Postgres] SLOW QUERY (${duration}ms) [${method}]: ${sql.substring(0, 200)}...`);
         }
 
         return { rows: res.rows as T[], rowCount: res.rowCount };
     } catch (err) {
         // Log query error with context
-        console.error(`[Postgres] Query Error [${method}]:`, (err as Error).message);
-        console.error(`[Postgres] Failed SQL: ${sql.substring(0, 500)}`);
+        logger.error(`[Postgres] Query Error [${method}]:`, (err as Error).message);
+        logger.error(`[Postgres] Failed SQL: ${sql.substring(0, 500)}`);
         throw err;
     }
 }
@@ -263,7 +264,7 @@ class PostgresDatabase implements IDatabase {
                 return result;
             })
             .catch((err: Error | null) => {
-                console.error('[Postgres] Run Error:', err.message, adaptedSql);
+                logger.error('[Postgres] Run Error:', err.message, adaptedSql);
                 if (callback) callback(err);
                 throw err;
             });
@@ -367,7 +368,7 @@ class PostgresDatabase implements IDatabase {
         }
         const promise = Promise.resolve()
             .then(() => {
-                console.log('[Postgres] Closing connection pool...');
+                logger.info('[Postgres] Closing connection pool...');
                 return pool?.end();
             })
             .then(() => {
@@ -414,18 +415,18 @@ class PostgresDatabase implements IDatabase {
 async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
     for (let i = 0; i < retries; i++) {
         try {
-            console.log(`[Postgres] Testing connection (attempt ${i + 1}/${retries})...`);
+            logger.info(`[Postgres] Testing connection (attempt ${i + 1}/${retries})...`);
             const result = await getPool().query('SELECT NOW() as current_time');
-            console.log('[Postgres] Connection test successful:', result.rows[0]);
+            logger.info('[Postgres] Connection test successful:', result.rows[0]);
             return true;
         } catch (err: unknown) {
-            console.error(`[Postgres] Connection test failed (attempt ${i + 1}/${retries}):`, (err as Error).message);
+            logger.error(`[Postgres] Connection test failed (attempt ${i + 1}/${retries}):`, (err as Error).message);
             if (i < retries - 1) {
-                console.log(`[Postgres] Retrying in ${delay}ms...`);
+                logger.info(`[Postgres] Retrying in ${delay}ms...`);
                 await new Promise((resolve) => setTimeout(resolve, delay));
                 delay *= 2; // Exponential backoff
             } else {
-                console.error('[Postgres] All connection attempts failed');
+                logger.error('[Postgres] All connection attempts failed');
                 return false;
             }
         }
@@ -437,13 +438,13 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
  * Initialize Database Schema
  */
 async function initDb(): Promise<void> {
-    console.log('[Postgres] Checking/Initializing Schema...');
+    logger.info('[Postgres] Checking/Initializing Schema...');
 
     try {
         // Test connection first
         const connected = await testConnection();
         if (!connected) {
-            console.error('[Postgres] Cannot proceed with schema initialization - connection failed');
+            logger.error('[Postgres] Cannot proceed with schema initialization - connection failed');
             return;
         }
 
@@ -453,7 +454,7 @@ async function initDb(): Promise<void> {
             try {
                 await getPool().query(adapted, params);
             } catch (e: unknown) {
-                console.error('[Postgres] Query Failed:', (e as Error).message);
+                logger.error('[Postgres] Query Failed:', (e as Error).message);
                 throw e;
             }
         };
@@ -718,7 +719,7 @@ async function initDb(): Promise<void> {
                 END IF;
             END $$;
         `).catch((err: Error | null) => {
-            console.log('[Postgres] User token columns migration skipped (may already exist)');
+            logger.info('[Postgres] User token columns migration skipped (may already exist)');
         });
 
         // AI Feedback
@@ -1287,7 +1288,7 @@ async function initDb(): Promise<void> {
                 END IF;
             END $$;
         `).catch((err: Error | null) => {
-            console.log('[Postgres] MFA columns migration skipped (may already exist)');
+            logger.info('[Postgres] MFA columns migration skipped (may already exist)');
         });
 
         // Add additional Organization columns if missing
@@ -1391,13 +1392,13 @@ async function initDb(): Promise<void> {
             END IF;
             END $$;
         `).catch((err: Error | null) => {
-            console.log('[Postgres] Organization columns migration skipped');
+            logger.info('[Postgres] Organization columns migration skipped');
         });
 
         // ---------------------------------------------------------
         // Phase 1.3: Performance Optimization (Missing Indexes)
         // ---------------------------------------------------------
-        console.log('[Postgres] Verifying/Creating Indexes...');
+        logger.info('[Postgres] Verifying/Creating Indexes...');
 
         // Users & Auth
         await query(`CREATE INDEX IF NOT EXISTS idx_users_org ON users(organization_id)`);
@@ -1452,7 +1453,7 @@ async function initDb(): Promise<void> {
         await query(`CREATE INDEX IF NOT EXISTS idx_usage_records_org_time ON usage_records(organization_id, recorded_at)`);
 
 
-        console.log('[Postgres] Schema Check Complete.');
+        logger.info('[Postgres] Schema Check Complete.');
 
         // Verify critical tables exist
         const criticalTables = ['organizations', 'users', 'sessions', 'projects', 'tasks', 'teams', 'invitations', 'notifications', 'settings'];
@@ -1465,14 +1466,14 @@ async function initDb(): Promise<void> {
                 );
                 const count = parseInt(checkResult.rows[0]?.count || '0', 10);
                 if (count === 0) {
-                    console.error(`[Postgres] CRITICAL: Table ${table} does not exist after initialization!`);
+                    logger.error(`[Postgres] CRITICAL: Table ${table} does not exist after initialization!`);
                     missingTables.push(table);
                 } else {
-                    console.log(`[Postgres] Verified table exists: ${table}`);
+                    logger.info(`[Postgres] Verified table exists: ${table}`);
                 }
             } catch (err: unknown) {
                 const error = err instanceof Error ? err : new Error(String(err));
-                console.error(`[Postgres] Error verifying table ${table}: ${error.message}`);
+                logger.error(`[Postgres] Error verifying table ${table}: ${error.message}`);
                 missingTables.push(table);
             }
         }
@@ -1481,13 +1482,13 @@ async function initDb(): Promise<void> {
             throw new Error(`Critical tables missing after initialization: ${missingTables.join(', ')}`);
         }
     } catch (err: unknown) {
-        console.error('[Postgres] InitDb Failed:', err);
+        logger.error('[Postgres] InitDb Failed:', err);
         // Log detailed error information
         if ((err as any).code) {
-            console.error('[Postgres] Error code:', (err as any).code);
+            logger.error('[Postgres] Error code:', (err as any).code);
         }
         if ((err as Error).message) {
-            console.error('[Postgres] Error message:', (err as Error).message);
+            logger.error('[Postgres] Error message:', (err as Error).message);
         }
         // Re-throw to ensure initialization failure is noticed
         throw err;

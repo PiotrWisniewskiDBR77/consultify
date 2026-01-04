@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/roadmap.js');
 const roadmapRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof roadmapRoutesJS === 'function' || (roadmapRoutesJS && typeof roadmapR
     router.use(roadmapRoutesJS);
 } else {
     // Fallback or error
-    console.error('roadmap.js did not export a valid router');
+    logger.error('roadmap.js did not export a valid router');
 }
 
 export default router;

@@ -729,3 +729,4 @@ Backend Consultify został zaprojektowany i zaimplementowany zgodnie z najlepszy
 **Data:** 2026-01-04  
 **Wersja:** 1.0
 
+

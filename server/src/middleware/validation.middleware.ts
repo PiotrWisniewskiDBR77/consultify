@@ -7,6 +7,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // MIDDLEWARE
@@ -41,7 +42,7 @@ export const validateBody = (schema: z.ZodSchema) => {
             req.body = result.data;
             next();
         } catch (error: unknown) {
-            console.error('Validation Middleware Error:', error);
+            logger.error('Validation Middleware Error:', error);
             res.status(500).json({ error: 'Internal Server Error during validation' });
         }
     };
@@ -74,7 +75,7 @@ export const validateQuery = (schema: z.ZodSchema) => {
             req.query = result.data as unknown as typeof req.query;
             next();
         } catch (error: unknown) {
-            console.error('Validation Middleware Error:', error);
+            logger.error('Validation Middleware Error:', error);
             res.status(500).json({ error: 'Internal Server Error during validation' });
         }
     };
@@ -107,7 +108,7 @@ export const validateParams = (schema: z.ZodSchema) => {
             req.params = result.data as unknown as typeof req.params;
             next();
         } catch (error: unknown) {
-            console.error('Validation Middleware Error:', error);
+            logger.error('Validation Middleware Error:', error);
             res.status(500).json({ error: 'Internal Server Error during validation' });
         }
     };

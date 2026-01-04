@@ -445,3 +445,4 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({ curren
 
 export default DataPrivacySettings;
 
+

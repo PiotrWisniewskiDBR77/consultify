@@ -13,6 +13,7 @@ import { _Request, NextFunction, Response } from 'express';
 import db from '../../db/sqliteAsync.js';
 import UserStateMachine from '../../services/userStateMachine.js';
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -106,7 +107,7 @@ export async function attachUserState(req: UserStateRequest, res: Response, next
 
         next();
     } catch (error: unknown) {
-        console.error('attachUserState error:', error);
+        logger.error('attachUserState error:', error);
         const { UserStateMachine } = deps;
         // Fail closed - treat as ANON
         req.userState = UserStateMachine.USER_STATES.ANON;
@@ -255,12 +256,12 @@ export async function transitionState(
                 },
             });
         } catch (auditError) {
-            console.warn('Audit log failed for state transition:', (auditError as Error).message);
+            logger.warn('Audit log failed for state transition:', (auditError as Error).message);
         }
 
         return { success: true };
     } catch (error: unknown) {
-        console.error('transitionState error:', error);
+        logger.error('transitionState error:', error);
         return { success: false, error: (error as Error).message };
     }
 }
@@ -279,4 +280,5 @@ export const PHASES = UserStateMachine.PHASES;
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
+
 

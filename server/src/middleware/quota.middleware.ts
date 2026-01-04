@@ -9,6 +9,7 @@ import { NextFunction, Request, Response } from 'express';
 
 import usageService from '../../services/usageService.js';
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -108,7 +109,7 @@ export async function enforceTokenQuota(req: QuotaRequest, res: Response, next: 
 
         next();
     } catch (error: unknown) {
-        console.error('Quota check error:', error);
+        logger.error('Quota check error:', error);
         // Allow request to proceed on quota check failure (fail open)
         next();
     }
@@ -150,7 +151,7 @@ export async function enforceStorageQuota(req: QuotaRequest, res: Response, next
 
         next();
     } catch (error: unknown) {
-        console.error('Storage quota check error:', error);
+        logger.error('Storage quota check error:', error);
         next();
     }
 }
@@ -178,7 +179,7 @@ export async function recordTokenUsageAfterResponse(
             });
         }
     } catch (error: unknown) {
-        console.error('Failed to record token usage:', error);
+        logger.error('Failed to record token usage:', error);
     }
 }
 
@@ -202,7 +203,7 @@ export async function recordStorageAfterUpload(
             });
         }
     } catch (error: unknown) {
-        console.error('Failed to record storage usage:', error);
+        logger.error('Failed to record storage usage:', error);
     }
 }
 

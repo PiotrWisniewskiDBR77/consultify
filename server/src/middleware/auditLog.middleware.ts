@@ -9,6 +9,7 @@
 import type { NextFunction, Response } from 'express';
 
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // Dynamic import for ActivityService to avoid circular dependencies
 let ActivityService: {
@@ -92,9 +93,9 @@ const auditLogMiddleware = async (req: AuthRequest, res: Response, next: NextFun
                             userAgent: req.get('user-agent') || undefined,
                         });
                     })
-                    .catch((err: Error | null) => console.error('[AuditLog] Failed to log:', (err as Error).message));
+                    .catch((err: Error | null) => logger.error('[AuditLog] Failed to log:', (err as Error).message));
             } catch (err: unknown) {
-                console.error('[AuditLog] Error processing log:', err);
+                logger.error('[AuditLog] Error processing log:', err);
             }
         }
     };

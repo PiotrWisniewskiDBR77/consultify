@@ -21,3 +21,4 @@ export { useStudioDocument } from './hooks/useStudioDocument';
 export type { AIMessage } from './hooks/useStudioAI';
 export type { StudioDocument } from './hooks/useStudioDocument';
 
+

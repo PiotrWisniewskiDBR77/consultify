@@ -11,6 +11,7 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
 import { validateDatabaseConfig } from './ConfigValidator.js';
+import logger from '../utils/Logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -75,8 +76,8 @@ let databaseUrl: string | undefined = process.env.DATABASE_URL;
 
 // Check if Railway variable expansion didn't work (still contains ${{)
 if (databaseUrl && databaseUrl.includes('${{')) {
-    console.warn('[DB Config] DATABASE_URL appears to contain unexpanded Railway variable:', databaseUrl);
-    console.warn('[DB Config] Falling back to individual DB_* variables');
+    logger.warn('[DB Config] DATABASE_URL appears to contain unexpanded Railway variable:', databaseUrl);
+    logger.warn('[DB Config] Falling back to individual DB_* variables');
     databaseUrl = undefined; // Force fallback to individual variables
 }
 
@@ -91,11 +92,11 @@ function getDatabaseType(): DatabaseType {
     if (process.env.DB_TYPE) {
         if (process.env.DB_TYPE === 'postgres') {
             if (!databaseUrl && !process.env.DB_HOST) {
-                console.error(
+                logger.error(
                     '\n\x1b[31m%s\x1b[0m',
                     'FATAL ERROR: DB_TYPE is set to "postgres" but no DATABASE_URL or DB_HOST is provided.',
                 );
-                console.error('Please configure your .env file with the correct database credentials.\n');
+                logger.error('Please configure your .env file with the correct database credentials.\n');
                 process.exit(1);
             }
             return 'postgres';
@@ -113,8 +114,8 @@ function getDatabaseType(): DatabaseType {
     }
 
     // Warn about implicit fallback
-    console.warn('\n\x1b[33m%s\x1b[0m', 'WARNING: No DB_TYPE set. Falling back to SQLite default.');
-    console.warn('To prevent this, set DB_TYPE=sqlite or DB_TYPE=postgres in your .env file.\n');
+    logger.warn('\n\x1b[33m%s\x1b[0m', 'WARNING: No DB_TYPE set. Falling back to SQLite default.');
+    logger.warn('To prevent this, set DB_TYPE=sqlite or DB_TYPE=postgres in your .env file.\n');
     return 'sqlite';
 }
 
@@ -144,7 +145,7 @@ function parsePostgresUrl(url: string): PostgresConfig | null {
         const connectionTimeout = (() => {
             const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
             if (timeout < 10000) {
-                console.warn(
+                logger.warn(
                     `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`,
                 );
                 return 30000; // Force minimum 30 seconds
@@ -166,7 +167,7 @@ function parsePostgresUrl(url: string): PostgresConfig | null {
         };
     } catch (e: unknown) {
         const error = e instanceof Error ? e : new Error(String(e));
-        console.error('Failed to parse DATABASE_URL:', error.message);
+        logger.error('Failed to parse DATABASE_URL:', error.message);
         return null;
     }
 }
@@ -197,7 +198,7 @@ function getPostgresConfig(): PostgresConfig {
     const connectionTimeout = (() => {
         const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
         if (timeout < 10000) {
-            console.warn(
+            logger.warn(
                 `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`,
             );
             return 30000; // Force minimum 30 seconds
@@ -265,7 +266,7 @@ function createDatabaseConfig(): DatabaseConfig {
     // Validate with Zod
     const result = DatabaseConfigSchema.safeParse(config);
     if (!result.success) {
-        console.error('[DB Config] Configuration validation failed:', result.error);
+        logger.error('[DB Config] Configuration validation failed:', result.error);
         throw new Error('Invalid database configuration');
     }
 

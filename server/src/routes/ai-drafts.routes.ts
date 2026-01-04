@@ -9,6 +9,7 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -81,7 +82,7 @@ try {
     draftService = module.draftService || module;
     DRAFT_TYPES = module.DRAFT_TYPES || module;
 } catch {
-    console.warn('[AI Drafts Routes] draftService not available');
+    logger.warn('[AI Drafts Routes] draftService not available');
 }
 
 try {
@@ -89,7 +90,7 @@ try {
     const module = loggerModule.default || loggerModule;
     aiLogger = module.aiLogger || module;
 } catch {
-    console.warn('[AI Drafts Routes] aiLogger not available');
+    logger.warn('[AI Drafts Routes] aiLogger not available');
 }
 
 // All routes require authentication

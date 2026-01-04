@@ -10,6 +10,7 @@
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -118,11 +119,11 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
 
     // For logging and debugging
     const displayHtml = html || `Template: ${template}`;
-    console.log(`\n--- [EMAIL SERVICE] Sending to ${to} ---`);
-    console.log(`Using Host: ${smtpConfig.host || 'Mock (Console)'}`);
-    console.log(`Subject: ${subject}`);
-    console.log(`Content: ${displayHtml.substring(0, 100)}...`);
-    console.log('------------------------------------------\n');
+    logger.info(`\n--- [EMAIL SERVICE] Sending to ${to} ---`);
+    logger.info(`Using Host: ${smtpConfig.host || 'Mock (Console)'}`);
+    logger.info(`Subject: ${subject}`);
+    logger.info(`Content: ${displayHtml.substring(0, 100)}...`);
+    logger.info('------------------------------------------\n');
 
     // IF REAL CONFIG EXISTS, TRY SENDING
     if (smtpConfig.host && smtpConfig.auth?.user) {
@@ -137,10 +138,10 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
                     `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
                 attachments,
             });
-            console.log('[EMAIL SERVICE] Sent successfully via SMTP');
+            logger.info('[EMAIL SERVICE] Sent successfully via SMTP');
         } catch (e: unknown) {
             const error = e as Error;
-            console.error('[EMAIL SERVICE] SMTP Failed:', error.message);
+            logger.error('[EMAIL SERVICE] SMTP Failed:', error.message);
         }
     }
 

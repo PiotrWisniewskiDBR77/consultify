@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -285,7 +286,7 @@ export async function activateBilling(orgId: string): Promise<ActivateBillingRes
         await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, { initialTokens: INITIAL_TOKENS });
     } catch (e: unknown) {
         // Event logging failed, but billing is active. Acceptable.
-        console.error('Post-billing activation error', e);
+        logger.error('Post-billing activation error', e);
     }
 
     return {

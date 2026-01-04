@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -198,7 +199,7 @@ export async function recordTokenUsage(
     } catch (budgetErr) {
         // Log but don't block if budget check fails
         const error = budgetErr as Error;
-        console.warn('[UsageService] Budget check failed:', error.message);
+        logger.warn('[UsageService] Budget check failed:', error.message);
     }
 
     const id = `usage-${uuidv4()}`;
@@ -228,7 +229,7 @@ export async function recordTokenUsage(
         }
     } catch (paygErr) {
         const error = paygErr as Error;
-        console.warn('[UsageService] PAYG recording failed:', error.message);
+        logger.warn('[UsageService] PAYG recording failed:', error.message);
     }
 
     return { id, tokens };
@@ -254,7 +255,7 @@ export async function recordStorageUsage(
         }
     } catch (budgetErr) {
         const error = budgetErr as Error;
-        console.warn('[UsageService] Budget check failed:', error.message);
+        logger.warn('[UsageService] Budget check failed:', error.message);
     }
 
     const id = `usage-${uuidv4()}`;
@@ -276,7 +277,7 @@ export async function recordStorageUsage(
         }
     } catch (paygErr) {
         const error = paygErr as Error;
-        console.warn('[UsageService] PAYG recording failed:', error.message);
+        logger.warn('[UsageService] PAYG recording failed:', error.message);
     }
 
     return { id, bytes };

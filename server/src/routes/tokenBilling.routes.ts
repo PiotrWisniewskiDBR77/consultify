@@ -12,6 +12,7 @@ import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -24,14 +25,14 @@ try {
     const tokenBillingModule = await import('../../services/tokenBillingService.js');
     TokenBillingService = tokenBillingModule.default || tokenBillingModule;
 } catch {
-    console.warn('[TokenBilling] TokenBillingService not available');
+    logger.warn('[TokenBilling] TokenBillingService not available');
 }
 
 try {
     const usageModule = await import('../../services/usageService.js');
     UsageService = usageModule.default || usageModule;
 } catch {
-    console.warn('[TokenBilling] UsageService not available');
+    logger.warn('[TokenBilling] UsageService not available');
 }
 
 // Initialize Stripe if configured
@@ -40,7 +41,7 @@ if (process.env.STRIPE_SECRET_KEY) {
         const stripeModule = await import('stripe');
         stripe = stripeModule.default(process.env.STRIPE_SECRET_KEY);
     } catch {
-        console.warn('[TokenBilling] Stripe not available');
+        logger.warn('[TokenBilling] Stripe not available');
     }
 }
 
@@ -65,7 +66,7 @@ router.get(
             const balance = await TokenBillingService.getBalance(userId);
             res.json({ success: true, balance });
         } catch (error: any) {
-            console.error('Get balance error:', error);
+            logger.error('Get balance error:', error);
             res.status(500).json({ success: false, error: 'Failed to get balance' });
         }
     }),
@@ -179,7 +180,7 @@ router.post(
             });
             res.json({ success: true, key: result });
         } catch (error: any) {
-            console.error('Add API key error:', error);
+            logger.error('Add API key error:', error);
             res.status(500).json({ success: false, error: 'Failed to add API key' });
         }
     }),
@@ -271,7 +272,7 @@ router.post(
                 res.json({ success: true, message: 'Tokens credited (demo mode)', tokens: pkg.tokens + bonusTokens });
             }
         } catch (error: any) {
-            console.error('Purchase error:', error);
+            logger.error('Purchase error:', error);
             res.status(500).json({ success: false, error: 'Purchase failed' });
         }
     }),
@@ -317,7 +318,7 @@ router.post(
 
             res.json({ received: true });
         } catch (err: any) {
-            console.error('Webhook error:', err.message);
+            logger.error('Webhook error:', err.message);
             res.status(400).send(`Webhook Error: ${err.message}`);
         }
     }),
@@ -417,7 +418,7 @@ router.get(
             );
             res.json({ success: true, costs });
         } catch (error: any) {
-            console.error('Get costs error:', error);
+            logger.error('Get costs error:', error);
             res.status(500).json({ success: false, error: 'Failed to get operational costs' });
         }
     }),

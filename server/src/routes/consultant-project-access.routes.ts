@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/consultant-project-access.js');
 const consultant_project_accessRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(consultant_project_accessRoutesJS);
 } else {
     // Fallback or error
-    console.error('consultant-project-access.js did not export a valid router');
+    logger.error('consultant-project-access.js did not export a valid router');
 }
 
 export default router;

@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/videos.js');
 const videosRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof videosRoutesJS === 'function' || (videosRoutesJS && typeof videosRout
     router.use(videosRoutesJS);
 } else {
     // Fallback or error
-    console.error('videos.js did not export a valid router');
+    logger.error('videos.js did not export a valid router');
 }
 
 export default router;

@@ -1,6 +1,7 @@
 import { getDatabase } from '../database/Database.js';
 import DbPromise from '../utils/DbPromise.js';
 import Logger from '../utils/Logger.js';
+import logger from '../utils/Logger.js';
 
 class SystemIntegrityService {
     private db: any;
@@ -16,7 +17,7 @@ class SystemIntegrityService {
     }
 
     async check() {
-        console.log('\n🏥 [SystemIntegrity] Starting Vitals Check...');
+        logger.info('\n🏥 [SystemIntegrity] Starting Vitals Check...');
         const issues: any[] = [];
 
         try {
@@ -33,7 +34,7 @@ class SystemIntegrityService {
                     message: "Anchor Tenant 'DBR77' NOT FOUND. You might be connected to an empty or wrong database.",
                 });
             } else {
-                console.log(`✅ [SystemIntegrity] Database Anchor Found: ${dbr77.name} (${dbr77.id})`);
+                logger.info(`✅ [SystemIntegrity] Database Anchor Found: ${dbr77.name} (${dbr77.id})`);
             }
 
             // 2. Check LLM Configuration (Are keys real?)
@@ -58,12 +59,12 @@ class SystemIntegrityService {
                         validLLMs++;
                     }
                 });
-                if (validLLMs > 0) console.log(`✅ [SystemIntegrity] Found ${validLLMs} Valid LLM Providers.`);
+                if (validLLMs > 0) logger.info(`✅ [SystemIntegrity] Found ${validLLMs} Valid LLM Providers.`);
             }
 
             // 3. Check Redis (Is Queueing operational?)
             if (process.env.MOCK_REDIS === 'true') {
-                console.log(`⚠️ [SystemIntegrity] Redis is MOCKED. Async AI tasks will be simulated.`);
+                logger.info(`⚠️ [SystemIntegrity] Redis is MOCKED. Async AI tasks will be simulated.`);
             }
         } catch (error: any) {
             issues.push({ type: 'CRITICAL', component: 'SYSTEM', message: `Integrity Check Failed: ${error.message}` });
@@ -71,16 +72,16 @@ class SystemIntegrityService {
 
         // REPORT CARD
         if (issues.length > 0) {
-            console.log('\n🚨 [SystemIntegrity] ISSUES DETECTED:');
+            logger.info('\n🚨 [SystemIntegrity] ISSUES DETECTED:');
             issues.forEach((i) => {
                 const color = i.type === 'CRITICAL' ? '\x1b[31m' : '\x1b[33m'; // Red or Yellow
-                console.log(`${color}[${i.type}] ${i.component}: ${i.message}\x1b[0m`);
+                logger.info(`${color}[${i.type}] ${i.component}: ${i.message}\x1b[0m`);
             });
-            console.log('\n');
+            logger.info('\n');
 
             // Optional: Exit on CRITICAL?
         } else {
-            console.log('💚 [SystemIntegrity] System Looks Healthy.\n');
+            logger.info('💚 [SystemIntegrity] System Looks Healthy.\n');
         }
     }
 }

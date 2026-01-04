@@ -27,6 +27,7 @@ import {
     TrialUsage,
 } from './access/AccessTypes.js';
 import { AccessUsageService } from './access/AccessUsageService.js';
+import logger from '../utils/Logger.js';
 
 // Interfaces for Deps
 interface AccessPolicyDeps {
@@ -251,7 +252,7 @@ class AccessPolicyServiceClass {
 
             return { allowed: true };
         } catch (error: unknown) {
-            console.error('[AccessPolicyService] Error checking access:', error);
+            logger.error('[AccessPolicyService] Error checking access:', error);
             // Fail open for system errors to avoid blocking legitimate users
             return { allowed: true };
         }
@@ -417,7 +418,7 @@ class AccessPolicyServiceClass {
         } catch (seatErr) {
             // Fallback
             const error = seatErr as Error;
-            console.warn('[AccessPolicyService] Seat check failed, using fallback:', error.message);
+            logger.warn('[AccessPolicyService] Seat check failed, using fallback:', error.message);
             if (limits) {
                 const currentUsers = await this.deps.resourceService.countOrgUsers(organizationId);
                 if (currentUsers >= limits.maxUsers) return { allowed: false, reasonCode: 'USER_LIMIT_REACHED' };
@@ -454,7 +455,7 @@ class AccessPolicyServiceClass {
             };
         } catch (seatErr) {
             const error = seatErr as Error;
-            console.warn('[AccessPolicyService] Seat config failed, using fallback:', error.message);
+            logger.warn('[AccessPolicyService] Seat config failed, using fallback:', error.message);
             const basic = await this.getSeatAvailability(organizationId);
             return {
                 ...basic,

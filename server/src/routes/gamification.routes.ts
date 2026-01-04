@@ -9,6 +9,7 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -25,7 +26,7 @@ try {
     const gamificationModule = await import('../../services/gamificationService.js');
     GamificationService = (gamificationModule.default || gamificationModule) as GamificationServiceInterface;
 } catch {
-    console.warn('[Gamification Routes] GamificationService not available');
+    logger.warn('[Gamification Routes] GamificationService not available');
 }
 
 /**
@@ -57,7 +58,7 @@ router.get(
                 },
             });
         } catch (error: unknown) {
-            console.error('Gamification profile error:', error);
+            logger.error('Gamification profile error:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),

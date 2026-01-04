@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // ZOD SCHEMAS
@@ -206,21 +207,21 @@ export function validateConfig(): ValidatedConfig {
             return `  - ${path}: ${issue.message}`;
         });
 
-        console.error('\n\x1b[31m%s\x1b[0m', 'Configuration validation failed:');
-        errors.forEach((err: string) => console.error(err));
+        logger.error('\n\x1b[31m%s\x1b[0m', 'Configuration validation failed:');
+        errors.forEach((err: string) => logger.error(err));
 
         // In production, fail fast
         if (isProduction) {
-            console.error(
+            logger.error(
                 '\n\x1b[31m%s\x1b[0m',
                 'FATAL ERROR: Invalid configuration. Application cannot start in production with invalid configuration.',
             );
-            console.error('Please check your environment variables and fix the errors above.\n');
+            logger.error('Please check your environment variables and fix the errors above.\n');
             process.exit(1);
         }
 
         // In development, warn but continue with defaults
-        console.warn(
+        logger.warn(
             '\n\x1b[33m%s\x1b[0m',
             'WARNING: Using default values for invalid configuration. Fix errors before deploying to production.\n',
         );
@@ -236,14 +237,14 @@ export function validateConfig(): ValidatedConfig {
     // Additional production checks
     if (isProduction) {
         if (!result.data.JWT_SECRET || result.data.JWT_SECRET.length < 32) {
-            console.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: JWT_SECRET must be at least 32 characters in production.');
-            console.error('Please set a secure JWT_SECRET environment variable.\n');
+            logger.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: JWT_SECRET must be at least 32 characters in production.');
+            logger.error('Please set a secure JWT_SECRET environment variable.\n');
             process.exit(1);
         }
 
         if (result.data.JWT_SECRET === 'supersecretkey_change_this_in_production') {
-            console.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: JWT_SECRET cannot use default value in production.');
-            console.error('Please set a secure JWT_SECRET environment variable.\n');
+            logger.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: JWT_SECRET cannot use default value in production.');
+            logger.error('Please set a secure JWT_SECRET environment variable.\n');
             process.exit(1);
         }
     }
@@ -265,8 +266,8 @@ export function validateDatabaseConfig(): void {
 
     if (isProduction && dbType === 'postgres') {
         if (!databaseUrl && (!hasDbHost || !hasDbName || !hasDbUser || !hasDbPassword)) {
-            console.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: PostgreSQL configuration incomplete in production.');
-            console.error('Either DATABASE_URL or all DB_* fields (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD) must be set.\n');
+            logger.error('\n\x1b[31m%s\x1b[0m', 'FATAL ERROR: PostgreSQL configuration incomplete in production.');
+            logger.error('Either DATABASE_URL or all DB_* fields (DB_HOST, DB_NAME, DB_USER, DB_PASSWORD) must be set.\n');
             process.exit(1);
         }
     }
@@ -277,4 +278,5 @@ export function validateDatabaseConfig(): void {
 // ==========================================
 
 export default validateConfig;
+
 

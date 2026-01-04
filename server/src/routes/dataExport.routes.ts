@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/dataExport.js');
 const dataExportRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(dataExportRoutesJS);
 } else {
     // Fallback or error
-    console.error('dataExport.js did not export a valid router');
+    logger.error('dataExport.js did not export a valid router');
 }
 
 export default router;

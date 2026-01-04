@@ -35,6 +35,7 @@ import { v4 as uuidv4 } from 'uuid';
 import config from '../../config.js';
 import ActivityService from '../services/ActivityService.js';
 import crypto from 'crypto';
+import logger from '../utils/Logger.js';
 
 // Helper to add timeout to promises
 const _withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
@@ -71,7 +72,7 @@ router.post(
                 expiresIn: result.expiresIn,
             });
         } catch (error: unknown) {
-            console.error('[Auth] Refresh error:', error);
+            logger.error('[Auth] Refresh error:', error);
             res.status(500).json({ error: 'Token refresh failed' });
         }
     }),
@@ -86,7 +87,7 @@ router.get(
             const sessions = await refreshTokenService.getActiveSessions(req.user!.id);
             res.json({ sessions });
         } catch (error: unknown) {
-            console.error('[Auth] Get sessions error:', error);
+            logger.error('[Auth] Get sessions error:', error);
             res.status(500).json({ error: 'Failed to get sessions' });
         }
     }),
@@ -104,7 +105,7 @@ router.delete(
             await refreshTokenService.revokeSession(req.user!.id, id);
             res.json({ success: true, message: 'Session revoked' });
         } catch (error: unknown) {
-            console.error('[Auth] Revoke session error:', error);
+            logger.error('[Auth] Revoke session error:', error);
             res.status(500).json({ error: 'Failed to revoke session' });
         }
     }),
@@ -196,7 +197,7 @@ router.get(
 
             res.json(response);
         } catch (err: unknown) {
-            console.error('[Auth] /me DB error:', err);
+            logger.error('[Auth] /me DB error:', err);
             // Fallback to token data if DB fails
             res.json({
                 user: {
@@ -242,7 +243,7 @@ router.post(
             );
             res.json({ message: 'Logged out successfully' });
         } catch (error: unknown) {
-            console.error('Logout error:', error);
+            logger.error('Logout error:', error);
             res.status(500).json({ error: 'Logout failed' });
         }
     }),
@@ -326,7 +327,7 @@ router.post(
         const DEMO_EMAIL = 'demo@legolex.com';
         const DEMO_PASSWORD = 'Demo123!';
 
-        console.log('[Auth] Demo login request');
+        logger.info('[Auth] Demo login request');
 
         try {
             const user = await dbGet<{
@@ -340,7 +341,7 @@ router.post(
             }>('SELECT * FROM users WHERE email = ?', [DEMO_EMAIL]);
 
             if (!user) {
-                console.error('[Auth] Demo user not found - please run seed script');
+                logger.error('[Auth] Demo user not found - please run seed script');
                 res.status(404).json({
                     error: 'Demo user not found. Please contact support.',
                     code: 'DEMO_USER_NOT_FOUND',
@@ -381,7 +382,7 @@ router.post(
                 hasWorkspace: true,
             };
 
-            console.log('[Auth] Demo login successful');
+            logger.info('[Auth] Demo login successful');
             res.json({
                 user: safeUser,
                 token: tokenResult.accessToken,
@@ -389,7 +390,7 @@ router.post(
                 isDemo: true,
             });
         } catch (error: unknown) {
-            console.error('[Auth] Demo login error:', error);
+            logger.error('[Auth] Demo login error:', error);
             res.status(500).json({ error: 'Demo login failed. Please try again.' });
         }
     }),
@@ -436,7 +437,7 @@ router.post(
                     return;
                 }
             } catch (err: unknown) {
-                console.error('[Auth] Promo validation error:', err);
+                logger.error('[Auth] Promo validation error:', err);
                 res.status(500).json({ error: 'Failed to validate promo code' });
                 return;
             }
@@ -461,7 +462,7 @@ router.post(
                 );
 
                 if (!orgResult.success) {
-                    if (process.env.NODE_ENV !== 'production') console.error('Register Org Error:', orgResult.error);
+                    if (process.env.NODE_ENV !== 'production') logger.error('Register Org Error:', orgResult.error);
                     res.status(500).json({ error: 'Failed to create organization' });
                     return;
                 }
@@ -473,7 +474,7 @@ router.post(
                 );
 
                 if (!userResult.success) {
-                    if (process.env.NODE_ENV !== 'production') console.error('Register User Error:', userResult.error);
+                    if (process.env.NODE_ENV !== 'production') logger.error('Register User Error:', userResult.error);
                     res.status(500).json({ error: 'Failed to create user' });
                     return;
                 }
@@ -497,14 +498,14 @@ router.post(
                         },
                     });
                 } catch (attrErr) {
-                    console.error('[Auth] Attribution recording failed:', attrErr);
+                    logger.error('[Auth] Attribution recording failed:', attrErr);
                 }
 
                 if (promoCode && promoValidation?.valid) {
                     try {
                         await PromoCodeService.markPromoCodeUsed(promoCode, orgId, userId);
                     } catch (promoErr) {
-                        console.error('[Auth] Promo code usage marking failed:', promoErr);
+                        logger.error('[Auth] Promo code usage marking failed:', promoErr);
                     }
                 }
 
@@ -515,7 +516,7 @@ router.post(
                     );
 
                     if (!requestResult.success) {
-                        console.error('Error logging access request:', requestResult.error);
+                        logger.error('Error logging access request:', requestResult.error);
                     }
 
                     res.json({
@@ -567,7 +568,7 @@ router.post(
                         : null,
                 });
             } catch (regErr) {
-                console.error('[Auth] Registration error:', regErr);
+                logger.error('[Auth] Registration error:', regErr);
                 res.status(500).json({ error: 'Registration failed' });
             }
         };
@@ -631,13 +632,13 @@ router.post(
                 [marker, userIdToRevoke, expiresAt, 'revoke-all']
             ).then((result) => {
                 if (!result.success) {
-                    // console.error('Error revoking all tokens:', result.error);
+                    // logger.error('Error revoking all tokens:', result.error);
                     res.status(500).json({ error: 'Failed to revoke tokens' });
                     return;
                 }
                 res.json({ message: 'All tokens revoked successfully' });
             }).catch(err => {
-                console.error('Error revoking all tokens:', err);
+                logger.error('Error revoking all tokens:', err);
                 res.status(500).json({ error: 'Failed to revoke tokens' });
             });
         };
@@ -715,7 +716,7 @@ router.post(
                 message: 'Password changed successfully. All other sessions have been logged out for security.',
             });
         } catch (error: unknown) {
-            console.error('[Auth] Change password error:', error);
+            logger.error('[Auth] Change password error:', error);
             res.status(500).json({ error: 'Failed to change password' });
         }
     }),
@@ -797,7 +798,7 @@ router.post(
 
             res.json({ success: true, message: 'Email verified successfully' });
         } catch (error: unknown) {
-            console.error('Email verify error:', error);
+            logger.error('Email verify error:', error);
             res.status(500).json({ error: 'Verification failed' });
         }
     }),
@@ -832,7 +833,7 @@ router.post(
 
             res.json({ success: true, message: 'Verification email sent' });
         } catch (error: unknown) {
-            console.error('Resend verify error:', error);
+            logger.error('Resend verify error:', error);
             res.status(500).json({ error: 'Failed to send email' });
         }
     }),
@@ -847,7 +848,7 @@ router.post(
             const result = await mfaService.setupMFA(req.user!.id, req.user!.email || '');
             res.json(result);
         } catch (error: unknown) {
-            console.error('MFA Setup error:', error);
+            logger.error('MFA Setup error:', error);
             res.status(500).json({ error: 'MFA setup failed' });
         }
     }),
@@ -867,7 +868,7 @@ router.post(
             }
             res.json(result);
         } catch (error: unknown) {
-            console.error('MFA Enable error:', error);
+            logger.error('MFA Enable error:', error);
             res.status(500).json({ error: 'MFA activation failed' });
         }
     }),
@@ -887,7 +888,7 @@ router.post(
             }
             res.json(result);
         } catch (error: unknown) {
-            console.error('MFA Disable error:', error);
+            logger.error('MFA Disable error:', error);
             res.status(500).json({ error: 'MFA disable failed' });
         }
     }),

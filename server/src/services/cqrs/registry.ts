@@ -2,6 +2,7 @@ import { CreateSubscriptionCommand, CreateSubscriptionHandler } from './billing/
 import { commandBus } from './index.js';
 import { CreateInitiativeCommand, CreateInitiativeHandler } from './initiative/CreateInitiative.js';
 import { CreateTaskCommand, CreateTaskHandler } from './task/CreateTask.js';
+import logger from '../../utils/Logger.js';
 
 export function registerCQRSHandlers() {
     // Initiatives
@@ -13,5 +14,5 @@ export function registerCQRSHandlers() {
     // Tasks
     commandBus.register(CreateTaskCommand, new CreateTaskHandler());
 
-    console.log('[CQRS] Handlers registered');
+    logger.info('[CQRS] Handlers registered');
 }

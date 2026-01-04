@@ -13,6 +13,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import auditLogger from '../utils/auditLogger.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // CONSTANTS
@@ -172,7 +173,7 @@ export async function escalateAssignment(
 export async function runSlaCheck(): Promise<SLACheckSummary> {
     await initDeps();
 
-    console.log('[SLAService] Running SLA check...');
+    logger.info('[SLAService] Running SLA check...');
     const startTime = Date.now();
 
     const summary: SLACheckSummary = {
@@ -234,13 +235,13 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
                 }
             } catch (err: unknown) {
                 const error = err as Error;
-                console.error(`[SLAService] Error processing assignment ${assignment.id}:`, error);
+                logger.error(`[SLAService] Error processing assignment ${assignment.id}:`, error);
                 summary.errors.push({ assignmentId: assignment.id, error: error.message });
             }
         }
 
         const duration = Date.now() - startTime;
-        console.log(`[SLAService] SLA check complete in ${duration}ms:`, summary);
+        logger.info(`[SLAService] SLA check complete in ${duration}ms:`, summary);
 
         auditLogger.info('SLA_CHECK_COMPLETE', {
             duration_ms: duration,
@@ -250,7 +251,7 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
         return summary;
     } catch (err: unknown) {
         const error = err as Error;
-        console.error('[SLAService] SLA check failed:', error);
+        logger.error('[SLAService] SLA check failed:', error);
         auditLogger.error('SLA_CHECK_FAILED', { error: error.message });
         throw err;
     }

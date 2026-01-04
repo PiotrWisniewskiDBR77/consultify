@@ -7,6 +7,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { sanitizeObject, sanitizeString, stripHtml } from '../utils/security.utils.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // CONFIGURATION
@@ -52,9 +53,9 @@ const STRIP_HTML_FIELDS = new Set([
  */
 function deepSanitize(obj: unknown, parentKey = '', depth = 0): unknown {
     if (depth > 20) return obj; // Prevent stack overflow
-    
+
     if (obj === null || obj === undefined) return obj;
-    
+
     if (typeof obj === 'string') {
         // Apply field-specific sanitization
         if (STRIP_HTML_FIELDS.has(parentKey)) {
@@ -70,11 +71,11 @@ function deepSanitize(obj: unknown, parentKey = '', depth = 0): unknown {
         // Default: full sanitization
         return sanitizeString(obj);
     }
-    
+
     if (Array.isArray(obj)) {
         return obj.map((item, index) => deepSanitize(item, `${parentKey}[${index}]`, depth + 1));
     }
-    
+
     if (typeof obj === 'object') {
         const sanitized: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
@@ -82,7 +83,7 @@ function deepSanitize(obj: unknown, parentKey = '', depth = 0): unknown {
         }
         return sanitized;
     }
-    
+
     return obj;
 }
 
@@ -96,37 +97,33 @@ function deepSanitize(obj: unknown, parentKey = '', depth = 0): unknown {
  */
 export function inputSanitizationMiddleware(req: Request, res: Response, next: NextFunction): void {
     // Skip for exempted paths
-    const shouldSkip = SKIP_SANITIZATION_PATHS.some(path => 
+    const shouldSkip = SKIP_SANITIZATION_PATHS.some(path =>
         req.path.startsWith(path)
     );
-    
+
     if (shouldSkip) {
         return next();
     }
-    
+
     try {
         // Sanitize request body
         if (req.body && typeof req.body === 'object') {
             req.body = deepSanitize(req.body);
         }
-        
+
         // Sanitize query parameters
         if (req.query && typeof req.query === 'object') {
-            const sanitizedQuery: Record<string, unknown> = {};
             for (const [key, value] of Object.entries(req.query)) {
                 if (typeof value === 'string') {
-                    sanitizedQuery[key] = sanitizeString(value);
+                    (req.query as any)[key] = sanitizeString(value);
                 } else if (Array.isArray(value)) {
-                    sanitizedQuery[key] = value.map(v => 
+                    (req.query as any)[key] = value.map(v =>
                         typeof v === 'string' ? sanitizeString(v) : v
                     );
-                } else {
-                    sanitizedQuery[key] = value;
                 }
             }
-            req.query = sanitizedQuery as typeof req.query;
         }
-        
+
         // Sanitize URL params
         if (req.params && typeof req.params === 'object') {
             const sanitizedParams: Record<string, string> = {};
@@ -135,10 +132,10 @@ export function inputSanitizationMiddleware(req: Request, res: Response, next: N
             }
             req.params = sanitizedParams;
         }
-        
+
         next();
     } catch (error) {
-        console.error('[InputSanitization] Error sanitizing request:', error);
+        logger.error('[InputSanitization] Error sanitizing request:', error);
         // Continue without sanitization rather than blocking the request
         next();
     }
@@ -165,18 +162,18 @@ export function queryParamSanitizationMiddleware(req: Request, _res: Response, n
  */
 export function sqlParamValidationMiddleware(req: Request, res: Response, next: NextFunction): void {
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
+
     // Check common ID parameters
     const idParams = ['id', 'userId', 'organizationId', 'projectId', 'taskId', 'initiativeId'];
-    
+
     for (const param of idParams) {
         const value = req.params[param] || req.query[param] || req.body?.[param];
         if (value && typeof value === 'string' && !uuidPattern.test(value)) {
             // Only validate if parameter exists and looks like it should be a UUID
             if (param.endsWith('Id') || param === 'id') {
                 // Log suspicious input
-                console.warn(`[SQLParamValidation] Invalid UUID format for ${param}: ${value.substring(0, 50)}`);
-                
+                logger.warn(`[SQLParamValidation] Invalid UUID format for ${param}: ${value.substring(0, 50)}`);
+
                 res.status(400).json({
                     error: 'Validation Error',
                     message: `Invalid ${param} format`,
@@ -186,7 +183,7 @@ export function sqlParamValidationMiddleware(req: Request, res: Response, next: 
             }
         }
     }
-    
+
     next();
 }
 
@@ -200,4 +197,5 @@ export default {
     sqlParamValidationMiddleware,
     deepSanitize,
 };
+
 

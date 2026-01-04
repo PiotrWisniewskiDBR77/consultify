@@ -34,7 +34,7 @@ const getNotificationService = async () => {
             const mod = (await import('./NotificationService.js')) as any;
             _notificationService = mod.default || mod;
         } catch (e: unknown) {
-            console.warn('[AIActionExecutor] NotificationService not available');
+            logger.warn('[AIActionExecutor] NotificationService not available');
         }
     }
     return _notificationService;
@@ -47,7 +47,7 @@ const getAIRoleGuard = async () => {
             const mod = (await import('./aiRoleGuard.js')) as any;
             _aiRoleGuard = mod.default || mod;
         } catch (e: unknown) {
-            console.warn('[AIActionExecutor] AIRoleGuard not available');
+            logger.warn('[AIActionExecutor] AIRoleGuard not available');
         }
     }
     return _aiRoleGuard;
@@ -60,7 +60,7 @@ const getRegulatoryModeGuard = async () => {
             const mod = (await import('./regulatoryModeGuard.js')) as any;
             _regulatoryModeGuard = mod.default || mod;
         } catch (e: unknown) {
-            console.warn('[AIActionExecutor] RegulatoryModeGuard not available');
+            logger.warn('[AIActionExecutor] RegulatoryModeGuard not available');
         }
     }
     return _regulatoryModeGuard;
@@ -73,7 +73,7 @@ const getApprovalPatternService = async () => {
             const mod = (await import('./approvalPatternService.js')) as any;
             _approvalPatternService = mod.default || mod;
         } catch (e: unknown) {
-            console.warn('[AIActionExecutor] ApprovalPatternService not available');
+            logger.warn('[AIActionExecutor] ApprovalPatternService not available');
         }
     }
     return _approvalPatternService;
@@ -183,6 +183,7 @@ const AIActionExecutor = {
 
         const id = uuidv4();
         const finalStatus = requiresApproval ? ACTION_STATUS.PENDING : ACTION_STATUS.APPROVED;
+import logger from '../utils/Logger.js';
 
         await dbRun(
             `INSERT INTO ai_actions 
@@ -224,7 +225,7 @@ const AIActionExecutor = {
                 actionType,
                 payload,
             ).catch((err: Error | null) => {
-                console.warn('[AIActionExecutor] Failed to send notification:', err.message);
+                logger.warn('[AIActionExecutor] Failed to send notification:', err.message);
             });
         }
 
@@ -301,7 +302,7 @@ const AIActionExecutor = {
                     patternInfo: patternResult,
                 };
             } catch (err: unknown) {
-                console.error('[AIActionExecutor] Pattern learning error:', err);
+                logger.error('[AIActionExecutor] Pattern learning error:', err);
             }
         }
 
@@ -350,7 +351,7 @@ const AIActionExecutor = {
                     patternInfo: patternResult,
                 };
             } catch (err: unknown) {
-                console.error('[AIActionExecutor] Pattern learning error:', err);
+                logger.error('[AIActionExecutor] Pattern learning error:', err);
             }
         }
 
@@ -494,7 +495,7 @@ const AIActionExecutor = {
                 message: `Similar to ${pattern.decision_count} previous ${pattern.decision.toLowerCase()} decisions`,
             };
         } catch (error: unknown) {
-            console.error('[AIActionExecutor] getPatternInfo error:', error);
+            logger.error('[AIActionExecutor] getPatternInfo error:', error);
             return null;
         }
     },
@@ -605,7 +606,7 @@ const AIActionExecutor = {
                 actionUrl: `/ai/actions/${actionId}`,
             });
         } catch (err: unknown) {
-            console.warn('[AIActionExecutor] Failed to create notification:', (err as Error).message);
+            logger.warn('[AIActionExecutor] Failed to create notification:', (err as Error).message);
         }
     },
 

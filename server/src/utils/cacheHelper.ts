@@ -5,6 +5,7 @@
  */
 
 import client from './RedisClient.js';
+import logger from './Logger.js';
 
 export const DEFAULT_TTL = {
     SHORT: 60, // 1 minute - frequently changing data
@@ -69,7 +70,7 @@ export async function getCached<T>(
 
         return data;
     } catch (error: unknown) {
-        console.error(`[Cache] Error for key ${key}:`, error);
+        logger.error(`[Cache] Error for key ${key}:`, error);
         // On cache error, fallback to direct fetch
         return fetchFn();
     }
@@ -88,7 +89,7 @@ export async function invalidatePattern(pattern: string): Promise<number> {
 
         return await redisClient.del(keys);
     } catch (error: unknown) {
-        console.error(`[Cache] Error invalidating pattern ${pattern}:`, error);
+        logger.error(`[Cache] Error invalidating pattern ${pattern}:`, error);
         return 0;
     }
 }
@@ -102,7 +103,7 @@ export async function invalidate(key: string): Promise<boolean> {
         const result = await redisClient.del(key);
         return result > 0;
     } catch (error: unknown) {
-        console.error(`[Cache] Error invalidating key ${key}:`, error);
+        logger.error(`[Cache] Error invalidating key ${key}:`, error);
         return false;
     }
 }

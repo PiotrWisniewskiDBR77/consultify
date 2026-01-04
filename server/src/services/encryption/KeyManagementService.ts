@@ -18,6 +18,7 @@
 
 import crypto from 'crypto';
 import logger from '../../utils/Logger.js';
+import logger from '../../utils/Logger.js';
 
 // ==========================================
 // CONFIGURATION
@@ -266,7 +267,7 @@ class KeyManagementServiceImpl {
 # Encryption Key Rotation Instructions
 
 ## Step 1: Generate new key
-Run: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+Run: node -e "logger.info(require('crypto').randomBytes(32).toString('hex'))"
 
 ## Step 2: Update environment variables
 1. Copy current ENCRYPTION_KEY to ENCRYPTION_KEY_V{current_version}
@@ -347,11 +348,11 @@ export const ENCRYPTION_ENV_TEMPLATE = `
 # ===========================================
 
 # Primary encryption key (32 bytes / 256 bits, hex encoded)
-# Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Generate: node -e "logger.info(require('crypto').randomBytes(32).toString('hex'))"
 ENCRYPTION_KEY=
 
 # Salt for key derivation (32 bytes, hex encoded)
-# Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Generate: node -e "logger.info(require('crypto').randomBytes(32).toString('hex'))"
 ENCRYPTION_SALT=
 
 # Key creation date (ISO 8601 format, for rotation tracking)
@@ -363,4 +364,5 @@ ENCRYPTION_KEY_CREATED_AT=
 `;
 
 export default KeyManagementService;
+
 

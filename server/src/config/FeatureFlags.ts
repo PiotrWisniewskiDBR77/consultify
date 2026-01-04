@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // ZOD SCHEMAS
@@ -51,13 +52,13 @@ function loadFeatureFlags(): FeatureFlags {
     const result = FeatureFlagsSchema.safeParse(rawFlags);
 
     if (!result.success) {
-        console.error('[Feature Flags] Configuration validation failed:');
+        logger.error('[Feature Flags] Configuration validation failed:');
         result.error.issues.forEach((err: Error | null) => {
-            console.error(`  - ${err.path.join('.')}: ${err.message}`);
+            logger.error(`  - ${err.path.join('.')}: ${err.message}`);
         });
 
         // Use defaults on validation failure
-        console.warn('[Feature Flags] Using defaults for invalid values.');
+        logger.warn('[Feature Flags] Using defaults for invalid values.');
         return FeatureFlagsSchema.parse({});
     }
 

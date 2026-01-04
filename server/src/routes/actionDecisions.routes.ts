@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -124,42 +125,42 @@ try {
     const decisionModule = await import('../../ai/actionDecisionService.js');
     ActionDecisionService = (decisionModule.default || decisionModule) as ActionDecisionServiceInterface;
 } catch {
-    console.warn('[ActionDecisions Routes] ActionDecisionService not available');
+    logger.warn('[ActionDecisions Routes] ActionDecisionService not available');
 }
 
 try {
     const executionModule = await import('../../ai/actionExecutionAdapter.js');
     ActionExecutionAdapter = (executionModule.default || executionModule) as ActionExecutionAdapterInterface;
 } catch {
-    console.warn('[ActionDecisions Routes] ActionExecutionAdapter not available');
+    logger.warn('[ActionDecisions Routes] ActionExecutionAdapter not available');
 }
 
 try {
     const auditModule = await import('../../ai/auditExport.js');
     AuditExportService = (auditModule.default || auditModule) as AuditExportServiceInterface;
 } catch {
-    console.warn('[ActionDecisions Routes] AuditExportService not available');
+    logger.warn('[ActionDecisions Routes] AuditExportService not available');
 }
 
 try {
     const policyModule = await import('../../ai/policyEngine.js');
     PolicyEngine = (policyModule.default || policyModule) as PolicyEngineInterface;
 } catch {
-    console.warn('[ActionDecisions Routes] PolicyEngine not available');
+    logger.warn('[ActionDecisions Routes] PolicyEngine not available');
 }
 
 try {
     const proposalModule = await import('../../ai/actionProposalEngine.js');
     ActionProposalEngine = (proposalModule.default || proposalModule) as ActionProposalEngineInterface;
 } catch {
-    console.warn('[ActionDecisions Routes] ActionProposalEngine not available');
+    logger.warn('[ActionDecisions Routes] ActionProposalEngine not available');
 }
 
 try {
     const asyncModule = await import('../../ai/asyncJobService.js');
     AsyncJobService = (asyncModule.default || asyncModule) as AsyncJobServiceInterface;
 } catch {
-    console.warn('[ActionDecisions Routes] AsyncJobService not available');
+    logger.warn('[ActionDecisions Routes] AsyncJobService not available');
 }
 
 // Apply auth to all routes in this file
@@ -213,7 +214,7 @@ router.post(
                 decision: decisionRecord.decision,
             });
         } catch (err: unknown) {
-            console.error('[ActionDecisionsRoute] Error:', err);
+            logger.error('[ActionDecisionsRoute] Error:', err);
             const status = (err as { status?: number })?.status || 400;
             res.status(status).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
@@ -262,7 +263,7 @@ router.get(
 
             res.json(log);
         } catch (err: unknown) {
-            console.error('[ActionAuditRoute] Error:', err);
+            logger.error('[ActionAuditRoute] Error:', err);
             res.status(500).json({ error: 'Failed to fetch audit log' });
         }
     }),
@@ -323,7 +324,7 @@ router.post(
             // Include correlation_id in response (Step 9.5)
             res.json(executionResult);
         } catch (err: unknown) {
-            console.error('[ActionExecutionRoute] Error:', err);
+            logger.error('[ActionExecutionRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -381,7 +382,7 @@ router.post(
 
             res.json(dryRunResult);
         } catch (err: unknown) {
-            console.error('[ActionDryRunRoute] Error:', err);
+            logger.error('[ActionDryRunRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -435,7 +436,7 @@ router.get(
 
             res.json(result.data);
         } catch (err: unknown) {
-            console.error('[AuditExportRoute] Error:', err);
+            logger.error('[AuditExportRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -489,7 +490,7 @@ router.get(
 
             res.json(result.data);
         } catch (err: unknown) {
-            console.error('[ExecutionsExportRoute] Error:', err);
+            logger.error('[ExecutionsExportRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -533,7 +534,7 @@ router.get(
 
             res.json(rules);
         } catch (err: unknown) {
-            console.error('[PolicyRulesRoute] Error:', err);
+            logger.error('[PolicyRulesRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -570,7 +571,7 @@ router.patch(
             if (err instanceof Error && err.message === 'Rule not found') {
                 return res.status(404).json({ error: err.message });
             }
-            console.error('[PolicyToggleRoute] Error:', err);
+            logger.error('[PolicyToggleRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -635,7 +636,7 @@ router.post(
 
             res.status(201).json(rule);
         } catch (err: unknown) {
-            console.error('[PolicyCreateRoute] Error:', err);
+            logger.error('[PolicyCreateRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -664,7 +665,7 @@ router.get(
             const status = await PolicyEngine.getGlobalStatus();
             res.json(status);
         } catch (err: unknown) {
-            console.error('[PolicyStatusRoute] Error:', err);
+            logger.error('[PolicyStatusRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -704,7 +705,7 @@ router.patch(
             const result = await PolicyEngine.setGlobalStatus(enabled, userId);
             res.json(result);
         } catch (err: unknown) {
-            console.error('[PolicyGlobalRoute] Error:', err);
+            logger.error('[PolicyGlobalRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -748,7 +749,7 @@ router.post(
             const result = await ActionDecisionService.evaluatePolicyForProposal(proposal, targetOrgId);
             res.json(result);
         } catch (err: unknown) {
-            console.error('[PolicyEvaluateRoute] Error:', err);
+            logger.error('[PolicyEvaluateRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -827,7 +828,7 @@ router.post(
 
             res.status(202).json(result);
         } catch (err: unknown) {
-            console.error('[AsyncExecuteRoute] Error:', err);
+            logger.error('[AsyncExecuteRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -871,7 +872,7 @@ router.get(
 
             res.json(job);
         } catch (err: unknown) {
-            console.error('[AsyncJobStatusRoute] Error:', err);
+            logger.error('[AsyncJobStatusRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -917,7 +918,7 @@ router.post(
             if (error.code === 'JOB_INVALID_STATE') {
                 return res.status(400).json({ error: error.message });
             }
-            console.error('[AsyncJobRetryRoute] Error:', err);
+            logger.error('[AsyncJobRetryRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -963,7 +964,7 @@ router.post(
             if (error.code === 'JOB_INVALID_STATE') {
                 return res.status(400).json({ error: error.message });
             }
-            console.error('[AsyncJobCancelRoute] Error:', err);
+            logger.error('[AsyncJobCancelRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -1006,7 +1007,7 @@ router.get(
 
             res.json({ jobs, count: jobs.length });
         } catch (err: unknown) {
-            console.error('[DeadLetterListRoute] Error:', err);
+            logger.error('[DeadLetterListRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -1042,7 +1043,7 @@ router.get(
 
             res.json(stats);
         } catch (err: unknown) {
-            console.error('[JobStatsRoute] Error:', err);
+            logger.error('[JobStatsRoute] Error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });

@@ -9,6 +9,7 @@ import { v4 as uuid } from 'uuid';
 import DbPromise from '../utils/DbPromise.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
+import logger from '../utils/Logger.js';
 
 /**
  * Project Role Enum - aligned with types.ts PMOProjectRole
@@ -733,7 +734,7 @@ export class ProjectMemberService {
                 ],
             );
         } catch (err: any) {
-            console.error('[ProjectMemberService] Audit log failed:', err.message);
+            logger.error('[ProjectMemberService] Audit log failed:', err.message);
         }
     }
 }

@@ -26,6 +26,7 @@ import Stripe from 'stripe';
 import type { DunningService } from '../services/DunningService.js';
 import type { InvoiceServiceClass } from '../services/InvoiceService.js';
 import webhookService from '../services/WebhookService.js';
+import logger from '../utils/Logger.js';
 
 // Type definitions for lazy-loaded services
 interface DunningServiceInstance {
@@ -255,7 +256,7 @@ router.post(
         const type = event.type;
         const data = event.data?.object;
 
-        console.log(`[Webhook] Received Stripe event: ${type}`);
+        logger.info(`[Webhook] Received Stripe event: ${type}`);
 
         try {
             const dunning = await getDunningService();
@@ -314,13 +315,13 @@ router.post(
                 }
 
                 case 'customer.subscription.deleted':
-                    console.log(`[Webhook] Subscription canceled: ${data.id}`);
+                    logger.info(`[Webhook] Subscription canceled: ${data.id}`);
                     break;
             }
 
             res.json({ received: true });
         } catch (error: unknown) {
-            console.error('[Webhook] Error processing event:', error);
+            logger.error('[Webhook] Error processing event:', error);
             res.status(500).json({ error: 'Webhook processing failed' });
         }
     }),

@@ -374,3 +374,4 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
 
 export default SettingsHistory;
 
+

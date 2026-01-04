@@ -15,6 +15,7 @@ import rateLimit from 'express-rate-limit';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -77,7 +78,7 @@ try {
     const serviceModule = await import('../../services/accessCodeService.js');
     AccessCodeService = (serviceModule.default || serviceModule) as AccessCodeServiceInterface;
 } catch {
-    console.warn('[AccessCodes Routes] AccessCodeService not available');
+    logger.warn('[AccessCodes Routes] AccessCodeService not available');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ router.post(
                 maxUses: code.maxUses,
             });
         } catch (err: unknown) {
-            console.error('[AccessCodes] Generate error:', err);
+            logger.error('[AccessCodes] Generate error:', err);
             res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
@@ -262,7 +263,7 @@ router.post(
                 });
             }
         } catch (err: unknown) {
-            console.error('[AccessCodes] Accept error:', err);
+            logger.error('[AccessCodes] Accept error:', err);
             res.status(500).json({ ok: false, error: 'INTERNAL_ERROR' });
         }
     }),

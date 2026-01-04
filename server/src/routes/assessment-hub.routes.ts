@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/assessment-hub.js');
 const assessment_hubRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(assessment_hubRoutesJS);
 } else {
     // Fallback or error
-    console.error('assessment-hub.js did not export a valid router');
+    logger.error('assessment-hub.js did not export a valid router');
 }
 
 export default router;

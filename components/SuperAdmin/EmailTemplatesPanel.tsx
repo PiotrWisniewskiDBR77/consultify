@@ -51,3 +51,4 @@ export const EmailTemplatesPanel: React.FC = () => {
 
 export default EmailTemplatesPanel;
 
+

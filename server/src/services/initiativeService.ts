@@ -11,6 +11,7 @@ import {
 import { InitiativeFinancialService } from './initiative/InitiativeFinancialService.js';
 import { InitiativeProgressService } from './initiative/InitiativeProgressService.js';
 import { InitiativeRiskService } from './initiative/InitiativeRiskService.js';
+import logger from '../utils/Logger.js';
 
 export class InitiativeService {
     public definition: InitiativeDefinitionService;
@@ -98,7 +99,7 @@ export class InitiativeService {
 
         if (typeof params === 'string') {
             initiativeId = params;
-            console.warn('[InitiativeService] DEPRECATION WARNING: recalculateProgress called without organizationId');
+            logger.warn('[InitiativeService] DEPRECATION WARNING: recalculateProgress called without organizationId');
         } else {
             organizationId = params.organizationId;
             initiativeId = params.initiativeId;

@@ -9,6 +9,7 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -44,7 +45,7 @@ try {
     const module = nudgesModule.default || nudgesModule;
     proactiveNudges = (module.proactiveNudges || module) as ProactiveNudgesInterface;
 } catch {
-    console.warn('[AI Nudges Routes] proactiveNudges service not available');
+    logger.warn('[AI Nudges Routes] proactiveNudges service not available');
 }
 
 // All routes require authentication
@@ -82,7 +83,7 @@ router.get(
                 data: nudges,
             });
         } catch (error: unknown) {
-            console.error('[AI Nudges] Error fetching pending nudges:', error);
+            logger.error('[AI Nudges] Error fetching pending nudges:', error);
             res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
@@ -133,7 +134,7 @@ router.post(
                 nudges: nudges || [],
             });
         } catch (error: unknown) {
-            console.error('[AI Nudges] Error tracking activity:', error);
+            logger.error('[AI Nudges] Error tracking activity:', error);
             res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
@@ -180,7 +181,7 @@ router.post(
                 success: true,
             });
         } catch (error: unknown) {
-            console.error('[AI Nudges] Error dismissing nudge:', error);
+            logger.error('[AI Nudges] Error dismissing nudge:', error);
             res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
@@ -227,7 +228,7 @@ router.post(
                 success: true,
             });
         } catch (error: unknown) {
-            console.error('[AI Nudges] Error marking nudge as acted:', error);
+            logger.error('[AI Nudges] Error marking nudge as acted:', error);
             res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
@@ -274,7 +275,7 @@ router.post(
                 success: true,
             });
         } catch (error: unknown) {
-            console.error('[AI Nudges] Error suppressing nudge type:', error);
+            logger.error('[AI Nudges] Error suppressing nudge type:', error);
             res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',

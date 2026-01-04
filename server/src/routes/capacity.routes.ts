@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/capacity.js');
 const capacityRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof capacityRoutesJS === 'function' || (capacityRoutesJS && typeof capaci
     router.use(capacityRoutesJS);
 } else {
     // Fallback or error
-    console.error('capacity.js did not export a valid router');
+    logger.error('capacity.js did not export a valid router');
 }
 
 export default router;

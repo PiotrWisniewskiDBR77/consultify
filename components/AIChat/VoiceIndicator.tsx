@@ -246,3 +246,4 @@ export const VoiceBadge: React.FC<{
 
 export default VoiceIndicator;
 
+

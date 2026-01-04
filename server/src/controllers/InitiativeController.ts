@@ -12,6 +12,7 @@ import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
+import logger from '../utils/Logger.js';
     CreateInitiativeRequest,
     UpdateInitiativeRequest,
     UpdateInitiativeStatusRequest,
@@ -29,7 +30,7 @@ const safeJsonParse = <T = unknown>(str: string | null | undefined, defaultValue
         const parsed = JSON.parse(str);
         return parsed || defaultValue;
     } catch (e: unknown) {
-        console.warn('[initiatives] Failed to parse JSON:', str?.substring?.(0, 100));
+        logger.warn('[initiatives] Failed to parse JSON:', str?.substring?.(0, 100));
         return defaultValue;
     }
 };

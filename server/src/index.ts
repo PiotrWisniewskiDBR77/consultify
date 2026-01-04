@@ -68,7 +68,7 @@ const sentryHandlers = initSentry(app);
     try {
         logger.info('[Server] Initializing database...');
         const db = await getDatabaseAsync();
-        console.log('[Server] Database instance created:', db ? 'OK' : 'MOCK');
+        logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
 
         // Initialize and verify schema
         const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
@@ -119,7 +119,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         Scheduler.init();
     } catch (err: unknown) {
         const error = err as Error;
-        console.error('[Server] Scheduler initialization failed:', error.message);
+        logger.error('[Server] Scheduler initialization failed:', error.message);
     }
 
     // Init Health Check Monitor (ES modules)
@@ -127,7 +127,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         startHealthCheck();
     } catch (err: unknown) {
         const error = err as Error;
-        console.error('[Server] Health Check initialization failed:', error.message);
+        logger.error('[Server] Health Check initialization failed:', error.message);
     }
 
     // Init CQRS
@@ -135,7 +135,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         const { registerCQRSHandlers } = await import('./services/cqrs/registry.js');
         registerCQRSHandlers();
     } catch (err: unknown) {
-        console.error('[Server] CQRS initialization failed:', err);
+        logger.error('[Server] CQRS initialization failed:', err);
     }
 
     // ============================================================
@@ -166,19 +166,19 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
                 (global as typeof globalThis & { llmHealthReport?: unknown }).llmHealthReport = healthReport;
 
                 if (healthReport.criticalErrors && healthReport.criticalErrors.length > 0) {
-                    console.error('[Server] ⚠️  LLM CRITICAL: Some AI features may not work');
-                    healthReport.criticalErrors.forEach((err: string) => console.error(`  - ${err}`));
+                    logger.error('[Server] ⚠️  LLM CRITICAL: Some AI features may not work');
+                    healthReport.criticalErrors.forEach((err: string) => logger.error(`  - ${err}`));
                 }
 
                 if (healthReport.summary && healthReport.summary.healthy > 0) {
-                    console.log(`[Server] ✅ LLM Ready: ${healthReport.summary.healthy} provider(s) healthy`);
+                    logger.info(`[Server] ✅ LLM Ready: ${healthReport.summary.healthy} provider(s) healthy`);
                 }
             } else {
-                console.warn('[Server] Startup validation skipped (function not found)');
+                logger.warn('[Server] Startup validation skipped (function not found)');
             }
         } catch (err: unknown) {
             const error = err as Error;
-            console.error('[Server] LLM Startup Validation failed:', error.message);
+            logger.error('[Server] LLM Startup Validation failed:', error.message);
         }
     })();
 
@@ -189,18 +189,18 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         const service = llmFallbackService.default || llmFallbackService;
         if (service && typeof service.startHealthMonitoring === 'function') {
             service.startHealthMonitoring(60000);
-            console.log('[Server] LLM Provider Health Monitoring started');
+            logger.info('[Server] LLM Provider Health Monitoring started');
         }
     } catch (err: unknown) {
         const error = err as Error;
-        console.warn('[Server] LLM Fallback Service not available:', error.message);
+        logger.warn('[Server] LLM Fallback Service not available:', error.message);
     }
 
     // Init AI Health Monitor (Self-Healing System)
     try {
         const healthMonitorModule = await import('./services/ai/healthMonitor.js');
         // Debug: Log imported module keys
-        console.log('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
+        logger.info('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
         // Handle both named exports and default export wrapping (CJS/ESM interop)
         // @ts-ignore
         let healthMonitor = healthMonitorModule.healthMonitor || healthMonitorModule.default?.healthMonitor;
@@ -215,17 +215,17 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
             healthMonitor.start(60000);
 
             healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
-                console.error('[AI Health] CRITICAL ALERT:', alert.message);
-                console.error('[AI Health] Failed checks:', alert.checks?.join(', '));
+                logger.error('[AI Health] CRITICAL ALERT:', alert.message);
+                logger.error('[AI Health] Failed checks:', alert.checks?.join(', '));
             });
 
-            console.log('[Server] AI Health Monitor started (self-healing enabled)');
+            logger.info('[Server] AI Health Monitor started (self-healing enabled)');
         } else {
-            console.warn('[Server] AI Health Monitor not available (export not found)');
+            logger.warn('[Server] AI Health Monitor not available (export not found)');
         }
     } catch (err: unknown) {
         const error = err as Error;
-        console.warn('[Server] AI Health Monitor not available:', error.message);
+        logger.warn('[Server] AI Health Monitor not available:', error.message);
     }
 }
 
@@ -448,7 +448,7 @@ app.use('/api/auth/register', authLimiter);
 // ============================================================
 
 // Initialize API Gateway Routes
-app.use((req, res, next) => { console.log('[Index] Pre-Gateway:', req.path); next(); });
+app.use((req, res, next) => { logger.info('[Index] Pre-Gateway:', req.path); next(); });
 apiGateway.initializeRoutes(app);
 
 // ============================================================
@@ -489,6 +489,7 @@ app.use(alertWatchdog);
 
 // Error Handler Middleware (must be last, after all routes)
 import { errorHandlerMiddleware } from './utils/ErrorHandler.js';
+import logger from './utils/Logger.js';
 app.use(errorHandlerMiddleware);
 
 // 404 Handler (must be after error handler)
@@ -511,9 +512,9 @@ if (!isTest) {
     process.on('uncaughtException', (err: Error) => {
         logger.error('[Server] Uncaught Exception:', err);
         if (isProduction) {
-            console.error('[Server] Uncaught Exception (not exiting):', err.message);
+            logger.error('[Server] Uncaught Exception (not exiting):', err.message);
         } else {
-            console.error('[Server] Uncaught Exception:', err);
+            logger.error('[Server] Uncaught Exception:', err);
         }
     });
 
@@ -521,9 +522,9 @@ if (!isTest) {
     process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
         logger.error('[Server] Unhandled Rejection:', { reason, promise });
         if (isProduction) {
-            console.error('[Server] Unhandled Rejection (not exiting):', reason);
+            logger.error('[Server] Unhandled Rejection (not exiting):', reason);
         } else {
-            console.error('[Server] Unhandled Rejection:', reason);
+            logger.error('[Server] Unhandled Rejection:', reason);
         }
     });
 
@@ -548,7 +549,7 @@ if (startServer && !isTest) {
     server.on('error', (err: NodeJS.ErrnoException) => {
         logger.error('[Server] HTTP Server Error:', err);
         if (err.code === 'EADDRINUSE') {
-            console.error(`Port ${PORT} is already in use`);
+            logger.error(`Port ${PORT} is already in use`);
             process.exit(1);
         }
     });
@@ -608,13 +609,13 @@ if (startServer && !isTest) {
                         const { rateLimiter } = await import('../services/ai/rateLimiter.js');
                         rateLimiter.connectRedis(redisClient);
 
-                        console.log('[AI Services] Redis connected for cache and rate limiting');
+                        logger.info('[AI Services] Redis connected for cache and rate limiting');
                     } else {
-                        console.log('[AI Services] Using in-memory fallback (Redis not available)');
+                        logger.info('[AI Services] Using in-memory fallback (Redis not available)');
                     }
                 })
                 .catch((err: Error) => {
-                    console.warn('[AI Services] Redis init failed, using in-memory:', err.message);
+                    logger.warn('[AI Services] Redis init failed, using in-memory:', err.message);
                 });
         } catch (err: unknown) {
             const error = err as Error;
@@ -760,11 +761,11 @@ if (startServer && !isTest) {
         });
     });
 
-    console.log('[Debug] Calling server.listen...');
+    logger.info('[Debug] Calling server.listen...');
     server.listen(PORT, '0.0.0.0', () => {
-        console.log('[Debug] server.listen callback fired!');
-        console.log('Server running on http://0.0.0.0:' + PORT);
-        console.log('WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
+        logger.info('[Debug] server.listen callback fired!');
+        logger.info('Server running on http://0.0.0.0:' + PORT);
+        logger.info('WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
         logger.info('[Server] Graceful shutdown handlers registered');
     });
 }

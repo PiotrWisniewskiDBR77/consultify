@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/organization-data.js');
 const organization_dataRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(organization_dataRoutesJS);
 } else {
     // Fallback or error
-    console.error('organization-data.js did not export a valid router');
+    logger.error('organization-data.js did not export a valid router');
 }
 
 export default router;

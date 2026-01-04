@@ -13,6 +13,7 @@ import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
 import type RequestStore from '../utils/RequestStore.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -161,7 +162,7 @@ export async function log(params: LogActivityParams): Promise<void> {
     } catch (err: unknown) {
         if (process.env.NODE_ENV !== 'production') {
             const error = err as Error;
-            console.warn('[ActivityService] Failed to log activity:', error.message);
+            logger.warn('[ActivityService] Failed to log activity:', error.message);
         }
         // Resolve anyway to prevent crashing caller
     }

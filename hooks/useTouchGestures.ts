@@ -299,3 +299,4 @@ export const useSwipeToClose = (onClose: () => void, enabled: boolean = true) =>
 
 export default useTouchGestures;
 
+

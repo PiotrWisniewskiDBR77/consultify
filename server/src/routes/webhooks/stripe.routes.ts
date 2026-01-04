@@ -11,6 +11,7 @@ import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -35,7 +36,7 @@ try {
     const billingModule = await import('../../../services/billingService.js');
     billingService = (billingModule.default || billingModule) as BillingServiceInterface;
 } catch {
-    console.warn('[Stripe Webhook] billingService not available');
+    logger.warn('[Stripe Webhook] billingService not available');
 }
 
 // Stripe webhook secret for signature verification
@@ -59,7 +60,7 @@ router.post(
                 event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
             } catch (err: unknown) {
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-                console.error('Webhook signature verification failed:', errorMessage);
+                logger.error('Webhook signature verification failed:', errorMessage);
                 return res.status(400).send(`Webhook Error: ${errorMessage}`);
             }
         } else {
@@ -67,7 +68,7 @@ router.post(
             event = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as Stripe.Event;
         }
 
-        console.log('Stripe webhook received:', event.type);
+        logger.info('Stripe webhook received:', event.type);
 
         try {
             switch (event.type) {
@@ -96,12 +97,12 @@ router.post(
                     break;
 
                 default:
-                    console.log(`Unhandled event type: ${event.type}`);
+                    logger.info(`Unhandled event type: ${event.type}`);
             }
 
             res.json({ received: true });
         } catch (error: unknown) {
-            console.error('Webhook processing error:', error);
+            logger.error('Webhook processing error:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Webhook processing failed' });
         }
     }),
@@ -115,7 +116,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription): Pro
     const orgId = await getOrgIdFromCustomer(customerId);
 
     if (!orgId) {
-        console.warn('No organization found for customer:', customerId);
+        logger.warn('No organization found for customer:', customerId);
         return;
     }
 
@@ -128,7 +129,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription): Pro
         });
     }
 
-    console.log(`Subscription created for org ${orgId}`);
+    logger.info(`Subscription created for org ${orgId}`);
 
     // Create notification for admin
     await createNotification(
@@ -156,7 +157,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
         });
     }
 
-    console.log(`Subscription updated for org ${orgId}: ${subscription.status}`);
+    logger.info(`Subscription updated for org ${orgId}: ${subscription.status}`);
 }
 
 /**
@@ -175,7 +176,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
         });
     }
 
-    console.log(`Subscription canceled for org ${orgId}`);
+    logger.info(`Subscription canceled for org ${orgId}`);
 
     await createNotification(
         orgId,
@@ -206,7 +207,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
         });
     }
 
-    console.log(`Invoice paid for org ${orgId}: ${invoice.id}`);
+    logger.info(`Invoice paid for org ${orgId}: ${invoice.id}`);
 
     await createNotification(
         orgId,
@@ -232,7 +233,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void
         });
     }
 
-    console.log(`Invoice payment failed for org ${orgId}: ${invoice.id}`);
+    logger.info(`Invoice payment failed for org ${orgId}: ${invoice.id}`);
 
     await createNotification(
         orgId,
@@ -257,7 +258,7 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice): Promise<void> {
         await billingService.recordInvoice(orgId, invoice);
     }
 
-    console.log(`Invoice created for org ${orgId}: ${invoice.id}`);
+    logger.info(`Invoice created for org ${orgId}: ${invoice.id}`);
 }
 
 /**
@@ -299,7 +300,7 @@ async function createNotification(
             );
         }
     } catch (err) {
-        console.error('[Stripe Webhook] Error creating notifications:', err);
+        logger.error('[Stripe Webhook] Error creating notifications:', err);
         // Don't throw - notification failure shouldn't break webhook processing
     }
 }

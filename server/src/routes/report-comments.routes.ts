@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/report-comments.js');
 const report_commentsRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(report_commentsRoutesJS);
 } else {
     // Fallback or error
-    console.error('report-comments.js did not export a valid router');
+    logger.error('report-comments.js did not export a valid router');
 }
 
 export default router;

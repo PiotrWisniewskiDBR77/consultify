@@ -16,3 +16,4 @@ export * from '../../../../server/src/index.js';
 
 console.log('[Consultify Backend] Application bootstrapped');
 
+

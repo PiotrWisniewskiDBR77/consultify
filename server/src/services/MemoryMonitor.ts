@@ -8,6 +8,7 @@
 
 import { getMetricsService } from './MetricsService.js';
 import { memoryUsageBytes } from './MetricsService.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -153,7 +154,7 @@ class MemoryMonitor {
             };
 
             // Log alert
-            console.warn('[MemoryMonitor] Potential memory leak detected:', {
+            logger.warn('[MemoryMonitor] Potential memory leak detected:', {
                 growthPercent: alert.growthPercent + '%',
                 timeWindow: `${Math.round(timeDiff / 1000 / 60)} minutes`,
                 currentHeap: `${(alert.currentHeap / 1024 / 1024).toFixed(2)} MB`,
@@ -249,4 +250,5 @@ export function getMemoryMonitor(options?: {
 
 export default MemoryMonitor;
 export type { MemorySample, MemoryLeakAlert };
+
 

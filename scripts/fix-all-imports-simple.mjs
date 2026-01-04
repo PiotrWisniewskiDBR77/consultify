@@ -133,3 +133,4 @@ console.log(`❌ Błędy: ${errors} plików`);
 console.log(`💾 Backup: ${backupDir}`);
 
 
+

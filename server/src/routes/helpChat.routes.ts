@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/helpChat.js');
 const helpChatRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof helpChatRoutesJS === 'function' || (helpChatRoutesJS && typeof helpCh
     router.use(helpChatRoutesJS);
 } else {
     // Fallback or error
-    console.error('helpChat.js did not export a valid router');
+    logger.error('helpChat.js did not export a valid router');
 }
 
 export default router;

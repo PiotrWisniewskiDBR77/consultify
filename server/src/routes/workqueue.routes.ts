@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/workqueue.js');
 const workqueueRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof workqueueRoutesJS === 'function' || (workqueueRoutesJS && typeof work
     router.use(workqueueRoutesJS);
 } else {
     // Fallback or error
-    console.error('workqueue.js did not export a valid router');
+    logger.error('workqueue.js did not export a valid router');
 }
 
 export default router;

@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/scim.js');
 const scimRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof scimRoutesJS === 'function' || (scimRoutesJS && typeof scimRoutesJS.h
     router.use(scimRoutesJS);
 } else {
     // Fallback or error
-    console.error('scim.js did not export a valid router');
+    logger.error('scim.js did not export a valid router');
 }
 
 export default router;

@@ -126,3 +126,4 @@ console.log(`   Errors: ${errorCount} files`);
 console.log(`   Total scanned: ${files.length} files`);
 
 
+

@@ -48,21 +48,32 @@ const generateAuthToken = (user: typeof testUser) => {
 };
 
 beforeAll(async () => {
-    // 1. Force MOCK_DB=false to create a REAL instance first
-    process.env.MOCK_DB = 'false';
-    const { createDatabase } = await import('../../src/database/Database.js');
-    const realDb = await createDatabase();
+    // 1. Instantiate the raw SQLite database directly (avoids loading Database.ts prematurely)
+    // process.env.MOCK_DB is NOT used by database.sqlite.active.js, it just creates a DB
+    const sqliteModule = await import('../../database.sqlite.active.js');
+    const realDb = sqliteModule.default || sqliteModule;
 
-    // 2. Set MOCK_DB=true and assign the real instance to the global mock
-    // This trick convinces the application to use our pre-initialized instance
+    // 2. Shim .query() method (which Database.ts usually does)
+    if (typeof (realDb as any).query !== 'function') {
+        (realDb as any).query = function (text: string, params: any[]) {
+            return new Promise((resolve, reject) => {
+                this.all(text, params, (err: Error, rows: any[]) => {
+                    if (err) reject(err);
+                    else resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
+                });
+            });
+        };
+    }
+
+    // 3. Set MOCK_DB=true and assign the real instance to the global mock
     process.env.MOCK_DB = 'true';
     (global as any).__TEST_DB_MOCK__ = realDb;
 
-    // 3. Now import the app, which will use the global mock (our real DB)
+    // 4. Now import the app, which will use the global mock (our real DB)
     const appModule = await import('../../src/index.js');
     app = appModule.default || appModule;
 
-    // 4. Use the same instance for test assertions
+    // 5. Use the same instance for test assertions
     db = realDb;
 
     // Setup test data

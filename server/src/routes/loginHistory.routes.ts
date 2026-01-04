@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -86,7 +87,7 @@ router.get(
                 data: formattedHistory,
             });
         } catch (error: unknown) {
-            console.error('Error fetching login history:', error);
+            logger.error('Error fetching login history:', error);
             res.status(500).json({ success: false, error: 'Failed to fetch login history' });
         }
     }),
@@ -122,7 +123,7 @@ router.post(
                 data: { id },
             });
         } catch (error: unknown) {
-            console.error('Error recording login history:', error);
+            logger.error('Error recording login history:', error);
             res.status(500).json({ success: false, error: 'Failed to record login' });
         }
     }),
@@ -156,7 +157,7 @@ router.get(
                 data: suspicious,
             });
         } catch (error: unknown) {
-            console.error('Error fetching suspicious logins:', error);
+            logger.error('Error fetching suspicious logins:', error);
             res.status(500).json({ success: false, error: 'Failed to fetch suspicious logins' });
         }
     }),

@@ -9,6 +9,7 @@ import type { IDatabase } from '../database/IDatabase.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import type { _AuthRequest, LoginRequest } from '../validators/auth.validators.js';
+import logger from '../utils/Logger.js';
 
 // Dependencies interface for dependency injection
 interface Dependencies {
@@ -83,7 +84,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const dependencies = await getDeps();
     const body = req.body as LoginRequest;
 
-    console.log('[Auth] Login request received for:', body.email || 'no email');
+    logger.info('[Auth] Login request received for:', body.email || 'no email');
     const { email, password, mfaToken, deviceFingerprint, trustDevice } = body;
 
     // Best-effort rate limit clear (pre-validation)
@@ -286,7 +287,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             expiresIn: tokenPair.expiresIn,
         });
     } catch (error: unknown) {
-        console.error('[Auth] Login error:', error);
+        logger.error('[Auth] Login error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 };

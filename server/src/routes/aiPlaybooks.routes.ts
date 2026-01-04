@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 // const module = await import('../../routes/aiPlaybooks.js');
 // const aiPlaybooksRoutesJS = module.default || module;
@@ -26,7 +27,7 @@ if (
     router.use(aiPlaybooksRoutesJS);
 } else {
     // Fallback or error
-    console.error('aiPlaybooks.js did not export a valid router');
+    logger.error('aiPlaybooks.js did not export a valid router');
 }
 */
 

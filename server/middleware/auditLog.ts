@@ -1,5 +1,6 @@
 // Default Dependencies
-import AuditLogService from '../services/auditLogService.js';
+// @ts-ignore - Vitest direct import
+import AuditLogService from '../services/auditLogService.ts';
 
 const deps = {
     AuditLogService

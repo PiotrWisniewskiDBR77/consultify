@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/multi-framework-assessment.js');
 const multi_framework_assessmentRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(multi_framework_assessmentRoutesJS);
 } else {
     // Fallback or error
-    console.error('multi-framework-assessment.js did not export a valid router');
+    logger.error('multi-framework-assessment.js did not export a valid router');
 }
 
 export default router;

@@ -61,3 +61,4 @@ echo ""
 echo "⚠️  UWAGA: Sprawdź czy importy działają - niektóre mogą wymagać ręcznej poprawy"
 
 
+

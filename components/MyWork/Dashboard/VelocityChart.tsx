@@ -175,3 +175,4 @@ export const VelocityChart: React.FC<Partial<VelocityChartProps> & { className?:
 
 export default VelocityChart;
 
+

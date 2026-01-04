@@ -10,6 +10,7 @@ import { Response, Router } from 'express';
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -46,7 +47,7 @@ try {
     const orchestratorModule = await import('../../services/aiOrchestrator.js');
     AIOrchestrator = (orchestratorModule.default || orchestratorModule) as AIOrchestratorInterface;
 } catch {
-    console.warn('[Agents Routes] AIOrchestrator not available');
+    logger.warn('[Agents Routes] AIOrchestrator not available');
 }
 
 /**
@@ -88,7 +89,7 @@ router.post(
 
             res.json(result);
         } catch (error: unknown) {
-            console.error('[Agents API] Error processing query:', error);
+            logger.error('[Agents API] Error processing query:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
@@ -137,7 +138,7 @@ router.post(
 
             res.json(result);
         } catch (error: unknown) {
-            console.error('[Agents API] Error querying specialist:', error);
+            logger.error('[Agents API] Error querying specialist:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
@@ -177,7 +178,7 @@ router.post(
 
             res.json(recommendations);
         } catch (error: unknown) {
-            console.error('[Agents API] Error getting recommendations:', error);
+            logger.error('[Agents API] Error getting recommendations:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
@@ -199,7 +200,7 @@ router.get(
             const agents = AIOrchestrator.getAvailableAgents();
             res.json({ agents });
         } catch (error: unknown) {
-            console.error('[Agents API] Error getting agents:', error);
+            logger.error('[Agents API] Error getting agents:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
@@ -222,7 +223,7 @@ router.get(
             const metrics = AIOrchestrator.getAgentMetrics();
             res.json(metrics);
         } catch (error: unknown) {
-            console.error('[Agents API] Error getting metrics:', error);
+            logger.error('[Agents API] Error getting metrics:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
@@ -265,7 +266,7 @@ router.post(
                 analysis: result,
             });
         } catch (error: unknown) {
-            console.error('[Agents API] Error analyzing initiative:', error);
+            logger.error('[Agents API] Error analyzing initiative:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
@@ -310,7 +311,7 @@ router.post(
                 review: result,
             });
         } catch (error: unknown) {
-            console.error('[Agents API] Error conducting strategic review:', error);
+            logger.error('[Agents API] Error conducting strategic review:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),

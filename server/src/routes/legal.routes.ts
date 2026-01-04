@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/legal.js');
 const legalRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof legalRoutesJS === 'function' || (legalRoutesJS && typeof legalRoutesJ
     router.use(legalRoutesJS);
 } else {
     // Fallback or error
-    console.error('legal.js did not export a valid router');
+    logger.error('legal.js did not export a valid router');
 }
 
 export default router;

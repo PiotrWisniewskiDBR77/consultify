@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/media-ingestion.js');
 const media_ingestionRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(media_ingestionRoutesJS);
 } else {
     // Fallback or error
-    console.error('media-ingestion.js did not export a valid router');
+    logger.error('media-ingestion.js did not export a valid router');
 }
 
 export default router;

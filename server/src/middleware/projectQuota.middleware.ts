@@ -10,6 +10,7 @@ import * as fs from 'fs';
 
 import usageService from '../../services/usageService.js';
 import type { _AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -73,7 +74,7 @@ export async function enforceProjectQuota(req: FileRequest, res: Response, next:
                 try {
                     fs.unlinkSync(req.file.path);
                 } catch (e: unknown) {
-                    console.error('Failed to cleanup temp file:', e);
+                    logger.error('Failed to cleanup temp file:', e);
                 }
             }
 
@@ -92,7 +93,7 @@ export async function enforceProjectQuota(req: FileRequest, res: Response, next:
 
         next();
     } catch (error: unknown) {
-        console.error('Project quota check error:', error);
+        logger.error('Project quota check error:', error);
         // Fail closed for safety
         res.status(500).json({ error: 'Failed to verify project quota' });
     }

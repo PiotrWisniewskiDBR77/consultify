@@ -9,6 +9,7 @@ import { z } from 'zod';
 
 import * as DbPromise from '../../utils/DbPromise.js';
 import { isOpenAIResponse, validateDatabaseRow } from '../../utils/typeGuards.js';
+import logger from '../../utils/Logger.js';
 
 type RerankDocument = {
     id?: string | number;
@@ -80,10 +81,10 @@ const OpenAIConfigSchema = z.object({
 const ScoresSchema = z.array(z.number().min(0).max(1));
 
 const fallbackLogger: AiLogger = {
-    debug: (component, message, data) => console.debug(`[AI:${component}] ${message}`, data ?? ''),
-    info: (component, message, data) => console.info(`[AI:${component}] ${message}`, data ?? ''),
-    warn: (component, message, data) => console.warn(`[AI:${component}] ${message}`, data ?? ''),
-    error: (component, message, error) => console.error(`[AI:${component}] ${message}`, error ?? ''),
+    debug: (component, message, data) => logger.debug(`[AI:${component}] ${message}`, data ?? ''),
+    info: (component, message, data) => logger.info(`[AI:${component}] ${message}`, data ?? ''),
+    warn: (component, message, data) => logger.warn(`[AI:${component}] ${message}`, data ?? ''),
+    error: (component, message, error) => logger.error(`[AI:${component}] ${message}`, error ?? ''),
 };
 
 // Dependency injection for testing

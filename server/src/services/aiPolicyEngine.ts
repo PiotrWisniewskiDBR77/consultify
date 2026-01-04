@@ -73,7 +73,7 @@ async function getAIRoleGuard() {
             const mod = (await import('../../services/aiRoleGuard.js')) as any;
             _aiRoleGuard = mod.default || mod.AIRoleGuard || mod.aiRoleGuard || mod;
         } catch (e: unknown) {
-            console.error('[AIPolicyEngine] aiRoleGuard not available');
+            logger.error('[AIPolicyEngine] aiRoleGuard not available');
         }
     }
     return _aiRoleGuard;
@@ -86,7 +86,7 @@ async function getRegulatoryModeGuard() {
             const mod = (await import('../../services/regulatoryModeGuard.js')) as any;
             _regulatoryModeGuard = mod.default || mod.RegulatoryModeGuard || mod.regulatoryModeGuard || mod;
         } catch (e: unknown) {
-            console.error('[AIPolicyEngine] regulatoryModeGuard not available');
+            logger.error('[AIPolicyEngine] regulatoryModeGuard not available');
         }
     }
     return _regulatoryModeGuard;
@@ -206,6 +206,7 @@ const AIPolicyEngine = {
 
         const isAllowed = currentIndex >= requiredIndex;
         const requiresApproval =
+import logger from '../utils/Logger.js';
             policy.policyLevel !== 'AUTOPILOT' &&
             (actionType.startsWith('CREATE_') || actionType.startsWith('SUGGEST_'));
 

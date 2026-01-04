@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import DbPromise from '../utils/DbPromise.js';
 import PDFParserService from './pdfParserService.js';
+import logger from '../utils/Logger.js';
 
 /**
  * Generic Report Service
@@ -65,7 +66,7 @@ class GenericReportService {
 
             // Start async processing
             this.processReport(reportId, filePath, fileType).catch((err: Error | null) => {
-                console.error('[GenericReport] Processing error:', err.message);
+                logger.error('[GenericReport] Processing error:', err.message);
                 this.updateProcessingStatus(reportId, 'error', err.message);
             });
 
@@ -74,7 +75,7 @@ class GenericReportService {
                 processing_status: 'pending',
             };
         } catch (error) {
-            console.error('[GenericReport] Upload error:', error);
+            logger.error('[GenericReport] Upload error:', error);
             throw error;
         }
     }
@@ -112,9 +113,9 @@ class GenericReportService {
                 suggestedTags,
             });
 
-            console.log(`[GenericReport] Processing complete: ${reportId}`);
+            logger.info(`[GenericReport] Processing complete: ${reportId}`);
         } catch (error: any) {
-            console.error('[GenericReport] Processing error:', error.message);
+            logger.error('[GenericReport] Processing error:', error.message);
             await this.updateProcessingStatus(reportId, 'error', error.message);
             throw error;
         }

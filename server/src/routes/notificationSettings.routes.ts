@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/notificationSettings.js');
 const notificationSettingsRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(notificationSettingsRoutesJS);
 } else {
     // Fallback or error
-    console.error('notificationSettings.js did not export a valid router');
+    logger.error('notificationSettings.js did not export a valid router');
 }
 
 export default router;

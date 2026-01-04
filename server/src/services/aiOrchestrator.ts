@@ -5,6 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { appCache } from './redis/CacheService.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES & CONSTANTS
@@ -200,7 +201,7 @@ export const AIOrchestrator = {
                 };
             }
         } catch (err: any) {
-            console.error('[AIOrchestrator] Token balance check failed:', err.message);
+            logger.error('[AIOrchestrator] Token balance check failed:', err.message);
         }
 
         // 1. Build context
@@ -281,7 +282,7 @@ export const AIOrchestrator = {
 
         // 10. Increment daily AI usage counter
         _AccessPolicyService.incrementUsage(organizationId, 'ai_calls', 1).catch((err: any) => {
-            console.error('[AIOrchestrator] Failed to increment AI usage counter:', err);
+            logger.error('[AIOrchestrator] Failed to increment AI usage counter:', err);
         });
 
         return {
@@ -397,7 +398,7 @@ export const AIOrchestrator = {
 
             if (trimResult.trimmed) {
                 projectMemory = trimResult.memory;
-                console.log('[AIOrchestrator] Context trimmed:', {
+                logger.info('[AIOrchestrator] Context trimmed:', {
                     model: modelName,
                     originalTokens: trimResult.originalAnalysis?.breakdown?.total,
                     newTokens: trimResult.newAnalysis?.breakdown?.total,
@@ -570,7 +571,7 @@ USER MESSAGE: ${userMessage}`;
         );
 
         if (tokenAnalysis.status.utilizationPercent > 80) {
-            console.warn('[AIOrchestrator] High token utilization:', {
+            logger.warn('[AIOrchestrator] High token utilization:', {
                 model: modelName,
                 utilization: `${tokenAnalysis.status.utilizationPercent}%`,
                 total: tokenAnalysis.breakdown.total,
@@ -756,7 +757,7 @@ USER MESSAGE: ${userMessage}`;
         });
 
         _AccessPolicyService.incrementUsage(organizationId, 'ai_calls', 1).catch((err: any) => {
-            console.error('[AIOrchestrator] Failed to increment AI usage counter:', err);
+            logger.error('[AIOrchestrator] Failed to increment AI usage counter:', err);
         });
 
         return {

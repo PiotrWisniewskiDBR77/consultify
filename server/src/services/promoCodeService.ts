@@ -21,6 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -205,7 +206,7 @@ export async function validatePromoCode(code: string): Promise<ValidatePromoCode
 
         return response;
     } catch (err: unknown) {
-        console.error('[PromoCodeService] Validation error:', err);
+        logger.error('[PromoCodeService] Validation error:', err);
         throw err;
     }
 }
@@ -266,7 +267,7 @@ export async function markPromoCodeUsed(
         [usageId, validation.codeId!, organizationId, userId],
     );
 
-    console.log(`[PromoCodeService] Promo code ${normalizedCode} used by org ${organizationId}`);
+    logger.info(`[PromoCodeService] Promo code ${normalizedCode} used by org ${organizationId}`);
 
     return {
         success: true,
@@ -326,7 +327,7 @@ export async function createPromoCode(params: CreatePromoCodeParams): Promise<Pr
             ],
         );
 
-        console.log(`[PromoCodeService] Created promo code: ${normalizedCode} (${type})`);
+        logger.info(`[PromoCodeService] Created promo code: ${normalizedCode} (${type})`);
 
         return {
             id: promoId,
@@ -348,7 +349,7 @@ export async function createPromoCode(params: CreatePromoCodeParams): Promise<Pr
         if (error.message.includes('UNIQUE constraint')) {
             throw new Error('Promo code already exists');
         }
-        console.error('[PromoCodeService] Create error:', err);
+        logger.error('[PromoCodeService] Create error:', err);
         throw err;
     }
 }

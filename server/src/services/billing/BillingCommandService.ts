@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
 import type {
+import logger from '../../utils/Logger.js';
     _SeatPricing,
     BillingPlan,
     BillingServiceDependencies,
@@ -365,7 +366,7 @@ export class BillingCommandService {
                     }) as Promise<any>);
                 }
             } catch (error: unknown) {
-                console.warn('Could not retrieve Stripe payment method details:', error);
+                logger.warn('Could not retrieve Stripe payment method details:', error);
             }
         }
 
@@ -412,7 +413,7 @@ export class BillingCommandService {
             try {
                 await deps.stripe.paymentMethods.detach(pm.stripe_payment_method_id);
             } catch (error: unknown) {
-                console.warn('Could not detach payment method from Stripe:', error);
+                logger.warn('Could not detach payment method from Stripe:', error);
             }
         }
 
@@ -443,7 +444,7 @@ export class BillingCommandService {
                     });
                 }
             } catch (error: unknown) {
-                console.warn('Could not update Stripe default payment method:', error);
+                logger.warn('Could not update Stripe default payment method:', error);
             }
         }
 

@@ -1,5 +1,6 @@
 import { getDatabase } from '../../database/Database.js';
 import { IDatabase } from '../../database/IDatabase.js';
+import logger from '../../utils/Logger.js';
 
 export class InitiativeProgressService {
     private deps: {
@@ -69,7 +70,7 @@ export class InitiativeProgressService {
 
             return calculatedProgress;
         } catch (error) {
-            console.error('[InitiativeProgressService] Error recalculating progress', error);
+            logger.error('[InitiativeProgressService] Error recalculating progress', error);
             throw error;
         }
     }

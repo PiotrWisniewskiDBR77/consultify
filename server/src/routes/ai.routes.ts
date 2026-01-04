@@ -12,6 +12,7 @@ import { validateBody, validateParams, validateQuery } from '../middleware/valid
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
+import logger from '../utils/Logger.js';
     ActionIdParamSchema,
     ActionTypeParamSchema,
     AIContextQuerySchema,
@@ -166,11 +167,11 @@ router.post(
         const connectionCleanup = () => {
             isClientConnected = false;
             streamAborted = true;
-            console.log(`[Stream] Client disconnected: ${streamSessionId}`);
+            logger.info(`[Stream] Client disconnected: ${streamSessionId}`);
 
             if (accumulatedContent.length > 0) {
                 savePartialResponse(streamSessionId, accumulatedContent, req.userId!, req.organizationId!).catch(
-                    (err: Error | null) => console.error('[Stream] Failed to save partial:', err),
+                    (err: Error | null) => logger.error('[Stream] Failed to save partial:', err),
                 );
             }
         };
@@ -253,7 +254,7 @@ router.post(
             if ((response as { stream?: AsyncIterable<string> }).stream) {
                 for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
                     if (!isClientConnected || res.destroyed || streamAborted) {
-                        console.log(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
+                        logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
                         break;
                     }
 
@@ -267,7 +268,7 @@ router.post(
                                 accumulatedContent,
                                 req.userId!,
                                 req.organizationId!,
-                            ).catch((err: Error | null) => console.warn('[Stream] Partial save failed:', (err as Error).message));
+                            ).catch((err: Error | null) => logger.warn('[Stream] Partial save failed:', (err as Error).message));
                             lastSaveTime = Date.now();
                         }
                     }
@@ -289,11 +290,11 @@ router.post(
                 res.end();
             }
         } catch (err: unknown) {
-            console.error('Stream Error:', err);
+            logger.error('Stream Error:', err);
 
             if (accumulatedContent.length > 0) {
                 savePartialResponse(streamSessionId, accumulatedContent, req.userId!, req.organizationId!).catch((e) =>
-                    console.warn('[Stream] Failed to save partial on error:', (e as Error).message),
+                    logger.warn('[Stream] Failed to save partial on error:', (e as Error).message),
                 );
             }
 
@@ -385,7 +386,7 @@ router.post(
                     'ADVISORY',
             });
         } catch (err: unknown) {
-            console.error('Chat Error:', err);
+            logger.error('Chat Error:', err);
             const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
             if (error.isBudgetError) {
                 res.status(403).json({
@@ -681,7 +682,7 @@ router.get(
 
             res.json(proposals);
         } catch (err: unknown) {
-            console.error('[AI Proposals] Error:', err);
+            logger.error('[AI Proposals] Error:', err);
             const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
             if (error.isBudgetError) {
                 res.status(403).json({
@@ -818,11 +819,11 @@ Return as a JSON array of initiatives.`;
                     initiatives = JSON.parse(jsonMatch[0]);
                 }
             } catch (parseErr) {
-                console.warn('[AI Recommend] Failed to parse AI response as JSON:', parseErr);
+                logger.warn('[AI Recommend] Failed to parse AI response as JSON:', parseErr);
             }
 
             if (!initiatives || (Array.isArray(initiatives) && initiatives.length === 0)) {
-                console.warn('[AI Recommend] No initiatives parsed, using fallback generation');
+                logger.warn('[AI Recommend] No initiatives parsed, using fallback generation');
                 initiatives = generateFallbackInitiatives(assessment, goals, industry);
             }
 
@@ -847,7 +848,7 @@ Return as a JSON array of initiatives.`;
 
             res.json(processedInitiatives);
         } catch (err: unknown) {
-            console.error('[AI Recommend] Error:', err);
+            logger.error('[AI Recommend] Error:', err);
             const fallbackInitiatives = generateFallbackInitiatives(
                 diagnosisReport.assessment || {},
                 diagnosisReport.goals || ['Digital Transformation'],
@@ -904,7 +905,7 @@ Return a structured roadmap assigning each initiative to a specific quarter.`;
             const roadmapData = (response as { object?: unknown }).object || response;
 
             if (!(roadmapData as { year1?: unknown }).year1) {
-                console.warn('[AI Roadmap] Invalid response structure, using fallback');
+                logger.warn('[AI Roadmap] Invalid response structure, using fallback');
                 const fallback: Record<string, Record<string, string[]>> = {
                     year1: { q1: [], q2: [], q3: [], q4: [] },
                     year2: { q1: [], q2: [], q3: [], q4: [] },
@@ -924,7 +925,7 @@ Return a structured roadmap assigning each initiative to a specific quarter.`;
 
             res.json(roadmapData);
         } catch (err: unknown) {
-            console.error('[AI Roadmap] Error:', err);
+            logger.error('[AI Roadmap] Error:', err);
             const fallback: Record<string, Record<string, string[]>> = {
                 year1: { q1: [], q2: [], q3: [], q4: [] },
                 year2: { q1: [], q2: [], q3: [], q4: [] },
@@ -1185,7 +1186,7 @@ router.get(
 
             res.json({ suggestions });
         } catch (err: unknown) {
-            console.error('[AI] Suggestions error:', err);
+            logger.error('[AI] Suggestions error:', err);
             res.status(500).json({
                 error: (err as Error).message,
                 suggestions: [],
@@ -1213,7 +1214,7 @@ router.post(
 
             res.json({ suggestions });
         } catch (err: unknown) {
-            console.error('[AI] Suggestions error:', err);
+            logger.error('[AI] Suggestions error:', err);
             res.status(500).json({
                 error: (err as Error).message,
                 suggestions: [],
@@ -1238,7 +1239,7 @@ router.get(
             const patterns = await ApprovalPatternService.getUserPatterns(req.userId!, actionType);
             res.json({ success: true, patterns });
         } catch (err: unknown) {
-            console.error('[AI] Get patterns error:', err);
+            logger.error('[AI] Get patterns error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1252,7 +1253,7 @@ router.get(
             const stats = await ApprovalPatternService.getPatternStats(req.userId!);
             res.json(stats);
         } catch (err: unknown) {
-            console.error('[AI] Pattern stats error:', err);
+            logger.error('[AI] Pattern stats error:', err);
             res.status(500).json({ error: (err as Error).message });
         }
     }),
@@ -1269,7 +1270,7 @@ router.patch(
             const result = await ApprovalPatternService.setAutoApply(req.params.patternId, enabled, req.userId!);
             res.json(result);
         } catch (err: unknown) {
-            console.error('[AI] Toggle auto-apply error:', err);
+            logger.error('[AI] Toggle auto-apply error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1284,7 +1285,7 @@ router.delete(
             const result = await ApprovalPatternService.deletePattern(req.params.patternId, req.userId!);
             res.json(result);
         } catch (err: unknown) {
-            console.error('[AI] Delete pattern error:', err);
+            logger.error('[AI] Delete pattern error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1304,7 +1305,7 @@ router.post(
             });
             res.json(result);
         } catch (err: unknown) {
-            console.error('[AI] Approve action error:', err);
+            logger.error('[AI] Approve action error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1327,7 +1328,7 @@ router.post(
             );
             res.json(result);
         } catch (err: unknown) {
-            console.error('[AI] Reject action error:', err);
+            logger.error('[AI] Reject action error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1360,7 +1361,7 @@ router.get(
 
             res.json({ success: true, actions: actionsWithPatterns });
         } catch (err: unknown) {
-            console.error('[AI] Get pending actions error:', err);
+            logger.error('[AI] Get pending actions error:', err);
             res.status(500).json({ success: false, error: (err as Error).message, actions: [] });
         }
     }),
@@ -1377,7 +1378,7 @@ router.post(
         const userId = req.userId!;
 
         try {
-            console.log(`[AI Feedback] User ${userId} rated message ${messageId} as ${rating}`);
+            logger.info(`[AI Feedback] User ${userId} rated message ${messageId} as ${rating}`);
 
             try {
                 const aiLogger = await import('../../services/ai/logger.js').then((m) => (m as any).default || m);
@@ -1388,12 +1389,12 @@ router.post(
                     timestamp: new Date().toISOString(),
                 });
             } catch (logErr) {
-                console.warn('[AI] Could not log feedback:', (logErr as Error).message);
+                logger.warn('[AI] Could not log feedback:', (logErr as Error).message);
             }
 
             res.json({ success: true });
         } catch (err: unknown) {
-            console.error('[AI] Feedback error:', err);
+            logger.error('[AI] Feedback error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1408,7 +1409,7 @@ router.post(
         const userId = req.userId!;
 
         try {
-            console.error(`[AI REPORT] 🚨 User ${userId} reported message ${messageId}: ${reason}`);
+            logger.error(`[AI REPORT] 🚨 User ${userId} reported message ${messageId}: ${reason}`);
 
             try {
                 const aiLogger = await import('../../services/ai/logger.js').then((m) => (m as any).default || m);
@@ -1420,12 +1421,12 @@ router.post(
                     severity: reason === 'harmful' ? 'critical' : 'warning',
                 });
             } catch (logErr) {
-                console.warn('[AI] Could not log report:', (logErr as Error).message);
+                logger.warn('[AI] Could not log report:', (logErr as Error).message);
             }
 
             res.json({ success: true });
         } catch (err: unknown) {
-            console.error('[AI] Report error:', err);
+            logger.error('[AI] Report error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1448,7 +1449,7 @@ router.get(
 
             res.json({ success: true, ...metrics });
         } catch (err: unknown) {
-            console.error('[AI] Memory metrics error:', err);
+            logger.error('[AI] Memory metrics error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1469,7 +1470,7 @@ router.get(
 
             res.json({ success: true, ...state });
         } catch (err: unknown) {
-            console.error('[AI] Current memory state error:', err);
+            logger.error('[AI] Current memory state error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1490,7 +1491,7 @@ router.get(
 
             res.json({ success: true, ...latency });
         } catch (err: unknown) {
-            console.error('[AI] Latency metrics error:', err);
+            logger.error('[AI] Latency metrics error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1521,7 +1522,7 @@ router.get(
 
             res.json({ success: true, suggestions });
         } catch (err: unknown) {
-            console.error('[AI] Proactive suggestions error:', err);
+            logger.error('[AI] Proactive suggestions error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1539,7 +1540,7 @@ router.post(
 
             res.json({ success: true });
         } catch (err: unknown) {
-            console.error('[AI] Suggestion action error:', err);
+            logger.error('[AI] Suggestion action error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1557,7 +1558,7 @@ router.get(
 
             res.json({ success: true, metrics });
         } catch (err: unknown) {
-            console.error('[AI] Suggestion metrics error:', err);
+            logger.error('[AI] Suggestion metrics error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1585,7 +1586,7 @@ router.post(
 
             res.json({ success: true, metrics });
         } catch (err: unknown) {
-            console.error('[AI] Quality calculation error:', err);
+            logger.error('[AI] Quality calculation error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1603,7 +1604,7 @@ router.get(
 
             res.json({ success: true, metrics });
         } catch (err: unknown) {
-            console.error('[AI] Aggregate quality metrics error:', err);
+            logger.error('[AI] Aggregate quality metrics error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
@@ -1621,7 +1622,7 @@ router.get(
 
             res.json({ success: true, trends });
         } catch (err: unknown) {
-            console.error('[AI] Quality trends error:', err);
+            logger.error('[AI] Quality trends error:', err);
             res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),

@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/mcp.js');
 const mcpRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof mcpRoutesJS === 'function' || (mcpRoutesJS && typeof mcpRoutesJS.hand
     router.use(mcpRoutesJS);
 } else {
     // Fallback or error
-    console.error('mcp.js did not export a valid router');
+    logger.error('mcp.js did not export a valid router');
 }
 
 export default router;

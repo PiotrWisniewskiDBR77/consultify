@@ -312,6 +312,31 @@ function initDb() {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
+        // MFA Attempts (Brute force protection)
+        db.run(`CREATE TABLE IF NOT EXISTS mfa_attempts (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            attempt_type TEXT NOT NULL, -- TOTP, SMS, BACKUP_CODE
+            success INTEGER DEFAULT 0,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Trusted Devices
+        db.run(`CREATE TABLE IF NOT EXISTS trusted_devices (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            device_fingerprint TEXT NOT NULL,
+            device_name TEXT,
+            last_used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE(user_id, device_fingerprint)
+        )`);
+
         // Organization Context (for Reports)
         db.run(`CREATE TABLE IF NOT EXISTS organization_context (
             id TEXT PRIMARY KEY,
@@ -399,6 +424,59 @@ function initDb() {
         // ============================================
         // Economics / Digitization Module Tables
         // ============================================
+
+        // Missing Management Report Tables (Added for Test/Legacy support)
+        db.run(`CREATE TABLE IF NOT EXISTS management_report_versions (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            version_number INTEGER NOT NULL,
+            content JSON,
+            ai_narrative TEXT,
+            ai_warnings JSON,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (report_id) REFERENCES management_reports(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS management_report_approvals (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            status TEXT DEFAULT 'PENDING',
+            comment TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (report_id) REFERENCES management_reports(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS management_report_audit_log (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            user_id TEXT,
+            action TEXT NOT NULL,
+            metadata JSON,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (report_id) REFERENCES management_reports(id) ON DELETE CASCADE
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS management_report_comments (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            version_id TEXT,
+            section_id TEXT,
+            content TEXT,
+            parent_comment_id TEXT,
+            mentions JSON,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_resolved INTEGER DEFAULT 0,
+            resolved_by TEXT,
+            resolved_at DATETIME,
+            FOREIGN KEY (report_id) REFERENCES management_reports(id) ON DELETE CASCADE,
+            FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY (resolved_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
 
         // Digitization Analyses
         db.run(`CREATE TABLE IF NOT EXISTS digitization_analyses (
@@ -557,6 +635,21 @@ function initDb() {
             // Ignore error if column exists
         });
         db.run(`ALTER TABLE users ADD COLUMN mfa_verified_at DATETIME`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN mfa_backup_codes TEXT`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN mfa_sms_enabled INTEGER DEFAULT 0`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN mfa_primary_method TEXT DEFAULT 'totp'`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN phone_number TEXT`, (err) => {
+            // Ignore error if column exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN phone_verified INTEGER DEFAULT 0`, (err) => {
             // Ignore error if column exists
         });
 

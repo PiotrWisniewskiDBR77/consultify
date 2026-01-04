@@ -188,3 +188,4 @@ tests/migration/reports/
 **Wygenerowano:** 2026-01-04  
 **Narzędzie:** System Testów Migracji JS→TS
 
+

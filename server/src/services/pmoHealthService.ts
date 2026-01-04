@@ -13,6 +13,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import { evaluateGate, getGateType, type Phase, PHASE_ORDER } from './stageGateService.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -174,7 +175,7 @@ export async function getHealthSnapshot(projectId: string): Promise<PMOHealthSna
     const blockers = await getBlockers(projectId);
 
     const duration = Date.now() - startTime;
-    console.log(`[PMOHealthService] Snapshot generated in ${duration}ms for project ${projectId}`);
+    logger.info(`[PMOHealthService] Snapshot generated in ${duration}ms for project ${projectId}`);
 
     return {
         projectId,
@@ -217,7 +218,7 @@ async function getTaskCounts(projectId: string): Promise<TaskCounts> {
             blockedCount: row?.blockedCount || 0,
         };
     } catch (err: unknown) {
-        console.error('[PMOHealthService] Task count error:', err);
+        logger.error('[PMOHealthService] Task count error:', err);
         return { overdueCount: 0, dueSoonCount: 0, blockedCount: 0 };
     }
 }
@@ -244,7 +245,7 @@ async function getDecisionCounts(projectId: string): Promise<DecisionCounts> {
             overdueCount: row?.overdueCount || 0,
         };
     } catch (err: unknown) {
-        console.error('[PMOHealthService] Decision count error:', err);
+        logger.error('[PMOHealthService] Decision count error:', err);
         return { pendingCount: 0, overdueCount: 0 };
     }
 }
@@ -269,7 +270,7 @@ async function getInitiativeCounts(projectId: string): Promise<InitiativeCounts>
             blockedCount: row?.blockedCount || 0,
         };
     } catch (err: unknown) {
-        console.error('[PMOHealthService] Initiative count error:', err);
+        logger.error('[PMOHealthService] Initiative count error:', err);
         return { atRiskCount: 0, blockedCount: 0 };
     }
 }
@@ -300,7 +301,7 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
             });
         }
     } catch (err: unknown) {
-        console.error('[PMOHealthService] Error fetching overdue tasks:', err);
+        logger.error('[PMOHealthService] Error fetching overdue tasks:', err);
     }
 
     // Pending decisions (7+ days)
@@ -321,7 +322,7 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
             });
         }
     } catch (err: unknown) {
-        console.error('[PMOHealthService] Error fetching pending decisions:', err);
+        logger.error('[PMOHealthService] Error fetching pending decisions:', err);
     }
 
     // Stage gate blockers (missing criteria)
@@ -347,7 +348,7 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
             }
         }
     } catch (err: unknown) {
-        console.error('[PMOHealthService] Error evaluating stage gate:', err);
+        logger.error('[PMOHealthService] Error evaluating stage gate:', err);
     }
 
     return blockers;

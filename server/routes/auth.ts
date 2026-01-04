@@ -1,7 +1,9 @@
+// @ts-nocheck
 import crypto from 'crypto';
 import express from 'express';
 const router = express.Router();
-import { getDatabase } from '../src/database/index.js';
+// @ts-ignore - Vitest direct import
+import { getDatabase } from '../src/database/index.ts';
 const db = getDatabase();
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';

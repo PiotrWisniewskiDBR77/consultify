@@ -6,9 +6,9 @@
  * Prevents table loss by verifying schema integrity
  */
 
-import { databaseConfig } from '../config/DatabaseConfig.js';
-import { getDatabase, getDatabaseAsync } from './Database.js';
-import logger from '../utils/Logger.js';
+import { databaseConfig } from '../config/DatabaseConfig.ts';
+import { getDatabase, getDatabaseAsync } from './Database.ts';
+import logger from '../utils/Logger.ts';
 
 // ==========================================
 // SCHEMA VERIFICATION
@@ -120,7 +120,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                     );
                     // Try to initialize schema manually
                     logger.info('[DatabaseInitializer] Attempting to initialize schema...');
-                    const { initDb } = await import('./PostgresDatabase.js');
+                    const { initDb } = await import('./PostgresDatabase.ts');
                     // Note: initDb is not exported, so we'll trigger it by accessing the pool
                     await db.query('SELECT 1');
                     // Wait again for initDb
@@ -149,7 +149,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                 logger.warn(
                     `[DatabaseInitializer] SQLite schema incomplete. Missing tables: ${verification.missing.join(', ')}`,
                 );
-                logger.info('[DatabaseInitializer] SQLite schema should be initialized by database.sqlite.active.js');
+                logger.info('[DatabaseInitializer] SQLite schema should be initialized by database.sqlite.active.ts');
                 // SQLite initialization is handled by database.sqlite.active.js
                 // Wait a bit for initDb() to complete
                 await new Promise((resolve) => setTimeout(resolve, 2000));

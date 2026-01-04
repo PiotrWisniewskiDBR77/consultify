@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/dbr77.js');
 const dbr77RoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof dbr77RoutesJS === 'function' || (dbr77RoutesJS && typeof dbr77RoutesJ
     router.use(dbr77RoutesJS);
 } else {
     // Fallback or error
-    console.error('dbr77.js did not export a valid router');
+    logger.error('dbr77.js did not export a valid router');
 }
 
 export default router;

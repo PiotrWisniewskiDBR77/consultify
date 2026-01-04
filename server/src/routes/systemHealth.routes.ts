@@ -13,6 +13,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const router = Router();
 
 import SystemHealthService from '../../services/systemHealthService.js';
+import logger from '../utils/Logger.js';
 
 /**
  * GET /api/system-health
@@ -29,7 +30,7 @@ router.get(
             const health = await SystemHealthService.getDetailedHealth();
             res.json(health);
         } catch (error: unknown) {
-            console.error('[SystemHealth] Error:', error);
+            logger.error('[SystemHealth] Error:', error);
             res.status(500).json({ error: 'Health check failed' });
         }
     }),
@@ -51,7 +52,7 @@ router.get(
             const health = await SystemHealthService.getDetailedHealth();
             res.json(health);
         } catch (error: unknown) {
-            console.error('[SystemHealth] Error:', error);
+            logger.error('[SystemHealth] Error:', error);
             res.status(500).json({ error: 'Health check failed' });
         }
     }),
@@ -73,7 +74,7 @@ router.get(
             const metrics = await SystemHealthService.getMetrics();
             res.json(metrics);
         } catch (error: unknown) {
-            console.error('[SystemHealth] Error fetching metrics:', error);
+            logger.error('[SystemHealth] Error fetching metrics:', error);
             res.status(500).json({ error: 'Failed to fetch system metrics' });
         }
     }),
@@ -95,7 +96,7 @@ router.get(
             const status = await SystemHealthService.getServiceStatus();
             res.json(status);
         } catch (error: unknown) {
-            console.error('[SystemHealth] Error fetching service status:', error);
+            logger.error('[SystemHealth] Error fetching service status:', error);
             res.status(500).json({ error: 'Failed to fetch service status' });
         }
     }),
@@ -117,7 +118,7 @@ router.post(
             const health = await SystemHealthService.getDetailedHealth();
             res.json(health);
         } catch (error: unknown) {
-            console.error('[SystemHealth] Error refreshing:', error);
+            logger.error('[SystemHealth] Error refreshing:', error);
             res.status(500).json({ error: 'Failed to refresh health data' });
         }
     }),
@@ -148,7 +149,7 @@ router.get(
                 timestamp: new Date().toISOString(),
             });
         } catch (error: unknown) {
-            console.error('[SystemHealth] Encryption health check error:', error);
+            logger.error('[SystemHealth] Encryption health check error:', error);
             res.status(500).json({ 
                 error: 'Encryption health check failed',
                 healthy: false,

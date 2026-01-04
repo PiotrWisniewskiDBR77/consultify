@@ -13,6 +13,7 @@ import NotificationService from '../services/NotificationService.js';
 import WhatsAppService from '../services/WhatsAppService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -52,7 +53,7 @@ router.post(
         try {
             await WhatsAppService.sendNewFeedbackAlert({ userId, userEmail, type, message });
         } catch (e: unknown) {
-            console.warn('WhatsApp notification failed:', e);
+            logger.warn('WhatsApp notification failed:', e);
         }
 
         // Create Internal Notification (Triggers Slack via NotificationService)
@@ -75,7 +76,7 @@ router.post(
                 actionUrl: '/admin?section=feedback',
             });
         } catch (noteErr) {
-            console.error('Failed to create notification for feedback:', noteErr);
+            logger.error('Failed to create notification for feedback:', noteErr);
         }
 
         res.json({ success: true, id });
@@ -192,7 +193,7 @@ router.post(
                     isActionable: false,
                 });
             } catch (noteErr) {
-                console.error('Failed to create response notification:', noteErr);
+                logger.error('Failed to create response notification:', noteErr);
             }
         }
 

@@ -1,23 +1,38 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="3" failures="1" errors="0" time="0.144360416">
-    <testsuite name="tests/integration/tasks.test.js" timestamp="2026-01-04T16:57:09.297Z" hostname="mac.home" tests="3" failures="1" errors="0" skipped="2" time="0.144360416">
+<testsuites name="vitest tests" tests="3" failures="1" errors="0" time="0.186282875">
+    <testsuite name="tests/integration/tasks.test.js" timestamp="2026-01-04T17:03:11.578Z" hostname="mac.home" tests="3" failures="1" errors="0" skipped="2" time="0.186282875">
         <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should list tasks" time="0">
             <skipped/>
         </testcase>
         <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should create a task" time="0">
             <skipped/>
         </testcase>
-        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration" time="0.143795917">
+        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration" time="0.185674666">
             <system-out>
 [Database] Mocking database for tests
 
-[dotenv@17.2.3] injecting env (7) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.3] injecting env (7) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
 [Redis] Initializing client...
 [Redis] Using Mock Client
+[Database:DEBUG] MOCK_DB: true NODE_ENV: test shouldMock: [33mtrue[39m
+DEBUG RequestStoreMod: [Module: null prototype] {
+  __esModule: [33mtrue[39m,
+  correlationMiddleware: [36m[Function: correlationMiddleware][39m,
+  default: {
+    correlationMiddleware: [36m[Function: correlationMiddleware][39m,
+    getCorrelationId: [36m[Function: getCorrelationId][39m,
+    getStore: [36m[Function: getStore][39m,
+    getStartTime: [36m[Function: getStartTime][39m
+  },
+  getCorrelationId: [36m[Function: getCorrelationId][39m,
+  getStartTime: [36m[Function: getStartTime][39m,
+  getStore: [36m[Function: getStore][39m
+}
+[Database:DEBUG] MOCK_DB: true NODE_ENV: test shouldMock: [33mtrue[39m
 
             </system-out>
-            <failure message="Cannot find module &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/index.js&apos; imported from /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/auditLogService.js" type="Error">
-Error: Cannot find module &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/index.js&apos; imported from /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/auditLogService.js
+            <failure message="Cannot find module &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/index.js&apos; imported from /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/accessPolicyService.js" type="Error">
+Error: Cannot find module &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/index.js&apos; imported from /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/accessPolicyService.js
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
 Serialized Error: { code: &apos;ERR_MODULE_NOT_FOUND&apos;, url: &apos;file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/index.js&apos; }
             </failure>

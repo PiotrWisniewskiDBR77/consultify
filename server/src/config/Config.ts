@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // ZOD SCHEMAS
@@ -118,9 +119,9 @@ function loadConfig(): AppConfig {
     const result = AppConfigSchema.safeParse(rawConfig);
 
     if (!result.success) {
-        console.error('[Config] Configuration validation failed:');
+        logger.error('[Config] Configuration validation failed:');
         result.error.issues.forEach((issue) => {
-            console.error(`  - ${issue.path.join('.')}: ${issue.message}`);
+            logger.error(`  - ${issue.path.join('.')}: ${issue.message}`);
         });
 
         // In production, fail fast on invalid config
@@ -131,7 +132,7 @@ function loadConfig(): AppConfig {
         }
 
         // In development/test, use defaults but warn
-        console.warn(
+        logger.warn(
             '[Config] Using defaults for invalid values. Fix configuration errors before deploying to production.',
         );
 

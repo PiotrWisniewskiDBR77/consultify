@@ -10,6 +10,7 @@ import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import type { Express, NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
+import logger from '../utils/Logger.js';
 
 // Use Handlers from @sentry/node for compatibility
 
@@ -69,7 +70,7 @@ export interface Context {
  */
 export function initSentry(app: Express): SentryHandlers {
     if (!isEnabled) {
-        console.log('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
+        logger.info('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
         return {
             requestHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
             tracingHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
@@ -143,7 +144,7 @@ export function initSentry(app: Express): SentryHandlers {
         ],
     });
 
-    console.log(`[Sentry] Initialized for ${validatedConfig.environment} environment`);
+    logger.info(`[Sentry] Initialized for ${validatedConfig.environment} environment`);
 
     return {
         // Request handler - must be first middleware
@@ -177,7 +178,7 @@ export function initSentry(app: Express): SentryHandlers {
  */
 export function captureException(error: Error, context: Context = {}): void {
     if (!isEnabled) {
-        console.error('[Error]', error, context);
+        logger.error('[Error]', error, context);
         return;
     }
 
@@ -212,7 +213,7 @@ export function captureMessage(
     context: Context = {},
 ): void {
     if (!isEnabled) {
-        console.log(`[${level.toUpperCase()}]`, message, context);
+        logger.info(`[${level.toUpperCase()}]`, message, context);
         return;
     }
 

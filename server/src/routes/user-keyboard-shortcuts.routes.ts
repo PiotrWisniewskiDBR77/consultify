@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-keyboard-shortcuts.js');
 const user_keyboard_shortcutsRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(user_keyboard_shortcutsRoutesJS);
 } else {
     // Fallback or error
-    console.error('user-keyboard-shortcuts.js did not export a valid router');
+    logger.error('user-keyboard-shortcuts.js did not export a valid router');
 }
 
 export default router;

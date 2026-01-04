@@ -91,6 +91,7 @@
   "exclude": [
     "node_modules",
     "dist",
+    "tests/integration/managementReports.integration.test.ts",
     "**/*.test.ts",
     "**/*.spec.ts",
     "src/utils/lazyServiceLoader.js",

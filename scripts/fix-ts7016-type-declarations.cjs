@@ -88,3 +88,4 @@ declare module '${moduleName}' {
 
 main();
 
+

@@ -9,6 +9,7 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -28,7 +29,7 @@ try {
     MegatrendService = (megatrendModule.default || megatrendModule) as MegatrendServiceInterface;
 } catch {
     // Service may not exist or not migrated yet
-    console.warn('[Megatrend] Service not available');
+    logger.warn('[Megatrend] Service not available');
 }
 
 // All routes require authentication
@@ -50,7 +51,7 @@ router.get(
             const data = await MegatrendService.getBaselineTrends(industry);
             res.json(data);
         } catch (err: unknown) {
-            console.error('[Megatrend] baseline error', err);
+            logger.error('[Megatrend] baseline error', err);
             res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
@@ -72,7 +73,7 @@ router.get(
             const data = await MegatrendService.getRadarData(industry);
             res.json(data);
         } catch (err: unknown) {
-            console.error('[Megatrend] radar error', err);
+            logger.error('[Megatrend] radar error', err);
             res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
@@ -96,7 +97,7 @@ router.get(
             }
             res.json(detail);
         } catch (err: unknown) {
-            console.error('[Megatrend] detail error', err);
+            logger.error('[Megatrend] detail error', err);
             res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
@@ -123,7 +124,7 @@ router.post(
             const created = await MegatrendService.createCustomTrend(req.body, companyId);
             res.status(201).json(created);
         } catch (err: unknown) {
-            console.error('[Megatrend] create custom error', err);
+            logger.error('[Megatrend] create custom error', err);
             res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
@@ -153,7 +154,7 @@ router.put(
             }
             res.json(updated);
         } catch (err: unknown) {
-            console.error('[Megatrend] update custom error', err);
+            logger.error('[Megatrend] update custom error', err);
             res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),

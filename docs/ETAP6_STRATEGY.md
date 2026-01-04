@@ -51,3 +51,4 @@ Zamiast usuwania wszystkich plików naraz, powinienem:
 5. Usunąć bezpieczne pliki
 
 
+

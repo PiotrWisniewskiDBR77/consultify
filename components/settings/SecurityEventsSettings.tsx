@@ -627,3 +627,4 @@ const AlertToggle: React.FC<AlertToggleProps> = ({ icon, title, description, che
 
 export default SecurityEventsSettings;
 
+

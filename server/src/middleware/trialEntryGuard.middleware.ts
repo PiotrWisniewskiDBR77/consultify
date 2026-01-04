@@ -15,6 +15,7 @@ import { _Request, NextFunction, Response } from 'express';
 
 import { get as dbGet } from '../utils/DbPromise.js';
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -145,7 +146,7 @@ export const trialEntryGuard = async (req: TrialRequest, res: Response, next: Ne
 
         next();
     } catch (error: unknown) {
-        console.error('[TrialEntryGuard] Error:', error);
+        logger.error('[TrialEntryGuard] Error:', error);
         next(error);
     }
 };

@@ -36,3 +36,4 @@ export type CreateInvitationRequest = z.infer<typeof CreateInvitationSchema>;
 export type ResendInvitationRequest = z.infer<typeof ResendInvitationSchema>;
 export type AcceptInvitationRequest = z.infer<typeof AcceptInvitationSchema>;
 
+

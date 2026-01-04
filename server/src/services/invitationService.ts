@@ -9,6 +9,7 @@ import { InvitationDataService } from './invitation/InvitationDataService.js';
 import { InvitationSendingService } from './invitation/InvitationSendingService.js';
 import { InvitationTokenService } from './invitation/InvitationTokenService.js';
 import {
+import logger from '../utils/Logger.js';
     AcceptInvitationParams,
     CreateOrgInvitationParams,
     CreateProjectInvitationParams,
@@ -472,7 +473,7 @@ export class InvitationServiceClass {
             const accessPolicyService = await getAccessPolicyService();
             await accessPolicyService.incrementUsage(invitation.organization_id, 'users', 1);
         } catch (counterErr) {
-            console.warn('[InvitationService] Failed to increment seat counter:', counterErr);
+            logger.warn('[InvitationService] Failed to increment seat counter:', counterErr);
         }
 
         // Attribution
@@ -499,7 +500,7 @@ export class InvitationServiceClass {
                 },
             });
         } catch (attrErr) {
-            console.warn('[InvitationService] Attribution recording failed:', attrErr);
+            logger.warn('[InvitationService] Attribution recording failed:', attrErr);
         }
 
         await this.deps.dataService.logEvent(
@@ -532,7 +533,7 @@ export class InvitationServiceClass {
                 },
             });
         } catch (metricsErr) {
-            console.warn('[InvitationService] Metrics recording failed:', metricsErr);
+            logger.warn('[InvitationService] Metrics recording failed:', metricsErr);
         }
 
         return {

@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/intelligence.js');
 const intelligenceRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(intelligenceRoutesJS);
 } else {
     // Fallback or error
-    console.error('intelligence.js did not export a valid router');
+    logger.error('intelligence.js did not export a valid router');
 }
 
 export default router;

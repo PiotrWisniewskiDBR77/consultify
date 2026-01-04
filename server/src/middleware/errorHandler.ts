@@ -6,6 +6,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { _AuthenticationError, _AuthorizationError, _NotFoundError, AppError, ValidationError } from '../types.js';
+import logger from '../utils/Logger.js';
 
 interface ErrorResponse {
     success: false;
@@ -20,7 +21,7 @@ interface ErrorResponse {
  */
 export const errorHandler = (err: Error, req: Request, res: Response, _next: NextFunction): void => {
     // Log error (in production, use proper logger)
-    console.error(`[Error] ${req.method} ${req.path}:`, {
+    logger.error(`[Error] ${req.method} ${req.path}:`, {
         message: err.message,
         stack: err.stack,
         correlationId: (req as unknown as { correlationId?: string }).correlationId,

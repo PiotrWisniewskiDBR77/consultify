@@ -9,6 +9,7 @@
 import { NextFunction, Response } from 'express';
 
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -71,7 +72,7 @@ export const demoGuard = (req: DemoRequest, res: Response, next: NextFunction): 
 
     for (const reqOrg of requestedOrgs) {
         if (reqOrg && reqOrg !== userOrg) {
-            console.warn(
+            logger.warn(
                 `[DemoGuard] Blocked cross-tenant access attempt by Demo User ${req.userId} (Target: ${reqOrg}, Actual: ${userOrg})`,
             );
             res.status(403).json({
@@ -110,7 +111,7 @@ export const demoGuard = (req: DemoRequest, res: Response, next: NextFunction): 
                 : 'MODIFY';
     const derivedAction = `${actionMethod}_${actionContext}`;
 
-    console.warn(
+    logger.warn(
         `[DemoGuard] Blocked ${req.method} ${req.originalUrl} for Demo User ${req.userId} (Action: ${derivedAction})`,
     );
 
@@ -124,4 +125,5 @@ export const demoGuard = (req: DemoRequest, res: Response, next: NextFunction): 
         isDemoRestriction: true,
     });
 };
+
 

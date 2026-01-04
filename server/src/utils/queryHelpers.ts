@@ -6,6 +6,7 @@
  */
 
 import { getDatabase } from '../database/Database.js';
+import logger from './Logger.js';
 
 interface Database {
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
@@ -36,7 +37,7 @@ export function queryAll(sql: string, params: unknown[] = []): Promise<unknown[]
     return new Promise((resolve, reject) => {
         getDatabase().all(sql, params, (err: Error | null, rows: unknown[]) => {
             if (err) {
-                console.error('[QueryHelper] Error in queryAll:', err);
+                logger.error('[QueryHelper] Error in queryAll:', err);
                 reject(err);
             } else {
                 resolve(rows || []);
@@ -52,7 +53,7 @@ export function queryOne(sql: string, params: unknown[] = []): Promise<unknown |
     return new Promise((resolve, reject) => {
         getDatabase().get(sql, params, (err: Error | null, row: unknown) => {
             if (err) {
-                console.error('[QueryHelper] Error in queryOne:', err);
+                logger.error('[QueryHelper] Error in queryOne:', err);
                 reject(err);
             } else {
                 resolve(row || null);
@@ -68,7 +69,7 @@ export function queryRun(sql: string, params: unknown[] = []): Promise<QueryResu
     return new Promise((resolve, reject) => {
         getDatabase().run(sql, params, function (this: { lastID?: number; changes: number }, err: Error | null) {
             if (err) {
-                console.error('[QueryHelper] Error in queryRun:', err);
+                logger.error('[QueryHelper] Error in queryRun:', err);
                 reject(err);
             } else {
                 resolve({
@@ -164,7 +165,7 @@ export function parseJsonFields(
             try {
                 parsed[field] = JSON.parse(parsed[field] as string);
             } catch (e: unknown) {
-                console.warn(`[QueryHelper] Failed to parse JSON field ${field}:`, e);
+                logger.warn(`[QueryHelper] Failed to parse JSON field ${field}:`, e);
                 parsed[field] = field.includes('[]') ? [] : {};
             }
         }

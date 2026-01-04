@@ -22,3 +22,4 @@ configMapGenerator:
       - PORT=3001
       - LOG_LEVEL=info
 
+

@@ -287,3 +287,4 @@ export function useGlobalHelpSearch(options: UseGlobalHelpSearchOptions = {}): U
 
 export default useGlobalHelpSearch;
 
+

@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import logger from './Logger.js';
 
 // ==========================================
 // SCHEMAS
@@ -74,12 +75,13 @@ export function validateOrFallback<T>(data: unknown, schema: z.ZodSchema<T>, fal
         if (result.success) {
             return result.data;
         } else {
-            console.warn('[AIValidator] Validation failed:', result.error.flatten());
+            logger.warn('[AIValidator] Validation failed:', result.error.flatten());
             return fallback;
         }
     } catch (error: unknown) {
-        console.error('[AIValidator] Unexpected validation error:', error);
+        logger.error('[AIValidator] Unexpected validation error:', error);
         return fallback;
     }
 }
+
 

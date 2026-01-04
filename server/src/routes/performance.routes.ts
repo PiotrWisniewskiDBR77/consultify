@@ -11,6 +11,7 @@ import { Router, type Request, type Response } from 'express';
 import { getMetricsService } from '../services/MetricsService.js';
 import { httpRequestDurationSeconds, dbQueryDurationSeconds, llmCallDurationSeconds } from '../services/MetricsService.js';
 import { httpRequestsPerSecond, dbQueriesPerSecond, llmRequestsPerSecond } from '../services/MetricsService.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -68,7 +69,7 @@ router.get('/metrics', async (_req: Request, res: Response) => {
         res.status(200).json(response);
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        console.error('[PerformanceRoutes] Error generating performance metrics:', err);
+        logger.error('[PerformanceRoutes] Error generating performance metrics:', err);
         res.status(500).json({
             error: 'Failed to generate performance metrics',
             details: err.message,
@@ -132,7 +133,7 @@ async function extractThroughputMetrics(register: any): Promise<{
             llm: llmGauge ? llmGauge.get().values[0]?.value || 0 : 0,
         };
     } catch (error) {
-        console.warn('[PerformanceRoutes] Error extracting throughput metrics:', error);
+        logger.warn('[PerformanceRoutes] Error extracting throughput metrics:', error);
         return {
             http: 0,
             db: 0,
@@ -161,4 +162,5 @@ async function extractErrorMetrics(prometheusMetrics: string): Promise<{
 }
 
 export default router;
+
 

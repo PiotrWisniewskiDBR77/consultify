@@ -10,7 +10,8 @@
  * - Export capabilities
  */
 
-import { getDatabase } from '../src/database/index.js';
+// @ts-ignore - Vitest direct import
+import { getDatabase } from '../src/database/index.ts';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 

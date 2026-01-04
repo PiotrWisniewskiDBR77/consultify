@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 // const module = await import('../../routes/content.js');
 // const contentRoutesJS = module.default || module;
@@ -23,7 +24,7 @@ if (typeof contentRoutesJS === 'function' || (contentRoutesJS && typeof contentR
     router.use(contentRoutesJS);
 } else {
     // Fallback or error
-    console.error('content.js did not export a valid router');
+    logger.error('content.js did not export a valid router');
 }
 */
 

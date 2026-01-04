@@ -13,6 +13,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -167,7 +168,7 @@ router.post('/reset', async (_req: Request, res: Response) => {
             const { getRedisClient, isRedisConnected } = await import('../services/ai/redisClient.js');
             if (!isRedisConnected()) {
                 // Redis client should auto-reconnect, but we can trigger reconnection
-                console.log('[Chaos] Redis should auto-reconnect');
+                logger.info('[Chaos] Redis should auto-reconnect');
             }
         } catch (error) {
             // Redis not available

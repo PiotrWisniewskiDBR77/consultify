@@ -36,17 +36,25 @@ describe('PlanLimits Middleware', () => {
 
     const setupOrg = (plan, status = 'active') => {
         mockDb.get.mockImplementationOnce((sql, params, callback) => {
-            callback(null, { id: 'org-test-plan', name: 'Test Org', plan, status });
+            if (sql.includes('organizations WHERE id = ?')) {
+                callback(null, { id: 'org-test-plan', name: 'Test Org', plan, status });
+            }
         });
     };
 
     const setProjectCount = (count) => {
-        mockDb.all.mockImplementationOnce((sql, params, callback) => {
-            const projects = [];
-            for (let i = 0; i < count; i++) {
-                projects.push({ id: `proj-${i}`, organization_id: 'org-test-plan', name: `Project ${i}` });
+        mockDb.get.mockImplementationOnce((sql, params, callback) => {
+            if (sql.includes('COUNT(*) as count FROM projects')) {
+                callback(null, { count });
             }
-            callback(null, projects);
+        });
+    };
+
+    const setMemberCount = (count) => {
+        mockDb.get.mockImplementationOnce((sql, params, callback) => {
+            if (sql.includes('COUNT(*) as count FROM users WHERE organization_id = ?')) {
+                callback(null, { count });
+            }
         });
     };
 
@@ -68,8 +76,8 @@ describe('PlanLimits Middleware', () => {
     });
 
     it('should allow request if within limit (Free plan)', async () => {
-        await setupOrg('free');
-        await setProjectCount(0); // Limit is 1
+        setupOrg('free');
+        setProjectCount(0); // Limit is 1
 
         const middleware = checkPlanLimit('max_projects');
         await middleware(req, res, next);
@@ -77,8 +85,8 @@ describe('PlanLimits Middleware', () => {
     });
 
     it('should block request if limit reached (Free plan)', async () => {
-        await setupOrg('free');
-        await setProjectCount(1); // Limit is 1. We have 1. Next creation would be 2.
+        setupOrg('free');
+        setProjectCount(1); // Limit is 1. We have 1. Next creation would be 2.
 
         const middleware = checkPlanLimit('max_projects');
         await middleware(req, res, next);
@@ -87,8 +95,8 @@ describe('PlanLimits Middleware', () => {
     });
 
     it('should allow request if within limit (Pro plan)', async () => {
-        await setupOrg('pro');
-        await setProjectCount(5); // Limit 10
+        setupOrg('pro');
+        setProjectCount(5); // Limit 10
 
         const middleware = checkPlanLimit('max_projects');
         await middleware(req, res, next);
@@ -96,8 +104,8 @@ describe('PlanLimits Middleware', () => {
     });
 
     it('should treat trial status as pro plan', async () => {
-        await setupOrg('free', 'trial'); // Status is trial, so should be Pro
-        await setProjectCount(5); // Limit 10 (Pro), 1 (Free). Should pass.
+        setupOrg('free', 'trial'); // Status is trial, so should be Pro
+        setProjectCount(5); // Limit 10 (Pro), 1 (Free). Should pass.
 
         const middleware = checkPlanLimit('max_projects');
         await middleware(req, res, next);
@@ -105,7 +113,7 @@ describe('PlanLimits Middleware', () => {
     });
 
     it('should handle undefined limits gracefully (warn and allow)', async () => {
-        await setupOrg('free');
+        setupOrg('free');
         const middleware = checkPlanLimit('unknown_limit_key');
 
         const consoleSpy = vi.spyOn(console, 'warn');
@@ -117,14 +125,7 @@ describe('PlanLimits Middleware', () => {
 
     it('should check max_members limit', async () => {
         setupOrg('free'); // Limit 1
-
-        // Mock user count query (2 users > 1 limit)
-        mockDb.all.mockImplementationOnce((sql, params, callback) => {
-            callback(null, [
-                { id: 'u1', organization_id: 'org-test-plan', email: 'u1@test.com' },
-                { id: 'u2', organization_id: 'org-test-plan', email: 'u2@test.com' }
-            ]);
-        });
+        setMemberCount(2); // 2 users > 1 limit
 
         const middleware = checkPlanLimit('max_members');
         await middleware(req, res, next);

@@ -9,6 +9,7 @@
 import { Router } from 'express';
 
 import { getMetricsService } from '../services/MetricsService.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -30,7 +31,7 @@ router.get('/', async (_req, res) => {
         res.send(metrics);
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        console.error('[MetricsRoutes] Error generating metrics:', err);
+        logger.error('[MetricsRoutes] Error generating metrics:', err);
         res.status(500).send(`# Error generating metrics: ${err.message}\n`);
     }
 });

@@ -19,6 +19,7 @@ import { NextFunction, Request, Response } from 'express';
 
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -285,7 +286,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
 
             next();
         } catch (error: unknown) {
-            console.error('[OrgContextMiddleware] Error:', error);
+            logger.error('[OrgContextMiddleware] Error:', error);
             res.status(500).json({ error: 'Internal error resolving organization context' });
         }
     };

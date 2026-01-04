@@ -12,6 +12,7 @@ import jwt from 'jsonwebtoken';
 import config from '../../config.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -84,22 +85,22 @@ export const verifySuperAdmin = async (req: AuthRequest, res: Response, next: Ne
 
         // If role is not SUPERADMIN, check database as fallback (in case role was changed)
         if (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
-            console.log(`[SuperAdmin Middleware] Initial role check failed for: ${userRole}`);
+            logger.info(`[SuperAdmin Middleware] Initial role check failed for: ${userRole}`);
 
             try {
                 const user = await db<UserRow>('SELECT role FROM users WHERE id = ?', [decoded.id]);
 
                 if (user && (user.role === 'SUPERADMIN' || user.role === 'SUPER_ADMIN')) {
-                    console.log('[SuperAdmin Middleware] Role promoted via DB check');
+                    logger.info('[SuperAdmin Middleware] Role promoted via DB check');
                     userRole = user.role;
                 } else {
-                    console.log(`[SuperAdmin Middleware] DB check validated non-superadmin role: ${user?.role}`);
-                    console.log(`[SuperAdmin Middleware] Access Denied. Role: ${user?.role || userRole}`);
+                    logger.info(`[SuperAdmin Middleware] DB check validated non-superadmin role: ${user?.role}`);
+                    logger.info(`[SuperAdmin Middleware] Access Denied. Role: ${user?.role || userRole}`);
                     res.status(403).json({ error: 'Requires Super Admin privileges' });
                     return;
                 }
             } catch (dbError) {
-                console.error('[SuperAdmin Middleware] Database check error:', dbError);
+                logger.error('[SuperAdmin Middleware] Database check error:', dbError);
                 // If DB check fails, we fall back to token role which failed check
                 res.status(403).json({ error: 'Requires Super Admin privileges' });
                 return;
@@ -108,7 +109,7 @@ export const verifySuperAdmin = async (req: AuthRequest, res: Response, next: Ne
 
         // If after all checks, the role is still not SUPERADMIN, deny access
         if (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
-            console.log(`[SuperAdmin Middleware] Access Denied. Role: ${userRole}`);
+            logger.info(`[SuperAdmin Middleware] Access Denied. Role: ${userRole}`);
             res.status(403).json({ error: 'Requires Super Admin privileges' });
             return;
         }

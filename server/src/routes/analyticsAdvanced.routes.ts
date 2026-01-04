@@ -10,6 +10,7 @@ import { Response, Router } from 'express';
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -30,14 +31,14 @@ try {
     const cohortModule = await import('../../services/cohortService.js');
     CohortService = (cohortModule.default || cohortModule) as CohortServiceInterface;
 } catch {
-    console.warn('[AnalyticsAdvanced Routes] CohortService not available');
+    logger.warn('[AnalyticsAdvanced Routes] CohortService not available');
 }
 
 try {
     const experimentModule = await import('../../services/experimentService.js');
     ExperimentService = (experimentModule.default || experimentModule) as ExperimentServiceInterface;
 } catch {
-    console.warn('[AnalyticsAdvanced Routes] ExperimentService not available');
+    logger.warn('[AnalyticsAdvanced Routes] ExperimentService not available');
 }
 
 /**
@@ -57,7 +58,7 @@ router.get(
             const matrix = await CohortService.getRetentionMatrix();
             res.json({ success: true, matrix });
         } catch (error: unknown) {
-            console.error('Cohort analysis error:', error);
+            logger.error('Cohort analysis error:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
@@ -84,7 +85,7 @@ router.get(
             const flags = await ExperimentService.getAllUserExperiments(userId);
             res.json({ success: true, flags });
         } catch (error: unknown) {
-            console.error('Experiment assignment error:', error);
+            logger.error('Experiment assignment error:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),

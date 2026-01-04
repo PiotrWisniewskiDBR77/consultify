@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -379,7 +380,7 @@ export async function sendAlert(alert: AdminAlert): Promise<SendAlertResult> {
     // 4. Create notifications for admins if notify_admins
 
     // For now, just log
-    console.log(`[Admin Alert] ${alert.alertType} triggered for org ${alert.organization_id}`);
+    logger.info(`[Admin Alert] ${alert.alertType} triggered for org ${alert.organization_id}`);
     return { sent: true };
 }
 

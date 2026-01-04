@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-profile-completeness.js');
 const user_profile_completenessRoutesJS = module.default || module;
@@ -24,7 +25,7 @@ if (
     router.use(user_profile_completenessRoutesJS);
 } else {
     // Fallback or error
-    console.error('user-profile-completeness.js did not export a valid router');
+    logger.error('user-profile-completeness.js did not export a valid router');
 }
 
 export default router;

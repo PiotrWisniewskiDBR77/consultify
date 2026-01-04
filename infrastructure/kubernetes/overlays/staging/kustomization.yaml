@@ -45,3 +45,4 @@ configMapGenerator:
       - ENABLE_METRICS=true
       - MOCK_EXTERNAL_SERVICES=false
 
+

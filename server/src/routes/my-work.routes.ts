@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/my-work.js');
 const my_workRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof my_workRoutesJS === 'function' || (my_workRoutesJS && typeof my_workR
     router.use(my_workRoutesJS);
 } else {
     // Fallback or error
-    console.error('my-work.js did not export a valid router');
+    logger.error('my-work.js did not export a valid router');
 }
 
 export default router;

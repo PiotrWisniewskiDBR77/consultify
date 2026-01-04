@@ -9,6 +9,7 @@ import { Response, Router } from 'express';
 
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -42,7 +43,7 @@ try {
     HealthStatusEnum = module.HealthStatus || module;
     ErrorMessagesEnum = module.ErrorMessages || module;
 } catch {
-    console.warn('[LLMHealth Routes] llmHealthMonitor not available');
+    logger.warn('[LLMHealth Routes] llmHealthMonitor not available');
 }
 
 // Helper function
@@ -142,7 +143,7 @@ router.get(
                 lastCheck: summary.lastCheck,
             });
         } catch (error: unknown) {
-            console.error('[LLMHealth] Error:', error);
+            logger.error('[LLMHealth] Error:', error);
             res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
@@ -222,7 +223,7 @@ router.get(
                 },
             });
         } catch (error: unknown) {
-            console.error('[LLMHealth] Error:', error);
+            logger.error('[LLMHealth] Error:', error);
             res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
@@ -285,7 +286,7 @@ router.post(
                 },
             });
         } catch (error: unknown) {
-            console.error('[LLMHealth] Test error:', error);
+            logger.error('[LLMHealth] Test error:', error);
             res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',

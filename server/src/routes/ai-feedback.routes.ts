@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -57,7 +58,7 @@ try {
     const module = loggerModule.default || loggerModule;
     aiLogger = module.aiLogger || module;
 } catch {
-    console.warn('[AI Feedback Routes] aiLogger not available');
+    logger.warn('[AI Feedback Routes] aiLogger not available');
 }
 
 try {
@@ -65,7 +66,7 @@ try {
     const module = adaptiveModule.default || adaptiveModule;
     adaptiveResponseService = (module.adaptiveResponseService || module) as AdaptiveResponseServiceInterface;
 } catch {
-    console.warn('[AI Feedback Routes] adaptiveResponseService not available');
+    logger.warn('[AI Feedback Routes] adaptiveResponseService not available');
 }
 
 // All routes require authentication

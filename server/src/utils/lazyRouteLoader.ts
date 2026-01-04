@@ -6,6 +6,7 @@
  */
 
 import { NextFunction, Request, Response, Router } from 'express';
+import logger from './Logger.js';
 
 interface RouteModule {
     default?: unknown;
@@ -43,11 +44,12 @@ export function createLazyRoute(routePath: string): Router {
             }
             next();
         } catch (error: unknown) {
-            console.error(`[LazyRoute] Error loading route from ${routePath}:`, error);
+            logger.error(`[LazyRoute] Error loading route from ${routePath}:`, error);
             res.status(500).json({ error: 'Failed to load route' });
         }
     });
 
     return router;
 }
+
 

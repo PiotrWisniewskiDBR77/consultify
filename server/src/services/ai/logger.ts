@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import logger from '../../utils/Logger.js';
 
 export const LOG_LEVELS = {
     DEBUG: 0,
@@ -139,26 +140,26 @@ export const aiLogger = {
 
     debug(component: string, message: string, data: unknown = null): void {
         if (this.currentLevel <= LOG_LEVELS.DEBUG) {
-            console.log(formatMessage('DEBUG', component, message, data, currentTraceContext));
+            logger.info(formatMessage('DEBUG', component, message, data, currentTraceContext));
         }
     },
 
     info(component: string, message: string, data: unknown = null): void {
         if (this.currentLevel <= LOG_LEVELS.INFO) {
-            console.log(formatMessage('INFO', component, message, data, currentTraceContext));
+            logger.info(formatMessage('INFO', component, message, data, currentTraceContext));
         }
     },
 
     warn(component: string, message: string, data: unknown = null): void {
         if (this.currentLevel <= LOG_LEVELS.WARN) {
-            console.warn(formatMessage('WARN', component, message, data, currentTraceContext));
+            logger.warn(formatMessage('WARN', component, message, data, currentTraceContext));
         }
     },
 
     error(component: string, message: string, error: unknown = null): void {
         if (this.currentLevel <= LOG_LEVELS.ERROR) {
             const errorData = error instanceof Error ? { message: error.message, stack: error.stack } : error;
-            console.error(formatMessage('ERROR', component, message, errorData, currentTraceContext));
+            logger.error(formatMessage('ERROR', component, message, errorData, currentTraceContext));
         }
     },
 
@@ -179,7 +180,7 @@ export const aiLogger = {
     },
 
     audit(action: string, data: unknown): void {
-        console.log(formatMessage('AUDIT', 'Audit', action, data, currentTraceContext));
+        logger.info(formatMessage('AUDIT', 'Audit', action, data, currentTraceContext));
     },
 
     startTrace(operationName: string, attributes: TraceAttributes = {}): TraceContext {
@@ -303,7 +304,7 @@ export const aiLogger = {
         };
 
         if (process.env.NODE_ENV === 'production') {
-            console.log(JSON.stringify(spanData));
+            logger.info(JSON.stringify(spanData));
         }
     },
 

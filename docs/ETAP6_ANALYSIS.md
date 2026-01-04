@@ -65,3 +65,4 @@ Zamiast usuwać legacy pliki teraz, można:
 **Rekomendacja:** Oznaczyć ETAP 6 jako częściowo zakończony i przejść do ETAP 7 (finalizacja dokumentacji).
 
 
+

@@ -57,3 +57,4 @@ for (const file of files) {
 
 console.log(`\n📊 Naprawiono ${fixed} plików TypeScript`);
 
+

@@ -354,3 +354,4 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
 
 export default SettingsTemplates;
 
+

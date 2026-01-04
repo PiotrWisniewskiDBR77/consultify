@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // ZOD SCHEMAS
@@ -48,9 +49,9 @@ function loadQueueConfig(): QueueConfig {
     const result = QueueConfigSchema.safeParse(rawConfig);
 
     if (!result.success) {
-        console.error('[Queue Config] Configuration validation failed:');
+        logger.error('[Queue Config] Configuration validation failed:');
         result.error.issues.forEach((err: Error | null) => {
-            console.error(`  - ${err.path.join('.')}: ${err.message}`);
+            logger.error(`  - ${err.path.join('.')}: ${err.message}`);
         });
 
         // In production, fail fast on invalid config
@@ -59,7 +60,7 @@ function loadQueueConfig(): QueueConfig {
         }
 
         // In development, use defaults
-        console.warn('[Queue Config] Using defaults for invalid values.');
+        logger.warn('[Queue Config] Using defaults for invalid values.');
         return {
             connection: {
                 host: 'localhost',

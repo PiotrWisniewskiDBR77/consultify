@@ -79,14 +79,14 @@ const DEFAULT_TIMEOUT = 5000; // 5 seconds
 const dbLogger: DbLogger = {
     debug: (msg: string, data?: unknown): void => {
         if (process.env.DEBUG_DB === 'true') {
-            console.log(`[DB:Promise] ${msg}`, data || '');
+            logger.info(`[DB:Promise] ${msg}`, data || '');
         }
     },
     warn: (msg: string, data?: unknown): void => {
-        console.warn(`[DB:Promise] ${msg}`, data || '');
+        logger.warn(`[DB:Promise] ${msg}`, data || '');
     },
     error: (msg: string, data?: unknown): void => {
-        console.error(`[DB:Promise] ${msg}`, data || '');
+        logger.error(`[DB:Promise] ${msg}`, data || '');
     },
 };
 
@@ -95,6 +95,7 @@ const dbLogger: DbLogger = {
 // ==========================================
 
 import { getDatabase } from '../database/Database.js';
+import logger from './Logger.js';
 
 const getDb = (): Database => {
     return getDatabase() as unknown as Database;

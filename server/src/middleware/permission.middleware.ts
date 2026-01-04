@@ -11,6 +11,7 @@ import { NextFunction, Request, Response } from 'express';
 import GovernanceAuditService from '../services/governanceAuditService.js';
 import PermissionService from '../services/permissionService.js';
 import type { AuthRequest } from './auth.middleware.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -90,7 +91,7 @@ export const requirePermission = (permissionKey: string) => {
             const hasPermission = await PermissionService.hasPermission(userId, orgId, permissionKey, userRole);
 
             if (!hasPermission) {
-                console.log(`[PermissionMiddleware] Denied: ${permissionKey} for user ${userId}`);
+                logger.info(`[PermissionMiddleware] Denied: ${permissionKey} for user ${userId}`);
                 res.status(403).json({
                     error: 'Permission denied',
                     required: permissionKey,
@@ -103,7 +104,7 @@ export const requirePermission = (permissionKey: string) => {
             (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
             next();
         } catch (err: unknown) {
-            console.error('[PermissionMiddleware] Error:', err);
+            logger.error('[PermissionMiddleware] Error:', err);
             res.status(500).json({
                 error: 'Permission check failed',
                 code: 'PERMISSION_ERROR',
@@ -144,14 +145,14 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
                 }
             }
 
-            console.log(`[PermissionMiddleware] Denied: none of [${permissionKeys.join(', ')}] for user ${userId}`);
+            logger.info(`[PermissionMiddleware] Denied: none of [${permissionKeys.join(', ')}] for user ${userId}`);
             res.status(403).json({
                 error: 'Permission denied',
                 requiredAny: permissionKeys,
                 code: 'PERMISSION_DENIED',
             });
         } catch (err: unknown) {
-            console.error('[PermissionMiddleware] Error:', err);
+            logger.error('[PermissionMiddleware] Error:', err);
             res.status(500).json({
                 error: 'Permission check failed',
                 code: 'PERMISSION_ERROR',
@@ -193,7 +194,7 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
             }
 
             if (missingPermissions.length > 0) {
-                console.log(
+                logger.info(
                     `[PermissionMiddleware] Denied: missing [${missingPermissions.join(', ')}] for user ${userId}`,
                 );
                 res.status(403).json({
@@ -207,7 +208,7 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
             (req as AuthRequest & { permissionChecked?: string[] }).permissionChecked = permissionKeys;
             next();
         } catch (err: unknown) {
-            console.error('[PermissionMiddleware] Error:', err);
+            logger.error('[PermissionMiddleware] Error:', err);
             res.status(500).json({
                 error: 'Permission check failed',
                 code: 'PERMISSION_ERROR',
@@ -250,7 +251,7 @@ export const auditAction = (options: AuditOptions) => {
                             undefined,
                     });
                 } catch (auditErr) {
-                    console.error('[AuditMiddleware] Error logging audit:', auditErr);
+                    logger.error('[AuditMiddleware] Error logging audit:', auditErr);
                     // Don't fail the request if audit fails
                 }
             }

@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -152,7 +153,7 @@ export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
 export async function recordEvent(eventType: EventType, payload: RecordEventPayload = {}): Promise<RecordEventResult> {
     // Validate event type
     if (!Object.values(EVENT_TYPES).includes(eventType)) {
-        console.warn(`[MetricsCollector] Unknown event type: ${eventType}`);
+        logger.warn(`[MetricsCollector] Unknown event type: ${eventType}`);
     }
 
     const eventId = uuidv4();
@@ -165,7 +166,7 @@ export async function recordEvent(eventType: EventType, payload: RecordEventPayl
         [eventId, eventType, userId, organizationId, source, JSON.stringify(context)],
     );
 
-    console.log(`[MetricsCollector] Recorded event: ${eventType} (${eventId})`);
+    logger.info(`[MetricsCollector] Recorded event: ${eventType} (${eventId})`);
 
     return { eventId, success: true };
 }

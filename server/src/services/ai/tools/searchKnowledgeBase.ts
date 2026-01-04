@@ -1,4 +1,5 @@
 /**
+import logger from '../../../utils/Logger.js';
  * Tool: search_knowledge_base
  * Searches the DRD methodology knowledge base using RAG.
  */
@@ -48,7 +49,7 @@ export async function searchKnowledgeBase(
         };
     } catch (error: unknown) {
         const err = error as Error;
-        console.warn('[searchKnowledgeBase] RAG failed, using fallback:', err.message);
+        logger.warn('[searchKnowledgeBase] RAG failed, using fallback:', err.message);
 
         return {
             results: [

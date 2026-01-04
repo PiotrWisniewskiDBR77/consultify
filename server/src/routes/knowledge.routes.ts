@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -130,21 +131,21 @@ try {
     const knowledgeModule = await import('../../services/knowledgeService.js');
     KnowledgeService = knowledgeModule.default || knowledgeModule;
 } catch {
-    console.warn('[Knowledge] KnowledgeService not available');
+    logger.warn('[Knowledge] KnowledgeService not available');
 }
 
 try {
     const storageModule = await import('../../services/storageService.js');
     StorageService = storageModule.default || storageModule;
 } catch {
-    console.warn('[Knowledge] StorageService not available');
+    logger.warn('[Knowledge] StorageService not available');
 }
 
 try {
     const notificationModule = await import('../../services/notificationOutboxService.js');
     NotificationOutboxService = notificationModule.default || notificationModule;
 } catch {
-    console.warn('[Knowledge] NotificationOutboxService not available');
+    logger.warn('[Knowledge] NotificationOutboxService not available');
 }
 
 // Get directory paths
@@ -178,14 +179,14 @@ try {
     enforceStorageQuota = quotaModule.enforceStorageQuota;
     recordStorageAfterUpload = quotaModule.recordStorageAfterUpload;
 } catch {
-    console.warn('[Knowledge] Quota middleware not available');
+    logger.warn('[Knowledge] Quota middleware not available');
 }
 
 try {
     const projectQuotaModule = await import('../../middleware/projectQuotaMiddleware.js');
     enforceProjectQuota = projectQuotaModule.default || projectQuotaModule;
 } catch {
-    console.warn('[Knowledge] Project quota middleware not available');
+    logger.warn('[Knowledge] Project quota middleware not available');
 }
 
 /**
@@ -396,7 +397,7 @@ router.get(
             const observations = await generateObservations(req.user?.id, req.user?.organizationId);
             res.json(observations);
         } catch (err: unknown) {
-            console.error('Observation Route Error', err);
+            logger.error('Observation Route Error', err);
             const message = err instanceof Error ? err.message : 'Unknown error';
             res.status(500).json({ error: message });
         }
@@ -719,7 +720,7 @@ router.post(
                     text = fs.readFileSync(finalPath, 'utf8');
                 }
             } catch (pdfErr) {
-                console.error('PDF Parsing error', pdfErr);
+                logger.error('PDF Parsing error', pdfErr);
                 text = 'Error parsing PDF content';
             }
 
@@ -733,7 +734,7 @@ router.post(
 
             res.json({ message: 'Document uploaded and indexed', docId, chunkCount });
         } catch (err: unknown) {
-            console.error('Upload Error', err);
+            logger.error('Upload Error', err);
             // Cleanup temp file if it still exists
             if (tempPath && fs.existsSync(tempPath)) {
                 try {

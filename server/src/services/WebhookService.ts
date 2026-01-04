@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -523,7 +524,7 @@ export class WebhookService {
             } catch (error: unknown) {
                 const err = error as Error;
                 results.push({ webhookId: webhook.id, success: false, error: err.message });
-                console.error(`[Webhook] Failed to send to ${webhook.url}:`, err.message);
+                logger.error(`[Webhook] Failed to send to ${webhook.url}:`, err.message);
             }
         }
 
@@ -591,7 +592,7 @@ export class WebhookService {
             return { success: response.ok, status: response.status };
         } catch (error: unknown) {
             const err = error as Error;
-            console.error('[Slack] Notification failed:', err);
+            logger.error('[Slack] Notification failed:', err);
             return { success: false, error: err.message };
         }
     }

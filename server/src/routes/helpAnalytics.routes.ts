@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/helpAnalytics.js');
 const helpAnalyticsRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(helpAnalyticsRoutesJS);
 } else {
     // Fallback or error
-    console.error('helpAnalytics.js did not export a valid router');
+    logger.error('helpAnalytics.js did not export a valid router');
 }
 
 export default router;

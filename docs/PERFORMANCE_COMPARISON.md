@@ -84,3 +84,4 @@ Dla developmentu tsx jest lepszy ze względu na szybkość iteracji i hot reload
 *Testy wykonane: 2026-01-04*
 
 
+

@@ -50,3 +50,4 @@ INSERT OR IGNORE INTO migrations (name, applied_at) VALUES ('110_workspace_defau
 
 
 
+

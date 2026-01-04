@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/workspace-defaults.js');
 const workspace_defaultsRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(workspace_defaultsRoutesJS);
 } else {
     // Fallback or error
-    console.error('workspace-defaults.js did not export a valid router');
+    logger.error('workspace-defaults.js did not export a valid router');
 }
 
 export default router;

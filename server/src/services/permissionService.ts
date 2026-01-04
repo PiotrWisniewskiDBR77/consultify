@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -347,7 +348,7 @@ export async function hasPermission(
 
         return !!rolePermission;
     } catch (err: unknown) {
-        console.error('[PermissionService] Permission query error:', err);
+        logger.error('[PermissionService] Permission query error:', err);
         return false;
     }
 }
@@ -418,7 +419,7 @@ export async function grantPermission(
         [id, userId, orgId, permissionKey, grantedBy],
     );
 
-    console.log(`[PermissionService] Permission granted: ${permissionKey} to ${userId} by ${grantedBy}`);
+    logger.info(`[PermissionService] Permission granted: ${permissionKey} to ${userId} by ${grantedBy}`);
     return {
         success: true,
         id,
@@ -454,7 +455,7 @@ export async function revokePermission(
         [id, userId, orgId, permissionKey, revokedBy],
     );
 
-    console.log(`[PermissionService] Permission revoked: ${permissionKey} from ${userId} by ${revokedBy}`);
+    logger.info(`[PermissionService] Permission revoked: ${permissionKey} from ${userId} by ${revokedBy}`);
     return {
         success: true,
         id,
@@ -583,7 +584,7 @@ export async function hasContentPermission(
         // Fall back to general permission check
         return await hasPermission(userId, orgId, permissionKey, userRole);
     } catch (err: unknown) {
-        console.error('[PermissionService] Content permission query error:', err);
+        logger.error('[PermissionService] Content permission query error:', err);
         // Fall back to general permission check
         return await hasPermission(userId, orgId, permissionKey, userRole);
     }
@@ -610,7 +611,7 @@ export async function grantContentPermission(
         [id, contentId, contentType, userId, permissionKey, grantedBy, expiresAt],
     );
 
-    console.log(
+    logger.info(
         `[PermissionService] Content permission granted: ${permissionKey} on ${contentType}:${contentId} to ${userId}`,
     );
     return {
@@ -647,7 +648,7 @@ export async function revokeContentPermission(
         [id, contentId, contentType, userId, permissionKey, revokedBy],
     );
 
-    console.log(
+    logger.info(
         `[PermissionService] Content permission revoked: ${permissionKey} on ${contentType}:${contentId} from ${userId}`,
     );
     return {

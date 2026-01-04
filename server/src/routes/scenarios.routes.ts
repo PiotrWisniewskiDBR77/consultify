@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/scenarios.js');
 const scenariosRoutesJS = module.default || module;
@@ -22,7 +23,7 @@ if (typeof scenariosRoutesJS === 'function' || (scenariosRoutesJS && typeof scen
     router.use(scenariosRoutesJS);
 } else {
     // Fallback or error
-    console.error('scenarios.js did not export a valid router');
+    logger.error('scenarios.js did not export a valid router');
 }
 
 export default router;

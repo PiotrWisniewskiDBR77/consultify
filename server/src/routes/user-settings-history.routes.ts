@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-settings-history.js');
 const user_settings_historyRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(user_settings_historyRoutesJS);
 } else {
     // Fallback or error
-    console.error('user-settings-history.js did not export a valid router');
+    logger.error('user-settings-history.js did not export a valid router');
 }
 
 export default router;

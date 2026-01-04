@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/pdf-import.js');
 const pdf_importRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(pdf_importRoutesJS);
 } else {
     // Fallback or error
-    console.error('pdf-import.js did not export a valid router');
+    logger.error('pdf-import.js did not export a valid router');
 }
 
 export default router;

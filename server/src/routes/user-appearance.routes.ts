@@ -8,6 +8,7 @@
  */
 
 import { Router } from 'express';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-appearance.js');
 const user_appearanceRoutesJS = module.default || module;
@@ -25,7 +26,7 @@ if (
     router.use(user_appearanceRoutesJS);
 } else {
     // Fallback or error
-    console.error('user-appearance.js did not export a valid router');
+    logger.error('user-appearance.js did not export a valid router');
 }
 
 export default router;

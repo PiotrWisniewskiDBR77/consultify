@@ -12,6 +12,7 @@ import DbPromise from '../utils/DbPromise.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
 import ProjectMemberService from './projectMemberService.js';
+import logger from '../utils/Logger.js';
 
 /**
  * Default SLA hours by priority
@@ -609,7 +610,7 @@ export class TaskAssignmentService {
                 });
             }
         } catch (err: any) {
-            console.error('[TaskAssignmentService] Activity log failed:', err.message);
+            logger.error('[TaskAssignmentService] Activity log failed:', err.message);
         }
     }
 
@@ -641,11 +642,11 @@ export class TaskAssignmentService {
                 });
             }
 
-            console.log(
+            logger.info(
                 `[ESCALATION] Notification sent to ${recipient.firstName} ${recipient.lastName} (${recipient.email})`,
             );
         } catch (err: any) {
-            console.error(`[ESCALATION] Failed to send notification: ${err.message}`);
+            logger.error(`[ESCALATION] Failed to send notification: ${err.message}`);
         }
     }
 
@@ -683,7 +684,7 @@ export class TaskAssignmentService {
                 ],
             );
         } catch (err: any) {
-            console.error('[TaskAssignmentService] Audit log failed:', err.message);
+            logger.error('[TaskAssignmentService] Audit log failed:', err.message);
         }
     }
 }

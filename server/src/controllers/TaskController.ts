@@ -25,6 +25,7 @@ import type {
     UpdateTaskRequest,
 } from '../validators/task.validators.js';
 import TaskAssignmentService from '../../services/taskAssignmentService.js';
+import logger from '../utils/Logger.js';
 
 const ESCALATION_TRIGGERS = {
     SLA_BREACH: 'SLA_BREACH',
@@ -114,7 +115,7 @@ export class TaskController {
      * Get all tasks with filters
      */
     static getTasks = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        console.log('[TaskController] getTasks called', { user: req.user?.id, org: req.user?.organizationId });
+        logger.info('[TaskController] getTasks called', { user: req.user?.id, org: req.user?.organizationId });
         const orgId = req.user?.organizationId;
         const userId = req.user?.id;
         if (!orgId || !userId) {
@@ -497,7 +498,7 @@ export class TaskController {
                     relatedObjectType: 'TASK',
                     relatedObjectId: id,
                 })
-                .catch((err: any) => console.error('[TaskController] Notification failed:', err));
+                .catch((err: any) => logger.error('[TaskController] Notification failed:', err));
         }
 
         // Activity logging
@@ -511,7 +512,7 @@ export class TaskController {
                 entityName: title,
                 newValue: body,
             })
-            .catch((err: any) => console.error('[TaskController] Activity log failed:', err));
+            .catch((err: any) => logger.error('[TaskController] Activity log failed:', err));
 
         // Audit Trail (PMO Standard)
         await DbPromise.run(
@@ -528,7 +529,7 @@ export class TaskController {
                 JSON.stringify(body),
                 now,
             ],
-        ).catch((err: Error | null) => console.error('[TaskController] PMO Audit log failed:', err));
+        ).catch((err: Error | null) => logger.error('[TaskController] PMO Audit log failed:', err));
 
         // Recalculate Initiative Progress
         if (initiativeId) {
@@ -537,7 +538,7 @@ export class TaskController {
             if (InitiativeService && (InitiativeService as any).recalculateProgress) {
                 (InitiativeService as any)
                     .recalculateProgress({ organizationId: orgId, initiativeId })
-                    .catch((err: any) => console.error('[TaskController] Recalc failed:', err));
+                    .catch((err: any) => logger.error('[TaskController] Recalc failed:', err));
             }
         }
 
@@ -692,7 +693,7 @@ export class TaskController {
                 await DbPromise.run(
                     `INSERT INTO task_history (id, task_id, field, old_value, new_value, changed_by) VALUES (?, ?, ?, ?, ?, ?)`,
                     [uuidv4(), entry.taskId, entry.field, entry.oldValue, entry.newValue, entry.changedBy],
-                ).catch((err: Error | null) => console.error('[TaskController] History log failed:', err));
+                ).catch((err: Error | null) => logger.error('[TaskController] History log failed:', err));
             }
         }
 
@@ -707,7 +708,7 @@ export class TaskController {
                 entityName: currentTask.title,
                 newValue: updates,
             })
-            .catch((err: any) => console.error('[TaskController] Activity log failed:', err));
+            .catch((err: any) => logger.error('[TaskController] Activity log failed:', err));
 
         // Notifications
         const affectedUserId = (updates as any).assigneeId || currentTask.assignee_id;
@@ -722,7 +723,7 @@ export class TaskController {
                     relatedObjectType: 'TASK',
                     relatedObjectId: id,
                 })
-                .catch((err: any) => console.error('[TaskController] Notification failed:', err));
+                .catch((err: any) => logger.error('[TaskController] Notification failed:', err));
         }
 
         // Initiative Progress Recalc
@@ -731,7 +732,7 @@ export class TaskController {
             const InitiativeService = await import('../services/initiativeService.js').then((m) => m.default || m);
             if (InitiativeService && InitiativeService.recalculateProgress) {
                 InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId }).catch((err: Error | null) =>
-                    console.error('[TaskController] Recalc failed:', err),
+                    logger.error('[TaskController] Recalc failed:', err),
                 );
             }
         }
@@ -795,7 +796,7 @@ export class TaskController {
                 entityId: id,
                 entityName: task.title,
             })
-            .catch((err: any) => console.error('[TaskController] Activity log failed:', err));
+            .catch((err: any) => logger.error('[TaskController] Activity log failed:', err));
 
         // Recalculate Initiative Progress
         if (task.initiative_id) {
@@ -803,7 +804,7 @@ export class TaskController {
             if (InitiativeService && (InitiativeService as any).recalculateProgress) {
                 (InitiativeService as any)
                     .recalculateProgress({ organizationId: orgId, initiativeId: task.initiative_id })
-                    .catch((err: any) => console.error('[TaskController] Recalc failed:', err));
+                    .catch((err: any) => logger.error('[TaskController] Recalc failed:', err));
             }
         }
 

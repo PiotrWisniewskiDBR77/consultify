@@ -6,6 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all, get, run } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES & CONSTANTS
@@ -141,7 +142,7 @@ export const AIMemoryManager = {
                 );
             }
         } catch (err: any) {
-            console.warn('[AIMemoryManager] Failed to log activity:', err.message);
+            logger.warn('[AIMemoryManager] Failed to log activity:', err.message);
         }
 
         return { id, projectId, memoryType };
@@ -596,7 +597,7 @@ export const AIMemoryManager = {
         }
 
         const result = await run(sql, params);
-        console.log(
+        logger.info(
             `[AIMemoryManager] Cleaned up ${result.changes} old memory entries (older than ${maxAgeDays} days)`,
         );
 
@@ -621,7 +622,7 @@ export const AIMemoryManager = {
         }
 
         if ((result.changes || 0) > 0) {
-            console.log(`[AIMemoryManager] Cleaned up ${result.changes} old partial responses`);
+            logger.info(`[AIMemoryManager] Cleaned up ${result.changes} old partial responses`);
         }
         return { deleted: result.changes, maxAgeHours };
     },
@@ -639,7 +640,7 @@ export const AIMemoryManager = {
         }
 
         if ((result.changes || 0) > 0) {
-            console.log(`[AIMemoryManager] Cleaned up ${result.changes} old feedback entries`);
+            logger.info(`[AIMemoryManager] Cleaned up ${result.changes} old feedback entries`);
         }
         return { deleted: result.changes, maxAgeDays };
     },
@@ -694,7 +695,7 @@ export const AIMemoryManager = {
             results.stats = await AIMemoryManager.getMemoryStats();
             results.duration = Date.now() - startTime;
 
-            console.log('[AIMemoryManager] Cleanup cycle complete:', {
+            logger.info('[AIMemoryManager] Cleanup cycle complete:', {
                 projectMemoryDeleted: results.projectMemory.deleted,
                 partialResponsesDeleted: results.partialResponses.deleted,
                 feedbackDeleted: results.feedback.deleted,
@@ -703,7 +704,7 @@ export const AIMemoryManager = {
 
             return results;
         } catch (error: any) {
-            console.error('[AIMemoryManager] Cleanup cycle failed:', error);
+            logger.error('[AIMemoryManager] Cleanup cycle failed:', error);
             results.error = error.message;
             results.duration = Date.now() - startTime;
             return results;

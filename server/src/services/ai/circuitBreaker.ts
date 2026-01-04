@@ -6,6 +6,7 @@
 
 import CircuitBreakerService, { STATES } from '../circuitBreakerService.js';
 import { aiLogger } from './logger.js';
+import logger from '../../utils/Logger.js';
 
 export const STATE = STATES;
 
@@ -68,7 +69,7 @@ export async function initialize(): Promise<void> {
 setImmediate(() => {
     initialize().catch((error) => {
         const err = error as Error;
-        console.warn('[CircuitBreaker] Auto-init failed:', err.message);
+        logger.warn('[CircuitBreaker] Auto-init failed:', err.message);
     });
 });
 

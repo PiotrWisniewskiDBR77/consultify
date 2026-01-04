@@ -9,13 +9,15 @@
 import type { IncrementResponse, Store } from 'express-rate-limit';
 
 import { getRedisClient, isRedisConnected } from '../../services/ai/redisClient.js';
+import logger from './Logger.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
 interface RedisStoreOptions {
-    windowMs: number;
+    windowMs?: number;
+    prefix?: string;
     prefix?: string;
 }
 
@@ -70,7 +72,7 @@ export class RedisRateLimitStore implements Store {
                 resetTime,
             };
         } catch (error: unknown) {
-            console.error('[RateLimit] Redis error:', error);
+            logger.error('[RateLimit] Redis error:', error);
             // Fail open - must return a positive integer for totalHits (v8 requirement)
             return {
                 totalHits: 1,
@@ -132,7 +134,7 @@ export class RedisRateLimitStore implements Store {
                 resetTime: new Date(Date.now() + this.windowMs),
             };
         } catch (error: unknown) {
-            console.error('[RateLimit] Redis get error:', error);
+            logger.error('[RateLimit] Redis get error:', error);
             // Fail open - return undefined to let express-rate-limit use defaults
             return undefined;
         }
@@ -140,4 +142,5 @@ export class RedisRateLimitStore implements Store {
 }
 
 export default RedisRateLimitStore;
+
 

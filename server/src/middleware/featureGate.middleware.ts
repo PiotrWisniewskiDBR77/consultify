@@ -137,7 +137,7 @@ export function requireFeature(featureId: string) {
     if (!requirements) {
         // Feature not registered - block by default (fail closed)
         return (_req: Request, res: Response, _next: NextFunction): void => {
-            console.error(`Feature '${featureId}' not registered in FEATURE_REQUIREMENTS`);
+            logger.error(`Feature '${featureId}' not registered in FEATURE_REQUIREMENTS`);
             res.status(500).json({
                 error: 'FEATURE_NOT_REGISTERED',
                 message: `Feature '${featureId}' is not properly configured. Contact support.`,
@@ -258,6 +258,7 @@ export function requireAccess(requirements: FeatureRequirements) {
  */
 export function isFeatureAccessible(featureId: string, context: FeatureContext): boolean {
     const requirements = FEATURE_REQUIREMENTS[featureId];
+import logger from '../utils/Logger.js';
     if (!requirements) return false;
 
     const { phase, state, role } = context;
@@ -285,4 +286,5 @@ export function isFeatureAccessible(featureId: string, context: FeatureContext):
 export function getAccessibleFeatures(context: FeatureContext): string[] {
     return Object.keys(FEATURE_REQUIREMENTS).filter((featureId) => isFeatureAccessible(featureId, context));
 }
+
 

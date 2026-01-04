@@ -302,3 +302,4 @@ export function calculateOverallMaturity(scores: Record<string, number>, weights
 
 export default FRAMEWORK_CONFIGS;
 
+

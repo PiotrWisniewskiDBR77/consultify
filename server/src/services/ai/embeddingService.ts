@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { getDatabase } from '../../database/Database.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import { validateExternalServiceResponse } from '../../utils/typeGuards.js';
+import logger from '../../utils/Logger.js';
 
 export const EMBEDDING_MODEL = 'text-embedding-3-small';
 export const EMBEDDING_DIMENSIONS = 1536;
@@ -107,7 +108,7 @@ export class EmbeddingService {
             return data.data[0]?.embedding ?? [];
         } catch (error: unknown) {
             const err = error as Error;
-            console.error('[EmbeddingService] Error:', err.message);
+            logger.error('[EmbeddingService] Error:', err.message);
             throw err;
         }
     }
@@ -263,7 +264,7 @@ export class EmbeddingService {
             }));
         } catch (error: unknown) {
             const err = error as Error;
-            console.error('[EmbeddingService] PostgreSQL search error:', err.message);
+            logger.error('[EmbeddingService] PostgreSQL search error:', err.message);
             throw err;
         }
     }
@@ -295,7 +296,7 @@ export class EmbeddingService {
         const isPg = process.env.DB_TYPE === 'postgres';
 
         if (isPg) {
-            console.log('[EmbeddingService] PostgreSQL - run migration for pgvector');
+            logger.info('[EmbeddingService] PostgreSQL - run migration for pgvector');
             return;
         }
 

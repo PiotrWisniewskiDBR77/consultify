@@ -10,6 +10,7 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoGuard } from '../middleware/demoGuard.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -36,14 +37,14 @@ try {
     const trialModule = await import('../../services/trialService.js');
     TrialService = (trialModule.default || trialModule) as TrialServiceInterface;
 } catch {
-    console.warn('[Trial Routes] TrialService not available');
+    logger.warn('[Trial Routes] TrialService not available');
 }
 
 try {
     const auditModule = await import('../../services/auditService.js');
     AuditService = (auditModule.default || auditModule) as AuditServiceInterface;
 } catch {
-    console.warn('[Trial Routes] AuditService not available');
+    logger.warn('[Trial Routes] AuditService not available');
 }
 
 /**
@@ -80,7 +81,7 @@ router.post(
                 newOrganizationId: result.newOrganizationId,
             });
         } catch (error: unknown) {
-            console.error('Trial Conversion Error:', error);
+            logger.error('Trial Conversion Error:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
@@ -133,7 +134,7 @@ router.post(
                 nextStep: 'ORG_SETUP_WIZARD',
             });
         } catch (error: unknown) {
-            console.error('Transition Confirmation Error:', error);
+            logger.error('Transition Confirmation Error:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
