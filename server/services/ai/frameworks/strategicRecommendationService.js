@@ -8,9 +8,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-const db = require('../../../database');
-const FrameworkEngine = require('./frameworkEngine');
-const { getFramework } = require('./consultingFrameworks');
+import db from '../../../database.js';
+import FrameworkEngine from './frameworkEngine.js';
+import { getFramework } from './consultingFrameworks.js';
 
 // Recommendation categories aligned with strategic consulting
 const RECOMMENDATION_CATEGORIES = {

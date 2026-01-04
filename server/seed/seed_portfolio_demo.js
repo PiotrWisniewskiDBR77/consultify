@@ -7,7 +7,7 @@
 
 import { getDatabase } from '../database/Database.js';
 const db = getDatabase();
-const queryHelpers = require('../utils/queryHelpers');
+import queryHelpers from '../utils/queryHelpers.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // ============================================
@@ -436,6 +436,10 @@ if (require.main === module) {
         .then(() => process.exit(0))
         .catch(() => process.exit(1));
 }
+
+export {
+seedPortfolioDemo
+};
 
 export default { seedPortfolioDemo };
 

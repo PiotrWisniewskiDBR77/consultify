@@ -6,7 +6,7 @@
  */
 
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+import path from 'path';
 
 // Use the same database path as the main application
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../consultify.db');
@@ -96,6 +96,10 @@ if (require.main === module) {
         process.exit(1);
     });
 }
+
+export {
+migrate
+};
 
 export default { migrate };
 

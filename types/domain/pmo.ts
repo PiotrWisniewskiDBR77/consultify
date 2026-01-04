@@ -39,7 +39,7 @@ export interface PMOContext {
     healthScore: number;
     maturityLevel?: number;
     domains: PMODomainStatus[];
-    blockingIssues: PMOIssue[];
+    blockingIssues: Issue[];
     pendingDecisions: Decision[];
     upcomingMilestones: Milestone[];
     lastUpdated: string;

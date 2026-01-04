@@ -4,7 +4,7 @@ import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
-const { verifyAdmin } = require('../middleware/adminMiddleware');
+import { verifyAdmin  } from '../middleware/adminMiddleware.js';
 
 router.use(verifyToken);
 

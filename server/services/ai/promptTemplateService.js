@@ -9,10 +9,10 @@
  * 4. Composing final prompt string
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const { promptBlockLibrary, DEFAULT_BLOCKS } = require('./promptBlockLibrary');
-const { variableResolver } = require('./variableResolver');
+import { promptBlockLibrary, DEFAULT_BLOCKS } from './promptBlockLibrary.js';
+import { variableResolver } from './variableResolver.js';
 
 // ============================================================================
 // Default Templates (Fallback)
@@ -231,11 +231,11 @@ class PromptTemplateService {
 
         // 2. Compose raw prompt from blocks
         const sections = [];
-        
+
         // Group blocks by category for organized output
         const categoryOrder = ['ROLE', 'BEHAVIOR', 'CONTEXT', 'TASK', 'OUTPUT', 'CONSTRAINT'];
         const blocksByCategory = {};
-        
+
         for (const block of blocks) {
             const cat = block.category;
             if (!blocksByCategory[cat]) blocksByCategory[cat] = [];
@@ -246,7 +246,7 @@ class PromptTemplateService {
             if (blocksByCategory[category]?.length) {
                 const categoryBlocks = blocksByCategory[category];
                 sections.push(`# ${this.getCategoryLabel(category)}\n`);
-                
+
                 for (const block of categoryBlocks) {
                     sections.push(block.semantic.trim());
                     sections.push('');
@@ -261,9 +261,9 @@ class PromptTemplateService {
 
         // 4. Add language instruction at the end
         const userLanguage = await variableResolver.resolveVariable('user.detected_language', context) ||
-                            await variableResolver.resolveVariable('user.language', context) ||
-                            'en';
-        
+            await variableResolver.resolveVariable('user.language', context) ||
+            'en';
+
         const languageInstruction = this.getLanguageInstruction(userLanguage);
 
         const finalPrompt = `${resolvedPrompt}\n\n# RESPONSE LANGUAGE\n${languageInstruction}`;
@@ -431,14 +431,14 @@ FORMALITY: Match formality conventions appropriate for the detected language cul
                         reject(err);
                     } else {
                         this.clearCache();
-                        
+
                         // Create version record
                         db.run(
                             `INSERT INTO ai_prompt_template_versions 
                              (id, template_id, version, template_blocks, variable_schema, config)
                              VALUES (?, ?, 1, ?, ?, ?)`,
                             [uuidv4(), id, JSON.stringify(blocks), JSON.stringify(variableSchema), JSON.stringify(config)],
-                            () => {} // Fire and forget
+                            () => { } // Fire and forget
                         );
 
                         resolve({ id, code, success: true });
@@ -546,7 +546,7 @@ FORMALITY: Match formality conventions appropriate for the detected language cul
         try {
             const assembled = await this.assemblePrompt(templateCode, context);
             const varValidation = await variableResolver.validateVariables(assembled.prompt, context);
-            
+
             for (const issue of varValidation.issues) {
                 if (issue.issue.includes('Unknown')) {
                     issues.push({ severity: 'error', message: `Unknown variable: ${issue.variable}` });
@@ -561,9 +561,9 @@ FORMALITY: Match formality conventions appropriate for the detected language cul
         // Check for recommended blocks
         const hasLanguageBlock = template.blocks.some(b => b.includes('LANGUAGE_ADAPTIVE'));
         if (!hasLanguageBlock) {
-            issues.push({ 
-                severity: 'warning', 
-                message: 'Template missing BEHAVIOR.LANGUAGE_ADAPTIVE block for multilingual support' 
+            issues.push({
+                severity: 'warning',
+                message: 'Template missing BEHAVIOR.LANGUAGE_ADAPTIVE block for multilingual support'
             });
         }
 
@@ -620,12 +620,12 @@ FORMALITY: Match formality conventions appropriate for the detected language cul
     getFromCache(key) {
         const cached = this.cache.get(key);
         if (!cached) return null;
-        
+
         if (Date.now() - cached.timestamp > this.cacheMaxAge) {
             this.cache.delete(key);
             return null;
         }
-        
+
         return cached.data;
     }
 
@@ -640,6 +640,12 @@ FORMALITY: Match formality conventions appropriate for the detected language cul
 
 // Singleton instance
 const promptTemplateService = new PromptTemplateService();
+
+export {
+PromptTemplateService,
+    promptTemplateService,
+    DEFAULT_TEMPLATES
+};
 
 export default {
     PromptTemplateService,

@@ -11,9 +11,10 @@
 
 import express from 'express';
 const router = express.Router();
-const StatusReportService = import('statusReportService.js');
+import * as StatusReportServiceModule from '../services/statusReportService.js';
+const StatusReportService = StatusReportServiceModule.default || StatusReportServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-const { asyncHandler } = require('../utils/errorHandler');
+import { asyncHandler  } from '../src/utils/asyncHandler.js';
 
 router.use(verifyToken);
 
@@ -181,7 +182,8 @@ router.get('/:reportId/export/:format', asyncHandler(async (req, res) => {
 
     try {
         if (format.toLowerCase() === 'pdf') {
-            const PdfExportService = import('pdfExportService.js');
+            const PdfExportServiceModule = await import('../services/pdfExportService.js');
+            const PdfExportService = PdfExportServiceModule.default || PdfExportServiceModule;
             
             // Generate PDF buffer
             const pdfBuffer = await PdfExportService.generateStatusReportPdf(report);
@@ -191,7 +193,8 @@ router.get('/:reportId/export/:format', asyncHandler(async (req, res) => {
                 `attachment; filename="status-report-${report.periodLabel.replace(/[^a-zA-Z0-9]/g, '-')}.pdf"`);
             res.send(pdfBuffer);
         } else {
-            const PptxExportService = import('pptxExportService.js');
+            const PptxExportServiceModule = await import('../services/pptxExportService.js');
+            const PptxExportService = PptxExportServiceModule.default || PptxExportServiceModule;
             
             // Generate PPTX buffer
             const pptxBuffer = await PptxExportService.generateStatusReportPptx(report);

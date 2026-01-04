@@ -161,11 +161,15 @@ async function seedAIPlaybookTemplates() {
     console.log(`[SeedAIPlaybooks] Completed: ${templates.length} templates seeded.`);
 }
 
+export {
+seedAIPlaybookTemplates
+};
+
 export default { seedAIPlaybookTemplates };
 
 // Allow direct execution
 if (require.main === module) {
-    import { getDatabase } from '../database/Database.js';
+    const { getDatabase } = await import('../database/Database.js');
 const db = getDatabase();
     db.initPromise.then(() => {
         seedAIPlaybookTemplates().then(() => {

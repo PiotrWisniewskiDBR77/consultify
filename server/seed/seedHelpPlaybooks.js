@@ -438,6 +438,10 @@ const seedHelpPlaybooks = async () => {
 };
 
 // Export for CLI or programmatic use
+export {
+seedHelpPlaybooks, CORE_PLAYBOOKS
+};
+
 export default { seedHelpPlaybooks, CORE_PLAYBOOKS };
 
 // Run if called directly

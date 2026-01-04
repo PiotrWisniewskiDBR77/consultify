@@ -11,8 +11,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../database/Database.js';
-const db = getDatabase();
+import db from '../database.js';
 
 // MCP Protocol Version
 const MCP_VERSION = '2024-11-05';
@@ -148,8 +147,8 @@ const TOOLS = {
             type: 'object',
             properties: {
                 query: { type: 'string' },
-                types: { 
-                    type: 'array', 
+                types: {
+                    type: 'array',
                     items: { type: 'string', enum: ['tasks', 'initiatives', 'projects'] },
                     default: ['tasks', 'initiatives', 'projects']
                 },
@@ -479,7 +478,7 @@ const MCPServer = {
                 `INSERT INTO tasks (id, title, description, priority, due_date, project_id, assignee_id, created_by, organization_id, status)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
                 [id, title, description, priority || 'medium', dueDate, projectId, assigneeId || userId, userId, organizationId],
-                function(err) {
+                function (err) {
                     if (err) return reject(err);
                     resolve({ taskId: id, created: true });
                 }
@@ -507,7 +506,7 @@ const MCPServer = {
             db.run(
                 `UPDATE tasks SET ${setClauses.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
                 params,
-                function(err) {
+                function (err) {
                     if (err) return reject(err);
                     resolve({ updated: this.changes > 0 });
                 }
@@ -577,8 +576,9 @@ const MCPServer = {
     },
 
     _sendNotification: async (userId, organizationId, args) => {
-        const NotificationService = import('notificationService.js');
-        
+        const NotificationServiceModule = await import('../src/services/NotificationService.js');
+        const NotificationService = NotificationServiceModule.default || NotificationServiceModule;
+
         const notification = {
             userId: args.userId || userId,
             organizationId,

@@ -9,10 +9,10 @@
  * - AI-generated insights
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const { embeddingService } = require('./embeddingService');
-const { aiLogger } = require('./logger');
+import { embeddingService } from './embeddingService.js';
+import { aiLogger } from './logger.js';
 
 // Memory types for organization-level patterns
 const ORG_MEMORY_TYPES = {
@@ -594,6 +594,12 @@ Return JSON:
 
 // Singleton instance
 const organizationMemoryStore = new OrganizationMemoryStore();
+
+export {
+OrganizationMemoryStore,
+    organizationMemoryStore,
+    ORG_MEMORY_TYPES
+};
 
 export default {
     OrganizationMemoryStore,

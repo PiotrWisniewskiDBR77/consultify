@@ -31,7 +31,7 @@ interface ProactiveNudgesInterface {
 let proactiveNudges: ProactiveNudgesInterface | null = null;
 
 try {
-    const nudgesModule = await import('../../services/ai/proactiveNudges.js');
+    const nudgesModule = await import('../services/ai/proactiveNudges.js');
     const module = nudgesModule.default || nudgesModule;
     proactiveNudges = (module.proactiveNudges || module) as ProactiveNudgesInterface;
 } catch {

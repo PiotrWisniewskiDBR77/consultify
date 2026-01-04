@@ -7,8 +7,8 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
-const { abTestingService } = import('ai/abTesting.js');
+import { requireRole  } from '../middleware/rbac.js';
+import abTestingService from '../services/ai/abTesting.js';
 
 /**
  * GET /api/ai-ab-testing/experiments

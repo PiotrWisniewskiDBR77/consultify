@@ -1,7 +1,8 @@
-const defaultJwt = require('jsonwebtoken');
-const defaultConfig = require('../config');
-const defaultDb = require('../database');
-const defaultPermissionService = import('permissionService.js');
+import defaultJwt from 'jsonwebtoken';
+import defaultConfig from '../config.js';
+import defaultDb from '../database.js';
+import * as PermissionServiceModule from '../services/permissionService.js';
+const defaultPermissionService = PermissionServiceModule.default || PermissionServiceModule;
 
 // Dependencies object to allow injection
 const deps = {

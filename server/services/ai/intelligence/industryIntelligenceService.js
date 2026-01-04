@@ -8,8 +8,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-const db = require('../../../database');
-const WebSearchService = require('../../webSearchService');
+import db from '../../../database.js';
+import WebSearchService from '../../webSearchService.js';
 
 // Cache TTL in milliseconds (24 hours)
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;

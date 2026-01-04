@@ -400,6 +400,13 @@ class FrameworkBenchmarkService {
     }
 }
 
+export {
+FrameworkBenchmarkService,
+    BENCHMARK_DATA,
+    REGION_MODIFIERS,
+    SIZE_MODIFIERS,
+};
+
 export default {
     FrameworkBenchmarkService,
     BENCHMARK_DATA,

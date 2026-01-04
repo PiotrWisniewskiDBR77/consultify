@@ -94,7 +94,7 @@ class BillingCron {
             logger.info('[BillingCron] Running resetMonthlyBudgets...');
             await deps.budgetManagementService.resetMonthlyBudgets();
             logger.info('[BillingCron] Monthly budgets reset completed');
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[BillingCron] Error resetting monthly budgets:', error);
             throw error;
         }
@@ -113,7 +113,7 @@ class BillingCron {
                 deps.db.all<Organization>(
                     'SELECT id FROM organizations WHERE status = ?',
                     ['active'],
-                    (err, rows) => {
+                    (err: Error | null, rows: unknown) => {
                         if (err) reject(err);
                         else resolve(rows || []);
                     }
@@ -128,14 +128,14 @@ class BillingCron {
                         triggeredCount += result.triggeredCount;
                         logger.info(`[BillingCron] Triggered ${result.triggeredCount} alerts for org ${org.id}`);
                     }
-                } catch (err) {
+                } catch (err: unknown) {
                     logger.error(`[BillingCron] Error checking alerts for org ${org.id}:`, err);
                 }
             }
 
             logger.info(`[BillingCron] Alert check completed. Triggered ${triggeredCount} alerts total`);
             return triggeredCount;
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[BillingCron] Error checking alerts:', error);
             throw error;
         }
@@ -160,7 +160,7 @@ class BillingCron {
                      FROM organization_seats os
                      WHERE os.billing_model IN('pay_as_you_go', 'hybrid')`,
                     [],
-                    (err, rows) => {
+                    (err: Error | null, rows: unknown) => {
                         if (err) reject(err);
                         else resolve(rows || []);
                     }
@@ -179,14 +179,14 @@ class BillingCron {
                         invoicesGenerated++;
                         logger.info(`[BillingCron] Generated invoice for org ${org.organization_id}: $${result.totalCost}`);
                     }
-                } catch (err) {
+                } catch (err: unknown) {
                     logger.error(`[BillingCron] Error generating invoice for org ${org.organization_id}:`, err);
                 }
             }
 
             logger.info(`[BillingCron] Invoice generation completed. Generated ${invoicesGenerated} invoices`);
             return invoicesGenerated;
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[BillingCron] Error generating invoices:', error);
             throw error;
         }
@@ -204,7 +204,7 @@ class BillingCron {
                 deps.db.all<Organization>(
                     'SELECT id FROM organizations WHERE status = ?',
                     ['active'],
-                    (err, rows) => {
+                    (err: Error | null, rows: unknown) => {
                         if (err) reject(err);
                         else resolve(rows || []);
                     }
@@ -216,14 +216,14 @@ class BillingCron {
                 try {
                     await deps.seatManagementService.updateSeatCount(org.id);
                     updated++;
-                } catch (err) {
+                } catch (err: unknown) {
                     logger.error(`[BillingCron] Error updating seat count for org ${org.id}:`, err);
                 }
             }
 
             logger.info(`[BillingCron] Seat count update completed. Updated ${updated} organizations`);
             return updated;
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[BillingCron] Error updating seat counts:', error);
             throw error;
         }
@@ -238,7 +238,7 @@ class BillingCron {
             // This would aggregate usage_records into usage_summaries
             // Implementation depends on your usage_summaries table structure
             logger.info('[BillingCron] Monthly usage calculation completed');
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[BillingCron] Error calculating monthly usage:', error);
             throw error;
         }

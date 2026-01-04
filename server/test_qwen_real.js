@@ -1,5 +1,5 @@
-const AiService = require('./services/aiService');
-const db = require('./database');
+import AiService from './services/aiService.js';
+import db from './database.js';
 
 // Mock a user ID that we know exists (e.g. 2 for Piotr)
 const userId = 'user-dbr77-admin';

@@ -1,13 +1,15 @@
+import crypto from 'crypto';
 import express from 'express';
 const router = express.Router();
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
-const bcrypt = require('bcryptjs');
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-const config = require('../config');
+import config from '../config.js';
 import authMiddleware from '../middleware/authMiddleware.js';
-const ActivityService = import('activityService.js');
+import * as ActivityServiceModule from '../services/activityService.js';
+const ActivityService = ActivityServiceModule.default || ActivityServiceModule;
 
 // Helper to add timeout to promises
 const withTimeout = (promise, timeoutMs = 1000) => {
@@ -20,7 +22,7 @@ const withTimeout = (promise, timeoutMs = 1000) => {
 // LOGIN
 // Enhanced with MFA support and refresh tokens
 // Import Controller
-const authController = require('../controllers/authController');
+import authController from '../controllers/authController.js';
 
 // LOGIN
 // Enhanced with MFA support and refresh tokens
@@ -34,7 +36,9 @@ router.post('/refresh', async (req, res) => {
         return res.status(400).json({ error: 'Refresh token is required' });
     }
 
-    const RefreshTokenService = import('refreshTokenService.js');
+    const RefreshTokenServiceModule = await import('../services/refreshTokenService.js');
+
+    const RefreshTokenService = RefreshTokenServiceModule.default || RefreshTokenServiceModule;
 
     try {
         const result = await RefreshTokenService.refreshAccessToken(refreshToken, {
@@ -59,7 +63,8 @@ router.post('/refresh', async (req, res) => {
 
 // GET ACTIVE SESSIONS
 router.get('/sessions', authMiddleware, async (req, res) => {
-    const RefreshTokenService = import('refreshTokenService.js');
+    const RefreshTokenServiceModule = await import('../services/refreshTokenService.js');
+    const RefreshTokenService = RefreshTokenServiceModule.default || RefreshTokenServiceModule;
 
     try {
         const sessions = await RefreshTokenService.getActiveSessions(req.user.id);
@@ -73,7 +78,8 @@ router.get('/sessions', authMiddleware, async (req, res) => {
 // REVOKE SESSION
 router.delete('/sessions/:id', authMiddleware, async (req, res) => {
     const { id } = req.params;
-    const RefreshTokenService = import('refreshTokenService.js');
+    const RefreshTokenServiceModule = await import('../services/refreshTokenService.js');
+    const RefreshTokenService = RefreshTokenServiceModule.default || RefreshTokenServiceModule;
 
     try {
         await RefreshTokenService.revokeSession(req.user.id, id);
@@ -112,7 +118,8 @@ router.get('/me', authMiddleware, async (req, res) => {
         // Check if role changed in database - if so, generate new token
         let newToken = null;
         if (user.role !== req.user.role) {
-            const RefreshTokenService = import('refreshTokenService.js');
+            const RefreshTokenServiceModule = await import('../services/refreshTokenService.js');
+            const RefreshTokenService = RefreshTokenServiceModule.default || RefreshTokenServiceModule;
             const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
             const tokenPair = await RefreshTokenService.generateTokenPair(
                 {
@@ -287,7 +294,8 @@ router.post('/demo-login', async (req, res) => {
         });
 
         // Generate tokens using RefreshTokenService
-        const RefreshTokenService = import('refreshTokenService.js');
+        const RefreshTokenServiceModule = await import('../services/refreshTokenService.js');
+        const RefreshTokenService = RefreshTokenServiceModule.default || RefreshTokenServiceModule;
 
         const tokenResult = await RefreshTokenService.generateTokenPair(user, {
             deviceInfo: 'Demo Session',
@@ -629,7 +637,8 @@ router.post('/change-password', authMiddleware, async (req, res) => {
         });
 
         // Optionally: Revoke all other sessions for security
-        const RefreshTokenService = import('refreshTokenService.js');
+        const RefreshTokenServiceModule = await import('../services/refreshTokenService.js');
+        const RefreshTokenService = RefreshTokenServiceModule.default || RefreshTokenServiceModule;
         await RefreshTokenService.revokeAllUserTokens(userId);
 
         res.json({
@@ -707,8 +716,9 @@ router.post('/verify-email', async (req, res) => {
 
 router.post('/resend-verification', authMiddleware, async (req, res) => {
     const userId = req.user.id;
-    const EmailService = import('emailService.js');
-    const crypto = require('crypto');
+    const EmailServiceModule = await import('../services/emailService.js');
+    const EmailService = EmailServiceModule.default || EmailServiceModule;
+    const crypto = crypto;
 
     try {
         const token = crypto.randomBytes(32).toString('hex');
@@ -741,7 +751,8 @@ router.post('/resend-verification', authMiddleware, async (req, res) => {
 
 // MFA SETUP
 router.post('/mfa/setup', authMiddleware, async (req, res) => {
-    const MFAService = import('mfaService.js');
+    const MFAServiceModule = await import('../services/mfaService.js');
+    const MFAService = MFAServiceModule.default || MFAServiceModule;
     try {
         const result = await MFAService.setupMFA(req.user.id, req.user.email);
         res.json(result);
@@ -753,7 +764,8 @@ router.post('/mfa/setup', authMiddleware, async (req, res) => {
 
 router.post('/mfa/enable', authMiddleware, async (req, res) => {
     const { token } = req.body;
-    const MFAService = import('mfaService.js');
+    const MFAServiceModule = await import('../services/mfaService.js');
+    const MFAService = MFAServiceModule.default || MFAServiceModule;
     try {
         const result = await MFAService.verifyAndEnableMFA(req.user.id, token);
         if (!result.success) {
@@ -768,7 +780,8 @@ router.post('/mfa/enable', authMiddleware, async (req, res) => {
 
 router.post('/mfa/disable', authMiddleware, async (req, res) => {
     const { token } = req.body;
-    const MFAService = import('mfaService.js');
+    const MFAServiceModule = await import('../services/mfaService.js');
+    const MFAService = MFAServiceModule.default || MFAServiceModule;
     try {
         const result = await MFAService.disableMFA(req.user.id, token);
         if (!result.success) {

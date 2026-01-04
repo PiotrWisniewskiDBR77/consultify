@@ -9,7 +9,7 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 // Socratic question patterns by type
 const SOCRATIC_PATTERNS = {
@@ -583,6 +583,13 @@ class SocraticEngine {
 
 // Singleton instance
 const socraticEngine = new SocraticEngine();
+
+export {
+SocraticEngine,
+    socraticEngine,
+    SOCRATIC_PATTERNS,
+    QUESTION_SELECTION_RULES
+};
 
 export default {
     SocraticEngine,

@@ -157,7 +157,7 @@ export function all<T = unknown>(
                     resolve((rows || []) as T[]);
                 }
             });
-        } catch (error) {
+        } catch (error: unknown) {
             clearTimeout(timeoutId);
             const err = error as Error;
             dbLogger.error('Query exception', { error: err.message, sql: sql.substring(0, 100) });
@@ -234,7 +234,7 @@ export function get<T = unknown>(
                     resolve((row || null) as T | null);
                 }
             });
-        } catch (error) {
+        } catch (error: unknown) {
             clearTimeout(timeoutId);
             const err = error as Error;
             dbLogger.error('Query exception', { error: err.message, sql: sql.substring(0, 100) });
@@ -315,7 +315,7 @@ export function run(
                     });
                 }
             });
-        } catch (error) {
+        } catch (error: unknown) {
             clearTimeout(timeoutId);
             const err = error as Error;
             dbLogger.error('Statement exception', { error: err.message, sql: sql.substring(0, 100) });
@@ -343,7 +343,7 @@ export async function transaction(statements: TransactionStatement[]): Promise<T
 
         await run('COMMIT', [], { fallback: false });
         return { success: true, results };
-    } catch (error) {
+    } catch (error: unknown) {
         const err = error as Error;
         dbLogger.error('Transaction failed, rolling back', { error: err.message });
         try {

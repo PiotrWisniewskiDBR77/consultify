@@ -127,7 +127,7 @@ const PMOValidation = {
                         (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)
                         VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
 
-                    import { v4 as uuidv4 } from 'uuid';
+                    const { v4 as uuidv4  } = await import('uuid');
                     db.run(logSql, [
                         uuidv4(),
                         req.organizationId || 'unknown',

@@ -4,7 +4,7 @@
  * Uses Zod for runtime validation.
  */
 
-const { z } = require('zod');
+import { z } from 'zod';
 
 // --- Schemas ---
 
@@ -77,11 +77,11 @@ function validateOrFallback(data, schema, fallback) {
     }
 }
 
-export default {
+export {
+    validateOrFallback,
     GapAnalysisSchema,
     EvidenceSchema,
     InitiativeListSchema,
     PrioritizedListSchema,
-    ROIEstimateSchema,
-    validateOrFallback
+    ROIEstimateSchema
 };

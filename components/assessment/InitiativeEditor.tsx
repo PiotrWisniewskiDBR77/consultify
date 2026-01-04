@@ -64,8 +64,8 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
     // Validation state
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Validate on change
-    useEffect(() => {
+    // Validate on change - use useMemo for computed errors
+    const computedErrors = React.useMemo(() => {
         const newErrors: Record<string, string> = {};
 
         if (!name || name.length < 5) {
@@ -84,8 +84,13 @@ export const InitiativeEditor: React.FC<InitiativeEditorProps> = ({
             newErrors.estimatedROI = 'ROI must be greater than 0';
         }
 
-        setErrors(newErrors);
+        return newErrors;
     }, [name, description, estimatedBudget, estimatedROI]);
+
+    // Sync errors state with computed errors
+    useEffect(() => {
+        queueMicrotask(() => setErrors(computedErrors));
+    }, [computedErrors]);
 
     const handleAddObjective = () => {
         if (newObjective.trim()) {

@@ -7,7 +7,8 @@
 
 import express from 'express';
 const router = express.Router();
-const webauthnService = import('webauthnService.js');
+import * as webauthnServiceModule from '../services/webauthnService.js';
+const webauthnService = webauthnServiceModule.default || webauthnServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // ====== REGISTRATION ENDPOINTS ======

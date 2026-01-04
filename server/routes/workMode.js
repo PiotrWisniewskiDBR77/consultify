@@ -9,8 +9,9 @@
 import express from 'express';
 const router = express.Router();
 import auth from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
-const WorkModeService = import('workModeService.js');
+import { requireRole  } from '../middleware/rbac.js';
+import * as WorkModeServiceModule from '../services/workModeService.js';
+const WorkModeService = WorkModeServiceModule.default || WorkModeServiceModule;
 
 /**
  * GET /api/org/work-mode

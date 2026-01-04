@@ -314,7 +314,7 @@ const PolicyEngine = {
      * @returns {Promise<Object>}
      */
     createRule: async (data) => {
-        import { v4 as uuidv4 } from 'uuid';
+        const uuidv4 = require('uuid').v4;
         const id = `pr-${uuidv4()}`;
 
         return new Promise((resolve, reject) => {

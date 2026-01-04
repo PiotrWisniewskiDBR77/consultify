@@ -1,7 +1,16 @@
-const cron = require('node-cron');
-const RetentionPolicyService = import('retentionPolicyService.js');
-const StorageReconciliationService = import('storageReconciliationService.js');
-const TrialCron = require('./trialCron');
+import cron from 'node-cron';
+import RetentionPolicyService from '../src/services/retentionPolicyService.ts';
+import StorageReconciliationService from '../src/services/storageReconciliationService.ts';
+import TrialCron from './trialCron.ts'; // Assuming JS usage for legacy or TS if Vitest resolves
+import MetricsAggregator from '../src/services/metricsAggregator.ts';
+import SLAService from '../src/services/slaService.ts';
+import AICostControlService from '../src/services/aiCostControlService.ts';
+import ScheduledReportsService from '../src/services/scheduledReportsService.ts';
+import ReportEmailService from '../src/services/reportEmailService.ts';
+import { learningSystem } from '../src/services/ai/learningSystem.ts'; // Check if file exists
+import AIMemoryManager from '../src/services/aiMemoryManager.ts';
+import FeedbackService from '../src/services/feedbackService.ts';
+import AIMemoryMetricsService from '../src/services/ai/aiMemoryMetricsService.ts';
 
 const Scheduler = {
     init: () => {
@@ -34,8 +43,7 @@ const Scheduler = {
         // 5. Metrics Snapshot Generation - Run every day at 2:45 AM
         cron.schedule('45 2 * * *', () => {
             console.log('[Scheduler] Running Daily Metrics Snapshot Generation');
-            const MetricsAggregator = import('metricsAggregator.js');
-            MetricsAggregator.buildDailySnapshots().catch(err => {
+            MetricsAggregator.buildDailySnapshots().catch((err: any) => {
                 console.error('[Scheduler] Metrics Snapshot Generation failed:', err.message);
             });
         });
@@ -43,8 +51,7 @@ const Scheduler = {
         // 6. SLA Check & Escalation - Run every 10 minutes
         cron.schedule('*/10 * * * *', () => {
             console.log('[Scheduler] Running SLA Check & Escalation');
-            const SLAService = import('slaService.js');
-            SLAService.runSlaCheck().catch(err => {
+            SLAService.runSlaCheck().catch((err: any) => {
                 console.error('[Scheduler] SLA Check failed:', err.message);
             });
         });
@@ -52,10 +59,9 @@ const Scheduler = {
         // 8. AI Monthly Budget Reset - Run on the 1st of every month at midnight
         cron.schedule('0 0 1 * *', () => {
             console.log('[Scheduler] Running Monthly AI Budget Reset');
-            const AICostControlService = import('aiCostControlService.js');
-            AICostControlService.resetMonthlyUsage().then(result => {
+            AICostControlService.resetMonthlyUsage().then((result: any) => {
                 console.log(`[Scheduler] AI Monthly Budget Reset completed. Count: ${result.resetCount}`);
-            }).catch(err => {
+            }).catch((err: any) => {
                 console.error('[Scheduler] AI Monthly Budget Reset failed:', err.message);
             });
         });
@@ -63,20 +69,18 @@ const Scheduler = {
         // 9. Scheduled Management Reports - Run every hour at minute 0
         cron.schedule('0 * * * *', () => {
             console.log('[Scheduler] Checking Scheduled Management Reports');
-            const ScheduledReportsService = import('scheduledReportsService.js');
-            ScheduledReportsService.processScheduledReports().then(result => {
+            ScheduledReportsService.processScheduledReports().then((result: any) => {
                 if (result.processed > 0) {
                     console.log(`[Scheduler] Processed ${result.processed} scheduled report(s)`);
                 }
-            }).catch(err => {
+            }).catch((err: any) => {
                 console.error('[Scheduler] Scheduled Reports processing failed:', err.message);
             });
         });
 
         // 10. Scheduled Emails - Run every 15 minutes
         cron.schedule('*/15 * * * *', () => {
-            const ReportEmailService = import('reportEmailService.js');
-            ReportEmailService.processScheduledEmails().catch(err => {
+            ReportEmailService.processScheduledEmails().catch((err: any) => {
                 console.error('[Scheduler] Scheduled Emails processing failed:', err.message);
             });
         });
@@ -89,10 +93,9 @@ const Scheduler = {
         cron.schedule('0 */6 * * *', async () => {
             console.log('[Scheduler] Running AI Pattern Extraction');
             try {
-                const { learningSystem } = import('ai/learningSystem.js');
                 const result = await learningSystem.extractAllPatterns();
                 console.log(`[Scheduler] AI Pattern Extraction completed: ${result.patternsExtracted} patterns from ${result.recordsProcessed} records`);
-            } catch (err) {
+            } catch (err: any) {
                 console.error('[Scheduler] AI Pattern Extraction failed:', err.message);
             }
         });
@@ -101,10 +104,9 @@ const Scheduler = {
         cron.schedule('30 4 * * *', async () => {
             console.log('[Scheduler] Running AI Learning Consolidation');
             try {
-                const { learningSystem } = import('ai/learningSystem.js');
                 const result = await learningSystem.consolidateLearnings();
                 console.log(`[Scheduler] AI Learning Consolidation completed: ${result.strategiesCreated} strategies created`);
-            } catch (err) {
+            } catch (err: any) {
                 console.error('[Scheduler] AI Learning Consolidation failed:', err.message);
             }
         });
@@ -113,10 +115,9 @@ const Scheduler = {
         cron.schedule('0 5 * * 1', async () => {
             console.log('[Scheduler] Running AI Learning Data Cleanup');
             try {
-                const { learningSystem } = import('ai/learningSystem.js');
                 const result = await learningSystem.cleanupOldData();
                 console.log(`[Scheduler] AI Learning Cleanup completed: ${result.deleted} old records deleted`);
-            } catch (err) {
+            } catch (err: any) {
                 console.error('[Scheduler] AI Learning Cleanup failed:', err.message);
             }
         });
@@ -126,7 +127,6 @@ const Scheduler = {
         cron.schedule('0 2 * * 0', async () => {
             console.log('[Scheduler] Running AI Memory Cleanup Cycle');
             try {
-                const AIMemoryManager = import('aiMemoryManager.js');
                 const result = await AIMemoryManager.runCleanupCycle();
                 console.log(`[Scheduler] AI Memory Cleanup completed:`, {
                     projectMemory: result.projectMemory?.deleted || 0,
@@ -134,7 +134,7 @@ const Scheduler = {
                     feedback: result.feedback?.deleted || 0,
                     duration: `${result.duration}ms`
                 });
-            } catch (err) {
+            } catch (err: any) {
                 console.error('[Scheduler] AI Memory Cleanup failed:', err.message);
             }
         });
@@ -143,7 +143,6 @@ const Scheduler = {
         // More frequent cleanup for streaming partial responses
         cron.schedule('0 * * * *', async () => {
             try {
-                const AIMemoryManager = import('aiMemoryManager.js');
                 const result = await AIMemoryManager.cleanupPartialResponses(1); // 1 hour
                 if (result.deleted > 0) {
                     console.log(`[Scheduler] Partial Response Cleanup: ${result.deleted} entries removed`);
@@ -158,10 +157,9 @@ const Scheduler = {
         cron.schedule('0 4 * * *', async () => {
             console.log('[Scheduler] Running Feedback Learning Consolidation');
             try {
-                const FeedbackService = import('feedbackService.js');
                 const result = await FeedbackService.consolidateLearning();
                 console.log(`[Scheduler] Feedback Consolidation completed:`, result);
-            } catch (err) {
+            } catch (err: any) {
                 console.error('[Scheduler] Feedback Consolidation failed:', err.message);
             }
         });
@@ -171,10 +169,9 @@ const Scheduler = {
         cron.schedule('0 1 * * *', async () => {
             console.log('[Scheduler] Running AI Memory Metrics Aggregation');
             try {
-                const AIMemoryMetricsService = import('ai/aiMemoryMetricsService.js');
                 const result = await AIMemoryMetricsService.aggregateDailyMetrics();
                 console.log(`[Scheduler] Memory Metrics Aggregation completed: ${result.aggregated} organizations for ${result.date}`);
-            } catch (err) {
+            } catch (err: any) {
                 console.error('[Scheduler] Memory Metrics Aggregation failed:', err.message);
             }
         });

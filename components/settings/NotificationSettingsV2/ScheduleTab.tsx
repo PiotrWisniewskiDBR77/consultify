@@ -28,9 +28,14 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({
 }) => {
     const { t } = useTranslation();
     const [localSchedule, setLocalSchedule] = useState(preferences.schedule);
+    const prevScheduleRef = React.useRef(preferences.schedule);
 
     useEffect(() => {
-        setLocalSchedule(preferences.schedule);
+        // Only sync if preferences actually changed from parent
+        if (prevScheduleRef.current !== preferences.schedule) {
+            prevScheduleRef.current = preferences.schedule;
+            queueMicrotask(() => setLocalSchedule(preferences.schedule));
+        }
     }, [preferences.schedule]);
 
     const handleQuietHoursToggle = async () => {

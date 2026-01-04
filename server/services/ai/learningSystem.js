@@ -1128,6 +1128,12 @@ class LearningSystem {
 // Singleton instance
 const learningSystem = new LearningSystem();
 
+export {
+LearningSystem,
+    learningSystem,
+    CONFIG
+};
+
 export default {
     LearningSystem,
     learningSystem,

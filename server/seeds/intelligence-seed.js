@@ -356,6 +356,10 @@ async function seedIntelligenceData(db, projectId, userId) {
     return { sessionId: session.id, insightCount: SAMPLE_INSIGHTS.length };
 }
 
+export {
+seedIntelligenceData, SAMPLE_INSIGHTS, SAMPLE_MESSAGES
+};
+
 export default { seedIntelligenceData, SAMPLE_INSIGHTS, SAMPLE_MESSAGES };
 
 

@@ -22,7 +22,7 @@ import FinancialService from './financialService.js';
 import WebSearchService from './webSearchService.js';
 import AnalyticsService from './analyticsService.js';
 import FeedbackService from './feedbackService.js';
-import TokenBillingService from './tokenBillingService.js';
+import TokenBillingService from '../src/services/TokenBillingService.js';
 import KnowledgeService from './knowledgeService.js';
 import aiQueue from '../queues/aiQueue.js';
 import fs from 'fs';

@@ -10,9 +10,9 @@
  * - Console (fallback)
  */
 
-const https = require('https');
-const http = require('http');
-const { aiLogger } = require('./logger');
+import https from 'https';
+import http from 'http';
+import { aiLogger } from './logger.js';
 
 // Alert severity levels
 const SEVERITY = {
@@ -400,6 +400,14 @@ const alerts = {
     
     errorSpike: (errorCount, errorRate, windowMinutes) => 
         alertingService.send(ALERT_TYPE.ERROR_SPIKE, { errorCount, errorRate, windowMinutes })
+};
+
+export {
+AlertingService,
+    alertingService,
+    alerts,
+    SEVERITY,
+    ALERT_TYPE
 };
 
 export default {

@@ -223,7 +223,7 @@ export async function logAudit(params: LogAuditParams): Promise<LogAuditResult> 
             [orgId]
         );
         prevHash = prevRow?.record_hash || null;
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[GovernanceAudit] Error fetching prev hash:', err);
         // Continue without hash chain if error
     }

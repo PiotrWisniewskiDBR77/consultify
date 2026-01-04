@@ -169,7 +169,7 @@ class TaxServiceClass {
      */
     private async dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
         return new Promise((resolve, reject) => {
-            this.db.all<T>(sql, params, (err, rows) => {
+            this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -181,7 +181,7 @@ class TaxServiceClass {
      */
     private async dbGet<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
         return new Promise((resolve, reject) => {
-            this.db.get<T>(sql, params, (err, row) => {
+            this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
                 else resolve(row || null);
             });
@@ -406,7 +406,7 @@ class TaxServiceClass {
                         amount: tb.amount
                     }))
                 };
-            } catch (e) {
+            } catch (e: unknown) {
                 logger.warn('[Tax] Stripe Tax calculation failed, falling back to local:', e instanceof Error ? e.message : String(e));
             }
         }
@@ -510,7 +510,7 @@ class TaxServiceClass {
 
                 await this.cacheValidation(cleanedNumber, countryCode, result);
                 return result;
-            } catch (e) {
+            } catch (e: unknown) {
                 logger.warn('[Tax] Stripe validation failed:', e instanceof Error ? e.message : String(e));
             }
         }
@@ -521,7 +521,7 @@ class TaxServiceClass {
                 const viesResult = await this.validateWithVIES(cleanedNumber, countryCode);
                 await this.cacheValidation(cleanedNumber, countryCode, viesResult);
                 return viesResult;
-            } catch (e) {
+            } catch (e: unknown) {
                 logger.warn('[Tax] VIES validation failed:', e instanceof Error ? e.message : String(e));
             }
         }

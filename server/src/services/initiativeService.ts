@@ -139,7 +139,7 @@ class InitiativeServiceClass {
 
             await this.deps.db.run(updateQuery, updateParams);
             return calculatedProgress;
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[InitiativeService] Error recalculating initiative progress:', error as Error);
             throw error;
         }

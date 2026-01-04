@@ -1,11 +1,11 @@
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+import path from 'path';
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const dbPath = path.resolve(__dirname, '../consultify.db');
 const db = new sqlite3.Database(dbPath);
 
-const { v4: uuidv4 } = require('uuid');
+import { v4: uuidv4 } from 'uuid';
 
 const providers = [
     {

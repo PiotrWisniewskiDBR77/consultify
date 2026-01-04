@@ -8,12 +8,10 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-const db = require('../../../database');
-const { 
-    CONSULTING_FRAMEWORKS, 
+import db from '../../../database.js';
+import { CONSULTING_FRAMEWORKS, 
     getFramework, 
-    recommendFrameworks 
-} = require('./consultingFrameworks');
+    recommendFrameworks } from './consultingFrameworks.js';
 
 // Lazy-load AI service to avoid circular dependencies
 let AIService = null;

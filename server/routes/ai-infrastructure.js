@@ -11,11 +11,11 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 
 // Import existing route handlers
-const llmRoutes = require('./llm');
-const aiSettingsRoutes = require('./ai-settings');
+import llmRoutes from './llm.js';
+import aiSettingsRoutes from './ai-settings.js';
 
 // ==========================================
 // PROVIDERS ENDPOINTS

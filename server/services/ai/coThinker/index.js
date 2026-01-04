@@ -13,35 +13,33 @@
  */
 
 // Consulting Brain Core
-const { IntentEngine, intentEngine, INTENT_TAXONOMY, URGENCY_INDICATORS, EMOTIONAL_INDICATORS } = require('../intentEngine');
-const { ConversationStateMachine, conversationStateMachine, CONVERSATION_PHASES, DATA_REQUIREMENTS } = require('../conversationStateMachine');
-const { ConsultingFlowEngine, consultingFlowEngine, TRANSFORMATION_METHODOLOGY, AXIS_QUESTION_BANK } = require('../consultingFlowEngine');
+import { IntentEngine, intentEngine, INTENT_TAXONOMY, URGENCY_INDICATORS, EMOTIONAL_INDICATORS } from '../intentEngine.js';
+import { ConversationStateMachine, conversationStateMachine, CONVERSATION_PHASES, DATA_REQUIREMENTS } from '../conversationStateMachine.js';
+import { ConsultingFlowEngine, consultingFlowEngine, TRANSFORMATION_METHODOLOGY, AXIS_QUESTION_BANK } from '../consultingFlowEngine.js';
 
 // Deep Knowledge Layer
-const { EnhancedContextBuilder, enhancedContextBuilder, PHASE_CONTEXT_PRIORITIES, MAX_TOKENS_PER_LAYER } = require('../enhancedContextBuilder');
-const { KnowledgeIndexer, knowledgeIndexer } = require('../knowledgeIndexer');
-const { IntelligentResearch, intelligentResearch, QUERY_TEMPLATES, CONTEXT_RESEARCH_MAP } = require('../intelligentResearch');
+import { EnhancedContextBuilder, enhancedContextBuilder, PHASE_CONTEXT_PRIORITIES, MAX_TOKENS_PER_LAYER } from '../enhancedContextBuilder.js';
+import { KnowledgeIndexer, knowledgeIndexer } from '../knowledgeIndexer.js';
+import { IntelligentResearch, intelligentResearch, QUERY_TEMPLATES, CONTEXT_RESEARCH_MAP } from '../intelligentResearch.js';
 
 // Action Layer
-const { ActionExecutor, actionExecutor, ACTION_TYPES, VIEW_MAPPINGS } = require('../actionExecutor');
+import { ActionExecutor, actionExecutor, ACTION_TYPES, VIEW_MAPPINGS } from '../actionExecutor.js';
 
 // Interaction Layer
-const { SocraticEngine, socraticEngine, SOCRATIC_PATTERNS, QUESTION_SELECTION_RULES } = require('../socraticEngine');
-const { PersonalizationEngine, personalizationEngine, DEFAULT_PROFILE, COMMUNICATION_STYLES, EXPERTISE_ADJUSTMENTS, LEARNING_SIGNALS } = require('../personalizationEngine');
+import { SocraticEngine, socraticEngine, SOCRATIC_PATTERNS, QUESTION_SELECTION_RULES } from '../socraticEngine.js';
+import { PersonalizationEngine, personalizationEngine, DEFAULT_PROFILE, COMMUNICATION_STYLES, EXPERTISE_ADJUSTMENTS, LEARNING_SIGNALS } from '../personalizationEngine.js';
 
 // Harvard Consultant Prompts
-const { 
-    HARVARD_CONSULTANT_PROMPT,
+import { HARVARD_CONSULTANT_PROMPT,
     PHASE_SPECIFIC_EXPERTISE,
     VOICE_RESPONSE_INSTRUCTIONS,
     CONTEXT_ENHANCEMENTS,
     getFullSystemPrompt,
     getTimeGreeting,
-    getFollowUpSuggestions: harvardFollowUpSuggestions
-} = require('../harvardConsultantPrompts');
+    getFollowUpSuggestions: harvardFollowUpSuggestions } from '../harvardConsultantPrompts.js';
 
 // Existing services for integration
-const { coThinkerPrompt, getEnhancedPrompt, getTimeGreeting, getQuickActionPrompt, getFollowUpSuggestions } = require('../coThinkerPrompts');
+import { coThinkerPrompt, getEnhancedPrompt, getTimeGreeting, getQuickActionPrompt, getFollowUpSuggestions } from '../coThinkerPrompts.js';
 
 /**
  * Co-Thinker Orchestrator
@@ -282,6 +280,77 @@ class CoThinkerOrchestrator {
 
 // Singleton instance
 const coThinkerOrchestrator = new CoThinkerOrchestrator();
+
+export {
+// Main orchestrator
+    CoThinkerOrchestrator,
+    coThinkerOrchestrator,
+    
+    // Consulting Brain Core
+    IntentEngine,
+    intentEngine,
+    INTENT_TAXONOMY,
+    URGENCY_INDICATORS,
+    EMOTIONAL_INDICATORS,
+    
+    ConversationStateMachine,
+    conversationStateMachine,
+    CONVERSATION_PHASES,
+    DATA_REQUIREMENTS,
+    
+    ConsultingFlowEngine,
+    consultingFlowEngine,
+    TRANSFORMATION_METHODOLOGY,
+    AXIS_QUESTION_BANK,
+    
+    // Deep Knowledge Layer
+    EnhancedContextBuilder,
+    enhancedContextBuilder,
+    PHASE_CONTEXT_PRIORITIES,
+    MAX_TOKENS_PER_LAYER,
+    
+    KnowledgeIndexer,
+    knowledgeIndexer,
+    
+    IntelligentResearch,
+    intelligentResearch,
+    QUERY_TEMPLATES,
+    CONTEXT_RESEARCH_MAP,
+    
+    // Action Layer
+    ActionExecutor,
+    actionExecutor,
+    ACTION_TYPES,
+    VIEW_MAPPINGS,
+    
+    // Interaction Layer
+    SocraticEngine,
+    socraticEngine,
+    SOCRATIC_PATTERNS,
+    QUESTION_SELECTION_RULES,
+    
+    PersonalizationEngine,
+    personalizationEngine,
+    DEFAULT_PROFILE,
+    COMMUNICATION_STYLES,
+    EXPERTISE_ADJUSTMENTS,
+    LEARNING_SIGNALS,
+    
+    // Harvard Prompts
+    HARVARD_CONSULTANT_PROMPT,
+    PHASE_SPECIFIC_EXPERTISE,
+    VOICE_RESPONSE_INSTRUCTIONS,
+    CONTEXT_ENHANCEMENTS,
+    getFullSystemPrompt,
+    getTimeGreeting,
+    
+    // Legacy Co-Thinker (for backwards compatibility)
+    coThinkerPrompt,
+    getEnhancedPrompt,
+    getTimeGreeting,
+    getQuickActionPrompt,
+    getFollowUpSuggestions
+};
 
 export default {
     // Main orchestrator

@@ -1,5 +1,5 @@
-const AiService = require('./services/aiService');
-const db = require('./database');
+import AiService from './services/aiService.js';
+import db from './database.js';
 
 // User 2 (Piotr)
 const userId = 2;

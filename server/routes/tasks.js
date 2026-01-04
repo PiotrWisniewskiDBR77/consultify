@@ -4,16 +4,21 @@ import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
-const notificationsRouter = require('./notifications');
-const ActivityService = import('activityService.js');
-const InitiativeService = import('initiativeService.js');
-const cacheHelper = require('../utils/cacheHelper');
-const TaskAssignmentService = import('taskAssignmentService.js');
-const ProjectMemberService = import('projectMemberService.js');
-const DecisionTriggerService = import('decisionTriggerService.js');
+import notificationsRouter from './notifications.js';
+import * as ActivityServiceModule from '../services/activityService.js';
+const ActivityService = ActivityServiceModule.default || ActivityServiceModule;
+import * as InitiativeServiceModule from '../services/initiativeService.js';
+const InitiativeService = InitiativeServiceModule.default || InitiativeServiceModule;
+import cacheHelper from '../utils/cacheHelper.js';
+import * as TaskAssignmentServiceModule from '../services/taskAssignmentService.js';
+const TaskAssignmentService = TaskAssignmentServiceModule.default || TaskAssignmentServiceModule;
+import * as ProjectMemberServiceModule from '../services/projectMemberService.js';
+const ProjectMemberService = ProjectMemberServiceModule.default || ProjectMemberServiceModule;
+import * as DecisionTriggerServiceModule from '../services/decisionTriggerService.js';
+const DecisionTriggerService = DecisionTriggerServiceModule.default || DecisionTriggerServiceModule;
 
-const { validateBody } = require('../middleware/validationMiddleware');
-const { createTaskSchema, updateTaskSchema } = require('../validators/taskValidator');
+const { validateBody   } = await import('../middleware/validationMiddleware.js');
+import { createTaskSchema, updateTaskSchema  } from '../validators/taskValidator.js';
 
 router.use(verifyToken);
 

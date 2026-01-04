@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import express from 'express';
 const router = express.Router();
 import { getDatabase } from '../src/database/Database.js';
@@ -84,7 +85,8 @@ router.post('/notifications', (req, res) => {
 // ==========================================
 
 import auth from '../middleware/authMiddleware.js';
-const NotificationOutboxService = import('notificationOutboxService.js');
+import * as NotificationOutboxServiceModule from '../services/notificationOutboxService.js';
+const NotificationOutboxService = NotificationOutboxServiceModule.default || NotificationOutboxServiceModule;
 
 /**
  * @route GET /api/settings/workflow-notifications
@@ -177,7 +179,7 @@ router.get('/integrations', (req, res) => {
 // ADD/UPDATE Integration
 router.post('/integrations', (req, res) => {
     const { organizationId, provider, config } = req.body;
-    import { v4 as uuidv4 } from 'uuid';
+    const { v4: uuidv4 } = await import('uuid');
 
     if (!organizationId || !provider) return res.status(400).json({ error: 'Org ID and Provider required' });
 
@@ -211,7 +213,9 @@ router.delete('/integrations/:id', (req, res) => {
 // INTEGRATION ANALYTICS & MONITORING
 // ==========================================
 
-const IntegrationAnalyticsService = import('integrationAnalyticsService.js');
+const IntegrationAnalyticsServiceModule = await import('../services/integrationAnalyticsService.js');
+
+const IntegrationAnalyticsService = IntegrationAnalyticsServiceModule.default || IntegrationAnalyticsServiceModule;
 
 // GET Integration Analytics - aggregated stats
 router.get('/integrations/analytics', auth, async (req, res) => {
@@ -393,8 +397,8 @@ router.put('/user/api-keys/:id/rotate', auth, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
-        import { v4 as uuidv4 } from 'uuid';
-        const crypto = require('crypto');
+        const { v4: uuidv4 } = await import('uuid');
+        const crypto = crypto;
 
         // Verify key belongs to user
         const key = await new Promise((resolve, reject) => {
@@ -709,7 +713,9 @@ router.put('/preferences/:category', auth, async (req, res) => {
 // USER NOTIFICATION PREFERENCES V2 (User-Level)
 // ==========================================
 
-const UserNotificationPreferencesService = import('userNotificationPreferencesService.js');
+const UserNotificationPreferencesServiceModule = await import('../services/userNotificationPreferencesService.js');
+
+const UserNotificationPreferencesService = UserNotificationPreferencesServiceModule.default || UserNotificationPreferencesServiceModule;
 
 /**
  * @route GET /api/settings/notifications/preferences
@@ -924,8 +930,7 @@ router.get('/watchers/check/:objectType/:objectId', auth, async (req, res) => {
 // PERSONAL API KEYS
 // ==========================================
 
-import { v4 as uuidv4 } from 'uuid';
-const crypto = require('crypto');
+const { v4 as uuidv4  } = await import('uuid');
 
 /**
  * @route GET /api/settings/api-keys

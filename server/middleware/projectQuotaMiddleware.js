@@ -19,7 +19,7 @@ async function enforceProjectQuota(req, res, next) {
         if (!quota.allowed) {
             // Cleanup temp file if it exists (since we are rejecting after upload)
             if (req.file && req.file.path) {
-                const fs = require('fs');
+                import fs from 'fs';
                 try { fs.unlinkSync(req.file.path); } catch (e) { console.error('Failed to cleanup temp file:', e); }
             }
 

@@ -580,7 +580,7 @@ export async function checkAccess(organizationId: string, action: 'create_projec
 
         return { allowed: true };
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[AccessPolicyService] Error checking access:', error);
         // Fail open for system errors to avoid blocking legitimate users
         return { allowed: true };

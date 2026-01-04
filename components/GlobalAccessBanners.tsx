@@ -35,7 +35,8 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
     // Show expiration modal when trial expires (only once per session)
     useEffect(() => {
         if (isTrialExpired && !modalDismissed) {
-            setShowExpirationModal(true);
+            // Defer state update to avoid synchronous setState in effect
+            queueMicrotask(() => setShowExpirationModal(true));
         }
     }, [isTrialExpired, modalDismissed]);
 

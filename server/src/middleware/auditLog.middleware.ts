@@ -101,7 +101,7 @@ const auditLogMiddleware = async (
                         });
                     })
                     .catch(err => console.error('[AuditLog] Failed to log:', (err as Error).message));
-            } catch (err) {
+            } catch (err: unknown) {
                 console.error('[AuditLog] Error processing log:', err);
             }
         }

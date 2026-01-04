@@ -3,9 +3,11 @@
  * Secure file upload handling for assessment documents
  */
 
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Storage configuration
@@ -51,7 +53,7 @@ const fileFilter = (req, file, cb) => {
 /**
  * Multer upload middleware
  */
-const upload = multer({
+export const upload = multer({
     storage,
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB max
@@ -59,6 +61,8 @@ const upload = multer({
     },
     fileFilter
 });
+
+// Redundant export block removed
 
 export default {
     upload,

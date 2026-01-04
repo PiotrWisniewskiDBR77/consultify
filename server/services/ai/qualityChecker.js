@@ -9,7 +9,7 @@
  * - Auto-retry on low quality
  */
 
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 // Quality thresholds
 const QUALITY_THRESHOLDS = {
@@ -478,6 +478,13 @@ class QualityChecker {
 
 // Singleton instance
 const qualityChecker = new QualityChecker();
+
+export {
+    QualityChecker,
+    QualityChecker as QualityCheckerService,
+    qualityChecker,
+    QUALITY_THRESHOLDS
+};
 
 export default {
     QualityChecker,

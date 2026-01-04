@@ -1,5 +1,5 @@
-import { getRedisClient, isRedisConnected } from '../services/ai/redisClient.js';
-
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const client = require('./redisClient');
 /**
  * A simple Redis store for express-rate-limit
  * Uses the existing Redis client connection
@@ -9,108 +9,59 @@ class RedisStore {
         this.windowMs = options.windowMs;
         this.prefix = 'rl:';
     }
-
     init(options) {
         this.windowMs = options.windowMs;
     }
-
     async increment(key) {
         const rKey = this.prefix + key;
         try {
-            const client = getRedisClient();
-
             // Check connectivity
-            if (!isRedisConnected() || !client) {
-                // Fallback to memory-like behavior (fail open)
-                // Return a safe object to allow traffic
+            const redisClient = client;
+            if (!redisClient.isOpen) {
+                // Fallback to memory-like behavior (return 1 to allow request but warn)
                 return { totalHits: 1, resetTime: new Date(Date.now() + this.windowMs) };
             }
-
-            const hits = await client.incr(rKey);
-
-            // CRITICAL FIX: express-rate-limit v8 requires positive integer
-            // Redis incr returns 0 on fresh keys or null on errors
-            const safeHits = (typeof hits === 'number' && hits > 0) ? hits : 1;
-
-            if (safeHits === 1) {
-                await client.expire(rKey, Math.ceil(this.windowMs / 1000));
+            const hits = await redisClient.incr(rKey);
+            if (hits === 1) {
+                await redisClient.expire(rKey, Math.ceil(this.windowMs / 1000));
             }
-
             const resetTime = new Date(Date.now() + this.windowMs); // Approximate
             return {
-                totalHits: safeHits,
+                totalHits: hits,
                 resetTime
             };
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[RateLimit] Redis error:', error);
-            // Fail open - must return a positive integer for totalHits (v8 requirement)
-            return {
-                totalHits: 1,
-                resetTime: new Date(Date.now() + (this.windowMs || 60000))
-            };
+            // Fail open
+            return { totalHits: 0, resetTime: new Date() };
         }
     }
-
     async decrement(key) {
         const rKey = this.prefix + key;
         try {
-            const client = getRedisClient();
-            if (isRedisConnected() && client) {
-                await client.decr(rKey);
+            const redisClient = client;
+            if (redisClient.isOpen) {
+                await redisClient.decr(rKey);
             }
-        } catch (error) {
+        }
+        catch (error) {
             // Ignore
         }
     }
-
     async resetKey(key) {
         const rKey = this.prefix + key;
         try {
-            const client = getRedisClient();
-            if (isRedisConnected() && client) {
-                await client.del(rKey);
+            const redisClient = client;
+            if (redisClient.isOpen) {
+                await redisClient.del(rKey);
             }
-        } catch (error) {
+        }
+        catch (error) {
             // Ignore
         }
     }
-
-    /**
-     * Get current hit count for a key (required by express-rate-limit v8)
-     * @param {string} key - The rate limit key
-     * @returns {Promise<{totalHits: number, resetTime: Date} | undefined>}
-     */
-    async get(key) {
-        const rKey = this.prefix + key;
-        try {
-            const client = getRedisClient();
-
-            if (!isRedisConnected() || !client) {
-                // Fail open - return undefined to indicate no stored state
-                return undefined;
-            }
-
-            const hits = await client.get(rKey);
-
-            // If key doesn't exist, return undefined (express-rate-limit handles this)
-            if (hits === null || hits === undefined) {
-                return undefined;
-            }
-
-            const parsedHits = parseInt(hits, 10);
-            // CRITICAL: Must return positive integer or undefined
-            const safeHits = (parsedHits > 0) ? parsedHits : 1;
-
-            return {
-                totalHits: safeHits,
-                resetTime: new Date(Date.now() + this.windowMs)
-            };
-        } catch (error) {
-            console.error('[RateLimit] Redis get error:', error);
-            // Fail open - return undefined to let express-rate-limit use defaults
-            return undefined;
-        }
-    }
 }
-
-export default RedisStore;
+module.exports = RedisStore;
+export {};
+//# sourceMappingURL=redisRateLimitStore.js.map

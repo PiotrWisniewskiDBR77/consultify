@@ -1,9 +1,10 @@
 import express from 'express';
 const router = express.Router();
-const AccessPolicyService = import('accessPolicyService.js');
+import * as AccessPolicyServiceModule from '../services/accessPolicyService.js';
+const AccessPolicyService = AccessPolicyServiceModule.default || AccessPolicyServiceModule;
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
-const bcrypt = require('bcryptjs');
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
 
@@ -52,9 +53,9 @@ router.get('/', (req, res) => {
 });
 
 // Configure Multer for Avatar Uploads
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {

@@ -2,9 +2,9 @@ import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
-const AIPlaybookService = require('../ai/aiPlaybookService');
-const AIPlaybookEngine = require('../ai/aiPlaybookEngine');
-const AIPlaybookExecutor = require('../ai/aiPlaybookExecutor');
+import AIPlaybookService from '../ai/aiPlaybookService.js';
+import AIPlaybookEngine from '../ai/aiPlaybookEngine.js';
+import AIPlaybookExecutor from '../ai/aiPlaybookExecutor.js';
 
 /**
  * @route GET /api/ai/playbooks/templates
@@ -66,7 +66,7 @@ router.get('/proposals', async (req, res) => {
             return res.status(403).json({ error: 'Forbidden: Admin access required' });
         }
 
-        const AICoach = require('../ai/aiCoach');
+
         const report = await AICoach.getAdvisoryReport(req.organizationId);
         const proposals = await AIPlaybookEngine.generatePlaybookProposals({
             data: report.context_snapshot,
@@ -246,7 +246,7 @@ router.post('/runs/:id/dry-run-route', async (req, res) => {
 // STEP 13: VISUAL PLAYBOOK EDITOR - VERSIONING ENDPOINTS
 // ==========================================
 
-const templateValidationService = require('../ai/templateValidationService');
+import templateValidationService from '../ai/templateValidationService.js';
 
 /**
  * @route GET /api/ai/playbooks/templates/published
@@ -447,8 +447,9 @@ router.post('/templates/import', async (req, res) => {
 // STEP 11: ASYNC JOB ENDPOINTS FOR PLAYBOOKS
 // ==========================================
 
-const AsyncJobService = require('../ai/asyncJobService');
+import AsyncJobService from '../ai/asyncJobService.js';
 import { v4 as uuidv4 } from 'uuid';
+import AICoach from '../ai/aiCoach.js';
 
 /**
  * @route POST /api/ai/playbooks/runs/:id/advance-async

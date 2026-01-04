@@ -17,14 +17,19 @@
 import express from 'express';
 const router = express.Router();
 import MetricsCollector from '../services/metricsCollector.js';
-const MetricsAggregator = import('metricsAggregator.js');
+import * as MetricsAggregatorModule from '../services/metricsAggregator.js';
+const MetricsAggregator = MetricsAggregatorModule.default || MetricsAggregatorModule;
 import verifyToken from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
-const seatManagementService = import('seatManagementService.js');
+import * as seatManagementServiceModule from '../services/seatManagementService.js';
+const seatManagementService = seatManagementServiceModule.default || seatManagementServiceModule;
 import payAsYouGoService from '../services/payAsYouGoService.js';
-import budgetManagementService from '../services/budgetManagementService.js';
-const usageService = import('usageService.js');
+import * as budgetManagementServiceModule from '../src/services/budgetManagementService.js';
+const budgetManagementService = budgetManagementServiceModule.default || budgetManagementServiceModule;
+import * as usageServiceModule from '../services/usageService.js';
+const usageService = usageServiceModule.default || usageServiceModule;
 import { getDatabase } from '../src/database/Database.js';
+import logger from '../utils/logger.js';
 const db = getDatabase();
 
 // ==========================================
@@ -38,8 +43,8 @@ const db = getDatabase();
  */
 router.get('/overview', verifyToken, verifySuperAdmin, async (req, res) => {
     try {
-        const logger = require('../utils/logger');
-        const { getRequestContext } = require('../utils/requestContext');
+
+        const { getRequestContext   } = await import('../utils/requestContext.js');
         logger.info('SuperAdmin fetching metrics overview', getRequestContext(req));
 
         const overview = await MetricsAggregator.getOverview();
@@ -334,8 +339,8 @@ router.post('/snapshots/build', verifyToken, verifySuperAdmin, async (req, res) 
 router.get('/org/overview', verifyToken, async (req, res) => {
     try {
         const organizationId = req.organizationId || req.user?.organizationId;
-        const logger = require('../utils/logger');
-        const { getRequestContext } = require('../utils/requestContext');
+
+        const { getRequestContext   } = await import('../utils/requestContext.js');
 
         if (!organizationId) {
             logger.warn('Metrics org/overview access without orgId', getRequestContext(req));
@@ -593,7 +598,8 @@ router.get('/org/ai-analytics', verifyToken, async (req, res) => {
         let successRate = 0;
         let avgResponseTime = 0;
         try {
-            const aiAnalyticsService = import('aiAnalyticsService.js');
+            const aiAnalyticsServiceModule = await import('../services/aiAnalyticsService.js');
+            const aiAnalyticsService = aiAnalyticsServiceModule.default || aiAnalyticsServiceModule;
             const analytics = await aiAnalyticsService.getDashboardData(organizationId);
             successRate = analytics?.actions?.success_rate || 0;
             // Estimate response time (would need actual timing data)

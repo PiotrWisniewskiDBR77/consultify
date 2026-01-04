@@ -167,7 +167,7 @@ async function withImmediateTransaction<T>(db: IDatabase, fn: () => Promise<T>):
         const result = await fn();
         await DbPromise.run(db, 'COMMIT', []);
         return result;
-    } catch (err) {
+    } catch (err: unknown) {
         await DbPromise.run(db, 'ROLLBACK', []);
         throw err;
     }

@@ -9,8 +9,8 @@
  * - Learning from user actions
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
+import db from '../../database.js';
+import { aiLogger } from './logger.js';
 
 // Nudge triggers and conditions
 const NUDGE_TRIGGERS = {
@@ -386,6 +386,13 @@ class ProactiveNudgesService {
 
 // Singleton instance
 const proactiveNudgesService = new ProactiveNudgesService();
+
+export {
+ProactiveNudgesService,
+    proactiveNudgesService,
+    proactiveNudges: proactiveNudgesService, // Alias for API routes
+    NUDGE_TRIGGERS
+};
 
 export default {
     ProactiveNudgesService,

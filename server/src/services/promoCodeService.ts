@@ -203,7 +203,7 @@ export async function validatePromoCode(code: string): Promise<ValidatePromoCode
         }
 
         return response;
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[PromoCodeService] Validation error:', err);
         throw err;
     }
@@ -333,7 +333,7 @@ export async function createPromoCode(params: CreatePromoCodeParams): Promise<Pr
             metadata,
             createdAt: new Date().toISOString()
         };
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         if (error.message.includes('UNIQUE constraint')) {
             throw new Error('Promo code already exists');

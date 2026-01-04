@@ -76,7 +76,7 @@ class BackupCron {
                 const cleanup = await deps.backupService.runRetentionPolicy();
                 logger.info(`[BackupCron] Cleanup: deleted ${cleanup.deleted} old backups`);
 
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error instanceof Error ? error : new Error(String(error));
                 logger.error('[BackupCron] Scheduled backup failed:', err);
 
@@ -86,7 +86,7 @@ class BackupCron {
                         deps.sentry.captureException(err, {
                             tags: { component: 'backup', job: 'scheduled' },
                         });
-                    } catch (e) {
+                    } catch (e: unknown) {
                         // Sentry not available
                     }
                 }

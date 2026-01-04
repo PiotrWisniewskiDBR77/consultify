@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 /**
  * AI Prompts Management API
  * 
@@ -10,7 +11,7 @@ const router = express.Router();
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import verifyToken from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 
 /**
  * GET /api/ai-prompts
@@ -140,7 +141,7 @@ router.post('/', verifyToken, requireRole(['super_admin']), async (req, res) => 
             return res.status(400).json({ error: 'Name, category, and template are required' });
         }
         
-        const id = require('crypto').randomUUID();
+        const id = crypto.randomUUID();
         
         await db.run(`
             INSERT INTO ai_system_prompts 
@@ -152,7 +153,7 @@ router.post('/', verifyToken, requireRole(['super_admin']), async (req, res) => 
         await db.run(`
             INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
             VALUES (?, ?, 1, ?, datetime('now'), ?)
-        `, [require('crypto').randomUUID(), id, template, req.user.id]);
+        `, [crypto.randomUUID(), id, template, req.user.id]);
         
         res.status(201).json({
             success: true,
@@ -201,7 +202,7 @@ router.put('/:id', verifyToken, requireRole(['super_admin']), async (req, res) =
             await db.run(`
                 INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
                 VALUES (?, ?, ?, ?, datetime('now'), ?)
-            `, [require('crypto').randomUUID(), id, newVersion, template, req.user.id]);
+            `, [crypto.randomUUID(), id, newVersion, template, req.user.id]);
         }
         
         res.json({
@@ -311,7 +312,7 @@ router.post('/:id/restore-version', verifyToken, requireRole(['super_admin']), a
         await db.run(`
             INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
             VALUES (?, ?, ?, ?, datetime('now'), ?)
-        `, [require('crypto').randomUUID(), id, newVersion, versionRecord.template, req.user.id]);
+        `, [crypto.randomUUID(), id, newVersion, versionRecord.template, req.user.id]);
         
         res.json({
             success: true,

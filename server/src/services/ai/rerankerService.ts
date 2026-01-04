@@ -279,7 +279,7 @@ const RerankerService = {
             });
 
             return results.slice(0, topK);
-        } catch (error) {
+        } catch (error: unknown) {
             const logger = getLogger();
             const err = error as Error;
             logger.error('RerankerService', `Re-ranking failed: ${err.message}`, err);
@@ -350,7 +350,7 @@ Do not include any explanation, just the JSON array.`;
                     combinedScore: RerankerService._combineScores(hybridScore, rerankerScore)
                 });
             }
-        } catch (error) {
+        } catch (error: unknown) {
             await initDeps();
             const logger = getLogger();
             const err = error as Error;
@@ -387,7 +387,7 @@ Do not include any explanation, just the JSON array.`;
         }
         try {
             return validateDatabaseRow(row, OpenAIConfigSchema);
-        } catch (error) {
+        } catch (error: unknown) {
             const logger = getLogger();
             logger.warn('RerankerService', 'Invalid OpenAI config row', error);
             return null;
@@ -482,7 +482,7 @@ Respond with ONLY a number between 0.0 and 1.0 indicating relevance.`;
                     rerankerScore: score,
                     rerankerMethod: 'cross_encoder'
                 });
-            } catch (error) {
+            } catch (error: unknown) {
                 scoredDocs.push({
                     ...doc,
                     rerankerScore: doc.hybridScore || 0.5,

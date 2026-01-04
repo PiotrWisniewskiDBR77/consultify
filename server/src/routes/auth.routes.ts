@@ -66,7 +66,7 @@ router.post('/refresh', validateBody(RefreshTokenRequestSchema), asyncHandler(as
             refreshToken: result.refreshToken,
             expiresIn: result.expiresIn
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Auth] Refresh error:', error);
         res.status(500).json({ error: 'Token refresh failed' });
     }
@@ -77,7 +77,7 @@ router.get('/sessions', verifyToken, asyncHandler(async (req: AuthRequest, res: 
     try {
         const sessions = await refreshTokenService.getActiveSessions(req.user!.id);
         res.json({ sessions });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Auth] Get sessions error:', error);
         res.status(500).json({ error: 'Failed to get sessions' });
     }
@@ -90,7 +90,7 @@ router.delete('/sessions/:id', verifyToken, validateParams(SessionIdParamSchema)
     try {
         await refreshTokenService.revokeSession(req.user!.id, id);
         res.json({ success: true, message: 'Session revoked' });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Auth] Revoke session error:', error);
         res.status(500).json({ error: 'Failed to revoke session' });
     }
@@ -117,7 +117,7 @@ router.get('/me', verifyToken, asyncHandler(async (req: AuthRequest, res: Respon
                  LEFT JOIN organizations o ON u.organization_id = o.id
                  WHERE u.id = ?`,
                 [req.user!.id],
-                (err, row) => {
+                (err: Error | null, row: unknown) => {
                     if (err) reject(err);
                     else resolve(row);
                 }
@@ -184,7 +184,7 @@ router.get('/me', verifyToken, asyncHandler(async (req: AuthRequest, res: Respon
         }
 
         res.json(response);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[Auth] /me DB error:', err);
         // Fallback to token data if DB fails
         res.json({
@@ -232,7 +232,7 @@ router.post('/logout', verifyToken, asyncHandler(async (req: AuthRequest, res: R
                 res.json({ message: 'Logged out successfully' });
             }
         );
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Logout error:', error);
         res.status(500).json({ error: 'Logout failed' });
     }
@@ -369,7 +369,7 @@ router.post('/demo-login', asyncHandler(async (req: AuthRequest, res: Response) 
             isDemo: true
         });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Auth] Demo login error:', error);
         res.status(500).json({ error: 'Demo login failed. Please try again.' });
     }
@@ -396,7 +396,7 @@ router.post('/register', validateBody(RegisterRequestSchema), asyncHandler(async
                 });
                 return;
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('[Auth] Promo validation error:', err);
             res.status(500).json({ error: 'Failed to validate promo code' });
             return;
@@ -643,7 +643,7 @@ router.post('/change-password', verifyToken, validateBody(ChangePasswordRequestS
             message: 'Password changed successfully. All other sessions have been logged out for security.'
         });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Auth] Change password error:', error);
         res.status(500).json({ error: 'Failed to change password' });
     }
@@ -714,7 +714,7 @@ router.post('/verify-email', validateBody(VerifyEmailRequestSchema), asyncHandle
         }
 
         res.json({ success: true, message: 'Email verified successfully' });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Email verify error:', error);
         res.status(500).json({ error: 'Verification failed' });
     }
@@ -747,7 +747,7 @@ router.post('/resend-verification', verifyToken, asyncHandler(async (req: AuthRe
         );
 
         res.json({ success: true, message: 'Verification email sent' });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Resend verify error:', error);
         res.status(500).json({ error: 'Failed to send email' });
     }
@@ -758,7 +758,7 @@ router.post('/mfa/setup', verifyToken, asyncHandler(async (req: AuthRequest, res
     try {
         const result = await mfaService.setupMFA(req.user!.id, req.user!.email || '');
         res.json(result);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('MFA Setup error:', error);
         res.status(500).json({ error: 'MFA setup failed' });
     }
@@ -773,7 +773,7 @@ router.post('/mfa/enable', verifyToken, validateBody(MFAEnableRequestSchema), as
             return;
         }
         res.json(result);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('MFA Enable error:', error);
         res.status(500).json({ error: 'MFA activation failed' });
     }
@@ -788,7 +788,7 @@ router.post('/mfa/disable', verifyToken, validateBody(MFADisableRequestSchema), 
             return;
         }
         res.json(result);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('MFA Disable error:', error);
         res.status(500).json({ error: 'MFA disable failed' });
     }

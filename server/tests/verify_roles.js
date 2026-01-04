@@ -1,5 +1,5 @@
-const AiService = require('../services/aiService');
-const db = require('../database');
+import AiService from '../services/aiService.js';
+import db from '../database.js';
 
 // Mock dependencies if needed, but we want to test DB integration mainly.
 // aiService requires 'deps' to be set up usually, or we trust it uses require()'d modules.

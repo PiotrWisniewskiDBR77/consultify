@@ -4,8 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
-const whatsappService = import('whatsappService.js');
-const notificationService = import('notificationService.js');
+const whatsappServiceModule = await import('../services/whatsappService.js');
+
+const whatsappService = whatsappServiceModule.default || whatsappServiceModule;
+import * as notificationServiceModule from '../services/notificationService.js';
+const notificationService = notificationServiceModule.default || notificationServiceModule;
 
 // POST /api/feedback - Submit new feedback
 router.post('/', (req, res) => {

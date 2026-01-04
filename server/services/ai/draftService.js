@@ -5,9 +5,9 @@
  * Provides staging area for AI suggestions before user approval.
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 // Draft types and their default configurations
 const DRAFT_TYPES = {
@@ -420,6 +420,12 @@ const draftService = new DraftService();
 setInterval(() => {
     draftService.expireOldDrafts().catch(console.error);
 }, 60 * 60 * 1000); // Every hour
+
+export {
+DraftService,
+    draftService,
+    DRAFT_TYPES
+};
 
 export default {
     DraftService,

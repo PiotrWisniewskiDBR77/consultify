@@ -8,7 +8,9 @@
  * - runtime: Computed at runtime (functions)
  */
 
-const db = require('../../database');
+import db from '../../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import { promptBlockLibrary } from './promptBlockLibrary.js';
 
 // ============================================================================
 // Configuration
@@ -124,7 +126,7 @@ const RUNTIME_FUNCTIONS = {
             });
         });
 
-        return topics.size > 0 
+        return topics.size > 0
             ? `Topics discussed: ${[...topics].join(', ')}`
             : `${messages.length} messages exchanged`;
     }
@@ -238,7 +240,7 @@ class VariableResolver {
     async resolveVariable(varCode, context = {}, options = {}) {
         // Get variable definition
         const varDef = await this.getVariableDefinition(varCode);
-        
+
         if (!varDef) {
             console.warn(`[VariableResolver] Unknown variable: ${varCode}`);
             return options.keepUnresolved ? `{{${varCode}}}` : '';
@@ -343,7 +345,7 @@ class VariableResolver {
      */
     getNestedValue(obj, path) {
         if (!path) return obj;
-        
+
         const parts = path.split('.');
         let value = obj;
 
@@ -460,7 +462,7 @@ class VariableResolver {
         while ((match = variablePattern.exec(template)) !== null) {
             const varCode = match[1].trim();
             const value = await this.resolveVariable(varCode, context, { keepUnresolved: true });
-            
+
             if (value === `{{${varCode}}}` || value === '') {
                 const def = await this.getVariableDefinition(varCode);
                 if (def) {
@@ -496,11 +498,5 @@ class VariableResolver {
 // Singleton instance
 const variableResolver = new VariableResolver();
 
-export default {
-    VariableResolver,
-    variableResolver,
-    RUNTIME_FUNCTIONS,
-    DEFAULT_VARIABLES,
-    APP_CONFIG
-};
-
+export { VariableResolver, variableResolver, RUNTIME_FUNCTIONS, DEFAULT_VARIABLES, APP_CONFIG };
+export default variableResolver;

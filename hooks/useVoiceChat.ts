@@ -32,44 +32,47 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
 
     const synthRef = useRef<SpeechSynthesis | null>(null);
     const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-    const [ttsSupported, setTtsSupported] = useState(false);
+    // Initialize ttsSupported synchronously
+    const [ttsSupported] = useState(() => typeof window !== 'undefined' && 'speechSynthesis' in window);
 
     // Initialize Speech Synthesis
     useEffect(() => {
-        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-            synthRef.current = window.speechSynthesis;
-            setTtsSupported(true);
+        if (!ttsSupported) return;
+        
+        synthRef.current = window.speechSynthesis;
 
-            // Load voices (may be async on some browsers)
-            const loadVoices = () => {
-                const voices = synthRef.current?.getVoices() || [];
+        // Load voices (may be async on some browsers)
+        const loadVoices = () => {
+            const voices = synthRef.current?.getVoices() || [];
 
-                // Get current language from i18n
-                const i18nLang = localStorage.getItem('i18nextLng') || 'pl';
-                const langCodeMap: Record<string, string> = {
-                    'pl': 'pl',
-                    'en': 'en',
-                    'de': 'de',
-                    'es': 'es',
-                    'ja': 'ja',
-                    'ar': 'ar'
-                };
-                const targetLang = langCodeMap[i18nLang] || 'pl';
+            // Get current language from i18n
+            const i18nLang = localStorage.getItem('i18nextLng') || 'pl';
+            const langCodeMap: Record<string, string> = {
+                'pl': 'pl',
+                'en': 'en',
+                'de': 'de',
+                'es': 'es',
+                'ja': 'ja',
+                'ar': 'ar'
+            };
+            const targetLang = langCodeMap[i18nLang] || 'pl';
 
-                // Find best voice for target language
-                let targetVoice = voices.find(v => v.lang.startsWith(targetLang) && v.name.includes('Google'));
-                if (!targetVoice) {
-                    targetVoice = voices.find(v => v.lang.startsWith(targetLang));
-                }
-                // Fallback to Polish
-                if (!targetVoice) {
-                    targetVoice = voices.find(v => v.lang.startsWith('pl'));
-                }
+            // Find best voice for target language
+            let targetVoice = voices.find(v => v.lang.startsWith(targetLang) && v.name.includes('Google'));
+            if (!targetVoice) {
+                targetVoice = voices.find(v => v.lang.startsWith(targetLang));
+            }
+            // Fallback to Polish
+            if (!targetVoice) {
+                targetVoice = voices.find(v => v.lang.startsWith('pl'));
+            }
 
-                console.log('[VoiceChat] Available voices:', voices.length);
-                console.log('[VoiceChat] Target language:', targetLang);
-                console.log('[VoiceChat] Selected voice:', targetVoice?.name || 'fallback');
+            console.log('[VoiceChat] Available voices:', voices.length);
+            console.log('[VoiceChat] Target language:', targetLang);
+            console.log('[VoiceChat] Selected voice:', targetVoice?.name || 'fallback');
 
+            // Use queueMicrotask to defer the state update
+            queueMicrotask(() => {
                 setState(prev => ({
                     ...prev,
                     availableVoices: voices,
@@ -77,14 +80,14 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
                         targetVoice?.voiceURI ||
                         voices[0]?.voiceURI || null
                 }));
-            };
+            });
+        };
 
-            loadVoices();
+        loadVoices();
 
-            // Some browsers load voices asynchronously
-            if (synthRef.current) {
-                synthRef.current.onvoiceschanged = loadVoices;
-            }
+        // Some browsers load voices asynchronously
+        if (synthRef.current) {
+            synthRef.current.onvoiceschanged = loadVoices;
         }
 
         return () => {
@@ -93,7 +96,7 @@ export const useVoiceChat = (): UseVoiceChatReturn => {
                 synthRef.current.cancel();
             }
         };
-    }, []);
+    }, [ttsSupported]);
 
     // Speak text using TTS
     const speak = useCallback((text: string) => {

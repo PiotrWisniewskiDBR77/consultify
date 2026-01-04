@@ -9,9 +9,11 @@
  * @version 1.0.0
  */
 
-const XLSX = require('xlsx');
-const fs = require('fs');
-const path = require('path');
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+import XLSX from 'xlsx';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Process a spreadsheet file and extract text content
@@ -59,7 +61,7 @@ async function process(filePath, options = {}) {
         // Process each sheet
         for (const sheetName of workbook.SheetNames) {
             const sheet = workbook.Sheets[sheetName];
-            
+
             // Convert to JSON array
             const jsonData = XLSX.utils.sheet_to_json(sheet, {
                 header: 1,
@@ -70,14 +72,14 @@ async function process(filePath, options = {}) {
 
             // Limit rows if needed
             const limitedData = jsonData.slice(0, maxRows);
-            
+
             // Extract headers (first row)
             const headers = limitedData[0] || [];
             const dataRows = includeHeaders ? limitedData : limitedData.slice(1);
 
             // Convert to text format
             let sheetText = '';
-            
+
             if (includeSheetNames && workbook.SheetNames.length > 1) {
                 sheetText += `## Sheet: ${sheetName}\n\n`;
             }
@@ -169,7 +171,7 @@ function formatCell(value) {
 
     // Handle strings
     const strValue = String(value).trim();
-    
+
     // Remove excessive whitespace
     return strValue.replace(/\s+/g, ' ');
 }
@@ -202,7 +204,7 @@ async function processCSV(filePath, options = {}) {
  */
 function detectDelimiter(content) {
     const firstLine = content.split('\n')[0] || '';
-    
+
     const delimiters = [',', ';', '\t', '|'];
     let maxCount = 0;
     let bestDelimiter = ',';
@@ -240,7 +242,7 @@ function extractStatistics(filePath) {
     for (const sheetName of workbook.SheetNames) {
         const sheet = workbook.Sheets[sheetName];
         const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
-        
+
         let numericCount = 0;
         let textCount = 0;
         let emptyCount = 0;
@@ -249,7 +251,7 @@ function extractStatistics(filePath) {
             for (let c = range.s.c; c <= range.e.c; c++) {
                 const cellAddress = XLSX.utils.encode_cell({ r, c });
                 const cell = sheet[cellAddress];
-                
+
                 if (!cell || cell.v === undefined || cell.v === '') {
                     emptyCount++;
                 } else if (typeof cell.v === 'number') {
@@ -303,6 +305,17 @@ function getSupportedMimeTypes() {
         'text/tab-separated-values'
     ];
 }
+
+export {
+process,
+    processCSV,
+    extractStatistics,
+    isSupported,
+    getSupportedExtensions,
+    getSupportedMimeTypes,
+    formatCell,
+    detectDelimiter
+};
 
 export default {
     process,

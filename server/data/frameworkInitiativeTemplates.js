@@ -497,6 +497,15 @@ function selectBestTemplate(templates, gap) {
 // EXPORTS
 // ============================================
 
+export {
+SIRI_TEMPLATES,
+    ADMA_TEMPLATES,
+    CMMI_TEMPLATES,
+    LEAN_TEMPLATES,
+    getTemplatesForGap,
+    selectBestTemplate,
+};
+
 export default {
     SIRI_TEMPLATES,
     ADMA_TEMPLATES,

@@ -149,7 +149,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
     const fetchIntegrations = useCallback(async () => {
         try {
-            const data = await Api.getIntegrations('current');
+            const data = await (Api as any).getIntegrations('current');
             setIntegrations(data);
         } catch (error) {
             // Mock data
@@ -185,7 +185,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
     const fetchWebhooks = useCallback(async () => {
         try {
-            const data = await (Api as any).getWebhooks?.() || [];
+            const data = (await (Api as any).getWebhooks?.()) || [];
             setWebhooks(data);
         } catch (error) {
             // Mock data
@@ -227,7 +227,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
     const handleDeleteIntegration = async (id: string) => {
         if (!confirm('Are you sure you want to disconnect this integration?')) return;
         try {
-            await Api.deleteIntegration(id);
+            await (Api as any).deleteIntegration(id);
             toast.success('Integration disconnected');
             fetchIntegrations();
         } catch (error) {
@@ -248,7 +248,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
     const handleTestWebhook = async (id: string) => {
         try {
-            await Api.testWebhook(id);
+            await (Api as any).testWebhook(id);
             toast.success('Test webhook sent');
         } catch (error) {
             toast.error('Failed to send test webhook');
@@ -258,7 +258,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
     const handleViewDeliveries = async (webhook: Webhook) => {
         setSelectedWebhook(webhook);
         try {
-            const data = await Api.getWebhookDeliveries(webhook.id);
+            const data = await (Api as any).getWebhookDeliveries(webhook.id);
             setDeliveries(data);
         } catch (error) {
             setDeliveries([]);

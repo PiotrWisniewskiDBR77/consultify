@@ -1,11 +1,12 @@
-const defaultJwt = require('jsonwebtoken');
-const config = require('../config');
+import defaultJwt from 'jsonwebtoken';
+import config from '../config.js';
 const JWT_SECRET = config.JWT_SECRET;
+import defaultDb from '../database.js';
 
 // Dependencies object to allow injection
 const deps = {
     jwt: defaultJwt,
-    db: require('../database')
+    db: defaultDb
 };
 
 const verifySuperAdmin = (req, res, next) => {

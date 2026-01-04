@@ -2,12 +2,12 @@
  * Tool Registry - Connects handlers to MCP Server
  */
 
-const { mcpServer } = require('../mcpServer');
-const { getProjectDetails } = require('./getProjectDetails');
-const { searchKnowledgeBase } = require('./searchKnowledgeBase');
-const { calculateRoiDraft } = require('./calculateRoiDraft');
-const { createInitiative } = require('./createInitiative');
-const { updateAssessmentScore } = require('./updateAssessmentScore');
+import { mcpServer } from '../mcpServer.js';
+import { getProjectDetails } from './getProjectDetails.js';
+import { searchKnowledgeBase } from './searchKnowledgeBase.js';
+import { calculateRoiDraft } from './calculateRoiDraft.js';
+import { createInitiative } from './createInitiative.js';
+import { updateAssessmentScore } from './updateAssessmentScore.js';
 
 // Register all tool handlers
 function registerAllTools() {
@@ -24,5 +24,9 @@ function registerAllTools() {
 
 // Auto-register on import
 registerAllTools();
+
+export {
+registerAllTools
+};
 
 export default { registerAllTools };

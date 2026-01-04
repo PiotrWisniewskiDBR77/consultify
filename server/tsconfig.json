@@ -19,9 +19,9 @@
     "useUnknownInCatchVariables": true,
     "alwaysStrict": true,
     
-    // Code quality
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    // Code quality (unused vars disabled to reduce noise - use ESLint instead)
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,

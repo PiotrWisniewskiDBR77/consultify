@@ -26,7 +26,7 @@ const dbGet = (sql, params = []) => new Promise((resolve, reject) => {
 
 // Helper: Promisify db.run
 const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
+    db.run(sql, params, function (err) {
         if (err) reject(err);
         else resolve({ lastID: this.lastID, changes: this.changes });
     });
@@ -106,7 +106,7 @@ router.get('/', verifyToken, async (req, res) => {
         // Get total count for pagination
         let countQuery = `SELECT COUNT(*) as count FROM conversations WHERE user_id = ?`;
         const countParams = [userId];
-        
+
         if (archived === 'false') {
             countQuery += ` AND (archived = 0 OR archived IS NULL)`;
         } else if (archived === 'true') {
@@ -328,7 +328,7 @@ router.post('/:id/messages', verifyToken, async (req, res) => {
         // Insert message
         const msgId = uuidv4();
         const now = new Date().toISOString();
-        
+
         await dbRun(`
             INSERT INTO conversation_messages (id, conversation_id, role, content, message_type, metadata, token_count, model_used, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -374,9 +374,9 @@ router.post('/:id/title/generate', verifyToken, async (req, res) => {
 
         // Don't regenerate if user manually edited title
         if (conv.title_source === 'user') {
-            return res.json({ 
-                skipped: true, 
-                reason: 'Title was manually edited by user' 
+            return res.json({
+                skipped: true,
+                reason: 'Title was manually edited by user'
             });
         }
 
@@ -389,14 +389,15 @@ router.post('/:id/title/generate', verifyToken, async (req, res) => {
         `, [id]);
 
         if (messages.length < 2) {
-            return res.json({ 
-                skipped: true, 
-                reason: 'Not enough messages to generate title' 
+            return res.json({
+                skipped: true,
+                reason: 'Not enough messages to generate title'
             });
         }
 
         // Use title generator service
-        const titleGenerator = import('ai/titleGenerator.js');
+        const titleGeneratorModule = await import('../ai/titleGenerator.js');
+        const titleGenerator = titleGeneratorModule.default || titleGeneratorModule;
         const generatedTitle = await titleGenerator.generateConversationTitle(messages);
 
         // Update conversation with new title
@@ -454,8 +455,8 @@ router.post('/bulk', verifyToken, async (req, res) => {
 
         const result = await dbRun(sql, params);
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             affected: result.changes,
             ids
         });
@@ -484,7 +485,7 @@ router.post('/migrate', verifyToken, async (req, res) => {
 
         for (const conv of conversations) {
             const { projectId, messages } = conv;
-            
+
             if (!messages || messages.length === 0) continue;
 
             const conversationId = uuidv4();
@@ -534,9 +535,9 @@ router.get('/:id/export/:format', verifyToken, async (req, res) => {
         // Validate format
         const validFormats = ['markdown', 'md', 'txt', 'json'];
         if (!validFormats.includes(format.toLowerCase())) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'Invalid format',
-                validFormats 
+                validFormats
             });
         }
 

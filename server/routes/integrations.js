@@ -6,7 +6,8 @@
 
 import express from 'express';
 const router = express.Router();
-const integrationService = import('integrationService.js');
+import * as integrationServiceModule from '../services/integrationService.js';
+const integrationService = integrationServiceModule.default || integrationServiceModule;
 import authMiddleware from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 

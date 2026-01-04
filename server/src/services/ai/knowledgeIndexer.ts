@@ -96,7 +96,7 @@ const getPdfParse = async (): Promise<PdfParseModule | null> => {
     try {
         const mod = await import('pdf-parse');
         pdfParse = (mod.default ?? mod) as PdfParseModule;
-    } catch (error) {
+    } catch (error: unknown) {
         const err = error as Error;
         aiLogger.warn('KnowledgeIndexer', `pdf-parse not installed, PDF indexing disabled: ${err.message}`);
     }
@@ -109,7 +109,7 @@ const getXlsxParse = async (): Promise<XlsxModule | null> => {
     try {
         const mod = await import('xlsx');
         xlsxParse = (mod.default ?? mod) as XlsxModule;
-    } catch (error) {
+    } catch (error: unknown) {
         const err = error as Error;
         aiLogger.warn('KnowledgeIndexer', `xlsx not installed, Excel indexing disabled: ${err.message}`);
     }
@@ -179,7 +179,7 @@ export class KnowledgeIndexer {
             this.embeddingService = embeddingService;
             await this.ensureTables();
             return true;
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('KnowledgeIndexer', `Initialization failed: ${err.message}`);
             return false;
@@ -277,7 +277,7 @@ export class KnowledgeIndexer {
                     });
 
                     results.success.push({ file: relativeFilePath, chunks: result.chunkCount });
-                } catch (error) {
+                } catch (error: unknown) {
                     const err = error as Error;
                     aiLogger.error('KnowledgeIndexer', `Error indexing ${relativeFilePath}: ${err.message}`);
                     results.failed.push({ file: relativeFilePath, error: err.message });
@@ -348,7 +348,7 @@ export class KnowledgeIndexer {
                 });
 
                 successCount++;
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error as Error;
                 aiLogger.warn('KnowledgeIndexer', `Error creating chunk ${i}: ${err.message}`);
             }
@@ -473,7 +473,7 @@ export class KnowledgeIndexer {
         try {
             const embedding = await this.embeddingService.generateEmbedding(text);
             return JSON.stringify(embedding);
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.warn('KnowledgeIndexer', `Embedding generation failed: ${err.message}`);
             return null;
@@ -638,7 +638,7 @@ export class KnowledgeIndexer {
                     similarity: chunk.similarity ?? 0,
                     metadata: parseJson<Record<string, unknown>>(chunk.metadata, {})
                 }));
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('KnowledgeIndexer', `Search error: ${err.message}`);
             return this.keywordSearch(query, { limit, sourceTypes });

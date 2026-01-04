@@ -1,10 +1,12 @@
-const AIPlaybookService = require('./aiPlaybookService');
-const AIPlaybookRoutingEngine = require('./aiPlaybookRoutingEngine');
-const ActionExecutionAdapter = require('./actionExecutionAdapter');
-const ActionDecisionService = require('./actionDecisionService');
+import AIPlaybookService from './aiPlaybookService.js';
+import AIPlaybookRoutingEngine from './aiPlaybookRoutingEngine.js';
+import ActionExecutionAdapter from './actionExecutionAdapter.js';
+import ActionDecisionService from './actionDecisionService.js';
+import SignalEngine from './signalEngine.js';
+import AsyncJobService from './asyncJobService.js';
+import * as auditLogger from '../utils/auditLogger.js';
+import db from '../database.js';
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../src/database/Database.js';
-const db = getDatabase();
 
 /**
  * AI Playbook Executor
@@ -42,7 +44,7 @@ const AIPlaybookExecutor = {
         }
 
         if (run.status === 'COMPLETED' || run.status === 'FAILED' || run.status === 'CANCELLED') {
-            return { success: false, error: `Run ${runId} is already ${run.status}` };
+            return { success: false, error: `Run ${runId} is already ${run.status} ` };
         }
 
         // Find the next pending step
@@ -253,7 +255,7 @@ const AIPlaybookExecutor = {
                 return {
                     status: 'PENDING', // Keep pending - not ready yet
                     outputs: { waiting: true },
-                    reason: `Wait condition not met: ${reason}`,
+                    reason: `Wait condition not met: ${reason} `,
                     trace: { wait_result: 'not_ready', reason }
                 };
             }
@@ -297,8 +299,8 @@ const AIPlaybookExecutor = {
      */
     _executeActionStep: async (step, run, userId) => {
         try {
-            const decisionId = `ad-pb-${uuidv4()}`;
-            const proposalId = `pbstep-${step.id}`;
+            const decisionId = `ad - pb - ${uuidv4()} `;
+            const proposalId = `pbstep - ${step.id} `;
 
             // Build proposal snapshot
             const proposalSnapshot = {
@@ -327,9 +329,9 @@ const AIPlaybookExecutor = {
             // Insert decision
             await new Promise((resolve, reject) => {
                 db.run(
-                    `INSERT INTO action_decisions 
-                     (id, proposal_id, organization_id, correlation_id, action_type, scope, decision, decided_by_user_id, proposal_snapshot, policy_rule_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    `INSERT INTO action_decisions
+    (id, proposal_id, organization_id, correlation_id, action_type, scope, decision, decided_by_user_id, proposal_snapshot, policy_rule_id)
+VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         decisionId,
                         proposalId,
@@ -365,7 +367,7 @@ const AIPlaybookExecutor = {
                 return {
                     status: 'SKIPPED',
                     decisionId,
-                    reason: `Action rejected by policy: ${policyResult?.matchedRule?.autoDecisionReason || 'Policy engine'}`,
+                    reason: `Action rejected by policy: ${policyResult?.matchedRule?.autoDecisionReason || 'Policy engine'} `,
                     outputs: { decision, policy_rule_id: policyRuleId }
                 };
             }
@@ -456,7 +458,7 @@ const AIPlaybookExecutor = {
         }
 
         if (run.status === 'COMPLETED' || run.status === 'CANCELLED') {
-            return { success: false, error: `Run ${runId} is already ${run.status}` };
+            return { success: false, error: `Run ${runId} is already ${run.status} ` };
         }
 
         await AIPlaybookService.updateRunStatus(runId, 'CANCELLED');

@@ -139,7 +139,7 @@ const RagService = {
                 encoding_format: 'float'
             });
             return response.data[0]?.embedding || null;
-        } catch (error) {
+        } catch (error: unknown) {
             aiLogger.error('RagService', 'Embedding Error', error);
             return null;
         }
@@ -306,7 +306,7 @@ const RagService = {
                 documentId: result.document_id || undefined,
                 chunkIndex: result.chunk_index || undefined
             }));
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('RagService', `searchRelevantChunks error: ${err.message}`);
             const keywordContext = await RagService.getContextKeyword(query, limit, organizationId || null);
@@ -354,7 +354,7 @@ const RagService = {
                 const embedding = await deps.embeddingService.generateEmbedding(chunk.content);
                 await deps.embeddingService.storeChunk(chunk, embedding);
                 successCount++;
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error as Error;
                 aiLogger.warn('RagService', `Failed to embed chunk ${chunk.chunkIndex}: ${err.message}`);
             }
@@ -490,7 +490,7 @@ const RagService = {
                 };
                 finalResults = await reranker.rerankDocuments(query, finalResults, limit);
                 aiLogger.info('RagService', `Re-ranked ${finalResults.length} results`);
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error as Error;
                 aiLogger.warn('RagService', `Re-ranking skipped: ${err.message}`);
             }

@@ -613,6 +613,21 @@ function recordSubscriptionEvent(organizationId, eventType, data) {
     });
 }
 
+export {
+setDependencies,
+    createCreditNote,
+    getCreditNoteById,
+    getCreditNotes,
+    getAllCreditNotes,
+    getCreditNoteItems,
+    applyCreditToInvoice,
+    refundCreditNote,
+    voidCreditNote,
+    getCreditNoteStats,
+    getAvailableCreditBalance,
+    generateCreditNoteNumber
+};
+
 export default {
     setDependencies,
     createCreditNote,

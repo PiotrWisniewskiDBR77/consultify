@@ -5,7 +5,9 @@
  * Handles PDF parsing, table extraction, and framework-specific parsing.
  */
 
-import pdfParse from 'pdf-parse';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
 import { promises as fs } from 'fs';
 
 class PDFParserService {
@@ -257,7 +259,7 @@ class PDFParserService {
         try {
             const text = await this.extractText(filePath);
             const detectedFramework = this.detectFrameworkFromText(text);
-            
+
             // Calculate confidence based on signature matches
             let confidence = 0;
             const frameworkSignatures = {
@@ -265,7 +267,7 @@ class PDFParserService {
                 ADMA: ['ASEAN Digital Masterplan', 'ADMA', 'Digital Economy', 'Digital Innovation Hub', 'European Commission', 'Pillar', 'Smart Products'],
                 CMMI: ['CMMI', 'Capability Maturity Model', 'Process Improvement', 'ISACA', 'Practice Area', 'Maturity Level', 'Appraisal'],
             };
-            
+
             const signatures = frameworkSignatures[detectedFramework] || [];
             let matchCount = 0;
             signatures.forEach(sig => {
@@ -273,12 +275,12 @@ class PDFParserService {
                     matchCount++;
                 }
             });
-            
+
             confidence = signatures.length > 0 ? matchCount / signatures.length : 0.3;
-            
+
             // Boost confidence if multiple strong indicators
             if (matchCount >= 3) confidence = Math.min(confidence + 0.2, 0.98);
-            
+
             return {
                 framework: detectedFramework,
                 confidence: Math.round(confidence * 100) / 100,
@@ -304,7 +306,7 @@ class PDFParserService {
         try {
             const text = await this.extractText(filePath);
             let scores = [];
-            
+
             if (framework === 'SIRI') {
                 scores = this.extractSIRIScores(text);
             } else if (framework === 'ADMA') {
@@ -312,7 +314,7 @@ class PDFParserService {
             } else if (framework === 'CMMI') {
                 scores = this.extractCMMIScores(text);
             }
-            
+
             return {
                 scores,
                 rawText: text.substring(0, 2000),
@@ -345,7 +347,7 @@ class PDFParserService {
             { id: 'talent_readiness', name: 'Talent Readiness', patterns: ['talent', 'skills', 'workforce', 'training'] },
             { id: 'structure_management', name: 'Structure & Management', patterns: ['structure', 'governance', 'organization', 'management'] },
         ];
-        
+
         dimensions.forEach(dim => {
             const score = this.findScoreNearKeyword(text, dim.patterns);
             scores.push({
@@ -355,7 +357,7 @@ class PDFParserService {
                 confidence: score.confidence
             });
         });
-        
+
         return scores;
     }
 
@@ -380,7 +382,7 @@ class PDFParserService {
             { id: 'data_analytics', name: 'Data Analytics', patterns: ['analytics', 'BI', 'dashboard', 'reporting'] },
             { id: 'data_services', name: 'Data-Based Services', patterns: ['data service', 'data monetization', 'as-a-service'] },
         ];
-        
+
         dimensions.forEach(dim => {
             const score = this.findScoreNearKeyword(text, dim.patterns);
             scores.push({
@@ -390,7 +392,7 @@ class PDFParserService {
                 confidence: score.confidence
             });
         });
-        
+
         return scores;
     }
 
@@ -423,7 +425,7 @@ class PDFParserService {
             { id: 'PCM', name: 'Process Management', patterns: ['process management', 'process improvement', 'SEPG'] },
             { id: 'MPM', name: 'Managing Performance', patterns: ['performance management', 'metrics', 'measurement'] },
         ];
-        
+
         practiceAreas.forEach(pa => {
             const score = this.findScoreNearKeyword(text, pa.patterns);
             scores.push({
@@ -433,7 +435,7 @@ class PDFParserService {
                 confidence: score.confidence
             });
         });
-        
+
         return scores;
     }
 
@@ -445,13 +447,13 @@ class PDFParserService {
      */
     static findScoreNearKeyword(text, patterns) {
         const textLower = text.toLowerCase();
-        
+
         for (const pattern of patterns) {
             const index = textLower.indexOf(pattern.toLowerCase());
             if (index !== -1) {
                 // Look for numbers near the keyword (within 100 chars)
                 const context = text.substring(Math.max(0, index - 50), Math.min(text.length, index + 150));
-                
+
                 // Pattern for scores like "3.5", "4", "Level 3", "Score: 2.8"
                 const scorePatterns = [
                     /(?:score|level|rating|grade)[:\s]*(\d(?:\.\d)?)/i,
@@ -459,7 +461,7 @@ class PDFParserService {
                     /:\s*(\d(?:\.\d)?)\s*$/m,
                     /\b([1-5](?:\.[0-9])?)\b/
                 ];
-                
+
                 for (const scorePattern of scorePatterns) {
                     const match = context.match(scorePattern);
                     if (match) {
@@ -471,11 +473,11 @@ class PDFParserService {
                 }
             }
         }
-        
+
         // Default: return random score with low confidence (for demo)
-        return { 
+        return {
             value: Math.round(Math.random() * 3 + 1), // 1-4
-            confidence: 0.4 
+            confidence: 0.4
         };
     }
 
@@ -487,7 +489,7 @@ class PDFParserService {
     static parseCMMI(pdfText) {
         try {
             const scores = {};
-            
+
             // CMMI Practice Areas
             const cmmiPracticeAreas = [
                 'Estimating',

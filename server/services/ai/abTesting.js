@@ -8,8 +8,8 @@
  * - Gradual rollout
  */
 
-const { queryRun, queryOne, queryAll } = require('../../utils/queryHelpers');
-const { aiLogger } = require('./logger');
+import { queryRun, queryOne, queryAll } from '../../utils/queryHelpers.js';
+import { aiLogger } from './logger.js';
 
 class ABTestingService {
     constructor() {
@@ -413,6 +413,12 @@ class ABTestingService {
 
 // Singleton instance
 const abTestingService = new ABTestingService();
+
+export {
+ABTestingService,
+    abTestingService,
+    abTesting: abTestingService // Alias for API routes
+};
 
 export default {
     ABTestingService,

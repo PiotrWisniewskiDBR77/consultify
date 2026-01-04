@@ -20,7 +20,7 @@ export class BillingDependencyLoader {
                     stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
                         apiVersion: '2025-12-15.clover' as any
                     });
-                } catch (error) {
+                } catch (error: unknown) {
                     console.warn('[BillingDependencyLoader] Stripe initialization failed:', error);
                 }
             }

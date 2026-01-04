@@ -193,7 +193,7 @@ export class DunningService {
         for (const org of orgs) {
             try {
                 await this.processOrganizationDunning(org);
-            } catch (err) {
+            } catch (err: unknown) {
                 logger.error(`[Dunning] Error processing org ${org.id}: ${(err as Error).message}`);
             }
         }
@@ -245,7 +245,7 @@ export class DunningService {
         try {
             await stripe.invoices.pay(invoices.data[0].id);
             return { success: true, message: 'Payment retry initiated' };
-        } catch (error) {
+        } catch (error: unknown) {
             return { success: false, message: 'Retry failed', error: (error as Error).message };
         }
     }
@@ -366,7 +366,7 @@ export class DunningService {
         try {
             const result = await this.manualRetry(orgId);
             logger.info(`[Dunning] Retry for ${orgId}: ${result.success ? 'success' : result.error}`);
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error(`[Dunning] Retry failed for ${orgId}: ${(error as Error).message}`);
         }
     }
@@ -406,7 +406,7 @@ export class DunningService {
                  VALUES (?, ?, ?, ?)`,
                 [uuidv4(), orgId, notificationType, admin.email]
             );
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[Dunning] Email send failed:', (error as Error).message);
         }
     }

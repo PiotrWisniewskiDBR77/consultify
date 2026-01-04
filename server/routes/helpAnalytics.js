@@ -6,8 +6,9 @@
 
 import express from 'express';
 const router = express.Router();
-const helpAnalyticsService = import('helpAnalyticsService.js');
-const { requireRole } = require('../middleware/rbac');
+import * as rb from '../middleware/rbac.js';
+const requireRole = rb.requireRole || rb.default?.requireRole;
+import helpAnalyticsService from '../services/helpAnalyticsService.js';
 
 /**
  * GET /api/help-analytics/dashboard
@@ -16,12 +17,12 @@ const { requireRole } = require('../middleware/rbac');
 router.get('/dashboard', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) => {
     try {
         const { days = 30, organizationId } = req.query;
-        
+
         const data = await helpAnalyticsService.getDashboardData({
             days: parseInt(days),
             organizationId: req.user.role === 'SUPERADMIN' ? organizationId : req.user.organizationId
         });
-        
+
         res.json(data);
     } catch (error) {
         console.error('Error fetching help analytics dashboard:', error);
@@ -36,13 +37,13 @@ router.get('/dashboard', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) 
 router.get('/content', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) => {
     try {
         const { days = 30, contentType, organizationId } = req.query;
-        
+
         const data = await helpAnalyticsService.getContentPerformance({
             days: parseInt(days),
             contentType,
             organizationId: req.user.role === 'SUPERADMIN' ? organizationId : req.user.organizationId
         });
-        
+
         res.json(data);
     } catch (error) {
         console.error('Error fetching content performance:', error);
@@ -57,12 +58,12 @@ router.get('/content', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) =>
 router.get('/search', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) => {
     try {
         const { days = 30, organizationId } = req.query;
-        
+
         const data = await helpAnalyticsService.getSearchAnalytics({
             days: parseInt(days),
             organizationId: req.user.role === 'SUPERADMIN' ? organizationId : req.user.organizationId
         });
-        
+
         res.json(data);
     } catch (error) {
         console.error('Error fetching search analytics:', error);
@@ -77,12 +78,12 @@ router.get('/search', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) => 
 router.get('/feedback', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) => {
     try {
         const { days = 30, organizationId } = req.query;
-        
+
         const data = await helpAnalyticsService.getFeedbackSummary({
             days: parseInt(days),
             organizationId: req.user.role === 'SUPERADMIN' ? organizationId : req.user.organizationId
         });
-        
+
         res.json(data);
     } catch (error) {
         console.error('Error fetching feedback summary:', error);
@@ -97,11 +98,11 @@ router.get('/feedback', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) =
 router.get('/tours', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) => {
     try {
         const { days = 30 } = req.query;
-        
+
         const data = await helpAnalyticsService.getTourAnalytics({
             days: parseInt(days)
         });
-        
+
         res.json(data);
     } catch (error) {
         console.error('Error fetching tour analytics:', error);
@@ -116,12 +117,12 @@ router.get('/tours', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) => {
 router.get('/engagement', requireRole(['ADMIN', 'SUPERADMIN']), async (req, res) => {
     try {
         const { days = 30, organizationId } = req.query;
-        
+
         const data = await helpAnalyticsService.getUserEngagement({
             days: parseInt(days),
             organizationId: req.user.role === 'SUPERADMIN' ? organizationId : req.user.organizationId
         });
-        
+
         res.json(data);
     } catch (error) {
         console.error('Error fetching engagement metrics:', error);

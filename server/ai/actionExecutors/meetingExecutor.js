@@ -3,7 +3,7 @@
  * Executes MEETING_SCHEDULE action.
  * Step 17: Now uses connector adapter layer for external integrations.
  */
-const connectorAdapter = require('../connectorAdapter');
+import connectorAdapter from '../connectorAdapter.js';
 
 const MeetingExecutor = {
     /**

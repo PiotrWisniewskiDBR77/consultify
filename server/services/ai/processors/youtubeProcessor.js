@@ -9,7 +9,8 @@
  * @version 1.0.0
  */
 
-const { YoutubeTranscript } = require('youtube-transcript');
+import { YoutubeTranscript } from 'youtube-transcript';
+import fetch from 'node-fetch'; // Ensure fetch is available if not global
 
 /**
  * Process a YouTube URL and extract transcript
@@ -120,7 +121,7 @@ async function process(url, options = {}) {
 
     } catch (error) {
         console.error('[YouTubeProcessor] Error processing video:', error.message);
-        
+
         // Provide more helpful error messages
         if (error.message.includes('Transcript is disabled')) {
             throw new Error('Transcripts are disabled for this video. The uploader has not enabled captions.');
@@ -131,7 +132,7 @@ async function process(url, options = {}) {
         if (error.message.includes('Video unavailable')) {
             throw new Error('Video is unavailable. It may be private, deleted, or region-locked.');
         }
-        
+
         throw new Error(`Failed to process YouTube video: ${error.message}`);
     }
 }
@@ -177,11 +178,11 @@ async function fetchVideoMetadata(url) {
     try {
         const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
         const response = await fetch(oembedUrl);
-        
+
         if (!response.ok) {
             throw new Error(`oEmbed request failed: ${response.status}`);
         }
-        
+
         return await response.json();
     } catch (error) {
         console.warn('[YouTubeProcessor] Could not fetch metadata:', error.message);
@@ -197,7 +198,7 @@ async function fetchVideoMetadata(url) {
  */
 function estimateDuration(transcript) {
     if (!transcript || transcript.length === 0) return 0;
-    
+
     const lastSegment = transcript[transcript.length - 1];
     return Math.ceil((lastSegment.offset + lastSegment.duration) / 1000);
 }
@@ -244,6 +245,15 @@ async function getAvailableLanguages(url) {
     // This is a placeholder for future implementation
     return ['en']; // Default assumption
 }
+
+export {
+process,
+    extractVideoId,
+    isYouTubeUrl,
+    fetchVideoMetadata,
+    getAvailableLanguages,
+    formatTimestamp
+};
 
 export default {
     process,

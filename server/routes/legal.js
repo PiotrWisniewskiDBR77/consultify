@@ -6,8 +6,10 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const LegalService = import('legalService.js');
-const ActivityService = import('activityService.js');
+import * as LegalServiceModule from '../services/legalService.js';
+const LegalService = LegalServiceModule.default || LegalServiceModule;
+import * as ActivityServiceModule from '../services/activityService.js';
+const ActivityService = ActivityServiceModule.default || ActivityServiceModule;
 
 // ==========================================
 // PUBLIC ROUTES (No Authentication Required)
@@ -236,7 +238,9 @@ router.get('/admin/acceptance-status/organization/:orgId', async (req, res) => {
 // ENTERPRISE+ COMPLIANCE EXPORT ENDPOINTS
 // ==========================================
 
-const LegalExportService = import('legalExportService.js');
+const LegalExportServiceModule = await import('../services/legalExportService.js');
+
+const LegalExportService = LegalExportServiceModule.default || LegalExportServiceModule;
 
 /**
  * GET /api/legal/export/acceptances
@@ -358,7 +362,9 @@ router.get('/compliance-summary', async (req, res) => {
 // CONTACT FORM
 // ==========================================
 
-const EmailService = import('emailService.js');
+const EmailServiceModule = await import('../services/emailService.js');
+
+const EmailService = EmailServiceModule.default || EmailServiceModule;
 
 /**
  * POST /api/legal/contact

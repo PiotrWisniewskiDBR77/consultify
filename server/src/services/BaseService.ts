@@ -130,7 +130,7 @@ export abstract class BaseService<T extends { id: string }> {
             if (parsed[field] && typeof parsed[field] === 'string') {
                 try {
                     parsed[field] = JSON.parse(parsed[field] as string);
-                } catch (e) {
+                } catch (e: unknown) {
                     // Keep original value if parsing fails
                 }
             }

@@ -1,4 +1,4 @@
-const logger = require('./logger');
+import logger from './logger.js';
 
 /**
  * Standardized AppError Class
@@ -109,6 +109,15 @@ function asyncHandler(fn) {
         Promise.resolve(fn(req, res, next)).catch(next);
     };
 }
+
+// Named exports for ES module compatibility
+export {
+    AppError,
+    ERROR_CODES,
+    errorHandlerMiddleware,
+    asyncHandler,
+    createError
+};
 
 export default {
     AppError,

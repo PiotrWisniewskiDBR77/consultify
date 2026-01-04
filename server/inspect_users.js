@@ -1,4 +1,4 @@
-const db = require('./database');
+import db from './database.js';
 
 const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
 const query = isPg

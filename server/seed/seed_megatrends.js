@@ -95,4 +95,8 @@ function seedMegatrends() {
     });
 }
 
+export {
+seedMegatrends
+};
+
 export default { seedMegatrends };

@@ -106,6 +106,8 @@ setImmediate(() => {
     });
 });
 
+// Redundant export block removed
+
 export default {
     STATE,
     canExecute,

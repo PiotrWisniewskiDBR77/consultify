@@ -7,8 +7,8 @@
  * Part of: User-Level Notifications & Integrations System
  */
 
-const axios = require('axios');
-const UserIntegrationService = require('../userIntegrationService');
+import axios from 'axios';
+import UserIntegrationService from '../userIntegrationService.js';
 
 // Microsoft Graph API endpoints
 const GRAPH_API = {

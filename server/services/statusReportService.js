@@ -10,7 +10,7 @@
  */
 
 import db from '../database.js';
-import queryHelpers from '../utils/queryHelpers.js';
+import * as queryHelpers from '../src/utils/queryHelpers.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // Report Status (RAG)

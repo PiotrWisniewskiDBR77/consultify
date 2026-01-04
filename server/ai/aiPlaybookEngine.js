@@ -1,5 +1,6 @@
-const SignalEngine = require('./signalEngine');
-const AIPlaybookService = require('./aiPlaybookService');
+import SignalEngine from './signalEngine.js';
+import AIPlaybookService from './aiPlaybookService.js';
+import AICoach from './aiCoach.js';
 
 /**
  * AI Playbook Engine

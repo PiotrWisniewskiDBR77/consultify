@@ -1,5 +1,5 @@
-const AiService = require('./services/aiService');
-const db = require('./database');
+import AiService from './services/aiService.js';
+import db from './database.js';
 
 const userId = 'user-dbr77-admin';
 const providerId = 'bce30987-1030-43e3-b89b-0400f76041e3'; // Qwen

@@ -603,6 +603,13 @@ class AIAssessmentReportGenerator {
 // Export singleton instance
 const aiAssessmentReportGenerator = new AIAssessmentReportGenerator();
 
+export {
+AIAssessmentReportGenerator,
+    aiAssessmentReportGenerator,
+    REPORT_TYPES,
+    STAKEHOLDER_ROLES
+};
+
 export default {
     AIAssessmentReportGenerator,
     aiAssessmentReportGenerator,

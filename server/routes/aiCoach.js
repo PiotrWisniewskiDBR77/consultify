@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-const AICoach = require('../ai/aiCoach');
+import AICoach from '../ai/aiCoach.js';
 // Assuming userMiddleware or similar exists for auth
 // For this demo, we'll use a simple mock-up of auth check if not already implemented globally
 

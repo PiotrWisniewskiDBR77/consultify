@@ -41,7 +41,7 @@ export async function createInitiative(
             status: 'CREATED',
             message: `Initiative "${title}" created successfully`
         };
-    } catch (error) {
+    } catch (error: unknown) {
         const err = error as Error;
         if (err.message.includes('no such table')) {
             return {

@@ -4,39 +4,35 @@
  * Use these codes in action_executions.error_code and structured logs.
  */
 
-const ACTION_ERROR_CODES = {
-    // RBAC / Authorization
-    RBAC_DENIED: 'RBAC_DENIED',
+export const ACTION_ERROR_CODES = {
+    // Playbook & Step Errors
+    STEP_NOT_FOUND: 'STEP_NOT_FOUND',
+    PLAYBOOK_NOT_FOUND: 'PLAYBOOK_NOT_FOUND',
+    STEP_EXECUTION_FAILED: 'STEP_EXECUTION_FAILED',
+    CONDITION_EVALUATION_FAILED: 'CONDITION_EVALUATION_FAILED',
 
-    // Resource Not Found
-    NOT_FOUND: 'NOT_FOUND',
-
-    // Validation Failures
+    // Decision & Action Errors
+    DECISION_NOT_FOUND: 'DECISION_NOT_FOUND',
+    ACTION_NOT_FOUND: 'ACTION_NOT_FOUND',
+    ACTION_EXECUTION_FAILED: 'ACTION_EXECUTION_FAILED',
+    INVALID_ACTION_TYPE: 'INVALID_ACTION_TYPE',
+    MISSING_INPUTS: 'MISSING_INPUTS',
     VALIDATION_ERROR: 'VALIDATION_ERROR',
 
-    // Conflict (e.g., double approval)
-    CONFLICT_409: 'CONFLICT_409',
+    // Security & Access Errors
+    RBAC_DENIED: 'RBAC_DENIED',
+    JOB_ORG_MISMATCH: 'JOB_ORG_MISMATCH',
+    UNAUTHORIZED_ACTION: 'UNAUTHORIZED_ACTION',
 
-    // Execution Errors (internal)
-    EXECUTION_ERROR: 'EXECUTION_ERROR',
-
-    // External Integration Errors
-    INTEGRATION_ERROR: 'INTEGRATION_ERROR',
-
-    // Timeout
-    TIMEOUT: 'TIMEOUT',
-
-    // Already Executed (idempotency)
+    // System Errors
     ALREADY_EXECUTED: 'ALREADY_EXECUTED',
+    NOT_FOUND: 'NOT_FOUND',
+    INTERNAL_ERROR: 'INTERNAL_ERROR',
 
-    // Missing required inputs
-    MISSING_INPUTS: 'MISSING_INPUTS',
-
-    // Step 11: Async Job Error Codes
+    // Async Job Error Codes (from original, re-added)
     JOB_NOT_FOUND: 'JOB_NOT_FOUND',
     JOB_INVALID_STATE: 'JOB_INVALID_STATE',
     JOB_MAX_RETRIES: 'JOB_MAX_RETRIES',
-    JOB_ORG_MISMATCH: 'JOB_ORG_MISMATCH',
     PLAYBOOK_ADVANCE_FAILED: 'PLAYBOOK_ADVANCE_FAILED'
 };
 
@@ -70,6 +66,8 @@ function classifyError(error, defaultCode = ACTION_ERROR_CODES.EXECUTION_ERROR) 
 
     return defaultCode;
 }
+
+// Redundant export block removed
 
 export default {
     ACTION_ERROR_CODES,

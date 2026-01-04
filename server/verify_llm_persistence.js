@@ -1,4 +1,4 @@
-const path = require('path');
+import path from 'path';
 
 // Mock Logger so we don't crash if logger relies on complex context
 global.aiLogger = {

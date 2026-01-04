@@ -151,6 +151,12 @@ async function runCleanup() {
 }
 
 // Export for programmatic use
+export {
+runCleanup,
+    expirePendingInvitations,
+    cleanupOldInvitations
+};
+
 export default {
     runCleanup,
     expirePendingInvitations,

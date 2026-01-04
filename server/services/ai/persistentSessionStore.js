@@ -5,9 +5,9 @@
  * Replaces the ephemeral in-memory map to ensure context survives server restarts.
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 class PersistentSessionStore {
     constructor(database = db) {
@@ -151,5 +151,9 @@ class PersistentSessionStore {
         }
     }
 }
+
+export {
+PersistentSessionStore
+};
 
 export default { PersistentSessionStore };

@@ -1,6 +1,6 @@
 // REFACTORED: Uses BaseService for common functionality
 import BaseService from './BaseService.js';
-import queryHelpers from '../utils/queryHelpers.js';
+import * as queryHelpers from '../src/utils/queryHelpers.js';
 
 const InitiativeService = Object.assign({}, BaseService, {
     // For testing: allow overriding dependencies (maintained for backwards compatibility)

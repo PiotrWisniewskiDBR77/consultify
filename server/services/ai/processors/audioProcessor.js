@@ -9,9 +9,9 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const path = require('path');
-const { speechToTextService } = require('../speechToTextService');
+import fs from 'fs';
+import path from 'path';
+import { speechToTextService } from '../speechToTextService.js';
 
 // Supported audio formats
 const SUPPORTED_FORMATS = {
@@ -108,7 +108,7 @@ async function process(filePath, options = {}) {
 
     } catch (error) {
         console.error('[AudioProcessor] Error processing file:', error.message);
-        
+
         // Provide helpful error messages
         if (error.message.includes('providers failed')) {
             throw new Error('Transcription service unavailable. Please try again later.');
@@ -116,7 +116,7 @@ async function process(filePath, options = {}) {
         if (error.message.includes('API key')) {
             throw new Error('Speech-to-text service not configured. Contact administrator.');
         }
-        
+
         throw new Error(`Failed to transcribe audio: ${error.message}`);
     }
 }
@@ -185,7 +185,7 @@ function estimateDuration(fileSize, format) {
 
     const bitrate = bitrates[format] || 128;
     const durationSeconds = (fileSize * 8) / (bitrate * 1000);
-    
+
     return Math.round(durationSeconds);
 }
 
@@ -250,6 +250,19 @@ function getAvailableLanguages() {
 function getServiceHealth() {
     return speechToTextService.getHealthStatus();
 }
+
+export {
+process,
+    processBuffer,
+    isSupported,
+    getSupportedExtensions,
+    getSupportedMimeTypes,
+    getAvailableLanguages,
+    getServiceHealth,
+    estimateDuration,
+    formatTimestamp,
+    SUPPORTED_FORMATS
+};
 
 export default {
     process,

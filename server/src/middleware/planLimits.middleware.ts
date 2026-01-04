@@ -134,7 +134,7 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
             }
 
             next();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Plan limit check error:', error);
             res.status(500).json({ error: 'Failed to verify plan limits' });
         }

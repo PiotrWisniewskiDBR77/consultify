@@ -231,7 +231,7 @@ function createNotification(orgId, type, title, message, priority = 'normal') {
             (err, users) => {
                 if (err) return reject(err);
 
-                import { v4 as uuidv4 } from 'uuid';
+                const { v4: uuidv4 } = await import('uuid');
                 const stmt = db.prepare(
                     'INSERT INTO notifications (id, user_id, type, title, message, data) VALUES (?, ?, ?, ?, ?, ?)'
                 );

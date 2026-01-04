@@ -10,8 +10,10 @@ import fs from 'fs';
 import path from 'path';
 import db from '../database.js';
 import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
 
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // DRD Axis Configuration
 const DRD_AXES = {
@@ -119,13 +121,13 @@ class AssessmentReportService {
 
         // Summary Sheet
         await this._addSummarySheet(workbook, assessment);
-        
+
         // Axis Details Sheet
         await this._addAxisSheet(workbook, assessment);
-        
+
         // Gap Analysis Sheet
         await this._addGapSheet(workbook, assessment);
-        
+
         // Recommendations Sheet
         await this._addRecommendationsSheet(workbook, assessment);
 
@@ -150,29 +152,29 @@ class AssessmentReportService {
     async _addCoverPage(doc, assessment, options) {
         // Background gradient effect (simulated with rectangles)
         doc.rect(0, 0, doc.page.width, 250)
-           .fill(BRAND.primaryColor);
+            .fill(BRAND.primaryColor);
 
         // Logo placeholder
         doc.fontSize(28)
-           .fillColor('white')
-           .font('Helvetica-Bold')
-           .text('CONSULTIFY', 50, 80, { align: 'left' });
+            .fillColor('white')
+            .font('Helvetica-Bold')
+            .text('CONSULTIFY', 50, 80, { align: 'left' });
 
         doc.fontSize(12)
-           .font('Helvetica')
-           .text('Enterprise Decision Platform', 50, 115, { align: 'left' });
+            .font('Helvetica')
+            .text('Enterprise Decision Platform', 50, 115, { align: 'left' });
 
         // Title
         doc.fontSize(32)
-           .font('Helvetica-Bold')
-           .text('Digital Readiness', 50, 300, { align: 'center' });
+            .font('Helvetica-Bold')
+            .text('Digital Readiness', 50, 300, { align: 'center' });
         doc.text('Assessment Report', { align: 'center' });
 
         // Organization
         doc.fontSize(18)
-           .font('Helvetica')
-           .fillColor(BRAND.darkGray)
-           .text(assessment.organizationName || 'Organization', 50, 400, { align: 'center' });
+            .font('Helvetica')
+            .fillColor(BRAND.darkGray)
+            .text(assessment.organizationName || 'Organization', 50, 400, { align: 'center' });
 
         // Metadata
         const metadata = [
@@ -183,8 +185,8 @@ class AssessmentReportService {
         ];
 
         doc.fontSize(11)
-           .fillColor(BRAND.textColor);
-        
+            .fillColor(BRAND.textColor);
+
         let y = 480;
         metadata.forEach(text => {
             doc.text(text, 50, y, { align: 'center' });
@@ -193,8 +195,8 @@ class AssessmentReportService {
 
         // Footer
         doc.fontSize(9)
-           .fillColor(BRAND.darkGray)
-           .text('Confidential', 50, doc.page.height - 50, { align: 'center' });
+            .fillColor(BRAND.darkGray)
+            .text('Confidential', 50, doc.page.height - 50, { align: 'center' });
 
         doc.addPage();
     }
@@ -204,7 +206,7 @@ class AssessmentReportService {
 
         const axisScores = assessment.axisScores || {};
         const axes = Object.keys(DRD_AXES);
-        
+
         // Calculate averages
         let totalActual = 0, totalTarget = 0, count = 0;
         axes.forEach(axis => {
@@ -221,28 +223,28 @@ class AssessmentReportService {
 
         // Key metrics boxes
         doc.fontSize(11)
-           .fillColor(BRAND.textColor);
+            .fillColor(BRAND.textColor);
 
         const metricsY = doc.y + 20;
-        
+
         // Metric 1: Overall Maturity
-        this._addMetricBox(doc, 50, metricsY, 150, 80, 
+        this._addMetricBox(doc, 50, metricsY, 150, 80,
             'Overall Maturity', `${avgActual} / 7.0`, BRAND.primaryColor);
-        
+
         // Metric 2: Target Level
         this._addMetricBox(doc, 210, metricsY, 150, 80,
             'Target Level', `${avgTarget} / 7.0`, BRAND.secondaryColor);
-        
+
         // Metric 3: Gap
         this._addMetricBox(doc, 370, metricsY, 150, 80,
-            'Overall Gap', `${overallGap} levels`, 
+            'Overall Gap', `${overallGap} levels`,
             parseFloat(overallGap) > 2 ? BRAND.dangerColor : BRAND.successColor);
 
         doc.y = metricsY + 110;
 
         // Summary text
         doc.fontSize(11)
-           .fillColor(BRAND.textColor);
+            .fillColor(BRAND.textColor);
 
         const summaryText = `This assessment evaluates the organization's digital maturity across seven key dimensions 
 of the Digital Readiness Diagnosis (DRD) framework. The overall maturity score of ${avgActual} indicates 
@@ -259,12 +261,12 @@ The identified gap of ${overallGap} levels between current and target state ${pa
         // Key Findings
         doc.y += 30;
         doc.fontSize(14)
-           .font('Helvetica-Bold')
-           .text('Key Findings', 50, doc.y);
+            .font('Helvetica-Bold')
+            .text('Key Findings', 50, doc.y);
 
         doc.y += 15;
         doc.fontSize(11)
-           .font('Helvetica');
+            .font('Helvetica');
 
         // Find strongest and weakest
         let strongest = { axis: '', score: 0 };
@@ -300,7 +302,7 @@ The identified gap of ${overallGap} levels between current and target state ${pa
 
         const axisScores = assessment.axisScores || {};
         const axes = Object.keys(DRD_AXES);
-        
+
         // Create simple bar chart visualization
         let y = doc.y + 30;
         const barWidth = 300;
@@ -314,33 +316,33 @@ The identified gap of ${overallGap} levels between current and target state ${pa
 
             // Axis label
             doc.fontSize(10)
-               .fillColor(BRAND.textColor)
-               .font('Helvetica')
-               .text(config.name, 50, y + 5, { width: 125 });
+                .fillColor(BRAND.textColor)
+                .font('Helvetica')
+                .text(config.name, 50, y + 5, { width: 125 });
 
             // Background bar
             doc.rect(leftMargin, y, barWidth, barHeight)
-               .fill(BRAND.lightGray);
+                .fill(BRAND.lightGray);
 
             // Actual score bar
             const actualWidth = (score / 7) * barWidth;
             doc.rect(leftMargin, y, actualWidth, barHeight)
-               .fill(config.color);
+                .fill(config.color);
 
             // Target indicator
             if (target > 0) {
                 const targetX = leftMargin + (target / 7) * barWidth;
                 doc.moveTo(targetX, y - 3)
-                   .lineTo(targetX, y + barHeight + 3)
-                   .strokeColor(BRAND.dangerColor)
-                   .lineWidth(2)
-                   .stroke();
+                    .lineTo(targetX, y + barHeight + 3)
+                    .strokeColor(BRAND.dangerColor)
+                    .lineWidth(2)
+                    .stroke();
             }
 
             // Score text
             doc.fontSize(10)
-               .fillColor(BRAND.textColor)
-               .text(`${score} / ${target || '-'}`, leftMargin + barWidth + 10, y + 6);
+                .fillColor(BRAND.textColor)
+                .text(`${score} / ${target || '-'}`, leftMargin + barWidth + 10, y + 6);
 
             y += barHeight + 15;
         });
@@ -348,8 +350,8 @@ The identified gap of ${overallGap} levels between current and target state ${pa
         // Legend
         doc.y = y + 20;
         doc.fontSize(9)
-           .fillColor(BRAND.darkGray)
-           .text('■ Current Level', 180, doc.y);
+            .fillColor(BRAND.darkGray)
+            .text('■ Current Level', 180, doc.y);
         doc.text('| Target Level', 280, doc.y);
 
         doc.addPage();
@@ -371,16 +373,16 @@ The identified gap of ${overallGap} levels between current and target state ${pa
 
             // Axis header
             doc.fontSize(12)
-               .font('Helvetica-Bold')
-               .fillColor(config.color)
-               .text(`${index + 1}. ${config.name}`, 50, doc.y);
+                .font('Helvetica-Bold')
+                .fillColor(config.color)
+                .text(`${index + 1}. ${config.name}`, 50, doc.y);
 
             doc.y += 5;
 
             // Scores
             doc.fontSize(10)
-               .font('Helvetica')
-               .fillColor(BRAND.textColor);
+                .font('Helvetica')
+                .fillColor(BRAND.textColor);
 
             const scoreRow = `Current Level: ${data.actual || '-'}  |  Target Level: ${data.target || '-'}  |  Gap: ${(data.target || 0) - (data.actual || 0)} levels`;
             doc.text(scoreRow, 60, doc.y);
@@ -390,11 +392,11 @@ The identified gap of ${overallGap} levels between current and target state ${pa
             // Justification
             if (data.justification) {
                 doc.fontSize(9)
-                   .fillColor(BRAND.darkGray)
-                   .text(`Justification: ${data.justification}`, 60, doc.y, { 
-                       width: 475,
-                       lineGap: 2
-                   });
+                    .fillColor(BRAND.darkGray)
+                    .text(`Justification: ${data.justification}`, 60, doc.y, {
+                        width: 475,
+                        lineGap: 2
+                    });
             }
 
             doc.y += 20;
@@ -433,13 +435,13 @@ The identified gap of ${overallGap} levels between current and target state ${pa
         let tableY = doc.y + 20;
 
         const headers = ['Dimension', 'Current', 'Target', 'Gap', 'Priority', 'Effort'];
-        
+
         doc.rect(tableX, tableY, 495, 25)
-           .fill(BRAND.primaryColor);
+            .fill(BRAND.primaryColor);
 
         doc.fontSize(9)
-           .fillColor('white')
-           .font('Helvetica-Bold');
+            .fillColor('white')
+            .font('Helvetica-Bold');
 
         let x = tableX + 5;
         headers.forEach((header, i) => {
@@ -451,7 +453,7 @@ The identified gap of ${overallGap} levels between current and target state ${pa
 
         // Table rows
         doc.font('Helvetica')
-           .fillColor(BRAND.textColor);
+            .fillColor(BRAND.textColor);
 
         gaps.forEach((gap, rowIndex) => {
             const bgColor = rowIndex % 2 === 0 ? '#FFFFFF' : BRAND.lightGray;
@@ -471,12 +473,12 @@ The identified gap of ${overallGap} levels between current and target state ${pa
                 if (i === 4) {
                     // Priority badge
                     const badgeColor = gap.priority === 'HIGH' ? BRAND.dangerColor :
-                                      gap.priority === 'MEDIUM' ? BRAND.warningColor :
-                                      BRAND.successColor;
+                        gap.priority === 'MEDIUM' ? BRAND.warningColor :
+                            BRAND.successColor;
                     doc.rect(x, tableY + 4, 45, 14).fill(badgeColor);
                     doc.fillColor('white')
-                       .fontSize(8)
-                       .text(cell, x + 2, tableY + 7);
+                        .fontSize(8)
+                        .text(cell, x + 2, tableY + 7);
                     doc.fillColor(BRAND.textColor).fontSize(9);
                 } else {
                     doc.text(cell, x, tableY + 6, { width: colWidths[i] - 10 });
@@ -491,7 +493,7 @@ The identified gap of ${overallGap} levels between current and target state ${pa
 
         if (gaps.length === 0) {
             doc.fontSize(11)
-               .text('No gaps identified. All axes meet or exceed target levels.', 50, doc.y);
+                .text('No gaps identified. All axes meet or exceed target levels.', 50, doc.y);
         }
 
         doc.addPage();
@@ -501,18 +503,18 @@ The identified gap of ${overallGap} levels between current and target state ${pa
         this._addSectionHeader(doc, 'Recommendations');
 
         doc.fontSize(11)
-           .fillColor(BRAND.textColor)
-           .font('Helvetica');
+            .fillColor(BRAND.textColor)
+            .font('Helvetica');
 
         const axisScores = assessment.axisScores || {};
-        
+
         // Generate recommendations based on gaps
         const recommendations = [];
-        
+
         Object.keys(DRD_AXES).forEach(axis => {
             const data = axisScores[axis] || {};
             const gap = (data.target || 0) - (data.actual || 0);
-            
+
             if (gap >= 2) {
                 recommendations.push({
                     priority: gap >= 3 ? 'Critical' : 'High',
@@ -540,34 +542,34 @@ The identified gap of ${overallGap} levels between current and target state ${pa
 
             // Priority badge
             const badgeColor = rec.priority === 'Critical' ? BRAND.dangerColor :
-                              rec.priority === 'High' ? BRAND.warningColor :
-                              BRAND.primaryColor;
-            
+                rec.priority === 'High' ? BRAND.warningColor :
+                    BRAND.primaryColor;
+
             doc.rect(50, y, 60, 16).fill(badgeColor);
             doc.fontSize(8)
-               .fillColor('white')
-               .font('Helvetica-Bold')
-               .text(rec.priority.toUpperCase(), 55, y + 4);
+                .fillColor('white')
+                .font('Helvetica-Bold')
+                .text(rec.priority.toUpperCase(), 55, y + 4);
 
             // Title
             doc.fontSize(11)
-               .fillColor(BRAND.textColor)
-               .font('Helvetica-Bold')
-               .text(rec.title, 120, y);
+                .fillColor(BRAND.textColor)
+                .font('Helvetica-Bold')
+                .text(rec.title, 120, y);
 
             y += 18;
 
             // Description
             doc.fontSize(10)
-               .font('Helvetica')
-               .fillColor(BRAND.darkGray)
-               .text(rec.description, 60, y, { width: 450 });
+                .font('Helvetica')
+                .fillColor(BRAND.darkGray)
+                .text(rec.description, 60, y, { width: 450 });
 
             y += 20;
 
             // Timeframe
             doc.fontSize(9)
-               .text(`Estimated timeframe: ${rec.timeframe}`, 60, y);
+                .text(`Estimated timeframe: ${rec.timeframe}`, 60, y);
 
             y += 25;
         });
@@ -582,18 +584,18 @@ The identified gap of ${overallGap} levels between current and target state ${pa
         this._addSectionHeader(doc, 'Appendix');
 
         doc.fontSize(10)
-           .fillColor(BRAND.textColor)
-           .font('Helvetica');
+            .fillColor(BRAND.textColor)
+            .font('Helvetica');
 
         // Methodology
         doc.fontSize(12)
-           .font('Helvetica-Bold')
-           .text('DRD Methodology', 50, doc.y);
+            .font('Helvetica-Bold')
+            .text('DRD Methodology', 50, doc.y);
 
         doc.y += 10;
         doc.fontSize(9)
-           .font('Helvetica')
-           .text(`The Digital Readiness Diagnosis (DRD) framework evaluates organizational maturity across 7 key dimensions, 
+            .font('Helvetica')
+            .text(`The Digital Readiness Diagnosis (DRD) framework evaluates organizational maturity across 7 key dimensions, 
 using a 7-level scale from Basic (1) to World-Class (7). Each level represents distinct capabilities and practices.`, 50, doc.y, { width: 495 });
 
         doc.y += 40;
@@ -617,39 +619,39 @@ using a 7-level scale from Basic (1) to World-Class (7). Each level represents d
         // Footer
         doc.y = doc.page.height - 80;
         doc.fontSize(8)
-           .fillColor(BRAND.darkGray)
-           .text('Generated by Consultify Enterprise Platform', 50, doc.y, { align: 'center' });
+            .fillColor(BRAND.darkGray)
+            .text('Generated by Consultify Enterprise Platform', 50, doc.y, { align: 'center' });
         doc.text(`Report ID: ${assessment.id || 'N/A'}`, 50, doc.y + 12, { align: 'center' });
     }
 
     _addSectionHeader(doc, title) {
         doc.fontSize(18)
-           .font('Helvetica-Bold')
-           .fillColor(BRAND.primaryColor)
-           .text(title, 50, doc.y);
+            .font('Helvetica-Bold')
+            .fillColor(BRAND.primaryColor)
+            .text(title, 50, doc.y);
 
         doc.moveTo(50, doc.y + 5)
-           .lineTo(545, doc.y + 5)
-           .strokeColor(BRAND.primaryColor)
-           .lineWidth(2)
-           .stroke();
+            .lineTo(545, doc.y + 5)
+            .strokeColor(BRAND.primaryColor)
+            .lineWidth(2)
+            .stroke();
 
         doc.y += 15;
     }
 
     _addMetricBox(doc, x, y, width, height, label, value, color) {
         doc.rect(x, y, width, height)
-           .fill(color);
+            .fill(color);
 
         doc.fontSize(10)
-           .fillColor('rgba(255,255,255,0.8)')
-           .font('Helvetica')
-           .text(label, x + 10, y + 12);
+            .fillColor('rgba(255,255,255,0.8)')
+            .font('Helvetica')
+            .text(label, x + 10, y + 12);
 
         doc.fontSize(22)
-           .fillColor('white')
-           .font('Helvetica-Bold')
-           .text(value, x + 10, y + 35);
+            .fillColor('white')
+            .font('Helvetica-Bold')
+            .text(value, x + 10, y + 35);
     }
 
     // ============================================
@@ -708,7 +710,7 @@ using a 7-level scale from Basic (1) to World-Class (7). Each level represents d
         // Headers
         const headers = ['Axis', 'Current Level', 'Target Level', 'Gap', 'Priority', 'Justification'];
         sheet.addRow(headers);
-        
+
         const headerRow = sheet.getRow(1);
         headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
         headerRow.fill = {
@@ -749,7 +751,7 @@ using a 7-level scale from Basic (1) to World-Class (7). Each level represents d
 
         const headers = ['Axis', 'Current', 'Target', 'Gap', 'Gap %', 'Estimated Effort (months)', 'Priority'];
         sheet.addRow(headers);
-        
+
         const headerRow = sheet.getRow(1);
         headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
         headerRow.fill = {

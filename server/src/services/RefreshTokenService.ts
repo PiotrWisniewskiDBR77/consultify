@@ -118,7 +118,7 @@ class RefreshTokenService {
      */
     private async dbGet<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
         return new Promise((resolve, reject) => {
-            this.db.get<T>(sql, params, (err, row) => {
+            this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
                 else resolve(row || null);
             });
@@ -144,7 +144,7 @@ class RefreshTokenService {
      */
     private async dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
         return new Promise((resolve, reject) => {
-            this.db.all<T>(sql, params, (err, rows) => {
+            this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });

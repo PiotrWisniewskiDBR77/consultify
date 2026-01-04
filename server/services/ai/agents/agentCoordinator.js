@@ -483,6 +483,12 @@ export const resetCoordinator = () => {
     coordinatorInstance = null;
 };
 
+export {
+AgentCoordinator,
+    getCoordinator,
+    resetCoordinator
+};
+
 export default {
     AgentCoordinator,
     getCoordinator,

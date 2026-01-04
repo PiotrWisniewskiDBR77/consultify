@@ -106,7 +106,7 @@ export const requirePermission = (permissionKey: string) => {
             // Attach permission info for audit logging
             (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
             next();
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('[PermissionMiddleware] Error:', err);
             res.status(500).json({
                 error: 'Permission check failed',
@@ -159,7 +159,7 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
                 requiredAny: permissionKeys,
                 code: 'PERMISSION_DENIED'
             });
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('[PermissionMiddleware] Error:', err);
             res.status(500).json({
                 error: 'Permission check failed',
@@ -218,7 +218,7 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
 
             (req as AuthRequest & { permissionChecked?: string[] }).permissionChecked = permissionKeys;
             next();
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('[PermissionMiddleware] Error:', err);
             res.status(500).json({
                 error: 'Permission check failed',

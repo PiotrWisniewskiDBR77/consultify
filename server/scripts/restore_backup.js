@@ -3,10 +3,10 @@
  * Usage: node scripts/restore_backup.js <backup_file_path>
  */
 
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
-const crypto = require('crypto');
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import crypto from 'crypto';
 
 const BACKUP_DIR = path.join(__dirname, '../../backups');
 const DB_PATH = path.join(__dirname, '../consultify.db');

@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const { requireOrgAccess } = require('../middleware/rbac');
+import { requireOrgAccess  } from '../middleware/rbac.js';
 import budgetManagementService from '../services/budgetManagementService.js';
 
 /**

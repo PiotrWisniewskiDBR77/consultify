@@ -1,7 +1,7 @@
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
-const PIIRedactor = require('../utils/piiRedactor');
+import PIIRedactor from '../utils/piiRedactor.js';
 
 /**
  * Audit Export Service

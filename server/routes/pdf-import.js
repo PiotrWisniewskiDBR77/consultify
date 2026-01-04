@@ -6,12 +6,13 @@
  */
 
 import express from 'express';
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import authMiddleware from '../middleware/authMiddleware.js';
-const pdfParserService = import('pdfParserService.js');
+import * as pdfParserServiceModule from '../services/pdfParserService.js';
+const pdfParserService = pdfParserServiceModule.default || pdfParserServiceModule;
 
 const router = express.Router();
 
@@ -224,10 +225,11 @@ router.post('/confirm', authMiddleware, async (req, res) => {
         }
 
         // Save to database
-        import { getDatabase } from '../src/database/Database.js';
+        const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
-        const { calculateFrameworkScore } = import('frameworkScoreCalculators.js');
-        const multiFrameworkAuditService = import('multiFrameworkAuditService.js');
+        const { calculateFrameworkScore   } = await import('../services/frameworkScoreCalculators.js');
+        const multiFrameworkAuditServiceModule = await import('../services/multiFrameworkAuditService.js');
+        const multiFrameworkAuditService = multiFrameworkAuditServiceModule.default || multiFrameworkAuditServiceModule;
         
         // Calculate scores
         let overallScore = null;

@@ -7,7 +7,7 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // Transformation methodology definition
@@ -682,6 +682,13 @@ class ConsultingFlowEngine {
 
 // Singleton instance
 const consultingFlowEngine = new ConsultingFlowEngine();
+
+export {
+ConsultingFlowEngine,
+    consultingFlowEngine,
+    TRANSFORMATION_METHODOLOGY,
+    AXIS_QUESTION_BANK
+};
 
 export default {
     ConsultingFlowEngine,

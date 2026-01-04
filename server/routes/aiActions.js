@@ -7,8 +7,8 @@
 
 import express from 'express';
 const router = express.Router();
-const { actionExecutor, ACTION_TYPES } = import('ai/actionExecutor.js');
-const { aiLogger } = import('ai/logger.js');
+import { actionExecutor, ACTION_TYPES  } from '../services/ai/actionExecutor.js';
+import { aiLogger  } from '../services/ai/logger.js';
 
 // Middleware to extract user context
 const getUserContext = (req) => ({

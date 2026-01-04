@@ -77,7 +77,7 @@ class ADKARServiceClass {
      */
     private async dbGet<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
         return new Promise((resolve, reject) => {
-            this.db.get<T>(sql, params, (err, row) => {
+            this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
                 else resolve(row || null);
             });

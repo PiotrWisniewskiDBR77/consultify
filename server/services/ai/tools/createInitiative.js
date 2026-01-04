@@ -3,7 +3,7 @@
  * MUTATION - Requires user approval before execution
  */
 
-const db = require('../../../database');
+import db from '../../../database.js';
 import { v4 as uuidv4 } from 'uuid';
 
 async function createInitiative(params, context) {
@@ -40,6 +40,10 @@ async function createInitiative(params, context) {
         );
     });
 }
+
+export {
+createInitiative
+};
 
 export default { createInitiative };
 

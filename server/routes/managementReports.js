@@ -10,10 +10,12 @@
 
 import express from 'express';
 const router = express.Router();
-const Joi = require('joi');
+import Joi from 'joi';
 import authMiddleware from '../middleware/authMiddleware.js';
-const ManagementReportsService = import('managementReportsService.js');
-const BrandingService = import('brandingService.js');
+import * as ManagementReportsServiceModule from '../services/managementReportsService.js';
+const ManagementReportsService = ManagementReportsServiceModule.default || ManagementReportsServiceModule;
+import * as BrandingServiceModule from '../services/brandingService.js';
+const BrandingService = BrandingServiceModule.default || BrandingServiceModule;
 
 // ==========================================
 // VALIDATION SCHEMAS

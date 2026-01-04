@@ -39,7 +39,7 @@ async function getPMOHealthService() {
         try {
             const mod = (await import('../../services/pmoHealthService.js')) as any;
             _pmoHealthService = mod.default || mod.pmoHealthService || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.warn('[AIContextBuilder] PMOHealthService not available');
         }
     }
@@ -53,7 +53,7 @@ async function getAIActionExecutor() {
             // Import from the local JS file (compiled TS)
             const mod = (await import('./aiActionExecutor.js')) as any;
             _aiActionExecutor = mod.default || mod.aiActionExecutor || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.warn('[AIContextBuilder] AIActionExecutor not available');
         }
     }
@@ -66,7 +66,7 @@ async function getAISettingsService() {
         try {
             const mod = (await import('../../services/aiSettingsService.js')) as any;
             _aiSettingsService = mod.default || mod.aiSettingsService || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.warn('[AIContextBuilder] AISettingsService not available');
         }
     }
@@ -79,7 +79,7 @@ async function getKnowledgeService() {
         try {
             const mod = (await import('../../services/knowledgeService.js')) as any;
             _knowledgeService = mod.default || mod.knowledgeService || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.warn('[AIContextBuilder] KnowledgeService not available');
         }
     }
@@ -109,7 +109,7 @@ export const AIContextBuilder = {
         if (projectId && PMOHealthService && ['all', 'pmo-docs', 'project-data'].includes(focusMode)) {
             try {
                 pmo.healthSnapshot = await PMOHealthService.getHealthSnapshot(projectId);
-            } catch (err) {
+            } catch (err: unknown) {
                 console.warn('[AIContextBuilder] Failed to get PMO health snapshot:', (err as Error).message);
             }
         }
@@ -122,7 +122,7 @@ export const AIContextBuilder = {
         if (AISettingsService) {
             try {
                 aiSettings = await AISettingsService.getEffectiveSettings(userId, organizationId);
-            } catch (err) {
+            } catch (err: unknown) {
                 console.warn('[AIContextBuilder] Failed to get AI settings:', (err as Error).message);
             }
         }
@@ -366,7 +366,7 @@ export const AIContextBuilder = {
         if (organizationId && KnowledgeService) {
             try {
                 strategicDirections = await KnowledgeService.getActiveStrategies();
-            } catch (err) {
+            } catch (err: unknown) {
                 console.warn('[AIContextBuilder] Failed to load strategic directions:', (err as Error).message);
             }
         }
@@ -375,7 +375,7 @@ export const AIContextBuilder = {
         if (organizationId && KnowledgeService) {
             try {
                 approvedIdeas = await KnowledgeService.getApprovedIdeas({});
-            } catch (err) {
+            } catch (err: unknown) {
                 console.warn('[AIContextBuilder] Failed to load approved ideas:', (err as Error).message);
             }
         }
@@ -408,7 +408,7 @@ export const AIContextBuilder = {
 
         let documents = [];
         if (organizationId && KnowledgeService) {
-            try { documents = await KnowledgeService.getDocuments(organizationId); } catch (err) { }
+            try { documents = await KnowledgeService.getDocuments(organizationId); } catch (err: unknown) { }
         }
 
         return {
@@ -455,7 +455,7 @@ export const AIContextBuilder = {
                     let patternInfo = null;
                     try {
                         patternInfo = await AIActionExecutor.getPatternInfo(userId, action.action_type, action.payload || {});
-                    } catch (e) { }
+                    } catch (e: unknown) { }
 
                     return {
                         id: action.id,
@@ -482,7 +482,7 @@ export const AIContextBuilder = {
                 oldestCreatedAt: pendingActions[pendingActions.length - 1]?.created_at,
                 hasLearnedPatterns: actionsWithPatterns.some((a: any) => a.patternInfo?.decisionCount > 1)
             };
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('[AIContextBuilder] Failed to get pending approvals:', error);
             return { count: 0, actions: [], summary: null };
         }

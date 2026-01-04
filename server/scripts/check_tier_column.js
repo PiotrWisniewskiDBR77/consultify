@@ -1,4 +1,4 @@
-const db = require('../database');
+import db from '../database.js';
 
 function checkAndMigrate() {
     console.log('Checking user_ai_settings schema...');

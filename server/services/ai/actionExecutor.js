@@ -705,6 +705,13 @@ setInterval(() => {
     actionExecutor.cleanupPendingActions();
 }, 10 * 60 * 1000); // Every 10 minutes
 
+export {
+ActionExecutor,
+    actionExecutor,
+    ACTION_TYPES,
+    VIEW_MAPPINGS
+};
+
 export default {
     ActionExecutor,
     actionExecutor,

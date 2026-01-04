@@ -708,6 +708,22 @@ async function getTaxSettings(orgId) {
     });
 }
 
+export {
+setDependencies,
+    // CRUD
+    getTemplates,
+    getTemplateById,
+    getDefaultTemplate,
+    createTemplate,
+    updateTemplate,
+    deleteTemplate,
+    cloneTemplate,
+    // Rendering
+    generateInvoiceHTML,
+    generatePreview,
+    buildInvoiceHTML
+};
+
 export default {
     setDependencies,
     // CRUD

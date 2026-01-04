@@ -95,14 +95,15 @@ export const FeatureSpotlight: React.FC<FeatureSpotlightProps> = ({
         
         // Calculate position
         const rect = element.getBoundingClientRect();
-        setPosition({
-            top: rect.top - padding,
-            left: rect.left - padding,
-            width: rect.width + padding * 2,
-            height: rect.height + padding * 2
+        queueMicrotask(() => {
+            setPosition({
+                top: rect.top - padding,
+                left: rect.left - padding,
+                width: rect.width + padding * 2,
+                height: rect.height + padding * 2
+            });
+            setIsVisible(true);
         });
-        
-        setIsVisible(true);
         
         // Update position on scroll/resize
         const updatePosition = () => {

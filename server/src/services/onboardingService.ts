@@ -438,7 +438,7 @@ class OnboardingServiceClass {
                         weight: 0.2
                     });
                 }
-            } catch (e) {
+            } catch (e: unknown) {
                 // ignore parse errors
             }
         }

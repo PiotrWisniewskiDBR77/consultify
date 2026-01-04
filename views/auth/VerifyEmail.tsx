@@ -17,8 +17,10 @@ export const VerifyEmail: React.FC = () => {
 
     useEffect(() => {
         if (!token) {
-            setStatus('error');
-            setMessage('No verification token provided.');
+            queueMicrotask(() => {
+                setStatus('error');
+                setMessage('No verification token provided.');
+            });
             return;
         }
 
@@ -26,15 +28,21 @@ export const VerifyEmail: React.FC = () => {
             try {
                 const res = await Api.post('/auth/verify-email', { token });
                 if (res.data.success) {
-                    setStatus('success');
-                    setMessage('Email verified successfully! You can now access all features.');
+                    queueMicrotask(() => {
+                        setStatus('success');
+                        setMessage('Email verified successfully! You can now access all features.');
+                    });
                 } else {
-                    setStatus('error');
-                    setMessage(res.data.error || 'Verification failed.');
+                    queueMicrotask(() => {
+                        setStatus('error');
+                        setMessage(res.data.error || 'Verification failed.');
+                    });
                 }
             } catch (err: any) {
-                setStatus('error');
-                setMessage(err.response?.data?.error || 'Verification failed. The token may be expired.');
+                queueMicrotask(() => {
+                    setStatus('error');
+                    setMessage(err.response?.data?.error || 'Verification failed. The token may be expired.');
+                });
             }
         };
 

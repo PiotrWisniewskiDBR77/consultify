@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
-const TrialService = import('trialService.js');
+import * as TrialServiceModule from '../services/trialService.js';
+const TrialService = TrialServiceModule.default || TrialServiceModule;
 import auth from '../middleware/authMiddleware.js';
 import demoGuard from '../middleware/demoGuard.js';
 import AuditService from '../services/auditService.js';

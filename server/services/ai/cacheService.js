@@ -3,7 +3,7 @@
  * Uses in-memory cache by default, Redis-ready interface
  */
 
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 // In-memory cache (can be swapped for Redis)
 const memoryCache = new Map();
@@ -222,5 +222,9 @@ class CacheService {
 
 // Singleton
 const cacheService = new CacheService();
+
+export {
+CacheService, cacheService, CACHE_CONFIG
+};
 
 export default { CacheService, cacheService, CACHE_CONFIG };

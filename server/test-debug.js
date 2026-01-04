@@ -1,4 +1,4 @@
-const debugExport = require('debug');
+import debugExport from 'debug';
 console.log('require("debug") type:', typeof debugExport);
 console.log('require("debug") value:', debugExport);
 try {

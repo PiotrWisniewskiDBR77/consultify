@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -10,31 +10,39 @@ export const VerifyEmail = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get('token');
-    const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
-    const [message, setMessage] = useState('');
+    const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(() => {
+        // Initialize with error if no token
+        return token ? 'verifying' : 'error';
+    });
+    const [message, setMessage] = useState(() => {
+        // Initialize message if no token
+        return token ? '' : t('auth.verifyEmail.invalidToken');
+    });
+    const hasVerifiedRef = useRef(false);
 
-    useEffect(() => {
-        if (!token) {
-            setStatus('error');
-            setMessage(t('auth.verifyEmail.invalidToken'));
-            return;
-        }
+    const handleVerify = useCallback(async () => {
+        if (!token || hasVerifiedRef.current) return;
+        hasVerifiedRef.current = true;
 
-        const verify = async () => {
-            try {
-                await axios.post(`${API_URL}/verify/email`, { token });
-                setStatus('success');
-                setTimeout(() => {
-                    navigate('/login');
-                }, 3000);
-            } catch (error: any) {
+        try {
+            await axios.post(`${API_URL}/verify/email`, { token });
+            queueMicrotask(() => setStatus('success'));
+            setTimeout(() => {
+                navigate('/login');
+            }, 3000);
+        } catch (error: any) {
+            queueMicrotask(() => {
                 setStatus('error');
                 setMessage(error.response?.data?.error || t('auth.verifyEmail.failedMessage'));
-            }
-        };
-
-        verify();
+            });
+        }
     }, [token, navigate, t]);
+
+    useEffect(() => {
+        if (token) {
+            handleVerify();
+        }
+    }, [handleVerify, token]);
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">

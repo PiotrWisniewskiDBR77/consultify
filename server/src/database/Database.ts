@@ -102,7 +102,7 @@ export async function createDatabase(): Promise<IDatabase> {
         try {
             const sqliteModule = await import('../../database.sqlite.active.js').then(m => m.default || m);
             return (sqliteModule.default || sqliteModule) as IDatabase;
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('[Database] Failed to load legacy SQLite database:', err);
             // Fallback to mock to prevent total crash in some environments, or re-throw
             throw err;

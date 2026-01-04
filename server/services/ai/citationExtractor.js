@@ -5,7 +5,7 @@
  * Detects mentions of assessments, initiatives, roadmaps, and reports.
  */
 
-const pool = require('../../db');
+import pool from '../../db.js';
 
 /**
  * Extract citations from AI response and context
@@ -302,6 +302,16 @@ async function processResponse(response, context = {}) {
         actions
     };
 }
+
+export {
+extractCitations,
+    processResponse,
+    extractAssessmentCitations,
+    extractInitiativeCitations,
+    extractRoadmapCitations,
+    extractReportCitations,
+    generateActions
+};
 
 export default {
     extractCitations,

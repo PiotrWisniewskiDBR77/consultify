@@ -6,7 +6,8 @@
 
 import express from 'express';
 const router = express.Router();
-const JourneyAnalytics = import('journeyAnalytics.js');
+import * as JourneyAnalyticsModule from '../services/journeyAnalytics.js';
+const JourneyAnalytics = JourneyAnalyticsModule.default || JourneyAnalyticsModule;
 import auth from '../middleware/authMiddleware.js';
 
 // Middleware to check if user is admin (for aggregate endpoints)

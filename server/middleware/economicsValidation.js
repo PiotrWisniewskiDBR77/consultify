@@ -5,7 +5,7 @@
  * Ensures data integrity and security for digitization analysis operations.
  */
 
-const { body, param, query, validationResult } = require('express-validator');
+const { body, param, query, validationResult } = await import('express-validator');
 
 /**
  * Handle validation errors - returns 400 with detailed error messages
@@ -328,40 +328,18 @@ const validateAddEvidence = [
     handleValidationErrors
 ];
 
-export default {
-    // Analysis
+export {
     validateCreateAnalysis,
     validateUpdateAnalysis,
     validateAnalysisId,
     validateListQuery,
-    
-    // Scores
     validateBulkScores,
     validateSingleScore,
-    
-    // Comparisons
     validateCreateComparison,
     validateQuickCompare,
-    
-    // Export/Import
     validateExportRequest,
-    
-    // Versioning
     validateCreateVersion,
     validateVersionId,
-    
-    // Evidence
     validateAddEvidence,
-    
-    // Utility
     handleValidationErrors
 };
-
-
-
-
-
-
-
-
-

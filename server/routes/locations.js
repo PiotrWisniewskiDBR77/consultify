@@ -1,10 +1,11 @@
 import express from 'express';
 const router = express.Router();
 import auth from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
-const FacilityUserService = import('facilityUserService.js');
+import * as FacilityUserServiceModule from '../services/facilityUserService.js';
+const FacilityUserService = FacilityUserServiceModule.default || FacilityUserServiceModule;
 
 /**
  * CRIT-04: Locations API

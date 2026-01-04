@@ -4,7 +4,7 @@
  * 
  * Unified with AIPipeline for generative capabilities.
  */
-const { aiPipeline } = import('ai/aiPipeline.js');
+import { aiPipeline } from '../services/ai/aiPipeline.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 

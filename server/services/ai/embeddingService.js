@@ -3,8 +3,9 @@
  * Generate and store vector embeddings using OpenAI text-embedding-3-small
  */
 
-const { createOpenAI } = require('@ai-sdk/openai');
-const db = require('../../database');
+import { createOpenAI } from '@ai-sdk/openai';
+import db from '../../database.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const EMBEDDING_DIMENSIONS = 1536;
@@ -81,7 +82,6 @@ class EmbeddingService {
 
     async storeChunkSqlite(chunk, embedding) {
         const { content, chunkIndex, documentId, organizationId, metadata } = chunk;
-        import { v4 as uuidv4 } from 'uuid';
 
         return new Promise((resolve, reject) => {
             db.run(
@@ -238,12 +238,12 @@ class EmbeddingService {
                     reject(err);
                     return;
                 }
-                
+
                 const rows = result.rows || [];
                 resolve(rows.map(row => ({
                     ...row,
-                    metadata: typeof row.metadata === 'string' 
-                        ? JSON.parse(row.metadata) 
+                    metadata: typeof row.metadata === 'string'
+                        ? JSON.parse(row.metadata)
                         : row.metadata
                 })));
             });
@@ -304,6 +304,13 @@ class EmbeddingService {
 
 // Singleton
 const embeddingService = new EmbeddingService();
+
+export {
+    EmbeddingService,
+    embeddingService,
+    EMBEDDING_MODEL,
+    EMBEDDING_DIMENSIONS
+};
 
 export default {
     EmbeddingService,

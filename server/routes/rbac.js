@@ -7,9 +7,10 @@
 
 import express from 'express';
 const router = express.Router();
-const rbacService = import('rbacService.js');
+import * as rbacServiceModule from '../services/rbacService.js';
+const rbacService = rbacServiceModule.default || rbacServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 
 // ====== ROLES ======
 

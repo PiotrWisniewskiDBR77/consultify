@@ -143,6 +143,8 @@ const PROVIDER_DEFINITIONS = {
     }
 };
 
+export { PROVIDER_DEFINITIONS };
+
 // Tier priority for fallback selection (higher = better)
 const TIER_PRIORITY = {
     'REASONING': 5,
@@ -680,6 +682,38 @@ class LLMConfigService extends BaseService {
         }
 
         return null;
+    }
+    /**
+     * Validate all defined keys
+     * @returns {Promise<Object>} Summary of key validation
+     */
+    async validateAllKeys() {
+        const providers = [];
+        let configuredCount = 0;
+        const totalCount = Object.keys(PROVIDER_DEFINITIONS).length;
+
+        for (const [providerId, definition] of Object.entries(PROVIDER_DEFINITIONS)) {
+            const providerConfig = await this.getProviderConfig(providerId);
+            const isConfigured = !!(providerConfig?.api_key || providerConfig?.isLocal);
+
+            if (isConfigured) configuredCount++;
+
+            providers.push({
+                provider: providerId,
+                name: definition.name,
+                configured: isConfigured,
+                valid: isConfigured // Basic check
+            });
+        }
+
+        return {
+            summary: {
+                total: totalCount,
+                configured: configuredCount,
+                unconfigured: totalCount - configuredCount
+            },
+            providers
+        };
     }
 }
 

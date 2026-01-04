@@ -18,9 +18,10 @@
 
 import express from 'express';
 const router = express.Router();
-const rateLimit = require('express-rate-limit');
+import rateLimit from 'express-rate-limit';
 import authMiddleware from '../middleware/authMiddleware.js';
-const PromoCodeService = import('promoCodeService.js');
+import * as PromoCodeServiceModule from '../services/promoCodeService.js';
+const PromoCodeService = PromoCodeServiceModule.default || PromoCodeServiceModule;
 import AttributionService from '../services/attributionService.js';
 
 // Rate limit promo validation: 10 per minute

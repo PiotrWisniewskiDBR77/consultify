@@ -1,4 +1,4 @@
-const { z } = require('zod');
+import { z  } from 'zod';
 
 /**
  * Higher-order function to validate request body against a Zod schema.
@@ -28,6 +28,10 @@ const validateBody = (schema) => (req, res, next) => {
         console.error('Validation Middleware Error:', error);
         return res.status(500).json({ error: 'Internal Server Error during validation' });
     }
+};
+
+export {
+validateBody
 };
 
 export default { validateBody };

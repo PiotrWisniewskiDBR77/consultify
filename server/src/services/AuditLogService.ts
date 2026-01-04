@@ -139,7 +139,7 @@ class AuditLogService {
                 ]
             );
             return { id, timestamp };
-        } catch (err) {
+        } catch (err: unknown) {
             logger.error('[AuditLog] Error creating log:', err);
             throw err;
         }

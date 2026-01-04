@@ -9,7 +9,7 @@ const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
-const { aiLogger } = import('ai/logger.js');
+import { aiLogger  } from '../services/ai/logger.js';
 
 // All routes require authentication
 router.use(verifyToken);

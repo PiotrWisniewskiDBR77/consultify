@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 /**
  * Voice API Routes
  * 
@@ -18,10 +19,10 @@
 
 import express from 'express';
 const router = express.Router();
-const multer = require('multer');
+import multer from 'multer';
 import verifyToken from '../middleware/authMiddleware.js';
-const { speechToTextService } = import('ai/speechToTextService.js');
-const { textToSpeechService } = import('ai/textToSpeechService.js');
+import speechToTextService from '../services/ai/speechToTextService.js';
+import textToSpeechService from '../services/ai/textToSpeechService.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
@@ -108,7 +109,7 @@ router.post('/stt', verifyToken, upload.single('audio'), async (req, res) => {
                 INSERT INTO ai_audit_log (id, user_id, organization_id, action, resource_type, request_summary, response_summary, timestamp)
                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
             `, [
-                require('uuid').v4(),
+                uuidv4(),
                 req.userId,
                 req.organizationId,
                 'voice_stt',
@@ -174,7 +175,7 @@ router.post('/tts', verifyToken, async (req, res) => {
                 INSERT INTO ai_audit_log (id, user_id, organization_id, action, resource_type, request_summary, response_summary, timestamp)
                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
             `, [
-                require('uuid').v4(),
+                uuidv4(),
                 req.userId,
                 req.organizationId,
                 'voice_tts',

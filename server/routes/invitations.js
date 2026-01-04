@@ -20,15 +20,15 @@
 
 import express from 'express';
 const router = express.Router();
-const InvitationService = import('invitationService.js');
+import * as InvitationServiceModule from '../services/invitationService.js';
+const InvitationService = InvitationServiceModule.default || InvitationServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-const { verifyAdmin } = require('../middleware/adminMiddleware');
-const {
-    validateRateLimiter,
+import { verifyAdmin  } from '../middleware/adminMiddleware.js';
+import { validateRateLimiter,
     acceptRateLimiter,
     recordAcceptFailure,
     clearAcceptFailure
-} = require('../middleware/invitationRateLimiter');
+ } from '../middleware/invitationRateLimiter.js';
 
 /**
  * Helper to extract request info for audit logging

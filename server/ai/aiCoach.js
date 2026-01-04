@@ -1,7 +1,11 @@
-const AIContextBuilder = require('./aiContextBuilder');
-const SignalEngine = require('./signalEngine');
-const RecommendationEngine = require('./recommendationEngine');
-const SimulationEngineClass = require('./simulationEngine');
+import AIContextBuilder from './aiContextBuilder.js';
+import SignalEngine from './signalEngine.js';
+import RecommendationEngine from './recommendationEngine.js';
+import SimulationEngineClass from './simulationEngine.js';
+import * as auditLogger from '../utils/auditLogger.js';
+import AiService from '../services/aiService.js';
+import db from '../database.js';
+
 const SimulationEngine = new SimulationEngineClass();
 
 /**

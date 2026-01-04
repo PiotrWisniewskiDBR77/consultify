@@ -207,5 +207,9 @@ if (require.main === module) {
         });
 }
 
+export {
+seedEnterpriseCustomers
+};
+
 export default { seedEnterpriseCustomers };
 

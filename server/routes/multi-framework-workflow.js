@@ -8,15 +8,16 @@
 import express from 'express';
 const router = express.Router();
 import authenticateToken from '../middleware/authMiddleware.js';
-const {
-    multiFrameworkRBAC,
+import { multiFrameworkRBAC,
     requireFrameworkApprover,
     validateWorkflowTransition
-} = require('../middleware/assessmentRBAC');
-const { FrameworkRBACService } = import('frameworkRBACService.js');
+ } from '../middleware/assessmentRBAC.js';
+import frameworkRBACServiceModule from '../services/frameworkRBACService.js';
+const FrameworkRBACService = frameworkRBACServiceModule.FrameworkRBACService || frameworkRBACServiceModule;
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
-const multiFrameworkAuditService = import('multiFrameworkAuditService.js');
+import * as multiFrameworkAuditServiceModule from '../services/multiFrameworkAuditService.js';
+const multiFrameworkAuditService = multiFrameworkAuditServiceModule.default || multiFrameworkAuditServiceModule;
 
 // ============================================
 // WORKFLOW STATUS ROUTES

@@ -18,7 +18,7 @@ export const AnalyticsPanel: React.FC = () => {
     const fetchMetrics = async () => {
         setLoading(true);
         try {
-            const data = await (Api as any).getSystemMetrics() || {};
+            const data = (await (Api as any).getSystemMetrics()) || {};
             setMetrics(data);
         } catch (error) {
             console.error('Failed to fetch metrics:', error);

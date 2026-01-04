@@ -94,7 +94,7 @@ class AssessmentAuditLogger {
             }
 
             return auditId;
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('[AuditLog] Error logging assessment action:', error);
             // Non-blocking - don't fail the request if audit fails
             return undefined;

@@ -1,7 +1,9 @@
 import express from 'express';
 const router = express.Router();
-const SystemHealthService = import('systemHealthService.js');
-const metricsService = import('metricsService.js');
+import * as SystemHealthServiceModule from '../services/systemHealthService.js';
+const SystemHealthService = SystemHealthServiceModule.default || SystemHealthServiceModule;
+import * as metricsServiceModule from '../services/metricsService.js';
+const metricsService = metricsServiceModule.default || metricsServiceModule;
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**

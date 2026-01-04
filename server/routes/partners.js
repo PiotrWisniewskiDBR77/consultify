@@ -13,10 +13,12 @@
 
 import express from 'express';
 const router = express.Router();
-const PartnerService = import('partnerService.js');
-const SettlementService = import('settlementService.js');
+import * as PartnerServiceModule from '../services/partnerService.js';
+const PartnerService = PartnerServiceModule.default || PartnerServiceModule;
+import * as SettlementServiceModule from '../services/settlementService.js';
+const SettlementService = SettlementServiceModule.default || SettlementServiceModule;
 import authMiddleware from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 
 // ==========================================
 // ADMIN ROUTES (SUPERADMIN OR ADMIN)

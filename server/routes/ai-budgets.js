@@ -7,9 +7,10 @@
 
 import express from 'express';
 const router = express.Router();
-const aiBudgetService = import('aiBudgetService.js');
+import * as aiBudgetServiceModule from '../services/aiBudgetService.js';
+const aiBudgetService = aiBudgetServiceModule.default || aiBudgetServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 
 // ====== BUDGET MANAGEMENT ======
 

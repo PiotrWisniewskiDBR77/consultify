@@ -354,6 +354,15 @@ async function getDashboardData(options = {}) {
     };
 }
 
+export {
+getContentPerformance,
+    getSearchAnalytics,
+    getFeedbackSummary,
+    getTourAnalytics,
+    getUserEngagement,
+    getDashboardData
+};
+
 export default {
     getContentPerformance,
     getSearchAnalytics,

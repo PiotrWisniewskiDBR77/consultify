@@ -9,7 +9,7 @@
  * - Conversation context
  */
 
-const pool = require('../../db');
+import pool from '../../db.js';
 
 /**
  * Get smart suggestions for a user/project
@@ -373,6 +373,18 @@ function invalidateCache(userId, projectId) {
     const cacheKey = `${userId}-${projectId || 'global'}`;
     suggestionCache.delete(cacheKey);
 }
+
+export {
+getSuggestions,
+    getCachedSuggestions,
+    invalidateCache,
+    checkAssessmentStatus,
+    checkLowMaturityAreas,
+    checkStaleInitiatives,
+    checkRoadmapStatus,
+    generateContextSuggestions,
+    checkOnboardingStatus
+};
 
 export default {
     getSuggestions,

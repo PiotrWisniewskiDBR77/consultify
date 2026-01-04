@@ -604,6 +604,27 @@ function getTaxRatesForCountry(countryCode) {
     });
 }
 
+export {
+setDependencies,
+    // Tax Rates
+    getTaxRates,
+    getTaxRateById,
+    createTaxRate,
+    updateTaxRate,
+    deleteTaxRate,
+    getTaxRatesForCountry,
+    // Tax Calculation
+    calculateTax,
+    findApplicableTaxRate,
+    // VAT Validation
+    validateVATNumber,
+    // Reports
+    getTaxReport,
+    // Helpers
+    isEUCountry,
+    mapCountryToTaxIdType
+};
+
 export default {
     setDependencies,
     // Tax Rates

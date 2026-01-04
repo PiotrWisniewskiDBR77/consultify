@@ -503,6 +503,22 @@ const cleanupOldLogs = async (retentionDays = 365) => {
     return result.changes;
 };
 
+export {
+setDependencies,
+    RISK_LEVELS,
+    ACTION_CATEGORIES,
+    calculateRiskScore,
+    getRiskLevel,
+    logAction,
+    getLogs,
+    getLogById,
+    resolveLog,
+    getStats,
+    exportToCsv,
+    getRecentHighRisk,
+    cleanupOldLogs
+};
+
 export default {
     setDependencies,
     RISK_LEVELS,

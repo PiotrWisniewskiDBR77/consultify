@@ -178,7 +178,7 @@ export const EnterpriseAuditLog: React.FC = () => {
             if (filters.startDate) queryFilters.startDate = filters.startDate;
             if (filters.endDate) queryFilters.endDate = filters.endDate;
 
-            const data = await (Api as any).exportAuditLogs(queryFilters, format) || [];
+            const data = (await (Api as any).exportAuditLogs(queryFilters, format)) || [];
 
             // Create download
             const blob = new Blob([format === 'json' ? JSON.stringify(data, null, 2) : data], {
@@ -236,8 +236,8 @@ export const EnterpriseAuditLog: React.FC = () => {
                         <button
                             onClick={() => setActiveView('logs')}
                             className={`px-3 py-1.5 text-sm rounded-md transition-colors ${activeView === 'logs'
-                                    ? 'bg-white/10 text-white'
-                                    : 'text-slate-400 hover:text-white'
+                                ? 'bg-white/10 text-white'
+                                : 'text-slate-400 hover:text-white'
                                 }`}
                         >
                             Logs
@@ -245,8 +245,8 @@ export const EnterpriseAuditLog: React.FC = () => {
                         <button
                             onClick={() => setActiveView('analytics')}
                             className={`px-3 py-1.5 text-sm rounded-md transition-colors ${activeView === 'analytics'
-                                    ? 'bg-white/10 text-white'
-                                    : 'text-slate-400 hover:text-white'
+                                ? 'bg-white/10 text-white'
+                                : 'text-slate-400 hover:text-white'
                                 }`}
                         >
                             Analytics
@@ -336,8 +336,8 @@ export const EnterpriseAuditLog: React.FC = () => {
                     <button
                         onClick={() => setShowFilters(!showFilters)}
                         className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${showFilters
-                                ? 'bg-purple-600 border-purple-500 text-white'
-                                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                            ? 'bg-purple-600 border-purple-500 text-white'
+                            : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                             }`}
                     >
                         <Filter size={16} />

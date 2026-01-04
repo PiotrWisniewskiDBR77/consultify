@@ -266,6 +266,13 @@ async function logInteraction(userId, sessionId, message, response) {
     }
 }
 
+export {
+processMessage,
+    logInteraction,
+    findRelevantContent,
+    loadHelpContent
+};
+
 export default {
     processMessage,
     logInteraction,

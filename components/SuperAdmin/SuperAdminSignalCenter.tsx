@@ -39,7 +39,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
             const client = allNotifications.filter(n => n.type === 'CLIENT_TICKET' && !n.isRead);
             const feedback = allNotifications.filter(n => n.type === 'USER_FEEDBACK' && !n.isRead);
 
-            setNotifications({ system, client, feedback });
+            queueMicrotask(() => setNotifications({ system, client, feedback }));
         } catch (error) {
             console.error('Failed to fetch signals', error);
         }

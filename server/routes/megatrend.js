@@ -4,7 +4,7 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const MegatrendService = require('../models/megatrend');
+import MegatrendService from '../models/megatrend.js';
 
 // All routes require authentication
 router.use(verifyToken);

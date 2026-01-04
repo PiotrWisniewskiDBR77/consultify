@@ -60,10 +60,10 @@ class TrialCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.demoService) {
-            this.deps.demoService = await import('../../services/demoService.js').then(m => m.default || m);
+            this.deps.demoService = await import('../services/demoService.js').then(m => m.default || m);
         }
         if (!this.deps.trialService) {
-            this.deps.trialService = await import('../../services/trialService.js').then(m => m.default || m);
+            this.deps.trialService = await import('../services/trialService.js').then(m => m.default || m);
         }
         return this.deps as Dependencies;
     }
@@ -96,7 +96,7 @@ class TrialCron {
                 warningsSent,
                 trialsLocked,
             };
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[TrialCron] Error running daily trial tasks:', error);
             throw error;
         }
@@ -118,7 +118,7 @@ class TrialCron {
             const deleted = result.changes || 0;
             logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
             return deleted;
-        } catch (err) {
+        } catch (err: unknown) {
             logger.error('[TrialCron] Error cleaning up usage counters:', err);
             throw err;
         }

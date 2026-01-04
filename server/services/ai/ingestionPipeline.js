@@ -5,11 +5,11 @@
  * for the RAG (Retrieval Augmented Generation) system.
  */
 
-const { embeddingService } = require('./embeddingService');
-const { aiLogger } = require('./logger');
-const db = require('../../database');
+import { embeddingService } from './embeddingService.js';
+import { aiLogger } from './logger.js';
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const path = require('path');
+import path from 'path';
 const fs = require('fs').promises;
 
 // Chunking configuration
@@ -423,6 +423,13 @@ class IngestionPipeline {
 
 // Singleton instance
 const ingestionPipeline = new IngestionPipeline();
+
+export {
+IngestionPipeline,
+    ingestionPipeline,
+    CHUNK_CONFIG,
+    DOCUMENT_TYPES
+};
 
 export default {
     IngestionPipeline,

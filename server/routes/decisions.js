@@ -425,8 +425,10 @@ router.post('/:id/escalate', verifyToken, async (req, res) => {
             
             // Try to create escalation record and notify
             try {
-                const EscalationService = import('escalationService.js');
-                const NotificationService = import('notificationService.js');
+                const EscalationServiceModule = await import('../services/escalationService.js');
+                const EscalationService = EscalationServiceModule.default || EscalationServiceModule;
+                const NotificationServiceModule = await import('../services/notificationService.js');
+                const NotificationService = NotificationServiceModule.default || NotificationServiceModule;
                 
                 // Find manager of decision owner
                 const managerSql = `SELECT manager_id FROM users WHERE id = ?`;

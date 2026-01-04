@@ -7,12 +7,18 @@
  * - "Review my work" - Evaluate task descriptions and provide feedback
  */
 
-const { LLMService } = require('./llmService');
-const { ModelRouter } = require('./modelRouter');
-const { draftService } = require('./draftService');
-const { memoryManager } = require('./memoryManager');
-const { aiLogger } = require('./logger');
-const db = require('../../database');
+import { LLMService } from './llmService.js';
+import { ModelRouter } from './modelRouter.js';
+import { draftService } from './draftService.js';
+import { memoryManager } from './memoryManager.js';
+import { aiLogger } from './logger.js';
+import db from '../../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Prompt templates for Task Advisor capabilities
 const PROMPTS = {
@@ -27,7 +33,7 @@ Your approach:
 5. Consider dependencies between subtasks
 
 Output format: JSON array of subtasks with title, description, estimatedHours, and any dependencies.`,
-        
+
         userTemplate: `Break down this task into subtasks:
 
 ## Task Details
@@ -480,14 +486,8 @@ class TaskAdvisorService {
 // Singleton instance
 const taskAdvisorService = new TaskAdvisorService();
 
-export default {
-    TaskAdvisorService,
-    taskAdvisorService,
-    PROMPTS
-};
-
-
-
+export { TaskAdvisorService };
+export default taskAdvisorService;
 
 
 

@@ -8,9 +8,11 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const EmailTemplateService = import('emailTemplateService.js');
-const ContentService = import('contentService.js');
-const AIPlaybookService = require('../ai/aiPlaybookService');
+import * as EmailTemplateServiceModule from '../services/emailTemplateService.js';
+const EmailTemplateService = EmailTemplateServiceModule.default || EmailTemplateServiceModule;
+import * as ContentServiceModule from '../services/contentService.js';
+const ContentService = ContentServiceModule.default || ContentServiceModule;
+import AIPlaybookService from '../ai/aiPlaybookService.js';
 
 // ==========================================
 // MIDDLEWARE HELPERS

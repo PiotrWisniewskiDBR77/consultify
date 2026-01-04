@@ -68,7 +68,7 @@ export async function getCached<T>(
         }
 
         return data;
-    } catch (error) {
+    } catch (error: unknown) {
         console.error(`[Cache] Error for key ${key}:`, error);
         // On cache error, fallback to direct fetch
         return fetchFn();
@@ -87,7 +87,7 @@ export async function invalidatePattern(pattern: string): Promise<number> {
         if (keys.length === 0) return 0;
 
         return await redisClient.del(keys);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error(`[Cache] Error invalidating pattern ${pattern}:`, error);
         return 0;
     }
@@ -101,7 +101,7 @@ export async function invalidate(key: string): Promise<boolean> {
         const redisClient = client as RedisClient;
         const result = await redisClient.del(key);
         return result > 0;
-    } catch (error) {
+    } catch (error: unknown) {
         console.error(`[Cache] Error invalidating key ${key}:`, error);
         return false;
     }

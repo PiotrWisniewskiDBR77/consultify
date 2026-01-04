@@ -124,7 +124,7 @@ class FeedbackServiceClass {
      */
     private async dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
         return new Promise((resolve, reject) => {
-            this.db.all<T>(sql, params, (err, rows) => {
+            this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -186,7 +186,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
 ---`).join('\n');
 
             return examples;
-        } catch (err) {
+        } catch (err: unknown) {
             // Don't fail if DB error, just return empty learning
             logger.warn('[FeedbackService] Error getting learning examples:', err);
             return '';
@@ -264,7 +264,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
                     );
                     logger.info(`[GlobalLearning] Learned new strategy: ${strategy.title}`);
                 }
-            } catch (e) {
+            } catch (e: unknown) {
                 logger.error('[GlobalLearning] Error processing context:', contextType, e);
             }
         }
@@ -366,7 +366,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
             );
 
             return { id, feedbackId, userId, voteType };
-        } catch (err) {
+        } catch (err: unknown) {
             if (err instanceof Error && err.message.includes('UNIQUE constraint')) {
                 throw new Error('User already voted');
             }

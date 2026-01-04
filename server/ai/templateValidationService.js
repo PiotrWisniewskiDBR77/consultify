@@ -14,7 +14,7 @@
  * 6. trigger_signal must be non-empty
  */
 
-const templateGraphService = require('./templateGraphService');
+import templateGraphService from './templateGraphService.js';
 
 // Validation error codes
 const ERROR_CODES = {
@@ -316,6 +316,13 @@ function quickValidate(template) {
 
     return { canSave: true, warnings };
 }
+
+export {
+ERROR_CODES,
+    validate,
+    validateGraph,
+    quickValidate
+};
 
 export default {
     ERROR_CODES,

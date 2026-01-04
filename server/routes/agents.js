@@ -11,7 +11,8 @@
 import express from 'express';
 const router = express.Router();
 import authenticate from '../middleware/authMiddleware.js';
-const AIOrchestrator = import('aiOrchestrator.js');
+import * as AIOrchestratorModule from '../services/aiOrchestrator.js';
+const AIOrchestrator = AIOrchestratorModule.default || AIOrchestratorModule;
 
 /**
  * POST /api/agents/query

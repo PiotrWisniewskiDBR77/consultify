@@ -3,8 +3,10 @@
 
 import express from 'express';
 const router = express.Router();
-const NotificationService = import('notificationService.js');
-const EscalationService = import('escalationService.js');
+import * as NotificationServiceModule from '../services/notificationService.js';
+const NotificationService = NotificationServiceModule.default || NotificationServiceModule;
+import * as EscalationServiceModule from '../services/escalationService.js';
+const EscalationService = EscalationServiceModule.default || EscalationServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/notifications

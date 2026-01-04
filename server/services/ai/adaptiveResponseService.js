@@ -11,7 +11,7 @@
  * @version 1.0.0
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // Token limits per response mode and length setting
@@ -460,6 +460,13 @@ ${formatting.includeActionItems ? '- Provide comprehensive action items' : ''}`
 
 // Export singleton
 const adaptiveResponseService = new AdaptiveResponseService();
+
+export {
+AdaptiveResponseService,
+    adaptiveResponseService,
+    RESPONSE_LENGTH_TOKENS,
+    INTENT_SIGNALS
+};
 
 export default {
     AdaptiveResponseService,

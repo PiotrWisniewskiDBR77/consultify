@@ -39,7 +39,7 @@ export const validateBody = (schema: z.ZodSchema) => {
             // Replace body with parsed (sanitized/coerced) data
             req.body = result.data;
             next();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Validation Middleware Error:', error);
             res.status(500).json({ error: 'Internal Server Error during validation' });
         }
@@ -71,7 +71,7 @@ export const validateQuery = (schema: z.ZodSchema) => {
 
             req.query = result.data as unknown as typeof req.query;
             next();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Validation Middleware Error:', error);
             res.status(500).json({ error: 'Internal Server Error during validation' });
         }
@@ -103,7 +103,7 @@ export const validateParams = (schema: z.ZodSchema) => {
 
             req.params = result.data as unknown as typeof req.params;
             next();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Validation Middleware Error:', error);
             res.status(500).json({ error: 'Internal Server Error during validation' });
         }

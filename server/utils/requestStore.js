@@ -26,6 +26,12 @@ export const getCorrelationId = () => {
 
 export const getStore = () => storage.getStore();
 
+export {
+correlationMiddleware,
+    getCorrelationId,
+    getStore
+};
+
 export default {
     correlationMiddleware,
     getCorrelationId,

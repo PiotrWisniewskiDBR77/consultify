@@ -9,11 +9,11 @@
  * Layer 5: External (Web Research) - Real-time external data
  */
 
-const { projectMemoryStore } = require('./projectMemoryStore');
-const { organizationMemoryStore } = require('./organizationMemoryStore');
-const { embeddingService } = require('./embeddingService');
-const { PersistentSessionStore } = require('./persistentSessionStore');
-const { aiLogger } = require('./logger');
+import { projectMemoryStore } from './projectMemoryStore.js';
+import { organizationMemoryStore } from './organizationMemoryStore.js';
+import { embeddingService } from './embeddingService.js';
+import { PersistentSessionStore } from './persistentSessionStore.js';
+import { aiLogger } from './logger.js';
 
 // Memory layer configuration
 const LAYER_CONFIG = {
@@ -454,6 +454,12 @@ const memoryManager = new MemoryManager();
 setInterval(() => {
     memoryManager.sessionStore.cleanup();
 }, 5 * 60 * 1000); // Every 5 minutes
+
+export {
+MemoryManager,
+    memoryManager,
+    LAYER_CONFIG
+};
 
 export default {
     MemoryManager,

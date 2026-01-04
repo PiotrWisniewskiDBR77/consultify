@@ -10,7 +10,7 @@
  * - Consistent sizing
  */
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 
 // Base input styles
 const baseInputClass = `
@@ -38,7 +38,8 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(({
     id,
     ...props
 }, ref) => {
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+    const generatedId = useId();
+    const inputId = id || generatedId;
     
     return (
         <div className="space-y-1.5">
@@ -76,7 +77,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
     id,
     ...props
 }, ref) => {
-    const inputId = id || `textarea-${Math.random().toString(36).substr(2, 9)}`;
+    const generatedId = useId();
+    const inputId = id || generatedId;
     
     return (
         <div className="space-y-1.5">
@@ -122,7 +124,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
     id,
     ...props
 }, ref) => {
-    const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
+    const generatedId = useId();
+    const selectId = id || generatedId;
     
     return (
         <div className="space-y-1.5">

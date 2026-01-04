@@ -11,8 +11,15 @@
  * @version 1.0.0
  */
 
-const { Readable } = require('stream');
+import fs from 'fs';
+import path from 'path';
+import { Readable } from 'stream';
+import fetch from 'node-fetch';
+import OpenAI from 'openai';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 // ============================================================================
 // Configuration
 // ============================================================================
@@ -82,7 +89,7 @@ const providerHealth = {
  */
 function cleanTextForSpeech(text) {
     if (!text) return '';
-    
+
     return text
         // Remove code blocks
         .replace(/```[\s\S]*?```/g, ' ')
@@ -163,10 +170,12 @@ class TextToSpeechService {
      */
     _initOpenAI() {
         try {
-            const OpenAI = require('openai');
-            this.openai = new OpenAI({
-                apiKey: process.env.OPENAI_API_KEY
-            });
+            // Initialize OpenAI client once
+            if (!this.openai) {
+                this.openai = new OpenAI({
+                    apiKey: process.env.OPENAI_API_KEY
+                });
+            }
         } catch (error) {
             console.error('[TTS] Failed to initialize OpenAI:', error.message);
             providerHealth.openai.healthy = false;
@@ -200,8 +209,8 @@ class TextToSpeechService {
         const startTime = Date.now();
 
         // Clean text if enabled
-        const cleanedText = this.config.cleanTextForSpeech 
-            ? cleanTextForSpeech(text) 
+        const cleanedText = this.config.cleanTextForSpeech
+            ? cleanTextForSpeech(text)
             : text;
 
         if (!cleanedText || cleanedText.length === 0) {
@@ -209,8 +218,8 @@ class TextToSpeechService {
         }
 
         // Get provider order
-        const providers = provider 
-            ? [provider] 
+        const providers = provider
+            ? [provider]
             : this._getHealthyProviders();
 
         if (providers.length === 0) {
@@ -223,7 +232,7 @@ class TextToSpeechService {
         for (const providerId of providers) {
             try {
                 console.log(`[TTS] Trying provider: ${providerId}`);
-                
+
                 const result = await this._synthesizeWithProvider(providerId, cleanedText, {
                     language,
                     voice,
@@ -253,11 +262,11 @@ class TextToSpeechService {
             } catch (error) {
                 console.error(`[TTS] Provider ${providerId} failed:`, error.message);
                 lastError = error;
-                
+
                 // Update health stats
                 providerHealth[providerId].errorCount++;
                 providerHealth[providerId].lastError = error.message;
-                
+
                 if (providerHealth[providerId].errorCount >= 3) {
                     providerHealth[providerId].healthy = false;
                     console.warn(`[TTS] Provider ${providerId} marked unhealthy after 3 failures`);
@@ -283,8 +292,8 @@ class TextToSpeechService {
         } = options;
 
         // Clean and split text
-        const cleanedText = this.config.cleanTextForSpeech 
-            ? cleanTextForSpeech(text) 
+        const cleanedText = this.config.cleanTextForSpeech
+            ? cleanTextForSpeech(text)
             : text;
 
         const chunks = splitTextIntoChunks(cleanedText);
@@ -371,7 +380,7 @@ class TextToSpeechService {
      */
     async _synthesizeWithEdge(text, options) {
         const providerConfig = this.config.providers.edge;
-        
+
         // Get voice for language
         const langVoices = providerConfig.voicesByLanguage[options.language];
         const voice = options.voice || (langVoices?.[0]) || providerConfig.defaultVoice;
@@ -379,22 +388,22 @@ class TextToSpeechService {
         // Edge TTS requires a package or we can use a simple HTTP approach
         // For now, let's use a fallback to Web Speech API indication
         // In production, you would use the 'edge-tts' npm package
-        
+
         try {
             // Try to use edge-tts package if available
             const edgeTts = require('edge-tts');
-            
+
             const communicate = new edgeTts.Communicate(text, voice);
             const audioChunks = [];
-            
+
             for await (const chunk of communicate.stream()) {
                 if (chunk.type === 'audio') {
                     audioChunks.push(chunk.data);
                 }
             }
-            
+
             const buffer = Buffer.concat(audioChunks);
-            
+
             return {
                 audio: buffer,
                 contentType: 'audio/mp3',
@@ -513,19 +522,19 @@ class TextToSpeechService {
      */
     resetProviderHealth(providerId = null) {
         if (providerId) {
-            providerHealth[providerId] = { 
-                healthy: true, 
-                lastError: null, 
-                errorCount: 0, 
-                latencyMs: 0 
+            providerHealth[providerId] = {
+                healthy: true,
+                lastError: null,
+                errorCount: 0,
+                latencyMs: 0
             };
         } else {
             Object.keys(providerHealth).forEach(id => {
-                providerHealth[id] = { 
-                    healthy: true, 
-                    lastError: null, 
-                    errorCount: 0, 
-                    latencyMs: 0 
+                providerHealth[id] = {
+                    healthy: true,
+                    lastError: null,
+                    errorCount: 0,
+                    latencyMs: 0
                 };
             });
         }
@@ -541,7 +550,7 @@ class TextToSpeechService {
                 language: 'en',
                 speed: 1.0
             });
-            
+
             return {
                 success: true,
                 latencyMs: Date.now() - start
@@ -558,14 +567,8 @@ class TextToSpeechService {
 // ============================================================================
 // Singleton Export
 // ============================================================================
-
+// Singleton instance
 const textToSpeechService = new TextToSpeechService();
 
-export default {
-    TextToSpeechService,
-    textToSpeechService,
-    TTS_CONFIG,
-    cleanTextForSpeech,
-    splitTextIntoChunks
-};
-
+export { TextToSpeechService, textToSpeechService, TTS_CONFIG, cleanTextForSpeech, splitTextIntoChunks };
+export default textToSpeechService;

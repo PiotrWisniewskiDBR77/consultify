@@ -5,7 +5,7 @@
  * using AI. Titles are 3-5 words capturing the essence of the discussion.
  */
 
-const { AIPipeline } = require('./aiPipeline');
+import { AIPipeline } from './aiPipeline.js';
 
 /**
  * Generate a conversation title from messages
@@ -167,6 +167,13 @@ function shouldRegenerateTitle(conversation) {
     
     return false;
 }
+
+export {
+generateConversationTitle,
+    generateFallbackTitle,
+    detectTags,
+    shouldRegenerateTitle
+};
 
 export default {
     generateConversationTitle,

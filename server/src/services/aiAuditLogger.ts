@@ -211,7 +211,7 @@ export const AIAuditLogger = {
                         timestamp: row.created_at
                     };
                 }
-            } catch (e) { }
+            } catch (e: unknown) { }
             return row;
         });
     },

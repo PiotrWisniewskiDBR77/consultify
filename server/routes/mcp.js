@@ -13,7 +13,7 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const MCPServer = require('../mcp/mcpServer');
+import MCPServer from '../mcp/mcpServer.js';
 
 // All MCP routes require authentication
 router.use(authMiddleware);

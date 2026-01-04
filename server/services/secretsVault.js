@@ -153,6 +153,17 @@ function validateSecrets(secrets, requiredFields = []) {
     };
 }
 
+export {
+encrypt,
+    decrypt,
+    redact,
+    validateSecrets,
+    // Export for testing
+    ALGORITHM,
+    IV_LENGTH,
+    AUTH_TAG_LENGTH
+};
+
 export default {
     encrypt,
     decrypt,

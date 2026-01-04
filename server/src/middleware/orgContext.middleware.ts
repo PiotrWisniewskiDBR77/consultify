@@ -283,7 +283,7 @@ function orgContextMiddleware(options: OrgContextOptions = {}) {
             req.orgContext = req.org;
 
             next();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('[OrgContextMiddleware] Error:', error);
             res.status(500).json({ error: 'Internal error resolving organization context' });
         }

@@ -1,51 +1,40 @@
-import BaseService from './BaseService.js';
-import nodemailer from 'nodemailer';
-import config from '../config.js';
-
 /**
  * Email Service
  * Handles sending system notifications and alerts.
  * Currently configured for console output, ready for SMTP integration.
  */
-class EmailService extends BaseService {
-    constructor() {
-        super();
-        this._nodemailer = nodemailer;
-    }
-
-    /**
-     * Initialize dependencies
-     */
-    async init() {
-        await super.init();
-        return this;
-    }
-
+import db from '../database.js';
+import nodemailer from 'nodemailer';
+import config from '../config';
+// Dependency injection for testing
+const deps = {
+    db: db,
+    nodemailer,
+    config
+};
+const EmailService = {
     /**
      * Set dependencies for testing
      */
     setDependencies(newDeps) {
-        super.setDependencies(newDeps);
-        if (newDeps.nodemailer) this._nodemailer = newDeps.nodemailer;
-    }
-
+        Object.assign(deps, newDeps);
+    },
     /**
      * Send an email
-     * @param {Object} options - Email options (to, subject, html, template, data, attachments)
-     * @returns {Promise<boolean>}
      */
-    async send(options) {
-        await this.init();
-
+    send: async (options) => {
+        await initDeps();
         const { to, subject, html, template, data, attachments = [] } = options;
-
         // 1. Fetch SMTP Settings from DB
-        const rows = await this.queryAll("SELECT key, value FROM settings WHERE key LIKE 'smtp_%'", []);
-        const settings = {};
-        if (rows) {
-            rows.forEach(r => settings[r.key] = r.value);
-        }
-
+        const settings = await new Promise((resolve) => {
+            deps.db.all("SELECT key, value FROM settings WHERE key LIKE 'smtp_%'", [], (err, rows) => {
+                if (err || !rows)
+                    return resolve({});
+                const s = {};
+                rows.forEach(r => s[r.key] = r.value);
+                resolve(s);
+            });
+        });
         const smtpConfig = {
             host: settings['smtp_host'] || process.env.SMTP_HOST,
             port: settings['smtp_port'] || process.env.SMTP_PORT || 587,
@@ -56,7 +45,6 @@ class EmailService extends BaseService {
             },
             from: settings['smtp_from'] || process.env.SMTP_FROM || '"Consultify System" <system@consultify.com>'
         };
-
         // For logging and debugging
         const displayHtml = html || `Template: ${template}`;
         console.log(`\n--- [EMAIL SERVICE] Sending to ${to} ---`);
@@ -64,11 +52,10 @@ class EmailService extends BaseService {
         console.log(`Subject: ${subject}`);
         console.log(`Content: ${displayHtml.substring(0, 100)}...`);
         console.log('------------------------------------------\n');
-
         // IF REAL CONFIG EXISTS, TRY SENDING
         if (smtpConfig.host && smtpConfig.auth.user) {
             try {
-                const transporter = this._nodemailer.createTransport(smtpConfig);
+                const transporter = deps.nodemailer.createTransport(smtpConfig);
                 await transporter.sendMail({
                     from: smtpConfig.from,
                     to,
@@ -77,23 +64,19 @@ class EmailService extends BaseService {
                     attachments
                 });
                 console.log('[EMAIL SERVICE] Sent successfully via SMTP');
-            } catch (e) {
+            }
+            catch (e) {
                 console.error('[EMAIL SERVICE] SMTP Failed:', e.message);
             }
         }
-
         return true;
-    }
-
+    },
     /**
      * Legacy method name
      */
-    async sendEmail(to, subject, html) {
-        return this.send({ to, subject, html });
+    sendEmail: async (to, subject, html) => {
+        return EmailService.send({ to, subject, html });
     }
-}
-
-const service = new EmailService();
-export default service;
-
-
+};
+export default EmailService;
+//# sourceMappingURL=emailService.js.map

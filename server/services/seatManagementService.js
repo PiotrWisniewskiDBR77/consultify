@@ -363,6 +363,19 @@ function toggleAutoAddSeats(orgId, enabled, threshold = 80) {
     });
 }
 
+export {
+setDependencies,
+    getSeatConfiguration,
+    initializeSeatConfiguration,
+    purchaseSeats,
+    autoAddSeatOnInvite,
+    releaseSeat,
+    canAddUser,
+    updateSeatCount,
+    getSeatHistory,
+    toggleAutoAddSeats
+};
+
 export default {
     setDependencies,
     getSeatConfiguration,

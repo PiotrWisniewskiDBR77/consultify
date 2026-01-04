@@ -4,15 +4,19 @@
 
 import express from 'express';
 const router = express.Router();
-const RapidLeanService = import('rapidLeanService.js');
-const RapidLeanObservationMapper = import('rapidLeanObservationMapper.js');
-const RapidLeanReportService = import('rapidLeanReportService.js');
+import * as RapidLeanServiceModule from '../services/rapidLeanService.js';
+const RapidLeanService = RapidLeanServiceModule.default || RapidLeanServiceModule;
+import * as RapidLeanObservationMapperModule from '../services/rapidLeanObservationMapper.js';
+const RapidLeanObservationMapper = RapidLeanObservationMapperModule.default || RapidLeanObservationMapperModule;
+import * as RapidLeanReportServiceModule from '../services/rapidLeanReportService.js';
+const RapidLeanReportService = RapidLeanReportServiceModule.default || RapidLeanReportServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-const { rapidLeanPhotoUpload } = require('../middleware/rapidLeanUploadMiddleware');
+import { rapidLeanPhotoUpload  } from '../middleware/rapidLeanUploadMiddleware.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-const path = require('path');
+import path from 'path';
+import templateData from '../data/rapidLeanObservationTemplates.js';
 
 router.use(verifyToken);
 
@@ -56,7 +60,6 @@ router.post('/', async (req, res) => {
 router.get('/templates', (req, res) => {
     try {
         console.log('[RapidLean API] Fetching templates...');
-        const templateData = require('../data/rapidLeanObservationTemplates');
         if (!templateData || typeof templateData.getAllTemplates !== 'function') {
             console.error('[RapidLean API] Template data invalid:', templateData);
             throw new Error('Template module invalid');

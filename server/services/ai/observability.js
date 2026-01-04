@@ -10,7 +10,7 @@
  * - Fallback to local logging when Langfuse unavailable
  */
 
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 // Model pricing (per 1M tokens) - Updated Dec 2024
 const MODEL_PRICING = {
@@ -389,6 +389,17 @@ function getStatus() {
         pricingModels: Object.keys(MODEL_PRICING).length
     };
 }
+
+export {
+initLangfuse,
+    createTrace,
+    calculateCost,
+    flush,
+    shutdown,
+    getStatus,
+    TracingContext,
+    MODEL_PRICING
+};
 
 export default {
     initLangfuse,

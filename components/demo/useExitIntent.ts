@@ -40,12 +40,12 @@ export const useExitIntent = (options: UseExitIntentOptions = {}): UseExitIntent
         
         const alreadyDismissed = sessionStorage.getItem('exit_intent_dismissed');
         if (alreadyDismissed && triggerOnce) {
-            setHasTriggered(true);
+            queueMicrotask(() => setHasTriggered(true));
         }
 
         // Start delay timer
         const timer = setTimeout(() => {
-            setIsReady(true);
+            queueMicrotask(() => setIsReady(true));
         }, delayMs);
 
         return () => clearTimeout(timer);
@@ -58,10 +58,12 @@ export const useExitIntent = (options: UseExitIntentOptions = {}): UseExitIntent
         const handleMouseLeave = (e: MouseEvent) => {
             // Only trigger if mouse leaves toward top
             if (e.clientY <= threshold && !hasTriggered) {
-                setShowExitIntent(true);
-                if (triggerOnce) {
-                    setHasTriggered(true);
-                }
+                queueMicrotask(() => {
+                    setShowExitIntent(true);
+                    if (triggerOnce) {
+                        setHasTriggered(true);
+                    }
+                });
             }
         };
 
@@ -79,10 +81,12 @@ export const useExitIntent = (options: UseExitIntentOptions = {}): UseExitIntent
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'hidden' && !hasTriggered) {
                 // User is leaving the tab
-                setShowExitIntent(true);
-                if (triggerOnce) {
-                    setHasTriggered(true);
-                }
+                queueMicrotask(() => {
+                    setShowExitIntent(true);
+                    if (triggerOnce) {
+                        setHasTriggered(true);
+                    }
+                });
             }
         };
 

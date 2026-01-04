@@ -1,7 +1,7 @@
-const { Worker } = require('bullmq');
-const redisConfig = require('../config/queue.config');
+import { Worker } from 'bullmq';
+import redisConfig from '../config/queue.config.js';
 const AiService = import('aiService.js');
-const AsyncJobProcessor = require('./asyncJobProcessor');
+import AsyncJobProcessor from './asyncJobProcessor.js';
 
 const workerName = 'ai-tasks-worker';
 
@@ -71,6 +71,10 @@ const initWorker = () => {
         console.error('[BullMQ] Failed to initialize worker:', err.message);
         return null;
     }
+};
+
+export {
+initWorker
 };
 
 export default { initWorker };

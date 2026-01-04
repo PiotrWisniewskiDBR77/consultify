@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Tooltip } from './Tooltip';
 
 /**
@@ -69,12 +69,8 @@ const saveCompletedTour = (tourId: string): void => {
 export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [activeTour, setActiveTour] = useState<Tour | null>(null);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
-    const [completedTours, setCompletedTours] = useState<string[]>([]);
-
-    // Load completed tours on mount
-    useEffect(() => {
-        setCompletedTours(getCompletedTours());
-    }, []);
+    // Use lazy initialization to load completed tours from localStorage
+    const [completedTours, setCompletedTours] = useState<string[]>(() => getCompletedTours());
 
     const startTour = useCallback((tour: Tour) => {
         // Don't restart completed tours unless manual

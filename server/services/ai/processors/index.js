@@ -6,14 +6,14 @@
  * @version 1.0.0
  */
 
-const docxProcessor = require('./docxProcessor');
-const spreadsheetProcessor = require('./spreadsheetProcessor');
-const pptxProcessor = require('./pptxProcessor');
-const youtubeProcessor = require('./youtubeProcessor');
-const audioProcessor = require('./audioProcessor');
-const videoProcessor = require('./videoProcessor');
-const imageProcessor = require('./imageProcessor');
-const urlProcessor = require('./urlProcessor');
+import docxProcessor from './docxProcessor.js';
+import spreadsheetProcessor from './spreadsheetProcessor.js';
+import pptxProcessor from './pptxProcessor.js';
+import youtubeProcessor from './youtubeProcessor.js';
+import audioProcessor from './audioProcessor.js';
+import videoProcessor from './videoProcessor.js';
+import imageProcessor from './imageProcessor.js';
+import urlProcessor from './urlProcessor.js';
 
 // Export all processors
 export default {

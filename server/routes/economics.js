@@ -20,25 +20,35 @@
 
 import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs').promises;
+import multer from 'multer';
+import path from 'path';
+import { promises as fs } from 'fs';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { v4 as uuidv4 } from 'uuid';
-const rateLimit = require('express-rate-limit');
+import rateLimit from 'express-rate-limit';
 
 // Services
-const EconomicsService = import('economicsService.js');
-const ExcelImportService = import('excelImportService.js');
-const ExcelExportService = import('excelExportService.js');
-const PDFExportService = import('pdfExportService.js');
-const GovernanceAuditService = import('governanceAuditService.js');
-const VersioningService = import('versioningService.js');
-const EvidenceService = import('evidenceService.js');
+import * as EconomicsServiceModule from '../services/economicsService.js';
+const EconomicsService = EconomicsServiceModule.default || EconomicsServiceModule;
+import * as ExcelImportServiceModule from '../services/excelImportService.js';
+const ExcelImportService = ExcelImportServiceModule.default || ExcelImportServiceModule;
+import * as ExcelExportServiceModule from '../services/excelExportService.js';
+const ExcelExportService = ExcelExportServiceModule.default || ExcelExportServiceModule;
+import * as PDFExportServiceModule from '../services/pdfExportService.js';
+const PDFExportService = PDFExportServiceModule.default || PDFExportServiceModule;
+import * as GovernanceAuditServiceModule from '../services/governanceAuditService.js';
+const GovernanceAuditService = GovernanceAuditServiceModule.default || GovernanceAuditServiceModule;
+import * as VersioningServiceModule from '../services/versioningService.js';
+const VersioningService = VersioningServiceModule.default || VersioningServiceModule;
+import * as EvidenceServiceModule from '../services/evidenceService.js';
+const EvidenceService = EvidenceServiceModule.default || EvidenceServiceModule;
 
 // Middleware
 import authMiddleware from '../middleware/authMiddleware.js';
-const { requirePermission, auditAction } = require('../middleware/permissionMiddleware');
-const {
+import { requirePermission, auditAction } from '../middleware/permissionMiddleware.js';
+import {
     validateCreateAnalysis,
     validateUpdateAnalysis,
     validateAnalysisId,
@@ -51,7 +61,7 @@ const {
     validateCreateVersion,
     validateVersionId,
     validateAddEvidence
-} = require('../middleware/economicsValidation');
+} from '../middleware/economicsValidation.js';
 
 // ============================================
 // Rate Limiting
@@ -103,7 +113,7 @@ const storage = multer.diskStorage({
         try {
             await fs.mkdir(uploadDir, { recursive: true });
             cb(null, uploadDir);
-    } catch (err) {
+        } catch (err) {
             cb(err);
         }
     },
@@ -120,8 +130,8 @@ const upload = multer({
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'application/vnd.ms-excel'
         ];
-        if (allowedTypes.includes(file.mimetype) || 
-            file.originalname.endsWith('.xlsx') || 
+        if (allowedTypes.includes(file.mimetype) ||
+            file.originalname.endsWith('.xlsx') ||
             file.originalname.endsWith('.xls')) {
             cb(null, true);
         } else {
@@ -196,7 +206,7 @@ router.get('/analyses',
             };
 
             const result = await EconomicsService.getAnalyses(req.organizationId, filters);
-        res.json(result);
+            res.json(result);
         } catch (error) {
             console.error('[Economics API] List analyses error:', error);
             res.status(500).json({ error: 'Failed to retrieve analyses', code: 'LIST_FAILED' });
@@ -494,7 +504,7 @@ router.post('/import',
             }
 
             const { analysisName } = req.body;
-            
+
             const result = await ExcelImportService.importExcel(
                 req.file.path,
                 {
@@ -580,8 +590,8 @@ router.get('/analyses/:id/export',
                 { format: 'excel', filename: path.basename(filePath), options }
             );
 
-            res.json({ 
-                success: true, 
+            res.json({
+                success: true,
                 downloadUrl: filePath,
                 filename: path.basename(filePath)
             });
@@ -640,8 +650,8 @@ router.get('/analyses/:id/export/pdf',
                 { format: 'pdf', template: options.template, filename: path.basename(filePath) }
             );
 
-            res.json({ 
-                success: true, 
+            res.json({
+                success: true,
                 downloadUrl: filePath,
                 filename: path.basename(filePath)
             });
@@ -751,9 +761,9 @@ router.post('/compare',
             }
 
             if (analyses.length < 2) {
-                return res.status(400).json({ 
-                    error: 'Not enough valid analyses found', 
-                    code: 'INSUFFICIENT_ANALYSES' 
+                return res.status(400).json({
+                    error: 'Not enough valid analyses found',
+                    code: 'INSUFFICIENT_ANALYSES'
                 });
             }
 
@@ -886,8 +896,8 @@ router.post('/analyses/:id/versions/:versionId/restore',
                 { newVersion: restoredVersion.version_number }
             );
 
-            res.json({ 
-                success: true, 
+            res.json({
+                success: true,
                 message: `Restored to version ${version.version_number}`,
                 newVersion: restoredVersion
             });
@@ -909,9 +919,9 @@ router.get('/analyses/:id/versions/compare',
             const { v1, v2 } = req.query;
 
             if (!v1 || !v2) {
-                return res.status(400).json({ 
-                    error: 'Both version IDs (v1 and v2) are required', 
-                    code: 'MISSING_VERSIONS' 
+                return res.status(400).json({
+                    error: 'Both version IDs (v1 and v2) are required',
+                    code: 'MISSING_VERSIONS'
                 });
             }
 
@@ -1037,7 +1047,7 @@ router.post('/scores/:scoreId/evidence/upload',
             console.error('[Economics API] Upload evidence error:', error);
             // Clean up file on error
             if (req.file?.path) {
-                try { await fs.unlink(req.file.path); } catch (e) {}
+                try { await fs.unlink(req.file.path); } catch (e) { }
             }
             res.status(500).json({ error: error.message || 'Failed to upload evidence', code: 'EVIDENCE_UPLOAD_FAILED' });
         }
@@ -1123,7 +1133,7 @@ router.delete('/evidence/:id',
     async (req, res) => {
         try {
             const evidence = await EvidenceService.getEvidence(req.params.id);
-            
+
             if (!evidence) {
                 return res.status(404).json({ error: 'Evidence not found', code: 'NOT_FOUND' });
             }
@@ -1206,9 +1216,9 @@ router.post('/analyses/:id/link-initiative',
             const { initiativeId } = req.body;
 
             if (!initiativeId) {
-                return res.status(400).json({ 
-                    error: 'Initiative ID is required', 
-                    code: 'INITIATIVE_REQUIRED' 
+                return res.status(400).json({
+                    error: 'Initiative ID is required',
+                    code: 'INITIATIVE_REQUIRED'
                 });
             }
 
@@ -1250,7 +1260,7 @@ router.delete('/analyses/:id/link-initiative',
     async (req, res) => {
         try {
             const before = await EconomicsService.getAnalysisById(req.params.id, req.organizationId);
-            
+
             const analysis = await EconomicsService.unlinkFromInitiative(
                 req.params.id,
                 req.organizationId
@@ -1363,8 +1373,9 @@ router.post('/analyses/:id/calculate-metrics',
     validateAnalysisId,
     async (req, res) => {
         try {
-            const FinancialCalc = import('financialCalculatorService.js');
-            
+            const FinancialCalcModule = await import('../services/financialCalculatorService.js');
+            const FinancialCalc = FinancialCalcModule.default || FinancialCalcModule;
+
             // Get financial data for the analysis
             const financials = await EconomicsService.getAnalysisFinancials(
                 req.params.id,
@@ -1372,9 +1383,9 @@ router.post('/analyses/:id/calculate-metrics',
             );
 
             if (!financials || (!financials.costs?.length && !financials.benefits?.length)) {
-                return res.status(400).json({ 
-                    error: 'No financial data available for calculation', 
-                    code: 'NO_FINANCIAL_DATA' 
+                return res.status(400).json({
+                    error: 'No financial data available for calculation',
+                    code: 'NO_FINANCIAL_DATA'
                 });
             }
 
@@ -1383,12 +1394,12 @@ router.post('/analyses/:id/calculate-metrics',
 
             // Build cash flows from costs and benefits
             const cashFlows = [];
-            
+
             // Year 0: Initial costs
             const initialCosts = financials.costs
                 .filter(c => c.year === 0)
                 .reduce((sum, c) => sum + (c.amount || 0), 0);
-            
+
             if (initialCosts > 0) {
                 cashFlows.push({ year: 0, amount: -initialCosts });
             }
@@ -1398,11 +1409,11 @@ router.post('/analyses/:id/calculate-metrics',
                 const yearBenefits = financials.benefits
                     .filter(b => b.year === year || b.year === 1) // Annual benefits
                     .reduce((sum, b) => sum + (b.amount || 0), 0);
-                
+
                 const yearCosts = financials.costs
                     .filter(c => c.year === year || c.year === 1) // Annual costs
                     .reduce((sum, c) => sum + (c.amount || 0), 0);
-                
+
                 cashFlows.push({ year, amount: yearBenefits - yearCosts });
             }
 
@@ -1410,10 +1421,10 @@ router.post('/analyses/:id/calculate-metrics',
             const npv = FinancialCalc.calculateNPV(cashFlows, discountRate);
             const irr = FinancialCalc.calculateIRR(cashFlows);
             const paybackPeriod = FinancialCalc.calculatePaybackPeriod(cashFlows);
-            
+
             const totalBenefits = financials.benefits.reduce((sum, b) => sum + (b.amount || 0) * horizon, 0);
-            const totalCosts = financials.costs.reduce((sum, c) => sum + (c.amount || 0), 0) + 
-                              financials.costs.filter(c => c.year >= 1).reduce((sum, c) => sum + (c.amount || 0) * horizon, 0);
+            const totalCosts = financials.costs.reduce((sum, c) => sum + (c.amount || 0), 0) +
+                financials.costs.filter(c => c.year >= 1).reduce((sum, c) => sum + (c.amount || 0) * horizon, 0);
             const roi = FinancialCalc.calculateROI(totalBenefits, totalCosts);
 
             // Build cumulative cash flow for chart
@@ -1543,7 +1554,7 @@ router.post('/analyses/:id/business-case',
             // For now, redirect to PDF export with business case template
             const timestamp = Date.now();
             const filename = `business_case_${analysis.name.replace(/[^a-z0-9]/gi, '_')}_${timestamp}.${options.format}`;
-            
+
             // Use PDFExportService for business case generation
             const result = await PDFExportService.exportBusinessCase(
                 analysis,
@@ -1590,8 +1601,8 @@ router.get('/initiatives/:initiativeId/financials',
             );
 
             if (!financials) {
-                return res.status(404).json({ 
-                    error: 'Financial analysis not found', 
+                return res.status(404).json({
+                    error: 'Financial analysis not found',
                     code: 'NOT_FOUND',
                     message: 'No financial analysis exists for this initiative. Create one first.'
                 });
@@ -1620,19 +1631,19 @@ router.post('/initiatives/:initiativeId/financials',
                 annualOperatingCost: req.body.annualOperatingCost,
                 trainingCost: req.body.trainingCost,
                 contingencyPercent: req.body.contingencyPercent,
-                
+
                 // Benefits Structure
                 annualCostSavings: req.body.annualCostSavings,
                 annualRevenueIncrease: req.body.annualRevenueIncrease,
                 productivityGainsPercent: req.body.productivityGainsPercent,
                 riskReductionValue: req.body.riskReductionValue,
-                
+
                 // Time Parameters
                 implementationMonths: req.body.implementationMonths,
                 benefitRealizationMonths: req.body.benefitRealizationMonths,
                 analysisHorizonYears: req.body.analysisHorizonYears,
                 discountRate: req.body.discountRate,
-                
+
                 // Metadata
                 currency: req.body.currency || 'PLN',
                 assumptions: req.body.assumptions,
@@ -1861,17 +1872,17 @@ router.post('/initiatives/:initiativeId/benefits',
                 periodStart: req.body.periodStart,
                 periodEnd: req.body.periodEnd,
                 periodType: req.body.periodType || 'monthly',
-                
+
                 // Planned values
                 plannedCostSavings: req.body.plannedCostSavings,
                 plannedRevenueIncrease: req.body.plannedRevenueIncrease,
                 plannedProductivityGains: req.body.plannedProductivityGains,
-                
+
                 // Actual values
                 actualCostSavings: req.body.actualCostSavings,
                 actualRevenueIncrease: req.body.actualRevenueIncrease,
                 actualProductivityGains: req.body.actualProductivityGains,
-                
+
                 // Qualitative
                 varianceNotes: req.body.varianceNotes,
                 achievements: req.body.achievements,
@@ -1979,7 +1990,7 @@ router.get('/initiatives/:initiativeId/benefits/summary',
                 req.organizationId
             );
 
-        res.json(summary);
+            res.json(summary);
         } catch (error) {
             console.error('[Economics API] Benefit summary error:', error);
             res.status(500).json({ error: 'Failed to get benefit summary', code: 'SUMMARY_FAILED' });
@@ -2020,15 +2031,16 @@ router.get('/initiatives/:initiativeId/quality',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = import('qualityAssessmentService.js');
+            const QualityServiceModule = await import('../services/qualityAssessmentService.js');
+            const QualityService = QualityServiceModule.default || QualityServiceModule;
             const assessment = await QualityService.getQualityAssessment(
                 req.params.initiativeId,
                 req.organizationId
             );
 
             if (!assessment) {
-                return res.status(404).json({ 
-                    error: 'Quality assessment not found', 
+                return res.status(404).json({
+                    error: 'Quality assessment not found',
                     code: 'NOT_FOUND',
                     message: 'No quality assessment exists for this initiative.'
                 });
@@ -2050,7 +2062,8 @@ router.post('/initiatives/:initiativeId/quality',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = import('qualityAssessmentService.js');
+            const QualityServiceModule = await import('../services/qualityAssessmentService.js');
+            const QualityService = QualityServiceModule.default || QualityServiceModule;
             const assessmentData = {
                 assessmentType: req.body.assessmentType || 'post_implementation',
                 lessonsLearned: req.body.lessonsLearned,
@@ -2091,7 +2104,8 @@ router.put('/initiatives/:initiativeId/quality',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = import('qualityAssessmentService.js');
+            const QualityServiceModule = await import('../services/qualityAssessmentService.js');
+            const QualityService = QualityServiceModule.default || QualityServiceModule;
             const assessment = await QualityService.updateQualityAssessment(
                 req.params.initiativeId,
                 req.body,
@@ -2119,7 +2133,8 @@ router.post('/initiatives/:initiativeId/quality/recalculate',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = import('qualityAssessmentService.js');
+            const QualityServiceModule = await import('../services/qualityAssessmentService.js');
+            const QualityService = QualityServiceModule.default || QualityServiceModule;
             const assessment = await QualityService.recalculateQualityScores(
                 req.params.initiativeId,
                 req.organizationId
@@ -2141,7 +2156,8 @@ router.get('/initiatives/:initiativeId/quality/lessons',
     requireOrganization,
     async (req, res) => {
         try {
-            const QualityService = import('qualityAssessmentService.js');
+            const QualityServiceModule = await import('../services/qualityAssessmentService.js');
+            const QualityService = QualityServiceModule.default || QualityServiceModule;
             const lessons = await QualityService.getLessonsLearned(
                 req.params.initiativeId,
                 req.organizationId
@@ -2161,23 +2177,23 @@ router.get('/initiatives/:initiativeId/quality/lessons',
 
 router.use((err, req, res, next) => {
     console.error('[Economics API] Unhandled error:', err);
-    
+
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ 
-                error: 'File too large. Maximum size is 10MB.', 
-                code: 'FILE_TOO_LARGE' 
+            return res.status(400).json({
+                error: 'File too large. Maximum size is 10MB.',
+                code: 'FILE_TOO_LARGE'
             });
         }
-        return res.status(400).json({ 
-            error: err.message, 
-            code: 'UPLOAD_ERROR' 
+        return res.status(400).json({
+            error: err.message,
+            code: 'UPLOAD_ERROR'
         });
     }
-    
-    res.status(500).json({ 
-        error: 'Internal server error', 
-        code: 'INTERNAL_ERROR' 
+
+    res.status(500).json({
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR'
     });
 });
 

@@ -147,7 +147,7 @@ export async function log(params: LogActivityParams): Promise<void> {
         } catch {
             // Ignore SIEM errors
         }
-    } catch (err) {
+    } catch (err: unknown) {
         if (process.env.NODE_ENV !== 'production') {
             const error = err as Error;
             console.warn('[ActivityService] Failed to log activity:', error.message);

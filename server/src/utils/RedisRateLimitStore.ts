@@ -68,7 +68,7 @@ export class RedisRateLimitStore implements Store {
                 totalHits: safeHits,
                 resetTime
             };
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('[RateLimit] Redis error:', error);
             // Fail open - must return a positive integer for totalHits (v8 requirement)
             return {
@@ -85,7 +85,7 @@ export class RedisRateLimitStore implements Store {
             if (isRedisConnected() && client) {
                 await client.decr(rKey);
             }
-        } catch (error) {
+        } catch (error: unknown) {
             // Ignore
         }
     }
@@ -97,7 +97,7 @@ export class RedisRateLimitStore implements Store {
             if (isRedisConnected() && client) {
                 await client.del(rKey);
             }
-        } catch (error) {
+        } catch (error: unknown) {
             // Ignore
         }
     }
@@ -130,7 +130,7 @@ export class RedisRateLimitStore implements Store {
                 totalHits: safeHits,
                 resetTime: new Date(Date.now() + this.windowMs)
             };
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('[RateLimit] Redis get error:', error);
             // Fail open - return undefined to let express-rate-limit use defaults
             return undefined;

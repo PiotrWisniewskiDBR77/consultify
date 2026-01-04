@@ -12,7 +12,7 @@
  * - ai_circuit_breaker_state (gauge)
  */
 
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 // Metrics storage (in-memory, reset on restart)
 const metrics = {
@@ -249,6 +249,18 @@ function getSummary() {
         cacheHitRate: totalRequests > 0 ? (cacheHits / totalRequests * 100).toFixed(2) : 0
     };
 }
+
+export {
+incCounter,
+    setGauge,
+    observeHistogram,
+    recordRequest,
+    updateCircuitState,
+    exportPrometheus,
+    exportJson,
+    reset,
+    getSummary
+};
 
 export default {
     incCounter,

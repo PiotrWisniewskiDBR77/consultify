@@ -106,6 +106,13 @@ class ReportGeneratorService {
 // Singleton
 const reportGeneratorService = new ReportGeneratorService();
 
+export {
+ReportGeneratorService,
+    reportGeneratorService,
+    AnalysisSchema,
+    StrategySchema
+};
+
 export default {
     ReportGeneratorService,
     reportGeneratorService,

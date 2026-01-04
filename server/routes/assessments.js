@@ -5,18 +5,23 @@
 
 import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
+import multer from 'multer';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 // Services
-const RapidLeanService = import('rapidLeanService.js');
-const ADKARService = import('adkarService.js');
-const ExternalAssessmentService = import('externalAssessmentService.js');
-const GenericReportService = import('genericReportService.js');
-const AssessmentOverviewService = import('assessmentOverviewService.js');
-const { assessmentRBAC } = require('../middleware/assessmentRBAC');
-const AssessmentAuditLogger = require('../utils/assessmentAuditLogger');
+import * as RapidLeanServiceModule from '../services/rapidLeanService.js';
+const RapidLeanService = RapidLeanServiceModule.default || RapidLeanServiceModule;
+import * as ADKARServiceModule from '../services/adkarService.js';
+const ADKARService = ADKARServiceModule.default || ADKARServiceModule;
+import * as ExternalAssessmentServiceModule from '../services/externalAssessmentService.js';
+const ExternalAssessmentService = ExternalAssessmentServiceModule.default || ExternalAssessmentServiceModule;
+import * as GenericReportServiceModule from '../services/genericReportService.js';
+const GenericReportService = GenericReportServiceModule.default || GenericReportServiceModule;
+import * as AssessmentOverviewServiceModule from '../services/assessmentOverviewService.js';
+const AssessmentOverviewService = AssessmentOverviewServiceModule.default || AssessmentOverviewServiceModule;
+import { assessmentRBAC  } from '../middleware/assessmentRBAC.js';
+import AssessmentAuditLogger from '../utils/assessmentAuditLogger.js';
 
 // File upload configuration
 const storage = multer.diskStorage({

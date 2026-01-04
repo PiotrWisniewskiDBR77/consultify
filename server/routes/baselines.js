@@ -3,7 +3,8 @@
 
 import express from 'express';
 const router = express.Router();
-const BaselineService = import('baselineService.js');
+import * as BaselineServiceModule from '../services/baselineService.js';
+const BaselineService = BaselineServiceModule.default || BaselineServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // POST /api/baselines/:roadmapId/capture

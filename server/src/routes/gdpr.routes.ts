@@ -148,7 +148,7 @@ router.get('/consents', asyncHandler(async (req: AuthRequest, res: Response) => 
                 }
             });
         }
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Consents error:', err);
         res.status(500).json({ error: 'Failed to get consents' });
     }
@@ -190,7 +190,7 @@ router.put('/consents', asyncHandler(async (req: AuthRequest, res: Response) => 
         );
 
         res.json({ success: true, message: 'Consents updated' });
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Update consents error:', err);
         res.status(500).json({ error: 'Failed to update consents' });
     }
@@ -232,7 +232,7 @@ router.get('/retention', asyncHandler(async (req: AuthRequest, res: Response) =>
                 }
             });
         }
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Retention error:', err);
         res.status(500).json({ error: 'Failed to get retention settings' });
     }
@@ -268,7 +268,7 @@ router.put('/retention', asyncHandler(async (req: AuthRequest, res: Response) =>
         );
 
         res.json({ success: true, message: 'Retention settings updated' });
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Update retention error:', err);
         res.status(500).json({ error: 'Failed to update retention' });
     }
@@ -300,7 +300,7 @@ router.get('/export-status', asyncHandler(async (req: AuthRequest, res: Response
             success: true,
             request: request || null
         });
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Export status error:', err);
         res.status(500).json({ error: 'Failed to get export status' });
     }
@@ -353,7 +353,7 @@ router.post('/export-request', asyncHandler(async (req: AuthRequest, res: Respon
                     WHERE id = ?`,
                     [`/api/gdpr/download-export/${requestId}`, requestId]
                 );
-            } catch (err) {
+            } catch (err: unknown) {
                 logger.error('[GDPR] Export processing error:', err);
             }
         }, 2000);
@@ -367,7 +367,7 @@ router.post('/export-request', asyncHandler(async (req: AuthRequest, res: Respon
                 expiresAt: expiresAt.toISOString()
             }
         });
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Export request error:', err);
         res.status(500).json({ error: 'Failed to request export' });
     }
@@ -403,7 +403,7 @@ router.get('/download-export/:requestId', asyncHandler(async (req: AuthRequest, 
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Content-Disposition', `attachment; filename=consultify-data-export-${new Date().toISOString().split('T')[0]}.json`);
         res.send(JSON.stringify(userData, null, 2));
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Download export error:', err);
         res.status(500).json({ error: 'Failed to download export' });
     }
@@ -453,7 +453,7 @@ router.post('/deletion-request', asyncHandler(async (req: AuthRequest, res: Resp
                 scheduledFor: scheduledFor.toISOString()
             }
         });
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Deletion request error:', err);
         res.status(500).json({ error: 'Failed to request deletion' });
     }
@@ -484,7 +484,7 @@ router.post('/cancel-deletion', asyncHandler(async (req: AuthRequest, res: Respo
         }
 
         res.json({ success: true, message: 'Deletion cancelled' });
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Cancel deletion error:', err);
         res.status(500).json({ error: 'Failed to cancel deletion' });
     }
@@ -512,7 +512,7 @@ router.get('/deletion-status', asyncHandler(async (req: AuthRequest, res: Respon
             success: true,
             request: request || null
         });
-    } catch (err) {
+    } catch (err: unknown) {
         logger.error('[GDPR] Deletion status error:', err);
         res.status(500).json({ error: 'Failed to get deletion status' });
     }

@@ -270,6 +270,18 @@ const requireOwnerOrSuperadmin = () => {
     };
 };
 
+// Named exports for ES module compatibility
+export {
+    requireOrgAccess,
+    requireRole,
+    requireOrgMember,
+    requireOrgRole,
+    requireOrgRoleOrHigher,
+    requireConsultantScope,
+    requireOwnerOrSuperadmin,
+    ORG_ROLE_HIERARCHY
+};
+
 export default {
     // Primary guard (recommended for new code)
     requireOrgAccess,

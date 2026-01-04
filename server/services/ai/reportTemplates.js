@@ -9,8 +9,8 @@
  * - Prompt templates
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
+import db from '../../database.js';
+import { aiLogger } from './logger.js';
 
 // Section structure definitions
 const SECTION_STRUCTURES = {
@@ -428,6 +428,13 @@ class ReportTemplateManager {
 
 // Singleton instance
 const reportTemplateManager = new ReportTemplateManager();
+
+export {
+ReportTemplateManager,
+    reportTemplateManager,
+    SECTION_STRUCTURES,
+    PROMPT_TEMPLATES
+};
 
 export default {
     ReportTemplateManager,

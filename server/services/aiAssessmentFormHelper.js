@@ -544,6 +544,13 @@ class AIAssessmentFormHelper {
 // Export singleton instance
 const aiAssessmentFormHelper = new AIAssessmentFormHelper();
 
+export {
+    AIAssessmentFormHelper,
+    aiAssessmentFormHelper,
+    FIELD_TYPES,
+    VALIDATION_RULES
+};
+
 export default {
     AIAssessmentFormHelper,
     aiAssessmentFormHelper,

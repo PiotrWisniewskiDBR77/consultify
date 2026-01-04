@@ -383,4 +383,5 @@ const GovernanceAuditService = {
     }
 };
 
+export { GovernanceAuditService };
 export default GovernanceAuditService;

@@ -130,4 +130,8 @@ function insertTasksForUser(user, resolve, reject) {
     });
 }
 
+export {
+seedTasks
+};
+
 export default { seedTasks };

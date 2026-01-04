@@ -10,7 +10,7 @@ import verifyToken from '../middleware/authMiddleware.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-const { aiLogger } = import('ai/logger.js');
+import { aiLogger  } from '../services/ai/logger.js';
 
 // All routes require authentication
 router.use(verifyToken);
@@ -300,7 +300,7 @@ function generateSuggestion(area) {
 // Response Feedback Endpoints (AI Response Personalization)
 // =====================================================
 
-const { adaptiveResponseService } = import('ai/adaptiveResponseService.js');
+const { adaptiveResponseService   } = await import('../ai/adaptiveResponseService.js');
 
 /**
  * POST /api/ai-feedback/response

@@ -3,9 +3,9 @@
  * Usage: node scripts/seed_staging.js
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../database');
-const bcrypt = require('bcrypt');
+import { v4: uuidv4 } from 'uuid';
+import db from '../database.js';
+import bcrypt from 'bcrypt';
 
 async function seed() {
     console.log('🌱 Seeding Staging Database...');

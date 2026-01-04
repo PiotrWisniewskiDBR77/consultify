@@ -482,6 +482,29 @@ const scanResource = async (resourceType, resourceId, content) => {
     };
 };
 
+export {
+setDependencies,
+    // Policies
+    createPolicy,
+    getPolicyById,
+    getPolicies,
+    updatePolicy,
+    togglePolicyActive,
+    deletePolicy,
+    // Violations
+    recordViolation,
+    getViolationById,
+    getViolations,
+    resolveViolation,
+    // Stats & Scanning
+    getStats,
+    scanResource,
+    // Constants
+    POLICY_TYPES,
+    ENFORCEMENT_ACTIONS,
+    SEVERITY_LEVELS
+};
+
 export default {
     setDependencies,
     // Policies

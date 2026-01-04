@@ -1,8 +1,11 @@
 import express from 'express';
 const router = express.Router();
-const DunningService = import('dunningService.js');
-const InvoiceService = import('invoiceService.js');
-const webhookService = import('webhookService.js');
+import * as DunningServiceModule from '../src/services/dunningService.ts';
+const DunningService = DunningServiceModule.default || DunningServiceModule;
+import * as InvoiceServiceModule from 'invoiceService.js';
+const InvoiceService = InvoiceServiceModule.default || InvoiceServiceModule;
+import * as webhookServiceModule from '../services/webhookService.js';
+const webhookService = webhookServiceModule.default || webhookServiceModule;
 import authMiddleware from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 

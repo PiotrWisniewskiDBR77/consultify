@@ -312,7 +312,7 @@ class PostgresDatabase implements IDatabase {
                 rows: result.rows as T[],
                 rowCount: result.rowCount
             };
-        } catch (e) {
+        } catch (e: unknown) {
             console.error('[Postgres] Query Failed:', (e as Error).message);
             throw e;
         }
@@ -327,7 +327,7 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
             const result = await getPool().query('SELECT NOW() as current_time');
             console.log('[Postgres] Connection test successful:', result.rows[0]);
             return true;
-        } catch (err) {
+        } catch (err: unknown) {
             console.error(`[Postgres] Connection test failed (attempt ${i + 1}/${retries}):`, (err as Error).message);
             if (i < retries - 1) {
                 console.log(`[Postgres] Retrying in ${delay}ms...`);
@@ -361,7 +361,7 @@ async function initDb(): Promise<void> {
             const adapted = adaptQuery(sql);
             try {
                 await getPool().query(adapted, params);
-            } catch (e) {
+            } catch (e: unknown) {
                 console.error('[Postgres] Query Failed:', (e as Error).message);
                 throw e;
             }
@@ -452,7 +452,7 @@ async function initDb(): Promise<void> {
 
         console.log('[Postgres] Schema Check Complete.');
 
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[Postgres] InitDb Failed:', err);
         // Log detailed error information
         if ((err as any).code) {

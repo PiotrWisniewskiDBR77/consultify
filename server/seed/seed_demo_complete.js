@@ -14,7 +14,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-const bcrypt = require('bcryptjs');
+import bcrypt from 'bcryptjs';
 
 // Detect database type
 const isPostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');

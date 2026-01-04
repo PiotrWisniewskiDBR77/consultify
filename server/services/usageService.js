@@ -525,6 +525,21 @@ async function getOperationalCosts(startDate, endDate) {
 }
 
 
+export {
+recordTokenUsage,
+    recordStorageUsage,
+    getCurrentUsage,
+    checkQuota,
+    calculateOverage,
+    updateUsageSummary,
+    getUsageHistory,
+    getGlobalUsageStats,
+    recordProjectStorageUsage,
+    checkProjectQuota,
+    setDependencies,
+    getOperationalCosts
+};
+
 export default {
     recordTokenUsage,
     recordStorageUsage,

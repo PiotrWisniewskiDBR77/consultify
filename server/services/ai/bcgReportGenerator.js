@@ -15,10 +15,10 @@
  * 8. Appendix (detailed data)
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const AiService = require('../aiService');
-const ContextService = require('../contextService');
+import AiService from '../aiService.js';
+import ContextService from '../contextService.js';
 
 // Report section types
 const REPORT_SECTIONS = {

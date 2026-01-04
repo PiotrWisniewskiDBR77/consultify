@@ -7,8 +7,8 @@
  * Run: node server/seeds/legalDocumentsFromFiles.js
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 import { getDatabase } from '../database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
@@ -178,6 +178,10 @@ if (require.main === module) {
         }
     }, 1000);
 }
+
+export {
+seedLegalDocuments, loadMetadata, loadDocumentContent
+};
 
 export default { seedLegalDocuments, loadMetadata, loadDocumentContent };
 

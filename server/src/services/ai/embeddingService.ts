@@ -107,7 +107,7 @@ export class EmbeddingService {
                 EmbeddingResponseSchema
             );
             return data.data[0]?.embedding ?? [];
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             console.error('[EmbeddingService] Error:', err.message);
             throw err;
@@ -273,7 +273,7 @@ export class EmbeddingService {
                     ? parseJson<Record<string, unknown>>(row.metadata, {})
                     : row.metadata
             }));
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             console.error('[EmbeddingService] PostgreSQL search error:', err.message);
             throw err;

@@ -96,4 +96,8 @@ const checkPlanLimit = (limitKey) => {
 };
 
 
+export {
+checkPlanLimit, PLAN_LIMITS
+};
+
 export default { checkPlanLimit, PLAN_LIMITS };

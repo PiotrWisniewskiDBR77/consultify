@@ -487,6 +487,29 @@ const getStats = async () => {
     };
 };
 
+export {
+setDependencies,
+    // Dashboards
+    createDashboard,
+    getDashboardById,
+    getDashboards,
+    updateDashboard,
+    deleteDashboard,
+    toggleShare,
+    cloneDashboard,
+    // Widgets
+    addWidget,
+    updateWidget,
+    removeWidget,
+    reorderWidgets,
+    getWidgetData,
+    // Stats
+    getStats,
+    // Constants
+    WIDGET_TYPES,
+    DATA_SOURCES
+};
+
 export default {
     setDependencies,
     // Dashboards

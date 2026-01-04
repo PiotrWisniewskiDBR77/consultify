@@ -13,8 +13,8 @@
  * @version 1.0.0
  */
 
-const { speechToTextService } = require('./speechToTextService');
-const { textToSpeechService } = require('./textToSpeechService');
+import { speechToTextService } from './speechToTextService.js';
+import { textToSpeechService } from './textToSpeechService.js';
 
 // ============================================================================
 // Configuration
@@ -467,6 +467,11 @@ class VoiceHealthMonitor {
 // ============================================================================
 
 const voiceHealthMonitor = new VoiceHealthMonitor();
+
+export {
+VoiceHealthMonitor,
+    voiceHealthMonitor
+};
 
 export default {
     VoiceHealthMonitor,

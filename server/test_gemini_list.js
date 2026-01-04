@@ -1,6 +1,6 @@
-const path = require('path');
+import path from 'path';
 require('dotenv').config({ path: path.join(__dirname, '.env') });
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const apiKey = process.env.GOOGLE_API_KEY;
 if (!apiKey) {

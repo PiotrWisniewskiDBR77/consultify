@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 /**
  * API Keys Management Routes
  * 
@@ -15,7 +16,6 @@ import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import verifyToken from '../middleware/authMiddleware.js';
 import { v4 as uuidv4 } from 'uuid';
-const crypto = require('crypto');
 
 // Apply auth middleware to all routes
 router.use(verifyToken);

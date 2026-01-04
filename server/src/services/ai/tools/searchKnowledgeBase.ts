@@ -44,7 +44,7 @@ export async function searchKnowledgeBase(
             })),
             totalFound: results.length
         };
-    } catch (error) {
+    } catch (error: unknown) {
         const err = error as Error;
         console.warn('[searchKnowledgeBase] RAG failed, using fallback:', err.message);
 

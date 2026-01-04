@@ -26,15 +26,15 @@ export const CookieConsentBanner: React.FC = () => {
         const consent = localStorage.getItem('cookie-consent');
         if (!consent) {
             // Delay showing banner for better UX
-            const timer = setTimeout(() => setIsOpen(true), 1500);
+            const timer = setTimeout(() => queueMicrotask(() => setIsOpen(true)), 1500);
             return () => clearTimeout(timer);
         } else {
             try {
                 const savedPreferences = JSON.parse(consent);
-                setPreferences(savedPreferences);
+                queueMicrotask(() => setPreferences(savedPreferences));
             } catch {
                 // Invalid stored data, show banner again
-                setIsOpen(true);
+                queueMicrotask(() => setIsOpen(true));
             }
         }
         return undefined;

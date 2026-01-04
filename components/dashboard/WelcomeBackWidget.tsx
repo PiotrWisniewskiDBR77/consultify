@@ -30,12 +30,12 @@ export const WelcomeBackWidget: React.FC = () => {
                 const parsed = JSON.parse(history);
                 const last = parsed[0]; // Most recent
                 if (last) {
-                    setLastActivity({
+                    queueMicrotask(() => setLastActivity({
                         view: last.viewId,
                         label: last.title || 'Ostatnia aktywność',
                         timestamp: last.timestamp,
                         url: last.path
-                    });
+                    }));
                 }
             } catch (e) {
                 console.error('Failed to parse history', e);

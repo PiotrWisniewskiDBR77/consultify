@@ -128,21 +128,22 @@ export const useDeviceType = (): DeviceInfo => {
     }, []);
 
     useEffect(() => {
-        // Initial check
-        updateDeviceInfo();
+        // Initial check - already computed in useState initializer, skip sync call
+        // updateDeviceInfo();
 
         // Listen for resize events
         window.addEventListener('resize', updateDeviceInfo);
         
         // Listen for orientation change (mobile devices)
-        window.addEventListener('orientationchange', () => {
+        const handleOrientationChange = () => {
             // Delay to allow orientation to complete
             setTimeout(updateDeviceInfo, 100);
-        });
+        };
+        window.addEventListener('orientationchange', handleOrientationChange);
 
         return () => {
             window.removeEventListener('resize', updateDeviceInfo);
-            window.removeEventListener('orientationchange', updateDeviceInfo);
+            window.removeEventListener('orientationchange', handleOrientationChange);
         };
     }, [updateDeviceInfo]);
 
@@ -164,14 +165,16 @@ export const useMediaQuery = (query: string): boolean => {
         const mediaQuery = window.matchMedia(query);
         const handleChange = (e: MediaQueryListEvent) => setMatches(e.matches);
 
-        // Set initial value
-        setMatches(mediaQuery.matches);
+        // Check if initial value differs (query changed)
+        if (mediaQuery.matches !== matches) {
+            queueMicrotask(() => setMatches(mediaQuery.matches));
+        }
 
         // Listen for changes
         mediaQuery.addEventListener('change', handleChange);
 
         return () => mediaQuery.removeEventListener('change', handleChange);
-    }, [query]);
+    }, [query, matches]);
 
     return matches;
 };
@@ -201,7 +204,10 @@ export const useKeyboardVisible = (): boolean => {
         const handleResize = () => {
             // If height decreased significantly, keyboard is likely visible
             const heightDiff = initialHeight - window.innerHeight;
-            setIsKeyboardVisible(heightDiff > 150);
+            const newVisible = heightDiff > 150;
+            if (newVisible !== isKeyboardVisible) {
+                setIsKeyboardVisible(newVisible);
+            }
         };
 
         // Use visualViewport API if available (more reliable)
@@ -213,7 +219,7 @@ export const useKeyboardVisible = (): boolean => {
         // Fallback to window resize
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [isMobile, isTablet]);
+    }, [isMobile, isTablet, isKeyboardVisible]);
 
     return isKeyboardVisible;
 };

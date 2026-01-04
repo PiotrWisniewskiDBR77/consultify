@@ -92,7 +92,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         const authRedisStore = new dependencies.RedisStore({ windowMs: 15 * 60 * 1000 });
         const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
         await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
-    } catch (err) {
+    } catch (err: unknown) {
         // Ignore rate limit errors
     }
 
@@ -111,7 +111,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             dependencies.db.get(
                 'SELECT * FROM users WHERE email = ?',
                 [email],
-                (err, row) => {
+                (err: Error | null, row: unknown) => {
                     if (err) reject(err);
                     else resolve(row as typeof row);
                 }
@@ -135,7 +135,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             const authRedisStore = new dependencies.RedisStore({ windowMs: 15 * 60 * 1000 });
             const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
             await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
-        } catch (err) {
+        } catch (err: unknown) {
             // Ignore
         }
 
@@ -148,7 +148,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             dependencies.db.get(
                 'SELECT * FROM organizations WHERE id = ?',
                 [user.organization_id],
-                (err, row) => {
+                (err: Error | null, row: unknown) => {
                     if (err) reject(err);
                     else resolve(row as typeof row);
                 }
@@ -300,7 +300,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             expiresIn: tokenPair.expiresIn
         });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Auth] Login error:', error);
         res.status(500).json({ error: 'Server error' });
     }

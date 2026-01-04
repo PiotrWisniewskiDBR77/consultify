@@ -13,7 +13,7 @@
  * - Gemini with Google Search (fallback)
  */
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Industry mapping for search queries
 const INDUSTRY_KEYWORDS = {
@@ -1137,6 +1137,13 @@ ${language === 'pl' ?
 
 // Export singleton and config
 const webResearchService = new WebResearchService();
+
+export {
+WebResearchService,
+    webResearchService,
+    INDUSTRY_KEYWORDS,
+    AXIS_SEARCH_TOPICS
+};
 
 export default {
     WebResearchService,

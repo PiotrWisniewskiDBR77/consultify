@@ -7,7 +7,8 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const ReferralService = import('referralService.js');
+import * as ReferralServiceModule from '../services/referralService.js';
+const ReferralService = ReferralServiceModule.default || ReferralServiceModule;
 
 /**
  * POST /api/referrals/generate

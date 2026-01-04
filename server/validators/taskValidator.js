@@ -1,4 +1,4 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
 const taskStatusEnum = z.enum(['todo', 'in_progress', 'review', 'done', 'blocked', 'on_hold']);
 const priorityEnum = z.enum(['low', 'medium', 'high', 'urgent']);
@@ -35,6 +35,11 @@ const createTaskSchema = z.object({
 });
 
 const updateTaskSchema = createTaskSchema.partial().omit({ organizationId: true });
+
+export {
+createTaskSchema,
+    updateTaskSchema
+};
 
 export default {
     createTaskSchema,

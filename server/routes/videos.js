@@ -7,8 +7,12 @@
 
 import express from 'express';
 const router = express.Router();
-const path = require('path');
-const fs = require('fs');
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Video storage directory
 const VIDEO_DIR = path.join(__dirname, '../../public/videos');

@@ -1,20 +1,26 @@
 // AI Service - Using unified pipeline with fallback to legacy service
-const { suggestTasks, validateInitiative, enrichInitiative } = import('ai/aiPipeline.js');
+import { suggestTasks, validateInitiative, enrichInitiative  } from '../services/ai/aiPipeline.js';
 // Legacy AiService kept for backward compatibility (deprecated)
-const AiService = import('aiService.js');
-const AccessPolicyService = import('accessPolicyService.js');
-const InitiativeStatusService = import('initiativeStatusService.js');
-const StatusMachine = import('statusMachine.js');
-const NotificationService = import('notificationService.js');
-const DecisionTriggerService = import('decisionTriggerService.js');
+import * as AiServiceModule from '../services/aiService.js';
+const AiService = AiServiceModule.default || AiServiceModule;
+import * as AccessPolicyServiceModule from '../services/accessPolicyService.js';
+const AccessPolicyService = AccessPolicyServiceModule.default || AccessPolicyServiceModule;
+import * as InitiativeStatusServiceModule from '../services/initiativeStatusService.js';
+const InitiativeStatusService = InitiativeStatusServiceModule.default || InitiativeStatusServiceModule;
+import * as StatusMachineModule from '../services/statusMachine.js';
+const StatusMachine = StatusMachineModule.default || StatusMachineModule;
+import * as NotificationServiceModule from '../services/notificationService.js';
+const NotificationService = NotificationServiceModule.default || NotificationServiceModule;
+import * as DecisionTriggerServiceModule from '../services/decisionTriggerService.js';
+const DecisionTriggerService = DecisionTriggerServiceModule.default || DecisionTriggerServiceModule;
 import express from 'express';
 const router = express.Router();
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
-const { asyncHandler } = require('../utils/errorHandler');
-const queryHelpers = require('../utils/queryHelpers');
+import { asyncHandler  } from '../src/utils/asyncHandler.js';
+import * as queryHelpers from '../src/utils/queryHelpers.js';
 
 router.use(verifyToken);
 
@@ -1067,7 +1073,9 @@ router.get('/:id/kpis/:kpiId/measurements', asyncHandler(async (req, res) => {
 // PORTFOLIO VIEW ENDPOINTS
 // ==========================================
 
-const PortfolioService = import('portfolioService.js');
+const PortfolioServiceModule = await import('../services/portfolioService.js');
+
+const PortfolioService = PortfolioServiceModule.default || PortfolioServiceModule;
 
 /**
  * GET /api/initiatives/portfolio

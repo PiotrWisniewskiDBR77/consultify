@@ -7,7 +7,7 @@
 
 import { getDatabase } from '../database/Database.js';
 const db = getDatabase();
-const bcrypt = require('bcryptjs');
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 const DEMO_ORG_ID = 'org-legolex-demo';
@@ -104,6 +104,10 @@ if (require.main === module) {
             process.exit(1);
         });
 }
+
+export {
+seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID
+};
 
 export default { seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID };
 

@@ -12,7 +12,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 // Memory types for conversation context
 const MEMORY_TYPES = {
@@ -569,6 +569,15 @@ class ConversationStateMachine {
 
 // Singleton instance
 const conversationStateMachine = new ConversationStateMachine();
+
+export {
+ConversationStateMachine,
+    conversationStateMachine,
+    MEMORY_TYPES,
+    CONSULTING_MODES,
+    RESPONSE_STYLES,
+    PHASES
+};
 
 export default {
     ConversationStateMachine,

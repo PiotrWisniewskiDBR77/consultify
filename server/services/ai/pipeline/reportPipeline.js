@@ -8,12 +8,12 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-const db = require('../../../database');
-const { getAgentsInOrder, getAgentPrompt, validateAgentOutput, getAgent } = require('./reportAgents');
-const IndustryIntelligenceService = require('../intelligence/industryIntelligenceService');
-const BenchmarkDataService = require('../intelligence/benchmarkDataService');
-const FrameworkEngine = require('../frameworks/frameworkEngine');
-const StrategicRecommendationService = require('../frameworks/strategicRecommendationService');
+import db from '../../../database.js';
+import { getAgentsInOrder, getAgentPrompt, validateAgentOutput, getAgent } from './reportAgents.js';
+import IndustryIntelligenceService from '../intelligence/industryIntelligenceService.js';
+import BenchmarkDataService from '../intelligence/benchmarkDataService.js';
+import FrameworkEngine from '../frameworks/frameworkEngine.js';
+import StrategicRecommendationService from '../frameworks/strategicRecommendationService.js';
 
 // Lazy-load AI service
 let AIService = null;

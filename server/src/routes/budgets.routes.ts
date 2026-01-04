@@ -25,7 +25,7 @@ let budgetManagementService: BudgetManagementServiceInterface | null = null;
 let requireOrgAccess: RequireOrgAccessMiddleware | null = null;
 
 try {
-    const budgetModule = await import('../../services/budgetManagementService.js');
+    const budgetModule = await import('../services/budgetManagementService.js');
     budgetManagementService = (budgetModule.default || budgetModule) as BudgetManagementServiceInterface;
 } catch {
     console.warn('[Budgets] budgetManagementService not available');

@@ -52,7 +52,7 @@ function loadFeatureFlags(): FeatureFlags {
 
     if (!result.success) {
         console.error('[Feature Flags] Configuration validation failed:');
-        result.error.issues.forEach((err) => {
+        result.error.issues.forEach((err: Error | null) => {
             console.error(`  - ${err.path.join('.')}: ${err.message}`);
         });
         

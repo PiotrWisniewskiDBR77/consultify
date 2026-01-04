@@ -293,7 +293,7 @@ class AuditServiceClass {
                 entityType,
                 entityId
             };
-        } catch (err) {
+        } catch (err: unknown) {
             logger.error('[AuditService] Failed to log event:', err instanceof Error ? err.message : String(err));
             // Fail-silent: audit failures should not break main flow
             return {

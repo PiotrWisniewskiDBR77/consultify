@@ -23,9 +23,10 @@
 
 import express from 'express';
 const router = express.Router();
-const scimService = import('scimService.js');
+import * as scimServiceModule from '../services/scimService.js';
+const scimService = scimServiceModule.default || scimServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 
 // ====== SCIM TOKEN AUTHENTICATION MIDDLEWARE ======
 

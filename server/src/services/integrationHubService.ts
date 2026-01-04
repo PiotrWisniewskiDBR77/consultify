@@ -489,7 +489,7 @@ class IntegrationHubServiceClass {
 
             return result;
 
-        } catch (error) {
+        } catch (error: unknown) {
             await this.logSyncEvent(integrationId, {
                 syncId,
                 event: 'sync_failed',

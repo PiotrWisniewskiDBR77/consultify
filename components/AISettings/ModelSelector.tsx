@@ -65,7 +65,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setModels(data);
+                    queueMicrotask(() => setModels(data));
                 }
             } catch (error) {
                 console.error('Failed to fetch models:', error);
@@ -73,7 +73,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         };
 
         if (availableModels.length > 0) {
-            setModels(availableModels);
+            queueMicrotask(() => setModels(availableModels));
         } else {
             // Fetch available models
             fetchModels();

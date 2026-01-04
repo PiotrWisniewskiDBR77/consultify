@@ -13,11 +13,11 @@
 import express from 'express';
 const router = express.Router();
 import requireAuth from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-const archiver = require('archiver');
+import archiver from 'archiver';
 
 /**
  * Helper: Run promise-based database query

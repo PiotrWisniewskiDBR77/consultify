@@ -4,7 +4,8 @@
 
 import express from 'express';
 const router = express.Router();
-const UserGoalsService = import('userGoals.js');
+import * as UserGoalsServiceModule from '../services/userGoals.js';
+const UserGoalsService = UserGoalsServiceModule.default || UserGoalsServiceModule;
 import auth from '../middleware/authMiddleware.js';
 
 // GET /api/user/goals — Get user's current goal

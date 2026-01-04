@@ -1,8 +1,11 @@
 import express from 'express';
 const router = express.Router();
-const InitiativeGeneratorService = import('initiativeGeneratorService.js');
-const AICharterGeneratorService = import('aiCharterGeneratorService.js');
-const InitiativeTemplateService = import('initiativeTemplateService.js');
+import * as InitiativeGeneratorServiceModule from '../services/initiativeGeneratorService.js';
+const InitiativeGeneratorService = InitiativeGeneratorServiceModule.default || InitiativeGeneratorServiceModule;
+import * as AICharterGeneratorServiceModule from '../services/aiCharterGeneratorService.js';
+const AICharterGeneratorService = AICharterGeneratorServiceModule.default || AICharterGeneratorServiceModule;
+import * as InitiativeTemplateServiceModule from '../services/initiativeTemplateService.js';
+const InitiativeTemplateService = InitiativeTemplateServiceModule.default || InitiativeTemplateServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);

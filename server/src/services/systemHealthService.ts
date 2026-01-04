@@ -86,7 +86,7 @@ class SystemHealthServiceClass {
      */
     private async dbGet<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
         return new Promise((resolve, reject) => {
-            this.db.get<T>(sql, params, (err, row) => {
+            this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
                 else resolve(row || null);
             });
@@ -98,7 +98,7 @@ class SystemHealthServiceClass {
      */
     private async dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
         return new Promise((resolve, reject) => {
-            this.db.all<T>(sql, params, (err, rows) => {
+            this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -164,7 +164,7 @@ class SystemHealthServiceClass {
                 connected: true,
                 latencyMs: duration
             };
-        } catch (err) {
+        } catch (err: unknown) {
             const duration = Date.now() - start;
             return {
                 connected: false,
@@ -200,7 +200,7 @@ class SystemHealthServiceClass {
                 status: hasAnyProvider ? 'online' : 'no_keys',
                 providers
             };
-        } catch (err) {
+        } catch (err: unknown) {
             logger.warn('[SystemHealth] Error checking AI services:', err);
             return {
                 status: 'unknown',
@@ -232,7 +232,7 @@ class SystemHealthServiceClass {
             }
 
             return ((errorCount?.count || 0) / totalRequests.count) * 100;
-        } catch (err) {
+        } catch (err: unknown) {
             logger.warn('[SystemHealth] Error calculating error rate:', err);
             return 0;
         }
@@ -289,7 +289,7 @@ class SystemHealthServiceClass {
                 total_queries: row?.total_queries || 0,
                 queries_last_hour: row?.queries_last_hour || 0
             };
-        } catch (err) {
+        } catch (err: unknown) {
             logger.warn('[SystemHealth] Error getting database metrics:', err);
             return { total_queries: 0, queries_last_hour: 0 };
         }
@@ -312,7 +312,7 @@ class SystemHealthServiceClass {
                 total_requests: row?.total_requests || 0,
                 requests_last_hour: row?.requests_last_hour || 0
             };
-        } catch (err) {
+        } catch (err: unknown) {
             logger.warn('[SystemHealth] Error getting API metrics:', err);
             return { total_requests: 0, requests_last_hour: 0 };
         }
@@ -339,7 +339,7 @@ class SystemHealthServiceClass {
                 total_output_tokens: row?.total_output_tokens || 0,
                 avg_latency: Math.round(row?.avg_latency || 0)
             };
-        } catch (err) {
+        } catch (err: unknown) {
             logger.warn('[SystemHealth] Error getting AI metrics:', err);
             return {
                 total_requests: 0,

@@ -4,10 +4,12 @@
 
 import express from 'express';
 const router = express.Router();
-const CohortService = import('cohortService.js');
-const ExperimentService = import('experimentService.js');
+import * as CohortServiceModule from '../services/cohortService.js';
+const CohortService = CohortServiceModule.default || CohortServiceModule;
+import * as ExperimentServiceModule from '../services/experimentService.js';
+const ExperimentService = ExperimentServiceModule.default || ExperimentServiceModule;
 import auth from '../middleware/authMiddleware.js';
-const { verifyAdmin } = require('../middleware/adminMiddleware');
+import { verifyAdmin  } from '../middleware/adminMiddleware.js';
 const requireAdmin = verifyAdmin;
 
 // GET /api/analytics/cohorts — Cohort Matrix (Admin only)

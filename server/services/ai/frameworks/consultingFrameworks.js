@@ -730,6 +730,22 @@ function recommendFrameworks(analysisContext) {
     return recommendations.sort((a, b) => a.priority - b.priority);
 }
 
+export {
+CONSULTING_FRAMEWORKS,
+    getFramework,
+    getFrameworkIds,
+    getFrameworkMetadata,
+    getAllFrameworksMetadata,
+    recommendFrameworks,
+    // Export individual frameworks for direct access
+    BCG_GROWTH_SHARE,
+    MCKINSEY_7S,
+    PORTER_5_FORCES,
+    PESTLE,
+    VALUE_CHAIN,
+    SWOT
+};
+
 export default {
     CONSULTING_FRAMEWORKS,
     getFramework,

@@ -11,11 +11,14 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
-const { requirePermission, auditAction } = require('../middleware/permissionMiddleware');
-const GovernanceAuditService = import('governanceAuditService.js');
-const BreakGlassService = import('breakGlassService.js');
-const PermissionService = import('permissionService.js');
+import { requireRole  } from '../middleware/rbac.js';
+import { requirePermission, auditAction  } from '../middleware/permissionMiddleware.js';
+import * as GovernanceAuditServiceModule from '../services/governanceAuditService.js';
+const GovernanceAuditService = GovernanceAuditServiceModule.default || GovernanceAuditServiceModule;
+import * as BreakGlassServiceModule from '../services/breakGlassService.js';
+const BreakGlassService = BreakGlassServiceModule.default || BreakGlassServiceModule;
+import * as PermissionServiceModule from '../services/permissionService.js';
+const PermissionService = PermissionServiceModule.default || PermissionServiceModule;
 
 // All routes require authentication
 router.use(authMiddleware);
@@ -182,7 +185,7 @@ router.get('/users/:id/permissions', requirePermission('PERMISSION_VIEW'), async
         const orgId = req.organizationId;
 
         // Fetch user role (simplified - would normally come from users table)
-        import { getDatabase } from '../src/database/Database.js';
+        const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
         const user = await new Promise((resolve, reject) => {
             db.get('SELECT role FROM users WHERE id = ?', [userId], (err, row) => {

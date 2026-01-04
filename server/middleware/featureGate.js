@@ -252,6 +252,14 @@ function getAccessibleFeatures(context) {
     );
 }
 
+export {
+FEATURE_REQUIREMENTS,
+    requireFeature,
+    requireAccess,
+    isFeatureAccessible,
+    getAccessibleFeatures
+};
+
 export default {
     FEATURE_REQUIREMENTS,
     requireFeature,

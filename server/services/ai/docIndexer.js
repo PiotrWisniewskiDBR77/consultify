@@ -11,8 +11,8 @@
  * - API route documentation
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // ============================================================================
 // Documentation Paths
@@ -400,6 +400,12 @@ const docIndexer = new DocIndexer();
 docIndexer.indexAll().catch(err => {
     console.error('[DocIndexer] Initial indexing failed:', err);
 });
+
+export {
+DocIndexer,
+    docIndexer,
+    PROMPT_ENGINEERING_KB
+};
 
 export default {
     DocIndexer,

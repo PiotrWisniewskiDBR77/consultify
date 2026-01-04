@@ -6,9 +6,10 @@
 
 import express from 'express';
 const router = express.Router();
-const TokenBillingService = import('tokenBillingService.js');
+import * as TokenBillingServiceModule from '../src/services/tokenBillingService.ts';
+const TokenBillingService = TokenBillingServiceModule.default || TokenBillingServiceModule;
 import authenticateToken from '../middleware/authMiddleware.js';
-const { verifyAdmin: requireAdmin } = require('../middleware/adminMiddleware');
+import { verifyAdmin: requireAdmin } from '../middleware/adminMiddleware.js';
 import requireSuperAdmin from '../middleware/superAdminMiddleware.js';
 
 // ==========================================
@@ -222,7 +223,8 @@ router.get('/costs', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
         // Lazily require usageService to avoid circular dependency issues if any
-        const UsageService = import('usageService.js');
+        const UsageServiceModule = await import('../services/usageService.js');
+        const UsageService = UsageServiceModule.default || UsageServiceModule;
         const costs = await UsageService.getOperationalCosts(startDate, endDate);
         res.json({ success: true, costs });
     } catch (error) {

@@ -14,7 +14,7 @@ export const UserApi = {
     getUsers: async (): Promise<User[]> => {
         const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
         const data = await handleResponse(res, 'Failed to fetch users') as any;
-        return (Array.isArray(data) ? data : (data?.users || [])) as User[];
+        return (Array.isArray(data) ? data : ((data as any).users || [])) as User[];
     },
 
     getUser: async (id: string): Promise<User> => {

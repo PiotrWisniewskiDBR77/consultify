@@ -8,7 +8,7 @@
  * - Resource allocation
  */
 
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 class PerformanceOptimizer {
     constructor() {
@@ -259,6 +259,11 @@ class PerformanceOptimizer {
 
 // Singleton instance
 const performanceOptimizer = new PerformanceOptimizer();
+
+export {
+PerformanceOptimizer,
+    performanceOptimizer
+};
 
 export default {
     PerformanceOptimizer,

@@ -203,7 +203,7 @@ export async function addMember(params: AddMemberParams): Promise<AddMemberResul
         );
 
         return { id, organizationId, userId, role };
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         // Check for unique constraint violation
         if (error.message.includes('UNIQUE constraint failed')) {
@@ -282,7 +282,7 @@ export async function activateBilling(orgId: string): Promise<ActivateBillingRes
     try {
         const { default: OrganizationEventService } = await import('./organizationEventService.js');
         await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, { initialTokens: INITIAL_TOKENS });
-    } catch (e) {
+    } catch (e: unknown) {
         // Event logging failed, but billing is active. Acceptable.
         console.error("Post-billing activation error", e);
     }

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 /**
  * Studio API Routes
  * 
@@ -11,7 +12,6 @@ import verifyToken from '../middleware/authMiddleware.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-const crypto = require('crypto');
 
 // Helper: Promisify db.all
 const dbAll = (sql, params = []) => new Promise((resolve, reject) => {
@@ -784,7 +784,9 @@ router.post('/templates', verifyToken, async (req, res) => {
 
 // ==================== AI ====================
 
-const studioAIService = import('studioAIService.js');
+const studioAIServiceModule = await import('../services/studioAIService.js');
+
+const studioAIService = studioAIServiceModule.default || studioAIServiceModule;
 
 /**
  * POST /api/studio/ai/generate

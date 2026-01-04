@@ -396,6 +396,17 @@ function getImpactEstimate(gap) {
 // EXPORTS
 // =====================================================
 
+export {
+FRAMEWORK_CONFIGS,
+    normalizeScore,
+    mapToDRDScale,
+    mapFromDRDScale,
+    mapDimensionToDRDAxis,
+    calculateOverallMaturity,
+    calculateGaps,
+    generateInitiativeSuggestions
+};
+
 export default {
     FRAMEWORK_CONFIGS,
     normalizeScore,

@@ -3,7 +3,7 @@
  * Searches the DRD methodology knowledge base using RAG
  */
 
-const RagService = require('../../ragService');
+import RagService from '../../ragService.js';
 
 async function searchKnowledgeBase(params, context) {
     const { query, maxResults = 5 } = params;
@@ -76,5 +76,9 @@ function getDRDFallbackContent(query) {
 
     return `DRD (Digital Readiness Diagnostic) is a comprehensive framework for assessing and improving organizational digital maturity. It focuses on identifying gaps, prioritizing improvements, and tracking progress across key dimensions of digital transformation.`;
 }
+
+export {
+searchKnowledgeBase
+};
 
 export default { searchKnowledgeBase };

@@ -6,7 +6,7 @@
  */
 
 import db from '../database.js';
-import auditLogger from '../utils/auditLogger.js';
+import * as auditLogger from '../utils/auditLogger.js';
 import { v4 as uuidv4 } from 'uuid';
 
 

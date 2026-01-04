@@ -9,11 +9,15 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const path = require('path');
-const { exec, spawn } = require('child_process');
-const { promisify } = require('util');
-const audioProcessor = require('./audioProcessor');
+import fs from 'fs';
+import path from 'path';
+import { exec, spawn } from 'child_process';
+import { promisify } from 'util';
+import audioProcessor from './audioProcessor.js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const execAsync = promisify(exec);
 
@@ -292,6 +296,20 @@ function formatDuration(seconds) {
     }
     return `${secs}s`;
 }
+
+export {
+process,
+    extractAudio,
+    extractKeyFrames,
+    getVideoDuration,
+    getVideoMetadata,
+    checkFFmpeg,
+    isSupported,
+    getSupportedExtensions,
+    getSupportedMimeTypes,
+    formatDuration,
+    SUPPORTED_FORMATS
+};
 
 export default {
     process,

@@ -1,6 +1,6 @@
-const { Pool } = require('pg');
-const config = require('./config/database.config');
-const bcrypt = require('bcryptjs');
+import { Pool } from 'pg';
+import config from './config/database.config.js';
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 console.log('[Postgres] Initializing connection pool...');

@@ -15,8 +15,8 @@
  * - Defensive type checking to prevent "is not iterable" errors
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
+import db from '../../database.js';
+import { aiLogger } from './logger.js';
 
 // =============================================================================
 // DATABASE PROMISE HELPERS (SQLite3 uses callbacks, not Promises!)
@@ -718,6 +718,17 @@ class EnterpriseSecurityService {
 
 // Singleton instance
 const enterpriseSecurity = new EnterpriseSecurityService();
+
+export {
+EnterpriseSecurityService,
+    enterpriseSecurity,
+    PII_PATTERNS,
+    RISK_RULES,
+    // Export helpers for use by other modules
+    dbAll,
+    dbGet,
+    dbRun
+};
 
 export default {
     EnterpriseSecurityService,

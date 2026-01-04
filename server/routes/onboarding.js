@@ -13,8 +13,9 @@ const router = express.Router();
 
 import authenticate from '../middleware/authMiddleware.js';
 import orgContextMiddleware from '../middleware/orgContextMiddleware.js';
-const { requireOrgAccess } = require('../middleware/rbac');
-const OnboardingService = import('onboardingService.js');
+import { requireOrgAccess  } from '../middleware/rbac.js';
+import * as OnboardingServiceModule from '../services/onboardingService.js';
+const OnboardingService = OnboardingServiceModule.default || OnboardingServiceModule;
 import auditService from '../services/auditService.js';
 const { getAsync } = getDatabase();
 import { getDatabase } from '../src/database/Database.js';

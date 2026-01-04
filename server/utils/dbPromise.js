@@ -274,6 +274,19 @@ async function count(table, where = '1=1', params = []) {
     return result?.count || 0;
 }
 
+export {
+all,
+    get,
+    run,
+    transaction,
+    tableExists,
+    exec,
+    safeAll,
+    count,
+    // Export logger for external use
+    logger: dbLogger
+};
+
 export default {
     all,
     get,

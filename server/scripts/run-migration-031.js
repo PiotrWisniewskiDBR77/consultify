@@ -6,9 +6,9 @@
  */
 
 require('dotenv').config();
-const db = require('../database');
-const fs = require('fs');
-const path = require('path');
+import db from '../database.js';
+import fs from 'fs';
+import path from 'path';
 
 async function runMigration() {
     console.log('🚀 Starting Migration 031: Performance Indexes...\n');

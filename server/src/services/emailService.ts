@@ -136,7 +136,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
                 attachments
             });
             console.log('[EMAIL SERVICE] Sent successfully via SMTP');
-        } catch (e) {
+        } catch (e: unknown) {
             const error = e as Error;
             console.error('[EMAIL SERVICE] SMTP Failed:', error.message);
         }

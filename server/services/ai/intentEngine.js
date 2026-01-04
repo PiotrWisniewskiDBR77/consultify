@@ -11,7 +11,7 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 // Intent categories mapped to consulting workflow
 const INTENT_TAXONOMY = {
@@ -558,6 +558,16 @@ class IntentEngine {
 
 // Singleton instance
 const intentEngine = new IntentEngine();
+
+export {
+IntentEngine,
+    intentEngine,
+    INTENT_TAXONOMY,
+    URGENCY_PATTERNS,
+    EMOTIONAL_PATTERNS,
+    EXPERTISE_PATTERNS,
+    DEPTH_PATTERNS
+};
 
 export default {
     IntentEngine,

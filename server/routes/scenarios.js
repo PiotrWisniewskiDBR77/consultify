@@ -3,8 +3,10 @@
 
 import express from 'express';
 const router = express.Router();
-const ScenarioService = import('scenarioService.js');
-const CriticalPathService = import('criticalPathService.js');
+import * as ScenarioServiceModule from '../services/scenarioService.js';
+const ScenarioService = ScenarioServiceModule.default || ScenarioServiceModule;
+import * as CriticalPathServiceModule from '../services/criticalPathService.js';
+const CriticalPathService = CriticalPathServiceModule.default || CriticalPathServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // POST /api/scenarios/:projectId

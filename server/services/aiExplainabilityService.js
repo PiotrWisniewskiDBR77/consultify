@@ -442,6 +442,21 @@ export const buildExplainabilityFooter = (explanation) => {
     return lines.join('\n');
 };
 
+export {
+AIConfidenceLevel,
+    AIProjectRole,
+    computeConfidenceLevel,
+    buildReasoningSummary,
+    extractConstraintsApplied,
+    identifyDataUsed,
+    buildAIExplanation,
+    buildExplainabilityFooter,
+    _countPopulatedLayers,
+    _getBlockerCount,
+    _extractExternalSources,
+    _mapOrchestratorRoleToProjectRole
+};
+
 export default {
     AIConfidenceLevel,
     AIProjectRole,

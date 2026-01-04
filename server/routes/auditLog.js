@@ -6,7 +6,8 @@
 
 import express from 'express';
 const router = express.Router();
-const auditLogService = import('auditLogService.js');
+import * as auditLogServiceModule from '../services/auditLogService.js';
+const auditLogService = auditLogServiceModule.default || auditLogServiceModule;
 import authMiddleware from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 

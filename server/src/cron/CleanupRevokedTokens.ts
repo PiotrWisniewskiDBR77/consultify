@@ -56,7 +56,7 @@ class CleanupRevokedTokensCron {
                 logger.info(`[Cron] Removed ${deleted} expired revoked tokens`);
             }
             return deleted;
-        } catch (err) {
+        } catch (err: unknown) {
             logger.error('[Cron] Error cleaning up revoked tokens:', err);
             throw err;
         }
@@ -70,7 +70,7 @@ class CleanupRevokedTokensCron {
         setTimeout(async () => {
             try {
                 await this.cleanupRevokedTokens();
-            } catch (err) {
+            } catch (err: unknown) {
                 logger.error('[Cron] Initial token cleanup failed:', err);
             }
         }, 5000);
@@ -79,7 +79,7 @@ class CleanupRevokedTokensCron {
         this.cleanupInterval = setInterval(async () => {
             try {
                 await this.cleanupRevokedTokens();
-            } catch (err) {
+            } catch (err: unknown) {
                 logger.error('[Cron] Periodic token cleanup failed:', err);
             }
         }, this.deps.config.TOKEN_CLEANUP_INTERVAL);

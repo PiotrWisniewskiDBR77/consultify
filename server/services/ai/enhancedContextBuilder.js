@@ -11,12 +11,12 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const { memoryManager } = require('./memoryManager');
-const { intelligentResearch } = require('./intelligentResearch');
-const { knowledgeIndexer } = require('./knowledgeIndexer');
-const { projectMemoryStore } = require('./projectMemoryStore');
-const ragService = require('../ragService');
-const { aiLogger } = require('./logger');
+import { memoryManager } from './memoryManager.js';
+import { intelligentResearch } from './intelligentResearch.js';
+import { knowledgeIndexer } from './knowledgeIndexer.js';
+import { projectMemoryStore } from './projectMemoryStore.js';
+import ragService from '../ragService.js';
+import { aiLogger } from './logger.js';
 
 // Context priorities by conversation phase
 const PHASE_CONTEXT_PRIORITIES = {
@@ -675,6 +675,13 @@ class EnhancedContextBuilder {
 
 // Singleton instance
 const enhancedContextBuilder = new EnhancedContextBuilder();
+
+export {
+EnhancedContextBuilder,
+    enhancedContextBuilder,
+    PHASE_CONTEXT_PRIORITIES,
+    MAX_TOKENS_PER_LAYER
+};
 
 export default {
     EnhancedContextBuilder,

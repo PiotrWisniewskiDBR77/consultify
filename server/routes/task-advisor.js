@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 /**
  * Task Advisor API Routes
  * 
@@ -10,8 +11,8 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { taskAdvisorService } = import('ai/taskAdvisorService.js');
-const { aiLogger } = import('ai/logger.js');
+import taskAdvisorService from '../services/ai/taskAdvisorService.js';
+import { aiLogger  } from '../services/ai/logger.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
@@ -198,7 +199,7 @@ router.post('/:taskId/apply-subtasks', async (req, res) => {
         const createdSubtasks = [];
         for (let i = 0; i < subtasks.length; i++) {
             const subtask = subtasks[i];
-            const id = require('uuid').v4();
+            const id = uuidv4();
 
             await new Promise((resolve, reject) => {
                 db.run(
@@ -231,7 +232,7 @@ router.post('/:taskId/apply-subtasks', async (req, res) => {
 
         // If draft provided, approve it
         if (draftId) {
-            const { draftService } = import('ai/draftService.js');
+            const { draftService   } = await import('../ai/draftService.js');
             await draftService.approveDraft(draftId, {
                 reviewedBy: req.user.id,
                 notes: `Applied ${createdSubtasks.length} subtasks`

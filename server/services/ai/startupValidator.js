@@ -13,8 +13,9 @@
  * @module server/services/ai/startupValidator
  */
 
-const { llmConfigService, PROVIDER_DEFINITIONS } = require('./llmConfigService');
-const { aiLogger } = require('./logger');
+import { llmConfigService, PROVIDER_DEFINITIONS } from './llmConfigService.js';
+import { aiLogger } from './logger.js';
+import jwt from 'jsonwebtoken';
 
 // Timeout for provider health checks (ms)
 const HEALTH_CHECK_TIMEOUT = 10000; // 10 seconds
@@ -268,7 +269,6 @@ async function testCohere(apiKey, endpoint) {
 
 async function testZAI(apiKey, model) {
     // z.ai requires JWT signing
-    import jwt from 'jsonwebtoken';
     const [id, secret] = apiKey.split('.');
 
     if (!id || !secret) {
@@ -586,6 +586,14 @@ async function testSingleProvider(providerId) {
 
     return testProviderConnection(config);
 }
+
+export {
+validateOnStartup,
+    testProviderConnection,
+    testSingleProvider,
+    generateQuickHealthReport,
+    HEALTH_CHECK_TIMEOUT
+};
 
 export default {
     validateOnStartup,

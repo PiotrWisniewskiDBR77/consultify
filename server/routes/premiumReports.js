@@ -7,8 +7,10 @@
 
 import express from 'express';
 const router = express.Router();
-const premiumPdfService = import('premiumPdfService.js');
-const premiumReportAIService = import('premiumReportAIService.js');
+import * as premiumPdfServiceModule from '../services/premiumPdfService.js';
+const premiumPdfService = premiumPdfServiceModule.default || premiumPdfServiceModule;
+import * as premiumReportAIServiceModule from '../services/premiumReportAIService.js';
+const premiumReportAIService = premiumReportAIServiceModule.default || premiumReportAIServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 /**

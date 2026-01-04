@@ -9,11 +9,11 @@
  * @version 1.0.0
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const NotificationService = require('../notificationService');
-const SlackService = require('../slackService');
-const { aiLogger } = require('./logger');
+import NotificationService from '../notificationService.js';
+import SlackService from '../slackService.js';
+import { aiLogger } from './logger.js';
 
 // Alert severities based on failure count
 const ALERT_SEVERITY = {

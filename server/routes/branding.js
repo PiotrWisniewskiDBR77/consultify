@@ -9,7 +9,8 @@ import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
-const BrandingService = import('brandingService.js');
+import * as BrandingServiceModule from '../services/brandingService.js';
+const BrandingService = BrandingServiceModule.default || BrandingServiceModule;
 
 // ==========================================
 // SUPERADMIN ROUTES

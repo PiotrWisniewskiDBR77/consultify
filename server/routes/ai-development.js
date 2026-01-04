@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 /**
  * AI Development Routes
  * 
@@ -11,14 +12,14 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 
 // Import existing services
 let abTestingService;
 try {
-    abTestingService = import('ai/abTesting.js').abTestingService;
+    abTestingService = import('../services/ai/abTesting.js').abTestingService;
 } catch (e) {
     console.warn('[AI Development] abTesting service not available');
 }
@@ -152,7 +153,7 @@ router.post('/prompts', verifyToken, requireRole(['super_admin']), async (req, r
             return res.status(400).json({ error: 'Name, category, and template are required' });
         }
         
-        const id = require('crypto').randomUUID();
+        const id = crypto.randomUUID();
         
         await db.run(`
             INSERT INTO ai_system_prompts 
@@ -163,7 +164,7 @@ router.post('/prompts', verifyToken, requireRole(['super_admin']), async (req, r
         await db.run(`
             INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
             VALUES (?, ?, 1, ?, datetime('now'), ?)
-        `, [require('crypto').randomUUID(), id, template, req.user.id]);
+        `, [crypto.randomUUID(), id, template, req.user.id]);
         
         res.status(201).json({
             success: true,
@@ -211,7 +212,7 @@ router.put('/prompts/:id', verifyToken, requireRole(['super_admin']), async (req
             await db.run(`
                 INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
                 VALUES (?, ?, ?, ?, datetime('now'), ?)
-            `, [require('crypto').randomUUID(), id, newVersion, template, req.user.id]);
+            `, [crypto.randomUUID(), id, newVersion, template, req.user.id]);
         }
         
         res.json({ success: true, data: { id, version: newVersion } });

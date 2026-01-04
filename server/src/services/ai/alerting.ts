@@ -318,7 +318,7 @@ export class AlertingService {
 
                 req.write(data);
                 req.end();
-            } catch (error) {
+            } catch (error: unknown) {
                 reject(error);
             }
         });

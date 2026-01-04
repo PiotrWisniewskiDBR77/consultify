@@ -9,9 +9,12 @@
 
 import express from 'express';
 const router = express.Router();
-const HelpService = import('helpService.js');
-const PlaybookResolver = import('playbookResolver.js');
-const AccessPolicyService = import('accessPolicyService.js');
+import * as HelpServiceModule from '../services/helpService.js';
+const HelpService = HelpServiceModule.default || HelpServiceModule;
+import * as PlaybookResolverModule from '../services/playbookResolver.js';
+const PlaybookResolver = PlaybookResolverModule.default || PlaybookResolverModule;
+import * as AccessPolicyServiceModule from '../services/accessPolicyService.js';
+const AccessPolicyService = AccessPolicyServiceModule.default || AccessPolicyServiceModule;
 import requireAuth from '../middleware/authMiddleware.js';
 const isSuperAdmin = (req, res, next) => {
     if (req.user && (req.user.role === 'SUPERADMIN' || req.user.role === 'SUPER_ADMIN')) {

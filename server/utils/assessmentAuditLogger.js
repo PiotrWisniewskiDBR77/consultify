@@ -3,8 +3,8 @@
  * Logs all assessment-related actions for compliance
  */
 
-const defaultDb = require('../database');
-const { v4: defaultUuidv4 } = require('uuid');
+import defaultDb from '../database.js';
+import { v4 as defaultUuidv4 } from 'uuid';
 
 class AssessmentAuditLogger {
     constructor() {

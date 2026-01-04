@@ -7,8 +7,10 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { draftService, DRAFT_TYPES } = import('ai/draftService.js');
-const { aiLogger } = import('ai/logger.js');
+import draftServiceModule from '../services/ai/draftService.js';
+const draftService = draftServiceModule.draftService || draftServiceModule;
+const DRAFT_TYPES = draftServiceModule.DRAFT_TYPES || {};
+import { aiLogger  } from '../services/ai/logger.js';
 
 // All routes require authentication
 router.use(verifyToken);

@@ -134,7 +134,7 @@ export const validateTask = async (
             return;
         }
         next();
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
@@ -182,7 +182,7 @@ export const validateInitiativeStatus = async (
         req.previousStatus = row.status;
         req.projectId = row.project_id;
         next();
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
@@ -230,7 +230,7 @@ export const validateTaskStatus = async (
         req.previousStatus = row.status;
         req.initiativeId = row.initiative_id;
         next();
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
@@ -260,7 +260,7 @@ export const logStatusChange = (entityType: string) => {
                         JSON.stringify({ status: req.previousStatus }),
                         JSON.stringify({ status: req.body.status })
                     ]);
-                } catch (err) {
+                } catch (err: unknown) {
                     // Log error but don't fail the request
                     console.error('[PMO Validation] Failed to log status change:', err);
                 }

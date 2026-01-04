@@ -13,10 +13,13 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { verifyAdmin } = require('../middleware/adminMiddleware');
-const AIAnalyticsService = import('aiAnalyticsService.js');
-const OutcomeService = import('outcomeService.js');
-const ROIService = import('roiService.js');
+import { verifyAdmin  } from '../middleware/adminMiddleware.js';
+import * as AIAnalyticsServiceModule from '../services/aiAnalyticsService.js';
+const AIAnalyticsService = AIAnalyticsServiceModule.default || AIAnalyticsServiceModule;
+import * as OutcomeServiceModule from '../services/outcomeService.js';
+const OutcomeService = OutcomeServiceModule.default || OutcomeServiceModule;
+import * as ROIServiceModule from '../services/roiService.js';
+const ROIService = ROIServiceModule.default || ROIServiceModule;
 
 // Apply authentication to all routes
 router.use(verifyToken);

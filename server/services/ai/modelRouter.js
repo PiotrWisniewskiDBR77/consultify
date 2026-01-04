@@ -11,8 +11,8 @@
  * @module server/services/ai/modelRouter
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
+import db from '../../database.js';
+import { aiLogger } from './logger.js';
 
 // Lazy-load LLMConfigService to avoid circular dependencies
 let _llmConfigService = null;
@@ -919,6 +919,17 @@ class ModelRouter {
 
 // Singleton instance
 const modelRouter = new ModelRouter();
+
+export {
+ModelRouter,
+    modelRouter,
+    CAPABILITY_TIERS,
+    TIER_DEFAULTS,
+    TIER_FALLBACK_CHAINS,
+    TIER_FALLBACKS,
+    MODEL_PROVIDER_MAP,
+    TIER_HIERARCHY
+};
 
 export default {
     ModelRouter,

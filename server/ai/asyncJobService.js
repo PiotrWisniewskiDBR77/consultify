@@ -1,9 +1,9 @@
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-const auditLogger = require('../utils/auditLogger');
-const aiQueue = require('../queues/aiQueue');
-const { ACTION_ERROR_CODES } = require('./actionErrors');
+import * as auditLogger from '../utils/auditLogger.js';
+import aiQueue from '../queues/aiQueue.js';
+import { ACTION_ERROR_CODES } from './actionErrors.js';
 
 /**
  * Async Job Service

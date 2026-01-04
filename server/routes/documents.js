@@ -1,9 +1,10 @@
 import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const DocumentService = import('documentService.js');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import * as DocumentServiceModule from '../services/documentService.js';
+const DocumentService = DocumentServiceModule.default || DocumentServiceModule;
 import authenticateToken from '../middleware/authMiddleware.js';
 
 // Ensure upload directory exists

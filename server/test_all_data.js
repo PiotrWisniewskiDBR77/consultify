@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 async function testAllData() {
     const email = 'piotr.wisniewski@dbr77.com';

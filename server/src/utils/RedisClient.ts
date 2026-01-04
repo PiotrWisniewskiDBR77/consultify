@@ -100,7 +100,7 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
                 await Promise.race([connectPromise, timeoutPromise]);
                 console.log('[Redis] Successfully connected');
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('[Redis] Connection Failed:', (err as Error).message);
             // Fallback to mock on connection failure
             console.log('[Redis] Falling back to Mock Client');

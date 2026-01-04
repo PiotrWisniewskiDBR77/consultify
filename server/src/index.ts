@@ -227,7 +227,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // Init Scheduler (ES modules)
     try {
         Scheduler.init();
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         console.error('[Server] Scheduler initialization failed:', error.message);
     }
@@ -235,7 +235,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // Init Health Check Monitor (ES modules)
     try {
         startHealthCheck();
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         console.error('[Server] Health Check initialization failed:', error.message);
     }
@@ -243,26 +243,41 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // ============================================================
     // LLM STARTUP VALIDATION - Single Source of Truth
     // ============================================================
+    // Validate LLM configuration
     (async () => {
         try {
-            const { validateOnStartup } = await import('./services/ai/startupValidator.js');
-            const healthReport = await validateOnStartup({
-                testConnectivity: true,
-                parallel: true
-            });
+            const startupValidatorModule = await import('./services/ai/startupValidator.js');
+            // Handle both named exports and default export wrapping (CJS/ESM interop)
+            // @ts-ignore
+            let validateOnStartup = startupValidatorModule.validateOnStartup || startupValidatorModule.default?.validateOnStartup;
 
-            // Store health report for API access
-            (global as typeof globalThis & { llmHealthReport?: unknown }).llmHealthReport = healthReport;
-
-            if (healthReport.criticalErrors.length > 0) {
-                console.error('[Server] ⚠️  LLM CRITICAL: Some AI features may not work');
-                healthReport.criticalErrors.forEach((err: string) => console.error(`  - ${err}`));
+            // Handle case where default export is a Promise (async module init)
+            if (!validateOnStartup && startupValidatorModule.default instanceof Promise) {
+                const resolvedDefault = await startupValidatorModule.default;
+                validateOnStartup = resolvedDefault.validateOnStartup;
             }
 
-            if (healthReport.summary.healthy > 0) {
-                console.log(`[Server] ✅ LLM Ready: ${healthReport.summary.healthy} provider(s) healthy`);
+            if (typeof validateOnStartup === 'function') {
+                const healthReport = await validateOnStartup({
+                    testConnectivity: true,
+                    parallel: true
+                });
+
+                // Store health report for API access
+                (global as typeof globalThis & { llmHealthReport?: unknown }).llmHealthReport = healthReport;
+
+                if (healthReport.criticalErrors && healthReport.criticalErrors.length > 0) {
+                    console.error('[Server] ⚠️  LLM CRITICAL: Some AI features may not work');
+                    healthReport.criticalErrors.forEach((err: string) => console.error(`  - ${err}`));
+                }
+
+                if (healthReport.summary && healthReport.summary.healthy > 0) {
+                    console.log(`[Server] ✅ LLM Ready: ${healthReport.summary.healthy} provider(s) healthy`);
+                }
+            } else {
+                console.warn('[Server] Startup validation skipped (function not found)');
             }
-        } catch (err) {
+        } catch (err: unknown) {
             const error = err as Error;
             console.error('[Server] LLM Startup Validation failed:', error.message);
         }
@@ -271,28 +286,45 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // Init LLM Provider Health Monitoring (Auto-Fallback)
     try {
         const llmFallbackService = await import('./services/llmFallbackService.js');
+        // @ts-ignore
         const service = llmFallbackService.default || llmFallbackService;
         if (service && typeof service.startHealthMonitoring === 'function') {
             service.startHealthMonitoring(60000);
             console.log('[Server] LLM Provider Health Monitoring started');
         }
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         console.warn('[Server] LLM Fallback Service not available:', error.message);
     }
 
     // Init AI Health Monitor (Self-Healing System)
     try {
-        const { healthMonitor } = await import('./services/ai/healthMonitor.js');
-        healthMonitor.start(60000);
+        const healthMonitorModule = await import('./services/ai/healthMonitor.js');
+        // Debug: Log imported module keys
+        console.log('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
+        // Handle both named exports and default export wrapping (CJS/ESM interop)
+        // @ts-ignore
+        let healthMonitor = healthMonitorModule.healthMonitor || healthMonitorModule.default?.healthMonitor;
 
-        healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
-            console.error('[AI Health] CRITICAL ALERT:', alert.message);
-            console.error('[AI Health] Failed checks:', alert.checks?.join(', '));
-        });
+        // Handle case where default export is a Promise (async module init)
+        if (!healthMonitor && healthMonitorModule.default instanceof Promise) {
+            const resolvedDefault = await healthMonitorModule.default;
+            healthMonitor = resolvedDefault.healthMonitor;
+        }
 
-        console.log('[Server] AI Health Monitor started (self-healing enabled)');
-    } catch (err) {
+        if (healthMonitor) {
+            healthMonitor.start(60000);
+
+            healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
+                console.error('[AI Health] CRITICAL ALERT:', alert.message);
+                console.error('[AI Health] Failed checks:', alert.checks?.join(', '));
+            });
+
+            console.log('[Server] AI Health Monitor started (self-healing enabled)');
+        } else {
+            console.warn('[Server] AI Health Monitor not available (export not found)');
+        }
+    } catch (err: unknown) {
         const error = err as Error;
         console.warn('[Server] AI Health Monitor not available:', error.message);
     }
@@ -470,7 +502,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
     try {
         const healthMonitorModule = await import('../services/ai/healthMonitor.js');
         healthMonitor = healthMonitorModule.healthMonitor || healthMonitorModule.default;
-    } catch (err) {
+    } catch (err: unknown) {
         // Health monitor not available
     }
 
@@ -486,7 +518,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
             database: 'connected',
             aiSystem: aiStatus
         });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('Health Check DB Error:', err);
         res.status(500).json({ status: 'error', message: 'Database unreachable', error: (err as any).message });
     }
@@ -735,7 +767,7 @@ const registerRoutes = () => {
         app.use('/api/budget', budgetRoutes);
         app.use('/api/content', contentRoutes);
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Server] Error loading routes:', error);
         // Don't block server startup - allow degraded mode
     }
@@ -847,7 +879,7 @@ if (isMainModule || require.main === module) {
             if (realtimeService && typeof realtimeService.initializeSimple === 'function') {
                 realtimeService.initializeSimple(server);
             }
-        } catch (err) {
+        } catch (err: unknown) {
             const error = err as Error;
             logger.warn('[Server] Realtime service not available:', error.message);
         }
@@ -858,7 +890,7 @@ if (isMainModule || require.main === module) {
         try {
             const { startCleanupJob } = await import('../cron/cleanupRevokedTokens.js');
             startCleanupJob();
-        } catch (err) {
+        } catch (err: unknown) {
             const error = err as Error;
             logger.warn('[Server] Token cleanup job failed to start:', error.message);
         }
@@ -872,7 +904,7 @@ if (isMainModule || require.main === module) {
             if (typeof initMetricsSnapshotJob === 'function') {
                 initMetricsSnapshotJob();
             }
-        } catch (err) {
+        } catch (err: unknown) {
             const error = err as Error;
             logger.warn('[Server] Metrics snapshot job failed to start:', error.message);
         }
@@ -899,7 +931,7 @@ if (isMainModule || require.main === module) {
             }).catch((err: Error) => {
                 console.warn('[AI Services] Redis init failed, using in-memory:', err.message);
             });
-        } catch (err) {
+        } catch (err: unknown) {
             const error = err as Error;
             logger.warn('[Server] AI Services failed to initialize:', error.message);
         }
@@ -910,7 +942,7 @@ if (isMainModule || require.main === module) {
         try {
             const { initWorker } = await import('../workers/aiWorker.js');
             initWorker();
-        } catch (err) {
+        } catch (err: unknown) {
             const error = err as Error;
             logger.warn('[Server] AI Worker failed to start (likely Redis missing):', error.message);
         }
@@ -927,7 +959,7 @@ if (isMainModule || require.main === module) {
                         SystemIntegrity.check();
                     }, 2000);
                 }
-            } catch (err) {
+            } catch (err: unknown) {
                 const error = err as Error;
                 logger.warn('[Server] System Integrity check failed:', error.message);
             }

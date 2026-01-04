@@ -8,9 +8,9 @@
  * - AI recommendations and user feedback
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 // Memory types with importance defaults
 const MEMORY_TYPES = {
@@ -435,6 +435,12 @@ class ProjectMemoryStore {
 
 // Singleton instance
 const projectMemoryStore = new ProjectMemoryStore();
+
+export {
+ProjectMemoryStore,
+    projectMemoryStore,
+    MEMORY_TYPES
+};
 
 export default {
     ProjectMemoryStore,

@@ -3,7 +3,7 @@
  * Provides syntax-aware editing with preview capability
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Save, X, Eye, EyeOff, RotateCcw } from 'lucide-react';
 import { Artifact } from '../../../types';
@@ -23,12 +23,10 @@ export const ArtifactEditor: React.FC<ArtifactEditorProps> = ({
   const { t } = useTranslation();
   const [content, setContent] = useState(artifact.content);
   const [showPreview, setShowPreview] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    setHasChanges(content !== artifact.content);
-  }, [content, artifact.content]);
+  // Compute hasChanges directly instead of using state + useEffect
+  const hasChanges = useMemo(() => content !== artifact.content, [content, artifact.content]);
 
   useEffect(() => {
     // Focus textarea and move cursor to end

@@ -82,7 +82,7 @@ function calculateSIRIScore(data) {
     const dimensions = data.dimensions || {};
     const categories = {};
     const details = {};
-    
+
     let totalWeightedScore = 0;
     let totalWeight = 0;
 
@@ -98,7 +98,7 @@ function calculateSIRIScore(data) {
             categories[blockId] = Math.round(blockScore * 100) / 100;
             totalWeightedScore += blockScore * block.weight;
             totalWeight += block.weight;
-            
+
             details[blockId] = {
                 name: block.name,
                 score: categories[blockId],
@@ -112,8 +112,8 @@ function calculateSIRIScore(data) {
     });
 
     // Calculate overall score
-    const overall = totalWeight > 0 
-        ? Math.round((totalWeightedScore / totalWeight) * 100) / 100 
+    const overall = totalWeight > 0
+        ? Math.round((totalWeightedScore / totalWeight) * 100) / 100
         : 0;
 
     // Calculate prioritization matrix (16 areas)
@@ -135,11 +135,11 @@ function calculateSIRIScore(data) {
 function calculateSIRIPrioritization(dimensions, overallScore) {
     const areas = {};
     const targetLevel = Math.min(5, Math.ceil(overallScore) + 1);
-    
+
     Object.entries(dimensions).forEach(([dimId, score]) => {
         const gap = Math.max(0, targetLevel - score);
         const priority = gap > 2 ? 'HIGH' : gap > 1 ? 'MEDIUM' : 'LOW';
-        
+
         areas[dimId] = {
             current: score,
             target: targetLevel,
@@ -147,7 +147,7 @@ function calculateSIRIPrioritization(dimensions, overallScore) {
             priority,
         };
     });
-    
+
     return areas;
 }
 
@@ -165,7 +165,7 @@ function calculateADMAScore(data) {
     const dimensions = data.dimensions || {};
     const categories = {};
     const details = {};
-    
+
     let totalWeightedScore = 0;
     let totalWeight = 0;
     let completedDimensions = 0;
@@ -198,7 +198,7 @@ function calculateADMAScore(data) {
             categories[pillarId] = Math.round(pillarScore * 100) / 100;
             totalWeightedScore += pillarScore * pillar.weight;
             totalWeight += pillar.weight;
-            
+
             details[pillarId] = {
                 name: pillar.name,
                 score: categories[pillarId],
@@ -212,8 +212,8 @@ function calculateADMAScore(data) {
     });
 
     // Calculate overall score
-    const overall = totalWeight > 0 
-        ? Math.round((totalWeightedScore / totalWeight) * 100) / 100 
+    const overall = totalWeight > 0
+        ? Math.round((totalWeightedScore / totalWeight) * 100) / 100
         : 0;
 
     // Calculate maturity level
@@ -255,7 +255,7 @@ function calculateCMMIScore(data) {
     const practiceAreas = data.practiceAreas || {};
     const categories = {};
     const details = {};
-    
+
     let allPracticeAreaScores = [];
 
     // Calculate category scores
@@ -270,7 +270,7 @@ function calculateCMMIScore(data) {
             const categoryScore = Math.min(...areaScores);
             categories[catId] = categoryScore;
             allPracticeAreaScores = allPracticeAreaScores.concat(areaScores);
-            
+
             details[catId] = {
                 name: category.name,
                 score: categoryScore,
@@ -284,8 +284,8 @@ function calculateCMMIScore(data) {
     });
 
     // CMMI staged representation: overall = minimum across ALL practice areas
-    const overall = allPracticeAreaScores.length > 0 
-        ? Math.min(...allPracticeAreaScores) 
+    const overall = allPracticeAreaScores.length > 0
+        ? Math.min(...allPracticeAreaScores)
         : 1;
 
     // Get maturity level description
@@ -329,7 +329,7 @@ function getCMMILevelDescription(level) {
 function calculateCMMIGaps(practiceAreas, currentLevel) {
     const gaps = {};
     const targetLevel = Math.min(5, currentLevel + 1);
-    
+
     Object.entries(practiceAreas).forEach(([paId, score]) => {
         if (score < targetLevel) {
             gaps[paId] = {
@@ -340,7 +340,7 @@ function calculateCMMIGaps(practiceAreas, currentLevel) {
             };
         }
     });
-    
+
     return gaps;
 }
 
@@ -400,8 +400,8 @@ function calculateLeanScore(data) {
         }
     });
 
-    const overall = totalWeight > 0 
-        ? Math.round((totalWeightedScore / totalWeight) * 100) / 100 
+    const overall = totalWeight > 0
+        ? Math.round((totalWeightedScore / totalWeight) * 100) / 100
         : 0;
 
     // Calculate Lean maturity and automation potential
@@ -425,23 +425,23 @@ function calculateLeanScore(data) {
 function calculateMeasurePhaseScore(processes, workstations) {
     let score = 1;
     let completeness = 0;
-    
+
     // Check process documentation
     const documentedProcesses = processes.filter(p => p.steps && p.steps.length > 0);
     const processCompleteness = processes.length > 0 ? documentedProcesses.length / processes.length : 0;
-    
+
     // Check workstation documentation
     const documentedWorkstations = workstations.filter(w => w.tasks && w.tasks.length > 0);
     const workstationCompleteness = workstations.length > 0 ? documentedWorkstations.length / workstations.length : 0;
-    
+
     completeness = (processCompleteness + workstationCompleteness) / 2;
-    
+
     // Score based on documentation quality
     if (completeness >= 0.9) score = 5;
     else if (completeness >= 0.7) score = 4;
     else if (completeness >= 0.5) score = 3;
     else if (completeness >= 0.3) score = 2;
-    
+
     return { score, completeness };
 }
 
@@ -452,31 +452,31 @@ function calculateOptimizePhaseScore(processes, managementPractices) {
     let score = 1;
     let wastesIdentified = 0;
     let improvementPotential = 0;
-    
+
     // Count identified wastes across processes
     processes.forEach(process => {
         if (process.wastes) {
             wastesIdentified += Object.values(process.wastes).filter(w => w > 0).length;
         }
     });
-    
+
     // Check management practices
     const practiceCategories = ['fiveS', 'kaizen', 'standardWork', 'visualManagement', 'tpm'];
     const implementedPractices = practiceCategories.filter(
         cat => managementPractices[cat] && managementPractices[cat].implemented
     ).length;
-    
+
     const practiceScore = implementedPractices / practiceCategories.length;
-    
+
     // Calculate improvement potential
     improvementPotential = processes.reduce((sum, p) => {
         return sum + (p.improvementPotential || 0);
     }, 0) / Math.max(1, processes.length);
-    
+
     // Combined score
     score = Math.round((practiceScore * 5 + (wastesIdentified > 0 ? 2 : 0)) / 1.4);
     score = Math.min(5, Math.max(1, score));
-    
+
     return { score, wastesIdentified, improvementPotential };
 }
 
@@ -487,7 +487,7 @@ function calculateAutomatePhaseScore(workstations, processes) {
     let score = 1;
     let candidates = [];
     let aiReadiness = 0;
-    
+
     // Find automation candidates
     workstations.forEach(workstation => {
         if (workstation.automationPotential >= 3) {
@@ -500,24 +500,24 @@ function calculateAutomatePhaseScore(workstations, processes) {
         }
         aiReadiness += workstation.aiReadiness || 0;
     });
-    
+
     // Average AI readiness
     aiReadiness = workstations.length > 0 ? aiReadiness / workstations.length : 0;
-    
+
     // Score based on automation analysis completeness
-    const assessedWorkstations = workstations.filter(w => 
+    const assessedWorkstations = workstations.filter(w =>
         typeof w.automationPotential === 'number'
     ).length;
-    
-    const assessmentCompleteness = workstations.length > 0 
-        ? assessedWorkstations / workstations.length 
+
+    const assessmentCompleteness = workstations.length > 0
+        ? assessedWorkstations / workstations.length
         : 0;
-    
+
     if (assessmentCompleteness >= 0.9 && candidates.length > 0) score = 5;
     else if (assessmentCompleteness >= 0.7) score = 4;
     else if (assessmentCompleteness >= 0.5) score = 3;
     else if (assessmentCompleteness >= 0.3) score = 2;
-    
+
     return { score, candidates, aiReadiness };
 }
 
@@ -538,13 +538,13 @@ function getLeanMaturityLevel(optimizeScore) {
 function calculateAutomationPotential(workstations) {
     const total = workstations.length;
     if (total === 0) return { high: 0, medium: 0, low: 0, totalTasks: 0 };
-    
+
     const high = workstations.filter(w => (w.automationPotential || 0) >= 4).length;
     const medium = workstations.filter(w => (w.automationPotential || 0) >= 2 && (w.automationPotential || 0) < 4).length;
     const low = total - high - medium;
-    
+
     const totalTasks = workstations.reduce((sum, w) => sum + (w.tasks?.length || 0), 0);
-    
+
     return {
         high,
         medium,
@@ -562,7 +562,7 @@ function calculateAutomationPotential(workstations) {
 function calculateLeanCompleteness(data) {
     let fields = 0;
     let completed = 0;
-    
+
     // Check processes
     if (data.processes) {
         fields += 3; // At least 3 required fields
@@ -570,7 +570,7 @@ function calculateLeanCompleteness(data) {
         if (data.processes.some(p => p.steps?.length > 0)) completed++;
         if (data.processes.some(p => p.wastes)) completed++;
     }
-    
+
     // Check workstations
     if (data.workstations) {
         fields += 3;
@@ -578,11 +578,11 @@ function calculateLeanCompleteness(data) {
         if (data.workstations.some(w => w.tasks?.length > 0)) completed++;
         if (data.workstations.some(w => typeof w.automationPotential === 'number')) completed++;
     }
-    
+
     // Check management practices
     fields += 1;
     if (Object.keys(data.managementPractices || {}).length > 0) completed++;
-    
+
     return fields > 0 ? completed / fields : 0;
 }
 
@@ -608,12 +608,12 @@ function calculateCompleteness(data, totalFields) {
  * @param {Object} data - Assessment data
  * @returns {Object} Score results
  */
-function calculateFrameworkScore(framework, data) {
+export const calculateFrameworkScore = (framework, answers) => {
     switch (framework?.toUpperCase()) {
         case 'SIRI':
-            return calculateSIRIScore(data);
+            return calculateSIRIScore(answers);
         case 'ADMA':
-            return calculateADMAScore(data);
+            return calculateADMAScore(answers);
         case 'CMMI':
             return calculateCMMIScore(data);
         case 'LEAN':
@@ -621,15 +621,6 @@ function calculateFrameworkScore(framework, data) {
         default:
             throw new Error(`Unknown framework: ${framework}`);
     }
-}
-
-export default {
-    calculateFrameworkScore,
-    calculateSIRIScore,
-    calculateADMAScore,
-    calculateCMMIScore,
-    calculateLeanScore,
-    FRAMEWORK_CONFIG,
 };
 
 

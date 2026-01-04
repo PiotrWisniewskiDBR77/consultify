@@ -242,7 +242,7 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
                     );
                     summary.notificationsSent++;
                 }
-            } catch (err) {
+            } catch (err: unknown) {
                 const error = err as Error;
                 console.error(`[SLAService] Error processing assignment ${assignment.id}:`, error);
                 summary.errors.push({ assignmentId: assignment.id, error: error.message });
@@ -258,7 +258,7 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
         });
 
         return summary;
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         console.error('[SLAService] SLA check failed:', error);
         auditLogger.error('SLA_CHECK_FAILED', { error: error.message });

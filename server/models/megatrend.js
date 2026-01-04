@@ -183,6 +183,14 @@ function updateCustomTrend(id, payload, companyId) {
     });
 }
 
+export {
+getBaselineTrends,
+    getRadarData,
+    getTrendDetail,
+    createCustomTrend,
+    updateCustomTrend,
+};
+
 export default {
     getBaselineTrends,
     getRadarData,

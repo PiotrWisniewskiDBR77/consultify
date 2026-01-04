@@ -3,7 +3,8 @@
 
 import express from 'express';
 const router = express.Router();
-const StabilizationService = import('stabilizationService.js');
+import * as StabilizationServiceModule from '../services/stabilizationService.js';
+const StabilizationService = StabilizationServiceModule.default || StabilizationServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/stabilization/:projectId/entry-criteria

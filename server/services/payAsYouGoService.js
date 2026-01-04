@@ -266,6 +266,16 @@ async function getPayAsYouGoForecast(orgId) {
     });
 }
 
+export {
+setDependencies,
+    recordUsage,
+    getCurrentPeriodUsage,
+    generatePayAsYouGoInvoice,
+    calculateUsageCost,
+    checkPayAsYouGoLimits,
+    getPayAsYouGoForecast
+};
+
 export default {
     setDependencies,
     recordUsage,

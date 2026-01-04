@@ -16,11 +16,11 @@
  * 5. REFINE - Consistency check and final synthesis
  */
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { contextBuilder, INDUSTRY_PROFILES, DRD_AXES } = require('./aiContext');
-const { webResearchService } = require('./webResearchService');
-const { memoryManager } = require('./memoryManager');
-const db = require('../../database');
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { contextBuilder, INDUSTRY_PROFILES, DRD_AXES } from './aiContext.js';
+import { webResearchService } from './webResearchService.js';
+import { memoryManager } from './memoryManager.js';
+import db from '../../database.js';
 
 // Report section definitions
 const REPORT_SECTIONS = {
@@ -1142,6 +1142,12 @@ Kluczowe trendy: ${(research.trends?.trends || industry.keyTransformationAreas |
 
 // Export singleton
 const comprehensiveReportGenerator = new ComprehensiveReportGenerator();
+
+export {
+ComprehensiveReportGenerator,
+    comprehensiveReportGenerator,
+    REPORT_SECTIONS
+};
 
 export default {
     ComprehensiveReportGenerator,

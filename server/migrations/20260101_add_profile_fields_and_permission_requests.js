@@ -121,6 +121,10 @@ if (require.main === module) {
         });
 }
 
+export {
+up, down, MIGRATION_NAME
+};
+
 export default { up, down, MIGRATION_NAME };
 
 

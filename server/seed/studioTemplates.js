@@ -331,6 +331,10 @@ if (require.main === module) {
     }, 1000);
 }
 
+export {
+seedTemplates, TEMPLATES
+};
+
 export default { seedTemplates, TEMPLATES };
 
 

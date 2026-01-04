@@ -7,7 +7,8 @@
 
 import express from 'express';
 const router = express.Router();
-const ContextService = import('contextService.js');
+import * as ContextServiceModule from '../services/contextService.js';
+const ContextService = ContextServiceModule.default || ContextServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 /**

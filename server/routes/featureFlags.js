@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
-const FeatureFlagService = import('featureFlagService.js');
+import * as FeatureFlagServiceModule from '../services/featureFlagService.js';
+const FeatureFlagService = FeatureFlagServiceModule.default || FeatureFlagServiceModule;
 import authMiddleware from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 

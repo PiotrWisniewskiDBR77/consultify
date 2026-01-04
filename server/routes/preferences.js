@@ -7,7 +7,8 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const UserPreferencesService = import('userPreferencesService.js');
+import * as UserPreferencesServiceModule from '../services/userPreferencesService.js';
+const UserPreferencesService = UserPreferencesServiceModule.default || UserPreferencesServiceModule;
 
 /**
  * GET /api/preferences

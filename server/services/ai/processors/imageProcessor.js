@@ -9,10 +9,10 @@
  * @version 1.0.0
  */
 
-const Tesseract = require('tesseract.js');
-const fs = require('fs');
-const path = require('path');
-const { OpenAI } = require('openai');
+import Tesseract from 'tesseract.js';
+import fs from 'fs';
+import path from 'path';
+import { OpenAI } from 'openai';
 
 // Supported image formats
 const SUPPORTED_FORMATS = {
@@ -89,7 +89,7 @@ async function processWithTesseract(filePath, options = {}) {
 
     // Map language code to Tesseract format
     const tessLang = TESSERACT_LANGUAGES[language] || 'eng';
-    
+
     // Try with multiple languages for better results
     const langString = tessLang === 'eng' ? 'eng' : `${tessLang}+eng`;
 
@@ -158,7 +158,7 @@ async function processWithVision(filePath, options = {}) {
 
         // Build prompt based on options
         let prompt = `Extract all text from this image. Output only the extracted text, preserving the original layout and structure as much as possible.`;
-        
+
         if (detectDiagrams) {
             prompt = `Analyze this image and:
 1. Extract all visible text, preserving layout
@@ -235,7 +235,7 @@ async function processBuffer(buffer, options = {}) {
     // For Tesseract, we need to save to temp file
     if (method === 'tesseract') {
         const tempPath = path.join(__dirname, '../../../../uploads/temp', `img_${Date.now()}.${format}`);
-        
+
         try {
             fs.writeFileSync(tempPath, buffer);
             const result = await processWithTesseract(tempPath, { language });
@@ -346,6 +346,20 @@ function getAvailableLanguages() {
 function isVisionAvailable() {
     return !!process.env.OPENAI_API_KEY;
 }
+
+export {
+process,
+    processWithTesseract,
+    processWithVision,
+    processBuffer,
+    isSupported,
+    getSupportedExtensions,
+    getSupportedMimeTypes,
+    getAvailableLanguages,
+    isVisionAvailable,
+    SUPPORTED_FORMATS,
+    TESSERACT_LANGUAGES
+};
 
 export default {
     process,

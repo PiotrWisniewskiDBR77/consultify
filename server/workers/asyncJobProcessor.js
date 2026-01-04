@@ -1,8 +1,8 @@
-const AsyncJobService = require('../ai/asyncJobService');
-const ActionExecutionAdapter = require('../ai/actionExecutionAdapter');
-const AIPlaybookExecutor = require('../ai/aiPlaybookExecutor');
-const auditLogger = require('../utils/auditLogger');
-const { classifyError } = require('../ai/actionErrors');
+import AsyncJobService from '../ai/asyncJobService.js';
+import ActionExecutionAdapter from '../ai/actionExecutionAdapter.js';
+import AIPlaybookExecutor from '../ai/aiPlaybookExecutor.js';
+import auditLogger from '../utils/auditLogger.js';
+import { classifyError } from '../ai/actionErrors.js';
 
 /**
  * Async Job Processor
@@ -50,7 +50,7 @@ const AsyncJobProcessor = {
 
             // Link job_id to action_execution if created
             if (execResult.execution_id) {
-                import { getDatabase } from '../src/database/Database.js';
+                const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
                 await new Promise((resolve, reject) => {
                     db.run(
@@ -188,7 +188,7 @@ const db = getDatabase();
 
             // Update ai_playbook_run_steps with job_id if step was executed
             if (advanceResult.step && advanceResult.step.id) {
-                import { getDatabase } from '../src/database/Database.js';
+                const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
                 await new Promise((resolve, reject) => {
                     db.run(

@@ -7,7 +7,7 @@
 
 import express from 'express';
 const router = express.Router();
-const { learningSystem } = import('ai/learningSystem.js');
+import { learningSystem  } from '../services/ai/learningSystem.js';
 import verifyToken from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
@@ -179,7 +179,7 @@ router.get('/interactions', verifyToken, async (req, res) => {
         const sinceDate = new Date();
         sinceDate.setDate(sinceDate.getDate() - days);
         
-        import { getDatabase } from '../src/database/Database.js';
+        const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
         const interactions = await new Promise((resolve, reject) => {
             const sql = organizationId 
@@ -232,7 +232,7 @@ router.get('/metrics', verifyToken, async (req, res) => {
         const sinceDate = new Date();
         sinceDate.setDate(sinceDate.getDate() - days);
         
-        import { getDatabase } from '../src/database/Database.js';
+        const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
         const analytics = await learningSystem.getAnalytics(organizationId);
         
@@ -411,7 +411,7 @@ router.get('/jobs', verifyToken, requireRole(['ADMIN', 'SUPERADMIN', 'OWNER']), 
  */
 router.get('/config', verifySuperAdmin, async (req, res) => {
     try {
-        const { CONFIG } = import('ai/learningSystem.js');
+        const { CONFIG   } = await import('../ai/learningSystem.js');
         
         res.json({
             success: true,

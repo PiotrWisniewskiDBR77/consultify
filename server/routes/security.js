@@ -6,8 +6,10 @@
 
 import express from 'express';
 const router = express.Router();
-const securityService = import('securityService.js');
-const complianceService = import('complianceService.js');
+import * as securityServiceModule from '../services/securityService.js';
+const securityService = securityServiceModule.default || securityServiceModule;
+import * as complianceServiceModule from '../services/complianceService.js';
+const complianceService = complianceServiceModule.default || complianceServiceModule;
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**

@@ -28,9 +28,14 @@ const DigestsTab: React.FC<DigestsTabProps> = ({
 }) => {
     const { t } = useTranslation();
     const [localDigests, setLocalDigests] = useState(preferences.digests);
+    const prevDigestsRef = React.useRef(preferences.digests);
 
     useEffect(() => {
-        setLocalDigests(preferences.digests);
+        // Only sync if preferences actually changed from parent
+        if (prevDigestsRef.current !== preferences.digests) {
+            prevDigestsRef.current = preferences.digests;
+            queueMicrotask(() => setLocalDigests(preferences.digests));
+        }
     }, [preferences.digests]);
 
     const handleToggle = async (field: keyof DigestSettings, value: boolean) => {

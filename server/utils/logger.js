@@ -1,72 +1,60 @@
 /**
  * Production Logger
  * Outputs structured JSON logs for easy parsing by log aggregators
- * Powered by Winston
  */
-
-import winston from 'winston';
-import requestStore from './requestStore.js';
-
 const isProduction = process.env.NODE_ENV === 'production';
-
-// Define custom formats
-const addCorrelationId = winston.format((info) => {
-    info.correlationId = requestStore.getCorrelationId();
-    return info;
-});
-
-// Configure Winston Logger
-const winstonLogger = winston.createLogger({
-    level: isProduction ? 'info' : 'debug',
-    format: winston.format.combine(
-        addCorrelationId(),
-        winston.format.timestamp(),
-        isProduction ? winston.format.json() : winston.format.combine(
-            winston.format.colorize(),
-            winston.format.printf(({ timestamp, level, message, correlationId, ...meta }) => {
-                const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
-                const cid = correlationId ? `[${correlationId}] ` : '';
-                return `${timestamp} ${level}: ${cid}${message} ${metaStr}`;
-            })
-        )
-    ),
-    transports: [
-        new winston.transports.Console()
-    ]
-});
-
+const formatLog = (level, message, meta = {}) => {
+    const log = {
+        level,
+        timestamp: new Date().toISOString(),
+        message,
+        ...meta,
+    };
+    if (meta.error && !isProduction) {
+        log.stack = meta.error.stack;
+    }
+    return log;
+};
 const logger = {
     info: (message, meta = {}) => {
-        winstonLogger.info(message, meta);
+        if (isProduction) {
+            console.log(JSON.stringify(formatLog('info', message, meta)));
+        }
+        else {
+            console.log(`[INFO] ${message}`, meta);
+        }
     },
-
     warn: (message, meta = {}) => {
-        winstonLogger.warn(message, meta);
+        if (isProduction) {
+            console.warn(JSON.stringify(formatLog('warn', message, meta)));
+        }
+        else {
+            console.warn(`[WARN] ${message}`, meta);
+        }
     },
-
     error: (message, error = null, meta = {}) => {
-        const logData = { ...meta };
+        const logData = {
+            ...meta,
+        };
         if (error) {
             logData.error = error.message;
-            logData.stack = error.stack;
-            logData.name = error.name;
+            logData.errorName = error.name;
         }
-        winstonLogger.error(message, logData);
+        if (isProduction) {
+            console.error(JSON.stringify(formatLog('error', message, logData)));
+        }
+        else {
+            console.error(`[ERROR] ${message}`, error || '', meta);
+        }
     },
-
     debug: (message, meta = {}) => {
-        winstonLogger.debug(message, meta);
+        if (!isProduction) {
+            console.log(`[DEBUG] ${message}`, meta);
+        }
     },
-
     // Request logging middleware
     requestLogger: (req, res, next) => {
         const start = Date.now();
-
-        // Log request start (debug only)
-        if (!isProduction) {
-            winstonLogger.debug(`Incoming ${req.method} ${req.originalUrl}`);
-        }
-
         res.on('finish', () => {
             const duration = Date.now() - start;
             const logData = {
@@ -74,23 +62,18 @@ const logger = {
                 url: req.originalUrl,
                 status: res.statusCode,
                 duration: `${duration}ms`,
-                ip: req.ip || req.connection.remoteAddress,
-                userAgent: req.get('User-Agent')
+                ip: req.ip || (req.socket?.remoteAddress) || 'unknown',
+                userAgent: req.get('User-Agent') || 'unknown',
             };
-
-            const msg = `HTTP ${req.method} ${req.originalUrl} - ${res.statusCode}`;
-
-            if (res.statusCode >= 500) {
-                winstonLogger.error(msg, logData);
-            } else if (res.statusCode >= 400) {
-                winstonLogger.warn(msg, logData);
-            } else {
-                winstonLogger.info(msg, logData);
+            if (res.statusCode >= 400) {
+                logger.warn('Request failed', logData);
+            }
+            else if (isProduction) {
+                logger.info('Request completed', logData);
             }
         });
-
         next();
     }
 };
-
 export default logger;
+//# sourceMappingURL=logger.js.map

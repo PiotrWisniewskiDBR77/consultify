@@ -6,7 +6,7 @@
 
 import express from 'express';
 const router = express.Router();
-const { llmHealthMonitor, HealthStatus, ErrorCategory, ErrorMessages } = import('ai/llmHealthMonitor.js');
+import { llmHealthMonitor, HealthStatus, ErrorCategory, ErrorMessages  } from '../services/ai/llmHealthMonitor.js';
 
 // Get database - works with both SQLite and PostgreSQL
 let db;

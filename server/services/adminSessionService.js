@@ -252,6 +252,19 @@ const updateMfaStatus = async (sessionId, mfaVerified) => {
     return result.changes > 0;
 };
 
+export {
+setDependencies,
+    createSession,
+    getSession,
+    verifySession,
+    revokeSession,
+    getActiveSessions,
+    revokeAllSessions,
+    getSessionStats,
+    cleanupExpiredSessions,
+    updateMfaStatus
+};
+
 export default {
     setDependencies,
     createSession,

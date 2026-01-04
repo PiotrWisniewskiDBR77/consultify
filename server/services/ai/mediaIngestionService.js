@@ -10,23 +10,31 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Import processors
-const docxProcessor = require('./processors/docxProcessor');
-const spreadsheetProcessor = require('./processors/spreadsheetProcessor');
-const pptxProcessor = require('./processors/pptxProcessor');
-const youtubeProcessor = require('./processors/youtubeProcessor');
-const audioProcessor = require('./processors/audioProcessor');
-const videoProcessor = require('./processors/videoProcessor');
-const imageProcessor = require('./processors/imageProcessor');
-const urlProcessor = require('./processors/urlProcessor');
+import docxProcessor from './processors/docxProcessor';
+import spreadsheetProcessor from './processors/spreadsheetProcessor';
+import pptxProcessor from './processors/pptxProcessor';
+import youtubeProcessor from './processors/youtubeProcessor';
+import audioProcessor from './processors/audioProcessor';
+import videoProcessor from './processors/videoProcessor';
+import imageProcessor from './processors/imageProcessor';
+import urlProcessor from './processors/urlProcessor';
 
 // Import existing services
-const RagService = require('../ragService');
-const KnowledgeService = require('../knowledgeService');
+import RagService from '../ragService';
+import KnowledgeService from '../knowledgeService';
+
+// Import external libraries
+import * as pdfParse from 'pdf-parse';
+const pdf = pdfParse.default || pdfParse;
 
 // File extension to processor mapping
 const FILE_PROCESSORS = {
@@ -42,7 +50,7 @@ const FILE_PROCESSORS = {
     '.txt': 'text',
     '.md': 'text',
     '.json': 'text',
-    
+
     // Audio
     '.mp3': 'audio',
     '.wav': 'audio',
@@ -50,14 +58,14 @@ const FILE_PROCESSORS = {
     '.webm': 'audio',
     '.ogg': 'audio',
     '.flac': 'audio',
-    
+
     // Video
     '.mp4': 'video',
     '.avi': 'video',
     '.mov': 'video',
     '.mkv': 'video',
     '.wmv': 'video',
-    
+
     // Images
     '.png': 'image',
     '.jpg': 'image',
@@ -198,7 +206,6 @@ class MediaIngestionService {
      * Process PDF file (using existing pdf-parse)
      */
     async processPdf(filePath, options = {}) {
-        const pdf = require('pdf-parse');
         const dataBuffer = fs.readFileSync(filePath);
         const data = await pdf(dataBuffer);
         const stats = fs.statSync(filePath);
@@ -239,7 +246,7 @@ class MediaIngestionService {
      */
     async processBuffer(buffer, options = {}) {
         const { filename } = options;
-        
+
         if (!filename) {
             throw new Error('filename is required when processing buffer');
         }
@@ -258,7 +265,7 @@ class MediaIngestionService {
         }
 
         const tempPath = path.join(tempDir, `temp_${Date.now()}_${filename}`);
-        
+
         try {
             fs.writeFileSync(tempPath, buffer);
             const result = await this.processFile(tempPath, options);
@@ -366,12 +373,12 @@ class MediaIngestionService {
     isSupported(input) {
         if (this.isYouTubeUrl(input)) return true;
         if (this.isUrl(input)) return true;
-        
+
         if (typeof input === 'string') {
             const ext = path.extname(input).toLowerCase();
             return !!FILE_PROCESSORS[ext];
         }
-        
+
         return false;
     }
 
@@ -394,18 +401,18 @@ class MediaIngestionService {
                 pptx: { parser: 'jszip', features: ['slide text', 'speaker notes'] }
             },
             media: {
-                audio: { 
-                    parser: 'whisper/deepgram', 
+                audio: {
+                    parser: 'whisper/deepgram',
                     features: ['transcription', 'language detection', 'timestamps'],
                     languages: audioProcessor.getAvailableLanguages()
                 },
-                video: { 
-                    parser: 'ffmpeg + whisper', 
+                video: {
+                    parser: 'ffmpeg + whisper',
                     features: ['audio extraction', 'transcription'],
                     requires: 'FFmpeg installation'
                 },
-                image: { 
-                    parser: 'tesseract.js / GPT-4 Vision', 
+                image: {
+                    parser: 'tesseract.js / GPT-4 Vision',
                     features: ['OCR', 'diagram description'],
                     languages: imageProcessor.getAvailableLanguages()
                 }
@@ -421,14 +428,15 @@ class MediaIngestionService {
 // Export singleton instance
 const mediaIngestionService = new MediaIngestionService();
 
+export {
+MediaIngestionService,
+    mediaIngestionService,
+};
+
 export default {
     MediaIngestionService,
     mediaIngestionService,
-    FILE_PROCESSORS
 };
-
-
-
 
 
 

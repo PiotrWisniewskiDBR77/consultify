@@ -414,6 +414,15 @@ function updateAlertCooldown(alertId, cooldownHours) {
     });
 }
 
+export {
+setDependencies,
+    createAdminAlert,
+    checkAndTriggerAlerts,
+    sendAlert,
+    getAlertHistory,
+    updateAlertCooldown
+};
+
 export default {
     setDependencies,
     createAdminAlert,

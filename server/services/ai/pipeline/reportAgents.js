@@ -334,6 +334,16 @@ function getAllAgentsMetadata() {
     }));
 }
 
+export {
+REPORT_AGENTS,
+    getAgent,
+    getAgentsInOrder,
+    getAgentPrompt,
+    validateAgentOutput,
+    getAgentMetadata,
+    getAllAgentsMetadata
+};
+
 export default {
     REPORT_AGENTS,
     getAgent,

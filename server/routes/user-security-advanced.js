@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 /**
  * Advanced User Security Routes
  * 
@@ -17,8 +18,7 @@ import requireAuth from '../middleware/authMiddleware.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
+import bcrypt from 'bcryptjs';
 
 router.use(requireAuth);
 

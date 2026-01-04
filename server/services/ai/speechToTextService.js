@@ -11,9 +11,9 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const path = require('path');
-const { Readable } = require('stream');
+import fs from 'fs';
+import path from 'path';
+import { Readable } from 'stream';
 
 // ============================================================================
 // Configuration
@@ -59,7 +59,7 @@ const providerHealth = {
 class SpeechToTextService {
     constructor() {
         this.config = STT_CONFIG;
-        this.openai = null;
+        this.openai = null; // Will be initialized once
         this.deepgramApiKey = process.env.DEEPGRAM_API_KEY;
         this._initOpenAI();
     }
@@ -69,10 +69,12 @@ class SpeechToTextService {
      */
     _initOpenAI() {
         try {
-            const OpenAI = require('openai');
-            this.openai = new OpenAI({
-                apiKey: process.env.OPENAI_API_KEY
-            });
+            // Initialize OpenAI client once
+            if (!this.openai) {
+                this.openai = new OpenAI({
+                    apiKey: process.env.OPENAI_API_KEY
+                });
+            }
         } catch (error) {
             console.error('[STT] Failed to initialize OpenAI:', error.message);
             providerHealth.whisper.healthy = false;
@@ -103,10 +105,10 @@ class SpeechToTextService {
 
         // Determine audio format
         const audioFormat = format || this._detectFormat(audio);
-        
+
         // Get provider order
-        const providers = provider 
-            ? [provider] 
+        const providers = provider
+            ? [provider]
             : this._getHealthyProviders();
 
         if (providers.length === 0) {
@@ -119,7 +121,7 @@ class SpeechToTextService {
         for (const providerId of providers) {
             try {
                 console.log(`[STT] Trying provider: ${providerId}`);
-                
+
                 const result = await this._transcribeWithProvider(providerId, audio, {
                     language,
                     format: audioFormat,
@@ -147,11 +149,11 @@ class SpeechToTextService {
             } catch (error) {
                 console.error(`[STT] Provider ${providerId} failed:`, error.message);
                 lastError = error;
-                
+
                 // Update health stats
                 providerHealth[providerId].errorCount++;
                 providerHealth[providerId].lastError = error.message;
-                
+
                 if (providerHealth[providerId].errorCount >= 3) {
                     providerHealth[providerId].healthy = false;
                     console.warn(`[STT] Provider ${providerId} marked unhealthy after 3 failures`);
@@ -194,8 +196,8 @@ class SpeechToTextService {
         if (Buffer.isBuffer(audio)) {
             // Create a File-like object from buffer
             const blob = new Blob([audio], { type: `audio/${options.format || 'webm'}` });
-            audioFile = new File([blob], `audio.${options.format || 'webm'}`, { 
-                type: `audio/${options.format || 'webm'}` 
+            audioFile = new File([blob], `audio.${options.format || 'webm'}`, {
+                type: `audio/${options.format || 'webm'}`
             });
         } else if (typeof audio === 'string') {
             // File path
@@ -326,7 +328,7 @@ class SpeechToTextService {
         if (provider) {
             return this.config.providers[provider]?.supportedLanguages?.includes(language) || false;
         }
-        
+
         // Check all providers
         return Object.values(this.config.providers).some(
             p => p.supportedLanguages?.includes(language)
@@ -364,19 +366,19 @@ class SpeechToTextService {
      */
     resetProviderHealth(providerId = null) {
         if (providerId) {
-            providerHealth[providerId] = { 
-                healthy: true, 
-                lastError: null, 
-                errorCount: 0, 
-                latencyMs: 0 
+            providerHealth[providerId] = {
+                healthy: true,
+                lastError: null,
+                errorCount: 0,
+                latencyMs: 0
             };
         } else {
             Object.keys(providerHealth).forEach(id => {
-                providerHealth[id] = { 
-                    healthy: true, 
-                    lastError: null, 
-                    errorCount: 0, 
-                    latencyMs: 0 
+                providerHealth[id] = {
+                    healthy: true,
+                    lastError: null,
+                    errorCount: 0,
+                    latencyMs: 0
                 };
             });
         }
@@ -389,13 +391,13 @@ class SpeechToTextService {
         try {
             // Create a small test audio (silence)
             const silentAudio = this._createSilentAudio();
-            
+
             const start = Date.now();
             await this._transcribeWithProvider(providerId, silentAudio, {
                 language: 'en',
                 format: 'wav'
             });
-            
+
             return {
                 success: true,
                 latencyMs: Date.now() - start
@@ -419,12 +421,12 @@ class SpeechToTextService {
         const fileSize = 44 + dataSize;
 
         const buffer = Buffer.alloc(fileSize);
-        
+
         // RIFF header
         buffer.write('RIFF', 0);
         buffer.writeUInt32LE(fileSize - 8, 4);
         buffer.write('WAVE', 8);
-        
+
         // fmt chunk
         buffer.write('fmt ', 12);
         buffer.writeUInt32LE(16, 16); // chunk size
@@ -434,12 +436,12 @@ class SpeechToTextService {
         buffer.writeUInt32LE(sampleRate * 2, 28); // byte rate
         buffer.writeUInt16LE(2, 32); // block align
         buffer.writeUInt16LE(16, 34); // bits per sample
-        
+
         // data chunk
         buffer.write('data', 36);
         buffer.writeUInt32LE(dataSize, 40);
         // Data is already zero (silence)
-        
+
         return buffer;
     }
 }
@@ -449,6 +451,12 @@ class SpeechToTextService {
 // ============================================================================
 
 const speechToTextService = new SpeechToTextService();
+
+export {
+SpeechToTextService,
+    speechToTextService,
+    STT_CONFIG
+};
 
 export default {
     SpeechToTextService,

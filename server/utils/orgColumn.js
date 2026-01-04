@@ -69,6 +69,12 @@ async function orgWhereClause(tableName, orgId) {
     };
 }
 
+export {
+getOrgColumn,
+    getOrgColumnCached,
+    orgWhereClause
+};
+
 export default {
     getOrgColumn,
     getOrgColumnCached,

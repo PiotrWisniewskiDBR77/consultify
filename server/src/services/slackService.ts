@@ -107,7 +107,7 @@ class SlackServiceClass {
 
             await this.axiosInstance.post(this.webhookUrl, payload);
             logger.info('[SlackService] System alert sent', { title, severity });
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[SlackService] Failed to send system alert:', error instanceof Error ? error.message : String(error));
         }
     }
@@ -160,7 +160,7 @@ class SlackServiceClass {
 
             await this.axiosInstance.post(this.webhookUrl, payload);
             logger.info('[SlackService] Client ticket alert sent', { title, clientName });
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[SlackService] Failed to send client ticket:', error instanceof Error ? error.message : String(error));
         }
     }
@@ -222,7 +222,7 @@ class SlackServiceClass {
 
             await this.axiosInstance.post(this.webhookUrl, payload);
             logger.info('[SlackService] Feedback alert sent', { type: feedback.type });
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[SlackService] Failed to send alert:', error instanceof Error ? error.message : String(error));
         }
     }
@@ -298,7 +298,7 @@ class SlackServiceClass {
             await this.axiosInstance.post(this.webhookUrl, payload);
             logger.info('[SlackService] AI Health Alert sent successfully', { severity });
             return { sent: true, severity };
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[SlackService] Failed to send AI Health Alert:', error instanceof Error ? error.message : String(error));
             throw error;
         }

@@ -81,7 +81,7 @@ export function validateOrFallback<T>(
             console.warn('[AIValidator] Validation failed:', result.error.flatten());
             return fallback;
         }
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[AIValidator] Unexpected validation error:', error);
         return fallback;
     }

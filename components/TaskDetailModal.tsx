@@ -69,7 +69,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
     const generateAiInsight = useCallback(async () => {
         setAiLoading(true);
         try {
-            const insight = await Api.generateTaskInsight(task, initiative);
+            const insight = await (Api as any).generateTaskInsight(task, initiative);
             setTask(prev => ({
                 ...prev,
                 aiInsight: insight
@@ -114,12 +114,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
                         </div>
                         <div className="flex-1" />
                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${initiative.status === 'DRAFT' ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' :
-                                initiative.status === 'PLANNING' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' :
-                                    initiative.status === 'REVIEW' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400' :
-                                        initiative.status === 'APPROVED' ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400' :
-                                            initiative.status === 'EXECUTING' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' :
-                                                initiative.status === 'DONE' ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400' :
-                                                    'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                            initiative.status === 'PLANNING' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' :
+                                initiative.status === 'REVIEW' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400' :
+                                    initiative.status === 'APPROVED' ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400' :
+                                        initiative.status === 'EXECUTING' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' :
+                                            initiative.status === 'DONE' ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400' :
+                                                'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                             }`}>
                             {initiative.status}
                         </span>
@@ -383,8 +383,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
                                                 key={w}
                                                 onClick={() => setTask({ ...task, weight: w })}
                                                 className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${(task.weight || 1) === w
-                                                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
-                                                        : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:border-purple-500/30'
+                                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
+                                                    : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:border-purple-500/30'
                                                     }`}
                                             >
                                                 {w}x
@@ -461,8 +461,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
 
                                 {/* Evidence Sign-off */}
                                 <div className={`p-5 rounded-xl border-2 transition-all ${task.signedOff
-                                        ? 'bg-green-50 dark:bg-green-500/10 border-green-500'
-                                        : 'bg-amber-50 dark:bg-amber-500/10 border-amber-500/50'
+                                    ? 'bg-green-50 dark:bg-green-500/10 border-green-500'
+                                    : 'bg-amber-50 dark:bg-amber-500/10 border-amber-500/50'
                                     }`}>
                                     <div className="flex items-center justify-between">
                                         <div>
@@ -511,8 +511,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = React.memo(({
                                                 }
                                             }}
                                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${task.signedOff
-                                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600'
-                                                    : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-500/30'
+                                                ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-red-100 dark:hover:bg-red-500/20 hover:text-red-600'
+                                                : 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-500/30'
                                                 }`}
                                         >
                                             {task.signedOff ? 'Revoke Sign-off' : '✓ Sign Off Evidence'}

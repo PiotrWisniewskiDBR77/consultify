@@ -212,6 +212,12 @@ async function generateOAuthToken(user) {
     });
 }
 
+export {
+findOrCreateOAuthUser,
+    createOAuthUser,
+    generateOAuthToken
+};
+
 export default {
     findOrCreateOAuthUser,
     createOAuthUser,

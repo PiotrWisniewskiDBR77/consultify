@@ -379,6 +379,23 @@ const getStats = async () => {
     };
 };
 
+export {
+setDependencies,
+    PERMISSION_CATEGORIES,
+    ROLE_HIERARCHY,
+    getAllPermissions,
+    getRolePermissions,
+    getMatrix,
+    updateRolePermissions,
+    togglePermission,
+    createPermission,
+    deletePermission,
+    copyRolePermissions,
+    hasPermission,
+    compareRoles,
+    getStats
+};
+
 export default {
     setDependencies,
     PERMISSION_CATEGORIES,

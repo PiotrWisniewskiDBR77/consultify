@@ -335,6 +335,26 @@ function clearCache() {
     cacheTimestamp = null;
 }
 
+export {
+setDependencies,
+    loadLegalMetadata,
+    getPlans,
+    getPlanById,
+    getTrialConfig,
+    getCurrency,
+    getCompanyInfo,
+    getContactEmails,
+    getDocuments,
+    getDocumentByType,
+    getComplianceInfo,
+    getFullMetadata,
+    formatPlanForApi,
+    getFormattedPlans,
+    getPricingPageData,
+    syncPricingToDatabase,
+    clearCache
+};
+
 export default {
     setDependencies,
     loadLegalMetadata,

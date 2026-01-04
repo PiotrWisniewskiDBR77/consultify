@@ -8,11 +8,11 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
-const { promptAssistant } = import('ai/promptAssistant.js');
-const { promptTemplateService } = import('ai/promptTemplateService.js');
-const { promptBlockLibrary, BLOCK_CATEGORIES } = import('ai/promptBlockLibrary.js');
-const { variableResolver } = import('ai/variableResolver.js');
+import { requireRole  } from '../middleware/rbac.js';
+import { promptAssistant  } from '../services/ai/promptAssistant.js';
+import promptTemplateService from '../services/ai/promptTemplateService.js';
+import { promptBlockLibrary, BLOCK_CATEGORIES  } from '../services/ai/promptBlockLibrary.js';
+import { variableResolver  } from '../services/ai/variableResolver.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 

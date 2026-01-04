@@ -22,9 +22,9 @@
  * @module seed_legolex_demo_v3
  */
 
-const { v4: uuidv4 } = require('uuid');
-const bcrypt = require('bcryptjs');
-const path = require('path');
+import { v4: uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
+import path from 'path';
 
 // ==========================================
 // PRODUCTION GUARD

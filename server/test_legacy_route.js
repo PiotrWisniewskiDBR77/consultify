@@ -1,4 +1,4 @@
-const { ModelRouter } = require('./services/ai/modelRouter');
+import { ModelRouter } from './services/ai/modelRouter.js';
 
 async function testLegacyRoute() {
     console.log('Testing Legacy Route...');

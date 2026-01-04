@@ -7,9 +7,9 @@
 
 import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();

@@ -277,7 +277,7 @@ export const aiLogger = {
             const result = await fn(span);
             this.endSpan(span, 'OK');
             return result;
-        } catch (error) {
+        } catch (error: unknown) {
             span.setAttribute('error', true);
             span.setAttribute('error.message', error instanceof Error ? error.message : error);
             this.endSpan(span, 'ERROR', { error: error instanceof Error ? error.message : error });

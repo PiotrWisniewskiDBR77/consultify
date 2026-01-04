@@ -7,7 +7,9 @@
 import express from 'express';
 const router = express.Router();
 import authenticateToken from '../middleware/authMiddleware.js';
-const { FrameworkRBACService, FRAMEWORK_ROLES } = import('frameworkRBACService.js');
+import frameworkRBACModule from '../services/frameworkRBACService.js';
+const FrameworkRBACService = frameworkRBACModule.FrameworkRBACService || frameworkRBACModule;
+const FRAMEWORK_ROLES = frameworkRBACModule.FRAMEWORK_ROLES || {};
 
 /**
  * GET /api/framework-rbac/permissions

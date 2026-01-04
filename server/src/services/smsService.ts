@@ -136,7 +136,7 @@ class SMSServiceClass {
                     process.env.TWILIO_ACCOUNT_SID!,
                     process.env.TWILIO_AUTH_TOKEN!
                 );
-            } catch (error) {
+            } catch (error: unknown) {
                 logger.warn('[SMS] Twilio not configured, using mock mode:', error instanceof Error ? error.message : String(error));
                 return null;
             }
@@ -222,7 +222,7 @@ class SMSServiceClass {
 
             return { success: true, messageSid: result.sid };
 
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[SMS] Send failed:', error);
 
             // Update log with error
@@ -291,7 +291,7 @@ class SMSServiceClass {
 
             return { success: true, expiresAt };
 
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[SMS] Send OTP failed:', error);
             return { success: false, error: 'Failed to send verification code' };
         }
@@ -352,7 +352,7 @@ class SMSServiceClass {
 
             return { success: true };
 
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[SMS] Verify OTP failed:', error);
             return { success: false, error: 'Verification failed' };
         }
@@ -430,7 +430,7 @@ class SMSServiceClass {
                  WHERE message_sid = ?`,
                 [MessageStatus, ErrorCode || null, ErrorMessage || null, MessageSid]
             );
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[SMS] Status callback update failed:', error);
         }
     }
@@ -495,7 +495,7 @@ class SMSServiceClass {
                  ON CONFLICT(phone_number, window_start) DO UPDATE SET count = count + 1`,
                 [phoneNumber, userId, windowStart]
             );
-        } catch (error) {
+        } catch (error: unknown) {
             // Ignore duplicate key errors
             if (error instanceof Error && !error.message.includes('UNIQUE constraint')) {
                 throw error;

@@ -19,13 +19,16 @@
 
 import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import verifyToken from '../middleware/authMiddleware.js';
-const AssessmentOverviewService = import('assessmentOverviewService.js');
+import * as AssessmentOverviewServiceModule from '../services/assessmentOverviewService.js';
+const AssessmentOverviewService = AssessmentOverviewServiceModule.default || AssessmentOverviewServiceModule;
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../src/database/Database.js';
+import PDFDocument from 'pdfkit';
+import XLSX from 'xlsx';
 const db = getDatabase();
 
 // Multer configuration for report imports
@@ -176,7 +179,8 @@ router.post('/import', verifyToken, importUpload.single('reportFile'), async (re
         }
 
         // Dynamically import ReportParserService to avoid circular dependency
-        const ReportParserService = import('ai/reportParserService.js');
+        const ReportParserServiceModule = await import('../ai/reportParserService.js');
+        const ReportParserService = ReportParserServiceModule.default || ReportParserServiceModule;
 
         // Parse the uploaded file
         const parsedData = await ReportParserService.parseReport({
@@ -459,7 +463,7 @@ router.get('/:id/export/pdf', verifyToken, async (req, res) => {
                 }
 
                 // Generate PDF with full sections
-                const PDFDocument = require('pdfkit');
+
                 const doc = new PDFDocument({ 
                     margin: 50,
                     size: 'A4',
@@ -1011,7 +1015,7 @@ router.get('/:id/export/excel', verifyToken, async (req, res) => {
             }
 
             // Generate Excel using xlsx library
-            const XLSX = require('xlsx');
+
             const workbook = XLSX.utils.book_new();
 
             // Summary sheet
@@ -1350,7 +1354,7 @@ router.post('/:id/generate-comprehensive', verifyToken, async (req, res) => {
 
             try {
                 // Import comprehensive report generator
-                const { comprehensiveReportGenerator } = import('ai/comprehensiveReportGenerator.js');
+                const { comprehensiveReportGenerator   } = await import('../ai/comprehensiveReportGenerator.js');
                 
                 // Generate comprehensive report
                 const result = await comprehensiveReportGenerator.generateReport(
@@ -2340,9 +2344,9 @@ let StrategicRecommendationService = null;
 function getEnterpriseServices() {
     if (!ReportPipeline) {
         try {
-            ReportPipeline = import('ai/pipeline/reportPipeline.js');
-            IndustryIntelligenceService = import('ai/intelligence/industryIntelligenceService.js');
-            StrategicRecommendationService = import('ai/frameworks/strategicRecommendationService.js');
+            ReportPipeline = import('../services/ai/pipeline/reportPipeline.js');
+            IndustryIntelligenceService = import('../services/ai/intelligence/industryIntelligenceService.js');
+            StrategicRecommendationService = import('../services/ai/frameworks/strategicRecommendationService.js');
         } catch (e) {
             console.warn('[Enterprise] Services not available:', e.message);
         }

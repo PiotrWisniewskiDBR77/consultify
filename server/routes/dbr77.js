@@ -26,7 +26,7 @@ router.get('/processes/:assessmentId', authMiddleware, async (req, res) => {
         const { assessmentId } = req.params;
         
         // TODO: Replace with actual database query
-        // const db = require('../db');
+        // import db from '../db.js';
         // const result = await db.query(
         //     'SELECT * FROM dbr77_processes WHERE assessment_id = $1 ORDER BY priority DESC, created_at',
         //     [assessmentId]
@@ -69,7 +69,7 @@ router.post('/processes', authMiddleware, async (req, res) => {
         const processId = uuidv4();
         
         // TODO: Insert into database
-        // const db = require('../db');
+        // import db from '../db.js';
         // await db.query(`
         //     INSERT INTO dbr77_processes (id, assessment_id, name, department, category, description, 
         //         current_state, lean_assessment, automation_potential, priority)
@@ -99,7 +99,7 @@ router.put('/processes/:processId', authMiddleware, async (req, res) => {
         const updates = req.body;
 
         // TODO: Update in database
-        // const db = require('../db');
+        // import db from '../db.js';
         // await db.query(`
         //     UPDATE dbr77_processes SET
         //         name = COALESCE($2, name),
@@ -135,7 +135,7 @@ router.delete('/processes/:processId', authMiddleware, async (req, res) => {
         const { processId } = req.params;
 
         // TODO: Delete from database
-        // const db = require('../db');
+        // import db from '../db.js';
         // await db.query('DELETE FROM dbr77_processes WHERE id = $1', [processId]);
 
         res.json({

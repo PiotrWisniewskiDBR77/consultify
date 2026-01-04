@@ -27,7 +27,7 @@ const safeJsonParse = <T = unknown>(str: string | null | undefined, defaultValue
     try {
         const parsed = JSON.parse(str);
         return parsed || defaultValue;
-    } catch (e) {
+    } catch (e: unknown) {
         console.warn('[initiatives] Failed to parse JSON:', str?.substring?.(0, 100));
         return defaultValue;
     }

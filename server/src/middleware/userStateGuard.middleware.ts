@@ -105,7 +105,7 @@ export async function attachUserState(
         req.statePermissions = UserStateMachine.getPermissions(req.userState);
 
         next();
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('attachUserState error:', error);
         const { UserStateMachine } = deps;
         // Fail closed - treat as ANON
@@ -259,7 +259,7 @@ export async function transitionState(
         }
 
         return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('transitionState error:', error);
         return { success: false, error: (error as Error).message };
     }

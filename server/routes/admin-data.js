@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 /**
  * Admin Data Routes
  * 
@@ -68,7 +69,7 @@ router.put('/user-tiers/:orgId/:userId', authMiddleware, async (req, res) => {
                 INSERT INTO ai_usage_stats (id, organization_id, user_id, tier, period_start, period_end)
                 VALUES (?, ?, ?, ?, date('now', '-7 days'), date('now'))
                 ON CONFLICT(user_id, period_start) DO UPDATE SET tier = ?
-            `, [require('uuid').v4(), orgId, userId, tier, tier], (err) => {
+            `, [uuidv4(), orgId, userId, tier, tier], (err) => {
                 if (err) reject(err);
                 else resolve();
             });
@@ -616,7 +617,7 @@ router.post('/scheduled-events/:orgId', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Title and start time are required' });
         }
 
-        const eventId = require('uuid').v4();
+        const eventId = uuidv4();
         
         await new Promise((resolve, reject) => {
             db.run(`

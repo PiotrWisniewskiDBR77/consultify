@@ -7,8 +7,8 @@
  * Part of: User-Level Notifications & Integrations System
  */
 
-const axios = require('axios');
-const UserIntegrationService = require('../userIntegrationService');
+import axios from 'axios';
+import UserIntegrationService from '../userIntegrationService.js';
 
 // Slack API endpoints
 const SLACK_API = {

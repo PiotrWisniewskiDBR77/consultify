@@ -66,7 +66,7 @@ async function getLLMConfigService(): Promise<{
         try {
             const mod = await import('./llmConfigService.js');
             _llmConfigService = mod.llmConfigService;
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.warn('LLMService', `LLMConfigService not available: ${err.message}`);
         }
@@ -494,14 +494,14 @@ export class LLMService {
 
                     await circuitBreaker.recordSuccess(providerId);
                     return { stream: result.textStream };
-                } catch (error) {
+                } catch (error: unknown) {
                     lastError = error as Error;
                     aiLogger.warn('LLMService', `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message}`);
                     if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
             throw lastError;
-        } catch (error) {
+        } catch (error: unknown) {
             await circuitBreaker.recordFailure(providerId, error);
             throw error;
         }
@@ -574,14 +574,14 @@ export class LLMService {
 
                     await circuitBreaker.recordSuccess(providerId);
                     return { stream: result.textStream };
-                } catch (error) {
+                } catch (error: unknown) {
                     lastError = error as Error;
                     aiLogger.warn('LLMService', `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message}`);
                     if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
             throw lastError;
-        } catch (error) {
+        } catch (error: unknown) {
             await circuitBreaker.recordFailure(providerId, error);
             throw error;
         }
@@ -665,7 +665,7 @@ export class LLMService {
                 usage: result.usage,
                 circuitState: (await circuitBreaker.canExecute(providerId)).state
             };
-        } catch (error) {
+        } catch (error: unknown) {
             await circuitBreaker.recordFailure(providerId, error);
 
             return {

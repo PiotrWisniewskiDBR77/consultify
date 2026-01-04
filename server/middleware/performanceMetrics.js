@@ -10,8 +10,8 @@
  * - Error rates
  */
 
-let logger = require('../utils/logger');
-let queryHelpers = require('../utils/queryHelpers');
+import logger from '../utils/logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 // Dependency Injection for Testing
 const _setDependencies = (deps) => {
@@ -207,13 +207,24 @@ function clearMetrics() {
     metricsStore.errors = [];
 }
 
+export {
+    performanceMetricsMiddleware,
+    performanceMetricsMiddleware as performanceMetrics,
+    getMetricsSummary,
+    getMetricsSummary as getMetrics,
+    getMemoryMetrics,
+    clearMetrics,
+    clearMetrics as resetMetrics,
+    metricsStore, // Expose for testing
+    _setDependencies // Expose for testing
+};
+
 export default {
     performanceMetricsMiddleware,
     getMetricsSummary,
     getMemoryMetrics,
     clearMetrics,
     resetMetrics: clearMetrics,
-    metricsStore, // Expose for testing
-    _setDependencies // Expose for testing
+    metricsStore,
+    _setDependencies
 };
-

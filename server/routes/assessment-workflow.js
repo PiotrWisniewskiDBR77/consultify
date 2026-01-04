@@ -6,9 +6,12 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const { assessmentRBAC } = require('../middleware/assessmentRBAC');
-const { AssessmentWorkflowService, WORKFLOW_STATES } = import('assessmentWorkflowService.js');
-const AssessmentAuditLogger = require('../utils/assessmentAuditLogger');
+import { assessmentRBAC  } from '../middleware/assessmentRBAC.js';
+import assessmentWorkflowModule from '../services/assessmentWorkflowService.js';
+const AssessmentWorkflowService = assessmentWorkflowModule.AssessmentWorkflowService || assessmentWorkflowModule;
+const WORKFLOW_STATES = assessmentWorkflowModule.WORKFLOW_STATES || {};
+import AssessmentAuditLogger from '../utils/assessmentAuditLogger.js';
+import path from 'path';
 
 /**
  * @route GET /api/assessment-workflow/:assessmentId/status
@@ -351,7 +354,9 @@ router.post('/:assessmentId/restore/:version', authMiddleware, assessmentRBAC('u
 // Enterprise Report Generation Endpoints
 // =====================================================
 
-const assessmentReportService = import('assessmentReportService.js');
+const assessmentReportServiceModule = await import('../services/assessmentReportService.js');
+
+const assessmentReportService = assessmentReportServiceModule.default || assessmentReportServiceModule;
 
 /**
  * @route POST /api/assessment-workflow/:assessmentId/export/pdf
@@ -437,7 +442,7 @@ router.post('/:assessmentId/export/excel', authMiddleware, assessmentRBAC('expor
 router.get('/:assessmentId/export/download/:fileName', authMiddleware, async (req, res) => {
     try {
         const { fileName } = req.params;
-        const path = require('path');
+
         const filePath = path.join(__dirname, '../../uploads/reports', fileName);
 
         res.download(filePath, fileName, (err) => {

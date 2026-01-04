@@ -126,7 +126,7 @@ class BudgetManagementServiceClass {
                 };
 
                 this.#initialized = true;
-            } catch (error) {
+            } catch (error: unknown) {
                 logger.error('Failed to initialize BudgetManagementService dependencies:', error);
                 throw error;
             } finally {

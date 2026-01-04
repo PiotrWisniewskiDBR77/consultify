@@ -15,7 +15,8 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const EmailVerificationService = import('emailVerificationService.js');
+import * as EmailVerificationServiceModule from '../services/emailVerificationService.js';
+const EmailVerificationService = EmailVerificationServiceModule.default || EmailVerificationServiceModule;
 import AuditService from '../services/auditService.js';
 
 /**

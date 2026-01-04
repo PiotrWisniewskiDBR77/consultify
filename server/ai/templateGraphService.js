@@ -431,6 +431,18 @@ function createEmptyGraph(triggerSignal = '') {
     };
 }
 
+export {
+NODE_TYPES,
+    EDGE_LABELS,
+    stepsToGraph,
+    graphToSteps,
+    validateDAG,
+    getAllPaths,
+    findDeadEnds,
+    findBranchesWithoutElse,
+    createEmptyGraph
+};
+
 export default {
     NODE_TYPES,
     EDGE_LABELS,

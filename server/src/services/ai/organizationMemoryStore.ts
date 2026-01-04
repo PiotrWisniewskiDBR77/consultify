@@ -138,7 +138,7 @@ export class OrganizationMemoryStore {
                 [],
                 { fallback: true }
             );
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.warn('OrgMemoryStore', `Table creation: ${err.message}`);
         }
@@ -168,7 +168,7 @@ export class OrganizationMemoryStore {
         try {
             const textToEmbed = `${title}. ${description}. ${JSON.stringify(content)}`.substring(0, 8000);
             embedding = await embeddingService.generateEmbedding(textToEmbed);
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.warn('OrgMemoryStore', `Embedding generation failed: ${err.message}`);
         }
@@ -312,7 +312,7 @@ export class OrganizationMemoryStore {
                 return this._searchPg(organizationId, queryEmbedding, options);
             }
             return this._searchSqlite(organizationId, queryEmbedding, options);
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('OrgMemoryStore', `Search error: ${err.message}`);
             return this._keywordSearch(organizationId, query, options);
@@ -647,7 +647,7 @@ Return JSON:
 
             aiLogger.info('OrgMemoryStore', `Extracted ${extractedCount} patterns from project ${projectData.id}`);
             return { extracted: extractedCount };
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('OrgMemoryStore', `Pattern extraction failed: ${err.message}`);
             return { extracted: 0, error: err.message };

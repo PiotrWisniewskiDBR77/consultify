@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 /**
  * User Contact Information Routes
  * 
@@ -15,7 +16,6 @@ import requireAuth from '../middleware/authMiddleware.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-const crypto = require('crypto');
 
 router.use(requireAuth);
 

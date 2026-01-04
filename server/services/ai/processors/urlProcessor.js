@@ -9,7 +9,7 @@
  * @version 1.0.0
  */
 
-const cheerio = require('cheerio');
+import * as cheerio from 'cheerio';
 
 // Common user agent to avoid bot detection
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -119,7 +119,7 @@ async function process(url, options = {}) {
 
     } catch (error) {
         console.error('[URLProcessor] Error processing URL:', error.message);
-        
+
         if (error.message.includes('ENOTFOUND')) {
             throw new Error('URL not found. Please check the address.');
         }
@@ -129,7 +129,7 @@ async function process(url, options = {}) {
         if (error.message.includes('timeout')) {
             throw new Error('Request timed out. The website may be slow or unavailable.');
         }
-        
+
         throw new Error(`Failed to process URL: ${error.message}`);
     }
 }
@@ -171,11 +171,11 @@ async function fetchWithFetch(url) {
  */
 async function fetchWithPuppeteer(url) {
     let browser;
-    
+
     try {
         // Dynamic import to avoid requiring puppeteer if not used
-        const puppeteer = require('puppeteer');
-        
+        const puppeteer = (await import('puppeteer')).default;
+
         browser = await puppeteer.launch({
             headless: 'new',
             args: [
@@ -206,12 +206,12 @@ async function fetchWithPuppeteer(url) {
         if (browser) {
             await browser.close();
         }
-        
+
         if (error.code === 'MODULE_NOT_FOUND') {
             console.warn('[URLProcessor] Puppeteer not installed, falling back to fetch');
             return fetchWithFetch(url);
         }
-        
+
         throw error;
     }
 }
@@ -401,8 +401,8 @@ function extractLinks($, baseUrl) {
         }
 
         // Skip internal anchors, javascript, mailto, etc.
-        if (href.startsWith('#') || 
-            href.startsWith('javascript:') || 
+        if (href.startsWith('#') ||
+            href.startsWith('javascript:') ||
             href.startsWith('mailto:') ||
             href.startsWith('tel:')) {
             return;
@@ -477,6 +477,18 @@ function needsJsRendering(url) {
         return false;
     }
 }
+
+export {
+    process,
+    fetchWithFetch,
+    fetchWithPuppeteer,
+    isValidUrl,
+    needsJsRendering,
+    extractTitle,
+    extractDescription,
+    extractMainContent,
+    cleanText
+};
 
 export default {
     process,

@@ -8,7 +8,7 @@
  * - Global: Circuit breaker after 5 failures in 60 seconds
  */
 
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
 
 // Rate limit configurations
 const RATE_LIMITS = {
@@ -256,6 +256,10 @@ class RateLimiter {
 
 // Singleton
 const rateLimiter = new RateLimiter();
+
+export {
+RateLimiter, rateLimiter, RATE_LIMITS
+};
 
 export default { RateLimiter, rateLimiter, RATE_LIMITS };
 

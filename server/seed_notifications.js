@@ -1,5 +1,5 @@
-const db = require('./database');
-const { v4: uuidv4 } = require('uuid');
+import db from './database.js';
+import { v4: uuidv4 } from 'uuid';
 
 // Use the specific user ID we've been working with or fetch the first one
 const TARGET_USER_EMAIL = 'piotr.wisniewski@dbr77.com';

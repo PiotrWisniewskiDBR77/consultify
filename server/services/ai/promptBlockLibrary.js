@@ -13,7 +13,7 @@
  * - TASK: Specific task instructions
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // ============================================================================
@@ -689,9 +689,9 @@ class PromptBlockLibrary {
     async searchBlocks(query) {
         const allBlocks = await this.getAllBlocks();
         const lowerQuery = query.toLowerCase();
-        
+
         return Object.entries(allBlocks)
-            .filter(([code, block]) => 
+            .filter(([code, block]) =>
                 code.toLowerCase().includes(lowerQuery) ||
                 block.name.toLowerCase().includes(lowerQuery) ||
                 block.semantic.toLowerCase().includes(lowerQuery)
@@ -710,7 +710,7 @@ class PromptBlockLibrary {
         }
 
         const id = uuidv4();
-        
+
         return new Promise((resolve, reject) => {
             if (!db || !db.run) {
                 // Add to in-memory defaults
@@ -724,7 +724,7 @@ class PromptBlockLibrary {
                 `INSERT INTO ai_prompt_blocks (id, code, category, name, semantic_instruction, variables, example_output)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [id, code, category, name, semantic, JSON.stringify(variables), example],
-                function(err) {
+                function (err) {
                     if (err) {
                         reject(err);
                     } else {
@@ -788,7 +788,7 @@ class PromptBlockLibrary {
         db.run(
             `UPDATE ai_prompt_blocks SET usage_count = usage_count + 1 WHERE code = ?`,
             [code],
-            () => {} // Fire and forget
+            () => { } // Fire and forget
         );
     }
 
@@ -880,12 +880,12 @@ class PromptBlockLibrary {
     getFromCache(key) {
         const cached = this.cache.get(key);
         if (!cached) return null;
-        
+
         if (Date.now() - cached.timestamp > this.cacheMaxAge) {
             this.cache.delete(key);
             return null;
         }
-        
+
         return cached.data;
     }
 
@@ -901,10 +901,10 @@ class PromptBlockLibrary {
 // Singleton instance
 const promptBlockLibrary = new PromptBlockLibrary();
 
-export default {
+export {
     PromptBlockLibrary,
     promptBlockLibrary,
     BLOCK_CATEGORIES,
     DEFAULT_BLOCKS
 };
-
+export default promptBlockLibrary;

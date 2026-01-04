@@ -8,8 +8,8 @@
 import { getDatabase } from '../database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // Legal documents root directory
 const LEGAL_DIR = path.join(__dirname, '../../Legal');
@@ -330,6 +330,14 @@ if (require.main === module) {
         }
     }, 1000);
 }
+
+export {
+seedLegalDocuments, 
+    updateLegalDocuments,
+    createNewVersion,
+    LEGAL_DOCUMENTS,
+    LEGAL_DOCUMENT_DEFS,
+};
 
 export default { 
     seedLegalDocuments, 

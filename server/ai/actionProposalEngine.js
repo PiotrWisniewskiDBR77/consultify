@@ -1,7 +1,12 @@
-const SignalEngine = require('./signalEngine');
-const RecommendationEngine = require('./recommendationEngine');
-const SimulationEngine = require('./simulationEngine');
-const ActionProposalMapper = require('./actionProposalMapper');
+import SignalEngine from './signalEngine.js';
+import RecommendationEngine from './recommendationEngine.js';
+import SimulationEngine from './simulationEngine.js';
+import ActionProposalMapper from './actionProposalMapper.js';
+const PolicyEngine = await import('./policyEngine.js');
+import * as auditLogger from '../utils/auditLogger.js';
+import db from '../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import AiService from '../services/aiService.js';
 
 /**
  * ActionProposalEngine

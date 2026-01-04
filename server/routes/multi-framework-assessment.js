@@ -14,13 +14,14 @@ const router = express.Router();
 
 // Middleware
 import authenticateToken from '../middleware/authMiddleware.js';
-const { assessmentRBAC } = require('../middleware/assessmentRBAC');
+import { assessmentRBAC  } from '../middleware/assessmentRBAC.js';
 
 // Services
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
-const { calculateFrameworkScore } = import('frameworkScoreCalculators.js');
-const multiFrameworkAuditService = import('multiFrameworkAuditService.js');
+import { calculateFrameworkScore  } from '../services/frameworkScoreCalculators.js';
+import * as multiFrameworkAuditServiceModule from '../services/multiFrameworkAuditService.js';
+const multiFrameworkAuditService = multiFrameworkAuditServiceModule.default || multiFrameworkAuditServiceModule;
 
 // Valid frameworks
 const VALID_FRAMEWORKS = ['SIRI', 'ADMA', 'CMMI', 'LEAN'];

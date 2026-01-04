@@ -209,7 +209,7 @@ export class AIPipeline {
                     memoryUsed: enrichedContext.memoryUsed,
                 },
             };
-        } catch (error) {
+        } catch (error: unknown) {
             const aiError = this.handleError(error);
             await this.logError(request, aiError, Date.now() - startTime, traceId);
             
@@ -274,7 +274,7 @@ export class AIPipeline {
                     traceId,
                 },
             });
-        } catch (error) {
+        } catch (error: unknown) {
             const aiError = this.handleError(error);
             onChunk({
                 type: 'error',

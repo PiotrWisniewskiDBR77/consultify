@@ -27,7 +27,7 @@ export const createAsyncHandler = <T>(
             if (result !== undefined && !res.headersSent) {
                 res.json(result);
             }
-        } catch (error) {
+        } catch (error: unknown) {
             next(error);
         }
     };

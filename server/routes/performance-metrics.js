@@ -12,12 +12,12 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { asyncHandler } = require('../utils/errorHandler');
-const {
-    getMetricsSummary,
+import { asyncHandler  } from '../src/utils/asyncHandler.js';
+import { getMetricsSummary,
     getMemoryMetrics
-} = require('../middleware/performanceMetrics');
-const metricsPersistenceService = import('metricsPersistenceService.js');
+ } from '../middleware/performanceMetrics.js';
+import * as metricsPersistenceServiceModule from '../services/metricsPersistenceService.js';
+const metricsPersistenceService = metricsPersistenceServiceModule.default || metricsPersistenceServiceModule;
 import alertService from '../services/alertService.js';
 
 // GET /api/performance-metrics/summary

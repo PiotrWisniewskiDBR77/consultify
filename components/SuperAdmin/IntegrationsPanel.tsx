@@ -55,7 +55,7 @@ export const IntegrationsPanel: React.FC = () => {
                 setAvailableTypes(types);
             } else {
                 const orgId = 'current'; // Get from context/store
-                const data = await (Api as any).getWebhooks(orgId) || [];
+                const data = (await (Api as any).getWebhooks(orgId)) || [];
                 setWebhooks(data);
             }
         } catch (error) {

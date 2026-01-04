@@ -156,6 +156,18 @@ function getAllCategories() {
     return CONNECTOR_CATEGORIES;
 }
 
+export {
+CONNECTOR_CATALOG,
+    CONNECTOR_CATEGORIES,
+    getAllConnectors,
+    getConnector,
+    getConnectorsByCategory,
+    hasCapability,
+    getRequiredCredentials,
+    validateCredentials,
+    getAllCategories
+};
+
 export default {
     CONNECTOR_CATALOG,
     CONNECTOR_CATEGORIES,

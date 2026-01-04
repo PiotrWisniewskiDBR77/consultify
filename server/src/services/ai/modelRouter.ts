@@ -141,7 +141,7 @@ async function getLLMConfigService(): Promise<LLMConfigService | null> {
         try {
             const mod = await import('./llmConfigService.js');
             _llmConfigService = mod.llmConfigService as LLMConfigService;
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.warn('ModelRouter', `LLMConfigService not available: ${err.message}`);
         }
@@ -205,7 +205,7 @@ export class ModelRouter {
                         };
                     }
                 }
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error as Error;
                 aiLogger.warn('ModelRouter', `LLMConfigService fallback failed: ${err.message}`);
             }
@@ -266,7 +266,7 @@ export class ModelRouter {
 
         try {
             return await DbPromise.all<ProviderRow>(query, params, { fallback: false });
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('ModelRouter', `Failed to get models for tier ${tier}: ${err.message}`);
             return [];
@@ -301,7 +301,7 @@ export class ModelRouter {
                 grouped[row.tier].push(row);
             }
             return grouped;
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('ModelRouter', `Failed to get tier assignments: ${err.message}`);
             return {};
@@ -348,7 +348,7 @@ export class ModelRouter {
         `;
         try {
             await DbPromise.run(query, [id, organizationId, tier, providerId], { fallback: true });
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.warn('ModelRouter', `Failed to update round-robin state: ${err.message}`);
         }
@@ -408,7 +408,7 @@ export class ModelRouter {
                         endpoint: nextProvider.endpoint || null
                     };
                 }
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error as Error;
                 aiLogger.warn('ModelRouter', `Config service fallback failed: ${err.message}`);
             }

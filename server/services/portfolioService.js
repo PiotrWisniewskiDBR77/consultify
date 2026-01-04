@@ -6,7 +6,7 @@
  */
 
 import db from '../database.js';
-import queryHelpers from '../utils/queryHelpers.js';
+import * as queryHelpers from '../src/utils/queryHelpers.js';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -396,6 +396,16 @@ async function getRoadmapWaves(projectId) {
         throw error;
     }
 }
+
+export {
+getPortfolioData,
+    getPortfolioStats,
+    bulkUpdateStatus,
+    quickUpdate,
+    reorderInitiatives,
+    getInitiativeDependencies,
+    getRoadmapWaves
+};
 
 export default {
     getPortfolioData,

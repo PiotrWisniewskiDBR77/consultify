@@ -952,6 +952,50 @@ export async function updateBillingModel(orgId, model) {
     });
 }
 
+export {
+setDependencies,
+    getPlans,
+    getPlanById,
+    createPlan,
+    updatePlan,
+    deletePlan,
+    getOrganizationBilling,
+    upsertOrganizationBilling: upsertOrgBilling,
+    getOrCreateStripeCustomer,
+    createSubscription,
+    cancelSubscription,
+    changePlan,
+    getInvoices,
+    recordInvoice,
+    getRevenueStats,
+    getUserPlans,
+    createUserPlan,
+    updateUserPlan,
+    deleteUserPlan,
+    // Payment Methods
+    getPaymentMethods,
+    getPaymentMethod,
+    addPaymentMethod,
+    removePaymentMethod,
+    setDefaultPaymentMethod,
+    createSetupIntent,
+    // Billing Alerts
+    getBillingAlerts,
+    updateBillingAlerts,
+    // Tax Settings
+    getTaxSettings,
+    updateTaxSettings,
+    // Discount Codes
+    validateDiscountCode,
+    incrementDiscountCodeUsage,
+    // Seat Management
+    getSeatPricing,
+    calculateSeatCost,
+    processSeatPurchase,
+    getBillingModel,
+    updateBillingModel
+};
+
 export default {
     setDependencies,
     getPlans,

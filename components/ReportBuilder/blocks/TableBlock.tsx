@@ -15,9 +15,13 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
     useEffect(() => {
         const newHeaders = content?.headers || ['Column 1', 'Column 2'];
         const newRows = content?.rows || [['Data 1', 'Data 2']];
-        if (JSON.stringify(newHeaders) !== JSON.stringify(headers)) setHeaders(newHeaders);
-        if (JSON.stringify(newRows) !== JSON.stringify(rows)) setRows(newRows);
-    }, [content]);
+        if (JSON.stringify(newHeaders) !== JSON.stringify(headers)) {
+            queueMicrotask(() => setHeaders(newHeaders));
+        }
+        if (JSON.stringify(newRows) !== JSON.stringify(rows)) {
+            queueMicrotask(() => setRows(newRows));
+        }
+    }, [content, headers, rows]);
 
     const save = (newHeaders: string[], newRows: string[][]) => {
         const updatedContent: TableBlockContent = {

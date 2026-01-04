@@ -9,10 +9,12 @@
 
 import express from 'express';
 const router = express.Router();
-const AISettingsService = import('aiSettingsService.js');
-const AIProactivityEngine = import('aiProactivityEngine.js');
+import * as AISettingsServiceModule from '../services/aiSettingsService.js';
+const AISettingsService = AISettingsServiceModule.default || AISettingsServiceModule;
+import * as AIProactivityEngineModule from '../services/aiProactivityEngine.js';
+const AIProactivityEngine = AIProactivityEngineModule.default || AIProactivityEngineModule;
 import authenticateToken from '../middleware/authMiddleware.js';
-const { requireRole, requireOrgRole } = require('../middleware/rbac');
+import { requireRole, requireOrgRole  } from '../middleware/rbac.js';
 
 // ==========================================
 // SUPERADMIN ROUTES

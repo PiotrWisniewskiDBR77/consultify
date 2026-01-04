@@ -1,5 +1,5 @@
-const AiService = require('../services/aiService');
-const FinancialService = require('../services/financialService');
+import AiService from '../services/aiService.js';
+import FinancialService from '../services/financialService.js';
 
 // Mock specific parts if needed, but we want integration test
 // We need to mock DB for callLLM if we don't have a real DB connection, 

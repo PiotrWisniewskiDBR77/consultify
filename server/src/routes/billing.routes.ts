@@ -123,7 +123,7 @@ router.get('/stats', verifyToken, requireSuperAdmin, validateQuery(BillingStatsQ
                 totalAmount: unpaidResult?.total_amount || 0
             }
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Stats error:', error);
         res.status(500).json({ error: 'Failed to get billing stats' });
     }
@@ -211,7 +211,7 @@ router.get('/invoices', verifyToken, validateQuery(ListInvoicesQuerySchema), asy
             page,
             pageSize
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] List invoices error:', error);
         res.status(500).json({ error: 'Failed to list invoices' });
     }
@@ -252,7 +252,7 @@ router.get('/invoices/:id', verifyToken, validateParams(InvoiceIdParamSchema), a
                 metadata: invoice.metadata ? JSON.parse(invoice.metadata) : {}
             }
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Get invoice error:', error);
         res.status(500).json({ error: 'Failed to get invoice' });
     }
@@ -283,7 +283,7 @@ router.post('/invoices', verifyToken, requireSuperAdmin, validateBody(CreateInvo
         ]);
 
         res.json({ success: true, id, invoiceNumber });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Create invoice error:', error);
         res.status(500).json({ error: 'Failed to create invoice' });
     }
@@ -339,7 +339,7 @@ router.put('/invoices/:id', verifyToken, requireSuperAdmin, validateParams(Invoi
         await dbRun(`UPDATE invoices SET ${updates.join(', ')} WHERE id = ?`, params);
 
         res.json({ success: true });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Update invoice error:', error);
         res.status(500).json({ error: 'Failed to update invoice' });
     }
@@ -356,7 +356,7 @@ router.post('/invoices/:id/send', verifyToken, requireSuperAdmin, validateParams
         `, [id]);
 
         res.json({ success: true, message: 'Invoice sent' });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Send invoice error:', error);
         res.status(500).json({ error: 'Failed to send invoice' });
     }
@@ -427,7 +427,7 @@ router.get('/subscriptions', verifyToken, validateQuery(ListSubscriptionsQuerySc
                 metadata: sub.metadata ? JSON.parse(sub.metadata) : {}
             }))
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] List subscriptions error:', error);
         res.status(500).json({ error: 'Failed to list subscriptions' });
     }
@@ -472,7 +472,7 @@ router.get('/subscriptions/:id', verifyToken, validateParams(SubscriptionIdParam
                 limits: subscription.limits ? JSON.parse(subscription.limits) : {}
             }
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Get subscription error:', error);
         res.status(500).json({ error: 'Failed to get subscription' });
     }
@@ -516,7 +516,7 @@ router.post('/subscriptions', verifyToken, requireSuperAdmin, validateBody(Creat
         `, [id, organizationId, planId, status, billingCycle, periodStart, periodEnd, trialStart, trialEnd]);
 
         res.json({ success: true, id });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Create subscription error:', error);
         res.status(500).json({ error: 'Failed to create subscription' });
     }
@@ -564,7 +564,7 @@ router.put('/subscriptions/:id', verifyToken, requireSuperAdmin, validateParams(
         await dbRun(`UPDATE subscriptions SET ${updates.join(', ')} WHERE id = ?`, params);
 
         res.json({ success: true });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Update subscription error:', error);
         res.status(500).json({ error: 'Failed to update subscription' });
     }
@@ -607,7 +607,7 @@ router.post('/subscriptions/:id/cancel', verifyToken, validateParams(Subscriptio
             success: true, 
             message: immediately ? 'Subscription canceled' : 'Subscription will be canceled at period end' 
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Cancel subscription error:', error);
         res.status(500).json({ error: 'Failed to cancel subscription' });
     }
@@ -652,7 +652,7 @@ router.get('/plans', verifyToken, validateQuery(ListPlansQuerySchema), asyncHand
                 limits: plan.limits ? JSON.parse(plan.limits) : {}
             }))
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] List plans error:', error);
         res.status(500).json({ error: 'Failed to list plans' });
     }
@@ -679,7 +679,7 @@ router.post('/plans', verifyToken, requireSuperAdmin, validateBody(CreatePlanReq
         ]);
 
         res.json({ success: true, id });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Create plan error:', error);
         res.status(500).json({ error: 'Failed to create plan' });
     }
@@ -723,7 +723,7 @@ router.put('/plans/:id', verifyToken, requireSuperAdmin, validateParams(PlanIdPa
         await dbRun(`UPDATE subscription_plans SET ${updates.join(', ')} WHERE id = ?`, params);
 
         res.json({ success: true });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Update plan error:', error);
         res.status(500).json({ error: 'Failed to update plan' });
     }
@@ -766,7 +766,7 @@ router.get('/credit-notes', verifyToken, asyncHandler(async (req: AuthRequest, r
         const creditNotes = await dbAll(query, params);
 
         res.json({ creditNotes });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] List credit notes error:', error);
         res.status(500).json({ error: 'Failed to list credit notes' });
     }
@@ -786,7 +786,7 @@ router.post('/credit-notes', verifyToken, requireSuperAdmin, validateBody(Create
         `, [id, organizationId, invoiceId, noteNumber, amount, reason]);
 
         res.json({ success: true, id, noteNumber });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Create credit note error:', error);
         res.status(500).json({ error: 'Failed to create credit note' });
     }
@@ -880,7 +880,7 @@ router.get('/usage', verifyToken, validateQuery(UsageQuerySchema), asyncHandler(
         const totals = await dbAll<UsageTotalRow>(`SELECT metric_name, SUM(quantity) as total FROM usage_records WHERE organization_id = ? GROUP BY metric_name`, [orgId]);
 
         res.json({ usage, structuredUsage, totals });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Get usage error:', error);
         res.status(500).json({ error: 'Failed to get usage' });
     }
@@ -898,7 +898,7 @@ router.post('/usage', verifyToken, validateBody(RecordUsageRequestSchema), async
         `, [id, req.user!.organizationId, metricName, quantity, JSON.stringify(metadata || {})]);
 
         res.json({ success: true, id });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Record usage error:', error);
         res.status(500).json({ error: 'Failed to record usage' });
     }
@@ -931,7 +931,7 @@ router.get('/spending-alerts', verifyToken, asyncHandler(async (req: AuthRequest
             isActive: !!a.is_active,
             lastTriggeredAt: a.last_triggered_at
         })));
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Get spending alerts error:', error);
         res.status(500).json({ error: 'Failed to get spending alerts' });
     }
@@ -950,7 +950,7 @@ router.post('/spending-alerts', verifyToken, validateBody(CreateSpendingAlertReq
         `, [id, orgId, type, threshold, thresholdType, action, JSON.stringify(notifyEmails || []), isActive ? 1 : 0]);
 
         res.json({ success: true, id });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Create spending alert error:', error);
         res.status(500).json({ error: 'Failed to create spending alert' });
     }
@@ -970,7 +970,7 @@ router.put('/spending-alerts/:id', verifyToken, validateParams(SpendingAlertIdPa
         `, [type, threshold, thresholdType, action, JSON.stringify(notifyEmails || []), isActive ? 1 : 0, id, orgId]);
 
         res.json({ success: true });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Update spending alert error:', error);
         res.status(500).json({ error: 'Failed to update spending alert' });
     }
@@ -988,7 +988,7 @@ router.post('/spending-alerts/:id/toggle', verifyToken, validateParams(SpendingA
         `, [id, orgId]);
 
         res.json({ success: true });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Toggle spending alert error:', error);
         res.status(500).json({ error: 'Failed to toggle spending alert' });
     }
@@ -1002,7 +1002,7 @@ router.delete('/spending-alerts/:id', verifyToken, validateParams(SpendingAlertI
         await dbRun(`DELETE FROM spending_alerts WHERE id = ? AND organization_id = ?`, [id, orgId]);
 
         res.json({ success: true });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Delete spending alert error:', error);
         res.status(500).json({ error: 'Failed to delete spending alert' });
     }
@@ -1017,7 +1017,7 @@ router.get('/addons', verifyToken, asyncHandler(async (req: AuthRequest, res: Re
         const sql = `SELECT * FROM billing_addons WHERE is_active = 1`;
         const addons = await dbAll(sql, []);
         res.json(addons);
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Get addons error:', error);
         res.status(500).json({ error: 'Failed to get add-ons' });
     }
@@ -1033,7 +1033,7 @@ router.get('/webhook-events', verifyToken, requireBillingAccess, asyncHandler(as
         const limit = parseInt((req.query.limit as string) || '100', 10);
         const events = await BillingWebhookService.getRecentEvents(orgId, limit);
         res.json({ events });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Get webhook events error:', error);
         res.status(500).json({ error: 'Failed to get webhook events' });
     }
@@ -1045,7 +1045,7 @@ router.get('/webhook-events/stats', verifyToken, requireBillingAccess, asyncHand
         const period = (req.query.period as string) || '30 days';
         const stats = await BillingWebhookService.getEventStats(orgId, period);
         res.json({ stats });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Get webhook event stats error:', error);
         res.status(500).json({ error: 'Failed to get webhook event statistics' });
     }
@@ -1064,7 +1064,7 @@ router.get('/webhook-events/:id', verifyToken, requireBillingAccess, validatePar
             return;
         }
         res.json({ event });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing] Get webhook event error:', error);
         res.status(500).json({ error: 'Failed to get webhook event' });
     }
@@ -1100,7 +1100,7 @@ router.post('/admin/webhook-events/:id/retry', verifyToken, requireSuperAdmin, v
         );
 
         res.json({ success: true, result });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing Admin] Retry webhook event error:', error);
         res.status(500).json({ error: 'Failed to retry webhook event' });
     }
@@ -1111,7 +1111,7 @@ router.get('/admin/webhook-events/failed', verifyToken, requireSuperAdmin, async
         const limit = parseInt((req.query.limit as string) || '50', 10);
         const failedEvents = await BillingWebhookService.getFailedEvents(limit);
         res.json({ events: failedEvents });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing Admin] Get failed webhook events error:', error);
         res.status(500).json({ error: 'Failed to get failed webhook events' });
     }
@@ -1122,7 +1122,7 @@ router.get('/admin/webhook-events/pending', verifyToken, requireSuperAdmin, asyn
         const limit = parseInt((req.query.limit as string) || '50', 10);
         const pendingEvents = await BillingWebhookService.getPendingRetries(limit);
         res.json({ events: pendingEvents });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[Billing Admin] Get pending webhook events error:', error);
         res.status(500).json({ error: 'Failed to get pending webhook events' });
     }

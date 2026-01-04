@@ -59,7 +59,7 @@ export async function initialize(): Promise<void> {
     try {
         await CircuitBreakerService.restoreStates();
         aiLogger.info('CircuitBreaker', 'LLM circuit breakers initialized');
-    } catch (error) {
+    } catch (error: unknown) {
         const err = error as Error;
         aiLogger.warn('CircuitBreaker', `Initialization warning: ${err.message}`);
     }

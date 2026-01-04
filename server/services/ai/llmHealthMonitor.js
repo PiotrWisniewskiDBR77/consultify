@@ -5,8 +5,8 @@
  * Runs periodic health checks and maintains status history.
  */
 
-const https = require('https');
-const http = require('http');
+import https from 'https';
+import http from 'http';
 
 // Health status categories
 const HealthStatus = {
@@ -482,6 +482,14 @@ class LLMHealthMonitor {
 
 // Singleton instance
 const llmHealthMonitor = new LLMHealthMonitor();
+
+export {
+llmHealthMonitor,
+    LLMHealthMonitor,
+    HealthStatus,
+    ErrorCategory,
+    ErrorMessages
+};
 
 export default {
     llmHealthMonitor,

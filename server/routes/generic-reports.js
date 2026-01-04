@@ -5,8 +5,9 @@
 
 import express from 'express';
 const router = express.Router();
-const GenericReportService = import('genericReportService.js');
-const { upload } = require('../middleware/fileUploadMiddleware');
+import * as GenericReportServiceModule from '../services/genericReportService.js';
+const GenericReportService = GenericReportServiceModule.default || GenericReportServiceModule;
+import { upload  } from '../middleware/fileUploadMiddleware.js';
 import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);
@@ -162,7 +163,7 @@ router.delete('/:id', async (req, res) => {
         const { id } = req.params;
         const organizationId = req.user.organizationId;
 
-        import { getDatabase } from '../src/database/Database.js';
+        const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
         const sql = `DELETE FROM generic_assessment_reports WHERE id = ? AND organization_id = ?`;
 

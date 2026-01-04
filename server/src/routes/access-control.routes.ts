@@ -274,7 +274,7 @@ router.get('/codes', verifyToken, verifyAdmin, asyncHandler(async (req: AuthRequ
             WHERE ac.organization_id = ?
             ORDER BY ac.created_at DESC`,
             [organizationId],
-            (err, rows) => {
+            (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
                 else resolve((rows || []) as Array<{
                     id: string;
@@ -395,7 +395,7 @@ router.post('/codes/register', asyncHandler(async (req: AuthRequest, res: Respon
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [newUserId, accessCode.org_id, email, hashedPassword, firstName, lastName,
                 accessCode.role, 'active'],
-            (err) => {
+            (err: Error | null) => {
                 if (err) reject(err);
                 else resolve();
             }
@@ -406,7 +406,7 @@ router.post('/codes/register', asyncHandler(async (req: AuthRequest, res: Respon
     await new Promise<void>((resolve, reject) => {
         db.run(`UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?`,
             [accessCode.id],
-            (err) => {
+            (err: Error | null) => {
                 if (err) reject(err);
                 else resolve();
             }
@@ -418,7 +418,7 @@ router.post('/codes/register', asyncHandler(async (req: AuthRequest, res: Respon
         db.run(`INSERT INTO access_code_usage (id, code_id, user_id, used_at)
             VALUES (?, ?, ?, datetime('now'))`,
             [uuidv4(), accessCode.id, newUserId],
-            (err) => {
+            (err: Error | null) => {
                 if (err) reject(err);
                 else resolve();
             }

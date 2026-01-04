@@ -192,7 +192,7 @@ class AICostControlServiceClass {
      */
     private async dbGet<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
         return new Promise((resolve, reject) => {
-            this.db.get<T>(sql, params, (err, row) => {
+            this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
                 else resolve(row || null);
             });
@@ -204,7 +204,7 @@ class AICostControlServiceClass {
      */
     private async dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
         return new Promise((resolve, reject) => {
-            this.db.all<T>(sql, params, (err, rows) => {
+            this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -432,7 +432,7 @@ class AICostControlServiceClass {
                 modelUsed: params.modelUsed,
                 modelCategory: params.modelCategory
             };
-        } catch (err) {
+        } catch (err: unknown) {
             logger.error('[AICostControl] Log usage error:', err);
             throw err;
         }

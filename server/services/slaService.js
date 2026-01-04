@@ -6,7 +6,7 @@
  */
 
 // Dependency injection for testing
-import auditLogger from '../utils/auditLogger.js';
+import * as auditLogger from '../utils/auditLogger.js';
 
 const deps = {
     _db: null,

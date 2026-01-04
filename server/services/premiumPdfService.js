@@ -11,7 +11,9 @@ import path from 'path';
 import db from '../database.js';
 import { promises as fs } from 'fs';
 
-
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Register Handlebars helpers
 Handlebars.registerHelper('formatDate', function (date) {

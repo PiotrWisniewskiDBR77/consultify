@@ -3,8 +3,8 @@
  * AI-powered form field suggestions using structured outputs
  */
 
-const { AIPipeline } = require('./aiPipeline');
-const { z } = require('zod');
+import { AIPipeline } from './aiPipeline.js';
+import { z } from 'zod';
 
 // Zod schema for Magic Wand suggestions
 const MagicWandSuggestionSchema = z.object({
@@ -292,5 +292,9 @@ Generate the justification:`;
 
 // Singleton
 const magicWandService = new MagicWandService();
+
+export {
+MagicWandService, magicWandService, MagicWandSuggestionSchema
+};
 
 export default { MagicWandService, magicWandService, MagicWandSuggestionSchema };

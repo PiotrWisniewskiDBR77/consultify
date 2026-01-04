@@ -3,10 +3,12 @@
 
 import express from 'express';
 const router = express.Router();
-const ReportingService = import('reportingService.js');
-const NarrativeService = import('narrativeService.js');
+import * as ReportingServiceModule from '../services/reportingService.js';
+const ReportingService = ReportingServiceModule.default || ReportingServiceModule;
+import * as NarrativeServiceModule from '../services/narrativeService.js';
+const NarrativeService = NarrativeServiceModule.default || NarrativeServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-const { asyncHandler } = require('../utils/errorHandler');
+import { asyncHandler  } from '../src/utils/asyncHandler.js';
 
 // GET /api/reports/executive-overview
 // REFACTORED: Uses asyncHandler
@@ -55,8 +57,11 @@ router.get('/narrative/progress/:projectId', verifyToken, asyncHandler(async (re
 
 // ==================== ORGANIZATION & INITIATIVE REPORTS ====================
 
-const ShareLinkService = import('shareLinkService.js');
-const PermissionService = import('permissionService.js');
+const ShareLinkServiceModule = await import('../services/shareLinkService.js');
+
+const ShareLinkService = ShareLinkServiceModule.default || ShareLinkServiceModule;
+import * as PermissionServiceModule from '../services/permissionService.js';
+const PermissionService = PermissionServiceModule.default || PermissionServiceModule;
 
 // GET /api/reports/org-overview
 // REFACTORED: Uses asyncHandler

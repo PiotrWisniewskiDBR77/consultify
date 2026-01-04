@@ -3,7 +3,8 @@
 
 import express from 'express';
 const router = express.Router();
-const CapacityService = import('capacityService.js');
+import * as CapacityServiceModule from '../services/capacityService.js';
+const CapacityService = CapacityServiceModule.default || CapacityServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/capacity/user/:userId

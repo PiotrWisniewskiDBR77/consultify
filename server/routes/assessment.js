@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
-const AssessmentService = import('assessmentService.js');
+import * as AssessmentServiceModule from '../services/assessmentService.js';
+const AssessmentService = AssessmentServiceModule.default || AssessmentServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/assessment/:projectId
@@ -63,8 +64,8 @@ router.post('/:projectId/gap-analysis', verifyToken, async (req, res) => {
 // AI THINKING_PARTNER Endpoints (Enterprise Workflow)
 // =====================================================
 
-const { aiAssessmentPartner } = import('aiAssessmentPartnerService.js');
-const { aiAssessmentFormHelper, FIELD_TYPES } = import('aiAssessmentFormHelper.js');
+const { aiAssessmentPartner   } = await import('../services/aiAssessmentPartnerService.js');
+import { aiAssessmentFormHelper, FIELD_TYPES  } from '../services/aiAssessmentFormHelper.js';
 
 /**
  * @route POST /api/assessment/:projectId/ai/guidance
@@ -632,7 +633,7 @@ router.post('/:projectId/ai/validate-field', verifyToken, async (req, res) => {
 // AI REPORT GENERATOR Endpoints
 // =====================================================
 
-const { aiAssessmentReportGenerator, REPORT_TYPES, STAKEHOLDER_ROLES } = import('aiAssessmentReportGenerator.js');
+const { aiAssessmentReportGenerator, REPORT_TYPES, STAKEHOLDER_ROLES   } = await import('../services/aiAssessmentReportGenerator.js');
 
 /**
  * @route POST /api/assessment/:projectId/ai/reports/full

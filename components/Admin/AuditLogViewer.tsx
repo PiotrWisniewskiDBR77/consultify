@@ -131,10 +131,11 @@ export function AuditLogViewer() {
 
     const fetchStats = useCallback(async () => {
         try {
-            const filters: any = {};
-            if (filters.startDate) filters.startDate = filters.startDate;
-            if (filters.endDate) filters.endDate = filters.endDate;
-            const statsData = await Api.getAuditLogStats(filters);
+            const statsFilters: any = {};
+            // Note: these would need actual filter values from component state
+            // if (someStartDate) statsFilters.startDate = someStartDate;
+            // if (someEndDate) statsFilters.endDate = someEndDate;
+            const statsData = await Api.getAuditLogStats(statsFilters);
             setStats({
                 total_requests: statsData.total || 0,
                 flagged_requests: 0, // TODO: Add flagged count to stats

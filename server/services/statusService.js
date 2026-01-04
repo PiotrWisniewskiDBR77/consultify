@@ -257,6 +257,24 @@ async function updateIncident(incidentId, update) {
     return { success: true };
 }
 
+export {
+STATUS,
+    SEVERITY,
+    getSystemStatus,
+    getIncidents,
+    getMaintenanceSchedule,
+    getUptimeStats,
+    subscribeToUpdates,
+    createIncident,
+    updateIncident,
+    // Health checks
+    checkDatabaseHealth,
+    checkAIHealth,
+    checkAPIHealth,
+    checkStorageHealth,
+    checkEmailHealth
+};
+
 export default {
     STATUS,
     SEVERITY,

@@ -12,12 +12,12 @@
  * - Provide prompt engineering guidance
  */
 
-const db = require('../../database');
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const { llmService } = require('./llmService');
-const { promptTemplateService } = require('./promptTemplateService');
-const { promptBlockLibrary, BLOCK_CATEGORIES } = require('./promptBlockLibrary');
-const { variableResolver } = require('./variableResolver');
+import { llmService } from './llmService.js';
+import promptTemplateService from './promptTemplateService.js';
+import { promptBlockLibrary, BLOCK_CATEGORIES } from './promptBlockLibrary.js';
+import { variableResolver } from './variableResolver.js';
 
 // ============================================================================
 // Prompt Engineering Knowledge Base
@@ -155,7 +155,7 @@ class PromptAssistantService {
             // Update history
             history.push({ role: 'user', content: message });
             history.push({ role: 'assistant', content: assistantMessage });
-            
+
             // Keep last 10 exchanges
             if (history.length > 20) {
                 history.splice(0, history.length - 20);
@@ -213,7 +213,7 @@ Blocks: ${template.blocks.join(', ')}
         const blockSummary = Object.entries(allBlocks)
             .map(([code, b]) => `- ${code}: ${b.name}`)
             .join('\n');
-        
+
         contextParts.push(`
 ## AVAILABLE BLOCKS:
 ${blockSummary}
@@ -225,7 +225,7 @@ ${blockSummary}
             .slice(0, 20)
             .map(v => `- {{${v.code}}}: ${v.description || 'No description'}`)
             .join('\n');
-        
+
         contextParts.push(`
 ## AVAILABLE VARIABLES (sample):
 ${varSummary}
@@ -315,10 +315,10 @@ ${varSummary}
 
         // 4. Check for recommended sections
         const sections = ['ROLE', 'PERSONA', 'BEHAVIOR', 'OUTPUT', 'FORMAT', 'CONSTRAINT', 'RULE'];
-        const foundSections = sections.filter(s => 
+        const foundSections = sections.filter(s =>
             promptContent.toUpperCase().includes(s)
         );
-        
+
         if (foundSections.length < 3) {
             analysis.suggestions.push({
                 type: 'structure',
@@ -328,12 +328,12 @@ ${varSummary}
         }
 
         // 5. Check for language adaptation
-        const hasLanguageAdaptation = 
+        const hasLanguageAdaptation =
             promptContent.includes('{{user.language}}') ||
             promptContent.includes('{{user.detected_language}}') ||
             promptContent.includes('LANGUAGE_ADAPTIVE') ||
             promptContent.toLowerCase().includes('detect') && promptContent.toLowerCase().includes('language');
-        
+
         if (!hasLanguageAdaptation) {
             analysis.issues.push({
                 severity: 'warning',
@@ -596,7 +596,7 @@ Return ONLY the improved prompt, no explanations.
      */
     extractSuggestions(message) {
         const suggestions = [];
-        
+
         // Look for numbered suggestions
         const numberedPattern = /\d+\.\s*\*\*([^*]+)\*\*:?\s*([^\n]+)/g;
         let match;
@@ -678,7 +678,7 @@ Return ONLY the improved prompt, no explanations.
 // Singleton instance
 const promptAssistant = new PromptAssistantService();
 
-export default {
+export {
     PromptAssistantService,
     promptAssistant,
     PROMPT_ENGINEERING_KNOWLEDGE,

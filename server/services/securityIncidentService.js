@@ -298,6 +298,22 @@ const getIncidentsByTimeRange = async (startDate, endDate) => {
     return deps.db.all(sql, [startDate, endDate]);
 };
 
+export {
+setDependencies,
+    createIncident,
+    getIncidentById,
+    getIncidents,
+    updateIncidentStatus,
+    resolveIncident,
+    updateIncident,
+    deleteIncident,
+    getStats,
+    getIncidentsByTimeRange,
+    SEVERITY,
+    STATUS,
+    INCIDENT_TYPES
+};
+
 export default {
     setDependencies,
     createIncident,

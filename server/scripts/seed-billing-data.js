@@ -9,9 +9,9 @@
  * - Billing alerts configuration
  */
 
-const path = require('path');
+import path from 'path';
 const db = require(path.join(__dirname, '../database'));
-const { v4: uuidv4 } = require('uuid');
+import { v4: uuidv4 } from 'uuid';
 
 // Promisified helpers
 const run = (sql, params = []) => {

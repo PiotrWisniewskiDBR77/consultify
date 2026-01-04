@@ -5,9 +5,16 @@
  * Generates professional narratives, insights, and recommendations.
  */
 
-const AiService = require('../aiService');
-const ContextService = require('../contextService');
-const { DRD_AXES_CONFIG, MATURITY_LEVELS } = require('./bcgReportGenerator');
+import aiService from '../aiService.js';
+import promptTemplateService from './promptTemplateService.js';
+import db from '../../database.js';
+import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import { DRD_AXES_CONFIG, MATURITY_LEVELS } from './bcgReportGenerator.js'; // Retained as no replacement was provided in instruction
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Prompt templates for different section types
 const PROMPT_TEMPLATES = {
@@ -128,7 +135,7 @@ class ReportContentGenerator {
      */
     async generateExecutiveSummary(assessment, orgContext, metrics) {
         const cacheKey = `exec_${assessment.id}_${Date.now()}`;
-        
+
         const context = this._buildContextString(orgContext);
         const prompt = this._fillTemplate(PROMPT_TEMPLATES.executiveSummary, {
             organizationContext: context,
@@ -141,9 +148,9 @@ class ReportContentGenerator {
         });
 
         try {
-            const response = await AiService.generateStructuredContent(prompt, 'assessment_report');
+            const response = await aiService.generateStructuredContent(prompt, 'assessment_report');
             const parsed = this._parseJSONResponse(response);
-            
+
             return {
                 generated: true,
                 generatedAt: new Date().toISOString(),
@@ -181,9 +188,9 @@ class ReportContentGenerator {
         });
 
         try {
-            const response = await AiService.generateStructuredContent(prompt, 'assessment_report');
+            const response = await aiService.generateStructuredContent(prompt, 'assessment_report');
             const parsed = this._parseJSONResponse(response);
-            
+
             return {
                 axis,
                 generated: true,
@@ -201,7 +208,7 @@ class ReportContentGenerator {
      */
     async generateRecommendations(gaps, priorities, orgContext) {
         const context = this._buildContextString(orgContext);
-        
+
         const gapAnalysisText = gaps.slice(0, 5)
             .map(g => `- ${g.bcgLabel}: Gap ${g.gap} levels (Priority: ${g.priority})`)
             .join('\n');
@@ -217,9 +224,9 @@ class ReportContentGenerator {
         });
 
         try {
-            const response = await AiService.generateStructuredContent(prompt, 'assessment_report');
+            const response = await aiService.generateStructuredContent(prompt, 'assessment_report');
             const parsed = this._parseJSONResponse(response);
-            
+
             return {
                 generated: true,
                 generatedAt: new Date().toISOString(),
@@ -237,7 +244,7 @@ class ReportContentGenerator {
      */
     async generateTransformationRoadmap(metrics, orgContext) {
         const context = this._buildContextString(orgContext);
-        
+
         const keyGapsText = metrics.gaps.slice(0, 3)
             .map(g => g.bcgLabel)
             .join(', ');
@@ -253,9 +260,9 @@ class ReportContentGenerator {
         });
 
         try {
-            const response = await AiService.generateStructuredContent(prompt, 'assessment_report');
+            const response = await aiService.generateStructuredContent(prompt, 'assessment_report');
             const parsed = this._parseJSONResponse(response);
-            
+
             return {
                 generated: true,
                 generatedAt: new Date().toISOString(),
@@ -346,18 +353,18 @@ Respond in JSON: { "response": string, "suggestedEdits": string[] }`;
         if (!context) return 'No organization context available';
 
         const parts = [];
-        
+
         if (context.industry) parts.push(`Industry: ${context.industry}`);
         if (context.companySize) parts.push(`Size: ${context.companySize}`);
         if (context.employeeCount) parts.push(`Employees: ${context.employeeCount}`);
-        
+
         if (context.strategicGoals) {
             const goals = Array.isArray(context.strategicGoals)
                 ? context.strategicGoals.join(', ')
                 : context.strategicGoals;
             parts.push(`Goals: ${goals}`);
         }
-        
+
         if (context.challenges) {
             const challenges = Array.isArray(context.challenges)
                 ? context.challenges.join(', ')
@@ -417,7 +424,7 @@ Respond in JSON: { "response": string, "suggestedEdits": string[] }`;
 
     _generateFallbackExecutiveSummary(metrics) {
         const label = this._getMaturityLabel(metrics.overallActual);
-        
+
         return {
             generated: false,
             verdict: `Organization demonstrates ${label} digital maturity at ${metrics.overallActual}%, with ${metrics.overallGap} percentage point gap to target.`,
@@ -441,7 +448,7 @@ Respond in JSON: { "response": string, "suggestedEdits": string[] }`;
 
     _generateFallbackAxisNarrative(axis, scores) {
         const config = DRD_AXES_CONFIG[axis] || { name: axis, bcgLabel: axis };
-        
+
         return {
             axis,
             generated: false,

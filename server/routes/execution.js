@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
-const ExecutionService = import('executionService.js');
+import * as ExecutionServiceModule from '../services/executionService.js';
+const ExecutionService = ExecutionServiceModule.default || ExecutionServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/execution/:projectId/summary

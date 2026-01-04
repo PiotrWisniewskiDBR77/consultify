@@ -226,7 +226,7 @@ export class LLMConfigService {
 
             this.initialized = true;
             aiLogger.info('LLMConfigService', 'LLM Config Service initialized with analytics storage');
-        } catch (error) {
+        } catch (error: unknown) {
             aiLogger.error('LLMConfigService', 'Failed to initialize service', error);
             throw error;
         }
@@ -297,7 +297,7 @@ export class LLMConfigService {
         for (const sql of migrations) {
             try {
                 await this.runAsync(sql);
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error as Error;
                 if (!err.message.includes('duplicate column')) {
                     aiLogger.warn('LLMConfigService', `Migration warning: ${err.message}`);
@@ -468,7 +468,7 @@ export class LLMConfigService {
                     ? settingsMap.get(provider.id)
                     : true
             }));
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('LLMConfigService', `Failed to get org settings: ${err.message}`);
             return providers.map(provider => ({ ...provider, is_enabled_for_org: true }));

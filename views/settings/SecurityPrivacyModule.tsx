@@ -56,9 +56,9 @@ export const SecurityPrivacyModule: React.FC<SecurityPrivacyModuleProps> = ({
     // Update active tab when initialTab prop changes
     useEffect(() => {
         if (initialTab && initialTab !== activeTab) {
-            setActiveTab(initialTab);
+            queueMicrotask(() => setActiveTab(initialTab));
         }
-    }, [initialTab]);
+    }, [initialTab, activeTab]);
 
     const tabs: Tab[] = [
         { 

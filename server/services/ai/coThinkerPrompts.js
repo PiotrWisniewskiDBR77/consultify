@@ -240,6 +240,18 @@ function getFollowUpSuggestions(context = 'general') {
     return FOLLOW_UP_TEMPLATES[context] || FOLLOW_UP_TEMPLATES.general;
 }
 
+export {
+CO_THINKER_PROMPT,
+    GREETING_PROMPTS,
+    CONTEXT_ENHANCEMENTS,
+    QUICK_ACTION_PROMPTS,
+    FOLLOW_UP_TEMPLATES,
+    getEnhancedPrompt,
+    getTimeGreeting,
+    getQuickActionPrompt,
+    getFollowUpSuggestions
+};
+
 export default {
     CO_THINKER_PROMPT,
     GREETING_PROMPTS,

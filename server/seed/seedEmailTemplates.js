@@ -361,6 +361,10 @@ if (require.main === module) {
     });
 }
 
+export {
+seedEmailTemplates, DEFAULT_EMAIL_TEMPLATES
+};
+
 export default { seedEmailTemplates, DEFAULT_EMAIL_TEMPLATES };
 
 

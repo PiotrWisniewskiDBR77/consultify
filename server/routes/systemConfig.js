@@ -6,7 +6,8 @@
 
 import express from 'express';
 const router = express.Router();
-const systemConfigService = import('systemConfigService.js');
+import * as systemConfigServiceModule from '../services/systemConfigService.js';
+const systemConfigService = systemConfigServiceModule.default || systemConfigServiceModule;
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**

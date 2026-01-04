@@ -95,7 +95,7 @@ export async function enforceTokenQuota(
         }
 
         next();
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Quota check error:', error);
         // Allow request to proceed on quota check failure (fail open)
         next();
@@ -140,7 +140,7 @@ export async function enforceStorageQuota(
         }
 
         next();
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Storage quota check error:', error);
         next();
     }
@@ -168,7 +168,7 @@ export async function recordTokenUsageAfterResponse(
                 model: (req.body as { model?: string })?.model || 'default'
             });
         }
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Failed to record token usage:', error);
     }
 }
@@ -192,7 +192,7 @@ export async function recordStorageAfterUpload(
                 filename: req.file?.originalname
             });
         }
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Failed to record storage usage:', error);
     }
 }

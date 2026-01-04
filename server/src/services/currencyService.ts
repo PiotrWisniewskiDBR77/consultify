@@ -115,7 +115,7 @@ class CurrencyServiceClass {
             }
 
             return currencies;
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[Currency] Error fetching currencies:', error);
             return Object.entries(DEFAULT_CURRENCIES).map(([code, data]) => ({
                 code,
@@ -186,7 +186,7 @@ class CurrencyServiceClass {
                 minimumFractionDigits: currencyInfo.decimals,
                 maximumFractionDigits: currencyInfo.decimals,
             }).format(value);
-        } catch (error) {
+        } catch (error: unknown) {
             // Fallback formatting
             const symbol = currencyInfo.symbol || currency;
             return `${symbol}${value.toFixed(currencyInfo.decimals)}`;
@@ -249,7 +249,7 @@ class CurrencyServiceClass {
             }
 
             logger.info(`[Currency] Updated ${supported.length} exchange rates`);
-        } catch (error) {
+        } catch (error: unknown) {
             logger.error('[Currency] Failed to update rates:', error);
             await this._useFallbackRates();
         }
@@ -297,7 +297,7 @@ class CurrencyServiceClass {
 
                     return fromRate * toRate;
                 }
-            } catch (error) {
+            } catch (error: unknown) {
                 logger.error('[Currency] API fetch failed:', error);
             }
         }

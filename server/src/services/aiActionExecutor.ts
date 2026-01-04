@@ -32,7 +32,7 @@ const getNotificationService = async () => {
         try {
             const mod = (await import('./NotificationService.js')) as any;
             _notificationService = mod.default || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.warn('[AIActionExecutor] NotificationService not available');
         }
     }
@@ -45,7 +45,7 @@ const getAIRoleGuard = async () => {
         try {
             const mod = (await import('./aiRoleGuard.js')) as any;
             _aiRoleGuard = mod.default || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.warn('[AIActionExecutor] AIRoleGuard not available');
         }
     }
@@ -58,7 +58,7 @@ const getRegulatoryModeGuard = async () => {
         try {
             const mod = (await import('./regulatoryModeGuard.js')) as any;
             _regulatoryModeGuard = mod.default || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.warn('[AIActionExecutor] RegulatoryModeGuard not available');
         }
     }
@@ -71,7 +71,7 @@ const getApprovalPatternService = async () => {
         try {
             const mod = (await import('./approvalPatternService.js')) as any;
             _approvalPatternService = mod.default || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.warn('[AIActionExecutor] ApprovalPatternService not available');
         }
     }
@@ -273,7 +273,7 @@ const AIActionExecutor = {
                     patternLearned: true,
                     patternInfo: patternResult
                 };
-            } catch (err) {
+            } catch (err: unknown) {
                 console.error('[AIActionExecutor] Pattern learning error:', err);
             }
         }
@@ -320,7 +320,7 @@ const AIActionExecutor = {
                     patternLearned: true,
                     patternInfo: patternResult
                 };
-            } catch (err) {
+            } catch (err: unknown) {
                 console.error('[AIActionExecutor] Pattern learning error:', err);
             }
         }
@@ -359,7 +359,7 @@ const AIActionExecutor = {
                 [actionId]);
 
             return { success: true, actionId, result };
-        } catch (err) {
+        } catch (err: unknown) {
             return { success: false, error: (err as Error).message };
         }
     },
@@ -443,7 +443,7 @@ const AIActionExecutor = {
                 lastDecisionAt: pattern.last_decision_at,
                 message: `Similar to ${pattern.decision_count} previous ${pattern.decision.toLowerCase()} decisions`
             };
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('[AIActionExecutor] getPatternInfo error:', error);
             return null;
         }
@@ -539,7 +539,7 @@ const AIActionExecutor = {
                 isActionable: true,
                 actionUrl: `/ai/actions/${actionId}`
             });
-        } catch (err) {
+        } catch (err: unknown) {
             console.warn('[AIActionExecutor] Failed to create notification:', (err as Error).message);
         }
     },

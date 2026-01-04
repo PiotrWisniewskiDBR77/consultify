@@ -1,16 +1,11 @@
-// Try to load BullMQ, fallback to mock if not available
-let Queue;
-let bullmqAvailable = false;
+import { Queue } from 'bullmq';
+import redisConfig from '../config/queue.config.js';
+import { aiLogger } from '../services/ai/logger.js';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
-try {
-    ({ Queue } = require('bullmq'));
-    bullmqAvailable = true;
-} catch (err) {
-    console.log('[Queue] BullMQ not available, using mock queue');
-    bullmqAvailable = false;
-}
-
-const redisConfig = require('../config/queue.config');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let aiQueue;
 
@@ -23,8 +18,8 @@ const createMockQueue = () => ({
     close: async () => { },
 });
 
-if (process.env.MOCK_REDIS === 'true' || !bullmqAvailable) {
-    console.log('[Queue] Using Mock Queue for ai-tasks');
+if (process.env.MOCK_REDIS === 'true') {
+    aiLogger.info('[Queue] Using Mock Queue for ai-tasks');
     aiQueue = createMockQueue();
 } else {
     aiQueue = new Queue('ai-tasks', redisConfig);

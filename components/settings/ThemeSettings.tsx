@@ -2,7 +2,7 @@
  * ThemeSettings - Theme/appearance settings
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sun, Moon, Monitor, Check } from 'lucide-react';
 
@@ -14,12 +14,14 @@ type Theme = 'light' | 'dark' | 'system';
 
 export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const [theme, setTheme] = useState<Theme>('system');
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) setTheme(savedTheme);
-  }, []);
+  // Use lazy initialization to load from localStorage
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme') as Theme;
+      return savedTheme || 'system';
+    }
+    return 'system';
+  });
 
   const handleThemeChange = (newTheme: Theme) => {
     setTheme(newTheme);

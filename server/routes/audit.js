@@ -9,7 +9,7 @@ import express from 'express';
 const router = express.Router();
 import AuditService from '../services/auditService.js';
 import auth from '../middleware/authMiddleware.js';
-const { orgContextMiddleware } = require('../middleware/orgContextMiddleware');
+import orgContextMiddleware from '../middleware/orgContextMiddleware.js';
 
 // GET /api/audit — List audit events for organization
 router.get('/', auth, async (req, res) => {

@@ -133,7 +133,7 @@ export const verifySuperAdmin = async (
         req.organizationId = decoded.organizationId || decoded.organization_id;
 
         next();
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(401).json({ error: 'Unauthorized' });
     }
 };

@@ -325,7 +325,7 @@ export class WebhookService {
         try {
             const result = await this.sendWebhook(webhook, payload.event as string, payload.data as Record<string, unknown>);
             return { success: true, result };
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             return { success: false, error: err.message };
         }
@@ -440,7 +440,7 @@ export class WebhookService {
             const result = await this.sendWebhook(webhook, delivery.event_type as string, payload);
             await this.updateDeliveryStatus(deliveryId, 'success', result.status, result.statusText);
             return { success: true, result };
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             await this.updateDeliveryStatus(deliveryId, 'failed', null, err.message);
             throw error;
@@ -478,7 +478,7 @@ export class WebhookService {
             try {
                 const result = await this.sendWebhook(webhook, eventType, data);
                 results.push({ webhookId: webhook.id, success: true, result });
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error as Error;
                 results.push({ webhookId: webhook.id, success: false, error: err.message });
                 console.error(`[Webhook] Failed to send to ${webhook.url}:`, err.message);
@@ -540,7 +540,7 @@ export class WebhookService {
             });
 
             return { success: response.ok, status: response.status };
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             console.error('[Slack] Notification failed:', err);
             return { success: false, error: err.message };

@@ -8,9 +8,11 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { verifyAdmin } = require('../middleware/adminMiddleware');
-const connectorService = import('connectorService.js');
-const connectorHealthService = import('connectorHealthService.js');
+import { verifyAdmin  } from '../middleware/adminMiddleware.js';
+import * as connectorServiceModule from '../services/connectorService.js';
+const connectorService = connectorServiceModule.default || connectorServiceModule;
+import * as connectorHealthServiceModule from '../services/connectorHealthService.js';
+const connectorHealthService = connectorHealthServiceModule.default || connectorHealthServiceModule;
 
 /**
  * Permission check middleware for CONNECTORS_MANAGE.

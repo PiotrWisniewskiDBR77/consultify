@@ -78,7 +78,7 @@ router.get('/context', verifyToken, validateQuery(AIContextQuerySchema), asyncHa
             { currentScreen: (req.query as any).screen as string | undefined }
         );
         res.json(context);
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
@@ -94,7 +94,7 @@ router.get('/context/:projectId', verifyToken, validateParams(ProjectIdParamSche
             { currentScreen: (req.query as any).screen as string | undefined }
         );
         res.json(context);
-    } catch (err) {
+    } catch (err: unknown) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
@@ -245,7 +245,7 @@ router.post('/chat/stream', verifyToken, validateBody(ChatStreamRequestSchema), 
             res.end();
         }
 
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('Stream Error:', err);
 
         if (accumulatedContent.length > 0) {
@@ -287,7 +287,7 @@ router.get('/stream/partial/:sessionId', verifyToken, validateParams(SessionIdPa
             updatedAt: row.updated_at,
             canResume: true
         });
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -325,7 +325,7 @@ router.post('/chat', verifyToken, validateBody(ChatRequestSchema), asyncHandler(
             prompt: result.prompt,
             policyLevel: ((result.responseContext as { policy?: { policyLevel?: string } })?.policy?.policyLevel) || 'ADVISORY'
         });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('Chat Error:', err);
         const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
         if (error.isBudgetError) {
@@ -347,7 +347,7 @@ router.get('/policy', verifyToken, asyncHandler(async (req: AuthRequest, res: Re
         const AIPolicyEngine = await getAIPolicyEngine();
         const info = await (AIPolicyEngine as any).getPolicySummary(req.organizationId as string);
         res.json(info);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -362,7 +362,7 @@ router.patch('/policy', verifyToken, validateBody(UpdatePolicyRequestSchema), as
         const AIPolicyEngine = await getAIPolicyEngine();
         const result = await AIPolicyEngine.updatePolicy(req.organizationId!, req.body);
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -378,7 +378,7 @@ router.get('/policy/can-perform/:actionType', verifyToken, validateParams(Action
             req.userId as string
         );
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -390,7 +390,7 @@ router.get('/memory/project/:projectId', verifyToken, validateParams(ProjectIdPa
         const AIMemoryManager = await getAIMemoryManager();
         const memory = await AIMemoryManager.buildProjectMemorySummary(req.params.projectId);
         res.json(memory);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -409,7 +409,7 @@ router.post('/memory/project/:projectId/decision', verifyToken, validateParams(P
             req.userId!
         );
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -419,7 +419,7 @@ router.get('/memory/user', verifyToken, asyncHandler(async (req: AuthRequest, re
         const AIMemoryManager = await getAIMemoryManager();
         const preferences = await AIMemoryManager.getUserPreferences(req.userId!);
         res.json(preferences);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -429,7 +429,7 @@ router.patch('/memory/user', verifyToken, validateBody(UpdateUserPreferencesRequ
         const AIMemoryManager = await getAIMemoryManager();
         const result = await AIMemoryManager.updateUserPreferences(req.userId!, req.body);
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -444,7 +444,7 @@ router.delete('/memory/project/:projectId', verifyToken, validateParams(ProjectI
         const AIMemoryManager = await getAIMemoryManager();
         const result = await AIMemoryManager.clearProjectMemory(req.params.projectId);
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -464,7 +464,7 @@ router.post('/actions/draft', verifyToken, validateBody(CreateDraftRequestSchema
             projectId
         );
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -479,7 +479,7 @@ router.get('/actions/pending', verifyToken, validateQuery(GetPendingActionsQuery
             req.organizationId as string
         );
         res.json(actions);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -489,7 +489,7 @@ router.patch('/actions/:id/approve', verifyToken, validateParams(ActionIdParamSc
         const AIActionExecutor = await getAIActionExecutor();
         const result = await AIActionExecutor.approveAction(req.params.id, req.userId!);
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -500,7 +500,7 @@ router.patch('/actions/:id/reject', verifyToken, validateParams(ActionIdParamSch
         const AIActionExecutor = await getAIActionExecutor();
         const result = await AIActionExecutor.rejectAction(req.params.id, req.userId!, reason);
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -510,7 +510,7 @@ router.post('/actions/:id/execute', verifyToken, validateParams(ActionIdParamSch
         const AIActionExecutor = await getAIActionExecutor();
         const result = await AIActionExecutor.executeAction(req.params.id, req.userId!);
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -549,7 +549,7 @@ router.get('/actions/proposals', verifyToken, validateQuery(GenerateProposalsQue
         const proposals = ActionProposalEngine.generateProposals(context);
 
         res.json(proposals);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI Proposals] Error:', err);
         const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
         if (error.isBudgetError) {
@@ -684,7 +684,7 @@ Return as a JSON array of initiatives.`;
         }));
 
         res.json(processedInitiatives);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI Recommend] Error:', err);
         const fallbackInitiatives = generateFallbackInitiatives(
             diagnosisReport.assessment || {},
@@ -753,7 +753,7 @@ Return a structured roadmap assigning each initiative to a specific quarter.`;
         }
 
         res.json(roadmapData);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI Roadmap] Error:', err);
         const fallback: Record<string, Record<string, string[]>> = {
             year1: { q1: [], q2: [], q3: [], q4: [] },
@@ -795,7 +795,7 @@ router.get('/audit', verifyToken, validateQuery(GetAuditLogsQuerySchema), asyncH
             offset: Number(offset) || 0
         });
         res.json(logs);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -806,7 +806,7 @@ router.get('/audit/stats', verifyToken, validateQuery(GetAuditLogsQuerySchema), 
         const AIAuditLogger = await getAIAuditLogger();
         const stats = await AIAuditLogger.getAuditStats(req.organizationId!, projectId as string | undefined);
         res.json(stats);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -817,7 +817,7 @@ router.post('/audit/:id/decision', verifyToken, validateParams(AuditIdParamSchem
         const AIAuditLogger = await getAIAuditLogger();
         const result = await AIAuditLogger.recordUserDecision(req.params.id, decision, feedback);
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -854,7 +854,7 @@ router.get('/explanations/:projectId', verifyToken, validateParams(ProjectIdPara
             total: explanations.length,
             explanations
         });
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -915,7 +915,7 @@ router.get('/explanations/export', verifyToken, validateQuery(ExportExplanations
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Content-Disposition', `attachment; filename="ai_explanations_${new Date().toISOString().split('T')[0]}.json"`);
         res.json(exportData);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({ error: (err as Error).message });
     }
 }));
@@ -935,7 +935,7 @@ router.get('/health', asyncHandler(async (req: AuthRequest, res: Response) => {
             providers: status.providers,
             checks: (status.lastCheck as { checks?: unknown[] })?.checks || []
         });
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({
             status: 'error',
             error: (err as Error).message
@@ -948,7 +948,7 @@ router.post('/health/diagnose', verifyToken, asyncHandler(async (req: AuthReques
         const { healthMonitor } = await import('../../services/ai/healthMonitor.js').then(m => m);
         const results = await healthMonitor.runDiagnostics();
         res.json(results);
-    } catch (err) {
+    } catch (err: unknown) {
         res.status(500).json({
             status: 'error',
             error: (err as Error).message
@@ -970,7 +970,7 @@ router.get('/suggestions', verifyToken, validateQuery(GetSuggestionsQuerySchema)
         );
 
         res.json({ suggestions });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Suggestions error:', err);
         res.status(500).json({
             error: (err as Error).message,
@@ -991,7 +991,7 @@ router.post('/suggestions', verifyToken, validateBody(PostSuggestionsRequestSche
         );
 
         res.json({ suggestions });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Suggestions error:', err);
         res.status(500).json({
             error: (err as Error).message,
@@ -1009,7 +1009,7 @@ router.get('/patterns', verifyToken, validateQuery(GetPatternsQuerySchema), asyn
         const { actionType } = req.query as { actionType?: string };
         const patterns = await ApprovalPatternService.getUserPatterns(req.userId!, actionType);
         res.json({ success: true, patterns });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Get patterns error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1019,7 +1019,7 @@ router.get('/patterns/stats', verifyToken, asyncHandler(async (req: AuthRequest,
     try {
         const stats = await ApprovalPatternService.getPatternStats(req.userId!);
         res.json(stats);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Pattern stats error:', err);
         res.status(500).json({ error: (err as Error).message });
     }
@@ -1034,7 +1034,7 @@ router.patch('/patterns/:patternId/auto-apply', verifyToken, validateParams(Patt
             req.userId!
         );
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Toggle auto-apply error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1047,7 +1047,7 @@ router.delete('/patterns/:patternId', verifyToken, validateParams(PatternIdParam
             req.userId!
         );
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Delete pattern error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1063,7 +1063,7 @@ router.post('/actions/:actionId/approve', verifyToken, validateParams(z.object({
             { alwaysApprove }
         );
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Approve action error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1080,7 +1080,7 @@ router.post('/actions/:actionId/reject', verifyToken, validateParams(z.object({ 
             { alwaysReject }
         );
         res.json(result);
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Reject action error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1108,7 +1108,7 @@ router.get('/actions/pending', verifyToken, validateQuery(GetPendingActionsQuery
         );
 
         res.json({ success: true, actions: actionsWithPatterns });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Get pending actions error:', err);
         res.status(500).json({ success: false, error: (err as Error).message, actions: [] });
     }
@@ -1136,7 +1136,7 @@ router.post('/feedback', verifyToken, validateBody(RecordFeedbackRequestSchema),
         }
 
         res.json({ success: true });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Feedback error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1163,7 +1163,7 @@ router.post('/report', verifyToken, validateBody(ReportMessageRequestSchema), as
         }
 
         res.json({ success: true });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Report error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1182,7 +1182,7 @@ router.get('/memory/metrics', verifyToken, validateQuery(GetMemoryMetricsQuerySc
         );
 
         res.json({ success: true, ...metrics });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Memory metrics error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1199,7 +1199,7 @@ router.get('/memory/current', verifyToken, validateQuery(GetCurrentMemoryQuerySc
         );
 
         res.json({ success: true, ...state });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Current memory state error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1216,7 +1216,7 @@ router.get('/memory/latency', verifyToken, validateQuery(GetMemoryLatencyQuerySc
         );
 
         res.json({ success: true, ...latency });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Latency metrics error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1240,7 +1240,7 @@ router.get('/suggestions', verifyToken, validateQuery(GetSuggestionsQuerySchema)
         });
 
         res.json({ success: true, suggestions });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Proactive suggestions error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1258,7 +1258,7 @@ router.post('/suggestions/action', verifyToken, validateBody(RecordSuggestionAct
         );
 
         res.json({ success: true });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Suggestion action error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1274,7 +1274,7 @@ router.get('/suggestions/metrics', verifyToken, validateQuery(GetSuggestionMetri
         );
 
         res.json({ success: true, metrics });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Suggestion metrics error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1297,7 +1297,7 @@ router.post('/quality/calculate', verifyToken, validateBody(CalculateQualityRequ
         });
 
         res.json({ success: true, metrics });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Quality calculation error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1313,7 +1313,7 @@ router.get('/quality/aggregate', verifyToken, validateQuery(GetAggregateQualityQ
         );
 
         res.json({ success: true, metrics });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Aggregate quality metrics error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }
@@ -1329,7 +1329,7 @@ router.get('/quality/trends', verifyToken, validateQuery(GetQualityTrendsQuerySc
         );
 
         res.json({ success: true, trends });
-    } catch (err) {
+    } catch (err: unknown) {
         console.error('[AI] Quality trends error:', err);
         res.status(500).json({ success: false, error: (err as Error).message });
     }

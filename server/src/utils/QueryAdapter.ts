@@ -52,7 +52,7 @@ export class QueryAdapter {
             return result.rows;
         } else {
             return new Promise<T[]>((resolve, reject) => {
-                this.db.all<T>(adapted.sql, adapted.params, (err, rows) => {
+                this.db.all<T>(adapted.sql, adapted.params, (err: Error | null, rows: unknown) => {
                     if (err) reject(err);
                     else resolve(rows || []);
                 });
@@ -71,7 +71,7 @@ export class QueryAdapter {
             return result.rows[0] || null;
         } else {
             return new Promise<T | null>((resolve, reject) => {
-                this.db.get<T>(adapted.sql, adapted.params, (err, row) => {
+                this.db.get<T>(adapted.sql, adapted.params, (err: Error | null, row: unknown) => {
                     if (err) reject(err);
                     else resolve(row || null);
                 });

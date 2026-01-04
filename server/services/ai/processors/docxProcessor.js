@@ -9,9 +9,9 @@
  * @version 1.0.0
  */
 
-const mammoth = require('mammoth');
-const fs = require('fs');
-const path = require('path');
+import mammoth from 'mammoth';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Process a DOCX/DOC file and extract text content
@@ -58,7 +58,7 @@ async function process(filePath, options = {}) {
 
         // Extract raw text
         const textResult = await mammoth.extractRawText(mammothOptions);
-        
+
         // Also get HTML for structure analysis if needed
         let structuredText = textResult.value;
         let htmlContent = null;
@@ -66,7 +66,7 @@ async function process(filePath, options = {}) {
         if (preserveStructure) {
             const htmlResult = await mammoth.convertToHtml(mammothOptions);
             htmlContent = htmlResult.value;
-            
+
             // Convert HTML headings to markdown-style markers for better chunking
             structuredText = convertHtmlToStructuredText(htmlResult.value);
         }
@@ -180,6 +180,15 @@ function getSupportedMimeTypes() {
         'application/msword'
     ];
 }
+
+export {
+process,
+    isSupported,
+    getSupportedExtensions,
+    getSupportedMimeTypes,
+    convertHtmlToStructuredText,
+    countWords
+};
 
 export default {
     process,

@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-const ActionDecisionService = require('../ai/actionDecisionService');
+import ActionDecisionService from '../ai/actionDecisionService.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
 // Apply auth to all routes in this file
@@ -83,7 +83,7 @@ router.get('/audit', async (req, res) => {
 router.post('/decisions/:id/execute', async (req, res) => {
     try {
         const { id } = req.params;
-        const ActionExecutionAdapter = require('../ai/actionExecutionAdapter');
+
 
         // RBAC check: ADMIN only their own org, SUPERADMIN any org
         // Fetch specific decision to check organization_id
@@ -122,7 +122,7 @@ router.post('/decisions/:id/execute', async (req, res) => {
 router.post('/decisions/:id/dry-run', async (req, res) => {
     try {
         const { id } = req.params;
-        const ActionExecutionAdapter = require('../ai/actionExecutionAdapter');
+
 
         // RBAC check
         if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'SUPERADMIN')) {
@@ -159,7 +159,7 @@ router.post('/decisions/:id/dry-run', async (req, res) => {
  */
 router.get('/audit/export', async (req, res) => {
     try {
-        const AuditExportService = require('../ai/auditExport');
+
 
         // RBAC check
         if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'SUPERADMIN')) {
@@ -198,7 +198,7 @@ router.get('/audit/export', async (req, res) => {
  */
 router.get('/executions/export', async (req, res) => {
     try {
-        const AuditExportService = require('../ai/auditExport');
+
 
         // RBAC check
         if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'SUPERADMIN')) {
@@ -234,7 +234,7 @@ router.get('/executions/export', async (req, res) => {
 // STEP 9.8: POLICY ENGINE ROUTES
 // ==========================================
 
-const PolicyEngine = require('../ai/policyEngine');
+import PolicyEngine from '../ai/policyEngine.js';
 
 /**
  * @route GET /api/ai/actions/policy-rules
@@ -382,7 +382,7 @@ router.post('/proposals/:id/evaluate-policy', async (req, res) => {
             return res.status(403).json({ error: 'Forbidden: Admin access required' });
         }
 
-        const ActionProposalEngine = require('../ai/actionProposalEngine');
+
         const organizationId = req.user.role === 'SUPERADMIN' && req.query.organizationId
             ? req.query.organizationId
             : req.organizationId;
@@ -404,8 +404,11 @@ router.post('/proposals/:id/evaluate-policy', async (req, res) => {
 // STEP 11: ASYNC JOB ENDPOINTS
 // ==========================================
 
-const AsyncJobService = require('../ai/asyncJobService');
+import AsyncJobService from '../ai/asyncJobService.js';
 import { v4 as uuidv4 } from 'uuid';
+import ActionExecutionAdapter from '../ai/actionExecutionAdapter.js';
+import AuditExportService from '../ai/auditExport.js';
+import ActionProposalEngine from '../ai/actionProposalEngine.js';
 
 /**
  * @route POST /api/ai/actions/decisions/:id/execute-async

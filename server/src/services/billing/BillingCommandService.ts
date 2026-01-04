@@ -340,7 +340,7 @@ export class BillingCommandService {
                         customer: billing.stripe_customer_id
                     }) as Promise<any>);
                 }
-            } catch (error) {
+            } catch (error: unknown) {
                 console.warn('Could not retrieve Stripe payment method details:', error);
             }
         }
@@ -387,7 +387,7 @@ export class BillingCommandService {
         if (deps.stripe && pm.stripe_payment_method_id) {
             try {
                 await deps.stripe.paymentMethods.detach(pm.stripe_payment_method_id);
-            } catch (error) {
+            } catch (error: unknown) {
                 console.warn('Could not detach payment method from Stripe:', error);
             }
         }
@@ -415,7 +415,7 @@ export class BillingCommandService {
                         invoice_settings: { default_payment_method: pm.stripe_payment_method_id }
                     });
                 }
-            } catch (error) {
+            } catch (error: unknown) {
                 console.warn('Could not update Stripe default payment method:', error);
             }
         }

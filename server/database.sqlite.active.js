@@ -7,9 +7,10 @@ const __dirname = dirname(__filename);
 const require = createRequire(import.meta.url);
 
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+import path from 'path';
 // const bcrypt = require('bcryptjs'); // Assuming bcrypt wasn't used or migrate it too if needed
 import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 const dbPath = process.env.NODE_ENV === 'test'
     ? ':memory:'
@@ -7059,6 +7060,11 @@ function initDb() {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             UNIQUE(user_id, organization_id, notification_type, channel)
         )`);
+
+        // Migration: Add organization_id if missing
+        db.run(`ALTER TABLE notification_preferences ADD COLUMN organization_id TEXT`, (err) => {
+            // Ignore error if column exists
+        });
         db.run(`CREATE INDEX IF NOT EXISTS idx_notification_prefs_user ON notification_preferences(user_id)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_notification_prefs_org ON notification_preferences(organization_id)`);
 

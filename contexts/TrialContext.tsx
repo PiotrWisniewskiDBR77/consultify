@@ -94,7 +94,7 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (user) {
             refreshTrialStatus();
         } else {
-            setState({ ...defaultState, loading: false });
+            queueMicrotask(() => setState({ ...defaultState, loading: false }));
         }
     }, [user]);
 

@@ -7,11 +7,18 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const fs = require('fs');
-const path = require('path');
-const db = require('../../database');
+import fs from 'fs';
+import path from 'path';
+import db from '../../database.js';
 import { v4 as uuidv4 } from 'uuid';
-const { aiLogger } = require('./logger');
+import { aiLogger } from './logger.js';
+
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 // PDF parsing libraries - these may need to be installed
 let pdfParse, xlsxParse;
@@ -121,7 +128,7 @@ class KnowledgeIndexer {
                     updated_at TEXT DEFAULT (datetime('now'))
                 )
             `;
-            
+
             const createChunksTable = `
                 CREATE TABLE IF NOT EXISTS knowledge_chunks (
                     id TEXT PRIMARY KEY,
@@ -160,16 +167,16 @@ class KnowledgeIndexer {
             skipped: []
         };
 
-        const sources = sourceNames 
+        const sources = sourceNames
             ? Object.entries(KNOWLEDGE_SOURCES).filter(([name]) => sourceNames.includes(name))
             : Object.entries(KNOWLEDGE_SOURCES);
 
         for (const [sourceName, sourceConfig] of sources) {
             aiLogger.info('KnowledgeIndexer', `Processing source: ${sourceName}`);
-            
+
             for (const relativeFilePath of sourceConfig.files) {
                 const filePath = path.join(this.projectRoot, relativeFilePath);
-                
+
                 try {
                     // Check if file exists
                     if (!fs.existsSync(filePath)) {
@@ -196,7 +203,7 @@ class KnowledgeIndexer {
                     });
 
                     results.success.push({ file: relativeFilePath, chunks: result.chunkCount });
-                    
+
                 } catch (error) {
                     aiLogger.error('KnowledgeIndexer', `Error indexing ${relativeFilePath}: ${error.message}`);
                     results.failed.push({ file: relativeFilePath, error: error.message });
@@ -238,7 +245,7 @@ class KnowledgeIndexer {
         // Create document record
         const docId = uuidv4();
         const filename = path.basename(filePath);
-        
+
         await this.insertDocument({
             id: docId,
             filename,
@@ -253,7 +260,7 @@ class KnowledgeIndexer {
         for (let i = 0; i < chunks.length; i++) {
             try {
                 const embedding = await this.generateEmbedding(chunks[i]);
-                
+
                 await this.insertChunk({
                     id: `${docId}-chunk-${i}`,
                     docId,
@@ -262,7 +269,7 @@ class KnowledgeIndexer {
                     embedding,
                     metadata: { ...config.metadata, chunkIndex: i }
                 });
-                
+
                 successCount++;
             } catch (error) {
                 aiLogger.warn('KnowledgeIndexer', `Error creating chunk ${i}: ${error.message}`);
@@ -305,13 +312,13 @@ class KnowledgeIndexer {
         for (const sheetName of workbook.SheetNames) {
             const sheet = workbook.Sheets[sheetName];
             const jsonData = xlsxParse.utils.sheet_to_json(sheet, { header: 1 });
-            
+
             // Convert to readable text
             const textContent = jsonData
                 .filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''))
                 .map(row => row.filter(cell => cell !== null && cell !== undefined).join(' | '))
                 .join('\n');
-            
+
             sheetContents[sheetName] = textContent;
         }
 
@@ -323,18 +330,18 @@ class KnowledgeIndexer {
      */
     processExcelChunks(sheetContents, config) {
         const chunks = [];
-        
+
         for (const [sheetName, content] of Object.entries(sheetContents)) {
             if (!content || content.trim().length < 50) continue;
-            
+
             // Add sheet context to each chunk
             const sheetChunks = this.chunkText(content, config.chunkSize || 800, config.overlap || 100);
-            
+
             for (const chunk of sheetChunks) {
                 chunks.push(`[Sheet: ${sheetName}]\n${chunk}`);
             }
         }
-        
+
         return chunks;
     }
 
@@ -343,19 +350,19 @@ class KnowledgeIndexer {
      */
     chunkText(text, chunkSize = 1000, overlap = 200) {
         if (!text || text.length === 0) return [];
-        
+
         const chunks = [];
         const sentences = text.split(/(?<=[.!?])\s+/);
-        
+
         let currentChunk = '';
         let lastChunk = '';
-        
+
         for (const sentence of sentences) {
             if (currentChunk.length + sentence.length > chunkSize) {
                 if (currentChunk.length > 0) {
                     chunks.push(currentChunk.trim());
                     lastChunk = currentChunk;
-                    
+
                     // Start new chunk with overlap
                     const overlapText = lastChunk.slice(-overlap);
                     currentChunk = overlapText + ' ' + sentence;
@@ -368,12 +375,12 @@ class KnowledgeIndexer {
                 currentChunk += (currentChunk ? ' ' : '') + sentence;
             }
         }
-        
+
         // Add remaining content
         if (currentChunk.trim().length > 0) {
             chunks.push(currentChunk.trim());
         }
-        
+
         return chunks;
     }
 
@@ -384,7 +391,7 @@ class KnowledgeIndexer {
         if (!this.embeddingService) {
             return null;
         }
-        
+
         try {
             const embedding = await this.embeddingService.generateEmbedding(text);
             return JSON.stringify(embedding);
@@ -410,7 +417,7 @@ class KnowledgeIndexer {
                 doc.sourceType,
                 JSON.stringify(doc.metadata || {}),
                 doc.chunkCount
-            ], function(err) {
+            ], function (err) {
                 if (err) reject(err);
                 else resolve(this.lastID);
             });
@@ -433,7 +440,7 @@ class KnowledgeIndexer {
                 chunk.content,
                 chunk.embedding,
                 JSON.stringify(chunk.metadata || {})
-            ], function(err) {
+            ], function (err) {
                 if (err) reject(err);
                 else resolve(this.lastID);
             });
@@ -457,7 +464,7 @@ class KnowledgeIndexer {
      */
     async search(query, options = {}) {
         const { limit = 5, minSimilarity = 0.5, sourceTypes = null } = options;
-        
+
         if (!this.embeddingService) {
             return this.keywordSearch(query, { limit, sourceTypes });
         }
@@ -471,7 +478,7 @@ class KnowledgeIndexer {
 
             // Get all chunks with embeddings
             const chunks = await this.getAllChunksWithEmbeddings(sourceTypes);
-            
+
             // Calculate similarities
             const scored = chunks.map(chunk => {
                 let chunkEmbedding;
@@ -480,7 +487,7 @@ class KnowledgeIndexer {
                 } catch {
                     return { ...chunk, similarity: 0 };
                 }
-                
+
                 const similarity = this.cosineSimilarity(queryEmbedding, chunkEmbedding);
                 return { ...chunk, similarity };
             });
@@ -509,13 +516,13 @@ class KnowledgeIndexer {
      */
     async keywordSearch(query, options = {}) {
         const { limit = 5, sourceTypes = null } = options;
-        
+
         return new Promise((resolve, reject) => {
             const keywords = query
                 .toLowerCase()
                 .split(/\s+/)
                 .filter(w => w.length > 3);
-            
+
             if (keywords.length === 0) {
                 return resolve([]);
             }
@@ -585,17 +592,17 @@ class KnowledgeIndexer {
      */
     cosineSimilarity(vecA, vecB) {
         if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
-        
+
         let dot = 0;
         let normA = 0;
         let normB = 0;
-        
+
         for (let i = 0; i < vecA.length; i++) {
             dot += vecA[i] * vecB[i];
             normA += vecA[i] * vecA[i];
             normB += vecB[i] * vecB[i];
         }
-        
+
         const denominator = Math.sqrt(normA) * Math.sqrt(normB);
         return denominator === 0 ? 0 : dot / denominator;
     }
@@ -630,7 +637,7 @@ class KnowledgeIndexer {
                 WHERE doc_id IN (SELECT id FROM knowledge_docs WHERE source_type = ?)
             `, [sourceType], (err) => {
                 if (err) return reject(err);
-                
+
                 db.run('DELETE FROM knowledge_docs WHERE source_type = ?', [sourceType], (err2) => {
                     if (err2) reject(err2);
                     else resolve();
@@ -642,6 +649,12 @@ class KnowledgeIndexer {
 
 // Singleton instance
 const knowledgeIndexer = new KnowledgeIndexer();
+
+export {
+    KnowledgeIndexer,
+    knowledgeIndexer,
+    KNOWLEDGE_SOURCES
+};
 
 export default {
     KnowledgeIndexer,

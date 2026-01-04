@@ -101,4 +101,8 @@ if (require.main === module) {
     });
 }
 
+export {
+seedDemoTemplate, DEFAULT_DEMO_TEMPLATE
+};
+
 export default { seedDemoTemplate, DEFAULT_DEMO_TEMPLATE };

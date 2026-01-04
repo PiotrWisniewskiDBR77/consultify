@@ -18,10 +18,10 @@
  * @module seedEnglishTestData
  */
 
-const path = require('path');
-const bcrypt = require('bcryptjs');
+import path from 'path';
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-const crypto = require('crypto');
+import crypto from 'crypto';
 const sqlite3 = require('sqlite3').verbose();
 
 // Production guard
@@ -644,6 +644,10 @@ async function main() {
 if (require.main === module) {
     main();
 }
+
+export {
+seedAll, cleanup, verify
+};
 
 export default { seedAll, cleanup, verify };
 

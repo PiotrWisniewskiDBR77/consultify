@@ -6,7 +6,8 @@
  */
 
 const request = require('supertest');
-const app = require('../../app');
+const appModule = require('../../index.cjs');
+const app = appModule.default || appModule;
 const db = require('../../database');
 const { v4: uuidv4 } = require('uuid');
 
@@ -188,7 +189,7 @@ describe('Management Reports API', () => {
         it('should filter by report type', async () => {
             const response = await request(app)
                 .get('/api/management-reports/history')
-                .query({ 
+                .query({
                     organizationId: testOrganization.id,
                     reportType: 'TEAM_MEETING'
                 })

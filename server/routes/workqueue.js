@@ -9,10 +9,13 @@ const router = express.Router();
 import auth from '../middleware/authMiddleware.js';
 import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
-const WorkqueueService = import('workqueueService.js');
-const SLAService = import('slaService.js');
-const NotificationOutboxService = import('notificationOutboxService.js');
-const AsyncJobService = require('../ai/asyncJobService');
+import * as WorkqueueServiceModule from '../services/workqueueService.js';
+const WorkqueueService = WorkqueueServiceModule.default || WorkqueueServiceModule;
+import * as SLAServiceModule from '../services/slaService.js';
+const SLAService = SLAServiceModule.default || SLAServiceModule;
+import * as NotificationOutboxServiceModule from '../services/notificationOutboxService.js';
+const NotificationOutboxService = NotificationOutboxServiceModule.default || NotificationOutboxServiceModule;
+import AsyncJobService from '../ai/asyncJobService.js';
 
 /**
  * @route GET /api/workqueue/approvals

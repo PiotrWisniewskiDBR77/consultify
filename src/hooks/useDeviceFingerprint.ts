@@ -2,22 +2,19 @@
 // This hook can be used to generate a unique device fingerprint
 // Currently not implemented - placeholder for future use
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+
+// Generate device fingerprint
+// This is a placeholder implementation
+const generateFingerprint = (): string | null => {
+    // In a real implementation, this would collect various device characteristics
+    // For now, return null
+    return null;
+};
 
 export const useDeviceFingerprint = (): string | null => {
-    const [fingerprint, setFingerprint] = useState<string | null>(null);
-
-    useEffect(() => {
-        // Generate device fingerprint
-        // This is a placeholder implementation
-        const generateFingerprint = () => {
-            // In a real implementation, this would collect various device characteristics
-            // For now, return null
-            return null;
-        };
-
-        setFingerprint(generateFingerprint());
-    }, []);
+    // Use lazy initialization to compute fingerprint once
+    const [fingerprint] = useState<string | null>(() => generateFingerprint());
 
     return fingerprint;
 };

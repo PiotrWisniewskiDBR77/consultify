@@ -133,7 +133,7 @@ export class IngestionPipeline {
                     );
 
                     storedCount++;
-                } catch (error) {
+                } catch (error: unknown) {
                     const err = error as Error;
                     aiLogger.warn('Ingestion', `Failed to embed chunk ${i}: ${err.message}`);
                     this.stats.errors++;
@@ -151,7 +151,7 @@ export class IngestionPipeline {
                 chunksCreated: storedCount,
                 totalChunks: chunks.length
             };
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('Ingestion', `Failed to process ${filePath}: ${err.message}`);
             this.stats.errors++;
@@ -183,7 +183,7 @@ export class IngestionPipeline {
                 try {
                     const result = await this.ingestFile(file, ingestionOptions);
                     results.push(result);
-                } catch (error) {
+                } catch (error: unknown) {
                     const err = error as Error;
                     results.push({
                         file,
@@ -198,7 +198,7 @@ export class IngestionPipeline {
                 failed: results.filter(result => result.error).length,
                 results
             };
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('Ingestion', `Failed to process directory: ${err.message}`);
             throw err;
@@ -252,7 +252,7 @@ export class IngestionPipeline {
                     );
 
                     storedCount++;
-                } catch (error) {
+                } catch (error: unknown) {
                     const err = error as Error;
                     aiLogger.warn('Ingestion', `Failed to embed chunk ${i}: ${err.message}`);
                 }
@@ -267,7 +267,7 @@ export class IngestionPipeline {
                 chunksCreated: storedCount,
                 totalChunks: chunks.length
             };
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('Ingestion', `Failed to ingest text: ${err.message}`);
             throw err;

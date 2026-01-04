@@ -72,7 +72,7 @@ class DunningCron {
 
             try {
                 await deps.dunningService.processScheduledRetries();
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error instanceof Error ? error : new Error(String(error));
                 logger.error('[DunningCron] Processing failed:', err);
 
@@ -82,7 +82,7 @@ class DunningCron {
                         deps.sentry.captureException(err, {
                             tags: { component: 'dunning', job: 'scheduled' },
                         });
-                    } catch (e) {
+                    } catch (e: unknown) {
                         // Sentry not available
                     }
                 }

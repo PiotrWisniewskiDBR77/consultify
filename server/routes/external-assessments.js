@@ -5,8 +5,9 @@
 
 import express from 'express';
 const router = express.Router();
-const ExternalAssessmentService = import('externalAssessmentService.js');
-const { upload } = require('../middleware/fileUploadMiddleware');
+import * as ExternalAssessmentServiceModule from '../services/externalAssessmentService.js';
+const ExternalAssessmentService = ExternalAssessmentServiceModule.default || ExternalAssessmentServiceModule;
+import { upload  } from '../middleware/fileUploadMiddleware.js';
 import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);
@@ -82,7 +83,7 @@ router.get('/organization/:orgId', async (req, res) => {
         }
 
         // Fetch all external assessments for this org
-        import { getDatabase } from '../src/database/Database.js';
+        const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
         const sql = `
             SELECT id, framework_type, framework_version, assessment_date, 
@@ -123,7 +124,7 @@ router.post('/:id/remap', async (req, res) => {
         const updatedMapping = { ...assessment.drd_axis_mapping, ...customMapping };
 
         // Save updated mapping
-        import { getDatabase } from '../src/database/Database.js';
+        const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
         const sql = `
             UPDATE external_digital_assessments

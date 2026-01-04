@@ -1,13 +1,14 @@
-import { getDatabase } from '../src/database/Database.js';
-const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
-const ActionDecisionService = require('./actionDecisionService');
-const auditLogger = require('../utils/auditLogger');
-const { ACTION_ERROR_CODES, classifyError } = require('./actionErrors');
-
-const TaskExecutor = require('./actionExecutors/taskExecutor');
-const PlaybookExecutor = require('./actionExecutors/playbookExecutor');
-const MeetingExecutor = require('./actionExecutors/meetingExecutor');
+import ActionDecisionService from './actionDecisionService.js';
+import * as auditLogger from '../utils/auditLogger.js';
+import actionErrors from './actionErrors.js';
+const { ACTION_ERROR_CODES, classifyError } = actionErrors;
+import TaskExecutor from './actionExecutors/taskExecutor.js';
+import PlaybookExecutor from './actionExecutors/playbookExecutor.js';
+import MeetingExecutor from './actionExecutors/meetingExecutor.js';
+import db from '../database.js'; // Assuming this is the new way to get the db instance
+// New imports from the instruction
+import ActionProposalEngine from './actionProposalEngine.js';
 
 /**
  * ActionExecutionAdapter
@@ -40,12 +41,12 @@ const ActionExecutionAdapter = {
             });
             return {
                 success: false,
-                error: `Decision not found: ${decisionId}`,
+                error: `Decision not found: ${decisionId} `,
                 error_code: ACTION_ERROR_CODES.NOT_FOUND
             };
         }
 
-        const correlationId = decision.correlation_id || `corr-${uuidv4()}`;
+        const correlationId = decision.correlation_id || `corr - ${uuidv4()} `;
         const orgId = decision.organization_id;
 
         // 2. Validate state
@@ -60,7 +61,7 @@ const ActionExecutionAdapter = {
             });
             return {
                 success: false,
-                error: `Decision ${decisionId} is ${decision.decision}, but only APPROVED/MODIFIED are executable`,
+                error: `Decision ${decisionId} is ${decision.decision}, but only APPROVED / MODIFIED are executable`,
                 error_code: ACTION_ERROR_CODES.VALIDATION_ERROR,
                 correlation_id: correlationId
             };
@@ -151,7 +152,7 @@ const ActionExecutionAdapter = {
                 });
                 return {
                     success: false,
-                    error: `Unknown or unsupported action type: ${actionType}`,
+                    error: `Unknown or unsupported action type: ${actionType} `,
                     error_code: ACTION_ERROR_CODES.VALIDATION_ERROR,
                     correlation_id: correlationId
                 };
@@ -207,15 +208,15 @@ const ActionExecutionAdapter = {
         const durationMs = Date.now() - startTime;
 
         // 7. Log execution result
-        const executionId = `ax-${uuidv4()}`;
+        const executionId = `ax - ${uuidv4()} `;
         const now = new Date().toISOString();
 
         await new Promise((resolve, reject) => {
             db.run(
-                `INSERT INTO action_executions (
-                    id, decision_id, proposal_id, action_type, organization_id, correlation_id,
-                    executed_by, status, result, error_code, error_message, duration_ms, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO action_executions(
+    id, decision_id, proposal_id, action_type, organization_id, correlation_id,
+    executed_by, status, result, error_code, error_message, duration_ms, created_at
+) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     executionId, decisionId, snapshot.proposal_id || 'unknown', actionType, orgId, correlationId,
                     executedBy, status, JSON.stringify(execResult), errorCode, errorMessage, durationMs, now

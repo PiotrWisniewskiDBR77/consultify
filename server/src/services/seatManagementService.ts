@@ -273,7 +273,7 @@ export async function autoAddSeatOnInvite(orgId: string, userId: string): Promis
                 ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [transactionId, orgId, 'auto_add', 1, config.seat_price_monthly || 0, config.seat_price_monthly || 0, 'auto', userId, 'Auto-added on invitation']
             );
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('Error recording auto-add transaction:', err);
         }
 

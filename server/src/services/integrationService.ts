@@ -354,7 +354,7 @@ class IntegrationServiceClass {
             });
 
             return { syncLogId, ...result };
-        } catch (error) {
+        } catch (error: unknown) {
             // Update sync log with error
             await this.updateSyncLog(syncLogId, {
                 status: 'failed',
@@ -468,7 +468,7 @@ class IntegrationServiceClass {
                 lastSync: integration.lastSyncAt,
                 lastSyncStatus: integration.lastSyncStatus
             };
-        } catch (error) {
+        } catch (error: unknown) {
             return {
                 status: 'unhealthy',
                 error: (error as Error).message

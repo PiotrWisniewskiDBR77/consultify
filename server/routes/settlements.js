@@ -12,9 +12,10 @@
 
 import express from 'express';
 const router = express.Router();
-const SettlementService = import('settlementService.js');
+import * as SettlementServiceModule from '../services/settlementService.js';
+const SettlementService = SettlementServiceModule.default || SettlementServiceModule;
 import authMiddleware from '../middleware/authMiddleware.js';
-const { requireRole } = require('../middleware/rbac');
+import { requireRole  } from '../middleware/rbac.js';
 
 // All routes require SUPERADMIN
 router.use(authMiddleware);

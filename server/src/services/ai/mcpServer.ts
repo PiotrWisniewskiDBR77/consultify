@@ -235,7 +235,7 @@ export class MCPServer {
                 status: 'SUCCESS',
                 data: result
             };
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.error('MCP', `Execution failed for ${toolName}`, err);
             return {

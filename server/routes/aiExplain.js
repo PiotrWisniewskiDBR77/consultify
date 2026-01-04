@@ -9,7 +9,8 @@
 
 import express from 'express';
 const router = express.Router();
-const EvidenceLedgerService = import('evidenceLedgerService.js');
+import * as EvidenceLedgerServiceModule from '../services/evidenceLedgerService.js';
+const EvidenceLedgerService = EvidenceLedgerServiceModule.default || EvidenceLedgerServiceModule;
 import authMiddleware from '../middleware/authMiddleware.js';
 
 // Apply auth to all routes

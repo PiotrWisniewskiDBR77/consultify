@@ -4,10 +4,14 @@
 
 import express from 'express';
 const router = express.Router();
-const MyWorkService = import('myWorkService.js');
-const ExecutionMonitorService = import('executionMonitorService.js');
-const FocusService = import('focusService.js');
-const InboxService = import('inboxService.js');
+import * as MyWorkServiceModule from '../services/myWorkService.js';
+const MyWorkService = MyWorkServiceModule.default || MyWorkServiceModule;
+import * as ExecutionMonitorServiceModule from '../services/executionMonitorService.js';
+const ExecutionMonitorService = ExecutionMonitorServiceModule.default || ExecutionMonitorServiceModule;
+import * as FocusServiceModule from '../services/focusService.js';
+const FocusService = FocusServiceModule.default || FocusServiceModule;
+import * as InboxServiceModule from '../services/inboxService.js';
+const InboxService = InboxServiceModule.default || InboxServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/my-work
@@ -446,7 +450,7 @@ router.get('/workload', verifyToken, async (req, res) => {
 router.get('/stats', verifyToken, async (req, res) => {
     try {
         const { period } = req.query; // 'week', 'month', 'quarter'
-        import { getDatabase } from '../src/database/Database.js';
+        const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
         
         // Calculate date range based on period
@@ -590,7 +594,7 @@ const db = getDatabase();
 router.get('/team-workload', verifyToken, async (req, res) => {
     try {
         const { projectId } = req.query;
-        import { getDatabase } from '../src/database/Database.js';
+        const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
         
         // Get team members and their task counts

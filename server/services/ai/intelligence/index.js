@@ -4,8 +4,13 @@
  * Exports all intelligence services for enterprise AI consulting.
  */
 
-const IndustryIntelligenceService = require('./industryIntelligenceService');
-const BenchmarkDataService = require('./benchmarkDataService');
+import IndustryIntelligenceService from './industryIntelligenceService.js';
+import BenchmarkDataService from './benchmarkDataService.js';
+
+export {
+IndustryIntelligenceService,
+    BenchmarkDataService
+};
 
 export default {
     IndustryIntelligenceService,

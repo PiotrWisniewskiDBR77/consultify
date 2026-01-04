@@ -150,7 +150,7 @@ function parsePostgresUrl(url: string): PostgresConfig | null {
             connectionTimeoutMillis: connectionTimeout,
             statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '60000', 10),
         };
-    } catch (e) {
+    } catch (e: unknown) {
         const error = e instanceof Error ? e : new Error(String(e));
         console.error('Failed to parse DATABASE_URL:', error.message);
         return null;

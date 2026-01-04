@@ -180,7 +180,7 @@ export class CircuitBreaker {
                 const result = await fn();
                 await this.recordSuccess();
                 return result;
-            } catch (error) {
+            } catch (error: unknown) {
                 lastError = error as Error;
 
                 if (this._isSystemFailure(lastError)) {
@@ -346,7 +346,7 @@ export class CircuitBreaker {
                 ],
                 { fallback: true }
             );
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.warn('CircuitBreaker', `Failed to persist state for [${this.name}]: ${err.message}`);
         }
@@ -397,7 +397,7 @@ export class EnhancedCircuitBreaker extends CircuitBreaker {
                 if (this.consecutiveHealthChecks >= 3 && this.state === STATES.HALF_OPEN) {
                     this.beginGradualRecovery();
                 }
-            } catch (error) {
+            } catch (error: unknown) {
                 const err = error as Error;
                 aiLogger.warn('CircuitBreaker', `Health check failed for [${this.name}]: ${err.message}`);
                 this.consecutiveHealthChecks = 0;
@@ -593,7 +593,7 @@ export const CircuitBreakerService = {
                 }
             }
             stateRestored = true;
-        } catch (error) {
+        } catch (error: unknown) {
             const err = error as Error;
             aiLogger.warn('CircuitBreaker', `Failed to restore states: ${err.message}`);
         }
@@ -635,7 +635,7 @@ export const CircuitBreakerService = {
                 const fn = createFn(provider);
                 const result = await breaker.execute(fn, options);
                 return { result, provider };
-            } catch (error) {
+            } catch (error: unknown) {
                 lastError = error as Error;
                 aiLogger.warn('CircuitBreaker', `Provider [${provider}] failed: ${lastError.message}`);
             }

@@ -13,9 +13,9 @@
  */
 
 require('dotenv').config();
-const { Pool } = require('pg');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+import { Pool } from 'pg';
+import bcrypt from 'bcryptjs';
+import { v4: uuidv4 } from 'uuid';
 
 const databaseUrl = process.env.DATABASE_URL;
 

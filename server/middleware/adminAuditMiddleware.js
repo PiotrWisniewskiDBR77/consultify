@@ -237,6 +237,17 @@ const auditDataExport = createAuditMiddleware({
     })
 });
 
+export {
+createAuditMiddleware,
+    auditLogin,
+    auditLogout,
+    auditUserAction,
+    auditOrgAction,
+    auditSecurityAction,
+    auditBulkAction,
+    auditDataExport
+};
+
 export default {
     createAuditMiddleware,
     auditLogin,

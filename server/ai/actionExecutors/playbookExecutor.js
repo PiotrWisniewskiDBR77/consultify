@@ -1,4 +1,4 @@
-const HelpService = require('../../services/helpService');
+import HelpService from '../../services/helpService.js';
 
 /**
  * PlaybookExecutor

@@ -6,7 +6,7 @@
  */
 
 require('dotenv').config();
-const { Pool } = require('pg');
+import { Pool } from 'pg';
 
 const databaseUrl = process.env.DATABASE_URL;
 

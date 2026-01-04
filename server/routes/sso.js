@@ -9,11 +9,13 @@ import express from 'express';
 const router = express.Router();
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
-const config = require('../config');
+import config from '../config.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
-const { requireOrgAccess } = require('../middleware/rbac');
-const SSOService = import('ssoService.js');
+import rbacMiddleware from '../middleware/rbac.js';
+const { requireOrgAccess } = rbacMiddleware;
+import * as SSOServiceModule from '../services/ssoService.js';
+const SSOService = SSOServiceModule.default || SSOServiceModule;
 import AuditService from '../services/auditService.js';
 
 // ==========================================

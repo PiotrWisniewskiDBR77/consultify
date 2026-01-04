@@ -5,7 +5,8 @@
 
 import express from 'express';
 const router = express.Router();
-const pricingService = import('pricingService.js');
+import * as pricingServiceModule from '../services/pricingService.js';
+const pricingService = pricingServiceModule.default || pricingServiceModule;
 import authMiddleware from '../middleware/authMiddleware.js';
 
 /**

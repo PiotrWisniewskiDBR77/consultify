@@ -295,7 +295,7 @@ class ConsultantServiceClass {
                 uses_count: null,
                 metadata: result.metadata as Record<string, unknown>
             };
-        } catch (err) {
+        } catch (err: unknown) {
             throw new Error('Invalid or expired invite code');
         }
     }

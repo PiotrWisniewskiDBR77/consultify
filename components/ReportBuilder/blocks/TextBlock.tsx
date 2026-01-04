@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ReportBlock, TextBlockContent } from '../../../types';
 
 interface TextBlockProps {
@@ -10,10 +10,16 @@ export const TextBlock: React.FC<TextBlockProps> = ({ block, onUpdate }) => {
     const content = block.content as TextBlockContent | undefined;
     const [text, setText] = useState(content?.text || '');
     const [isEditing, setIsEditing] = useState(false);
+    const prevContentRef = useRef(content?.text);
 
+    // Sync text from props only when content.text actually changes from parent
     useEffect(() => {
         const newText = content?.text || '';
-        if (text !== newText) setText(newText);
+        if (prevContentRef.current !== newText) {
+            prevContentRef.current = newText;
+            // Use queueMicrotask to defer state update
+            queueMicrotask(() => setText(newText));
+        }
     }, [content?.text]);
 
     const handleBlur = () => {

@@ -3,35 +3,14 @@
  *
  * Tracks user retention by sign-up cohort (weekly).
  */
-
-import db from '../database';
-
-interface Database {
-    all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
-}
-
-export interface RetentionRow {
-    week_start: string;
-    cohort_size: number;
-    week_0: number;
-    week_1: number;
-    week_2: number;
-    week_4: number;
-}
-
-export interface CohortServiceInterface {
-    getRetentionMatrix: () => Promise<RetentionRow[]>;
-}
-
-const CohortService: CohortServiceInterface = {
+const CohortService = {
     /**
      * Get retention matrix
      * Rows: Cohort (Week Start)
      * Cols: Weeks since signup (0, 1, 2, 4, 8)
      */
-    async getRetentionMatrix(): Promise<RetentionRow[]> {
+    async getRetentionMatrix() {
         const db = getDb();
-
         const sql = `
             WITH UserCohorts AS (
                 SELECT 
@@ -60,14 +39,15 @@ const CohortService: CohortServiceInterface = {
             ORDER BY uc.week_start DESC
             LIMIT 12
         `;
-
         return new Promise((resolve, reject) => {
-            (db as Database).all(sql, [], (err, rows) => {
-                if (err) reject(err);
-                else resolve((rows as RetentionRow[]) || []);
+            db.all(sql, [], (err, rows) => {
+                if (err)
+                    reject(err);
+                else
+                    resolve(rows || []);
             });
         });
     }
 };
-
 export default CohortService;
+//# sourceMappingURL=cohortService.js.map

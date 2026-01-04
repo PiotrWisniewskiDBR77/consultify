@@ -209,6 +209,13 @@ setInterval(() => {
     }
 }, 300000);
 
+export {
+securityHeaders,
+    createRateLimiter,
+    rateLimitPresets,
+    validateRequest
+};
+
 export default {
     securityHeaders,
     createRateLimiter,

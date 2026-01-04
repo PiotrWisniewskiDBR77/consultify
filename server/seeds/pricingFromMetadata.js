@@ -7,8 +7,8 @@
  * Run: node server/seeds/pricingFromMetadata.js
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 import { getDatabase } from '../database/Database.js';
 const db = getDatabase();
 
@@ -266,6 +266,10 @@ if (require.main === module) {
         }
     }, 1000);
 }
+
+export {
+seedPricingPlans, loadPricingMetadata, verifyPlans, seedTrialConfig
+};
 
 export default { seedPricingPlans, loadPricingMetadata, verifyPlans, seedTrialConfig };
 

@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
-const RoadmapService = import('roadmapService.js');
+import * as RoadmapServiceModule from '../services/roadmapService.js';
+const RoadmapService = RoadmapServiceModule.default || RoadmapServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
 
 // GET /api/roadmap/:projectId/waves

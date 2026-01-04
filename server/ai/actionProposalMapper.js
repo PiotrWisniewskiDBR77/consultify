@@ -7,7 +7,7 @@
  * - LOW_HELP_ADOPTION  -> PLAYBOOK_ASSIGN
  * - STRONG_TEAM_MEMBER -> ROLE_SUGGESTION
  */
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 /**
  * Generate a deterministic hash from content for stable proposal IDs.
@@ -22,6 +22,12 @@ const generateProposalId = (prefix, entityId, signalType) => {
     return `ap-${prefix}-${hash}`;
 };
 
+/**
+ * ActionProposalMapper (Deterministic)
+ * 
+ * Maps internal AI signals to user-facing Action Proposals with 
+ * guaranteed schema compliance.
+ */
 const ActionProposalMapper = {
     /**
      * Maps a signal and its associated recommendation/simulation to proposals.

@@ -75,7 +75,7 @@ export async function enforceProjectQuota(
             if (req.file?.path) {
                 try {
                     fs.unlinkSync(req.file.path);
-                } catch (e) {
+                } catch (e: unknown) {
                     console.error('Failed to cleanup temp file:', e);
                 }
             }
@@ -94,7 +94,7 @@ export async function enforceProjectQuota(
         }
 
         next();
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Project quota check error:', error);
         // Fail closed for safety
         res.status(500).json({ error: 'Failed to verify project quota' });

@@ -7,7 +7,7 @@
 import express from 'express';
 const router = express.Router();
 import authenticateToken from '../middleware/authMiddleware.js';
-const { FrameworkBenchmarkService } = import('frameworkBenchmarkService.js');
+import FrameworkBenchmarkService from '../services/frameworkBenchmarkService.js';
 
 /**
  * GET /api/benchmark/compare

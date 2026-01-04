@@ -38,7 +38,7 @@ export async function updateAssessmentScore(
                 ? `Score updated to ${score} for axis ${axisId}`
                 : 'No matching assessment found'
         };
-    } catch (error) {
+    } catch (error: unknown) {
         const err = error as Error;
         if (err.message.includes('no such table') || err.message.includes('no such column')) {
             return {

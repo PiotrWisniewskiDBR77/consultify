@@ -1,7 +1,7 @@
 
-const { LLMService } = require('./services/ai/llmService');
-const { LLMConfigService } = require('./services/ai/llmConfigService');
-const db = require('./database');
+import { LLMService } from './services/ai/llmService.js';
+import { LLMConfigService } from './services/ai/llmConfigService.js';
+import db from './database.js';
 
 // Mock Logger to look like real output
 const logger = {

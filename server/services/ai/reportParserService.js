@@ -5,11 +5,11 @@
  * Supports PDF and Excel files, maps extracted data to DRD structure.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-const AiService = require('../aiService');
-const { DRD_AXES_CONFIG } = require('./bcgReportGenerator');
+import AiService from '../aiService.js';
+import { DRD_AXES_CONFIG } from './bcgReportGenerator.js';
 
 // Supported file types
 const SUPPORTED_TYPES = {

@@ -6,7 +6,8 @@
 
 import express from 'express';
 const router = express.Router();
-const helpChatService = import('helpChatService.js');
+import * as helpChatServiceModule from '../services/helpChatService.js';
+const helpChatService = helpChatServiceModule.default || helpChatServiceModule;
 
 /**
  * POST /api/help/chat

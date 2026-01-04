@@ -153,7 +153,7 @@ export class AnalyticsServiceClass {
                  VALUES (?, ?, ?, ?, ?)`,
                 [uuidv4(), organizationId, axis, score, industry]
             );
-        } catch (err) {
+        } catch (err: unknown) {
             logger.error('[AnalyticsService] Failed to save maturity score:', err);
         }
     }

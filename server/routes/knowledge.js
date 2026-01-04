@@ -1,9 +1,10 @@
 import express from 'express';
 const router = express.Router();
-const KnowledgeService = import('knowledgeService.js');
+import * as KnowledgeServiceModule from '../services/knowledgeService.js';
+const KnowledgeService = KnowledgeServiceModule.default || KnowledgeServiceModule;
 import requireSuperAdmin from '../middleware/superAdminMiddleware.js';
 import verifyToken from '../middleware/authMiddleware.js';
-const { enforceStorageQuota, recordStorageAfterUpload } = require('../middleware/quotaMiddleware');
+import { enforceStorageQuota, recordStorageAfterUpload  } from '../middleware/quotaMiddleware.js';
 
 // --- CANDIDATES (Idea Inbox) ---
 
@@ -112,7 +113,7 @@ router.get('/candidates/by-project/:projectId', verifyToken, async (req, res) =>
 router.get('/observations/generate', requireSuperAdmin, async (req, res) => {
     try {
         // Use unified AI pipeline for observation generation
-        const { generateObservations } = import('ai/aiPipeline.js');
+        const { generateObservations   } = await import('../ai/aiPipeline.js');
         const observations = await generateObservations(req.user?.id, req.user?.organizationId);
         res.json(observations);
     } catch (err) {
@@ -251,13 +252,15 @@ router.put('/strategies/:id/toggle', requireSuperAdmin, async (req, res) => {
 
 // --- KNOWLEDGE DOCUMENTS (RAG) ---
 
-const StorageService = import('storageService.js');
+const StorageServiceModule = await import('../services/storageService.js');
+
+const StorageService = StorageServiceModule.default || StorageServiceModule;
 import { v4 as uuidv4 } from 'uuid';
 
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const pdf = require('pdf-parse');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import pdf from 'pdf-parse';
 
 // Configure multer to use a temporary staging directory
 const upload = multer({

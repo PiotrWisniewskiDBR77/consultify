@@ -152,7 +152,7 @@ export const trialEntryGuard = async (
         }
 
         next();
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('[TrialEntryGuard] Error:', error);
         next(error);
     }

@@ -27,8 +27,10 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
     // Reset selection when panel closes
     useEffect(() => {
         if (!isOpen) {
-            setSelectedPlaybook(null);
-            setCurrentStep(0);
+            queueMicrotask(() => {
+                setSelectedPlaybook(null);
+                setCurrentStep(0);
+            });
         }
     }, [isOpen]);
 

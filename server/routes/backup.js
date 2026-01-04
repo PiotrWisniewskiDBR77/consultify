@@ -5,11 +5,13 @@
  */
 
 import express from 'express';
-const router = express.Router();
-const BackupService = import('backupService.js');
+import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../src/database/Database.js';
-const db = getDatabase();
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
+import BackupService from '../services/backupService.js';
+
+const router = express.Router();
+const db = getDatabase();
 
 /**
  * GET /api/backups
@@ -53,7 +55,6 @@ router.post('/', verifySuperAdmin, async (req, res) => {
         const backup = await BackupService.createBackup(type, reason);
 
         // Record in database
-        import { v4 as uuidv4 } from 'uuid';
         const backupId = uuidv4();
         const now = new Date().toISOString();
 

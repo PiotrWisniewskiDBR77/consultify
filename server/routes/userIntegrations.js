@@ -10,6 +10,7 @@
  */
 
 import express from 'express';
+import axios from 'axios';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
 import UserIntegrationService from '../services/userIntegrationService.js';
@@ -182,7 +183,6 @@ async function handleOAuthCallback(provider, userId, code, req) {
  * Slack OAuth callback handler
  */
 async function handleSlackCallback(userId, code, redirectUri) {
-    const axios = require('axios');
 
     try {
         const response = await axios.post('https://slack.com/api/oauth.v2.access', null, {
@@ -219,7 +219,6 @@ async function handleSlackCallback(userId, code, redirectUri) {
  * Teams OAuth callback handler
  */
 async function handleTeamsCallback(userId, code, redirectUri) {
-    const axios = require('axios');
 
     try {
         const response = await axios.post(
@@ -261,7 +260,6 @@ async function handleTeamsCallback(userId, code, redirectUri) {
  * Jira OAuth callback handler
  */
 async function handleJiraCallback(userId, code, redirectUri) {
-    const axios = require('axios');
 
     try {
         const response = await axios.post('https://auth.atlassian.com/oauth/token', {
@@ -303,7 +301,6 @@ async function handleJiraCallback(userId, code, redirectUri) {
  * ClickUp OAuth callback handler
  */
 async function handleClickUpCallback(userId, code, redirectUri) {
-    const axios = require('axios');
 
     try {
         const response = await axios.post('https://app.clickup.com/api/v2/oauth/token', null, {

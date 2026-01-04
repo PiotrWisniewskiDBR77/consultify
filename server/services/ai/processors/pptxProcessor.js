@@ -9,9 +9,9 @@
  * @version 1.0.0
  */
 
-const JSZip = require('jszip');
-const fs = require('fs');
-const path = require('path');
+import JSZip from 'jszip';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Process a PowerPoint file and extract text content
@@ -140,7 +140,7 @@ function extractTextFromSlideXml(xml) {
 
     // Extract all text elements (a:t tags)
     const textMatches = xml.match(/<a:t[^>]*>([^<]*)<\/a:t>/g) || [];
-    
+
     for (const match of textMatches) {
         const text = match.replace(/<a:t[^>]*>([^<]*)<\/a:t>/, '$1');
         if (text && text.trim()) {
@@ -163,7 +163,7 @@ function extractTextFromSlideXml(xml) {
     // Group text by paragraphs (a:p elements)
     let result = '';
     let currentParagraph = '';
-    
+
     // Simple approach: join with spaces, add newlines for apparent paragraph breaks
     const uniqueText = [...new Set(textParts)];
     result = uniqueText.join(' ').replace(/\s+/g, ' ').trim();
@@ -230,6 +230,15 @@ function getSupportedMimeTypes() {
         'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ];
 }
+
+export {
+process,
+    isSupported,
+    getSupportedExtensions,
+    getSupportedMimeTypes,
+    extractTextFromSlideXml,
+    extractXmlValue
+};
 
 export default {
     process,

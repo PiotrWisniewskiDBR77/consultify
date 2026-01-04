@@ -2,7 +2,7 @@ import defaultDb from '../database.js';
 import { v4 as defaultUuidv4 } from 'uuid';
 import ActionProposalEngine from './actionProposalEngine.js';
 import PolicyEngine from './policyEngine.js';
-import auditLogger from '../utils/auditLogger.js';
+import * as auditLogger from '../utils/auditLogger.js';
 import actionErrors from './actionErrors.js';
 const { ACTION_ERROR_CODES, classifyError } = actionErrors;
 import EvidenceLedgerService from '../services/evidenceLedgerService.js';

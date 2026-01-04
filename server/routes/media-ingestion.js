@@ -10,11 +10,15 @@
  */
 
 import express from 'express';
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { mediaIngestionService } = import('ai/mediaIngestionService.js');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import mediaIngestionService from '../services/ai/mediaIngestionService.js';
 import requireAuth from '../middleware/authMiddleware.js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -436,7 +440,7 @@ router.use((error, req, res, next) => {
             });
         }
     }
-    
+
     if (error.message.includes('Unsupported file type')) {
         return res.status(400).json({
             success: false,

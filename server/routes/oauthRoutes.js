@@ -5,13 +5,12 @@
 
 import express from 'express';
 const router = express.Router();
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const LinkedInStrategy = require('passport-linkedin-oauth2').Strategy;
-// Microsoft OAuth using passport-azure-ad-oauth2 or simple OAuth2
-const MicrosoftStrategy = require('passport-microsoft').Strategy;
-const config = require('../config');
-const oauthService = import('oauthService.js');
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as LinkedInStrategy } from 'passport-linkedin-oauth2';
+import { Strategy as MicrosoftStrategy } from 'passport-microsoft';
+import config from '../config.js';
+import oauthService from '../services/oauthService.js';
 
 // Initialize Passport
 passport.serializeUser((user, done) => done(null, user));

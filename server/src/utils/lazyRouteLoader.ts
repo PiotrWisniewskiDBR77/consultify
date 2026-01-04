@@ -38,7 +38,7 @@ export function createLazyRoute(routePath: string): Router {
                 return (routesHandler as { use: (req: Request, res: Response, next: NextFunction) => void }).use(req, res, next);
             }
             next();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error(`[LazyRoute] Error loading route from ${routePath}:`, error);
             res.status(500).json({ error: 'Failed to load route' });
         }

@@ -3,7 +3,7 @@
  * Fetches full project data from the database
  */
 
-const db = require('../../../database');
+import db from '../../../database.js';
 
 async function getProjectDetails(params, context) {
     const { projectId } = params;
@@ -62,5 +62,9 @@ async function getProjectDetails(params, context) {
         );
     });
 }
+
+export {
+getProjectDetails
+};
 
 export default { getProjectDetails };

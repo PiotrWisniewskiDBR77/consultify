@@ -7,7 +7,7 @@
 import express from 'express';
 const router = express.Router();
 import verifyToken from '../middleware/authMiddleware.js';
-const { proactiveNudges } = import('ai/proactiveNudges.js');
+import { proactiveNudges  } from '../services/ai/proactiveNudges.js';
 
 // All routes require authentication
 router.use(verifyToken);

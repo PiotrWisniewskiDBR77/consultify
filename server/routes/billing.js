@@ -1064,7 +1064,8 @@ router.get('/addons', authMiddleware, async (req, res) => {
 // ==========================================
 // BILLING WEBHOOK EVENTS ROUTES
 // ==========================================
-const billingWebhookService = import('billingWebhookService.js');
+import * as billingWebhookServiceModule from 'billingWebhookService.js';
+const billingWebhookService = billingWebhookServiceModule.default || billingWebhookServiceModule;
 const { BILLING_EVENT_TYPES } = billingWebhookService;
 
 /**

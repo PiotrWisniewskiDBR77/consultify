@@ -793,6 +793,12 @@ class AIHealthMonitor {
 // Singleton instance
 const healthMonitor = new AIHealthMonitor();
 
+export {
+AIHealthMonitor,
+    healthMonitor,
+    providerStatus
+};
+
 export default {
     AIHealthMonitor,
     healthMonitor,

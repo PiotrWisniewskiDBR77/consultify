@@ -11,8 +11,10 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const AccessPolicyService = import('accessPolicyService.js');
-const TrialService = import('trialService.js');
+import * as AccessPolicyServiceModule from '../services/accessPolicyService.js';
+const AccessPolicyService = AccessPolicyServiceModule.default || AccessPolicyServiceModule;
+import * as TrialServiceModule from '../services/trialService.js';
+const TrialService = TrialServiceModule.default || TrialServiceModule;
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
 /**

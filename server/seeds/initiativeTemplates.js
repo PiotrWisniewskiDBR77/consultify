@@ -642,6 +642,11 @@ async function seedTemplates(db) {
     console.log(`[Seed] Inserted ${DEFAULT_TEMPLATES.length} initiative templates`);
 }
 
+export {
+DEFAULT_TEMPLATES,
+    seedTemplates
+};
+
 export default {
     DEFAULT_TEMPLATES,
     seedTemplates

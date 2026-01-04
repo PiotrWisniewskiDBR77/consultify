@@ -94,7 +94,7 @@ router.post('/:id/restore', async (req, res) => {
 
         // In production, apply the old value to the appropriate settings table
         // And log the restore action
-        import { v4 as uuidv4 } from 'uuid';
+        const { v4: uuidv4 } = await import('uuid');
         await new Promise((resolve, reject) => {
             db.run(
                 `INSERT INTO user_settings_history (
@@ -132,7 +132,7 @@ router.post('/:id/restore', async (req, res) => {
  * Utility function to log settings changes (exported for use in other routes)
  */
 async function logSettingsChange(userId, category, setting, action, oldValue, newValue, device, ipAddress) {
-    import { v4 as uuidv4 } from 'uuid';
+    const { v4: uuidv4 } = await import('uuid');
     return new Promise((resolve, reject) => {
         db.run(
             `INSERT INTO user_settings_history (

@@ -16,8 +16,9 @@ import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
-const NotificationService = import('notificationService.js');
-const auditLogger = require('../utils/auditLogger');
+import * as NotificationServiceModule from '../services/notificationService.js';
+const NotificationService = NotificationServiceModule.default || NotificationServiceModule;
+import * as auditLogger from '../utils/auditLogger.js';
 
 // Request type definitions
 const REQUEST_TYPES = {
@@ -116,7 +117,7 @@ router.get('/', verifyToken, async (req, res) => {
         const orgId = req.user.organizationId || req.user.organization_id;
 
         const requests = await getUserRequests(userId, orgId);
-        
+
         // Format for frontend
         const formatted = requests.map(r => ({
             id: r.id,
@@ -230,7 +231,7 @@ router.post('/', verifyToken, async (req, res) => {
         });
 
         if (existingPending) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'You already have a pending request of this type',
                 existingRequestId: existingPending.id
             });
@@ -245,7 +246,7 @@ router.post('/', verifyToken, async (req, res) => {
                  (id, organization_id, user_id, request_type, current_value, requested_value, justification, priority, status)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`,
                 [requestId, orgId, userId, requestType, currentValue, requestedValue, justification, requestPriority],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve(this.lastID);
                 }
@@ -333,7 +334,7 @@ router.put('/:id/approve', verifyToken, async (req, res) => {
                  SET status = 'APPROVED', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
                 [adminId, adminNotes, id],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve();
                 }
@@ -346,7 +347,7 @@ router.put('/:id/approve', verifyToken, async (req, res) => {
                 db.run(
                     `UPDATE users SET role = ? WHERE id = ?`,
                     [request.requested_value, request.user_id],
-                    function(err) {
+                    function (err) {
                         if (err) reject(err);
                         else resolve();
                     }
@@ -358,7 +359,7 @@ router.put('/:id/approve', verifyToken, async (req, res) => {
                 db.run(
                     `UPDATE users SET token_limit = ? WHERE id = ?`,
                     [parseInt(request.requested_value), request.user_id],
-                    function(err) {
+                    function (err) {
                         if (err) reject(err);
                         else resolve();
                     }
@@ -442,7 +443,7 @@ router.put('/:id/reject', verifyToken, async (req, res) => {
                  SET status = 'REJECTED', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, admin_notes = ?, updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
                 [adminId, adminNotes, id],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve();
                 }
@@ -518,7 +519,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
             db.run(
                 `UPDATE permission_requests SET status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
                 [id],
-                function(err) {
+                function (err) {
                     if (err) reject(err);
                     else resolve();
                 }

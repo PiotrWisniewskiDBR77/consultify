@@ -11,9 +11,11 @@
 
 import express from 'express';
 const router = express.Router();
-const BudgetService = import('budgetService.js');
+import * as BudgetServiceModule from '../services/budgetService.js';
+const BudgetService = BudgetServiceModule.default || BudgetServiceModule;
 import verifyToken from '../middleware/authMiddleware.js';
-const { asyncHandler } = require('../utils/errorHandler');
+import { asyncHandler  } from '../src/utils/asyncHandler.js';
+import * as queryHelpers from '../src/utils/queryHelpers.js';
 
 router.use(verifyToken);
 
@@ -102,7 +104,7 @@ router.put('/:budgetId', asyncHandler(async (req, res) => {
     params.push(budgetId);
     params.push(orgId);
 
-    import { getDatabase } from '../src/database/Database.js';
+    const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
     await new Promise((resolve, reject) => {
         db.run(
@@ -169,7 +171,7 @@ router.put('/:budgetId/line-items/:itemId', asyncHandler(async (req, res) => {
     params.push(itemId);
     params.push(budgetId);
 
-    import { getDatabase } from '../src/database/Database.js';
+    const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
     await new Promise((resolve, reject) => {
         db.run(
@@ -189,7 +191,7 @@ const db = getDatabase();
 router.delete('/:budgetId/line-items/:itemId', asyncHandler(async (req, res) => {
     const { budgetId, itemId } = req.params;
 
-    import { getDatabase } from '../src/database/Database.js';
+    const { getDatabase } = await import('../src/database/Database.js');
 const db = getDatabase();
     await new Promise((resolve, reject) => {
         db.run(
@@ -256,7 +258,7 @@ router.get('/:budgetId/transactions', asyncHandler(async (req, res) => {
     sql += ` ORDER BY t.transaction_date DESC LIMIT ? OFFSET ?`;
     params.push(parseInt(limit), parseInt(offset));
 
-    const queryHelpers = require('../utils/queryHelpers');
+
     const transactions = await queryHelpers.queryAll(sql, params);
 
     res.json({ 
@@ -372,7 +374,7 @@ router.post('/:budgetId/snapshots', asyncHandler(async (req, res) => {
 router.get('/:budgetId/snapshots', asyncHandler(async (req, res) => {
     const { budgetId } = req.params;
 
-    const queryHelpers = require('../utils/queryHelpers');
+
     const snapshots = await queryHelpers.queryAll(`
         SELECT * FROM budget_snapshots 
         WHERE budget_id = ?

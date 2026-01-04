@@ -4,7 +4,8 @@
 
 import express from 'express';
 const router = express.Router();
-const GamificationService = import('gamificationService.js');
+import * as GamificationServiceModule from '../services/gamificationService.js';
+const GamificationService = GamificationServiceModule.default || GamificationServiceModule;
 import auth from '../middleware/authMiddleware.js';
 
 // GET /api/gamification/me — Get current user's stats

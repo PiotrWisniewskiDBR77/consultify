@@ -684,6 +684,27 @@ function calculateTrendSummary(data) {
     };
 }
 
+export {
+setDependencies,
+    // MRR
+    getCurrentMRR,
+    getMRRTrend,
+    calculateMRRMovement,
+    // Churn
+    getChurnRate,
+    getChurnReasons,
+    // LTV
+    getLTV,
+    getLTVBySegment,
+    // Cohorts
+    getCohortAnalysis,
+    // Expansion
+    getExpansionRevenue,
+    // Snapshots
+    createDailySnapshot,
+    recordSubscriptionEvent
+};
+
 export default {
     setDependencies,
     // MRR

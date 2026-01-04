@@ -5,7 +5,9 @@
  * Provides CRUD operations and scoring calculations
  */
 
-import queryHelpers from '../utils/queryHelpers.js';
+import { queryAll, queryOne, queryRun } from '../utils/queryHelpers.js';
+
+const queryHelpers = { queryAll, queryOne, queryRun };
 import db from '../database.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -888,9 +890,9 @@ const EconomicsService = {
             if (!analysis) return null;
 
             // Calculate basic scores
-            const methodologyScore = analysis.completionPercent > 80 ? 4 : 
-                                     analysis.completionPercent > 60 ? 3 :
-                                     analysis.completionPercent > 40 ? 2 : 1;
+            const methodologyScore = analysis.completionPercent > 80 ? 4 :
+                analysis.completionPercent > 60 ? 3 :
+                    analysis.completionPercent > 40 ? 2 : 1;
             const documentationScore = analysis.description ? 3 : 2;
 
             return {

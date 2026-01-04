@@ -84,7 +84,7 @@ class HealthCheckJob {
                     this.isSystemHealthy = true;
                     this.consecutiveFailures = 0;
                 }
-            } catch (err) {
+            } catch (err: unknown) {
                 // FAILURE
                 this.consecutiveFailures++;
                 const error = err instanceof Error ? err : new Error(String(err));

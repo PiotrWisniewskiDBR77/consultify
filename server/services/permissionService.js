@@ -707,4 +707,5 @@ const PermissionService = {
     }
 };
 
+export { PermissionService };
 export default PermissionService;

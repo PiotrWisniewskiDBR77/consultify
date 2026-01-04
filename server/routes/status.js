@@ -6,7 +6,8 @@
 
 import express from 'express';
 const router = express.Router();
-const statusService = import('statusService.js');
+import * as statusServiceModule from '../services/statusService.js';
+const statusService = statusServiceModule.default || statusServiceModule;
 
 /**
  * GET /api/status

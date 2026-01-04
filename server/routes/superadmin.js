@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
-const superAdminController = require('../controllers/superAdminController');
+import superAdminController from '../controllers/superAdminController.js';
 
 router.use(verifySuperAdmin);
 

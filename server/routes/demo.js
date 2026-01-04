@@ -15,10 +15,12 @@
 import express from 'express';
 const router = express.Router();
 import jwt from 'jsonwebtoken';
-const rateLimit = require('express-rate-limit');
-const config = require('../config');
-const DemoService = import('demoService.js');
-const OrganizationEventService = import('organizationEventService.js');
+import rateLimit from 'express-rate-limit';
+import config from '../config.js';
+import * as DemoServiceModule from '../services/demoService.js';
+const DemoService = DemoServiceModule.default || DemoServiceModule;
+import * as OrganizationEventServiceModule from '../services/organizationEventService.js';
+const OrganizationEventService = OrganizationEventServiceModule.default || OrganizationEventServiceModule;
 import AttributionService from '../services/attributionService.js';
 
 // Demo abuse protection: 3 demos per 10 minutes per IP
@@ -137,7 +139,9 @@ router.get('/templates', async (req, res) => {
 // PHASE B: DEMO SESSION FLOW ENDPOINTS
 // ============================================================
 
-const DemoSessionService = import('demoSessionService.js');
+const DemoSessionServiceModule = await import('../services/demoSessionService.js');
+
+const DemoSessionService = DemoSessionServiceModule.default || DemoSessionServiceModule;
 import authMiddleware from '../middleware/authMiddleware.js';
 
 /**

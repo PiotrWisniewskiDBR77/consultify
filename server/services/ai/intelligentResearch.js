@@ -10,8 +10,8 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const { webResearchService } = require('./webResearchService');
-const { aiLogger } = require('./logger');
+import { webResearchService } from './webResearchService.js';
+import { aiLogger } from './logger.js';
 
 // Query generation templates by research purpose
 const QUERY_TEMPLATES = {
@@ -766,6 +766,13 @@ class IntelligentResearch {
 
 // Singleton instance
 const intelligentResearch = new IntelligentResearch();
+
+export {
+IntelligentResearch,
+    intelligentResearch,
+    QUERY_TEMPLATES,
+    CONTEXT_RESEARCH_MAP
+};
 
 export default {
     IntelligentResearch,

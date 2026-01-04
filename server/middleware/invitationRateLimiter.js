@@ -132,6 +132,16 @@ function clearAcceptFailure(req) {
     acceptFailures.delete(ip);
 }
 
+export {
+validateRateLimiter,
+    acceptRateLimiter,
+    recordAcceptFailure,
+    clearAcceptFailure,
+    // Expose for testing
+    _validateRateLimits: validateRateLimits,
+    _acceptFailures: acceptFailures
+};
+
 export default {
     validateRateLimiter,
     acceptRateLimiter,

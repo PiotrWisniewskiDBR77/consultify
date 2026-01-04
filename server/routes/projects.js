@@ -4,8 +4,8 @@ import { getDatabase } from '../src/database/Database.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 import verifyToken from '../middleware/authMiddleware.js';
-const { asyncHandler } = require('../utils/errorHandler');
-const queryHelpers = require('../utils/queryHelpers');
+import { asyncHandler  } from '../src/utils/asyncHandler.js';
+import * as queryHelpers from '../src/utils/queryHelpers.js';
 
 router.use(verifyToken);
 
@@ -43,7 +43,7 @@ router.get('/', asyncHandler(async (req, res) => {
     })));
 }));
 
-const { checkPlanLimit } = require('../middleware/planLimits');
+const { checkPlanLimit   } = await import('../middleware/planLimits.js');
 
 // CREATE Project
 // REFACTORED: Uses asyncHandler and queryHelpers
@@ -232,8 +232,11 @@ router.put('/:id/notification-settings', asyncHandler(async (req, res) => {
 // AI Roles Model: Project AI Governance API
 // ==========================================
 
-const AIRoleGuard = import('aiRoleGuard.js');
-const AIAuditLogger = import('aiAuditLogger.js');
+const AIRoleGuardModule = await import('../services/aiRoleGuard.js');
+
+const AIRoleGuard = AIRoleGuardModule.default || AIRoleGuardModule;
+import * as AIAuditLoggerModule from '../services/aiAuditLogger.js';
+const AIAuditLogger = AIAuditLoggerModule.default || AIAuditLoggerModule;
 
 // GET AI Role for a project
 // REFACTORED: Uses asyncHandler
@@ -309,7 +312,9 @@ router.put('/:id/ai-role', asyncHandler(async (req, res) => {
 // Regulatory Mode: Strict Compliance API
 // ==========================================
 
-const RegulatoryModeGuard = import('regulatoryModeGuard.js');
+const RegulatoryModeGuardModule = await import('../services/regulatoryModeGuard.js');
+
+const RegulatoryModeGuard = RegulatoryModeGuardModule.default || RegulatoryModeGuardModule;
 
 // GET Regulatory Mode status for a project
 // REFACTORED: Uses asyncHandler

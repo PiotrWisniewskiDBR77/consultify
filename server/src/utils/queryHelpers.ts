@@ -159,7 +159,7 @@ export function parseJsonFields(
         if (parsed[field] && typeof parsed[field] === 'string') {
             try {
                 parsed[field] = JSON.parse(parsed[field] as string);
-            } catch (e) {
+            } catch (e: unknown) {
                 console.warn(`[QueryHelper] Failed to parse JSON field ${field}:`, e);
                 parsed[field] = field.includes('[]') ? [] : {};
             }

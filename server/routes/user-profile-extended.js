@@ -15,7 +15,8 @@
 import express from 'express';
 const router = express.Router();
 import auth from '../middleware/authMiddleware.js';
-const UserProfileExtendedService = import('userProfileExtendedService.js');
+import * as UserProfileExtendedServiceModule from '../services/userProfileExtendedService.js';
+const UserProfileExtendedService = UserProfileExtendedServiceModule.default || UserProfileExtendedServiceModule;
 
 // ==========================================
 // FULL EXTENDED PROFILE

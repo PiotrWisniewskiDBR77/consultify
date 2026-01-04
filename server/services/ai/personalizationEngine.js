@@ -7,8 +7,8 @@
  * Part of the Harvard-Level Co-Thinker AI System
  */
 
-const db = require('../../database');
-const { aiLogger } = require('./logger');
+import db from '../../database.js';
+import { aiLogger } from './logger.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // Default user profile template
@@ -630,6 +630,15 @@ class PersonalizationEngine {
 
 // Singleton instance
 const personalizationEngine = new PersonalizationEngine();
+
+export {
+PersonalizationEngine,
+    personalizationEngine,
+    DEFAULT_PROFILE,
+    COMMUNICATION_STYLES,
+    EXPERTISE_ADJUSTMENTS,
+    LEARNING_SIGNALS
+};
 
 export default {
     PersonalizationEngine,

@@ -4,8 +4,13 @@
  * Exports all pipeline services for enterprise AI consulting.
  */
 
-const reportAgents = require('./reportAgents');
-const ReportPipeline = require('./reportPipeline');
+import reportAgents from './reportAgents.js';
+import ReportPipeline from './reportPipeline.js';
+
+export {
+...reportAgents,
+    ReportPipeline
+};
 
 export default {
     ...reportAgents,

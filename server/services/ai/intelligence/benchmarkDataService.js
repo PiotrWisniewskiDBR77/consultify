@@ -8,9 +8,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-const db = require('../../../database');
-const WebSearchService = require('../../webSearchService');
-const IndustryIntelligenceService = require('./industryIntelligenceService');
+import db from '../../../database.js';
+import WebSearchService from '../../webSearchService.js';
+import IndustryIntelligenceService from './industryIntelligenceService.js';
 
 // Cache TTL: 24 hours
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;

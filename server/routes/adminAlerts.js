@@ -1,8 +1,9 @@
 import express from 'express';
 const router = express.Router();
 import authMiddleware from '../middleware/authMiddleware.js';
-const { requireOrgAccess } = require('../middleware/rbac');
-const adminAlertService = import('adminAlertService.js');
+import { requireOrgAccess  } from '../middleware/rbac.js';
+import * as adminAlertServiceModule from '../services/adminAlertService.js';
+const adminAlertService = adminAlertServiceModule.default || adminAlertServiceModule;
 
 /**
  * GET /api/admin-alerts

@@ -20,10 +20,10 @@
  * @module seedLegolexDemoOrg
  */
 
-const path = require('path');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
+import path from 'path';
+import bcrypt from 'bcryptjs';
+import { v4: uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 // ==========================================
 // PRODUCTION GUARD (Enterprise Hygiene)
@@ -114,7 +114,7 @@ TRIAL_EXPIRES.setDate(TRIAL_EXPIRES.getDate() + 21); // 14 + 7 days
 // ==========================================
 
 // Use database abstraction to support both SQLite and PostgreSQL
-const db = require('../database');
+import db from '../database.js';
 
 // Promisified db.run
 const dbRun = (sql, params = []) => new Promise((resolve, reject) => {

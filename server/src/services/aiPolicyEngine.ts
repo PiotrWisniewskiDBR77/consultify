@@ -72,7 +72,7 @@ async function getAIRoleGuard() {
         try {
             const mod = (await import('../../services/aiRoleGuard.js')) as any;
             _aiRoleGuard = mod.default || mod.AIRoleGuard || mod.aiRoleGuard || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.error('[AIPolicyEngine] aiRoleGuard not available');
         }
     }
@@ -85,7 +85,7 @@ async function getRegulatoryModeGuard() {
         try {
             const mod = (await import('../../services/regulatoryModeGuard.js')) as any;
             _regulatoryModeGuard = mod.default || mod.RegulatoryModeGuard || mod.regulatoryModeGuard || mod;
-        } catch (e) {
+        } catch (e: unknown) {
             console.error('[AIPolicyEngine] regulatoryModeGuard not available');
         }
     }

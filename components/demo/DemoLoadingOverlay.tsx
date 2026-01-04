@@ -25,28 +25,35 @@ export const DemoLoadingOverlay: React.FC<DemoLoadingOverlayProps> = ({
 
     useEffect(() => {
         if (!isVisible) {
-            setCurrentStep(0);
-            setCompletedSteps([]);
+            // Defer state reset using functional updates
+            queueMicrotask(() => {
+                setCurrentStep(0);
+                setCompletedSteps([]);
+            });
             return;
         }
 
         // Progress through steps
+        const timers: NodeJS.Timeout[] = [];
         LOADING_STEPS.forEach((step, index) => {
-            setTimeout(() => {
+            const stepTimer = setTimeout(() => {
                 setCurrentStep(index);
-                setTimeout(() => {
+                const completeTimer = setTimeout(() => {
                     setCompletedSteps(prev => [...prev, index]);
                 }, 300);
+                timers.push(completeTimer);
             }, step.delay);
+            timers.push(stepTimer);
         });
 
         // Complete after all steps
         const totalTime = LOADING_STEPS[LOADING_STEPS.length - 1].delay + 600;
-        const timer = setTimeout(() => {
+        const completeTimer = setTimeout(() => {
             onComplete?.();
         }, totalTime);
+        timers.push(completeTimer);
 
-        return () => clearTimeout(timer);
+        return () => timers.forEach(timer => clearTimeout(timer));
     }, [isVisible, onComplete]);
 
     return (

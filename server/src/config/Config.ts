@@ -75,7 +75,7 @@ function loadConfig(): AppConfig {
 
     if (!result.success) {
         console.error('[Config] Configuration validation failed:');
-        result.error.issues.forEach((err) => {
+        result.error.issues.forEach((err: Error | null) => {
             console.error(`  - ${err.path.join('.')}: ${err.message}`);
         });
         

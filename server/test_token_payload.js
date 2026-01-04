@@ -1,5 +1,5 @@
-const axios = require('axios');
-const jwt = require('jsonwebtoken');
+import axios from 'axios';
+import jwt from 'jsonwebtoken';
 
 async function testTokenPayload() {
     const email = 'piotr.wisniewski@dbr77.com';

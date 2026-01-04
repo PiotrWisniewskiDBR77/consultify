@@ -241,7 +241,7 @@ export class TokenBillingServiceClass {
         let org;
         try {
             org = await this.getOrgBalance(orgId);
-        } catch (err) {
+        } catch (err: unknown) {
             return { allowed: false, balance: 0, reason: 'Balance check failed. Please retry.' };
         }
 

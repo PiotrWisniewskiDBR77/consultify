@@ -405,6 +405,26 @@ const getBlockedDomains = async () => {
     }));
 };
 
+export {
+setDependencies,
+    addThreat,
+    getThreatById,
+    getThreats,
+    checkIPReputation,
+    checkDomainReputation,
+    blockThreat,
+    unblockThreat,
+    updateThreat,
+    deleteThreat,
+    getStats,
+    bulkImport,
+    getThreatsByTimeRange,
+    getBlockedIPs,
+    getBlockedDomains,
+    THREAT_LEVELS,
+    THREAT_TYPES
+};
+
 export default {
     setDependencies,
     addThreat,

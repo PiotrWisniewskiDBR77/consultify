@@ -3,20 +3,17 @@
  * Provides caching layer for frequently accessed data
  * Uses Redis for distributed caching
  */
-
-import redis from './redisClient.js';
-
-const DEFAULT_TTL = {
-    SHORT: 60,        // 1 minute - frequently changing data
-    MEDIUM: 300,      // 5 minutes - moderately stable data
-    LONG: 900,        // 15 minutes - stable data
-    VERY_LONG: 3600   // 1 hour - rarely changing data
+import client from './redisClient';
+export const DEFAULT_TTL = {
+    SHORT: 60, // 1 minute - frequently changing data
+    MEDIUM: 300, // 5 minutes - moderately stable data
+    LONG: 900, // 15 minutes - stable data
+    VERY_LONG: 3600 // 1 hour - rarely changing data
 };
-
 /**
  * Cache key generators
  */
-const CacheKeys = {
+export const CacheKeys = {
     user: (userId) => `user:${userId}`,
     userTasks: (userId, orgId) => `tasks:user:${userId}:org:${orgId}`,
     userDashboard: (userId, orgId) => `dashboard:user:${userId}:org:${orgId}`,
@@ -28,77 +25,73 @@ const CacheKeys = {
     workload: (projectId) => `workload:project:${projectId}`,
     overAllocation: (projectId) => `overallocation:project:${projectId}`
 };
-
 /**
  * Get cached data or fetch and cache
- * @param {string} key - Cache key
- * @param {Function} fetchFn - Function to fetch data if not cached
- * @param {number} ttl - Time to live in seconds
- * @returns {Promise<any>}
  */
-async function getCached(key, fetchFn, ttl = DEFAULT_TTL.MEDIUM) {
+export async function getCached(key, fetchFn, ttl = DEFAULT_TTL.MEDIUM) {
     try {
+        const redisClient = client;
         // Try to get from cache
-        const cached = await redis.get(key);
+        const cached = await redisClient.get(key);
         if (cached) {
             return JSON.parse(cached);
         }
-
         // Fetch fresh data
         const data = await fetchFn();
-
         // Cache the data
         if (data !== null && data !== undefined) {
-            await redis.setEx(key, ttl, JSON.stringify(data));
+            if (redisClient.setEx) {
+                await redisClient.setEx(key, ttl, JSON.stringify(data));
+            }
+            else if (redisClient.set && redisClient.expire) {
+                await redisClient.set(key, JSON.stringify(data));
+                await redisClient.expire(key, ttl);
+            }
         }
-
         return data;
-    } catch (error) {
+    }
+    catch (error) {
         console.error(`[Cache] Error for key ${key}:`, error);
         // On cache error, fallback to direct fetch
         return fetchFn();
     }
 }
-
 /**
  * Invalidate cache by key pattern
- * @param {string} pattern - Redis key pattern (e.g., 'tasks:user:*')
- * @returns {Promise<number>} Number of keys deleted
  */
-async function invalidatePattern(pattern) {
+export async function invalidatePattern(pattern) {
     try {
-        const keys = await redis.keys(pattern);
-        if (keys.length === 0) return 0;
-
-        return await redis.del(keys);
-    } catch (error) {
+        const redisClient = client;
+        if (!redisClient.keys)
+            return 0;
+        const keys = await redisClient.keys(pattern);
+        if (keys.length === 0)
+            return 0;
+        return await redisClient.del(keys);
+    }
+    catch (error) {
         console.error(`[Cache] Error invalidating pattern ${pattern}:`, error);
         return 0;
     }
 }
-
 /**
  * Invalidate cache by exact key
- * @param {string} key - Cache key
- * @returns {Promise<boolean>}
  */
-async function invalidate(key) {
+export async function invalidate(key) {
     try {
-        const result = await redis.del(key);
+        const redisClient = client;
+        const result = await redisClient.del(key);
         return result > 0;
-    } catch (error) {
+    }
+    catch (error) {
         console.error(`[Cache] Error invalidating key ${key}:`, error);
         return false;
     }
 }
-
 /**
  * Invalidate all user-related cache
- * @param {string} userId - User ID
- * @param {string} orgId - Organization ID
- * @returns {Promise<number>} Number of keys deleted
  */
-async function invalidateUserCache(userId, orgId) {
+export async function invalidateUserCache(userId, orgId) {
     const patterns = [
         CacheKeys.user(userId),
         CacheKeys.userTasks(userId, orgId),
@@ -107,73 +100,27 @@ async function invalidateUserCache(userId, orgId) {
         CacheKeys.userDecisions(userId),
         CacheKeys.userAlerts(userId)
     ];
-
     let deleted = 0;
     for (const key of patterns) {
         if (await invalidate(key)) {
             deleted++;
         }
     }
-
     // Also invalidate pattern-based keys
     deleted += await invalidatePattern(`tasks:user:${userId}:*`);
     deleted += await invalidatePattern(`dashboard:user:${userId}:*`);
-
     return deleted;
 }
-
 /**
  * Invalidate project-related cache
- * @param {string} projectId - Project ID
- * @returns {Promise<number>} Number of keys deleted
  */
-async function invalidateProjectCache(projectId) {
+export async function invalidateProjectCache(projectId) {
     return await invalidatePattern(`*:project:${projectId}*`);
 }
-
 /**
  * Invalidate organization-related cache
- * @param {string} orgId - Organization ID
- * @returns {Promise<number>} Number of keys deleted
  */
-async function invalidateOrgCache(orgId) {
+export async function invalidateOrgCache(orgId) {
     return await invalidatePattern(`*:org:${orgId}*`);
 }
-
-export {
-    getCached,
-    invalidate,
-    invalidatePattern,
-    invalidateUserCache,
-    invalidateProjectCache,
-    invalidateOrgCache,
-    CacheKeys,
-    DEFAULT_TTL
-};
-
-export default {
-    getCached,
-    invalidate,
-    invalidatePattern,
-    invalidateUserCache,
-    invalidateProjectCache,
-    invalidateOrgCache,
-    CacheKeys,
-    DEFAULT_TTL
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//# sourceMappingURL=cacheHelper.js.map

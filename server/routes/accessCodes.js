@@ -10,7 +10,7 @@
  */
 
 import express from 'express';
-const rateLimit = require('express-rate-limit');
+import rateLimit from 'express-rate-limit';
 const router = express.Router();
 import AccessCodeService from '../services/accessCodeService.js';
 import authenticateToken from '../middleware/authMiddleware.js';
