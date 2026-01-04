@@ -6,7 +6,7 @@
 
 import { v4 as uuid } from 'uuid';
 
-import { DbPromise } from '../database/Database.js';
+import DbPromise from '../utils/DbPromise.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
 

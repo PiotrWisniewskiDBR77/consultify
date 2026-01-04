@@ -6,14 +6,34 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
     plugins: [react()],
     resolve: {
-        alias: {
-            '@': path.resolve(__dirname, './src'),
-            '@aws-sdk/client-s3': path.resolve(__dirname, './tests/__mocks__/aws-sdk-client-s3.js'),
-            // Ensure AI SDK mocks work for server/* tests
-            // This routes server/node_modules/@google/generative-ai to main node_modules
-            // '@google/generative-ai': path.resolve(__dirname, 'node_modules/@google/generative-ai'),
-            // 'openai': path.resolve(__dirname, 'node_modules/openai'),
-        },
+        alias: [
+            { find: '@', replacement: path.resolve(__dirname, './src') },
+            { find: '@aws-sdk/client-s3', replacement: path.resolve(__dirname, './tests/__mocks__/aws-sdk-client-s3.js') },
+
+            // 1. KEEP Legacy JS files as JS (exclude from TS mapping)
+            { find: /.*\/server\/database\.js$/, replacement: path.resolve(__dirname, 'server/database.js') },
+            { find: /.*\/database\.postgres\.js$/, replacement: path.resolve(__dirname, 'server/database.postgres.js') },
+            { find: /.*\/database\.sqlite\.active\.js$/, replacement: path.resolve(__dirname, 'server/database.sqlite.active.js') },
+            { find: /.*\/learningSystem\.js$/, replacement: path.resolve(__dirname, 'server/services/ai/learningSystem.js') },
+            { find: /.*\/src\/database\/index\.js$/, replacement: path.resolve(__dirname, 'server/src/database/index.ts') },
+
+            // 2. KEEP Mocks as JS (exclude from TS mapping)
+            { find: /^(\.?\.\/.*__mocks__.*)\.js$/, replacement: '$1.js' },
+
+            // 3. Global alias for other relative .js imports -> .ts (unless in __mocks__ or specific files)
+            {
+                find: /^(\.?\.\/.*)(?<!__mocks__\/.*)\.js$/,
+                replacement: '$1.ts',
+                customResolver: async function (updatedId, importer, options) {
+                    // 1. Try to resolve the TS file (Src preference)
+                    const tsResolution = await this.resolve(updatedId, importer, { ...options, skipSelf: true });
+                    if (tsResolution) return tsResolution;
+
+                    // 2. Fallback to JS file (Legacy)
+                    const jsPath = updatedId.replace(/\.ts$/, '.js');
+                    return this.resolve(jsPath, importer, { ...options, skipSelf: true });
+                }
+            }],
     },
     // Disable .env loading in tests to avoid permission issues
     envPrefix: [],

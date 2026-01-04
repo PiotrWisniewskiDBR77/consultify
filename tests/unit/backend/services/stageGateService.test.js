@@ -1,17 +1,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 // Mock database
-const createMockDb = () => ({
+const mockDb = vi.hoisted(() => ({
     get: vi.fn(),
     all: vi.fn(),
     run: vi.fn()
-});
+}));
+
+const createMockDb = () => mockDb;
+
+// Mock the database module
+vi.mock('../../../../server/src/database/index.js', () => ({
+    default: mockDb
+}));
 
 // Import service (will inject mock)
-const StageGateService = require('../../../../server/services/stageGateService');
+const StageGateServiceModule = await import('../../../../server/services/stageGateService.js');
+const StageGateService = StageGateServiceModule.default;
 
 describe('StageGateService', () => {
     let mockDb;
@@ -19,7 +24,7 @@ describe('StageGateService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockDb = createMockDb();
-        StageGateService._setDb(mockDb);
+        StageGateService.setDependencies({ db: mockDb });
     });
 
     describe('GATE_TYPES', () => {

@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
+import { config } from '../../config/index.js';
 import { getDatabase } from '../../database/Database.js';
 import type { BillingServiceDependencies } from './types.js';
 
@@ -16,14 +17,23 @@ export class BillingDependencyLoader {
             const db = getDatabase();
             let stripe: Stripe | null = null;
 
-            if (process.env.STRIPE_SECRET_KEY) {
+            // 1. If MOCK_BILLING is enabled, we explicitly SKIP Stripe initialization
+            // 2. If STRIPE_SECRET_KEY is present (and not mocked), we initialize Stripe
+            // 3. If neither, we log a warning (dev/test env)
+
+            if (config.MOCK_BILLING) {
+                console.log('[BillingDependencyLoader] MOCK_BILLING enabled. Skipping Stripe initialization.');
+            } else if (config.STRIPE_SECRET_KEY) {
                 try {
-                    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+                    stripe = new Stripe(config.STRIPE_SECRET_KEY, {
                         apiVersion: '2025-12-15.clover' as any,
                     });
                 } catch (error: unknown) {
                     console.warn('[BillingDependencyLoader] Stripe initialization failed:', error);
                 }
+            } else {
+                // Should be unreachable in PRODUCTION due to Config.ts validation
+                console.warn('[BillingDependencyLoader] No Stripe Key found. Falling back to MOCK mode.');
             }
 
             this.#deps = {

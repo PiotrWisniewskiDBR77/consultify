@@ -11,12 +11,14 @@ import { all, get, run } from '../utils/DbPromise.js';
 // TYPES & CONSTANTS
 // ==========================================
 
-export enum MemoryType {
-    DECISION = 'DECISION',
-    PHASE_TRANSITION = 'PHASE_TRANSITION',
-    RECOMMENDATION = 'RECOMMENDATION',
-    PATTERN = 'PATTERN',
-}
+export const MemoryType = {
+    DECISION: 'DECISION',
+    PHASE_TRANSITION: 'PHASE_TRANSITION',
+    RECOMMENDATION: 'RECOMMENDATION',
+    PATTERN: 'PATTERN',
+} as const;
+
+export type MemoryType = (typeof MemoryType)[keyof typeof MemoryType];
 
 export const MEMORY_TYPES = {
     DECISION: MemoryType.DECISION,
@@ -242,7 +244,7 @@ export const AIMemoryManager = {
                 if (typeof row.content === 'string') {
                     row.content = JSON.parse(row.content);
                 }
-            } catch {}
+            } catch { }
             return row;
         });
     },
@@ -901,9 +903,9 @@ export const AIMemoryManager = {
             recommendations:
                 totalTokens > availableForContext
                     ? {
-                          trimMemoryBy: Math.min(memoryTokens, totalTokens - availableForContext),
-                          trimHistoryBy: Math.max(0, totalTokens - availableForContext - memoryTokens),
-                      }
+                        trimMemoryBy: Math.min(memoryTokens, totalTokens - availableForContext),
+                        trimHistoryBy: Math.max(0, totalTokens - availableForContext - memoryTokens),
+                    }
                     : null,
         };
     },

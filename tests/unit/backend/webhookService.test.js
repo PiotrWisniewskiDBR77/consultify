@@ -26,9 +26,31 @@ describe('WebhookService', () => {
         });
 
         // Inject mock dependencies
-        WebhookService.constructor.setDependencies({
+        const mockQueryHelpers = {
+            queryAll: (sql, params) => new Promise((resolve, reject) => {
+                mockDb.all(sql, params, (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows);
+                });
+            }),
+            queryOne: (sql, params) => new Promise((resolve, reject) => {
+                mockDb.get(sql, params, (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                });
+            }),
+            queryRun: (sql, params) => new Promise((resolve, reject) => {
+                mockDb.run(sql, params, function (err) {
+                    if (err) reject(err);
+                    else resolve({ lastID: this?.lastID, changes: this?.changes });
+                });
+            })
+        };
+
+        WebhookService.setDependencies({
             db: mockDb,
-            fetch: mockFetch
+            fetch: mockFetch,
+            queryHelpers: mockQueryHelpers
         });
     });
 

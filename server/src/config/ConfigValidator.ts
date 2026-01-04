@@ -207,7 +207,7 @@ export function validateConfig(): ValidatedConfig {
         });
 
         console.error('\n\x1b[31m%s\x1b[0m', 'Configuration validation failed:');
-        errors.forEach((err: Error | null) => console.error(err));
+        errors.forEach((err: string) => console.error(err));
 
         // In production, fail fast
         if (isProduction) {

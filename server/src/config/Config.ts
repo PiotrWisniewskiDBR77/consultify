@@ -22,6 +22,11 @@ const AppConfigSchema = z.object({
     PORT: z.number().int().positive().max(65535).default(3005),
     NODE_ENV: z.enum(['development', 'production', 'test', 'staging']).default('development'),
 
+    // Billing & Stripe Configuration
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    MOCK_BILLING: z.coerce.boolean().default(false),
+
     // OAuth: Google
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -39,6 +44,11 @@ const AppConfigSchema = z.object({
 
     // Frontend URL
     FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+
+    // Alerting Configuration
+    SLACK_WEBHOOK_URL: z.string().url().optional(),
+    DISCORD_WEBHOOK_URL: z.string().url().optional(),
+    AI_ALERTING_ENABLED: z.enum(['true', 'false']).default('true'),
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;
@@ -75,13 +85,19 @@ function loadConfig(): AppConfig {
             (isProduction
                 ? undefined
                 : isTest
-                  ? 'test-secret-key-for-testing-only-min-32-chars'
-                  : 'supersecretkey_change_this_in_production'),
+                    ? 'test-secret-key-for-testing-only-min-32-chars'
+                    : 'supersecretkey_change_this_in_production'),
         JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '365d',
         REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',
         TOKEN_CLEANUP_INTERVAL: parseInt(process.env.TOKEN_CLEANUP_INTERVAL || '3600000', 10),
         PORT: parseInt(process.env.PORT || '3005', 10),
         NODE_ENV: (process.env.NODE_ENV || 'development') as 'development' | 'production' | 'test' | 'staging',
+
+        // Billing Config
+        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+        STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+        MOCK_BILLING: process.env.MOCK_BILLING === 'true',
+
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
         GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3005/api/auth/google/callback',
@@ -93,6 +109,9 @@ function loadConfig(): AppConfig {
         MICROSOFT_CALLBACK_URL:
             process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:3005/api/auth/microsoft/callback',
         FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
+        SLACK_WEBHOOK_URL: process.env.SLACK_WEBHOOK_URL,
+        DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
+        AI_ALERTING_ENABLED: (process.env.AI_ALERTING_ENABLED || 'true') as 'true' | 'false',
     };
 
     // Validate configuration
@@ -128,7 +147,18 @@ function loadConfig(): AppConfig {
         });
     }
 
-    return result.data;
+    const config = result.data;
+
+    // Production Validation for Billing
+    if (isProduction) {
+        if (!config.MOCK_BILLING && !config.STRIPE_SECRET_KEY) {
+            throw new Error(
+                'STRIPE_SECRET_KEY is required in production. Either provide the key or set MOCK_BILLING=true to explicitly enable billing mocking.',
+            );
+        }
+    }
+
+    return config;
 }
 
 // ==========================================

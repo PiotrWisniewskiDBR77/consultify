@@ -176,7 +176,9 @@ export function performanceMetricsMiddleware(req: RequestWithMetrics, res: Respo
         }
 
         // Disable performance tracking when request finishes
-        queryHelpers.disablePerformanceTracking();
+        if (typeof queryHelpers.disablePerformanceTracking === 'function') {
+            queryHelpers.disablePerformanceTracking();
+        }
     });
 
     next();

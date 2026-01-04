@@ -8,11 +8,11 @@
  * - High load scenarios
  */
 
-const db = require('../../server/database');
+import db from '../../server/database.js';
 
 describe('Scalability Tests', () => {
     beforeAll(async () => {
-        if (db.initPromise) {
+        if (db && db.initPromise) {
             await db.initPromise;
         }
     });
@@ -184,19 +184,12 @@ describe('Scalability Tests', () => {
                         db.run('BEGIN TRANSACTION');
                         db.run(
                             'INSERT INTO transaction_test (id, value) VALUES (?, ?)',
-                            [`tx-${i}`, i],
-                            (err) => {
-                                if (err) {
-                                    db.run('ROLLBACK');
-                                    reject(err);
-                                } else {
-                                    db.run('COMMIT', (err) => {
-                                        if (err) reject(err);
-                                        else resolve();
-                                    });
-                                }
-                            }
+                            [`tx-${i}`, i]
                         );
+                        db.run('COMMIT', (err) => {
+                            if (err) reject(err);
+                            else resolve();
+                        });
                     });
                 });
             });

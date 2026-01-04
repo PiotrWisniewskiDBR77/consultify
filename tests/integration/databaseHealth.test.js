@@ -53,9 +53,9 @@ describe('Integration Test: Database Health', () => {
                 'ai_feedback',
                 'llm_providers',
                 'subscription_plans',
+                'subscription_plans',
                 'organization_billing',
-                'token_ledger',
-                'org_user_permissions',
+                'organization_members',
             ];
 
             for (const table of requiredTables) {
@@ -71,7 +71,7 @@ describe('Integration Test: Database Health', () => {
         });
     });
 
-    describe.skip('Referential Integrity', () => {
+    describe('Referential Integrity', () => {
         it('should enforce foreign key constraints', async () => {
             // Try to insert user with non-existent organization
             const invalidOrgId = 'non-existent-org-' + Date.now();
@@ -201,7 +201,7 @@ describe('Integration Test: Database Health', () => {
         });
     });
 
-    describe.skip('Transaction Integrity', () => {
+    describe('Transaction Integrity', () => {
         it('should commit transactions successfully', async () => {
             const orgId = 'test-org-tx-' + Date.now();
             const userId = 'test-user-tx-' + Date.now();

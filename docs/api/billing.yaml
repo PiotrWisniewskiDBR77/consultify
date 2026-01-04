@@ -1,0 +1,1479 @@
+openapi: 3.1.0
+info:
+  title: Consultify Billing API
+  description: |
+    Complete billing management API for subscription management, invoicing, 
+    payment processing, and usage tracking. Integrates with Stripe for payment processing.
+    
+    ## Authentication
+    All endpoints require Bearer token authentication via the `Authorization` header.
+    Most endpoints also require the `X-Organization-Id` header for multi-tenant access.
+    
+    ## Rate Limiting
+    - Standard endpoints: 100 requests/minute
+    - Webhook endpoints: 1000 requests/minute
+    
+    ## Webhooks
+    Stripe webhooks are handled at `/webhooks/stripe` with signature verification.
+  version: 2.0.0
+  contact:
+    name: Consultify Support
+    email: support@consultify.app
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.consultify.app/api
+    description: Production
+  - url: https://staging-api.consultify.app/api
+    description: Staging
+  - url: http://localhost:3001/api
+    description: Development
+
+tags:
+  - name: Invoices
+    description: Invoice management
+  - name: Subscriptions
+    description: Subscription lifecycle management
+  - name: Plans
+    description: Subscription plan management
+  - name: Payment Methods
+    description: Payment method management
+  - name: Checkout
+    description: Stripe Checkout integration
+  - name: Usage
+    description: Usage tracking and billing
+  - name: Spending Alerts
+    description: Spending threshold alerts
+  - name: Credit Notes
+    description: Credit notes and refunds
+  - name: Stats
+    description: Billing statistics (SuperAdmin)
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ==========================================
+  # INVOICES
+  # ==========================================
+  /billing/invoices:
+    get:
+      tags: [Invoices]
+      summary: List invoices
+      description: Get paginated list of invoices for the organization
+      operationId: listInvoices
+      parameters:
+        - $ref: '#/components/parameters/XOrganizationId'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, open, paid, void, uncollectible, past_due]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+      responses:
+        '200':
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invoice'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Invoices]
+      summary: Create invoice
+      description: Create a new invoice (SuperAdmin only)
+      operationId: createInvoice
+      security:
+        - BearerAuth: []
+        - SuperAdmin: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [organizationId, lineItems]
+              properties:
+                organizationId:
+                  type: string
+                lineItems:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/LineItem'
+                currency:
+                  type: string
+                  default: USD
+                dueDate:
+                  type: string
+                  format: date-time
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  id:
+                    type: string
+                  invoiceNumber:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /billing/invoices/{id}:
+    get:
+      tags: [Invoices]
+      summary: Get invoice details
+      operationId: getInvoice
+      parameters:
+        - $ref: '#/components/parameters/XOrganizationId'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice:
+                    $ref: '#/components/schemas/Invoice'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Invoices]
+      summary: Update invoice
+      operationId: updateInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [draft, open, paid, void]
+                lineItems:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/LineItem'
+                dueDate:
+                  type: string
+                  format: date-time
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Invoice updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /billing/invoices/{id}/send:
+    post:
+      tags: [Invoices]
+      summary: Send invoice to customer
+      operationId: sendInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /billing/invoices/{id}/download:
+    get:
+      tags: [Invoices]
+      summary: Download invoice PDF
+      operationId: downloadInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  # ==========================================
+  # SUBSCRIPTIONS
+  # ==========================================
+  /billing/subscriptions:
+    get:
+      tags: [Subscriptions]
+      summary: List subscriptions
+      operationId: listSubscriptions
+      parameters:
+        - $ref: '#/components/parameters/XOrganizationId'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, trialing, past_due, canceled, unpaid]
+      responses:
+        '200':
+          description: List of subscriptions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscriptions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subscription'
+
+    post:
+      tags: [Subscriptions]
+      summary: Create subscription
+      operationId: createSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [organizationId, planId]
+              properties:
+                organizationId:
+                  type: string
+                planId:
+                  type: string
+                billingCycle:
+                  type: string
+                  enum: [monthly, yearly]
+                  default: monthly
+                trialDays:
+                  type: integer
+                  default: 0
+      responses:
+        '200':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  id:
+                    type: string
+
+  /billing/subscriptions/{id}:
+    get:
+      tags: [Subscriptions]
+      summary: Get subscription details
+      operationId: getSubscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription:
+                    $ref: '#/components/schemas/Subscription'
+
+    put:
+      tags: [Subscriptions]
+      summary: Update subscription
+      operationId: updateSubscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                planId:
+                  type: string
+                billingCycle:
+                  type: string
+                cancelAtPeriodEnd:
+                  type: boolean
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /billing/subscriptions/{id}/cancel:
+    post:
+      tags: [Subscriptions]
+      summary: Cancel subscription
+      operationId: cancelSubscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                immediately:
+                  type: boolean
+                  default: false
+                  description: If true, cancels immediately. Otherwise, cancels at period end.
+      responses:
+        '200':
+          description: Subscription canceled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  # ==========================================
+  # PLANS
+  # ==========================================
+  /billing/plans:
+    get:
+      tags: [Plans]
+      summary: List subscription plans
+      operationId: listPlans
+      parameters:
+        - name: includeInactive
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of plans
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Plan'
+
+    post:
+      tags: [Plans]
+      summary: Create plan (SuperAdmin)
+      operationId: createPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanInput'
+      responses:
+        '200':
+          description: Plan created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  id:
+                    type: string
+
+  /billing/plans/{id}:
+    put:
+      tags: [Plans]
+      summary: Update plan (SuperAdmin)
+      operationId: updatePlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanInput'
+      responses:
+        '200':
+          description: Plan updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ==========================================
+  # PAYMENT METHODS
+  # ==========================================
+  /billing/payment-methods:
+    get:
+      tags: [Payment Methods]
+      summary: List payment methods
+      operationId: listPaymentMethods
+      parameters:
+        - $ref: '#/components/parameters/XOrganizationId'
+      responses:
+        '200':
+          description: List of payment methods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethod'
+
+    post:
+      tags: [Payment Methods]
+      summary: Add payment method
+      operationId: addPaymentMethod
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paymentMethodId]
+              properties:
+                paymentMethodId:
+                  type: string
+                  description: Stripe PaymentMethod ID from frontend
+                setAsDefault:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Payment method added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+
+  /billing/payment-methods/{id}:
+    delete:
+      tags: [Payment Methods]
+      summary: Remove payment method
+      operationId: removePaymentMethod
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment method removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /billing/payment-methods/{id}/default:
+    post:
+      tags: [Payment Methods]
+      summary: Set default payment method
+      operationId: setDefaultPaymentMethod
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Default payment method set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /billing/setup-intent:
+    post:
+      tags: [Payment Methods]
+      summary: Create Stripe SetupIntent
+      description: Creates a SetupIntent for securely collecting payment method details
+      operationId: createSetupIntent
+      responses:
+        '200':
+          description: SetupIntent created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clientSecret:
+                    type: string
+                  id:
+                    type: string
+
+  # ==========================================
+  # CHECKOUT
+  # ==========================================
+  /billing/checkout:
+    post:
+      tags: [Checkout]
+      summary: Create checkout session
+      description: Creates a Stripe Checkout session for new subscriptions
+      operationId: createCheckoutSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId, successUrl, cancelUrl]
+              properties:
+                planId:
+                  type: string
+                successUrl:
+                  type: string
+                  format: uri
+                cancelUrl:
+                  type: string
+                  format: uri
+                billingCycle:
+                  type: string
+                  enum: [monthly, yearly]
+                  default: monthly
+                discountCode:
+                  type: string
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                  url:
+                    type: string
+                    format: uri
+
+  /billing/checkout/portal:
+    post:
+      tags: [Checkout]
+      summary: Create billing portal session
+      description: Creates a Stripe Customer Portal session for self-service management
+      operationId: createPortalSession
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                returnUrl:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Portal session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+
+  # ==========================================
+  # USAGE
+  # ==========================================
+  /billing/usage:
+    get:
+      tags: [Usage]
+      summary: Get usage data
+      operationId: getUsage
+      parameters:
+        - $ref: '#/components/parameters/XOrganizationId'
+        - name: metric
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Usage data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usage:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UsageRecord'
+                  structuredUsage:
+                    $ref: '#/components/schemas/StructuredUsage'
+                  totals:
+                    type: array
+                    items:
+                      type: object
+
+    post:
+      tags: [Usage]
+      summary: Record usage event
+      operationId: recordUsage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metricName]
+              properties:
+                metricName:
+                  type: string
+                quantity:
+                  type: number
+                  default: 1
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Usage recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  id:
+                    type: string
+
+  /billing/usage-summary:
+    get:
+      tags: [Usage]
+      summary: Get usage summary dashboard data
+      operationId: getUsageSummary
+      parameters:
+        - $ref: '#/components/parameters/XOrganizationId'
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+            default: 30d
+      responses:
+        '200':
+          description: Usage summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageSummary'
+
+  # ==========================================
+  # SPENDING ALERTS
+  # ==========================================
+  /billing/spending-alerts:
+    get:
+      tags: [Spending Alerts]
+      summary: List spending alerts
+      operationId: listSpendingAlerts
+      responses:
+        '200':
+          description: List of spending alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpendingAlert'
+
+    post:
+      tags: [Spending Alerts]
+      summary: Create spending alert
+      operationId: createSpendingAlert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpendingAlertInput'
+      responses:
+        '200':
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  id:
+                    type: string
+
+  /billing/spending-alerts/{id}:
+    put:
+      tags: [Spending Alerts]
+      summary: Update spending alert
+      operationId: updateSpendingAlert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpendingAlertInput'
+      responses:
+        '200':
+          description: Alert updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+    delete:
+      tags: [Spending Alerts]
+      summary: Delete spending alert
+      operationId: deleteSpendingAlert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /billing/spending-alerts/{id}/toggle:
+    post:
+      tags: [Spending Alerts]
+      summary: Toggle spending alert active state
+      operationId: toggleSpendingAlert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert toggled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ==========================================
+  # CREDIT NOTES
+  # ==========================================
+  /billing/credit-notes:
+    get:
+      tags: [Credit Notes]
+      summary: List credit notes
+      operationId: listCreditNotes
+      parameters:
+        - $ref: '#/components/parameters/XOrganizationId'
+      responses:
+        '200':
+          description: List of credit notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  creditNotes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CreditNote'
+
+    post:
+      tags: [Credit Notes]
+      summary: Create credit note (SuperAdmin)
+      operationId: createCreditNote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [organizationId, amount]
+              properties:
+                organizationId:
+                  type: string
+                amount:
+                  type: number
+                reason:
+                  type: string
+                invoiceId:
+                  type: string
+      responses:
+        '200':
+          description: Credit note created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  id:
+                    type: string
+                  noteNumber:
+                    type: string
+
+  # ==========================================
+  # STATS (SuperAdmin)
+  # ==========================================
+  /billing/stats:
+    get:
+      tags: [Stats]
+      summary: Get billing statistics
+      description: SuperAdmin only - returns MRR, ARR, revenue trends
+      operationId: getBillingStats
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: integer
+            default: 30
+            description: Number of days to analyze
+      responses:
+        '200':
+          description: Billing statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingStats'
+
+  # ==========================================
+  # NOTIFICATION PREFERENCES
+  # ==========================================
+  /billing/notification-preferences:
+    get:
+      tags: [Notifications]
+      summary: Get notification preferences
+      operationId: getNotificationPreferences
+      responses:
+        '200':
+          description: Notification preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+
+    put:
+      tags: [Notifications]
+      summary: Update notification preferences
+      operationId: updateNotificationPreferences
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPreferences'
+      responses:
+        '200':
+          description: Preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /billing/test-email:
+    post:
+      tags: [Notifications]
+      summary: Send test billing email
+      operationId: sendTestEmail
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [templateKey]
+              properties:
+                templateKey:
+                  type: string
+                  enum: [invoice_created, invoice_paid, payment_failed, subscription_renewed]
+                recipientEmail:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Test email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    SuperAdmin:
+      type: http
+      scheme: bearer
+      description: SuperAdmin role required
+
+  parameters:
+    XOrganizationId:
+      name: X-Organization-Id
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Organization ID for multi-tenant access
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Authentication required
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Insufficient permissions
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Resource not found
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+        organization_id:
+          type: string
+        invoice_number:
+          type: string
+        status:
+          type: string
+          enum: [draft, open, paid, void, uncollectible, past_due]
+        currency:
+          type: string
+        subtotal:
+          type: number
+        tax_amount:
+          type: number
+        total:
+          type: number
+        amount_due:
+          type: number
+        amount_paid:
+          type: number
+        due_date:
+          type: string
+          format: date-time
+        paid_at:
+          type: string
+          format: date-time
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineItem'
+        pdf_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    LineItem:
+      type: object
+      properties:
+        description:
+          type: string
+        quantity:
+          type: number
+        unit_price:
+          type: number
+        amount:
+          type: number
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        organization_id:
+          type: string
+        plan_id:
+          type: string
+        plan_name:
+          type: string
+        status:
+          type: string
+          enum: [active, trialing, past_due, canceled, unpaid]
+        billing_cycle:
+          type: string
+          enum: [monthly, yearly]
+        current_period_start:
+          type: string
+          format: date-time
+        current_period_end:
+          type: string
+          format: date-time
+        trial_start:
+          type: string
+          format: date-time
+        trial_end:
+          type: string
+          format: date-time
+        cancel_at_period_end:
+          type: boolean
+        canceled_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    Plan:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price_monthly:
+          type: number
+        price_yearly:
+          type: number
+        currency:
+          type: string
+        features:
+          type: array
+          items:
+            type: string
+        limits:
+          type: object
+          properties:
+            token_limit:
+              type: integer
+            storage_limit_gb:
+              type: integer
+            seats_included:
+              type: integer
+        trial_days:
+          type: integer
+        is_active:
+          type: boolean
+        is_public:
+          type: boolean
+
+    PlanInput:
+      type: object
+      required: [name, priceMonthly]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        priceMonthly:
+          type: number
+        priceYearly:
+          type: number
+        currency:
+          type: string
+          default: USD
+        features:
+          type: array
+          items:
+            type: string
+        limits:
+          type: object
+        trialDays:
+          type: integer
+          default: 0
+        isPublic:
+          type: boolean
+          default: true
+        sortOrder:
+          type: integer
+          default: 0
+
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        brand:
+          type: string
+        last4:
+          type: string
+        exp_month:
+          type: integer
+        exp_year:
+          type: integer
+        holder_name:
+          type: string
+        is_default:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    UsageRecord:
+      type: object
+      properties:
+        metric_name:
+          type: string
+        total:
+          type: number
+        date:
+          type: string
+          format: date
+
+    StructuredUsage:
+      type: object
+      properties:
+        tokens:
+          type: object
+          properties:
+            used:
+              type: integer
+            limit:
+              type: integer
+        storage:
+          type: object
+          properties:
+            used_gb:
+              type: number
+            limit_gb:
+              type: number
+        seats:
+          type: object
+          properties:
+            used:
+              type: integer
+            total:
+              type: integer
+        spend:
+          type: object
+          properties:
+            current_period:
+              type: number
+            budget:
+              type: number
+
+    UsageSummary:
+      type: object
+      properties:
+        currentPeriod:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        tokens:
+          type: object
+          properties:
+            used:
+              type: integer
+            limit:
+              type: integer
+            percentage:
+              type: number
+            trend:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                  value:
+                    type: integer
+        storage:
+          type: object
+        seats:
+          type: object
+        apiCalls:
+          type: object
+        breakdown:
+          type: object
+          properties:
+            byUser:
+              type: array
+            byProject:
+              type: array
+            byFeature:
+              type: array
+        projectedUsage:
+          type: number
+        estimatedCost:
+          type: number
+        basePlanCost:
+          type: number
+
+    SpendingAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [ai_tokens, storage, user_seats, total_spend]
+        threshold:
+          type: number
+        thresholdType:
+          type: string
+          enum: [percentage, absolute]
+        action:
+          type: string
+          enum: [notify, notify_pause, hard_limit]
+        notifyEmails:
+          type: array
+          items:
+            type: string
+            format: email
+        isActive:
+          type: boolean
+        lastTriggeredAt:
+          type: string
+          format: date-time
+
+    SpendingAlertInput:
+      type: object
+      required: [type, threshold, thresholdType, action]
+      properties:
+        type:
+          type: string
+          enum: [ai_tokens, storage, user_seats, total_spend]
+        threshold:
+          type: number
+        thresholdType:
+          type: string
+          enum: [percentage, absolute]
+        action:
+          type: string
+          enum: [notify, notify_pause, hard_limit]
+        notifyEmails:
+          type: array
+          items:
+            type: string
+            format: email
+        isActive:
+          type: boolean
+          default: true
+
+    CreditNote:
+      type: object
+      properties:
+        id:
+          type: string
+        organization_id:
+          type: string
+        invoice_id:
+          type: string
+        note_number:
+          type: string
+        amount:
+          type: number
+        reason:
+          type: string
+        status:
+          type: string
+          enum: [issued, applied, void]
+        created_at:
+          type: string
+          format: date-time
+
+    BillingStats:
+      type: object
+      properties:
+        mrr:
+          type: number
+          description: Monthly Recurring Revenue
+        arr:
+          type: number
+          description: Annual Recurring Revenue
+        revenue:
+          type: object
+          properties:
+            total:
+              type: number
+            invoiceCount:
+              type: integer
+            period:
+              type: integer
+        subscriptions:
+          type: object
+          properties:
+            byPlan:
+              type: array
+              items:
+                type: object
+            trends:
+              type: array
+              items:
+                type: object
+        unpaidInvoices:
+          type: object
+          properties:
+            count:
+              type: integer
+            totalAmount:
+              type: number
+
+    NotificationPreferences:
+      type: object
+      properties:
+        invoice_created:
+          type: boolean
+        invoice_paid:
+          type: boolean
+        invoice_overdue:
+          type: boolean
+        payment_failed:
+          type: boolean
+        payment_method_expiring:
+          type: boolean
+        subscription_renewed:
+          type: boolean
+        subscription_canceled:
+          type: boolean
+        credit_note_issued:
+          type: boolean
+        usage_threshold_warning:
+          type: boolean
+        additional_recipients:
+          type: array
+          items:
+            type: string
+            format: email
+

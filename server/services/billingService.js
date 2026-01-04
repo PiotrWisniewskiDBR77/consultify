@@ -16,8 +16,8 @@ let deps = {
 async function initDeps() {
     if (!deps.db) {
         const dbModule = await import('../src/database/index.js');
-    const { getDatabase } = dbModule;
-    deps.db = getDatabase();
+        const { getDatabase } = dbModule;
+        deps.db = getDatabase();
     }
 
     if (!deps.uuidv4) {
@@ -954,14 +954,14 @@ export async function updateBillingModel(orgId, model) {
 }
 
 export {
-setDependencies,
+    setDependencies,
     getPlans,
     getPlanById,
     createPlan,
     updatePlan,
     deletePlan,
     getOrganizationBilling,
-    upsertOrganizationBilling: upsertOrgBilling,
+    upsertOrgBilling as upsertOrganizationBilling,
     getOrCreateStripeCustomer,
     createSubscription,
     cancelSubscription,

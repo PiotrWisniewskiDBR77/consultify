@@ -110,6 +110,7 @@ import organizationProfilesRoutes from './routes/organization-profiles.routes.js
 import organizationRoutes from './routes/organizations.routes.js';
 import partnerRoutes from './routes/partners.routes.js';
 import performanceMetricsRoutes from './routes/performance-metrics.routes.js';
+import performanceRoutes from './routes/performance.routes.js';
 import permissionRequestsRoutes from './routes/permissionRequests.routes.js';
 import pinnedPromptsRoutes from './routes/pinned-prompts.routes.js';
 import pmoRoutes from './routes/pmo.routes.js';
@@ -382,6 +383,11 @@ export class ApiGateway {
             app.use('/api/notification-settings', notificationSettingsRoutes);
             app.use('/api/metrics', metricsRoutes);
             app.use('/api/performance-metrics', performanceMetricsRoutes);
+            app.use('/api/performance', performanceRoutes);
+            // Chaos engineering endpoints (development only)
+            if (process.env.NODE_ENV !== 'production') {
+                app.use('/api/chaos', chaosRoutes);
+            }
             app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
 
             // Other routes

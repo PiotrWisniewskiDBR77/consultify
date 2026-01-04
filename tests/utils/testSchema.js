@@ -306,7 +306,8 @@ export const TEST_SCHEMA = [
         phone_verified INTEGER DEFAULT 0,
         is_owner INTEGER DEFAULT 0,
         last_login DATETIME,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
     `DROP TABLE IF EXISTS decisions`,
     `CREATE TABLE IF NOT EXISTS decisions (
@@ -602,6 +603,17 @@ export const TEST_SCHEMA = [
         revoked_at DATETIME,
         revoked_reason TEXT
     )`,
+    `CREATE TABLE IF NOT EXISTS sessions(
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        token TEXT UNIQUE,
+        expires_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        ip_address TEXT,
+        user_agent TEXT,
+        last_active_at DATETIME,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
     `CREATE TABLE IF NOT EXISTS revoked_tokens(
         jti TEXT PRIMARY KEY,
         user_id TEXT,
@@ -663,6 +675,20 @@ export const TEST_SCHEMA = [
         created_by TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS tasks(
+        id TEXT PRIMARY KEY,
+        project_id TEXT,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT DEFAULT 'TODO',
+        priority TEXT DEFAULT 'MEDIUM',
+        assignee_id TEXT,
+        due_date DATETIME,
+        created_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS project_members(
         id TEXT PRIMARY KEY,

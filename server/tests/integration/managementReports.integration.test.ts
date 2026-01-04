@@ -5,11 +5,14 @@
  * including generation, approval workflows, versioning, and export.
  */
 
-const request = require('supertest');
-const appModule = require('../../index.cjs');
-const app = appModule.default || appModule;
-const db = require('../../database');
-const { v4: uuidv4 } = require('uuid');
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
+
+let app: any;
+let db: any;
+let getDatabase: any;
 
 // Test data
 const testOrganization = {
@@ -33,11 +36,10 @@ const testProject = {
     status: 'ACTIVE'
 };
 
-let authToken;
+let authToken: string;
 
 // Helper to create auth token
-const generateAuthToken = (user) => {
-    const jwt = require('jsonwebtoken');
+const generateAuthToken = (user: typeof testUser) => {
     return jwt.sign(
         { id: user.id, email: user.email, organization_id: user.organization_id, role: user.role },
         process.env.JWT_SECRET || 'test-secret',
@@ -46,8 +48,25 @@ const generateAuthToken = (user) => {
 };
 
 beforeAll(async () => {
+    // 1. Force MOCK_DB=false to create a REAL instance first
+    process.env.MOCK_DB = 'false';
+    const { createDatabase } = await import('../../src/database/Database.js');
+    const realDb = await createDatabase();
+
+    // 2. Set MOCK_DB=true and assign the real instance to the global mock
+    // This trick convinces the application to use our pre-initialized instance
+    process.env.MOCK_DB = 'true';
+    (global as any).__TEST_DB_MOCK__ = realDb;
+
+    // 3. Now import the app, which will use the global mock (our real DB)
+    const appModule = await import('../../src/index.js');
+    app = appModule.default || appModule;
+
+    // 4. Use the same instance for test assertions
+    db = realDb;
+
     // Setup test data
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
         db.serialize(() => {
             db.run(
                 `INSERT OR REPLACE INTO organizations (id, name) VALUES (?, ?)`,
@@ -60,7 +79,7 @@ beforeAll(async () => {
             db.run(
                 `INSERT OR REPLACE INTO projects (id, name, organization_id, status) VALUES (?, ?, ?, ?)`,
                 [testProject.id, testProject.name, testProject.organization_id, testProject.status],
-                (err) => err ? reject(err) : resolve()
+                (err: Error | null) => err ? reject(err) : resolve()
             );
         });
     });
@@ -70,7 +89,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     // Cleanup test data
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
         db.serialize(() => {
             db.run(`DELETE FROM management_report_comments WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`, [testOrganization.id]);
             db.run(`DELETE FROM management_report_audit_log WHERE report_id IN (SELECT id FROM management_reports WHERE organization_id = ?)`, [testOrganization.id]);
@@ -79,13 +98,13 @@ afterAll(async () => {
             db.run(`DELETE FROM management_reports WHERE organization_id = ?`, [testOrganization.id]);
             db.run(`DELETE FROM projects WHERE id = ?`, [testProject.id]);
             db.run(`DELETE FROM users WHERE id = ?`, [testUser.id]);
-            db.run(`DELETE FROM organizations WHERE id = ?`, [testOrganization.id], (err) => err ? reject(err) : resolve());
+            db.run(`DELETE FROM organizations WHERE id = ?`, [testOrganization.id], (err: Error | null) => err ? reject(err) : resolve());
         });
     });
 });
 
 describe('Management Reports API', () => {
-    let createdReportId;
+    let createdReportId: string;
 
     describe('POST /api/management-reports/generate', () => {
         it('should generate a team meeting report for a project', async () => {
@@ -100,6 +119,11 @@ describe('Management Reports API', () => {
                     periodDays: 7,
                     aiEnhancement: false
                 });
+
+            if (response.status !== 200) {
+                console.log('Response Status:', response.status);
+                console.log('Response Body:', JSON.stringify(response.body, null, 2));
+            }
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
@@ -196,14 +220,14 @@ describe('Management Reports API', () => {
                 .set('Authorization', `Bearer ${authToken}`);
 
             expect(response.status).toBe(200);
-            response.body.reports.forEach(report => {
+            response.body.reports.forEach((report: any) => {
                 expect(report.reportType).toBe('TEAM_MEETING');
             });
         });
     });
 
     describe('Approval Workflow', () => {
-        let approvalReportId;
+        let approvalReportId: string;
 
         beforeAll(async () => {
             // Create a report with approval required
@@ -305,7 +329,7 @@ describe('Management Reports API', () => {
     });
 
     describe('Comments', () => {
-        let commentId;
+        let commentId: string;
 
         it('should add a comment to report', async () => {
             const response = await request(app)
@@ -389,7 +413,7 @@ describe('Management Reports API', () => {
     });
 
     describe('Lock/Finalize', () => {
-        let finalizeReportId;
+        let finalizeReportId: string;
 
         beforeAll(async () => {
             // Create and approve a report for finalization
@@ -505,13 +529,3 @@ describe('Management Reports API', () => {
         });
     });
 });
-
-
-
-
-
-
-
-
-
-

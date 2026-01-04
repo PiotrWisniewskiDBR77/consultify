@@ -43,7 +43,8 @@ describe('AIService Test Suite', () => {
                 onSuccess: vi.fn(),
                 onFailure: vi.fn()
             })),
-            isOpen: vi.fn(() => false)
+            isOpen: vi.fn(() => false),
+            handleFailure: vi.fn()
         };
 
         // 2. Register doMocks for static dependencies
@@ -187,8 +188,9 @@ describe('AIService Test Suite', () => {
             mockChatSession.sendMessageStream.mockRejectedValueOnce(new Error('Stream Fail'));
             const stream = AIService.streamLLM('Test', '', [], null, 'user-1');
             const chunks = [];
-            for await (const chunk of stream) chunks.push(chunk);
-            expect(chunks[0]).toContain('[Error generating response]');
+            await expect(async () => {
+                for await (const chunk of stream) chunks.push(chunk);
+            }).rejects.toThrow('Stream Fail');
         });
     });
 
@@ -230,8 +232,9 @@ describe('AIService Test Suite', () => {
             fetch.mockResolvedValue({ ok: false, statusText: 'Error' });
             const iterator = AIService.streamLLM('Hi', '', [], 'prov-1', 'user-1');
             const res = [];
-            for await (const c of iterator) res.push(c);
-            expect(res[0]).toContain('[Error generating response]');
+            await expect(async () => {
+                for await (const c of iterator) res.push(c);
+            }).rejects.toThrow('Provider openai Stream error: Error');
         });
     });
 

@@ -90,13 +90,34 @@ const AlertService = {
     async dispatchAlerts(alerts: Alert[]): Promise<void> {
         if (!alerts || alerts.length === 0) return;
 
-        alerts.forEach((alert) => {
+        // Lazy import to avoid circular dependencies
+        const { default: NotificationService } = await import('./NotificationService.js');
+
+        for (const alert of alerts) {
             if (alert.type === 'CRITICAL') {
                 console.error(`[ALERT SERVICE] ${alert.message}`);
-                return;
+
+                try {
+                    // Create system alert notification
+                    if (NotificationService && typeof NotificationService.create === 'function') {
+                        await NotificationService.create({
+                            userId: 'system', // System-level alert
+                            organizationId: 'system',
+                            type: 'SYSTEM_ALERT',
+                            title: `System Alert: ${alert.component}`,
+                            message: alert.message,
+                            severity: 'CRITICAL',
+                            isActionable: false,
+                            expiresAt: undefined
+                        });
+                    }
+                } catch (error) {
+                    console.error('[ALERT SERVICE] Failed to dispatch notification:', error);
+                }
+            } else {
+                console.warn(`[ALERT SERVICE] ${alert.message}`);
             }
-            console.warn(`[ALERT SERVICE] ${alert.message}`);
-        });
+        }
     },
 };
 

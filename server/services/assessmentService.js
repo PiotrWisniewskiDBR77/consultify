@@ -1,6 +1,6 @@
-import { createAssessmentAnalysis } from './assessment/assessmentAnalysis.js';
-import { createAssessmentStorage } from './assessment/assessmentStorage.js';
-import { createAssessmentWorkflow } from './assessment/assessmentWorkflow.js';
+import { createAssessmentAnalysis } from '../services/assessment/assessmentAnalysis.js';
+import { createAssessmentStorage } from '../services/assessment/assessmentStorage.js';
+import { createAssessmentWorkflow } from '../services/assessment/assessmentWorkflow.js';
 
 // Dependency injection for testing
 let deps = {
@@ -14,8 +14,8 @@ let deps = {
 async function initDeps() {
     if (!deps.db) {
         const dbModule = await import('../src/database/index.js');
-    const { getDatabase } = dbModule;
-    deps.db = getDatabase();
+        const { getDatabase } = dbModule;
+        deps.db = getDatabase();
     }
 
     if (!deps.uuidv4) {

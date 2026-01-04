@@ -394,10 +394,12 @@ export const createAILLMService = ({ deps, AccessPolicyService }) => ({
                         if (images.length > 0) {
                             const parts = formatGeminiVisionParts(prompt, images);
                             if (systemInstruction) parts.unshift({ text: `System: ${systemInstruction}` });
-                            const result = await model.generateContent(parts);
-                            const responseText = result.response.text();
-                            fullResponse += responseText;
-                            yield responseText;
+                            const result = await model.generateContentStream(parts);
+                            for await (const chunk of result.stream) {
+                                const chunkText = chunk.text();
+                                fullResponse += chunkText;
+                                yield chunkText;
+                            }
                         } else {
                             const chatSession = model.startChat({
                                 history: history.map(h => ({
@@ -406,10 +408,12 @@ export const createAILLMService = ({ deps, AccessPolicyService }) => ({
                                 })),
                                 systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
                             });
-                            const result = await chatSession.sendMessage(prompt);
-                            const responseText = (await result.response).text();
-                            fullResponse += responseText;
-                            yield responseText;
+                            const result = await chatSession.sendMessageStream(prompt);
+                            for await (const chunk of result.stream) {
+                                const chunkText = chunk.text();
+                                fullResponse += chunkText;
+                                yield chunkText;
+                            }
                         }
                     } else if (zaiKey || deepseekKey) {
                         const provider = zaiKey ? 'z_ai' : 'deepseek';
@@ -586,10 +590,12 @@ export const createAILLMService = ({ deps, AccessPolicyService }) => ({
                         if (images.length > 0) {
                             const parts = formatGeminiVisionParts(prompt, images);
                             if (systemInstruction) parts.unshift({ text: `System Guide: ${systemInstruction}` });
-                            const result = await model.generateContent(parts);
-                            const responseText = result.response.text();
-                            fullResponse += responseText;
-                            yield responseText;
+                            const result = await model.generateContentStream(parts);
+                            for await (const chunk of result.stream) {
+                                const chunkText = chunk.text();
+                                fullResponse += chunkText;
+                                yield chunkText;
+                            }
                         } else {
                             const chatSession = model.startChat({
                                 history: history.map(h => ({
@@ -598,10 +604,12 @@ export const createAILLMService = ({ deps, AccessPolicyService }) => ({
                                 })),
                                 systemInstruction: systemInstruction ? { role: "system", parts: [{ text: systemInstruction }] } : undefined
                             });
-                            const result = await chatSession.sendMessage(prompt);
-                            const responseText = (await result.response).text();
-                            fullResponse += responseText;
-                            yield responseText;
+                            const result = await chatSession.sendMessageStream(prompt);
+                            for await (const chunk of result.stream) {
+                                const chunkText = chunk.text();
+                                fullResponse += chunkText;
+                                yield chunkText;
+                            }
                         }
                     }
                     else {

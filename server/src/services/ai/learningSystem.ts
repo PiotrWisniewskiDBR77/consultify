@@ -9,6 +9,10 @@ import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
 const loadLearningsystem = createCachedLazyService('../../services/ai/learningSystem.js');
+const service = loadLearningsystem();
 
-// Export default instance (for backward compatibility)
-export default loadLearningsystem();
+export const learningSystem = service.learningSystem;
+export const LearningSystem = service.LearningSystem;
+export const CONFIG = service.CONFIG;
+
+export default service;

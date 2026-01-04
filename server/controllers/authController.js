@@ -4,10 +4,10 @@ const db = getDatabase();
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import config from '../config.js';
-import ActivityService from '../src/services/ActivityService.js';
-import MFAService from '../src/services/mfaService.js';
-import RefreshTokenService from '../src/services/refreshTokenService.js';
-import RedisStore from '../src/utils/redisRateLimitStore.js';
+import ActivityService from '../src/services/ActivityService.ts';
+import MFAService from '../src/services/MFAService.ts';
+import RefreshTokenService from '../src/services/RefreshTokenService.ts';
+import RedisStore from '../src/utils/redisRateLimitStore.ts';
 
 // Default Dependencies
 const deps = {

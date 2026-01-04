@@ -213,8 +213,25 @@ const Scheduler = {
         });
         this.jobs.push(job17);
 
+        // 18. Memory Cleanup - Run every 6 hours
+        // Cleans up old data, invalidates stale cache, and prevents memory leaks
+        const job18 = cron.schedule('0 */6 * * *', async () => {
+            console.log('[Scheduler] Running Memory Cleanup');
+            try {
+                const { runMemoryCleanup } = await import('./MemoryCleanupJob.js');
+                const result = await runMemoryCleanup();
+                console.log(
+                    `[Scheduler] Memory Cleanup completed: ${result.itemsCleaned} items cleaned, ${(result.memoryFreed / 1024 / 1024).toFixed(2)} MB freed`,
+                );
+            } catch (err: unknown) {
+                const error = err as Error;
+                console.error('[Scheduler] Memory Cleanup failed:', error.message);
+            }
+        });
+        this.jobs.push(job18);
+
         console.log(
-            '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM)',
+            '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h)',
         );
     },
     stop: (): void => {

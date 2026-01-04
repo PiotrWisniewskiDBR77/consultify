@@ -1,11 +1,16 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { getDatabase } from '../../server/src/database/Database.js';
 
-describe('Integration Test: Database Constraints & Triggers', () => {
-    let db;
+import { TestDatabaseFactory } from '../utils/TestDatabaseFactory.js';
 
-    beforeAll(() => {
-        db = getDatabase();
+describe('Integration Test: Database Constraints & Triggers', () => {
+    let db: any;
+
+    beforeAll(async () => {
+        // Create real in-memory SQLite with schema
+        db = await TestDatabaseFactory.create();
+        // Inject into global mock slot so getDatabase() picks it up if called elsewhere
+        (global as any).__TEST_DB_MOCK__ = db;
     });
 
     it('should enforce foreign key constraints', async () => {

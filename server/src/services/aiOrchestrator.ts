@@ -10,12 +10,14 @@ import { appCache } from './redis/CacheService.js';
 // TYPES & CONSTANTS
 // ==========================================
 
-export enum AIRole {
-    ADVISOR = 'ADVISOR',
-    PMO_MANAGER = 'PMO_MANAGER',
-    EXECUTOR = 'EXECUTOR',
-    EDUCATOR = 'EDUCATOR',
-}
+export const AIRole = {
+    ADVISOR: 'ADVISOR',
+    PMO_MANAGER: 'PMO_MANAGER',
+    EXECUTOR: 'EXECUTOR',
+    EDUCATOR: 'EDUCATOR',
+} as const;
+
+export type AIRole = (typeof AIRole)[keyof typeof AIRole];
 
 export const AI_ROLES = {
     ADVISOR: AIRole.ADVISOR,
@@ -24,13 +26,15 @@ export const AI_ROLES = {
     EDUCATOR: AIRole.EDUCATOR,
 };
 
-export enum ChatMode {
-    EXPLAIN = 'EXPLAIN',
-    GUIDE = 'GUIDE',
-    ANALYZE = 'ANALYZE',
-    DO = 'DO',
-    TEACH = 'TEACH',
-}
+export const ChatMode = {
+    EXPLAIN: 'EXPLAIN',
+    GUIDE: 'GUIDE',
+    ANALYZE: 'ANALYZE',
+    DO: 'DO',
+    TEACH: 'TEACH',
+} as const;
+
+export type ChatMode = (typeof ChatMode)[keyof typeof ChatMode];
 
 export const CHAT_MODES = {
     EXPLAIN: ChatMode.EXPLAIN,

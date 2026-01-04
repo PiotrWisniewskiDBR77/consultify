@@ -1,94 +1,109 @@
 /**
- * Production Logger
- * Outputs structured JSON logs for easy parsing by log aggregators
+ * Production Logger (Winston)
+ * Enterprise SaaS Architecture
+ * 
+ * Replaces custom console logger with structured Winston logging.
+ * Supports log rotation, levels, and JSON formatting.
  */
 
 import { NextFunction, Request, Response } from 'express';
+import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
+
+// Define log levels (npm style is standard: error: 0, warn: 1, info: 2, http: 3, verbose: 4, debug: 5, silly: 6)
+const levels = {
+    error: 0,
+    warn: 1,
+    info: 2,
+    http: 3,
+    debug: 4,
+};
+
+const colors = {
+    error: 'red',
+    warn: 'yellow',
+    info: 'green',
+    http: 'magenta',
+    debug: 'white',
+};
+
+winston.addColors(colors);
+
+const format = winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
+    winston.format.errors({ stack: true }), // Include stack trace on errors
+    isProduction ? winston.format.json() : winston.format.colorize({ all: true }),
+    winston.format.printf(
+        (info) => `${info.timestamp} ${info.level}: ${info.message}${info.stack ? '\n' + info.stack : ''}`
+    )
+);
+
+const transports: winston.transport[] = [
+    // Console transport (Always active, restricted level in prod)
+    new winston.transports.Console({
+        level: isProduction ? 'info' : 'debug',
+        silent: isTest, // Silence logs in tests unless debugging
+    }),
+];
+
+// Add file transports in production
+if (isProduction) {
+    transports.push(
+        new DailyRotateFile({
+            filename: 'logs/error-%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '14d',
+            level: 'error',
+        })
+    );
+    transports.push(
+        new DailyRotateFile({
+            filename: 'logs/all-%DATE%.log',
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '14d',
+        })
+    );
+}
+
+const winstonLogger = winston.createLogger({
+    levels,
+    format,
+    transports,
+});
 
 interface LogMeta {
     [key: string]: unknown;
-    error?: Error;
 }
 
-interface LogFormat {
-    level: string;
-    timestamp: string;
-    message: string;
-    [key: string]: unknown;
-}
-
-const formatLog = (level: string, message: string, meta: LogMeta = {}): LogFormat => {
-    const log: LogFormat = {
-        level,
-        timestamp: new Date().toISOString(),
-        message,
-        ...meta,
-    };
-
-    if (meta.error && !isProduction) {
-        log.stack = meta.error.stack;
-    }
-
-    return log;
-};
-
-interface Logger {
-    info: (message: string, meta?: LogMeta) => void;
-    warn: (message: string, meta?: LogMeta) => void;
-    error: (message: string, error?: Error | null, meta?: LogMeta) => void;
-    debug: (message: string, meta?: LogMeta) => void;
-    requestLogger: (req: Request, res: Response, next: NextFunction) => void;
-}
-
-const logger: Logger = {
-    info: (message: string, meta: LogMeta = {}) => {
-        if (isProduction) {
-            console.log(JSON.stringify(formatLog('info', message, meta)));
-        } else {
-            console.log(`[INFO] ${message}`, meta);
-        }
-    },
-
-    warn: (message: string, meta: LogMeta = {}) => {
-        if (isProduction) {
-            console.warn(JSON.stringify(formatLog('warn', message, meta)));
-        } else {
-            console.warn(`[WARN] ${message}`, meta);
-        }
-    },
-
-    error: (message: string, error: Error | null = null, meta: LogMeta = {}) => {
-        const logData: LogMeta = {
-            ...meta,
-        };
-
+// Wrapper to match existing Logger interface
+const logger = {
+    info: (message: string, meta?: LogMeta) => winstonLogger.info(message, meta),
+    warn: (message: string, meta?: LogMeta) => winstonLogger.warn(message, meta),
+    error: (message: string, error?: Error | null, meta?: LogMeta) => {
         if (error) {
-            logData.error = error.message;
-            logData.errorName = error.name;
-        }
-
-        if (isProduction) {
-            console.error(JSON.stringify(formatLog('error', message, logData)));
+            winstonLogger.error(message, { error: error.message, stack: error.stack, ...meta });
         } else {
-            console.error(`[ERROR] ${message}`, error || '', meta);
+            winstonLogger.error(message, meta);
         }
     },
-
-    debug: (message: string, meta: LogMeta = {}) => {
-        if (!isProduction) {
-            console.log(`[DEBUG] ${message}`, meta);
-        }
-    },
+    debug: (message: string, meta?: LogMeta) => winstonLogger.debug(message, meta),
+    http: (message: string, meta?: LogMeta) => winstonLogger.http(message, meta),
 
     // Request logging middleware
     requestLogger: (req: Request, res: Response, next: NextFunction) => {
         const start = Date.now();
-
         res.on('finish', () => {
             const duration = Date.now() - start;
-            const logData: LogMeta = {
+            const message = `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`;
+
+            const meta = {
                 method: req.method,
                 url: req.originalUrl,
                 status: res.statusCode,
@@ -97,15 +112,17 @@ const logger: Logger = {
                 userAgent: req.get('User-Agent') || 'unknown',
             };
 
-            if (res.statusCode >= 400) {
-                logger.warn('Request failed', logData);
-            } else if (isProduction) {
-                logger.info('Request completed', logData);
+            if (res.statusCode >= 500) {
+                winstonLogger.error(message, meta);
+            } else if (res.statusCode >= 400) {
+                winstonLogger.warn(message, meta);
+            } else {
+                winstonLogger.http(message, meta);
             }
         });
-
         next();
     },
 };
 
 export default logger;
+

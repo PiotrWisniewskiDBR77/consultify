@@ -3,7 +3,7 @@ import { render, RenderOptions } from '@testing-library/react';
 import { vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
-import i18n from '../src/i18n'; // Ensure this points to your i18n instance or use a mock
+import i18n from '../i18n'; // Ensure this points to your i18n instance or use a mock
 
 // Mock Translation Provider
 const MockI18nProvider = ({ children }: { children: React.ReactNode }) => (

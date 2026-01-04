@@ -108,9 +108,10 @@ export function errorHandlerMiddleware(
     }
 
     // Production response
-    if ((err as AppError).isOperational) {
-        // Known operational error (AppError)
-        res.status(err.statusCode).json({
+    // Treat as operational if it's explicitly marked OR if it has a 4xx status code (e.g. BodyParser)
+    if ((err as AppError).isOperational || (err.statusCode && err.statusCode < 500)) {
+        // Known operational error (AppError) or Client Error
+        res.status(err.statusCode || 400).json({
             status: err.status,
             error: {
                 code: err.code || 'ERROR',

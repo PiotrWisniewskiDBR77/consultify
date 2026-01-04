@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithProviders } from '../../../test-utils';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TaskInbox } from '../../../../components/MyWork/TaskInbox';
@@ -89,7 +90,7 @@ describe('TaskInbox', () => {
 
     it('renders and fetches tasks', async () => {
         const user = userEvent.setup();
-        render(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
+        renderWithProviders(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
 
         await waitFor(() => {
             expect(Api.getTasks).toHaveBeenCalled();
@@ -110,7 +111,7 @@ describe('TaskInbox', () => {
 
     it('shows empty state when no tasks', async () => {
         (Api.getTasks as any).mockResolvedValue([]);
-        render(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
+        renderWithProviders(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
 
         await waitFor(() => {
             expect(screen.getByText('No tasks found')).toBeInTheDocument();
@@ -119,7 +120,7 @@ describe('TaskInbox', () => {
 
     it('filters tasks by Quick Filter (Overdue)', async () => {
         const user = userEvent.setup();
-        render(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
+        renderWithProviders(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
 
         await waitFor(() => expect(Api.getTasks).toHaveBeenCalled());
 
@@ -147,7 +148,7 @@ describe('TaskInbox', () => {
 
     it('calls onEditTask when clicking a task', async () => {
         const user = userEvent.setup();
-        render(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
+        renderWithProviders(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
 
         await waitFor(() => expect(Api.getTasks).toHaveBeenCalled());
 
@@ -171,7 +172,7 @@ describe('TaskInbox', () => {
 
     it('calls onCreateTask when new task button clicked', async () => {
         const user = userEvent.setup();
-        render(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
+        renderWithProviders(<TaskInbox onEditTask={mockOnEditTask} onCreateTask={mockOnCreateTask} />);
 
         await waitFor(() => expect(Api.getTasks).toHaveBeenCalled());
 

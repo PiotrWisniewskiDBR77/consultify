@@ -176,6 +176,20 @@ export function getDatabase(): IDatabase {
         // Dynamic import for ESM compatibility - using createRequire for synchronous access
         const sqliteModule = require('../../database.sqlite.active.js');
         dbInstance = (sqliteModule.default || sqliteModule) as IDatabase;
+
+        // SHIM: Ensure .query exists (critical for DatabaseInitializer)
+        if (dbInstance && typeof (dbInstance as any).query !== 'function') {
+            console.log('[Database] Shimming .query() method on synchronous SQLite instance');
+            (dbInstance as any).query = function (text: string, params: any[]) {
+                return new Promise((resolve, reject) => {
+                    this.all(text, params, (err: Error, rows: any[]) => {
+                        if (err) reject(err);
+                        else resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
+                    });
+                });
+            };
+        }
+
         console.log('[Database] Loaded SQLite synchronously');
         return dbInstance;
     } catch (err: unknown) {

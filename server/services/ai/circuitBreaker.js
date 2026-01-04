@@ -39,37 +39,57 @@ const LLM_CONFIG = {
 
 /**
  * Check if circuit allows request (legacy API)
+ * @deprecated Use CircuitBreakerService.getBreaker(providerId).canExecute() directly
  */
 export function canExecute(providerId) {
+    if (process.env.NODE_ENV !== 'production') {
+        console.warn('[DEPRECATED] circuitBreaker.canExecute() is deprecated. Use CircuitBreakerService.getBreaker(providerId).canExecute() directly.');
+    }
     const breaker = CircuitBreakerService.getBreaker(providerId, LLM_CONFIG);
     return breaker.canExecute();
 }
 
 /**
  * Record a successful request (legacy API)
+ * @deprecated Use CircuitBreakerService.recordSuccess(providerId) directly
  */
 export async function recordSuccess(providerId) {
+    if (process.env.NODE_ENV !== 'production') {
+        console.warn('[DEPRECATED] circuitBreaker.recordSuccess() is deprecated. Use CircuitBreakerService.recordSuccess(providerId) directly.');
+    }
     await CircuitBreakerService.recordSuccess(providerId);
 }
 
 /**
  * Record a failed request (legacy API)
+ * @deprecated Use CircuitBreakerService.recordFailure(providerId, error) directly
  */
 export async function recordFailure(providerId, error) {
+    if (process.env.NODE_ENV !== 'production') {
+        console.warn('[DEPRECATED] circuitBreaker.recordFailure() is deprecated. Use CircuitBreakerService.recordFailure(providerId, error) directly.');
+    }
     await CircuitBreakerService.recordFailure(providerId, error);
 }
 
 /**
  * Reset circuit to closed state (legacy API)
+ * @deprecated Use CircuitBreakerService.reset(providerId) directly
  */
 export async function reset(providerId) {
+    if (process.env.NODE_ENV !== 'production') {
+        console.warn('[DEPRECATED] circuitBreaker.reset() is deprecated. Use CircuitBreakerService.reset(providerId) directly.');
+    }
     await CircuitBreakerService.reset(providerId);
 }
 
 /**
  * Get status of all circuits (legacy API)
+ * @deprecated Use CircuitBreakerService.getAllStatuses() directly
  */
 export function getStatus() {
+    if (process.env.NODE_ENV !== 'production') {
+        console.warn('[DEPRECATED] circuitBreaker.getStatus() is deprecated. Use CircuitBreakerService.getAllStatuses() directly.');
+    }
     return CircuitBreakerService.getAllStatuses().reduce((acc, status) => {
         acc[status.name] = status;
         return acc;
@@ -78,8 +98,12 @@ export function getStatus() {
 
 /**
  * Execute function with circuit breaker and retry logic (legacy API)
+ * @deprecated Use CircuitBreakerService.getBreaker(providerId).execute(fn, options) directly
  */
 export async function execute(providerId, fn, options = {}) {
+    if (process.env.NODE_ENV !== 'production') {
+        console.warn('[DEPRECATED] circuitBreaker.execute() is deprecated. Use CircuitBreakerService.getBreaker(providerId).execute(fn, options) directly.');
+    }
     const breaker = CircuitBreakerService.getBreaker(providerId, {
         ...LLM_CONFIG,
         ...options

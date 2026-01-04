@@ -43,102 +43,16 @@ const isTest = process.env.NODE_ENV === 'test';
 // Trust proxy (required for Railway and other reverse proxies)
 app.set('trust proxy', 1);
 
+// Health Check Routes
+import healthRoutes from './routes/healthRoutes.js';
+import { HealthCheckController } from './controllers/HealthCheckController.js';
+
 // Health Check (Ping) - synchronous
-app.get('/ping', (_req, res) => {
-    res.status(200).send('pong');
-});
+app.get('/ping', HealthCheckController.ping);
 
-// Simple health check - before Sentry to avoid middleware issues
-app.get('/api/health', async (_req, res) => {
-    const health: {
-        status: string;
-        timestamp: string;
-        database: string;
-        redis?: string;
-        version: string;
-    } = {
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        database: 'connected',
-        version: '1.0.0',
-    };
+// Mount Health Check Routes
+app.use('/api/health', healthRoutes);
 
-    // Check Redis connectivity
-    try {
-        const { isRedisConnected } = await import('./services/ai/redisClient.js');
-        health.redis = isRedisConnected() ? 'connected' : 'disconnected';
-    } catch (error) {
-        health.redis = 'error';
-    }
-
-    res.json(health);
-});
-
-// Kubernetes readiness probe - checks if app is ready to serve traffic
-app.get('/api/health/ready', async (_req, res) => {
-    const checks: {
-        database: boolean;
-        redis: boolean;
-        metrics: boolean;
-    } = {
-        database: false,
-        redis: false,
-        metrics: false,
-    };
-
-    // Check database
-    try {
-        const { getDatabase } = await import('./database/Database.js');
-        const db = getDatabase();
-        // Simple query to verify database is accessible
-        await db.query('SELECT 1');
-        checks.database = true;
-    } catch (error) {
-        checks.database = false;
-    }
-
-    // Check Redis
-    try {
-        const { isRedisConnected } = await import('./services/ai/redisClient.js');
-        checks.redis = isRedisConnected();
-    } catch (error) {
-        checks.redis = false;
-    }
-
-    // Check metrics service
-    try {
-        const { getMetricsService } = await import('./services/MetricsService.js');
-        const metricsService = getMetricsService();
-        await metricsService.getMetrics();
-        checks.metrics = true;
-    } catch (error) {
-        checks.metrics = false;
-    }
-
-    const isReady = checks.database && checks.redis && checks.metrics;
-
-    if (isReady) {
-        res.status(200).json({
-            status: 'ready',
-            checks,
-            timestamp: new Date().toISOString(),
-        });
-    } else {
-        res.status(503).json({
-            status: 'not ready',
-            checks,
-            timestamp: new Date().toISOString(),
-        });
-    }
-});
-
-// Kubernetes liveness probe - checks if app is alive
-app.get('/api/health/live', (_req, res) => {
-    res.status(200).json({
-        status: 'alive',
-        timestamp: new Date().toISOString(),
-    });
-});
 
 // Initialize Sentry (must be before other middleware)
 const sentryHandlers = initSentry(app);
@@ -551,7 +465,13 @@ app.use(express.static(path.join(__dirname, '../dist'), {
 app.use((req: Request, res: Response) => {
     // Only send index.html if it's not an API route
     if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ error: 'API route not found' });
+        return res.status(404).json({
+            error: {
+                code: 'NOT_FOUND',
+                message: `Route ${req.method} ${req.path} not found`,
+                timestamp: new Date().toISOString(),
+            },
+        });
     }
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });

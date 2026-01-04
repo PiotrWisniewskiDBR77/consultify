@@ -7,11 +7,13 @@
  * - API response throughput
  */
 
-const db = require('../../server/database');
+import databaseConfig from '../../server/config/database.config.js';
+import db, { getDatabase } from '../../server/database.js';
 
 describe('Throughput Tests', () => {
     beforeAll(async () => {
-        if (db.initPromise) {
+        // Ensure database is initialized
+        if (db && db.initPromise) {
             await db.initPromise;
         }
     });
@@ -167,13 +169,13 @@ describe('Throughput Tests', () => {
             await new Promise((resolve, reject) => {
                 db.serialize(() => {
                     db.run('BEGIN TRANSACTION');
-                    
+
                     const stmt = db.prepare('INSERT INTO throughput_batch_test (id, value) VALUES (?, ?)');
-                    
+
                     for (let i = 0; i < batchSize; i++) {
                         stmt.run(`batch-${i}`, `value-${i}`);
                     }
-                    
+
                     stmt.finalize();
                     db.run('COMMIT', (err) => {
                         if (err) reject(err);

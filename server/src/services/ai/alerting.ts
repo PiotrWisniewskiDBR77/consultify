@@ -103,6 +103,33 @@ export class AlertingService {
             promises.push(this.sendToWebhook(alert));
         }
 
+        // Send to Sentry for critical alerts
+        if (alert.severity === SEVERITY.CRITICAL || alert.severity === SEVERITY.ERROR) {
+            try {
+                const { captureMessage, addBreadcrumb } = await import('../../config/index.js');
+                addBreadcrumb({
+                    message: alert.title,
+                    level: alert.severity === SEVERITY.CRITICAL ? 'critical' : 'error',
+                    data: alert.data,
+                    category: 'alert',
+                });
+                captureMessage(alert.message, {
+                    level: alert.severity === SEVERITY.CRITICAL ? 'fatal' : 'error',
+                    tags: {
+                        alertType: alert.type,
+                        severity: alert.severity,
+                        environment: alert.environment || process.env.NODE_ENV || 'unknown',
+                        ...(alert.data.providerId ? { providerId: String(alert.data.providerId) } : {}),
+                        ...(alert.data.organizationId ? { organizationId: String(alert.data.organizationId) } : {}),
+                    },
+                    extra: alert.data,
+                });
+            } catch (error: unknown) {
+                // Sentry not available, continue without it
+                aiLogger.debug('Alerting', 'Sentry integration not available');
+            }
+        }
+
         await Promise.allSettled(promises);
     }
 
@@ -205,8 +232,14 @@ export class AlertingService {
     }
 
     async sendToSlack(alert: AlertPayload): Promise<{ success: true }> {
+        if (!this.slackWebhook) {
+            aiLogger.debug('Alerting', 'Slack webhook not configured, skipping');
+            return { success: true };
+        }
+
         const color = this.getSeverityColor(alert.severity);
 
+        // Enhanced Slack payload with rich formatting
         const payload = {
             attachments: [
                 {
@@ -227,12 +260,26 @@ export class AlertingService {
                                 text: alert.message,
                             },
                         },
+                        // Add fields for additional data
+                        ...(Object.keys(alert.data).length > 0
+                            ? [
+                                  {
+                                      type: 'section',
+                                      fields: Object.entries(alert.data)
+                                          .slice(0, 10) // Limit to 10 fields
+                                          .map(([key, value]) => ({
+                                              type: 'mrkdwn',
+                                              text: `*${key}:* ${String(value)}`,
+                                          })),
+                                  },
+                              ]
+                            : []),
                         {
                             type: 'context',
                             elements: [
                                 {
                                     type: 'mrkdwn',
-                                    text: `*Environment:* ${alert.environment} | *Time:* ${alert.timestamp}`,
+                                    text: `*Environment:* ${alert.environment} | *Time:* ${new Date(alert.timestamp).toLocaleString()} | *Severity:* ${alert.severity.toUpperCase()}`,
                                 },
                             ],
                         },
@@ -241,7 +288,13 @@ export class AlertingService {
             ],
         };
 
-        return this.postWebhook(this.slackWebhook, payload);
+        try {
+            return await this.postWebhook(this.slackWebhook, payload);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            aiLogger.error('Alerting', `Failed to send Slack alert: ${err.message}`);
+            throw err;
+        }
     }
 
     async sendToDiscord(alert: AlertPayload): Promise<{ success: true }> {

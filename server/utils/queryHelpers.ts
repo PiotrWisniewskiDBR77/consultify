@@ -5,7 +5,7 @@
  * Eliminates callback hell and provides consistent error handling.
  */
 
-import db from '../database.js';
+import { getDatabase } from '../src/database/index.js';
 
 interface Database {
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
@@ -34,7 +34,7 @@ interface Query {
  */
 export function queryAll(sql: string, params: unknown[] = []): Promise<unknown[]> {
     return new Promise((resolve, reject) => {
-        (db as Database).all(sql, params, (err: Error | null, rows: unknown[]) => {
+        getDatabase().all(sql, params, (err: Error | null, rows: unknown[]) => {
             if (err) {
                 console.error('[QueryHelper] Error in queryAll:', err);
                 reject(err);
@@ -50,7 +50,7 @@ export function queryAll(sql: string, params: unknown[] = []): Promise<unknown[]
  */
 export function queryOne(sql: string, params: unknown[] = []): Promise<unknown | null> {
     return new Promise((resolve, reject) => {
-        (db as Database).get(sql, params, (err: Error | null, row: unknown) => {
+        getDatabase().get(sql, params, (err: Error | null, row: unknown) => {
             if (err) {
                 console.error('[QueryHelper] Error in queryOne:', err);
                 reject(err);
@@ -66,7 +66,7 @@ export function queryOne(sql: string, params: unknown[] = []): Promise<unknown |
  */
 export function queryRun(sql: string, params: unknown[] = []): Promise<QueryResult> {
     return new Promise((resolve, reject) => {
-        (db as Database).run(sql, params, function (this: { lastID?: number; changes: number }, err: Error | null) {
+        getDatabase().run(sql, params, function (this: { lastID?: number; changes: number }, err: Error | null) {
             if (err) {
                 console.error('[QueryHelper] Error in queryRun:', err);
                 reject(err);
@@ -121,18 +121,40 @@ export function buildUserFilter(tableAlias: string, _userId: string): string {
 /**
  * Execute transaction (for databases that support it)
  */
+// Performance tracking callback
+let performanceCallback: ((queryType: string, duration: number) => void) | null = null;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _performanceCallback = performanceCallback; // Prevent unused variable warning
+
+/**
+ * Enable performance tracking for database queries
+ */
+export function enablePerformanceTracking(callback: (queryType: string, duration: number) => void): void {
+    performanceCallback = callback;
+}
+
+/**
+ * Disable performance tracking for database queries
+ */
+export function disablePerformanceTracking(): void {
+    performanceCallback = null;
+}
+
+
 export async function transaction<T>(callback: (db: Database) => Promise<T>): Promise<T> {
     // SQLite transaction support
+    const db = getDatabase();
     return new Promise((resolve, reject) => {
-        (db as Database).serialize(() => {
-            (db as Database).run('BEGIN TRANSACTION', (err: Error | null) => {
+        db.serialize(() => {
+            db.run('BEGIN TRANSACTION', [], (err: Error | null) => {
                 if (err) return reject(err);
 
-                callback(db as Database)
+                callback(db)
                     .then((result) => {
-                        (db as Database).run('COMMIT', (commitErr: Error | null) => {
+                        db.run('COMMIT', [], (commitErr: Error | null) => {
                             if (commitErr) {
-                                (db as Database).run('ROLLBACK', () => {});
+                                db.run('ROLLBACK', [], () => {});
                                 reject(commitErr);
                             } else {
                                 resolve(result);
@@ -140,7 +162,7 @@ export async function transaction<T>(callback: (db: Database) => Promise<T>): Pr
                         });
                     })
                     .catch((error) => {
-                        (db as Database).run('ROLLBACK', () => {});
+                        db.run('ROLLBACK', [], () => {});
                         reject(error);
                     });
             });

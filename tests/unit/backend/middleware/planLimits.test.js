@@ -1,37 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Mock database
+const mockDb = vi.hoisted(() => ({
+    get: vi.fn(),
+    all: vi.fn(),
+    run: vi.fn()
+}));
+
+// Mock the database module
+vi.mock('../../../../server/src/database/index.js', () => ({
+    getDatabase: () => mockDb
+}));
+
+// Import middleware after mocking
+const planLimitsModule = await import('../../../../server/middleware/planLimits.js');
+const checkPlanLimit = planLimitsModule.checkPlanLimit;
+
 describe('PlanLimits Middleware', () => {
     let req, res, next;
-    let checkPlanLimit;
-    let db;
 
-    beforeEach(async () => {
-        vi.resetModules(); // Clear module cache
-        process.env.NODE_ENV = 'test';
-        process.env.MOCK_DB = 'false';
-
-        // 1. Initialize the Test Database (Real SQLite :memory:)
-        const { default: dbInstance } = await import('../../../../server/database.js');
-        db = dbInstance;
-
-        // Ensure DB is initialized
-        if (db.initPromise) {
-            await db.initPromise;
-        }
-
-        // 2. Mock the Modern Database Access to return our Test DB
-        // This ensures the middleware sees the same DB as the test
-        vi.doMock('../../../../server/src/database/index.js', () => {
-            return {
-                getDatabase: () => db,
-                databaseConfig: {}
-            };
-        });
-
-        // 3. Import Middleware (It will use the mocked getDatabase)
-        const mod = await import('../../../../server/middleware/planLimits.js');
-        checkPlanLimit = mod.checkPlanLimit;
-
+    beforeEach(() => {
         req = {
             user: { organizationId: 'org-test-plan' },
             body: {}
@@ -42,35 +30,24 @@ describe('PlanLimits Middleware', () => {
         };
         next = vi.fn();
 
-        // Clean DB tables
-        await new Promise(r => db.run('DELETE FROM organizations WHERE id = ?', ['org-test-plan'], r));
-        await new Promise(r => db.run('DELETE FROM users WHERE organization_id = ?', ['org-test-plan'], r));
-        await new Promise(r => db.run('DELETE FROM projects WHERE organization_id = ?', ['org-test-plan'], r));
+        // Reset mocks
+        vi.clearAllMocks();
     });
 
-    const setupOrg = async (plan, status = 'active') => {
-        await new Promise((resolve, reject) => {
-            db.run('INSERT OR REPLACE INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                ['org-test-plan', 'Test Org', plan, status], (err) => {
-                    if (err) reject(err);
-                    else resolve();
-                });
+    const setupOrg = (plan, status = 'active') => {
+        mockDb.get.mockImplementationOnce((sql, params, callback) => {
+            callback(null, { id: 'org-test-plan', name: 'Test Org', plan, status });
         });
     };
 
-    const setProjectCount = async (count) => {
-        await new Promise((resolve, reject) => db.run('DELETE FROM projects WHERE organization_id = ?', ['org-test-plan'], (err) => {
-            if (err) reject(err); else resolve();
-        }));
-
-        for (let i = 0; i < count; i++) {
-            await new Promise((resolve, reject) => {
-                db.run('INSERT INTO projects (id, organization_id, name) VALUES (?, ?, ?)',
-                    [`proj-${i}`, 'org-test-plan', `Project ${i}`], (err) => {
-                        if (err) reject(err); else resolve();
-                    });
-            });
-        }
+    const setProjectCount = (count) => {
+        mockDb.all.mockImplementationOnce((sql, params, callback) => {
+            const projects = [];
+            for (let i = 0; i < count; i++) {
+                projects.push({ id: `proj-${i}`, organization_id: 'org-test-plan', name: `Project ${i}` });
+            }
+            callback(null, projects);
+        });
     };
 
     it('should return 403 if no organization found in user', async () => {
@@ -81,8 +58,9 @@ describe('PlanLimits Middleware', () => {
     });
 
     it('should return 404 if organization does not exist in DB', async () => {
-        // Ensure DB is clean/org missing
-        await new Promise(resolve => db.run('DELETE FROM organizations WHERE id = ?', ['org-test-plan'], resolve));
+        mockDb.get.mockImplementationOnce((sql, params, callback) => {
+            callback(null, null);
+        });
 
         const middleware = checkPlanLimit('max_projects');
         await middleware(req, res, next);
@@ -138,12 +116,15 @@ describe('PlanLimits Middleware', () => {
     });
 
     it('should check max_members limit', async () => {
-        await setupOrg('free'); // Limit 1
+        setupOrg('free'); // Limit 1
 
-        // Add users
-        const orgId = 'org-test-plan';
-        await new Promise((resolve, reject) => db.run('INSERT INTO users (id, organization_id, email, password, role) VALUES (?, ?, ?, ?, ?)', ['u1', orgId, 'u1@test.com', 'pass', 'USER'], (err) => err ? reject(err) : resolve()));
-        await new Promise((resolve, reject) => db.run('INSERT INTO users (id, organization_id, email, password, role) VALUES (?, ?, ?, ?, ?)', ['u2', orgId, 'u2@test.com', 'pass', 'USER'], (err) => err ? reject(err) : resolve()));
+        // Mock user count query (2 users > 1 limit)
+        mockDb.all.mockImplementationOnce((sql, params, callback) => {
+            callback(null, [
+                { id: 'u1', organization_id: 'org-test-plan', email: 'u1@test.com' },
+                { id: 'u2', organization_id: 'org-test-plan', email: 'u2@test.com' }
+            ]);
+        });
 
         const middleware = checkPlanLimit('max_members');
         await middleware(req, res, next);

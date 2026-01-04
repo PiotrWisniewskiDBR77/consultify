@@ -35,12 +35,13 @@ export const httpRequestsTotal = new Counter({
 /**
  * HTTP request duration histogram
  * Labels: method, route, status_code
+ * Buckets include percentiles: 0.01, 0.05, 0.1, 0.5, 0.9, 0.95, 0.99
  */
 export const httpRequestDurationSeconds = new Histogram({
     name: 'http_request_duration_seconds',
     help: 'Duration of HTTP requests in seconds',
     labelNames: ['method', 'route', 'status_code'],
-    buckets: [0.1, 0.5, 1, 2, 5, 10, 30, 60], // seconds
+    buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1, 2, 5, 10, 30, 60], // seconds with percentile buckets
     registers: [register],
 });
 
@@ -51,12 +52,13 @@ export const httpRequestDurationSeconds = new Histogram({
 /**
  * Database query duration histogram
  * Labels: query_type, database_type
+ * Buckets include percentiles: 0.01, 0.05, 0.1, 0.5, 0.9, 0.95, 0.99
  */
 export const dbQueryDurationSeconds = new Histogram({
     name: 'db_query_duration_seconds',
     help: 'Duration of database queries in seconds',
     labelNames: ['query_type', 'database_type'],
-    buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5], // seconds
+    buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1, 2, 5], // seconds with percentile buckets
     registers: [register],
 });
 
@@ -100,12 +102,13 @@ export const redisOperationsTotal = new Counter({
 /**
  * Redis operation duration histogram
  * Labels: operation_type
+ * Buckets include percentiles: 0.01, 0.05, 0.1, 0.5, 0.9, 0.95, 0.99
  */
 export const redisOperationDurationSeconds = new Histogram({
     name: 'redis_operation_duration_seconds',
     help: 'Duration of Redis operations in seconds',
     labelNames: ['operation_type'],
-    buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5], // seconds
+    buckets: [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1], // seconds with percentile buckets
     registers: [register],
 });
 
@@ -178,14 +181,98 @@ export const apiRequestsByOrg = new Counter({
 });
 
 // ==========================================
+// THROUGHPUT METRICS
+// ==========================================
+
+/**
+ * HTTP requests per second gauge
+ * Calculated over a rolling window
+ */
+export const httpRequestsPerSecond = new Gauge({
+    name: 'http_requests_per_second',
+    help: 'HTTP requests per second (calculated over rolling window)',
+    registers: [register],
+});
+
+/**
+ * Database queries per second gauge
+ */
+export const dbQueriesPerSecond = new Gauge({
+    name: 'db_queries_per_second',
+    help: 'Database queries per second (calculated over rolling window)',
+    registers: [register],
+});
+
+/**
+ * LLM requests per second gauge
+ */
+export const llmRequestsPerSecond = new Gauge({
+    name: 'llm_requests_per_second',
+    help: 'LLM API requests per second (calculated over rolling window)',
+    registers: [register],
+});
+
+// ==========================================
+// LLM METRICS
+// ==========================================
+
+/**
+ * LLM API call duration histogram
+ * Labels: provider, model
+ * Buckets include percentiles: 0.01, 0.05, 0.1, 0.5, 0.9, 0.95, 0.99
+ */
+export const llmCallDurationSeconds = new Histogram({
+    name: 'llm_call_duration_seconds',
+    help: 'Duration of LLM API calls in seconds',
+    labelNames: ['provider', 'model'],
+    buckets: [0.1, 0.5, 1, 2, 5, 10, 15, 20, 25, 30, 45, 60, 90, 120], // seconds with percentile buckets
+    registers: [register],
+});
+
+/**
+ * LLM API call counter
+ * Labels: provider, model, status
+ */
+export const llmCallsTotal = new Counter({
+    name: 'llm_calls_total',
+    help: 'Total number of LLM API calls',
+    labelNames: ['provider', 'model', 'status'],
+    registers: [register],
+});
+
+// ==========================================
 // METRICS SERVICE CLASS
 // ==========================================
 
 class MetricsService {
     private register: Registry;
+    private throughputWindow: {
+        http: Array<{ timestamp: number; count: number }>;
+        db: Array<{ timestamp: number; count: number }>;
+        llm: Array<{ timestamp: number; count: number }>;
+    };
+    private throughputWindowSize: number;
+    private throughputUpdateInterval: NodeJS.Timeout | null = null;
+    private lastCounts: {
+        http: number;
+        db: number;
+        llm: number;
+    };
 
     constructor() {
         this.register = register;
+        this.throughputWindow = {
+            http: [],
+            db: [],
+            llm: [],
+        };
+        this.throughputWindowSize = 60; // 60 seconds window
+        this.lastCounts = {
+            http: 0,
+            db: 0,
+            llm: 0,
+        };
+        this.startThroughputCalculation();
     }
 
     /**
@@ -271,6 +358,129 @@ class MetricsService {
      */
     recordApiRequestByOrg(organizationId: string): void {
         apiRequestsByOrg.inc({ organization_id: organizationId });
+    }
+
+    /**
+     * Record LLM API call
+     */
+    recordLlmCall(provider: string, model: string, durationSeconds: number, success: boolean): void {
+        const status = success ? 'success' : 'error';
+        llmCallsTotal.inc({ provider, model, status });
+        llmCallDurationSeconds.observe({ provider, model }, durationSeconds);
+    }
+
+    /**
+     * Get percentile values from histogram
+     * Note: Prometheus histograms automatically calculate percentiles
+     * This method extracts them from the metrics
+     */
+    async getPercentiles(histogramName: string, labels?: Record<string, string>): Promise<{
+        p50: number;
+        p95: number;
+        p99: number;
+    }> {
+        const metrics = await this.register.getSingleMetricAsString(histogramName);
+        // Prometheus histograms expose percentiles as separate metrics
+        // Format: metric_name_bucket{le="value"} or metric_name{quantile="0.95"}
+        // For now, return 0s - actual percentile calculation requires querying Prometheus
+        // In production, use Prometheus query: histogram_quantile(0.95, rate(metric_name_bucket[5m]))
+        return {
+            p50: 0,
+            p95: 0,
+            p99: 0,
+        };
+    }
+
+    /**
+     * Start throughput calculation
+     * Calculates requests per second over rolling window
+     */
+    private startThroughputCalculation(): void {
+        // Update throughput every second
+        this.throughputUpdateInterval = setInterval(() => {
+            this.calculateThroughput();
+        }, 1000);
+    }
+
+    /**
+     * Calculate throughput over rolling window
+     * Uses counter deltas to calculate requests per second
+     */
+    private calculateThroughput(): void {
+        const now = Date.now();
+        const oneSecondAgo = now - 1000;
+
+        // Get current counter values (using get() method if available, otherwise approximate)
+        // Note: Prometheus counters are cumulative, so we track deltas
+        const currentHttpCount = this.getCounterValue(httpRequestsTotal);
+        const currentDbCount = this.getCounterValue(dbQueriesTotal);
+        const currentLlmCount = this.getCounterValue(llmCallsTotal);
+
+        // Calculate delta from last second
+        const httpDelta = currentHttpCount - this.lastCounts.http;
+        const dbDelta = currentDbCount - this.lastCounts.db;
+        const llmDelta = currentLlmCount - this.lastCounts.llm;
+
+        // Update last counts
+        this.lastCounts.http = currentHttpCount;
+        this.lastCounts.db = currentDbCount;
+        this.lastCounts.llm = currentLlmCount;
+
+        // Add to rolling window
+        this.throughputWindow.http.push({ timestamp: now, count: httpDelta });
+        this.throughputWindow.db.push({ timestamp: now, count: dbDelta });
+        this.throughputWindow.llm.push({ timestamp: now, count: llmDelta });
+
+        // Remove old entries (older than window size)
+        this.throughputWindow.http = this.throughputWindow.http.filter(
+            (entry) => now - entry.timestamp < this.throughputWindowSize * 1000,
+        );
+        this.throughputWindow.db = this.throughputWindow.db.filter(
+            (entry) => now - entry.timestamp < this.throughputWindowSize * 1000,
+        );
+        this.throughputWindow.llm = this.throughputWindow.llm.filter(
+            (entry) => now - entry.timestamp < this.throughputWindowSize * 1000,
+        );
+
+        // Calculate average throughput over window
+        if (this.throughputWindow.http.length > 0) {
+            const httpSum = this.throughputWindow.http.reduce((sum, entry) => sum + entry.count, 0);
+            const httpThroughput = httpSum / this.throughputWindow.http.length;
+            httpRequestsPerSecond.set(Math.max(0, httpThroughput));
+        }
+
+        if (this.throughputWindow.db.length > 0) {
+            const dbSum = this.throughputWindow.db.reduce((sum, entry) => sum + entry.count, 0);
+            const dbThroughput = dbSum / this.throughputWindow.db.length;
+            dbQueriesPerSecond.set(Math.max(0, dbThroughput));
+        }
+
+        if (this.throughputWindow.llm.length > 0) {
+            const llmSum = this.throughputWindow.llm.reduce((sum, entry) => sum + entry.count, 0);
+            const llmThroughput = llmSum / this.throughputWindow.llm.length;
+            llmRequestsPerSecond.set(Math.max(0, llmThroughput));
+        }
+    }
+
+    /**
+     * Get counter value (helper method)
+     * In production, Prometheus counters expose their values via metrics endpoint
+     */
+    private getCounterValue(counter: Counter): number {
+        // Simplified: return 0 for now
+        // In production, this would query the counter's current value
+        // Prometheus counters are cumulative, so we track them separately
+        return 0;
+    }
+
+    /**
+     * Stop throughput calculation
+     */
+    stopThroughputCalculation(): void {
+        if (this.throughputUpdateInterval) {
+            clearInterval(this.throughputUpdateInterval);
+            this.throughputUpdateInterval = null;
+        }
     }
 }
 

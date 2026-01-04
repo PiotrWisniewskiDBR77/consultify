@@ -36,7 +36,7 @@ vi.mock('../../server/services/permissionService.js', () => ({
 
 // Mock orgContext middleware
 vi.mock('../../server/src/middleware/orgContext.middleware.js', () => ({
-    orgContextMiddleware: (req: any, res: any, next: any) => next()
+    default: (req: any, res: any, next: any) => next()
 }));
 
 // Import app

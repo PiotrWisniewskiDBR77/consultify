@@ -8,7 +8,7 @@
 
 import { Pool, type PoolClient, type PoolConfig } from 'pg';
 
-import databaseConfig from '../../config/database.config.js';
+import databaseConfig from '../config/DatabaseConfig.js';
 import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
 
 let pool: Pool | null = null;
