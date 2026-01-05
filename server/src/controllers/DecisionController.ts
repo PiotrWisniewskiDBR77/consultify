@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import * as DbPromise from '../utils/DbPromise.ts';
+import * as DbPromise from '../utils/DbPromise.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
     CreateDecisionRequest,
@@ -206,7 +206,7 @@ export class DecisionController {
      */
     static decide = asyncHandler(async (req: AuthenticatedRequest<DecideRequest>, res: Response): Promise<void> => {
         const { id } = req.params;
-        const { decision, rationale, _notes } = req.body;
+        const { decision, rationale, notes } = req.body;
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: 'Unauthorized' });

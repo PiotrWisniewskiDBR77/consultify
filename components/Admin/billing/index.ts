@@ -4,11 +4,9 @@
  * Export all billing-related admin components
  */
 
-export { SeatAllocationView } from './SeatAllocationView';
-export type { SeatType, UserSeat } from './SeatAllocationView';
-
-export { SeatTypesManager } from './SeatTypesManager';
-export type { SeatFeature, SeatTypeDefinition } from './SeatTypesManager';
-
-export { AddRemoveSeats } from './AddRemoveSeats';
 export type { ProrateCalculation, SeatPlan } from './AddRemoveSeats';
+export { AddRemoveSeats } from './AddRemoveSeats';
+export type { SeatType, UserSeat } from './SeatAllocationView';
+export { SeatAllocationView } from './SeatAllocationView';
+export type { SeatFeature, SeatTypeDefinition } from './SeatTypesManager';
+export { SeatTypesManager } from './SeatTypesManager';

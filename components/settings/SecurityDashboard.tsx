@@ -690,8 +690,3 @@ const ComplianceBadge: React.FC<ComplianceBadgeProps> = ({ name, compliant, desc
 };
 
 export default SecurityDashboard;
-
-
-
-
-

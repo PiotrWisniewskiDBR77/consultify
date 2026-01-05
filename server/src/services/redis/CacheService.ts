@@ -1,4 +1,4 @@
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 import { redisClient } from './RedisClient.js';
 
 export class CacheService {

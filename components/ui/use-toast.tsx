@@ -37,7 +37,7 @@ function useToast() {
 
             return { id: Date.now().toString(), dismiss: () => toast.dismiss() };
         },
-        []
+        [],
     );
 
     return {
@@ -49,6 +49,3 @@ function useToast() {
 
 export { useToast };
 export type { Toast, ToasterToast };
-
-
-

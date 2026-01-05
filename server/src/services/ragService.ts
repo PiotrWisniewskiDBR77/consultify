@@ -6,7 +6,7 @@
 import { OpenAI } from 'openai';
 import { v4 as uuidv4 } from 'uuid';
 
-import * as DbPromise from '../utils/DbPromise.ts';
+import * as DbPromise from '../utils/DbPromise.js';
 import { embeddingService } from './ai/embeddingService.js';
 import { aiLogger } from './ai/logger.js';
 
@@ -291,7 +291,7 @@ const RagService = {
         try {
             const results = await deps.embeddingService.search(query, {
                 limit,
-                organizationId,
+                organizationId: organizationId || undefined,
                 minSimilarity,
             });
 
@@ -368,7 +368,7 @@ const RagService = {
         for (const chunk of chunks) {
             try {
                 const embedding = await deps.embeddingService.generateEmbedding(chunk.content);
-                await deps.embeddingService.storeChunk(chunk, embedding);
+                await deps.embeddingService.storeChunk({ ...chunk, documentId }, embedding);
                 successCount++;
             } catch (error: unknown) {
                 const err = error as Error;
@@ -498,7 +498,7 @@ const RagService = {
         });
 
         combined.sort((a, b) => (b.hybridScore || 0) - (a.hybridScore || 0));
-        let finalResults = combined.slice(0, limit);
+        let finalResults: RerankableChunk[] = combined.slice(0, limit);
 
         if (enableReranking && finalResults.length > 1) {
             try {

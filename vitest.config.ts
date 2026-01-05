@@ -89,10 +89,10 @@ export default defineConfig({
         // Optimize test execution
         pool: 'forks', // Use forks instead of threads to avoid napi_throw with SQLite native bindings
         poolOptions: {
-          forks: {
-            singleFork: false,
-            isolate: false,
-          },
+            forks: {
+                singleFork: false,
+                isolate: false,
+            },
         },
         // Enable test file parallelization (but not within files)
         fileParallelism: true,

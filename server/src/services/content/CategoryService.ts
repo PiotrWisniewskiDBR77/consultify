@@ -134,7 +134,7 @@ export class CategoryService {
                     createdBy,
                 ],
             );
-        } catch (err: unknown) {
+        } catch (err: any) {
             const error = err as Error;
             if (error.message.includes('UNIQUE')) {
                 throw new Error(`Category with slug '${categorySlug}' already exists`);

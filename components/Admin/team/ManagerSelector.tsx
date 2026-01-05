@@ -55,7 +55,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
     // Filter out the user themselves and any excluded IDs
     const filteredUsers = useMemo(() => {
         const idsToExclude = new Set([...(userId ? [userId] : []), ...excludeIds]);
-        
+
         return availableUsers
             .filter((user) => !idsToExclude.has(user.id))
             .filter((user) => {
@@ -156,9 +156,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
                 ) : (
                     <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                         <User size={18} />
-                        <span className="text-sm">
-                            {t('admin.team.manager.selectManager', 'Select manager...')}
-                        </span>
+                        <span className="text-sm">{t('admin.team.manager.selectManager', 'Select manager...')}</span>
                     </div>
                 )}
 
@@ -187,10 +185,7 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
                     {/* Search Input */}
                     <div className="p-2 border-b border-slate-200 dark:border-navy-700">
                         <div className="relative">
-                            <Search
-                                size={16}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                            />
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
                                 ref={inputRef}
                                 type="text"
@@ -278,6 +273,3 @@ export const ManagerSelector: React.FC<ManagerSelectorProps> = ({
 };
 
 export default ManagerSelector;
-
-
-

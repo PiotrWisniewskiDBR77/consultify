@@ -15,8 +15,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -96,7 +96,7 @@ class AuditLogService {
     private _db: IDatabase;
 
     constructor(dbInstance?: IDatabase) {
-        this.db = dbInstance || getDatabase();
+        this._db = dbInstance || getDatabase();
     }
 
     /**
@@ -150,7 +150,7 @@ class AuditLogService {
                 ],
             );
             return { id, timestamp };
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[AuditLog] Error creating log:', err);
             throw err;
         }

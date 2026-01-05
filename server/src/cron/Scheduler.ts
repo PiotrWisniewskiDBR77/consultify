@@ -7,21 +7,40 @@
 
 import cron from 'node-cron';
 
-import kls from '../services/ai/learningSystem.js';
-import aiCostControlService from '../services/aiCostControlService.js';
-import slaService from '../services/slaService.js';
-import storageReconciliationService from '../services/storageReconciliationService.js';
-import * as trialCron from './TrialCron.js';
-const { learningSystem } = kls;
-import aiMemoryMetricsService from '../services/ai/aiMemoryMetricsService.js';
-import aiMemoryManager from '../services/aiMemoryManager.js';
-import feedbackService from '../services/feedbackService.js';
-import logger from '../utils/Logger.ts';
+let learningSystem: any;
+let aiMemoryMetricsService: any;
+let aiCostControlService: any;
+let slaService: any;
+let storageReconciliationService: any;
+let aiMemoryManager: any;
+let feedbackService: any;
 
-const Scheduler = {
+import logger from '../utils/Logger.js';
+import * as trialCron from './TrialCron.js';
+
+export const Scheduler = {
     jobs: [] as cron.ScheduledTask[],
-    init: (): void => {
+    async init(): Promise<void> {
         logger.info('[Scheduler] Initializing Cron Jobs...');
+
+        // Resolve lazy services
+        const [kls_p, amms_p, accs_p, slas_p, srs_p, amm_p, fs_p] = await Promise.all([
+            import('../services/ai/learningSystem.js').then((m) => m.default),
+            import('../services/ai/aiMemoryMetricsService.js').then((m) => m.default),
+            import('../services/aiCostControlService.js').then((m) => m.default),
+            import('../services/slaService.js').then((m) => m.default),
+            import('../services/storageReconciliationService.js').then((m) => m.default),
+            import('../services/aiMemoryManager.js').then((m) => m.default),
+            import('../services/feedbackService.js').then((m) => m.default),
+        ]);
+
+        learningSystem = (await kls_p).learningSystem;
+        aiMemoryMetricsService = await amms_p;
+        aiCostControlService = await accs_p;
+        slaService = await slas_p;
+        storageReconciliationService = await srs_p;
+        aiMemoryManager = await amm_p;
+        feedbackService = await fs_p;
 
         // 1. Retention Policy Cleanup - Run every day at 3:00 AM
         const job1 = cron.schedule('0 3 * * *', () => {
@@ -116,7 +135,7 @@ const Scheduler = {
                 logger.info(
                     `[Scheduler] AI Pattern Extraction completed: ${result.patternsExtracted} patterns from ${result.recordsProcessed} records`,
                 );
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err as Error;
                 logger.error('[Scheduler] AI Pattern Extraction failed:', error.message);
             }
@@ -131,7 +150,7 @@ const Scheduler = {
                 logger.info(
                     `[Scheduler] AI Learning Consolidation completed: ${result.strategiesCreated} strategies created`,
                 );
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err as Error;
                 logger.error('[Scheduler] AI Learning Consolidation failed:', error.message);
             }
@@ -144,7 +163,7 @@ const Scheduler = {
             try {
                 const result = await learningSystem.cleanupOldData();
                 logger.info(`[Scheduler] AI Learning Cleanup completed: ${result.deleted} old records deleted`);
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err as Error;
                 logger.error('[Scheduler] AI Learning Cleanup failed:', error.message);
             }
@@ -163,7 +182,7 @@ const Scheduler = {
                     feedback: result.feedback?.deleted || 0,
                     duration: `${result.duration}ms`,
                 });
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err as Error;
                 logger.error('[Scheduler] AI Memory Cleanup failed:', error.message);
             }
@@ -178,7 +197,7 @@ const Scheduler = {
                 if (result.deleted > 0) {
                     logger.info(`[Scheduler] Partial Response Cleanup: ${result.deleted} entries removed`);
                 }
-            } catch (err: unknown) {
+            } catch (err: any) {
                 // Silent fail - not critical
             }
         });
@@ -191,7 +210,7 @@ const Scheduler = {
             try {
                 const result = await feedbackService.consolidateLearning();
                 logger.info(`[Scheduler] Feedback Consolidation completed:`, result);
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err as Error;
                 logger.error('[Scheduler] Feedback Consolidation failed:', error.message);
             }
@@ -207,7 +226,7 @@ const Scheduler = {
                 logger.info(
                     `[Scheduler] Memory Metrics Aggregation completed: ${result.aggregated} organizations for ${result.date}`,
                 );
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err as Error;
                 logger.error('[Scheduler] Memory Metrics Aggregation failed:', error.message);
             }
@@ -224,7 +243,7 @@ const Scheduler = {
                 logger.info(
                     `[Scheduler] Memory Cleanup completed: ${result.itemsCleaned} items cleaned, ${(result.memoryFreed / 1024 / 1024).toFixed(2)} MB freed`,
                 );
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err as Error;
                 logger.error('[Scheduler] Memory Cleanup failed:', error.message);
             }
@@ -235,7 +254,7 @@ const Scheduler = {
             '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h)',
         );
     },
-    stop: (): void => {
+    stop(): void {
         logger.info('[Scheduler] Stopping all cron jobs...');
         this.jobs.forEach((job) => {
             job.stop();
@@ -244,5 +263,8 @@ const Scheduler = {
         logger.info('[Scheduler] All cron jobs stopped');
     },
 };
+
+export const getScheduler = () => Scheduler;
+export const init = () => Scheduler.init();
 
 export default Scheduler;

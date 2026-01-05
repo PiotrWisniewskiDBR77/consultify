@@ -11,10 +11,9 @@ import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
 import BillingWebhookService, { BILLING_EVENT_TYPES } from '../services/BillingWebhookService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
-    _CreditNoteIdParamSchema,
     BillingStatsQuerySchema,
     CancelSubscriptionRequestSchema,
     CreateCreditNoteRequestSchema,
@@ -22,6 +21,7 @@ import {
     CreatePlanRequestSchema,
     CreateSpendingAlertRequestSchema,
     CreateSubscriptionRequestSchema,
+    CreditNoteIdParamSchema,
     InvoiceIdParamSchema,
     ListInvoicesQuerySchema,
     ListPlansQuerySchema,
@@ -46,6 +46,22 @@ router.use(defaultRateLimiter);
 // Database helpers with proper typing
 type SQLParam = string | number | boolean | null | undefined;
 type SQLParams = SQLParam[];
+
+interface InvoiceRow {
+    id: string;
+    organization_id: string;
+    organization_name?: string;
+    status: string;
+    amount: number;
+    amount_paid: number;
+    currency: string;
+    due_date: string;
+    paid_at?: string;
+    line_items?: string;
+    metadata?: string;
+    created_at: string;
+    updated_at: string;
+}
 
 // Billing access middleware
 const requireBillingAccess = (req: AuthRequest, res: Response, next: () => void): void => {
@@ -123,7 +139,7 @@ router.get(
             WHERE status IN ('open', 'past_due')
         `)) as { count: number; total_amount: number } | null;
 
-            res.json({
+            return res.json({
                 mrr: mrrResult?.mrr || 0,
                 arr: (mrrResult?.mrr || 0) * 12,
                 revenue: {
@@ -142,7 +158,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[Billing] Stats error:', error);
-            res.status(500).json({ error: 'Failed to get billing stats' });
+            return res.status(500).json({ error: 'Failed to get billing stats' });
         }
     }),
 );
@@ -191,21 +207,6 @@ router.get(
             query += ` ORDER BY i.created_at DESC LIMIT ? OFFSET ?`;
             params.push(pageSize, offset);
 
-            interface InvoiceRow {
-                id: string;
-                organization_id: string;
-                organization_name?: string;
-                status: string;
-                amount: number;
-                amount_paid: number;
-                currency: string;
-                due_date: string;
-                paid_at?: string;
-                line_items?: string;
-                metadata?: string;
-                created_at: string;
-                updated_at: string;
-            }
             const invoices = await dbAll<InvoiceRow>(query, params);
 
             let countQuery = `SELECT COUNT(*) as total FROM invoices WHERE 1=1`;
@@ -223,7 +224,7 @@ router.get(
             }
             const total = (await dbGet(countQuery, countParams)) as { total: number } | null;
 
-            res.json({
+            return res.json({
                 invoices: invoices.map((inv) => ({
                     ...inv,
                     line_items: inv.line_items ? JSON.parse(inv.line_items) : [],
@@ -235,7 +236,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[Billing] List invoices error:', error);
-            res.status(500).json({ error: 'Failed to list invoices' });
+            return res.status(500).json({ error: 'Failed to list invoices' });
         }
     }),
 );
@@ -268,11 +269,11 @@ router.get(
             const invoice = await dbGet<InvoiceDetailRow>(query, params);
 
             if (!invoice) {
-                res.status(404).json({ error: 'Invoice not found' });
+                return res.status(404).json({ error: 'Invoice not found' });
                 return;
             }
 
-            res.json({
+            return res.json({
                 invoice: {
                     ...invoice,
                     line_items: invoice.line_items ? JSON.parse(invoice.line_items) : [],
@@ -281,7 +282,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[Billing] Get invoice error:', error);
-            res.status(500).json({ error: 'Failed to get invoice' });
+            return res.status(500).json({ error: 'Failed to get invoice' });
         }
     }),
 );
@@ -326,10 +327,10 @@ router.post(
                 ],
             );
 
-            res.json({ success: true, id, invoiceNumber });
+            return res.json({ success: true, id, invoiceNumber });
         } catch (error: unknown) {
             logger.error('[Billing] Create invoice error:', error);
-            res.status(500).json({ error: 'Failed to create invoice' });
+            return res.status(500).json({ error: 'Failed to create invoice' });
         }
     }),
 );
@@ -383,7 +384,7 @@ router.put(
             }
 
             if (updates.length === 0) {
-                res.status(400).json({ error: 'No updates provided' });
+                return res.status(400).json({ error: 'No updates provided' });
                 return;
             }
 
@@ -392,10 +393,10 @@ router.put(
 
             await dbRun(`UPDATE invoices SET ${updates.join(', ')} WHERE id = ?`, params);
 
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             logger.error('[Billing] Update invoice error:', error);
-            res.status(500).json({ error: 'Failed to update invoice' });
+            return res.status(500).json({ error: 'Failed to update invoice' });
         }
     }),
 );
@@ -418,10 +419,10 @@ router.post(
                 [id],
             );
 
-            res.json({ success: true, message: 'Invoice sent' });
+            return res.json({ success: true, message: 'Invoice sent' });
         } catch (error: unknown) {
             logger.error('[Billing] Send invoice error:', error);
-            res.status(500).json({ error: 'Failed to send invoice' });
+            return res.status(500).json({ error: 'Failed to send invoice' });
         }
     }),
 );
@@ -489,7 +490,7 @@ router.get(
             }
             const subscriptions = await dbAll<SubscriptionRow>(query, params);
 
-            res.json({
+            return res.json({
                 subscriptions: subscriptions.map((sub) => ({
                     ...sub,
                     metadata: sub.metadata ? JSON.parse(sub.metadata) : {},
@@ -497,7 +498,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[Billing] List subscriptions error:', error);
-            res.status(500).json({ error: 'Failed to list subscriptions' });
+            return res.status(500).json({ error: 'Failed to list subscriptions' });
         }
     }),
 );
@@ -533,11 +534,11 @@ router.get(
             } | null;
 
             if (!subscription) {
-                res.status(404).json({ error: 'Subscription not found' });
+                return res.status(404).json({ error: 'Subscription not found' });
                 return;
             }
 
-            res.json({
+            return res.json({
                 subscription: {
                     ...subscription,
                     metadata: subscription.metadata ? JSON.parse(subscription.metadata) : {},
@@ -547,7 +548,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[Billing] Get subscription error:', error);
-            res.status(500).json({ error: 'Failed to get subscription' });
+            return res.status(500).json({ error: 'Failed to get subscription' });
         }
     }),
 );
@@ -570,7 +571,7 @@ router.post(
             )) as { id: string } | null;
 
             if (existing) {
-                res.status(400).json({ error: 'Organization already has an active subscription' });
+                return res.status(400).json({ error: 'Organization already has an active subscription' });
                 return;
             }
 
@@ -600,10 +601,10 @@ router.post(
                 [id, organizationId, planId, status, billingCycle, periodStart, periodEnd, trialStart, trialEnd],
             );
 
-            res.json({ success: true, id });
+            return res.json({ success: true, id });
         } catch (error: unknown) {
             logger.error('[Billing] Create subscription error:', error);
-            res.status(500).json({ error: 'Failed to create subscription' });
+            return res.status(500).json({ error: 'Failed to create subscription' });
         }
     }),
 );
@@ -646,7 +647,7 @@ router.put(
             }
 
             if (updates.length === 0) {
-                res.status(400).json({ error: 'No updates provided' });
+                return res.status(400).json({ error: 'No updates provided' });
                 return;
             }
 
@@ -655,10 +656,10 @@ router.put(
 
             await dbRun(`UPDATE subscriptions SET ${updates.join(', ')} WHERE id = ?`, params);
 
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             logger.error('[Billing] Update subscription error:', error);
-            res.status(500).json({ error: 'Failed to update subscription' });
+            return res.status(500).json({ error: 'Failed to update subscription' });
         }
     }),
 );
@@ -678,12 +679,12 @@ router.post(
                 organization_id: string;
             } | null;
             if (!subscription) {
-                res.status(404).json({ error: 'Subscription not found' });
+                return res.status(404).json({ error: 'Subscription not found' });
                 return;
             }
 
             if (!isSuperAdmin && subscription.organization_id !== req.user!.organizationId) {
-                res.status(403).json({ error: 'Access denied' });
+                return res.status(403).json({ error: 'Access denied' });
                 return;
             }
 
@@ -707,13 +708,13 @@ router.post(
                 );
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 message: immediately ? 'Subscription canceled' : 'Subscription will be canceled at period end',
             });
         } catch (error: unknown) {
             logger.error('[Billing] Cancel subscription error:', error);
-            res.status(500).json({ error: 'Failed to cancel subscription' });
+            return res.status(500).json({ error: 'Failed to cancel subscription' });
         }
     }),
 );
@@ -754,7 +755,7 @@ router.get(
             }
             const plans = await dbAll<PlanRow>(query);
 
-            res.json({
+            return res.json({
                 plans: plans.map((plan) => ({
                     ...plan,
                     features: plan.features ? JSON.parse(plan.features) : [],
@@ -763,7 +764,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[Billing] List plans error:', error);
-            res.status(500).json({ error: 'Failed to list plans' });
+            return res.status(500).json({ error: 'Failed to list plans' });
         }
     }),
 );
@@ -811,10 +812,10 @@ router.post(
                 ],
             );
 
-            res.json({ success: true, id });
+            return res.json({ success: true, id });
         } catch (error: unknown) {
             logger.error('[Billing] Create plan error:', error);
-            res.status(500).json({ error: 'Failed to create plan' });
+            return res.status(500).json({ error: 'Failed to create plan' });
         }
     }),
 );
@@ -862,7 +863,7 @@ router.put(
             }
 
             if (updates.length === 0) {
-                res.status(400).json({ error: 'No updates provided' });
+                return res.status(400).json({ error: 'No updates provided' });
                 return;
             }
 
@@ -871,10 +872,10 @@ router.put(
 
             await dbRun(`UPDATE subscription_plans SET ${updates.join(', ')} WHERE id = ?`, params);
 
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             logger.error('[Billing] Update plan error:', error);
-            res.status(500).json({ error: 'Failed to update plan' });
+            return res.status(500).json({ error: 'Failed to update plan' });
         }
     }),
 );
@@ -922,10 +923,10 @@ router.get(
 
             const creditNotes = await dbAll(query, params);
 
-            res.json({ creditNotes });
+            return res.json({ creditNotes });
         } catch (error: unknown) {
             logger.error('[Billing] List credit notes error:', error);
-            res.status(500).json({ error: 'Failed to list credit notes' });
+            return res.status(500).json({ error: 'Failed to list credit notes' });
         }
     }),
 );
@@ -951,10 +952,10 @@ router.post(
                 [id, organizationId, invoiceId, noteNumber, amount, reason],
             );
 
-            res.json({ success: true, id, noteNumber });
+            return res.json({ success: true, id, noteNumber });
         } catch (error: unknown) {
             logger.error('[Billing] Create credit note error:', error);
-            res.status(500).json({ error: 'Failed to create credit note' });
+            return res.status(500).json({ error: 'Failed to create credit note' });
         }
     }),
 );
@@ -1059,10 +1060,10 @@ router.get(
                 [orgId],
             );
 
-            res.json({ usage, structuredUsage, totals });
+            return res.json({ usage, structuredUsage, totals });
         } catch (error: unknown) {
             logger.error('[Billing] Get usage error:', error);
-            res.status(500).json({ error: 'Failed to get usage' });
+            return res.status(500).json({ error: 'Failed to get usage' });
         }
     }),
 );
@@ -1085,10 +1086,10 @@ router.post(
                 [id, req.user!.organizationId, metricName, quantity, JSON.stringify(metadata || {})],
             );
 
-            res.json({ success: true, id });
+            return res.json({ success: true, id });
         } catch (error: unknown) {
             logger.error('[Billing] Record usage error:', error);
-            res.status(500).json({ error: 'Failed to record usage' });
+            return res.status(500).json({ error: 'Failed to record usage' });
         }
     }),
 );
@@ -1118,7 +1119,7 @@ router.get(
                 orgId,
             ]);
 
-            res.json(
+            return res.json(
                 alerts.map((a) => ({
                     ...a,
                     notifyEmails: JSON.parse(a.notify_emails || '[]'),
@@ -1129,7 +1130,7 @@ router.get(
             );
         } catch (error: unknown) {
             logger.error('[Billing] Get spending alerts error:', error);
-            res.status(500).json({ error: 'Failed to get spending alerts' });
+            return res.status(500).json({ error: 'Failed to get spending alerts' });
         }
     }),
 );
@@ -1162,10 +1163,10 @@ router.post(
                 ],
             );
 
-            res.json({ success: true, id });
+            return res.json({ success: true, id });
         } catch (error: unknown) {
             logger.error('[Billing] Create spending alert error:', error);
-            res.status(500).json({ error: 'Failed to create spending alert' });
+            return res.status(500).json({ error: 'Failed to create spending alert' });
         }
     }),
 );
@@ -1200,10 +1201,10 @@ router.put(
                 ],
             );
 
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             logger.error('[Billing] Update spending alert error:', error);
-            res.status(500).json({ error: 'Failed to update spending alert' });
+            return res.status(500).json({ error: 'Failed to update spending alert' });
         }
     }),
 );
@@ -1227,10 +1228,10 @@ router.post(
                 [id, orgId],
             );
 
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             logger.error('[Billing] Toggle spending alert error:', error);
-            res.status(500).json({ error: 'Failed to toggle spending alert' });
+            return res.status(500).json({ error: 'Failed to toggle spending alert' });
         }
     }),
 );
@@ -1246,10 +1247,10 @@ router.delete(
 
             await dbRun(`DELETE FROM spending_alerts WHERE id = ? AND organization_id = ?`, [id, orgId]);
 
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             logger.error('[Billing] Delete spending alert error:', error);
-            res.status(500).json({ error: 'Failed to delete spending alert' });
+            return res.status(500).json({ error: 'Failed to delete spending alert' });
         }
     }),
 );
@@ -1265,10 +1266,10 @@ router.get(
         try {
             const sql = `SELECT * FROM billing_addons WHERE is_active = 1`;
             const addons = await dbAll(sql, []);
-            res.json(addons);
+            return res.json(addons);
         } catch (error: unknown) {
             logger.error('[Billing] Get addons error:', error);
-            res.status(500).json({ error: 'Failed to get add-ons' });
+            return res.status(500).json({ error: 'Failed to get add-ons' });
         }
     }),
 );
@@ -1286,10 +1287,10 @@ router.get(
             const orgId = (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
             const limit = parseInt((req.query.limit as string) || '100', 10);
             const events = await BillingWebhookService.getRecentEvents(orgId, limit);
-            res.json({ events });
+            return res.json({ events });
         } catch (error: unknown) {
             logger.error('[Billing] Get webhook events error:', error);
-            res.status(500).json({ error: 'Failed to get webhook events' });
+            return res.status(500).json({ error: 'Failed to get webhook events' });
         }
     }),
 );
@@ -1303,10 +1304,10 @@ router.get(
             const orgId = (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
             const period = (req.query.period as string) || '30 days';
             const stats = await BillingWebhookService.getEventStats(orgId, period);
-            res.json({ stats });
+            return res.json({ stats });
         } catch (error: unknown) {
             logger.error('[Billing] Get webhook event stats error:', error);
-            res.status(500).json({ error: 'Failed to get webhook event statistics' });
+            return res.status(500).json({ error: 'Failed to get webhook event statistics' });
         }
     }),
 );
@@ -1320,18 +1321,18 @@ router.get(
         try {
             const event = await BillingWebhookService.getEventById(req.params.id);
             if (!event) {
-                res.status(404).json({ error: 'Webhook event not found' });
+                return res.status(404).json({ error: 'Webhook event not found' });
                 return;
             }
             const orgId = (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
             if ((event as { organization_id: string }).organization_id !== orgId && req.user!.role !== 'SUPERADMIN') {
-                res.status(403).json({ error: 'Permission denied' });
+                return res.status(403).json({ error: 'Permission denied' });
                 return;
             }
-            res.json({ event });
+            return res.json({ event });
         } catch (error: unknown) {
             logger.error('[Billing] Get webhook event error:', error);
-            res.status(500).json({ error: 'Failed to get webhook event' });
+            return res.status(500).json({ error: 'Failed to get webhook event' });
         }
     }),
 );
@@ -1340,7 +1341,7 @@ router.get(
     '/webhook-event-types',
     verifyToken,
     asyncHandler(async (_req: AuthRequest, res: Response) => {
-        res.json({ eventTypes: BILLING_EVENT_TYPES });
+        return res.json({ eventTypes: BILLING_EVENT_TYPES });
     }),
 );
 
@@ -1353,7 +1354,7 @@ router.post(
         try {
             const event = await BillingWebhookService.getEventById(req.params.id);
             if (!event) {
-                res.status(404).json({ error: 'Webhook event not found' });
+                return res.status(404).json({ error: 'Webhook event not found' });
                 return;
             }
 
@@ -1369,7 +1370,7 @@ router.post(
                     | Record<string, unknown>;
             }
             const webhookEvent = event as WebhookEvent;
-            const payload = (webhookEvent.payload?.data?.object || webhookEvent.payload) as
+            const payload = ((webhookEvent.payload as any)?.data?.object || webhookEvent.payload) as
                 | Record<string, unknown>
                 | undefined;
             const result = await BillingWebhookService.triggerEvent(
@@ -1378,10 +1379,10 @@ router.post(
                 payload,
             );
 
-            res.json({ success: true, result });
+            return res.json({ success: true, result });
         } catch (error: unknown) {
             logger.error('[Billing Admin] Retry webhook event error:', error);
-            res.status(500).json({ error: 'Failed to retry webhook event' });
+            return res.status(500).json({ error: 'Failed to retry webhook event' });
         }
     }),
 );
@@ -1394,10 +1395,10 @@ router.get(
         try {
             const limit = parseInt((req.query.limit as string) || '50', 10);
             const failedEvents = await BillingWebhookService.getFailedEvents(limit);
-            res.json({ events: failedEvents });
+            return res.json({ events: failedEvents });
         } catch (error: unknown) {
             logger.error('[Billing Admin] Get failed webhook events error:', error);
-            res.status(500).json({ error: 'Failed to get failed webhook events' });
+            return res.status(500).json({ error: 'Failed to get failed webhook events' });
         }
     }),
 );
@@ -1410,10 +1411,10 @@ router.get(
         try {
             const limit = parseInt((req.query.limit as string) || '50', 10);
             const pendingEvents = await BillingWebhookService.getPendingRetries(limit);
-            res.json({ events: pendingEvents });
+            return res.json({ events: pendingEvents });
         } catch (error: unknown) {
             logger.error('[Billing Admin] Get pending webhook events error:', error);
-            res.status(500).json({ error: 'Failed to get pending webhook events' });
+            return res.status(500).json({ error: 'Failed to get pending webhook events' });
         }
     }),
 );

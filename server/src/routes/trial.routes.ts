@@ -11,7 +11,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { demoGuard } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -38,14 +38,14 @@ let TrialService: TrialServiceInterface | null = null;
 let AuditService: AuditServiceInterface | null = null;
 
 try {
-    const trialModule = await import('../../services/trialService.js');
+    const trialModule = (await import('../services/trialService.js')) as any;
     TrialService = (trialModule.default || trialModule) as TrialServiceInterface;
 } catch {
     logger.warn('[Trial Routes] TrialService not available');
 }
 
 try {
-    const auditModule = await import('../../services/auditService.js');
+    const auditModule = (await import('../services/auditService.js')) as any;
     AuditService = (auditModule.default || auditModule) as AuditServiceInterface;
 } catch {
     logger.warn('[Trial Routes] AuditService not available');
@@ -79,14 +79,14 @@ router.post(
 
             const result = await TrialService.convertTrialToOrg(trialId, userId, newOrgName);
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Trial converted successfully',
                 newOrganizationId: result.newOrganizationId,
             });
         } catch (error: unknown) {
             logger.error('Trial Conversion Error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );
@@ -132,14 +132,14 @@ router.post(
                 },
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Transition confirmed',
                 nextStep: 'ORG_SETUP_WIZARD',
             });
         } catch (error: unknown) {
             logger.error('Transition Confirmation Error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );

@@ -11,11 +11,13 @@
 
 import { Response, Router } from 'express';
 
-import SuperAdminController from '../controllers/SuperAdminController.js';
-import type { AuthRequest } from '../middleware/auth.middleware.js';
+import SuperAdminControllerRaw from '../controllers/SuperAdminController.js';
+const SuperAdminController = SuperAdminControllerRaw as any;
+
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
-import { _validateParams, validateBody } from '../middleware/validation.middleware.js';
+import { validateBody, validateParams } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import {
     CreateAccessCodeSchema,

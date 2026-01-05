@@ -1,8 +1,8 @@
 import { getDatabase } from '../../../../database/Database.js';
 import type { IDatabase } from '../../../../database/IDatabase.js';
 
-export interface ListProjectsQuery {
-    organizationId: string;
+export class ListProjectsQuery {
+    constructor(public readonly organizationId: string) {}
 }
 
 export class ListProjectsHandler {

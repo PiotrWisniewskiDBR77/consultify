@@ -35,7 +35,7 @@ interface ABTestingServiceInterface {
 let abTestingService: ABTestingServiceInterface | null = null;
 
 try {
-    const abTestingModule = await import('../../services/ai/abTesting.js');
+    const abTestingModule = (await import('../services/ai/abTesting.js')) as any;
     const module = abTestingModule.default || abTestingModule;
     abTestingService = (module.abTestingService || module) as ABTestingServiceInterface;
 } catch {
@@ -62,7 +62,7 @@ router.get(
                 promptId: promptId as string | undefined,
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 data: experiments.map((e) => ({
                     ...e,
@@ -72,7 +72,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error listing experiments:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list experiments',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -104,10 +104,10 @@ router.post(
                 createdBy: userId,
             });
 
-            res.status(201).json({ success: true, data: result });
+            return res.status(201).json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error creating experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to create experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -130,10 +130,10 @@ router.get(
 
         try {
             const stats = await abTestingService.getExperimentStats(req.params.id);
-            res.json({ success: true, data: stats });
+            return res.json({ success: true, data: stats });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error getting experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -161,10 +161,10 @@ router.post(
             }
 
             const result = await abTestingService.startExperiment(req.params.id, userId);
-            res.json({ success: true, data: result });
+            return res.json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error starting experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to start experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -188,10 +188,10 @@ router.post(
         try {
             const { reason = 'manual' } = req.body;
             const result = await abTestingService.stopExperiment(req.params.id, reason);
-            res.json({ success: true, data: result });
+            return res.json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error stopping experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to stop experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -224,10 +224,10 @@ router.post(
             }
 
             await abTestingService.recordOutcome(experimentId, userId, metric, value);
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error recording outcome:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to record outcome',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });

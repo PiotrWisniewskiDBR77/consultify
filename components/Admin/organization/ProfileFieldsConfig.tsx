@@ -118,12 +118,7 @@ const getVisibilityLabel = (visibility: FieldVisibility) => {
     }
 };
 
-export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
-    fields,
-    onChange,
-    onSave,
-    className,
-}) => {
+export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({ fields, onChange, onSave, className }) => {
     const { t } = useTranslation();
     const [editingField, setEditingField] = useState<string | null>(null);
     const [newField, setNewField] = useState<Partial<ProfileField> | null>(null);
@@ -172,10 +167,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
             const targetIndex = direction === 'up' ? index - 1 : index + 1;
             if (targetIndex < 0 || targetIndex >= newFields.length) return;
 
-            [newFields[index], newFields[targetIndex]] = [
-                newFields[targetIndex],
-                newFields[index],
-            ];
+            [newFields[index], newFields[targetIndex]] = [newFields[targetIndex], newFields[index]];
 
             // Update order
             onChange(newFields.map((f, i) => ({ ...f, order: i })));
@@ -190,7 +182,12 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                 <div>
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                         {t('admin.organization.profileFields.title', 'Profile Fields')}
-                        <Tooltip content={t('admin.organization.profileFields.tooltip', 'Configure which fields appear on user profiles')}>
+                        <Tooltip
+                            content={t(
+                                'admin.organization.profileFields.tooltip',
+                                'Configure which fields appear on user profiles',
+                            )}
+                        >
                             <HelpCircle size={16} className="text-slate-400" />
                         </Tooltip>
                     </h3>
@@ -293,9 +290,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() =>
-                                                setEditingField(isEditing ? null : field.id)
-                                            }
+                                            onClick={() => setEditingField(isEditing ? null : field.id)}
                                             className="h-8 w-8 p-0"
                                         >
                                             {isEditing ? <X size={14} /> : <Text size={14} />}
@@ -324,9 +319,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                                                 <input
                                                     type="text"
                                                     value={field.label}
-                                                    onChange={(e) =>
-                                                        updateField(field.id, { label: e.target.value })
-                                                    }
+                                                    onChange={(e) => updateField(field.id, { label: e.target.value })}
                                                     className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                                                 />
                                             </div>
@@ -404,9 +397,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                                             <input
                                                 type="text"
                                                 value={field.placeholder || ''}
-                                                onChange={(e) =>
-                                                    updateField(field.id, { placeholder: e.target.value })
-                                                }
+                                                onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
                                                 className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                                             />
                                         </div>
@@ -415,15 +406,16 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                                         {(field.type === 'dropdown' || field.type === 'multiselect') && (
                                             <div>
                                                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                                    {t('admin.organization.profileFields.options', 'Options (one per line)')}
+                                                    {t(
+                                                        'admin.organization.profileFields.options',
+                                                        'Options (one per line)',
+                                                    )}
                                                 </label>
                                                 <textarea
                                                     value={field.options?.join('\n') || ''}
                                                     onChange={(e) =>
                                                         updateField(field.id, {
-                                                            options: e.target.value
-                                                                .split('\n')
-                                                                .filter((o) => o.trim()),
+                                                            options: e.target.value.split('\n').filter((o) => o.trim()),
                                                         })
                                                     }
                                                     rows={4}
@@ -451,9 +443,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                                 <input
                                     type="text"
                                     value={newField.label || ''}
-                                    onChange={(e) =>
-                                        setNewField({ ...newField, label: e.target.value })
-                                    }
+                                    onChange={(e) => setNewField({ ...newField, label: e.target.value })}
                                     placeholder="e.g., Department, Location"
                                     className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-violet-200 dark:border-violet-700 rounded-lg text-navy-900 dark:text-white"
                                     autoFocus
@@ -486,11 +476,7 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
                             </div>
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setNewField(null)}
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => setNewField(null)}>
                                 {t('common.cancel', 'Cancel')}
                             </Button>
                             <Button
@@ -529,6 +515,3 @@ export const ProfileFieldsConfig: React.FC<ProfileFieldsConfigProps> = ({
 };
 
 export default ProfileFieldsConfig;
-
-
-

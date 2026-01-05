@@ -218,7 +218,7 @@ export const AppPricingView: React.FC = () => {
             {/* Hero Section */}
             <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-slate-50 px-6 pb-12 pt-10 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent dark:from-purple-900/20" />
-                
+
                 <div className="relative mx-auto max-w-4xl text-center">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -238,8 +238,8 @@ export const AppPricingView: React.FC = () => {
                         </h1>
 
                         <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
-                            Zastąp kosztownych konsultantów strategicznym wsparciem AI. 
-                            14-dniowy trial. Bez karty kredytowej.
+                            Zastąp kosztownych konsultantów strategicznym wsparciem AI. 14-dniowy trial. Bez karty
+                            kredytowej.
                         </p>
 
                         {/* Billing Toggle */}
@@ -279,7 +279,7 @@ export const AppPricingView: React.FC = () => {
                         {tiers.map((tier, idx) => {
                             const Icon = tier.icon;
                             const displayPrice = billingPeriod === 'annual' ? tier.annualPrice : tier.monthlyPrice;
-                            
+
                             return (
                                 <motion.div
                                     key={tier.name}
@@ -304,9 +304,7 @@ export const AppPricingView: React.FC = () => {
                                     <div className="flex items-center gap-3">
                                         <div
                                             className={`flex h-11 w-11 items-center justify-center rounded-xl ${
-                                                tier.highlight
-                                                    ? 'bg-white/20'
-                                                    : 'bg-purple-100 dark:bg-purple-900/30'
+                                                tier.highlight ? 'bg-white/20' : 'bg-purple-100 dark:bg-purple-900/30'
                                             }`}
                                         >
                                             <Icon
@@ -346,7 +344,9 @@ export const AppPricingView: React.FC = () => {
                                         </span>
                                         <span
                                             className={`ml-1 text-sm ${
-                                                tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                                                tier.highlight
+                                                    ? 'text-purple-200'
+                                                    : 'text-slate-500 dark:text-slate-400'
                                             }`}
                                         >
                                             {tier.priceNote}
@@ -362,7 +362,9 @@ export const AppPricingView: React.FC = () => {
                                         <div>
                                             <div
                                                 className={`text-xs ${
-                                                    tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                                                    tier.highlight
+                                                        ? 'text-purple-200'
+                                                        : 'text-slate-500 dark:text-slate-400'
                                                 }`}
                                             >
                                                 Stanowiska
@@ -378,7 +380,9 @@ export const AppPricingView: React.FC = () => {
                                         <div>
                                             <div
                                                 className={`text-xs ${
-                                                    tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                                                    tier.highlight
+                                                        ? 'text-purple-200'
+                                                        : 'text-slate-500 dark:text-slate-400'
                                                 }`}
                                             >
                                                 AI Credits
@@ -476,7 +480,8 @@ export const AppPricingView: React.FC = () => {
                             AI Credits: dwa sposoby płatności
                         </h2>
                         <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-                            Wybierz Managed AI dla prostoty lub BYOK dla kontroli. Obie opcje dają pełny dostęp do funkcji AI.
+                            Wybierz Managed AI dla prostoty lub BYOK dla kontroli. Obie opcje dają pełny dostęp do
+                            funkcji AI.
                         </p>
                     </div>
 
@@ -494,11 +499,14 @@ export const AppPricingView: React.FC = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-navy-950 dark:text-white">Managed AI</h3>
-                                    <span className="text-xs font-medium text-green-600 dark:text-green-400">Domyślnie</span>
+                                    <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                                        Domyślnie
+                                    </span>
                                 </div>
                             </div>
                             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                My zarządzamy wszystkim. Najnowsze modele, zoptymalizowane prompty, automatyczny failover.
+                                My zarządzamy wszystkim. Najnowsze modele, zoptymalizowane prompty, automatyczny
+                                failover.
                             </p>
                             <div className="space-y-2">
                                 {[
@@ -506,9 +514,14 @@ export const AppPricingView: React.FC = () => {
                                     { label: 'Scale overage', value: '€0.04/credit' },
                                     { label: 'Enterprise overage', value: '€0.03/credit' },
                                 ].map((item, idx) => (
-                                    <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 dark:border-white/5">
+                                    <div
+                                        key={idx}
+                                        className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 dark:border-white/5"
+                                    >
                                         <span className="text-sm text-slate-600 dark:text-slate-400">{item.label}</span>
-                                        <span className="text-sm font-bold text-navy-950 dark:text-white">{item.value}</span>
+                                        <span className="text-sm font-bold text-navy-950 dark:text-white">
+                                            {item.value}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -527,7 +540,9 @@ export const AppPricingView: React.FC = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-navy-950 dark:text-white">BYOK Mode</h3>
-                                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400">Scale+ only</span>
+                                    <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+                                        Scale+ only
+                                    </span>
                                 </div>
                             </div>
                             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
@@ -539,9 +554,14 @@ export const AppPricingView: React.FC = () => {
                                     { label: 'Enterprise orchestration', value: '€0.01/credit' },
                                     { label: 'Local LLM (Llama, Mistral)', value: '€0.01/credit' },
                                 ].map((item, idx) => (
-                                    <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 dark:border-white/5">
+                                    <div
+                                        key={idx}
+                                        className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 dark:border-white/5"
+                                    >
                                         <span className="text-sm text-slate-600 dark:text-slate-400">{item.label}</span>
-                                        <span className="text-sm font-bold text-navy-950 dark:text-white">{item.value}</span>
+                                        <span className="text-sm font-bold text-navy-950 dark:text-white">
+                                            {item.value}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -575,9 +595,7 @@ export const AppPricingView: React.FC = () => {
             <section className="px-6 py-12">
                 <div className="mx-auto max-w-3xl">
                     <div className="mb-8 text-center">
-                        <h2 className="text-2xl font-black text-navy-950 dark:text-white">
-                            Często zadawane pytania
-                        </h2>
+                        <h2 className="text-2xl font-black text-navy-950 dark:text-white">Często zadawane pytania</h2>
                     </div>
 
                     <div className="space-y-3">
@@ -604,10 +622,7 @@ export const AppPricingView: React.FC = () => {
                                         animate={{ rotate: expandedFaq === idx ? 180 : 0 }}
                                         transition={{ duration: 0.2 }}
                                     >
-                                        <ArrowRight
-                                            size={16}
-                                            className="flex-shrink-0 rotate-90 text-slate-400"
-                                        />
+                                        <ArrowRight size={16} className="flex-shrink-0 rotate-90 text-slate-400" />
                                     </motion.div>
                                 </button>
                                 {expandedFaq === idx && (
@@ -616,9 +631,7 @@ export const AppPricingView: React.FC = () => {
                                         animate={{ height: 'auto', opacity: 1 }}
                                         className="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-white/5"
                                     >
-                                        <p className="pl-7 text-sm text-slate-600 dark:text-slate-400">
-                                            {faq.answer}
-                                        </p>
+                                        <p className="pl-7 text-sm text-slate-600 dark:text-slate-400">{faq.answer}</p>
                                     </motion.div>
                                 )}
                             </motion.div>
@@ -630,12 +643,10 @@ export const AppPricingView: React.FC = () => {
             {/* CTA Section */}
             <section className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-12">
                 <div className="mx-auto max-w-4xl text-center">
-                    <h2 className="text-2xl font-black text-white">
-                        Gotowy na transformację?
-                    </h2>
+                    <h2 className="text-2xl font-black text-white">Gotowy na transformację?</h2>
                     <p className="mx-auto mt-3 max-w-xl text-sm text-purple-100">
-                        Rozpocznij 14-dniowy trial już dziś. Pełne funkcje Scale, 2,000 AI Credits, 5 stanowisk. 
-                        Bez karty kredytowej.
+                        Rozpocznij 14-dniowy trial już dziś. Pełne funkcje Scale, 2,000 AI Credits, 5 stanowisk. Bez
+                        karty kredytowej.
                     </p>
                     <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
                         <button
@@ -660,4 +671,3 @@ export const AppPricingView: React.FC = () => {
 };
 
 export default AppPricingView;
-

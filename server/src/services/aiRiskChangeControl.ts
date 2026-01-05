@@ -7,13 +7,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import * as DbPromise from '../utils/DbPromise.ts';
+import * as DbPromise from '../utils/DbPromise.js';
 
-type Database = {
-    all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
-    get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    run: (sql: string, params: unknown[], callback: (this: { changes?: number }, err: Error | null) => void) => void;
-};
+// Use any to avoid type mismatch with DbPromise internal types
+type Database = any;
 
 const deps = {
     db: null as Database | null,
@@ -727,7 +724,9 @@ const AIRiskChangeControl = {
 
     getOpenRisks: async (
         projectId: string,
-    ): Promise<Array<RiskRow & { affected_entities: AffectedEntity[]; ownerName: string }>> => {
+    ): Promise<
+        Array<Omit<RiskRow, 'affected_entities'> & { affected_entities: AffectedEntity[]; ownerName: string }>
+    > => {
         const rows = await dbAll<RiskRow>(
             `
                 SELECT r.*, u.first_name as owner_first, u.last_name as owner_last
@@ -742,11 +741,14 @@ const AIRiskChangeControl = {
             [projectId],
         );
 
-        return (rows || []).map((row) => ({
-            ...row,
-            affected_entities: parseJsonArray(row.affected_entities),
-            ownerName: row.owner_first ? `${row.owner_first} ${row.owner_last}` : 'Unassigned',
-        }));
+        return (rows || []).map((row) => {
+            const { affected_entities, ...rest } = row;
+            return {
+                ...rest,
+                affected_entities: parseJsonArray(affected_entities),
+                ownerName: row.owner_first ? `${row.owner_first} ${row.owner_last}` : 'Unassigned',
+            };
+        });
     },
 
     updateRiskStatus: async (

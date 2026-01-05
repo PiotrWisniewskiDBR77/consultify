@@ -228,3 +228,21 @@ export interface BillingServiceDependencies {
     uuidv4: () => string;
     stripe: Stripe | null;
 }
+export type _BillingPlan = BillingPlan;
+export type _SetupIntent = SetupIntent;
+
+export interface UpdateTaxSettingsData {
+    tax_id?: string;
+    tax_id_type?: string;
+    tax_exempt?: number | boolean;
+    billing_name?: string;
+    billing_email?: string;
+    billing_address_line1?: string;
+    billing_address_line2?: string;
+    billing_city?: string;
+    billing_state?: string;
+    billing_postal_code?: string;
+    billing_country?: string;
+    invoice_prefix?: string;
+    po_number?: string;
+}

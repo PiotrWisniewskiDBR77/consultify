@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 // Use vi.hoisted to ensure mock data is available to vi.mock
 const {
@@ -12,7 +12,7 @@ const {
     mockAIExecutiveReporting,
     mockReportVersionService,
     mockReportAuditService,
-    mockManagementReportRepository
+    mockManagementReportRepository,
 } = vi.hoisted(() => ({
     mockDb: {
         get: vi.fn(),
@@ -29,18 +29,20 @@ const {
     mockAIExecutiveReporting: {
         translateToNarrative: vi.fn().mockReturnValue('AI-generated executive summary'),
         generateReport: vi.fn().mockResolvedValue({ narrative: 'AI-generated steering summary', warnings: [] }),
-        REPORT_TYPES: { PROJECT_STATUS: 'PROJECT_STATUS' }
+        REPORT_TYPES: { PROJECT_STATUS: 'PROJECT_STATUS' },
     },
     mockReportVersionService: {
         createVersion: vi.fn().mockResolvedValue({ id: 'v1', versionNumber: 1 }),
-        getCurrentVersion: vi.fn().mockResolvedValue(1)
+        getCurrentVersion: vi.fn().mockResolvedValue(1),
     },
     mockReportAuditService: {
-        log: vi.fn().mockResolvedValue({ success: true })
+        log: vi.fn().mockResolvedValue({ success: true }),
     },
     mockManagementReportRepository: {
         getProjectById: vi.fn(),
-        getTaskStatistics: vi.fn().mockResolvedValue({ total: 10, completed: 5, inProgress: 3, blocked: 1, overdue: 1 }),
+        getTaskStatistics: vi
+            .fn()
+            .mockResolvedValue({ total: 10, completed: 5, inProgress: 3, blocked: 1, overdue: 1 }),
         getInitiativeStatistics: vi.fn().mockResolvedValue({ total: 2, onTrack: 1, atRisk: 1 }),
         getDecisionStatistics: vi.fn().mockResolvedValue({ approved: 2, pending: 1 }),
         getCompletedTasks: vi.fn().mockResolvedValue([]),
@@ -62,19 +64,19 @@ const {
         updateStatus: vi.fn().mockResolvedValue({ success: true }),
         createShareLink: vi.fn().mockResolvedValue(true),
         getByShareToken: vi.fn(),
-        finalizeReport: vi.fn().mockResolvedValue({ success: true })
-    }
+        finalizeReport: vi.fn().mockResolvedValue({ success: true }),
+    },
 }));
 
 // Mock the Database module (if needed by other things, though repository is mocked)
 vi.mock('../../../../src/database/index.js', () => ({
     getDatabase: () => mockDb,
-    default: mockDb
+    default: mockDb,
 }));
 
 // Mock repositories
 vi.mock('../../../../repositories/ManagementReportRepository.js', () => ({
-    default: mockManagementReportRepository
+    default: mockManagementReportRepository,
 }));
 
 // Mock related services
@@ -95,12 +97,12 @@ describe('ManagementReportsService', () => {
             (mockManagementReportRepository.getProjectById as Mock).mockResolvedValue({
                 id: 'proj1',
                 name: 'Test Project',
-                organization_id: 'org1'
+                organization_id: 'org1',
             });
 
             const result = await ManagementReportsService.generateTeamMeetingReport('proj1', {
                 userId: 'user1',
-                aiEnhancement: true
+                aiEnhancement: true,
             });
 
             expect(result.reportType).toBe('TEAM_MEETING');
@@ -120,7 +122,7 @@ describe('ManagementReportsService', () => {
                 scope: 'PROJECT',
                 title: 'Weekly Report',
                 content: { summary: 'Test' },
-                ai_narrative: 'AI summary'
+                ai_narrative: 'AI summary',
             };
 
             (mockManagementReportRepository.getReportById as Mock).mockResolvedValue(mockReport);
@@ -137,12 +139,12 @@ describe('ManagementReportsService', () => {
             (mockManagementReportRepository.getProjectById as Mock).mockResolvedValue({
                 id: 'proj1',
                 name: 'Test Project',
-                organization_id: 'org1'
+                organization_id: 'org1',
             });
 
             const result = await ManagementReportsService.generateSteeringCommitteeReport('proj1', {
                 userId: 'user1',
-                aiEnhancement: true
+                aiEnhancement: true,
             });
 
             expect(result.reportType).toBe('STEERING_COMMITTEE');

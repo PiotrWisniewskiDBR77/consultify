@@ -1,16 +1,11 @@
-/**
- * Metrics Routes
- * Enterprise SaaS Architecture - TypeScript Backend
- *
- * Prometheus metrics endpoint
- * GET /metrics - Returns metrics in Prometheus format
- */
-
 import { Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import { getMetricsService } from '../services/MetricsService.js';
-import logger from '../utils/Logger.ts';
+import { getMetricsService } from '../services/metricsService.js';
+import logger from '../utils/Logger.js';
+// Import legacy router
+// @ts-ignore
+import legacyMetricsRouter from './metrics.js';
 
 const router = Router();
 
@@ -18,13 +13,12 @@ const router = Router();
 router.use(defaultRateLimiter);
 
 // ==========================================
-// METRICS ENDPOINT
+// PROMETHEUS METRICS ENDPOINT
 // ==========================================
 
 /**
- * GET /metrics
+ * GET /api/metrics/
  * Prometheus metrics endpoint
- * Optionally protected with basic auth in production
  */
 router.get('/', async (_req, res) => {
     try {
@@ -32,12 +26,18 @@ router.get('/', async (_req, res) => {
         const metrics = await metricsService.getMetrics();
 
         res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
-        res.send(metrics);
+        return res.send(metrics);
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('[MetricsRoutes] Error generating metrics:', err);
-        res.status(500).send(`# Error generating metrics: ${err.message}\n`);
+        return res.status(500).send(`# Error generating metrics: ${err.message}\n`);
     }
 });
+
+// ==========================================
+// BUSINESS METRICS ENDPOINTS (Legacy)
+// ==========================================
+
+router.use('/', legacyMetricsRouter);
 
 export default router;

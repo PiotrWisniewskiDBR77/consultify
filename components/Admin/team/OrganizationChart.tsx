@@ -73,9 +73,7 @@ const OrgNodeCard: React.FC<{
                     {/* Horizontal line from parent */}
                     <div className="absolute -left-6 top-8 w-6 h-px bg-slate-300 dark:bg-navy-600" />
                     {/* Vertical line to siblings */}
-                    {!isLast && (
-                        <div className="absolute -left-6 top-8 w-px h-full bg-slate-300 dark:bg-navy-600" />
-                    )}
+                    {!isLast && <div className="absolute -left-6 top-8 w-px h-full bg-slate-300 dark:bg-navy-600" />}
                 </>
             )}
 
@@ -83,8 +81,7 @@ const OrgNodeCard: React.FC<{
             <div
                 className={cn(
                     'relative flex items-center gap-3 p-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer',
-                    level === 0 &&
-                        'border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20',
+                    level === 0 && 'border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20',
                 )}
                 onClick={() => onNodeClick?.(node)}
             >
@@ -108,16 +105,10 @@ const OrgNodeCard: React.FC<{
                 <Avatar name={node.name} src={node.avatarUrl} size="md" />
 
                 <div className="flex-1 min-w-0">
-                    <p className="font-medium text-navy-900 dark:text-white truncate">
-                        {node.name}
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
-                        {node.title}
-                    </p>
+                    <p className="font-medium text-navy-900 dark:text-white truncate">{node.name}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{node.title}</p>
                     {node.teamName && (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
-                            {node.teamName}
-                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{node.teamName}</p>
                     )}
                 </div>
 
@@ -156,9 +147,7 @@ export const OrganizationChart: React.FC<OrganizationChartProps> = ({
     className,
 }) => {
     const { t } = useTranslation();
-    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
-        new Set([rootNode.id]),
-    );
+    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set([rootNode.id]));
     const [zoom, setZoom] = useState(100);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -234,27 +223,13 @@ export const OrganizationChart: React.FC<OrganizationChartProps> = ({
                 <div className="flex items-center gap-2">
                     {/* Expand/Collapse */}
                     <div className="flex items-center gap-1 border border-slate-200 dark:border-navy-700 rounded-lg p-1">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={expandAll}
-                            className="h-7 px-2"
-                        >
+                        <Button variant="ghost" size="sm" onClick={expandAll} className="h-7 px-2">
                             <ChevronDown size={14} />
-                            <span className="ml-1 text-xs">
-                                {t('admin.team.orgChart.expandAll', 'Expand')}
-                            </span>
+                            <span className="ml-1 text-xs">{t('admin.team.orgChart.expandAll', 'Expand')}</span>
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={collapseAll}
-                            className="h-7 px-2"
-                        >
+                        <Button variant="ghost" size="sm" onClick={collapseAll} className="h-7 px-2">
                             <ChevronRight size={14} />
-                            <span className="ml-1 text-xs">
-                                {t('admin.team.orgChart.collapseAll', 'Collapse')}
-                            </span>
+                            <span className="ml-1 text-xs">{t('admin.team.orgChart.collapseAll', 'Collapse')}</span>
                         </Button>
                     </div>
 
@@ -338,10 +313,7 @@ export const OrganizationChart: React.FC<OrganizationChartProps> = ({
             {/* Footer */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {t(
-                        'admin.team.orgChart.clickToView',
-                        'Click on a person to view their details',
-                    )}
+                    {t('admin.team.orgChart.clickToView', 'Click on a person to view their details')}
                 </p>
                 <Button variant="ghost" size="sm" icon={<Download size={14} />}>
                     {t('admin.team.orgChart.export', 'Export')}
@@ -352,6 +324,3 @@ export const OrganizationChart: React.FC<OrganizationChartProps> = ({
 };
 
 export default OrganizationChart;
-
-
-

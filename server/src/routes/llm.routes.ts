@@ -7,6 +7,6 @@
 
 import { createLazyRoute } from '../utils/lazyRouteLoader.js';
 
-const router = createLazyRoute('../../routes/llm.js');
+const router = createLazyRoute('./llm.js');
 
 export default router;

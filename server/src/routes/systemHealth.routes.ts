@@ -7,7 +7,8 @@
 
 import { Response, Router } from 'express';
 
-import { type AuthRequest, verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { type AuthRequest } from '../middleware/auth.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -15,9 +16,9 @@ const router = Router();
 // Apply rate limiting
 router.use(defaultRateLimiter);
 
-import SystemHealthService from '../../services/systemHealthService.js';
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import SystemHealthService from '../services/systemHealthService.js';
+import logger from '../utils/Logger.js';
 
 /**
  * GET /api/system-health
@@ -32,10 +33,10 @@ router.get(
 
         try {
             const health = await SystemHealthService.getDetailedHealth();
-            res.json(health);
+            return res.json(health);
         } catch (error: unknown) {
             logger.error('[SystemHealth] Error:', error);
-            res.status(500).json({ error: 'Health check failed' });
+            return res.status(500).json({ error: 'Health check failed' });
         }
     }),
 );
@@ -54,10 +55,10 @@ router.get(
 
         try {
             const health = await SystemHealthService.getDetailedHealth();
-            res.json(health);
+            return res.json(health);
         } catch (error: unknown) {
             logger.error('[SystemHealth] Error:', error);
-            res.status(500).json({ error: 'Health check failed' });
+            return res.status(500).json({ error: 'Health check failed' });
         }
     }),
 );
@@ -76,10 +77,10 @@ router.get(
 
         try {
             const metrics = await SystemHealthService.getMetrics();
-            res.json(metrics);
+            return res.json(metrics);
         } catch (error: unknown) {
             logger.error('[SystemHealth] Error fetching metrics:', error);
-            res.status(500).json({ error: 'Failed to fetch system metrics' });
+            return res.status(500).json({ error: 'Failed to fetch system metrics' });
         }
     }),
 );
@@ -98,10 +99,10 @@ router.get(
 
         try {
             const status = await SystemHealthService.getServiceStatus();
-            res.json(status);
+            return res.json(status);
         } catch (error: unknown) {
             logger.error('[SystemHealth] Error fetching service status:', error);
-            res.status(500).json({ error: 'Failed to fetch service status' });
+            return res.status(500).json({ error: 'Failed to fetch service status' });
         }
     }),
 );
@@ -120,10 +121,10 @@ router.post(
 
         try {
             const health = await SystemHealthService.getDetailedHealth();
-            res.json(health);
+            return res.json(health);
         } catch (error: unknown) {
             logger.error('[SystemHealth] Error refreshing:', error);
-            res.status(500).json({ error: 'Failed to refresh health data' });
+            return res.status(500).json({ error: 'Failed to refresh health data' });
         }
     }),
 );
@@ -138,13 +139,14 @@ router.get(
     asyncHandler(async (_req: AuthRequest, res: Response) => {
         try {
             // Dynamic import to avoid circular dependencies
-            const { KeyManagementService, getCurrentKeyVersion } = await import('../services/encryption/index.js');
+            const { KeyManagementService, getCurrentKeyVersion } =
+                (await import('../services/encryption/index.js')) as any;
 
             const health = KeyManagementService.checkHealth();
             const keyStatus = KeyManagementService.getKeyStatus();
             const currentVersion = getCurrentKeyVersion();
 
-            res.json({
+            return res.json({
                 healthy: health.healthy,
                 currentKeyVersion: currentVersion,
                 keyStatus,
@@ -154,7 +156,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[SystemHealth] Encryption health check error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Encryption health check failed',
                 healthy: false,
             });

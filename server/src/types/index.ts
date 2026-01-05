@@ -15,16 +15,30 @@ export interface AuthenticatedUser {
     name: string;
     role: UserRole;
     organizationId: string;
+    organization_id?: string; // Legacy support
     isSuperAdmin?: boolean;
     isDemo?: boolean;
 }
 
-export interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest<
+    ReqBody = any,
+    P = any,
+    ResBody = any,
+    ReqQuery = any,
+    Locals extends Record<string, any> = Record<string, any>,
+> extends Request<P, ResBody, ReqBody, ReqQuery, Locals> {
     user?: AuthenticatedUser;
     correlationId?: string;
+    can?: (capability: string) => boolean;
+    tenantId?: string;
+    workspaceId?: string;
 }
 
-export type AsyncHandler = (req: AuthenticatedRequest, res: Response, next: NextFunction) => Promise<void | Response>;
+export type AsyncHandler<ReqBody = any, P = any, ResBody = any, ReqQuery = any> = (
+    req: AuthenticatedRequest<ReqBody, P, ResBody, ReqQuery>,
+    res: Response<ResBody>,
+    next: NextFunction,
+) => Promise<any>;
 
 // ==========================================
 // USER & ORGANIZATION
@@ -32,12 +46,26 @@ export type AsyncHandler = (req: AuthenticatedRequest, res: Response, next: Next
 
 export type UserRole =
     | 'owner'
+    | 'OWNER'
     | 'administrator'
+    | 'ADMIN'
+    | 'admin'
     | 'project_manager'
+    | 'PROJECT_MANAGER'
     | 'team_member'
+    | 'TEAM_MEMBER'
+    | 'member'
+    | 'MEMBER'
     | 'viewer'
+    | 'VIEWER'
     | 'guest'
-    | 'consultant';
+    | 'GUEST'
+    | 'consultant'
+    | 'CONSULTANT'
+    | 'superadmin'
+    | 'SUPERADMIN'
+    | 'SUPER_ADMIN'
+    | 'super_admin';
 
 export type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending';
 

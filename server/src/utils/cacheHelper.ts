@@ -4,7 +4,7 @@
  * Uses Redis for distributed caching
  */
 
-import logger from './Logger.ts';
+import logger from './Logger.js';
 import client from './RedisClient.js';
 
 export const DEFAULT_TTL = {
@@ -34,7 +34,7 @@ interface RedisClient {
     get: (key: string) => Promise<string | null>;
     setEx?: (key: string, seconds: number, value: string) => Promise<string>;
     set?: (key: string, value: string) => Promise<string>;
-    expire?: (key: string, seconds: number) => Promise<boolean>;
+    expire?: (key: string, seconds: number) => Promise<number>;
     keys?: (pattern: string) => Promise<string[]>;
     del: (key: string | string[]) => Promise<number>;
 }
@@ -48,7 +48,7 @@ export async function getCached<T>(
     ttl: number = DEFAULT_TTL.MEDIUM,
 ): Promise<T> {
     try {
-        const redisClient = client as RedisClient;
+        const redisClient = client as unknown as RedisClient;
         // Try to get from cache
         const cached = await redisClient.get(key);
         if (cached) {
@@ -81,7 +81,7 @@ export async function getCached<T>(
  */
 export async function invalidatePattern(pattern: string): Promise<number> {
     try {
-        const redisClient = client as RedisClient;
+        const redisClient = client as unknown as RedisClient;
         if (!redisClient.keys) return 0;
 
         const keys = await redisClient.keys(pattern);
@@ -99,7 +99,7 @@ export async function invalidatePattern(pattern: string): Promise<number> {
  */
 export async function invalidate(key: string): Promise<boolean> {
     try {
-        const redisClient = client as RedisClient;
+        const redisClient = client as unknown as RedisClient;
         const result = await redisClient.del(key);
         return result > 0;
     } catch (error: unknown) {

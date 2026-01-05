@@ -8,11 +8,11 @@
 
 import { createRequire } from 'module';
 
-import { databaseConfig } from '../config/DatabaseConfig.ts';
-import type { IDatabase } from './IDatabase.ts';
-import PostgresDatabase from './PostgresDatabase.ts';
+import { databaseConfig } from '../config/DatabaseConfig.js';
+import type { IDatabase } from './IDatabase.js';
+import PostgresDatabase from './PostgresDatabase.js';
 const require = createRequire(import.meta.url);
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // SQLiteDatabase will be imported using dynamic import for ES modules compatibility
 
@@ -33,43 +33,42 @@ function createMockDatabase(): MockDatabase {
             _sql: string,
             _params?: unknown[],
             callback?: (err: Error | null, row: T | null) => void,
-        ): MockDatabase {
+        ): any {
             if (callback) {
                 callback(null, null);
+                return this;
             }
-            return this;
+            return Promise.resolve(null);
         },
-        all<T = unknown>(
-            _sql: string,
-            _params?: unknown[],
-            callback?: (err: Error | null, rows: T[]) => void,
-        ): MockDatabase {
+        all<T = unknown>(_sql: string, _params?: unknown[], callback?: (err: Error | null, rows: T[]) => void): any {
             if (callback) {
                 callback(null, []);
+                return this;
             }
-            return this;
+            return Promise.resolve([]);
         },
-        run(_sql: string, _params?: unknown[], callback?: (err: Error | null) => void): MockDatabase {
-            logger.info('[InternalMockDB] run called', { sql: _sql });
+        run(_sql: string, _params?: unknown[], callback?: (err: Error | null) => void): any {
             if (callback) {
                 // @ts-ignore - Mock sqlite context
                 callback.call({ lastID: 0, changes: 0 }, null);
+                return this;
             }
-            return this;
+            return Promise.resolve({ lastID: 0, changes: 0 });
         },
-        exec(_sql: string, callback?: (err: Error | null) => void): MockDatabase {
+        exec(_sql: string, callback?: (err: Error | null) => void): any {
             if (callback) {
-                // @ts-ignore
-                callback.call({ lastID: 0, changes: 0 }, null);
+                callback(null);
+                return this;
             }
-            return this;
+            return Promise.resolve();
         },
         serialize(callback: () => void): void {
             callback();
         },
-        close(callback?: (err: Error | null) => void): Promise<void> {
+        close(callback?: (err: Error | null) => void): Promise<void> | void {
             if (callback) {
                 callback(null);
+                return;
             }
             return Promise.resolve();
         },
@@ -111,7 +110,7 @@ export async function createDatabase(): Promise<IDatabase> {
                 logger.info('[Database] Shimming .query() method on async SQLite instance');
                 (db as any).query = function (text: string, params: any[]) {
                     return new Promise((resolve, reject) => {
-                        db.all(text, params, (err: Error, rows: any[]) => {
+                        db.all(text, params, (err: Error | null, rows: any[]) => {
                             if (err) reject(err);
                             else resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
                         });
@@ -120,7 +119,7 @@ export async function createDatabase(): Promise<IDatabase> {
             }
 
             return db;
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[Database] Failed to load legacy SQLite database:', err);
             // Fallback to mock to prevent total crash in some environments, or re-throw
             throw err;
@@ -162,14 +161,12 @@ export function getDatabase(): IDatabase {
     // 2. Implicitly enabled in 'test' env, UNLESS explicitly disabled via MOCK_DB='false'
     const shouldMock =
         process.env.MOCK_DB === 'true' || (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false');
-    logger.info(
-        '[Database:DEBUG] MOCK_DB:',
-        process.env.MOCK_DB,
-        'NODE_ENV:',
-        process.env.NODE_ENV,
-        'shouldMock:',
+
+    logger.debug('[Database:DEBUG] Initialization state', {
+        MOCK_DB: process.env.MOCK_DB,
+        NODE_ENV: process.env.NODE_ENV,
         shouldMock,
-    );
+    });
 
     if (shouldMock) {
         const globalMock = (global as any).__TEST_DB_MOCK__ as MockDatabase | undefined;
@@ -207,7 +204,7 @@ export function getDatabase(): IDatabase {
             logger.info('[Database] Shimming .query() method on synchronous SQLite instance');
             (dbInstance as any).query = function (text: string, params: any[]) {
                 return new Promise((resolve, reject) => {
-                    this.all(text, params, (err: Error, rows: any[]) => {
+                    this.all(text, params, (err: Error | null, rows: any[]) => {
                         if (err) reject(err);
                         else resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
                     });
@@ -217,7 +214,7 @@ export function getDatabase(): IDatabase {
 
         logger.info('[Database] Loaded SQLite synchronously');
         return dbInstance;
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.warn('[Database] Could not load SQLite synchronously, using mock. Call getDatabaseAsync() first.');
         // Return a proxy that will queue requests until real db is ready
         if (!dbInstance) {

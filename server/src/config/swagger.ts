@@ -1,3 +1,4 @@
+// @ts-ignore
 import swaggerJsdoc from 'swagger-jsdoc';
 
 const options = {
@@ -29,7 +30,7 @@ const options = {
             },
         ],
     },
-    apis: ['./server/src/routes/*.ts', './server/src/controllers/*.ts'], // Path to the API docs
+    apis: ['./server/src/routes/*.js', './server/src/controllers/*.js'], // Path to the API docs
 };
 
-export const swaggerSpec = swaggerJsdoc(options);
+export const swaggerSpec = (swaggerJsdoc as any)(options);

@@ -16,7 +16,7 @@ import rateLimit from 'express-rate-limit';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -77,7 +77,7 @@ interface AccessCodeServiceInterface {
 let AccessCodeService: AccessCodeServiceInterface | null = null;
 
 try {
-    const serviceModule = await import('../../services/accessCodeService.js');
+    const serviceModule = (await import('../services/accessCodeService.js')) as any;
     AccessCodeService = (serviceModule.default || serviceModule) as AccessCodeServiceInterface;
 } catch {
     logger.warn('[AccessCodes Routes] AccessCodeService not available');
@@ -174,14 +174,14 @@ router.post(
             });
 
             // Return plaintext code (ONCE)
-            res.status(201).json({
+            return res.status(201).json({
                 code: code.code,
                 expiresAt: code.expiresAt,
                 maxUses: code.maxUses,
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[AccessCodes] Generate error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -206,10 +206,10 @@ router.get(
 
         try {
             const result = await AccessCodeService.validatePublic(req.params.code);
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             // Always return same shape for privacy
-            res.json({ valid: false });
+            return res.json({ valid: false });
         }
     }),
 );
@@ -252,21 +252,21 @@ router.post(
 
             // Sanitize response
             if (result.ok) {
-                res.json({
+                return res.json({
                     ok: true,
                     type: result.type,
                     outcome: result.outcome,
                     organizationId: result.organizationId || null,
                 });
             } else {
-                res.status(400).json({
+                return res.status(400).json({
                     ok: false,
                     error: result.error,
                 });
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[AccessCodes] Accept error:', err);
-            res.status(500).json({ ok: false, error: 'INTERNAL_ERROR' });
+            return res.status(500).json({ ok: false, error: 'INTERNAL_ERROR' });
         }
     }),
 );
@@ -306,9 +306,9 @@ router.get(
                 createdAt: c.created_at,
             }));
 
-            res.json(sanitized);
-        } catch (err: unknown) {
-            res.status(500).json({
+            return res.json(sanitized);
+        } catch (err: any) {
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -331,9 +331,9 @@ router.post(
         try {
             // TODO: Add ownership verification
             await AccessCodeService.revokeCode(req.params.id);
-            res.json({ success: true });
-        } catch (err: unknown) {
-            res.status(500).json({
+            return res.json({ success: true });
+        } catch (err: any) {
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }

@@ -18,8 +18,7 @@
 
 import crypto from 'crypto';
 
-import logger from '../../utils/Logger.ts';
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 
 // ==========================================
 // CONFIGURATION
@@ -365,8 +364,3 @@ ENCRYPTION_KEY_CREATED_AT=
 `;
 
 export default KeyManagementService;
-
-
-
-
-

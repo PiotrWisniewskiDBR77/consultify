@@ -504,6 +504,3 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
 };
 
 export default RecoveryOptionsSettings;
-
-
-

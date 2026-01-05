@@ -130,8 +130,3 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
 };
 
 export default LoginHistorySettings;
-
-
-
-
-

@@ -11,7 +11,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -76,15 +76,8 @@ interface AIBudgetServiceInterface {
     estimateCost?: (model: string, inputTokens: number, outputTokens: number) => number;
 }
 
-// Dynamic import for aiBudgetService (may not be migrated yet)
-let aiBudgetService: AIBudgetServiceInterface | null = null;
-
-try {
-    const budgetModule = await import('../../services/aiBudgetService.js');
-    aiBudgetService = (budgetModule.default || budgetModule) as AIBudgetServiceInterface;
-} catch {
-    logger.warn('[AI Budgets Routes] aiBudgetService not available');
-}
+// Dynamic import for aiBudgetService
+const aiBudgetService = (await import('../services/aiBudgetService.js')).default as any;
 
 // ====== BUDGET MANAGEMENT ======
 
@@ -114,13 +107,13 @@ router.get(
                 includeUserBudgets !== 'false',
             );
 
-            res.json({
+            return res.json({
                 success: true,
                 data: budgets,
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] List budgets error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to list budgets',
             });
@@ -183,14 +176,14 @@ router.post(
                 createdBy: userId_created,
             });
 
-            res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 data: result,
                 message: 'Budget created successfully',
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Create budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Failed to create budget',
             });
@@ -221,13 +214,13 @@ router.get(
                 });
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 data: budget,
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Get budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to get budget',
             });
@@ -258,13 +251,13 @@ router.put(
                 });
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Budget updated successfully',
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Update budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to update budget',
             });
@@ -295,13 +288,13 @@ router.delete(
                 });
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Budget deleted successfully',
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Delete budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to delete budget',
             });
@@ -332,14 +325,14 @@ router.post(
                 });
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 data: result,
                 message: 'Budget reset successfully',
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Reset budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to reset budget',
             });
@@ -375,13 +368,13 @@ router.get(
                 cost: parseFloat(cost as string) || 0,
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 data: result,
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Check budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to check budget',
             });
@@ -417,13 +410,13 @@ router.post(
                 requestCount,
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 data: result,
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Record usage error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to record usage',
             });
@@ -458,13 +451,13 @@ router.get(
                 groupBy: groupBy as string | undefined,
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 data: stats,
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Get stats error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to get statistics',
             });
@@ -502,13 +495,13 @@ router.get(
                 offset: parseInt(offset as string) || 0,
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 data: alerts,
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] List alerts error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to list alerts',
             });
@@ -544,13 +537,13 @@ router.post(
                 });
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Alert acknowledged',
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Acknowledge alert error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to acknowledge alert',
             });
@@ -581,13 +574,13 @@ router.post(
                 });
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Alert dismissed',
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Dismiss alert error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to dismiss alert',
             });
@@ -624,13 +617,13 @@ router.get(
                 scopeId as string | undefined,
             );
 
-            res.json({
+            return res.json({
                 success: true,
                 data: permissions,
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] List model permissions error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to list model permissions',
             });
@@ -689,14 +682,14 @@ router.post(
                 createdBy: userId,
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 data: result,
                 message: 'Model permission set successfully',
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Set model permission error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to set model permission',
             });
@@ -735,13 +728,13 @@ router.get(
 
             const result = await aiBudgetService.checkModelAccess(organizationId, userId, userRole, modelId as string);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: result,
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Check model access error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to check model access',
             });
@@ -772,13 +765,13 @@ router.delete(
                 });
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Model permission deleted successfully',
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Delete model permission error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to delete model permission',
             });
@@ -800,13 +793,13 @@ router.get(
 
         try {
             const costs = aiBudgetService.getModelCosts();
-            res.json({
+            return res.json({
                 success: true,
                 data: costs,
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Get model costs error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to get model costs',
             });
@@ -831,7 +824,7 @@ router.post(
 
             const cost = aiBudgetService.estimateCost(model, inputTokens || 0, outputTokens || 0);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     model,
@@ -842,7 +835,7 @@ router.post(
             });
         } catch (error: unknown) {
             logger.error('[AI Budgets] Estimate cost error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to estimate cost',
             });

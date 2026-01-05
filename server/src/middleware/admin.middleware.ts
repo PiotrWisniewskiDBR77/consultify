@@ -9,7 +9,7 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import config from '../../config.js';
+import config from '../config/Config.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -57,7 +57,7 @@ export const verifyAdmin = (req: AuthRequest, res: Response, next: NextFunction)
 
     const cleanToken = typeof token === 'string' && token.startsWith('Bearer ') ? token.slice(7) : token;
 
-    jwtLib.verify(cleanToken as string, depsConfig.JWT_SECRET, (err, decoded) => {
+    jwtLib.verify(cleanToken as string, depsConfig.JWT_SECRET, (err: any, decoded: any) => {
         if (err) {
             res.status(401).json({ error: 'Unauthorized' });
             return;
@@ -76,8 +76,10 @@ export const verifyAdmin = (req: AuthRequest, res: Response, next: NextFunction)
         req.organizationId = payload.organizationId || payload.organization_id;
         req.user = {
             id: payload.id,
-            role: payload.role || 'user',
-            organizationId: req.organizationId,
+            email: (payload as any).email || '',
+            name: (payload as any).name || '',
+            role: (payload.role || 'MEMBER') as any,
+            organizationId: req.organizationId as string,
             isSuperAdmin: payload.role === 'SUPERADMIN',
         };
 
@@ -187,8 +189,3 @@ export const checkPermission = (requiredPermission: string) => {
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
-
-
-
-
-

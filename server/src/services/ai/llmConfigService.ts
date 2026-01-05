@@ -6,7 +6,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import * as DbPromise from '../../utils/DbPromise.ts';
+import * as DbPromise from '../../utils/DbPromise.js';
 import { aiLogger } from './logger.js';
 
 type ProviderDefinition = {

@@ -66,7 +66,7 @@ const fileFilter = (
         return cb(null, true);
     }
 
-    cb(new Error('Only PDF, Excel, and Word documents are allowed'));
+    cb(new Error('Only PDF, Excel, and Word documents are allowed'), false);
 };
 
 /**
@@ -78,12 +78,7 @@ export const upload = multer({
         fileSize: 10 * 1024 * 1024, // 10MB max
         files: 1, // Single file upload
     },
-    fileFilter,
+    fileFilter: fileFilter as any,
 });
 
 export { fileFilter };
-
-
-
-
-

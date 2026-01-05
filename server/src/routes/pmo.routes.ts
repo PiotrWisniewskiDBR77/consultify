@@ -5,11 +5,11 @@
  * All PMO-related API endpoints
  */
 
-import { Router } from 'express';
+import { Response, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import type { AuthenticatedRequest, Response } from '../types/index.js';
+import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -30,13 +30,13 @@ router.use(verifyToken);
  */
 router.get(
     '/health/:projectId',
-    asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
         const { projectId } = req.params;
 
-        const { getHealthSnapshot } = await import('../../services/pmoHealthService.js');
+        const { getHealthSnapshot } = (await import('../services/pmoHealthService.js')) as any;
         const snapshot = await getHealthSnapshot(projectId);
 
-        res.json(snapshot);
+        return res.json(snapshot);
     }),
 );
 

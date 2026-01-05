@@ -15,9 +15,9 @@ import {
     Check,
     ChevronDown,
     ChevronUp,
+    CircleCheck,
     CircleDashed,
     CircleDot,
-    CircleCheck,
     GripVertical,
     HelpCircle,
     Plus,
@@ -112,15 +112,18 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
     }, [statuses]);
 
     // Add new status
-    const handleAddStatus = useCallback((category: StatusCategory) => {
-        setNewStatus({
-            id: `status_${Date.now()}`,
-            name: '',
-            color: statusColors[0].value,
-            category,
-            order: statuses.length,
-        });
-    }, [statuses.length]);
+    const handleAddStatus = useCallback(
+        (category: StatusCategory) => {
+            setNewStatus({
+                id: `status_${Date.now()}`,
+                name: '',
+                color: statusColors[0].value,
+                category,
+                order: statuses.length,
+            });
+        },
+        [statuses.length],
+    );
 
     // Save new status
     const handleSaveNewStatus = useCallback(() => {
@@ -198,9 +201,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
                 key={status.id}
                 className={cn(
                     'flex items-center gap-3 p-3 bg-white dark:bg-navy-800 rounded-lg border transition-all',
-                    isEditing
-                        ? 'border-violet-500 ring-2 ring-violet-500/20'
-                        : 'border-slate-200 dark:border-navy-700',
+                    isEditing ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-slate-200 dark:border-navy-700',
                 )}
             >
                 {/* Drag Handle */}
@@ -229,9 +230,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
                 {/* Color Indicator */}
                 <div className="relative">
                     <button
-                        onClick={() =>
-                            setShowColorPicker(showColorPicker === status.id ? null : status.id)
-                        }
+                        onClick={() => setShowColorPicker(showColorPicker === status.id ? null : status.id)}
                         className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0"
                         style={{ backgroundColor: status.color }}
                     />
@@ -272,9 +271,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
                         autoFocus
                     />
                 ) : (
-                    <span className="flex-1 text-sm font-medium text-navy-900 dark:text-white">
-                        {status.name}
-                    </span>
+                    <span className="flex-1 text-sm font-medium text-navy-900 dark:text-white">{status.name}</span>
                 )}
 
                 {/* Badges */}
@@ -362,19 +359,12 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Icon size={18} className={info.color} />
-                                <h4 className="font-medium text-navy-900 dark:text-white">
-                                    {info.label}
-                                </h4>
+                                <h4 className="font-medium text-navy-900 dark:text-white">{info.label}</h4>
                                 <span className="px-1.5 py-0.5 text-xs bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400 rounded">
                                     {categoryStatuses.length}
                                 </span>
                             </div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleAddStatus(category)}
-                                className="h-7"
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => handleAddStatus(category)} className="h-7">
                                 <Plus size={14} />
                                 {t('admin.workspace.statuses.add', 'Add')}
                             </Button>
@@ -382,9 +372,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
 
                         {/* Status List */}
                         <div className="space-y-2 ml-6">
-                            {categoryStatuses.map((status) =>
-                                renderStatusItem(status, categoryStatuses),
-                            )}
+                            {categoryStatuses.map((status) => renderStatusItem(status, categoryStatuses))}
 
                             {/* New Status Form */}
                             {newStatus && newStatus.category === category && (
@@ -396,9 +384,7 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
                                     <input
                                         type="text"
                                         value={newStatus.name || ''}
-                                        onChange={(e) =>
-                                            setNewStatus({ ...newStatus, name: e.target.value })
-                                        }
+                                        onChange={(e) => setNewStatus({ ...newStatus, name: e.target.value })}
                                         placeholder="Status name..."
                                         className="flex-1 px-2 py-1 bg-white dark:bg-navy-800 border border-violet-200 dark:border-violet-700 rounded text-sm text-navy-900 dark:text-white"
                                         autoFocus
@@ -437,6 +423,3 @@ export const CustomStatusesManager: React.FC<CustomStatusesManagerProps> = ({
 };
 
 export default CustomStatusesManager;
-
-
-

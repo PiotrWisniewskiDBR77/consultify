@@ -77,7 +77,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
             name: t('admin.compliance.gdpr.features.privacyForms', 'Privacy sections in forms'),
             description: t(
                 'admin.compliance.gdpr.features.privacyFormsDesc',
-                'Add consent checkboxes and privacy notices to all data collection forms'
+                'Add consent checkboxes and privacy notices to all data collection forms',
             ),
             icon: FileText,
             enabled: config.enabled,
@@ -88,7 +88,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
             name: t('admin.compliance.gdpr.features.privacyMeetings', 'Privacy sections in meetings'),
             description: t(
                 'admin.compliance.gdpr.features.privacyMeetingsDesc',
-                'Include recording consent and data processing notices in meeting invites'
+                'Include recording consent and data processing notices in meeting invites',
             ),
             icon: Users,
             enabled: config.enabled,
@@ -99,7 +99,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
             name: t('admin.compliance.gdpr.features.unsubscribeLinks', 'Unsubscribe links in emails'),
             description: t(
                 'admin.compliance.gdpr.features.unsubscribeLinksDesc',
-                'Automatically add unsubscribe links to all marketing and notification emails'
+                'Automatically add unsubscribe links to all marketing and notification emails',
             ),
             icon: Mail,
             enabled: config.enabled,
@@ -110,7 +110,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
             name: t('admin.compliance.gdpr.features.dataRetention', 'Automatic data retention'),
             description: t(
                 'admin.compliance.gdpr.features.dataRetentionDesc',
-                'Automatically delete or anonymize data after the configured retention period'
+                'Automatically delete or anonymize data after the configured retention period',
             ),
             icon: Lock,
             enabled: config.enabled,
@@ -121,7 +121,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
             name: t('admin.compliance.gdpr.features.consentTracking', 'Consent tracking'),
             description: t(
                 'admin.compliance.gdpr.features.consentTrackingDesc',
-                'Track and store consent records for all data processing activities'
+                'Track and store consent records for all data processing activities',
             ),
             icon: CheckCircle,
             enabled: config.enabled,
@@ -132,7 +132,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
             name: t('admin.compliance.gdpr.features.dataExport', 'Data portability'),
             description: t(
                 'admin.compliance.gdpr.features.dataExportDesc',
-                'Allow users to export their personal data in machine-readable format'
+                'Allow users to export their personal data in machine-readable format',
             ),
             icon: FileText,
             enabled: config.enabled,
@@ -169,7 +169,12 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                         <div>
                             <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                                 {t('admin.compliance.gdpr.title', 'GDPR Compliance')}
-                                <Tooltip content={t('admin.compliance.gdpr.tooltip', 'General Data Protection Regulation - EU data privacy standard')}>
+                                <Tooltip
+                                    content={t(
+                                        'admin.compliance.gdpr.tooltip',
+                                        'General Data Protection Regulation - EU data privacy standard',
+                                    )}
+                                >
                                     <HelpCircle size={16} className="text-slate-400" />
                                 </Tooltip>
                             </h3>
@@ -186,7 +191,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                                 'text-sm font-medium',
                                 config.enabled
                                     ? 'text-emerald-600 dark:text-emerald-400'
-                                    : 'text-slate-500 dark:text-slate-400'
+                                    : 'text-slate-500 dark:text-slate-400',
                             )}
                         >
                             {config.enabled ? 'Enabled' : 'Disabled'}
@@ -197,13 +202,13 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                             className={cn(
                                 'relative w-14 h-7 rounded-full transition-colors',
                                 config.enabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-navy-700',
-                                enabling && 'opacity-50 cursor-wait'
+                                enabling && 'opacity-50 cursor-wait',
                             )}
                         >
                             <span
                                 className={cn(
                                     'absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform',
-                                    config.enabled ? 'left-8' : 'left-1'
+                                    config.enabled ? 'left-8' : 'left-1',
                                 )}
                             />
                         </button>
@@ -229,11 +234,36 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                                         {t('admin.compliance.gdpr.impactTitle', 'When you enable GDPR compliance:')}
                                     </p>
                                     <ul className="space-y-1.5 list-disc list-inside">
-                                        <li>{t('admin.compliance.gdpr.impact1', 'Privacy sections will be added to all forms automatically')}</li>
-                                        <li>{t('admin.compliance.gdpr.impact2', 'Meeting invites will include consent language')}</li>
-                                        <li>{t('admin.compliance.gdpr.impact3', 'All marketing emails will have unsubscribe links')}</li>
-                                        <li>{t('admin.compliance.gdpr.impact4', 'Users can request data export and deletion')}</li>
-                                        <li>{t('admin.compliance.gdpr.impact5', 'Consent records will be tracked for audit purposes')}</li>
+                                        <li>
+                                            {t(
+                                                'admin.compliance.gdpr.impact1',
+                                                'Privacy sections will be added to all forms automatically',
+                                            )}
+                                        </li>
+                                        <li>
+                                            {t(
+                                                'admin.compliance.gdpr.impact2',
+                                                'Meeting invites will include consent language',
+                                            )}
+                                        </li>
+                                        <li>
+                                            {t(
+                                                'admin.compliance.gdpr.impact3',
+                                                'All marketing emails will have unsubscribe links',
+                                            )}
+                                        </li>
+                                        <li>
+                                            {t(
+                                                'admin.compliance.gdpr.impact4',
+                                                'Users can request data export and deletion',
+                                            )}
+                                        </li>
+                                        <li>
+                                            {t(
+                                                'admin.compliance.gdpr.impact5',
+                                                'Consent records will be tracked for audit purposes',
+                                            )}
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -254,8 +284,8 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                                     compliancePercentage === 100
                                         ? 'text-emerald-600'
                                         : compliancePercentage >= 50
-                                            ? 'text-amber-600'
-                                            : 'text-rose-600'
+                                          ? 'text-amber-600'
+                                          : 'text-rose-600',
                                 )}
                             >
                                 {compliancePercentage}% {t('admin.compliance.gdpr.configured', 'configured')}
@@ -268,8 +298,8 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                                     compliancePercentage === 100
                                         ? 'bg-emerald-500'
                                         : compliancePercentage >= 50
-                                            ? 'bg-amber-500'
-                                            : 'bg-rose-500'
+                                          ? 'bg-amber-500'
+                                          : 'bg-rose-500',
                                 )}
                                 style={{ width: `${compliancePercentage}%` }}
                             />
@@ -296,7 +326,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                                         ? feature.configured
                                             ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800'
                                             : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'
-                                        : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 opacity-60'
+                                        : 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 opacity-60',
                                 )}
                             >
                                 <div
@@ -305,8 +335,8 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                                         isActive && feature.configured
                                             ? 'bg-emerald-100 dark:bg-emerald-900/30'
                                             : isActive
-                                                ? 'bg-amber-100 dark:bg-amber-900/30'
-                                                : 'bg-slate-100 dark:bg-navy-800'
+                                              ? 'bg-amber-100 dark:bg-amber-900/30'
+                                              : 'bg-slate-100 dark:bg-navy-800',
                                     )}
                                 >
                                     <Icon
@@ -315,19 +345,17 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                                             isActive && feature.configured
                                                 ? 'text-emerald-600 dark:text-emerald-400'
                                                 : isActive
-                                                    ? 'text-amber-600 dark:text-amber-400'
-                                                    : 'text-slate-400'
+                                                  ? 'text-amber-600 dark:text-amber-400'
+                                                  : 'text-slate-400',
                                         )}
                                     />
                                 </div>
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <h5 className="font-medium text-navy-900 dark:text-white">
-                                            {feature.name}
-                                        </h5>
-                                        {isActive && (
-                                            feature.configured ? (
+                                        <h5 className="font-medium text-navy-900 dark:text-white">{feature.name}</h5>
+                                        {isActive &&
+                                            (feature.configured ? (
                                                 <span className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full">
                                                     <Check size={10} />
                                                     {t('admin.compliance.gdpr.configured', 'Configured')}
@@ -337,8 +365,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                                                     <AlertCircle size={10} />
                                                     {t('admin.compliance.gdpr.needsSetup', 'Needs setup')}
                                                 </span>
-                                            )
-                                        )}
+                                            ))}
                                     </div>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                         {feature.description}
@@ -346,11 +373,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                                 </div>
 
                                 {isActive && !feature.configured && onConfigureFeature && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => onConfigureFeature(feature.id)}
-                                    >
+                                    <Button variant="outline" size="sm" onClick={() => onConfigureFeature(feature.id)}>
                                         {t('admin.compliance.gdpr.configure', 'Configure')}
                                     </Button>
                                 )}
@@ -371,7 +394,7 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                             {t(
                                 'admin.compliance.gdpr.learnMoreDesc',
-                                'The General Data Protection Regulation (GDPR) is a regulation in EU law on data protection and privacy. It applies to all organizations processing personal data of EU residents.'
+                                'The General Data Protection Regulation (GDPR) is a regulation in EU law on data protection and privacy. It applies to all organizations processing personal data of EU residents.',
                             )}
                         </p>
                         <a
@@ -391,6 +414,3 @@ export const GDPRComplianceDashboard: React.FC<GDPRComplianceDashboardProps> = (
 };
 
 export default GDPRComplianceDashboard;
-
-
-

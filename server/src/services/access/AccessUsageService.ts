@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import type { IDatabase } from '../../database/IDatabase.js';
-import * as DbPromise from '../../utils/DbPromise.ts';
+import * as DbPromise from '../../utils/DbPromise.js';
 import { DailyUsage, OrganizationRow, TrialUsage, UsageCountersRow } from './AccessTypes.js';
 
 export class AccessUsageService {

@@ -1,7 +1,7 @@
 /**
-import logger from '../utils/Logger.ts';
  * Service to handle active alerting based on performance metrics.
  */
+import logger from '../utils/Logger.js';
 
 type AlertSeverity = 'CRITICAL' | 'WARNING';
 
@@ -109,7 +109,8 @@ const AlertService = {
                             message: alert.message,
                             severity: 'CRITICAL',
                             isActionable: false,
-                            expiresAt: undefined,
+
+                            // expiresAt removed as it's not in NotificationPayload
                         });
                     }
                 } catch (error) {

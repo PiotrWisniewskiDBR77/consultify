@@ -141,4 +141,3 @@ describe('ReportService Facade Smoke Test', () => {
         expect(csv).toContain('Jane,user');
     });
 });
-

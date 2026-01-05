@@ -8,14 +8,14 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import TaskAssignmentService from '../../services/taskAssignmentService.js';
 import ActivityService from '../services/ActivityService.js';
 import NotificationService from '../services/NotificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
+import TaskAssignmentService from '../services/taskAssignmentService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import type {
     AddTaskCommentRequest,
     AssignTaskRequest,
@@ -643,7 +643,7 @@ export class TaskController {
 
                 // Check for change
                 const oldValue = (currentTask as any)[dbKey];
-                if (value != oldValue) {
+                if (value !== oldValue) {
                     sqlUpdates.push(`${dbKey} = ?`);
                     params.push(value);
 

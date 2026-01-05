@@ -7,7 +7,7 @@
 
 import { NextFunction, Request, Response, Router } from 'express';
 
-import logger from './Logger.ts';
+import logger from './Logger.js';
 
 interface RouteModule {
     default?: unknown;

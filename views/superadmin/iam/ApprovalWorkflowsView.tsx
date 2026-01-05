@@ -535,8 +535,3 @@ const ApprovalWorkflowsView: React.FC = () => {
 };
 
 export default ApprovalWorkflowsView;
-
-
-
-
-

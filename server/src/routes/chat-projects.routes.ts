@@ -10,10 +10,10 @@
 import { Router } from 'express';
 
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/chat-projects.js');
-const chat_projectsRoutesJS = module.default || module;
+const chatModule = (await import('./chat-projects.js')) as any;
+const chat_projectsRoutesJS = chatModule.default || chatModule;
 
 // Create router and apply JS routes
 const router = Router();

@@ -106,7 +106,8 @@ export class AlertingService {
         // Send to Sentry for critical alerts
         if (alert.severity === SEVERITY.CRITICAL || alert.severity === SEVERITY.ERROR) {
             try {
-                const { captureMessage, addBreadcrumb } = await import('../../config/index.js');
+                const Logic = await import('../../config/index.js');
+                const { captureMessage, addBreadcrumb } = Logic as any;
                 addBreadcrumb({
                     message: alert.title,
                     level: alert.severity === SEVERITY.CRITICAL ? 'critical' : 'error',

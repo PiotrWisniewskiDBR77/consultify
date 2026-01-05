@@ -1,10 +1,10 @@
 import { CommandBus } from '../CommandBus.js';
 import { QueryBus } from '../QueryBus.js';
-import { _CreateProjectCommand, CreateProjectHandler } from './commands/CreateProjectCommand.js';
-import { _DeleteProjectCommand, DeleteProjectHandler } from './commands/DeleteProjectCommand.js';
-import { _UpdateProjectCommand, UpdateProjectHandler } from './commands/UpdateProjectCommand.js';
-import { _GetProjectQuery, GetProjectHandler } from './queries/GetProjectQuery.js';
-import { _ListProjectsQuery, ListProjectsHandler } from './queries/ListProjectsQuery.js';
+import { CreateProjectCommand, CreateProjectHandler } from './commands/CreateProjectCommand.js';
+import { DeleteProjectCommand, DeleteProjectHandler } from './commands/DeleteProjectCommand.js';
+import { UpdateProjectCommand, UpdateProjectHandler } from './commands/UpdateProjectCommand.js';
+import { GetProjectHandler, GetProjectQuery } from './queries/GetProjectQuery.js';
+import { ListProjectsHandler, ListProjectsQuery } from './queries/ListProjectsQuery.js';
 
 const commandBus = new CommandBus();
 commandBus.register(CreateProjectCommand, new CreateProjectHandler());

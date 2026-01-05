@@ -8,11 +8,11 @@
  *   router.get('/endpoint', userStateGuard.requireState(['ORG_MEMBER', 'TEAM_COLLAB']), handler)
  */
 
-import { _Request, NextFunction, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
-import db from '../../db/sqliteAsync.js';
 import UserStateMachine from '../../services/userStateMachine.js';
-import logger from '../utils/Logger.ts';
+import { getDatabase as getDb } from '../database/Database.js';
+import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -59,7 +59,7 @@ interface Dependencies {
 
 let deps: Dependencies = {
     UserStateMachine,
-    db: db as unknown as Database,
+    db: getDb() as unknown as Database,
 };
 
 // ==========================================
@@ -280,8 +280,3 @@ export const PHASES = UserStateMachine.PHASES;
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
     deps = { ...deps, ...newDeps };
 };
-
-
-
-
-

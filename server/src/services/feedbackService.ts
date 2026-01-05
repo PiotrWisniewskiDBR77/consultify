@@ -17,7 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -127,7 +127,7 @@ class FeedbackServiceClass {
         return new Promise((resolve, reject) => {
             this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as T[]) || []);
             });
         });
     }
@@ -191,7 +191,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
                 .join('\n');
 
             return examples;
-        } catch (err: unknown) {
+        } catch (err: any) {
             // Don't fail if DB error, just return empty learning
             logger.warn('[FeedbackService] Error getting learning examples:', err);
             return '';
@@ -387,7 +387,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
             await this.dbRun(`UPDATE feedback_items SET votes_count = votes_count + 1 WHERE id = ?`, [feedbackId]);
 
             return { id, feedbackId, userId, voteType };
-        } catch (err: unknown) {
+        } catch (err: any) {
             if (err instanceof Error && err.message.includes('UNIQUE constraint')) {
                 throw new Error('User already voted');
             }

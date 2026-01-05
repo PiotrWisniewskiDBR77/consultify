@@ -148,11 +148,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
                         label="Modules Completed"
                         value={`${stats.completedModules}/${stats.totalModules}`}
                     />
-                    <StatCard
-                        icon={<Clock size={16} />}
-                        label="Total Duration"
-                        value={`${stats.totalDuration} min`}
-                    />
+                    <StatCard icon={<Clock size={16} />} label="Total Duration" value={`${stats.totalDuration} min`} />
                     <StatCard
                         icon={<Star size={16} />}
                         label="Average Score"
@@ -169,7 +165,9 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
                 <div>
                     <div className="mb-2 flex items-center justify-between text-xs">
                         <span className="text-slate-600 dark:text-slate-300">Overall Progress</span>
-                        <span className="font-semibold text-purple-600 dark:text-purple-400">{stats.progressPercent}%</span>
+                        <span className="font-semibold text-purple-600 dark:text-purple-400">
+                            {stats.progressPercent}%
+                        </span>
                     </div>
                     <div className="h-3 overflow-hidden rounded-full bg-white/80 dark:bg-navy-900/60">
                         <div
@@ -339,7 +337,9 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
             <div className="flex items-center gap-4">
                 {isCompleted && module.score && (
                     <div className="text-right">
-                        <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{module.score}%</div>
+                        <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                            {module.score}%
+                        </div>
                         <div className="text-xs text-slate-400">Score</div>
                     </div>
                 )}
@@ -363,4 +363,3 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ module, onStart }) => {
 };
 
 export default AcademyProgress;
-

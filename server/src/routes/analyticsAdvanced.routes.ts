@@ -11,7 +11,7 @@ import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -30,14 +30,14 @@ let CohortService: CohortServiceInterface | null = null;
 let ExperimentService: ExperimentServiceInterface | null = null;
 
 try {
-    const cohortModule = await import('../../services/cohortService.js');
+    const cohortModule = (await import('../services/cohortService.js')) as any;
     CohortService = (cohortModule.default || cohortModule) as CohortServiceInterface;
 } catch {
     logger.warn('[AnalyticsAdvanced Routes] CohortService not available');
 }
 
 try {
-    const experimentModule = await import('../../services/experimentService.js');
+    const experimentModule = (await import('../services/experimentService.js')) as any;
     ExperimentService = (experimentModule.default || experimentModule) as ExperimentServiceInterface;
 } catch {
     logger.warn('[AnalyticsAdvanced Routes] ExperimentService not available');
@@ -58,10 +58,10 @@ router.get(
 
         try {
             const matrix = await CohortService.getRetentionMatrix();
-            res.json({ success: true, matrix });
+            return res.json({ success: true, matrix });
         } catch (error: unknown) {
             logger.error('Cohort analysis error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );
@@ -85,10 +85,10 @@ router.get(
             }
 
             const flags = await ExperimentService.getAllUserExperiments(userId);
-            res.json({ success: true, flags });
+            return res.json({ success: true, flags });
         } catch (error: unknown) {
             logger.error('Experiment assignment error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );

@@ -386,7 +386,7 @@ export class ProjectController {
     static getAIRole = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
 
-        const AIRoleGuard = await import('../../services/aiRoleGuard.js').then((m) => m.default || m);
+        const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
         const roleConfig = await AIRoleGuard.getRoleConfig(id);
 
         res.json({
@@ -429,9 +429,9 @@ export class ProjectController {
                 return;
             }
 
-            const AIRoleGuard = await import('../../services/aiRoleGuard.js').then((m) => m.default || m);
+            const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
 
-            const AIAuditLogger = await import('../../services/aiAuditLogger.js').then((m) => m.default || m);
+            const AIAuditLogger = await import('../services/aiAuditLogger.js').then((m) => m.default || m);
 
             // Get current role for audit
             const currentRole = await AIRoleGuard.getProjectRole(projectId);
@@ -472,7 +472,7 @@ export class ProjectController {
     static getRegulatoryMode = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
 
-        const RegulatoryModeGuard = await import('../../services/regulatoryModeGuard.js').then((m) => m.default || m);
+        const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then((m) => m.default || m);
         const status = await RegulatoryModeGuard.getStatus(id);
 
         res.json({
@@ -511,11 +511,9 @@ export class ProjectController {
                 return;
             }
 
-            const RegulatoryModeGuard = await import('../../services/regulatoryModeGuard.js').then(
-                (m) => m.default || m,
-            );
+            const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then((m) => m.default || m);
 
-            const AIAuditLogger = await import('../../services/aiAuditLogger.js').then((m) => m.default || m);
+            const AIAuditLogger = await import('../services/aiAuditLogger.js').then((m) => m.default || m);
 
             // Get current status for audit
             const currentStatus = await RegulatoryModeGuard.isEnabled(projectId);

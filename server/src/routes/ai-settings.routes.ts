@@ -14,61 +14,34 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
 
 // Service interfaces
 interface AISettingsServiceInterface {
-    getSuperAdminSettings?: () => Promise<unknown>;
-    updateSuperAdminSettings?: (
-        settings: unknown,
-        actorId: string,
-        actorRole: string,
-        ipAddress: string | null,
-        userAgent: string | null,
-    ) => Promise<unknown>;
-    getOrgSettings?: (orgId: string) => Promise<{ defaultProactivityMode?: string; [key: string]: unknown }>;
-    updateOrgSettings?: (
-        orgId: string,
-        settings: unknown,
-        actorId: string,
-        actorRole: string,
-        ipAddress: string | null,
-        userAgent: string | null,
-    ) => Promise<unknown>;
-    getUserSettings?: (userId: string) => Promise<unknown>;
-    updateUserSettings?: (userId: string, settings: unknown) => Promise<unknown>;
-    getEffectiveSettings?: (userId: string, organizationId: string) => Promise<unknown>;
-    getAvailableModels?: (userId: string, organizationId: string) => Promise<unknown[]>;
-    getAuditLog?: (filters: { level?: string; targetId?: string; limit: number; offset: number }) => Promise<unknown[]>;
-    getUserCostHistory?: (userId: string, period: string) => Promise<unknown>;
-    getOrgUserTiers?: (orgId: string) => Promise<unknown[]>;
-    assignUserTier?: (orgId: string, userId: string, tier: string) => Promise<unknown>;
-    getOrgCostAttribution?: (orgId: string, period: string) => Promise<unknown>;
-    generateComplianceReport?: (orgId: string, standard: string, format: string) => Promise<{ data: string | unknown }>;
+    [key: string]: any;
 }
 
 interface AIProactivityEngineInterface {
-    getEffectiveProactivity?: (userId: string, organizationId: string) => Promise<unknown>;
-    getAllModes?: () => unknown[];
+    [key: string]: any;
 }
 
 // Dynamic imports for services (may not be migrated yet)
-let AISettingsService: AISettingsServiceInterface | null = null;
-let AIProactivityEngine: AIProactivityEngineInterface | null = null;
+let AISettingsService: any = null;
+let AIProactivityEngine: any = null;
 
 try {
-    const settingsModule = await import('../../services/aiSettingsService.js');
-    AISettingsService = (settingsModule.default || settingsModule) as AISettingsServiceInterface;
+    const settingsModule = (await import('../services/aiSettingsService.js')) as any;
+    AISettingsService = settingsModule.default || settingsModule;
 } catch {
     logger.warn('[AI Settings Routes] AISettingsService not available');
 }
 
 try {
-    const proactivityModule = await import('../../services/aiProactivityEngine.js');
-    AIProactivityEngine = (proactivityModule.default || proactivityModule) as AIProactivityEngineInterface;
+    const proactivityModule = (await import('../services/aiProactivityEngine.js')) as any;
+    AIProactivityEngine = proactivityModule.default || proactivityModule;
 } catch {
     logger.warn('[AI Settings Routes] AIProactivityEngine not available');
 }
@@ -93,13 +66,14 @@ router.get(
 
         try {
             const settings = await AISettingsService.getSuperAdminSettings();
-            res.json(settings);
-        } catch (error: unknown) {
+            return res.json(settings);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting superadmin settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -137,13 +111,14 @@ router.put(
                 userAgent,
             );
 
-            res.json(updated);
-        } catch (error: unknown) {
+            return res.json(updated);
+        } catch (error: any) {
             logger.error('[AI Settings] Error updating superadmin settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -176,13 +151,14 @@ router.get(
             }
 
             const settings = await AISettingsService.getOrgSettings(orgId);
-            res.json(settings);
-        } catch (error: unknown) {
+            return res.json(settings);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting org settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -234,13 +210,14 @@ router.put(
                 userAgent,
             );
 
-            res.json(updated);
-        } catch (error: unknown) {
+            return res.json(updated);
+        } catch (error: any) {
             logger.error('[AI Settings] Error updating org settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -268,13 +245,14 @@ router.get(
             }
 
             const settings = await AISettingsService.getUserSettings(userId);
-            res.json(settings);
-        } catch (error: unknown) {
+            return res.json(settings);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting user settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -312,17 +290,19 @@ router.put(
                         error: 'Invalid proactivity mode',
                         message: `Your organization limits proactivity to ${orgSettings.defaultProactivityMode || 'PROACTIVE'} or lower`,
                     });
+                    return;
                 }
             }
 
             const updated = await AISettingsService.updateUserSettings(userId, settings);
-            res.json(updated);
-        } catch (error: unknown) {
+            return res.json(updated);
+        } catch (error: any) {
             logger.error('[AI Settings] Error updating user settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -353,13 +333,14 @@ router.get(
             }
 
             const effective = await AISettingsService.getEffectiveSettings(userId, organizationId);
-            res.json(effective);
-        } catch (error: unknown) {
+            return res.json(effective);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting effective settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -390,13 +371,14 @@ router.get(
             }
 
             const models = await AISettingsService.getAvailableModels(userId, organizationId);
-            res.json(models);
-        } catch (error: unknown) {
+            return res.json(models);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting available models:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get models',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -426,13 +408,14 @@ router.get(
             }
 
             const proactivity = await AIProactivityEngine.getEffectiveProactivity(userId, organizationId);
-            res.json(proactivity);
-        } catch (error: unknown) {
+            return res.json(proactivity);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting proactivity:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get proactivity',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -451,13 +434,14 @@ router.get(
 
         try {
             const modes = AIProactivityEngine.getAllModes();
-            res.json(modes);
-        } catch (error: unknown) {
+            return res.json(modes);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting proactivity modes:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get modes',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -507,13 +491,14 @@ router.get(
             }
 
             const auditLog = await AISettingsService.getAuditLog(filters);
-            res.json(auditLog);
-        } catch (error: unknown) {
+            return res.json(auditLog);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting audit log:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get audit log',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -547,14 +532,16 @@ router.get(
                 limit: parseInt(limit as string),
                 offset: parseInt(offset as string),
             });
+            return;
 
-            res.json(auditLog);
-        } catch (error: unknown) {
+            return res.json(auditLog);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting org audit log:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get audit log',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -584,13 +571,14 @@ router.get(
             }
 
             const costs = await AISettingsService.getUserCostHistory(userId, period as string);
-            res.json(costs);
-        } catch (error: unknown) {
+            return res.json(costs);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting user costs:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get cost history',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -628,13 +616,14 @@ router.get(
             }
 
             const tiers = await AISettingsService.getOrgUserTiers(orgId);
-            res.json(tiers);
-        } catch (error: unknown) {
+            return res.json(tiers);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting user tiers:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get user tiers',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -665,6 +654,7 @@ router.put(
                     error: 'Invalid tier',
                     message: `Tier must be one of: ${validTiers.join(', ')}`,
                 });
+                return;
             }
 
             // Check if user is admin for this org
@@ -678,13 +668,14 @@ router.put(
             }
 
             const result = await AISettingsService.assignUserTier(orgId, userId, tier);
-            res.json(result);
-        } catch (error: unknown) {
+            return res.json(result);
+        } catch (error: any) {
             logger.error('[AI Settings] Error assigning user tier:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to assign tier',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -723,13 +714,14 @@ router.get(
             }
 
             const costs = await AISettingsService.getOrgCostAttribution(orgId, period as string);
-            res.json(costs);
-        } catch (error: unknown) {
+            return res.json(costs);
+        } catch (error: any) {
             logger.error('[AI Settings] Error getting cost attribution:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get costs',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -764,6 +756,7 @@ router.get(
                     error: 'Invalid format',
                     message: `Format must be one of: ${validFormats.join(', ')}`,
                 });
+                return;
             }
 
             // Validate standard
@@ -773,6 +766,7 @@ router.get(
                     error: 'Invalid standard',
                     message: `Standard must be one of: ${validStandards.join(', ')}`,
                 });
+                return;
             }
 
             // Check admin access
@@ -803,14 +797,15 @@ router.get(
                     typeof report.data === 'string' ? report.data : Buffer.from(JSON.stringify(report.data)),
                 );
             } else {
-                res.json(report);
+                return res.json(report);
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             logger.error('[AI Settings] Error generating compliance report:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to generate report',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );
@@ -848,13 +843,14 @@ router.post(
             }
 
             const report = await AISettingsService.generateComplianceReport(orgId, standard, 'json');
-            res.json(report);
-        } catch (error: unknown) {
+            return res.json(report);
+        } catch (error: any) {
             logger.error('[AI Settings] Error generating compliance report:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to generate report',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
+            return;
         }
     }),
 );

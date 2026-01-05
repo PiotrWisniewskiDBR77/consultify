@@ -66,11 +66,11 @@ export interface SubscriptionAnalyticsDependencies {
 
 class SubscriptionAnalyticsServiceClass {
     private deps: SubscriptionAnalyticsDependencies;
-    private mrrService: MrrAnalyticsService;
-    private churnService: ChurnAnalyticsService;
-    private ltvService: LtvAnalyticsService;
-    private cohortService: CohortAnalyticsService;
-    private snapshotService: SnapshotService;
+    private mrrService!: MrrAnalyticsService;
+    private churnService!: ChurnAnalyticsService;
+    private ltvService!: LtvAnalyticsService;
+    private cohortService!: CohortAnalyticsService;
+    private snapshotService!: SnapshotService;
 
     constructor(deps?: Partial<SubscriptionAnalyticsDependencies>) {
         this.deps = {

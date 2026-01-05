@@ -144,7 +144,7 @@ export class InvitationDataService {
             params.push(options.offset);
         }
 
-        return this.deps.db.all<InvitationRecord[]>(query, params);
+        return (await this.deps.db.all<InvitationRecord>(query, params)) || [];
     }
 
     async logEvent(

@@ -27,10 +27,10 @@ router.use(authRateLimiter);
 import Stripe from 'stripe';
 
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import type { DunningService } from '../services/DunningService.js';
+import type { DunningService as DunningServiceType } from '../services/DunningService.js';
 import type { InvoiceServiceClass } from '../services/InvoiceService.js';
 import webhookService from '../services/WebhookService.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Type definitions for lazy-loaded services
 interface DunningServiceInstance {
@@ -70,7 +70,7 @@ let InvoiceService: InvoiceServiceInstance | null = null;
 // Lazy load services to avoid circular dependencies
 async function getDunningService(): Promise<DunningServiceInstance> {
     if (!DunningService) {
-        const module = await import('../services/dunningService.js');
+        const module = (await import('../services/DunningService.js')) as any;
         DunningService = (module.default || module) as DunningServiceInstance;
     }
     return DunningService;
@@ -78,7 +78,7 @@ async function getDunningService(): Promise<DunningServiceInstance> {
 
 async function getInvoiceService(): Promise<InvoiceServiceInstance> {
     if (!InvoiceService) {
-        const module = await import('../services/InvoiceService.js');
+        const module = (await import('../services/InvoiceService.js')) as any;
         InvoiceService = (module.default || module) as InvoiceServiceInstance;
     }
     return InvoiceService;
@@ -99,10 +99,10 @@ router.use((req, res, next) => {
 router.get(
     '/',
     validateQuery(GetWebhooksQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const orgId = req.user?.organizationId || (req.query.organizationId as string);
         if (!orgId) {
-            res.status(400).json({ error: 'Organization ID required' });
+            return res.status(400).json({ error: 'Organization ID required' });
             return;
         }
 
@@ -111,7 +111,7 @@ router.get(
             enabled: enabled === 'true' ? true : enabled === 'false' ? false : undefined,
         };
         const webhooks = await webhookService.getWebhooks(orgId, filters);
-        res.json(webhooks);
+        return res.json(webhooks);
     }),
 );
 
@@ -122,16 +122,16 @@ router.get(
 router.get(
     '/:id',
     validateParams(WebhookIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         const webhook = await webhookService.getWebhookById(id);
 
         if (!webhook) {
-            res.status(404).json({ error: 'Webhook not found' });
+            return res.status(404).json({ error: 'Webhook not found' });
             return;
         }
 
-        res.json(webhook);
+        return res.json(webhook);
     }),
 );
 
@@ -142,10 +142,10 @@ router.get(
 router.post(
     '/',
     validateBody(CreateWebhookBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const orgId = req.user?.organizationId || (req.body.organization_id as string);
         if (!orgId) {
-            res.status(400).json({ error: 'Organization ID required' });
+            return res.status(400).json({ error: 'Organization ID required' });
             return;
         }
 
@@ -156,7 +156,7 @@ router.post(
         };
 
         const webhook = await webhookService.createWebhook(webhookData);
-        res.status(201).json(webhook);
+        return res.status(201).json(webhook);
     }),
 );
 
@@ -168,10 +168,10 @@ router.put(
     '/:id',
     validateParams(WebhookIdParamSchema),
     validateBody(UpdateWebhookBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         const webhook = await webhookService.updateWebhook(id, req.body);
-        res.json(webhook);
+        return res.json(webhook);
     }),
 );
 
@@ -182,10 +182,10 @@ router.put(
 router.delete(
     '/:id',
     validateParams(WebhookIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         const result = await webhookService.deleteWebhook(id);
-        res.json(result);
+        return res.json(result);
     }),
 );
 
@@ -197,12 +197,12 @@ router.post(
     '/:id/test',
     validateParams(WebhookIdParamSchema),
     validateBody(TestWebhookBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         const { payload } = req.body;
 
         const result = await webhookService.testWebhook(id, payload);
-        res.json(result);
+        return res.json(result);
     }),
 );
 
@@ -214,7 +214,7 @@ router.get(
     '/:id/deliveries',
     validateParams(WebhookIdParamSchema),
     validateQuery(GetDeliveriesQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         const { status, eventType, page = '1', pageSize = '50' } = req.query;
 
@@ -225,7 +225,7 @@ router.get(
         };
 
         const deliveries = await webhookService.getDeliveries(id, filters, pagination);
-        res.json(deliveries);
+        return res.json(deliveries);
     }),
 );
 
@@ -237,15 +237,15 @@ router.post(
     '/:id/retry',
     validateParams(WebhookIdParamSchema),
     validateBody(RetryDeliveryBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { deliveryId } = req.body;
         if (!deliveryId) {
-            res.status(400).json({ error: 'Delivery ID required' });
+            return res.status(400).json({ error: 'Delivery ID required' });
             return;
         }
 
         const result = await webhookService.retryDelivery(deliveryId);
-        res.json(result);
+        return res.json(result);
     }),
 );
 
@@ -255,7 +255,7 @@ router.post(
  */
 router.post(
     '/stripe',
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const event = req.body;
         const type = event.type;
         const data = event.data?.object;
@@ -264,18 +264,18 @@ router.post(
 
         try {
             const dunning = await getDunningService();
-            const invoice = await getInvoiceService();
+            const invoiceService = await getInvoiceService();
 
             switch (type) {
                 case 'invoice.payment_failed': {
                     // Convert Invoice to PaymentIntent-like structure for DunningService
-                    const invoice = data as Stripe.Invoice;
-                    const paymentIntentId = invoice.payment_intent as string | undefined;
+                    const stripeInvoice = data as any;
+                    const paymentIntentId = stripeInvoice.payment_intent as string | undefined;
 
                     if (paymentIntentId) {
                         // If we have payment_intent, we can handle it directly
                         // For now, we'll start dunning process based on invoice data
-                        const orgId = invoice.metadata?.organization_id;
+                        const orgId = stripeInvoice.metadata?.organization_id;
                         if (orgId) {
                             // Get organization and start dunning if needed
                             const org = await dunning.getDunningStatus(orgId);
@@ -283,14 +283,14 @@ router.post(
                                 // Create a mock PaymentIntent structure for handlePaymentFailed
                                 const mockPaymentIntent = {
                                     id: paymentIntentId,
-                                    amount: invoice.amount_due || 0,
-                                    currency: invoice.currency || 'usd',
-                                    metadata: invoice.metadata || {},
+                                    amount: stripeInvoice.amount_due || 0,
+                                    currency: stripeInvoice.currency || 'usd',
+                                    metadata: stripeInvoice.metadata || {},
                                     last_payment_error: {
                                         code: 'payment_failed',
-                                        message: invoice.last_payment_error?.message || 'Payment failed',
+                                        message: stripeInvoice.last_payment_error?.message || 'Payment failed',
                                     },
-                                } as Stripe.PaymentIntent;
+                                } as unknown as Stripe.PaymentIntent;
 
                                 await dunning.handlePaymentFailed(mockPaymentIntent);
                             }
@@ -300,21 +300,21 @@ router.post(
                 }
 
                 case 'invoice.payment_succeeded': {
-                    const invoice = data as Stripe.Invoice;
-                    const paymentIntentId = invoice.payment_intent as string | undefined;
+                    const stripeInvoiceSucceeded = data as any;
+                    const paymentIntentIdSucceeded = stripeInvoiceSucceeded.payment_intent as string | undefined;
 
-                    if (paymentIntentId) {
+                    if (paymentIntentIdSucceeded) {
                         const mockPaymentIntent = {
-                            id: paymentIntentId,
-                            amount: invoice.amount_paid || 0,
-                            currency: invoice.currency || 'usd',
-                            metadata: invoice.metadata || {},
-                        } as Stripe.PaymentIntent;
+                            id: paymentIntentIdSucceeded,
+                            amount: stripeInvoiceSucceeded.amount_paid || 0,
+                            currency: stripeInvoiceSucceeded.currency || 'usd',
+                            metadata: stripeInvoiceSucceeded.metadata || {},
+                        } as unknown as Stripe.PaymentIntent;
 
                         await dunning.handlePaymentSucceeded(mockPaymentIntent);
                     }
 
-                    await invoice.createFromStripe(invoice);
+                    await invoiceService.createFromStripe(stripeInvoiceSucceeded);
                     break;
                 }
 
@@ -323,10 +323,10 @@ router.post(
                     break;
             }
 
-            res.json({ received: true });
+            return res.json({ received: true });
         } catch (error: unknown) {
             logger.error('[Webhook] Error processing event:', error);
-            res.status(500).json({ error: 'Webhook processing failed' });
+            return res.status(500).json({ error: 'Webhook processing failed' });
         }
     }),
 );

@@ -14,7 +14,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 // Apply rate limiting
 const router = Router();
@@ -64,7 +64,7 @@ router.post(
             throw new Error(runResult.error || 'Failed to create access request');
         }
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Access request submitted successfully',
             requestId,
@@ -107,7 +107,7 @@ router.get(
             organization_id: string | null;
         }>(query, params);
 
-        res.json(requests);
+        return res.json(requests);
     }),
 );
 
@@ -190,7 +190,7 @@ router.put(
             throw new Error(updateResult.error || 'Failed to update request');
         }
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Access request approved',
             organizationId: orgId,
@@ -238,7 +238,7 @@ router.put(
             throw new Error(runResult.error || 'Failed to reject access request');
         }
 
-        res.json({ success: true, message: 'Access request rejected' });
+        return res.json({ success: true, message: 'Access request rejected' });
     }),
 );
 
@@ -279,7 +279,7 @@ router.post(
             throw new Error(runResult.error || 'Failed to create access code');
         }
 
-        res.json({
+        return res.json({
             success: true,
             code: {
                 id: codeId,
@@ -308,55 +308,16 @@ router.get(
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        const codes = await new Promise<
-            Array<{
-                id: string;
-                organization_id: string;
-                code: string;
-                created_by: string;
-                role: string;
-                max_uses: number;
-                current_uses: number;
-                expires_at: string | null;
-                is_active: number;
-                created_at: string;
-                first_name: string | null;
-                last_name: string | null;
-                created_by_email: string | null;
-            }>
-        >((resolve, reject) => {
-            db.all(
-                `SELECT ac.*, u.first_name, u.last_name, u.email as created_by_email
+        const codes = await dbAll<any>(
+            `SELECT ac.*, u.first_name, u.last_name, u.email as created_by_email
             FROM access_codes ac
             LEFT JOIN users u ON ac.created_by = u.id
             WHERE ac.organization_id = ?
             ORDER BY ac.created_at DESC`,
-                [organizationId],
-                (err: Error | null, rows: unknown) => {
-                    if (err) reject(err);
-                    else
-                        resolve(
-                            (rows || []) as Array<{
-                                id: string;
-                                organization_id: string;
-                                code: string;
-                                created_by: string;
-                                role: string;
-                                max_uses: number;
-                                current_uses: number;
-                                expires_at: string | null;
-                                is_active: number;
-                                created_at: string;
-                                first_name: string | null;
-                                last_name: string | null;
-                                created_by_email: string | null;
-                            }>,
-                        );
-                },
-            );
-        });
+            [organizationId],
+        );
 
-        res.json(codes);
+        return res.json(codes);
     }),
 );
 
@@ -393,7 +354,7 @@ router.get(
         const isExpired = codeInfo.expires_at && new Date(codeInfo.expires_at) < new Date();
         const isMaxedOut = codeInfo.max_uses !== -1 && codeInfo.current_uses >= codeInfo.max_uses;
 
-        res.json({
+        return res.json({
             valid: codeInfo.is_active !== 0 && !isExpired && !isMaxedOut,
             organizationName: codeInfo.organization_name,
             role: codeInfo.role,
@@ -465,44 +426,37 @@ router.post(
         const hashedPassword = bcrypt.hashSync(password, 8);
 
         // Create user
-        await new Promise<void>((resolve, reject) => {
-            db.run(
-                `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
+        const userResult = await dbRun(
+            `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [newUserId, accessCode.org_id, email, hashedPassword, firstName, lastName, accessCode.role, 'active'],
-                (err: Error | null) => {
-                    if (err) reject(err);
-                    else resolve();
-                },
-            );
-        });
+            [newUserId, accessCode.org_id, email, hashedPassword, firstName, lastName, accessCode.role, 'active'],
+        );
+
+        if (!userResult.success) {
+            throw new Error(userResult.error || 'Failed to create user');
+        }
 
         // Update code usage
-        await new Promise<void>((resolve, reject) => {
-            db.run(
-                `UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?`,
-                [accessCode.id],
-                (err: Error | null) => {
-                    if (err) reject(err);
-                    else resolve();
-                },
-            );
-        });
+        const usageResult = await dbRun(`UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?`, [
+            accessCode.id,
+        ]);
+
+        if (!usageResult.success) {
+            throw new Error(usageResult.error || 'Failed to update code usage');
+        }
 
         // Track code usage
-        await new Promise<void>((resolve, reject) => {
-            db.run(
-                `INSERT INTO access_code_usage (id, code_id, user_id, used_at)
+        const trackResult = await dbRun(
+            `INSERT INTO access_code_usage (id, code_id, user_id, used_at)
             VALUES (?, ?, ?, datetime('now'))`,
-                [uuidv4(), accessCode.id, newUserId],
-                (err: Error | null) => {
-                    if (err) reject(err);
-                    else resolve();
-                },
-            );
-        });
+            [uuidv4(), accessCode.id, newUserId],
+        );
 
-        res.json({
+        if (!trackResult.success) {
+            throw new Error(trackResult.error || 'Failed to track code usage');
+        }
+
+        return res.json({
             success: true,
             user: {
                 id: newUserId,
@@ -548,7 +502,7 @@ router.delete(
             throw new Error(runResult.error || 'Failed to deactivate access code');
         }
 
-        res.json({ success: true, message: 'Access code deactivated' });
+        return res.json({ success: true, message: 'Access code deactivated' });
     }),
 );
 

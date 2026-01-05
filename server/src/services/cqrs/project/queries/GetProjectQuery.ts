@@ -1,8 +1,8 @@
 import { getDatabase } from '../../../../database/Database.js';
 import type { IDatabase } from '../../../../database/IDatabase.js';
 
-export interface GetProjectQuery {
-    projectId: string;
+export class GetProjectQuery {
+    constructor(public readonly projectId: string) {}
 }
 
 export class GetProjectHandler {

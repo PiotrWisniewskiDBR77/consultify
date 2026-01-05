@@ -7,7 +7,7 @@
  */
 
 import { getDatabase } from '../database/Database.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -371,9 +371,3 @@ export function getAuditLogger(): AuditLogger {
 // ==========================================
 
 export default AuditLogger;
-export type { AuditLogEntry, AuditLogQuery };
-
-
-
-
-

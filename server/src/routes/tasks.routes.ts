@@ -7,11 +7,12 @@
 
 import { Router } from 'express';
 
-import TaskController from '../controllers/TaskController.js';
+import TaskControllerRaw from '../controllers/TaskController.js';
+const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import {
     AddTaskCommentSchema,
     AssignTaskSchema,

@@ -7,6 +7,6 @@
 
 import { createLazyRoute } from '../utils/lazyRouteLoader.js';
 
-const router = createLazyRoute('../../routes/ai-security.js');
+const router = createLazyRoute('./ai-security.js');
 
 export default router;

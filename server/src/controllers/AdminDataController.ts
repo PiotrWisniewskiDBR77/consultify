@@ -148,8 +148,3 @@ export class AdminDataController {
 }
 
 export default AdminDataController;
-
-
-
-
-

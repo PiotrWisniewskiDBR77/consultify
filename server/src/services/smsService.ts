@@ -26,8 +26,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -119,7 +119,7 @@ const CONFIG = {
 // ==========================================
 
 class SMSServiceClass {
-    private _db: IDatabase;
+    private db: IDatabase;
     private twilioClient: Twilio | null = null;
 
     constructor(deps?: SMSServiceDependencies) {

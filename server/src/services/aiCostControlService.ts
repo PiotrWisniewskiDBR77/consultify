@@ -212,7 +212,7 @@ class AICostControlServiceClass {
         return new Promise((resolve, reject) => {
             this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row || null);
+                else resolve((row as T) || null);
             });
         });
     }
@@ -224,7 +224,7 @@ class AICostControlServiceClass {
         return new Promise((resolve, reject) => {
             this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as T[]) || []);
             });
         });
     }
@@ -489,7 +489,7 @@ class AICostControlServiceClass {
                 modelUsed: params.modelUsed,
                 modelCategory: params.modelCategory,
             };
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[AICostControl] Log usage error:', err);
             throw err;
         }

@@ -22,6 +22,8 @@ export interface IDatabase {
     /**
      * Get a single row
      */
+    get<T = unknown>(sql: string, params?: unknown[]): Promise<T | null>;
+    get<T = unknown>(sql: string, params: unknown[], callback: (err: Error | null, row: T | null) => void): this;
     get<T = unknown>(
         sql: string,
         params?: unknown[],
@@ -31,6 +33,8 @@ export interface IDatabase {
     /**
      * Get all rows
      */
+    all<T = unknown>(sql: string, params?: unknown[]): Promise<T[]>;
+    all<T = unknown>(sql: string, params: unknown[], callback: (err: Error | null, rows: T[]) => void): this;
     all<T = unknown>(
         sql: string,
         params?: unknown[],
@@ -40,6 +44,8 @@ export interface IDatabase {
     /**
      * Execute a query (INSERT/UPDATE/DELETE)
      */
+    run(sql: string, params?: unknown[]): Promise<RunResult>;
+    run(sql: string, params: unknown[], callback: (err: Error | null) => void): this;
     run(sql: string, params?: unknown[], callback?: (err: Error | null) => void): this | Promise<RunResult>;
 
     /**
@@ -62,8 +68,3 @@ export interface IDatabase {
      */
     query<T = unknown>(text: string, params?: unknown[]): Promise<QueryResult<T>>;
 }
-
-
-
-
-

@@ -70,20 +70,30 @@ describe('BenchmarkCache', () => {
 
     describe('clearExpired', () => {
         it('should remove expired entries', async () => {
+            const originalNow = Date.now;
+            const baseTime = 1000000;
+
+            // Set key1 at baseTime
+            Date.now = vi.fn(() => baseTime);
             benchmarkCache.set('key1', { value: '1' });
+
+            // Set key2 at baseTime + 2 hours (different time context)
+            // Wait, TTL is 1 hour. Let's make key2 much later.
+            Date.now = vi.fn(() => baseTime + 5000000);
             benchmarkCache.set('key2', { value: '2' });
 
-            // Mock Date.now to simulate expiration for key1
-            const originalNow = Date.now;
-            const baseTime = originalNow();
-            Date.now = vi.fn(() => baseTime + 3600001); // Expired
-
+            // Now call clearExpired at baseTime + 5000001
+            // key1 (at baseTime) is expired (5000001 > 3600000)
+            // key2 (at baseTime + 5000000) is NOT expired (1 <= 3600000)
+            Date.now = vi.fn(() => baseTime + 5000001);
             benchmarkCache.clearExpired();
 
+            // key1 should be gone
+            Date.now = vi.fn(() => baseTime); // Back to baseTime for get (though it doesn't matter much)
             expect(benchmarkCache.get('key1')).toBeNull();
 
-            // Reset Date.now for key2 check
-            Date.now = vi.fn(() => baseTime);
+            // key2 should remain
+            Date.now = vi.fn(() => baseTime + 5000001);
             expect(benchmarkCache.get('key2')).toEqual({ value: '2' });
 
             Date.now = originalNow;
@@ -97,8 +107,3 @@ describe('BenchmarkCache', () => {
         });
     });
 });
-
-
-
-
-

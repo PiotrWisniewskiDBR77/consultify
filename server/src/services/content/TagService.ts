@@ -96,7 +96,7 @@ export class TagService {
                 ) VALUES (?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
                 [id, name, tagSlug, contentType, color, organizationId, now, createdBy],
             );
-        } catch (err: unknown) {
+        } catch (err: any) {
             const error = err as Error;
             if (error.message.includes('UNIQUE')) {
                 throw new Error(`Tag with slug '${tagSlug}' already exists`);

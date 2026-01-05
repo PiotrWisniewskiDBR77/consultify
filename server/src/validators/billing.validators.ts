@@ -19,7 +19,7 @@ export const CreateInvoiceRequestSchema = z.object({
     lineItems: z.array(InvoiceLineItemSchema).min(1),
     currency: z.string().default('USD'),
     dueDate: z.string().datetime().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Update Invoice Request
@@ -27,7 +27,7 @@ export const UpdateInvoiceRequestSchema = z.object({
     status: z.enum(['draft', 'open', 'paid', 'past_due', 'void']).optional(),
     lineItems: z.array(InvoiceLineItemSchema).optional(),
     dueDate: z.string().datetime().optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Create Subscription Request
@@ -59,7 +59,7 @@ export const CreatePlanRequestSchema = z.object({
     priceYearly: z.number().nonnegative().optional(),
     currency: z.string().default('USD'),
     features: z.array(z.string()).default([]),
-    limits: z.record(z.unknown()).default({}),
+    limits: z.record(z.string(), z.unknown()).default({}),
     trialDays: z.number().int().min(0).default(0),
     isPublic: z.boolean().default(true),
     sortOrder: z.number().int().default(0),
@@ -80,7 +80,7 @@ export const CreateCreditNoteRequestSchema = z.object({
 export const RecordUsageRequestSchema = z.object({
     metricName: z.string().min(1),
     quantity: z.number().int().positive().default(1),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Create Spending Alert Request
@@ -103,28 +103,28 @@ export const ToggleSpendingAlertRequestSchema = z.object({
 
 // Query Params
 export const BillingStatsQuerySchema = z.object({
-    period: z.string().default('30'),
+    period: z.coerce.number().default(30),
 });
 
 export const ListInvoicesQuerySchema = z.object({
     status: z.enum(['draft', 'open', 'paid', 'past_due', 'void']).optional(),
     organizationId: z.string().uuid().optional(),
-    page: z.string().transform(Number).pipe(z.number().int().positive()).default('1'),
-    pageSize: z.string().transform(Number).pipe(z.number().int().positive().max(100)).default('50'),
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().positive().max(100).default(50),
 });
 
 export const ListSubscriptionsQuerySchema = z.object({
     status: z.enum(['active', 'past_due', 'canceled', 'trialing']).optional(),
     organizationId: z.string().uuid().optional(),
-    page: z.string().transform(Number).pipe(z.number().int().positive()).default('1'),
-    pageSize: z.string().transform(Number).pipe(z.number().int().positive().max(100)).default('50'),
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().positive().max(100).default(50),
 });
 
 export const ListPlansQuerySchema = z.object({
     includeInactive: z
         .string()
-        .transform((val) => val === 'true')
-        .default('false'),
+        .default('false')
+        .transform((val) => val === 'true'),
 });
 
 export const UsageQuerySchema = z.object({

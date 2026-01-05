@@ -12,7 +12,7 @@ import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 const router = Router();
 
@@ -78,7 +78,7 @@ router.get(
             createdAt: t.created_at,
         }));
 
-        res.json(formattedTeams);
+        return res.json(formattedTeams);
     }),
 );
 
@@ -137,7 +137,7 @@ router.get(
             avatar_url: string | null;
         }>(membersSql, [id]);
 
-        res.json({
+        return res.json({
             id: team.id,
             organizationId: team.organization_id,
             name: team.name,
@@ -210,7 +210,7 @@ router.post(
             }
         }
 
-        res.json({
+        return res.json({
             id,
             organizationId: orgId,
             name,
@@ -251,7 +251,7 @@ router.put(
             return res.status(404).json({ error: 'Team not found' });
         }
 
-        res.json({ message: 'Team updated' });
+        return res.json({ message: 'Team updated' });
     }),
 );
 
@@ -283,7 +283,7 @@ router.delete(
             return res.status(404).json({ error: 'Team not found' });
         }
 
-        res.json({ message: 'Team deleted' });
+        return res.json({ message: 'Team deleted' });
     }),
 );
 
@@ -338,7 +338,7 @@ router.post(
             throw new Error(runResult.error || 'Failed to add team member');
         }
 
-        res.json({ message: 'Member added to team' });
+        return res.json({ message: 'Member added to team' });
     }),
 );
 
@@ -372,7 +372,7 @@ router.delete(
             return res.status(404).json({ error: 'Member not in team' });
         }
 
-        res.json({ message: 'Member removed from team' });
+        return res.json({ message: 'Member removed from team' });
     }),
 );
 

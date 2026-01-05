@@ -8,8 +8,8 @@ import { Request, Response } from 'express';
 import type { IDatabase } from '../database/IDatabase.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
-import logger from '../utils/Logger.ts';
-import type { _AuthRequest, LoginRequest } from '../validators/auth.validators.js';
+import logger from '../utils/Logger.js';
+import type { LoginRequest } from '../validators/auth.validators.js';
 
 // Dependencies interface for dependency injection
 interface Dependencies {
@@ -54,7 +54,7 @@ const getDeps = async (): Promise<Dependencies> => {
             deps = {
                 db: dbModule.default || dbModule,
                 bcrypt: bcryptModule.default || bcryptModule,
-                ActivityService: activityModule.default || activityModule,
+                ActivityService: (activityModule as any).default || activityModule,
                 MFAService: mfaService,
                 RefreshTokenService: refreshTokenService,
                 RedisStore: (redisModule.default || redisModule) as new (options: { windowMs: number }) => {
@@ -92,7 +92,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         const authRedisStore = new dependencies.RedisStore({ windowMs: 15 * 60 * 1000 });
         const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
         await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
-    } catch (err: unknown) {
+    } catch (err: any) {
         // Ignore rate limit errors
     }
 
@@ -110,7 +110,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         } | null>((resolve, reject) => {
             dependencies.db.get('SELECT * FROM users WHERE email = ?', [email], (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row as typeof row);
+                else resolve(row as any);
             });
         });
 
@@ -131,7 +131,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             const authRedisStore = new dependencies.RedisStore({ windowMs: 15 * 60 * 1000 });
             const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
             await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
-        } catch (err: unknown) {
+        } catch (err: any) {
             // Ignore
         }
 
@@ -140,13 +140,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             id: string;
             name: string;
             status: string;
+            plan: string;
         } | null>((resolve, reject) => {
             dependencies.db.get(
                 'SELECT * FROM organizations WHERE id = ?',
                 [user.organization_id],
                 (err: Error | null, row: unknown) => {
                     if (err) reject(err);
-                    else resolve(row as typeof row);
+                    else resolve(row as any);
                 },
             );
         });

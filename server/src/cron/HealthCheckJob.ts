@@ -9,8 +9,8 @@ import * as cron from 'node-cron';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -40,7 +40,7 @@ class HealthCheckJob {
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            emailService: deps?.emailService,
+            emailService: deps?.emailService as any,
             alertEmail: deps?.alertEmail || 'piotr.wisniewski@dbr77.com',
             alertThreshold: deps?.alertThreshold || 1,
         };
@@ -82,7 +82,7 @@ class HealthCheckJob {
                     this.isSystemHealthy = true;
                     this.consecutiveFailures = 0;
                 }
-            } catch (err: unknown) {
+            } catch (err: any) {
                 // FAILURE
                 this.consecutiveFailures++;
                 const error = err instanceof Error ? err : new Error(String(err));

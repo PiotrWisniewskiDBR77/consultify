@@ -1,6 +1,1 @@
 export { BottomNavigation } from './BottomNavigation';
-
-
-
-
-

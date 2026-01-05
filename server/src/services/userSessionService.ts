@@ -1,4 +1,4 @@
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import { sessionCache } from './redis/CacheService.js';
 
 export interface UserSession {

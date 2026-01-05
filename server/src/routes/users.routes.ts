@@ -7,7 +7,8 @@
 
 import { Router } from 'express';
 
-import UserController from '../controllers/UserController.js';
+import UserControllerRaw from '../controllers/UserController.js';
+const UserController = UserControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';

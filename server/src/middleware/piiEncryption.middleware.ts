@@ -14,7 +14,7 @@
 import { NextFunction, Request, Response } from 'express';
 
 import { decryptPII, encryptPII, isEncrypted, PII_FIELDS } from '../services/encryption/EncryptionService.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // CONFIGURATION
@@ -182,8 +182,3 @@ export default {
     getEncryptedFields,
     PII_ENCRYPTION_ROUTES,
 };
-
-
-
-
-

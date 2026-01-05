@@ -11,8 +11,8 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
 
-import logger from '../utils/Logger.ts';
-import { validateDatabaseConfig } from './ConfigValidator.ts';
+import logger from '../utils/Logger.js';
+import { validateDatabaseConfig } from './ConfigValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -77,7 +77,7 @@ export type SQLiteConfig = z.infer<typeof SQLiteConfigSchema>;
 // ==========================================
 
 function getDatabaseUrl(): string | undefined {
-    let url = process.env.DATABASE_URL;
+    const url = process.env.DATABASE_URL;
     // Check if Railway variable expansion didn't work (still contains ${{)
     if (url && url.includes('${{')) {
         logger.warn('[DB Config] DATABASE_URL appears to contain unexpanded Railway variable:', url);

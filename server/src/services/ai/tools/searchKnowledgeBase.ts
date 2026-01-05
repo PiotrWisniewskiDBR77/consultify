@@ -1,8 +1,9 @@
 /**
-import logger from '../../../utils/Logger.ts';
  * Tool: search_knowledge_base
  * Searches the DRD methodology knowledge base using RAG.
  */
+
+import logger from '../../../utils/Logger.js';
 
 type SearchParams = {
     query: string;

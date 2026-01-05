@@ -10,13 +10,13 @@
 import { Router } from 'express';
 
 import { fileUploadRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 
 const router = Router();
 
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/user-professional-profile.js');
+const module = (await import('./user-professional-profile.js')) as any;
 const user_professional_profileRoutesJS = module.default || module;
 
 // Apply rate limiting

@@ -8,9 +8,9 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
-import * as queryHelpers from '../../utils/queryHelpers.js';
-import { getMetricsService } from '../services/MetricsService.js';
-import logger from '../utils/Logger.ts';
+import { getMetricsService } from '../services/metricsService.js';
+import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 // ==========================================
 // TYPES
@@ -110,14 +110,14 @@ export function performanceMetricsMiddleware(req: RequestWithMetrics, res: Respo
     // Enable performance tracking for this request (if available)
     const metricsService = getMetricsService();
     if (typeof queryHelpers.enablePerformanceTracking === 'function') {
-        queryHelpers.enablePerformanceTracking((queryType: string, duration: number) => {
+        queryHelpers.enablePerformanceTracking((_queryType: string, duration: number) => {
             if (req._performanceMetrics) {
                 req._performanceMetrics.dbQueryCount++;
                 req._performanceMetrics.dbQueryTime += duration;
             }
             // Record DB query metric for Prometheus
             const dbType = process.env.DB_TYPE || 'sqlite';
-            metricsService.recordDbQuery(queryType, dbType, duration / 1000); // Convert to seconds
+            metricsService.recordDbQuery(_queryType, dbType, duration / 1000); // Convert to seconds
         });
     }
 
@@ -131,15 +131,15 @@ export function performanceMetricsMiddleware(req: RequestWithMetrics, res: Respo
             rss: endMemory.rss - startMemory.rss,
         };
 
-        const metrics = req._performanceMetrics || {};
+        const metrics = req._performanceMetrics || { dbQueryCount: 0, dbQueryTime: 0 };
         const metric: Metric = {
             timestamp: new Date().toISOString(),
             method: req.method,
             path: req.originalUrl || req.path,
             statusCode: res.statusCode,
             responseTime,
-            dbQueryCount: metrics.dbQueryCount || 0,
-            dbQueryTime: metrics.dbQueryTime || 0,
+            dbQueryCount: metrics.dbQueryCount,
+            dbQueryTime: metrics.dbQueryTime,
             memoryDelta,
             userId: req.user?.id || null,
             organizationId: req.user?.organizationId || null,

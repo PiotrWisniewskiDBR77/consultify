@@ -8,7 +8,7 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-import { aiLogger } from '../../../services/ai/logger.js';
+import { aiLogger } from '.././ai/logger.js';
 import { embeddingService } from './embeddingService.js';
 
 export const CHUNK_CONFIG = {
@@ -87,7 +87,9 @@ export class IngestionPipeline {
             const fileName = path.basename(filePath);
             const extension = path.extname(filePath).toLowerCase();
 
-            const docType = Object.entries(DOCUMENT_TYPES).find(([, config]) => config.extensions.includes(extension));
+            const docType = Object.entries(DOCUMENT_TYPES).find(([, config]) =>
+                (config.extensions as unknown as any[]).includes(extension),
+            );
 
             if (!docType) {
                 throw new Error(`Unsupported file type: ${extension}`);
@@ -422,7 +424,7 @@ export class IngestionPipeline {
                 files.push(...subFiles);
             } else if (entry.isFile()) {
                 const ext = path.extname(entry.name).toLowerCase();
-                if (supportedExtensions.includes(ext)) {
+                if (supportedExtensions.includes(ext as any)) {
                     if (!pattern || new RegExp(pattern).test(entry.name)) {
                         files.push(fullPath);
                     }

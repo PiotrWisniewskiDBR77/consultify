@@ -7,10 +7,10 @@ import { Brain } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { NotificationsHub } from '../components/MyWork/NotificationsHub';
 import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
 import { WorkCenter } from '../components/MyWork/WorkCenter';
-import { SplitLayout } from '../components/layout/SplitLayout';
 import { AppView } from '../types';
 
 interface MyWorkViewProps {

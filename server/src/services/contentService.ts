@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import _logger from '../utils/Logger.ts';
+import _logger from '../utils/Logger.js';
 import { CategoryService } from './content/CategoryService.js';
 import { CommentService } from './content/CommentService.js';
 import { ContentAnalyticsService } from './content/ContentAnalyticsService.js';

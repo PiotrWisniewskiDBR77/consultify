@@ -10,7 +10,7 @@ import { NextFunction, Request, Response } from 'express';
 
 import GovernanceAuditService from '../services/governanceAuditService.js';
 import PermissionService from '../services/permissionService.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -103,7 +103,7 @@ export const requirePermission = (permissionKey: string) => {
             // Attach permission info for audit logging
             (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
             next();
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[PermissionMiddleware] Error:', err);
             res.status(500).json({
                 error: 'Permission check failed',
@@ -151,7 +151,7 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
                 requiredAny: permissionKeys,
                 code: 'PERMISSION_DENIED',
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[PermissionMiddleware] Error:', err);
             res.status(500).json({
                 error: 'Permission check failed',
@@ -207,7 +207,7 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
 
             (req as AuthRequest & { permissionChecked?: string[] }).permissionChecked = permissionKeys;
             next();
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[PermissionMiddleware] Error:', err);
             res.status(500).json({
                 error: 'Permission check failed',

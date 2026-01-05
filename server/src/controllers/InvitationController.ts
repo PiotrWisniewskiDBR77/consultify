@@ -53,8 +53,8 @@ export class InvitationController {
                 email,
                 role,
                 organizationId,
-                invitedById: userId,
-                message,
+                invitedByUserId: userId,
+                metadata: { message },
             });
 
             res.status(201).json(invitation);
@@ -96,8 +96,7 @@ export class InvitationController {
         const { id } = req.params;
 
         const InvitationService = (await import('../services/invitationService.js')).default;
-        await InvitationService.cancelInvitation(id, req.user?.id);
-
+        await InvitationService.cancelInvitation(id, req.user?.id || '');
         res.json({ message: 'Invitation cancelled' });
     });
 }

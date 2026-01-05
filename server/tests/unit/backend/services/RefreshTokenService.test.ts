@@ -10,11 +10,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 import { RefreshTokenService } from '../../../../src/services/RefreshTokenService.js';
 
-// Mock the DbPromise module which RefreshTokenService uses for write operations
-vi.mock('../../../../src/utils/DbPromise.ts', () => ({
-    run: vi.fn().mockResolvedValue({ success: true, lastID: 1, changes: 1 }),
-}));
-
 // Mock logger to suppress logs
 vi.mock('../../../../src/utils/Logger.ts', () => ({
     default: {
@@ -31,24 +26,13 @@ describe('RefreshTokenService', () => {
     beforeEach(async () => {
         vi.clearAllMocks();
 
-        // Get the mocked module
-        const DbPromise = await import('../../../../src/utils/DbPromise.ts');
-
-        // Reset mock implementations
-        (DbPromise.run as ReturnType<typeof vi.fn>).mockResolvedValue({
-            success: true,
-            lastID: 1,
-            changes: 1,
-        });
-
         mockDb = {
             get: vi.fn(),
             all: vi.fn(),
-            run: vi.fn((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+            run: vi.fn(function (sql: string, params: unknown[], callback: (err: Error | null) => void) {
                 if (callback) {
-                    callback(null);
+                    callback.call({ lastID: 1, changes: 1 }, null);
                 }
-                return mockDb;
             }),
             exec: vi.fn(),
             serialize: vi.fn(),
@@ -104,8 +88,8 @@ describe('RefreshTokenService', () => {
 
             await service.generateTokenPair(user);
 
-            // RefreshTokenService uses DbPromise.run for insert operations
-            expect(DbPromise.run).toHaveBeenCalled();
+            // RefreshTokenService uses mockDb.run for insert operations
+            expect(mockDb.run).toHaveBeenCalled();
         });
     });
 
@@ -164,11 +148,9 @@ describe('RefreshTokenService', () => {
 
     describe('revokeToken', () => {
         it('should revoke refresh token', async () => {
-            const DbPromise = await import('../../../../src/utils/DbPromise.ts');
-
             await service.revokeToken('token-123', 'user_requested');
 
-            expect(DbPromise.run).toHaveBeenCalled();
+            expect(mockDb.run).toHaveBeenCalled();
         });
 
         it('should revoke entire token family on theft detection', async () => {
@@ -202,11 +184,8 @@ describe('RefreshTokenService', () => {
     });
 
     it('should revoke all sessions for user', async () => {
-        const DbPromise = await import('../../../../src/utils/DbPromise.ts');
-
         await service.revokeAllUserTokens('user-123');
 
-        expect(DbPromise.run).toHaveBeenCalled();
+        expect(mockDb.run).toHaveBeenCalled();
     });
 });
-

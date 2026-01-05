@@ -7,6 +7,6 @@
 
 import { createLazyRoute } from '../utils/lazyRouteLoader.js';
 
-const router = createLazyRoute('../../routes/ai-preferences-extended.js');
+const router = createLazyRoute('./ai-preferences-extended.js');
 
 export default router;

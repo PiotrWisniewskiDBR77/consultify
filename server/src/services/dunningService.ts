@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 const DUNNING_SCHEDULE = {
     RETRY_1: 3, // days
@@ -93,7 +93,7 @@ async function getEmailService(): Promise<EmailServiceInterface | null> {
 
 async function getAuditService(): Promise<AuditServiceInterface | null> {
     if (!auditService) {
-        const module = await import('../../services/auditService.js');
+        const module = (await import('../../services/auditService.js')) as any;
         auditService = module.logSystemEvent ? module : null;
     }
     return auditService;
@@ -113,7 +113,7 @@ export class DunningService {
         if (!secret) {
             throw new Error('Stripe API key is not configured');
         }
-        this.stripeClient = new Stripe(secret, { apiVersion: '2024-11-20.acacia' });
+        this.stripeClient = new Stripe(secret, { apiVersion: '2024-11-20.acacia' as any });
         return this.stripeClient;
     }
 

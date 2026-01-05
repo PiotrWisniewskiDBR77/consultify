@@ -13,8 +13,8 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -52,7 +52,7 @@ let abTestingService: ABTestingServiceInterface | null = null;
 let KnowledgeService: KnowledgeServiceInterface | null = null;
 
 try {
-    const abTestingModule = await import('../../services/ai/abTesting.js');
+    const abTestingModule = (await import('../services/ai/abTesting.js')) as any;
     const module = abTestingModule.default || abTestingModule;
     abTestingService = (module.abTestingService || module) as ABTestingServiceInterface;
 } catch {
@@ -60,7 +60,7 @@ try {
 }
 
 try {
-    const knowledgeModule = await import('../../services/knowledgeService.js');
+    const knowledgeModule = (await import('../services/knowledgeService.js')) as any;
     KnowledgeService = (knowledgeModule.default || knowledgeModule) as KnowledgeServiceInterface;
 } catch {
     logger.warn('[AI Development Routes] KnowledgeService not available');
@@ -113,7 +113,7 @@ router.get(
                 [key: string]: unknown;
             }>;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: prompts.map((p) => ({
                     ...p,
@@ -124,7 +124,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Development] Error listing prompts:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list prompts',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -149,10 +149,10 @@ router.get(
             ORDER BY category
         `);
 
-            res.json({ success: true, data: categories });
+            return res.json({ success: true, data: categories });
         } catch (error: unknown) {
             logger.error('[AI Development] Error listing categories:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list categories',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -193,7 +193,7 @@ router.get(
                 [id],
             );
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     ...prompt,
@@ -204,7 +204,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Development] Error getting prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -268,13 +268,13 @@ router.post(
                 throw new Error(runResult2.error || 'Failed to create prompt version');
             }
 
-            res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 data: { id, name, category, version: 1 },
             });
         } catch (error: unknown) {
             logger.error('[AI Development] Error creating prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to create prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -353,10 +353,10 @@ router.put(
                 }
             }
 
-            res.json({ success: true, data: { id, version: newVersion } });
+            return res.json({ success: true, data: { id, version: newVersion } });
         } catch (error: unknown) {
             logger.error('[AI Development] Error updating prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -392,7 +392,7 @@ router.post(
 
             const unreplacedVars = renderedTemplate.match(/\{\{\s*\w+\s*\}\}/g) || [];
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     original: prompt.template,
@@ -403,7 +403,7 @@ router.post(
             });
         } catch (error: unknown) {
             logger.error('[AI Development] Error testing prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to test prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -435,7 +435,7 @@ router.get(
                 promptId: promptId as string | undefined,
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 data: experiments.map((e) => ({
                     ...e,
@@ -445,7 +445,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Development] Error listing experiments:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list experiments',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -477,10 +477,10 @@ router.post(
                 createdBy: userId,
             });
 
-            res.status(201).json({ success: true, data: result });
+            return res.status(201).json({ success: true, data: result });
         } catch (error: unknown) {
             logger.error('[AI Development] Error creating experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to create experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -503,10 +503,10 @@ router.get(
 
         try {
             const stats = await abTestingService.getExperimentStats(req.params.id);
-            res.json({ success: true, data: stats });
+            return res.json({ success: true, data: stats });
         } catch (error: unknown) {
             logger.error('[AI Development] Error getting experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -534,10 +534,10 @@ router.post(
             }
 
             const result = await abTestingService.startExperiment(req.params.id, userId);
-            res.json({ success: true, data: result });
+            return res.json({ success: true, data: result });
         } catch (error: unknown) {
             logger.error('[AI Development] Error starting experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to start experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -561,10 +561,10 @@ router.post(
         try {
             const { reason = 'manual' } = req.body;
             const result = await abTestingService.stopExperiment(req.params.id, reason);
-            res.json({ success: true, data: result });
+            return res.json({ success: true, data: result });
         } catch (error: unknown) {
             logger.error('[AI Development] Error stopping experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to stop experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -592,10 +592,10 @@ router.get(
         try {
             const status = (req.query.status as string) || 'pending';
             const items = await KnowledgeService.getCandidates(status);
-            res.json({ success: true, data: items });
+            return res.json({ success: true, data: items });
         } catch (error: unknown) {
             logger.error('[AI Development] Error listing knowledge candidates:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list candidates',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -618,10 +618,10 @@ router.post(
         try {
             const { content, reasoning, source, relatedAxis, originContext } = req.body;
             const id = await KnowledgeService.addCandidate(content, reasoning, source, relatedAxis, originContext);
-            res.json({ success: true, data: { id }, message: 'Candidate submitted' });
+            return res.json({ success: true, data: { id }, message: 'Candidate submitted' });
         } catch (error: unknown) {
             logger.error('[AI Development] Error submitting candidate:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to submit candidate',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -645,10 +645,10 @@ router.put(
         try {
             const { status, adminComment } = req.body;
             await KnowledgeService.updateCandidateStatus(req.params.id, status, adminComment);
-            res.json({ success: true, message: 'Status updated' });
+            return res.json({ success: true, message: 'Status updated' });
         } catch (error: unknown) {
             logger.error('[AI Development] Error updating candidate status:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update status',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -675,10 +675,10 @@ router.get(
             }
 
             const ideas = await KnowledgeService.getApprovedIdeas(filters);
-            res.json({ success: true, data: ideas });
+            return res.json({ success: true, data: ideas });
         } catch (error: unknown) {
             logger.error('[AI Development] Error getting approved ideas:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get approved ideas',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -704,7 +704,7 @@ router.get(
             SELECT * FROM ai_settings WHERE key = 'intelligence_config'
         `)) as { value?: string } | null;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: config?.value
                     ? JSON.parse(config.value)
@@ -716,7 +716,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Development] Error getting intelligence config:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get config',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -748,10 +748,10 @@ router.put(
                 throw new Error(runResult.error || 'Failed to update config');
             }
 
-            res.json({ success: true, message: 'Configuration updated' });
+            return res.json({ success: true, message: 'Configuration updated' });
         } catch (error: unknown) {
             logger.error('[AI Development] Error updating intelligence config:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update config',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -805,7 +805,7 @@ router.get(
                 }>,
             ]);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     prompts: promptStats || { total: 0, active: 0, categories: 0 },
@@ -815,7 +815,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Development] Error getting summary:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get summary',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });

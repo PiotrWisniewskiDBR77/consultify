@@ -10,9 +10,10 @@ export class QueryBus {
     }
 
     async execute<TResult>(query: unknown): Promise<TResult> {
-        const handler = this.handlers.get(query?.constructor?.name);
+        const queryName = (query as any)?.constructor?.name;
+        const handler = queryName ? this.handlers.get(queryName) : undefined;
         if (!handler) {
-            throw new Error(`No handler registered for query "${query?.constructor?.name}"`);
+            throw new Error(`No handler registered for query "${queryName}"`);
         }
         return handler.execute(query) as Promise<TResult>;
     }

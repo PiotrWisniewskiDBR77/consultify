@@ -45,7 +45,7 @@ export class AdminAlertController {
                 return;
             }
 
-            const alert = await createAdminAlert(orgId, alertConfig);
+            const alert = await createAdminAlert(orgId, alertConfig as any);
 
             res.json({ success: true, alert });
         },

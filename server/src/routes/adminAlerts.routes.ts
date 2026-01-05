@@ -7,7 +7,8 @@
 
 import { Router } from 'express';
 
-import AdminAlertController from '../controllers/AdminAlertController.js';
+import AdminAlertControllerRaw from '../controllers/AdminAlertController.js';
+const AdminAlertController = AdminAlertControllerRaw as any;
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';

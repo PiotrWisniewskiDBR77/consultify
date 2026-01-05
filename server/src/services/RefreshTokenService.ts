@@ -24,8 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import { run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -108,6 +107,15 @@ class RefreshTokenService {
     }
 
     /**
+     * Set dependencies (for testing)
+     */
+    setDependencies(deps: { db: IDatabase }): void {
+        if (deps.db) {
+            this.db = deps.db;
+        }
+    }
+
+    /**
      * Hash token for storage
      */
     private hashToken(token: string): string {
@@ -119,9 +127,9 @@ class RefreshTokenService {
      */
     private async dbGet<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
         return new Promise((resolve, reject) => {
-            this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
+            this.db.get(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row || null);
+                else resolve((row as T) || null);
             });
         });
     }
@@ -130,14 +138,12 @@ class RefreshTokenService {
      * Database helper: Run query
      */
     private async dbRun(sql: string, params: unknown[] = []): Promise<RunResult> {
-        const result = await dbRun(sql, params);
-        if (!result.success) {
-            throw new Error(result.error || 'Database operation failed');
-        }
-        return {
-            lastID: result.lastID,
-            changes: result.changes || 0,
-        };
+        return new Promise((resolve, reject) => {
+            this.db.run(sql, params, function (this: any, err: Error | null) {
+                if (err) reject(err);
+                else resolve({ lastID: this.lastID, changes: this.changes });
+            });
+        });
     }
 
     /**
@@ -145,9 +151,9 @@ class RefreshTokenService {
      */
     private async dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
         return new Promise((resolve, reject) => {
-            this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
+            this.db.all(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows || []) as T[]);
             });
         });
     }
@@ -463,10 +469,10 @@ class RefreshTokenService {
 }
 
 // Export singleton instance
-const refreshTokenService = new RefreshTokenService();
-
-// Export class for testing
-export { RefreshTokenService };
+export const refreshTokenService = new RefreshTokenService();
 
 // Export default instance (for backward compatibility)
 export default refreshTokenService;
+
+// Export class for testing
+export { RefreshTokenService };

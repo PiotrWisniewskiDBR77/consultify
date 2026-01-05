@@ -5,11 +5,11 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { getConfig } from '../config/Config.js';
+import { config } from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import { run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -17,7 +17,7 @@ import logger from '../utils/Logger.ts';
 
 interface Dependencies {
     db: IDatabase;
-    config: ReturnType<typeof getConfig>;
+    config: typeof config;
 }
 
 // ==========================================
@@ -31,7 +31,7 @@ class CleanupRevokedTokensCron {
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            config: deps?.config || getConfig(),
+            config: deps?.config || config,
         };
     }
 
@@ -53,7 +53,7 @@ class CleanupRevokedTokensCron {
                 logger.info(`[Cron] Removed ${deleted} expired revoked tokens`);
             }
             return deleted;
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[Cron] Error cleaning up revoked tokens:', err);
             throw err;
         }
@@ -67,7 +67,7 @@ class CleanupRevokedTokensCron {
         setTimeout(async () => {
             try {
                 await this.cleanupRevokedTokens();
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.error('[Cron] Initial token cleanup failed:', err);
             }
         }, 5000);
@@ -76,7 +76,7 @@ class CleanupRevokedTokensCron {
         this.cleanupInterval = setInterval(async () => {
             try {
                 await this.cleanupRevokedTokens();
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.error('[Cron] Periodic token cleanup failed:', err);
             }
         }, this.deps.config.TOKEN_CLEANUP_INTERVAL);

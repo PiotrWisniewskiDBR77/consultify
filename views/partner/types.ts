@@ -1,6 +1,6 @@
 /**
  * Partner Module Types
- * 
+ *
  * Defines types for the Partner Portal with PMO Standards Compliance
  * Aligned with ISO 21500 / PMBOK 7 / PRINCE2
  */
@@ -68,7 +68,12 @@ export const PARTNER_PMO_MAPPING: Record<string, PMOStandardsMapping> = {
 // TRUST PROGRESSION MODEL
 // =============================================================================
 
-export type PartnerTrustPhase = 'G1_DISCOVERY' | 'G2_QUALIFICATION' | 'G3_ONBOARDING' | 'G4_ACTIVATION' | 'G5_ECOSYSTEM';
+export type PartnerTrustPhase =
+    | 'G1_DISCOVERY'
+    | 'G2_QUALIFICATION'
+    | 'G3_ONBOARDING'
+    | 'G4_ACTIVATION'
+    | 'G5_ECOSYSTEM';
 
 export interface PartnerTrustProgression {
     phase: PartnerTrustPhase;
@@ -293,4 +298,3 @@ export interface DirectoryReview {
     createdAt: string;
     verified: boolean;
 }
-

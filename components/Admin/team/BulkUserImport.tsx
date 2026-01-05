@@ -301,12 +301,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
     );
 
     return (
-        <Modal
-            open={open}
-            onClose={handleClose}
-            title={t('admin.team.import.title', 'Import Users')}
-            size="lg"
-        >
+        <Modal open={open} onClose={handleClose} title={t('admin.team.import.title', 'Import Users')} size="lg">
             <div className={cn('min-h-[400px]', className)}>
                 <AnimatePresence mode="wait">
                     {/* Step 1: Upload */}
@@ -321,7 +316,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                             <p className="text-sm text-slate-600 dark:text-slate-400">
                                 {t(
                                     'admin.team.import.uploadDescription',
-                                    'Upload a CSV or Excel file with user data. Download our template for the correct format.'
+                                    'Upload a CSV or Excel file with user data. Download our template for the correct format.',
                                 )}
                             </p>
 
@@ -349,10 +344,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                             >
                                 <Upload
                                     size={48}
-                                    className={cn(
-                                        'mb-4',
-                                        isDragOver ? 'text-violet-500' : 'text-slate-400',
-                                    )}
+                                    className={cn('mb-4', isDragOver ? 'text-violet-500' : 'text-slate-400')}
                                 />
                                 <p className="text-lg font-medium text-navy-900 dark:text-white mb-1">
                                     {t('admin.team.import.dropZoneTitle', 'Drop your file here')}
@@ -360,9 +352,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {t('admin.team.import.dropZoneSubtitle', 'or click to browse')}
                                 </p>
-                                <p className="text-xs text-slate-400 mt-2">
-                                    CSV, XLS, XLSX (max 10MB)
-                                </p>
+                                <p className="text-xs text-slate-400 mt-2">CSV, XLS, XLSX (max 10MB)</p>
                             </div>
 
                             <input
@@ -418,9 +408,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <FileSpreadsheet size={20} className="text-violet-500" />
-                                    <span className="font-medium text-navy-900 dark:text-white">
-                                        {fileName}
-                                    </span>
+                                    <span className="font-medium text-navy-900 dark:text-white">{fileName}</span>
                                     <span className="text-sm text-slate-500">
                                         ({parsedRows.length} {t('admin.team.import.users', 'users')})
                                     </span>
@@ -508,9 +496,7 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
                                                         {hasErrors ? (
                                                             <span className="flex items-center gap-1 text-rose-600">
                                                                 <XCircle size={14} />
-                                                                <span className="text-xs">
-                                                                    {errors[0].message}
-                                                                </span>
+                                                                <span className="text-xs">{errors[0].message}</span>
                                                             </span>
                                                         ) : (
                                                             <span className="flex items-center gap-1 text-emerald-600">
@@ -656,6 +642,3 @@ export const BulkUserImport: React.FC<BulkUserImportProps> = ({
 };
 
 export default BulkUserImport;
-
-
-

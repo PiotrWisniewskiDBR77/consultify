@@ -7,7 +7,7 @@
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -59,13 +59,10 @@ class BillingCron {
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            budgetManagementService: deps?.budgetManagementService,
-            adminAlertService: deps?.adminAlertService,
-            payAsYouGoService: deps?.payAsYouGoService,
-            seatManagementService: deps?.seatManagementService,
-            BudgetService: deps?.BudgetService || BudgetService,
-            BillingService: deps?.BillingService || BillingService,
-            SubscriptionService: deps?.SubscriptionService || SubscriptionService,
+            budgetManagementService: deps?.budgetManagementService as any,
+            adminAlertService: deps?.adminAlertService as any,
+            payAsYouGoService: deps?.payAsYouGoService as any,
+            seatManagementService: deps?.seatManagementService as any,
         };
     }
 
@@ -121,7 +118,7 @@ class BillingCron {
                 deps.db.all<Organization>(
                     'SELECT id FROM organizations WHERE status = ?',
                     ['active'],
-                    (err: Error | null, rows: unknown) => {
+                    (err: Error | null, rows: Organization[]) => {
                         if (err) reject(err);
                         else resolve(rows || []);
                     },
@@ -136,7 +133,7 @@ class BillingCron {
                         triggeredCount += result.triggeredCount;
                         logger.info(`[BillingCron] Triggered ${result.triggeredCount} alerts for org ${org.id}`);
                     }
-                } catch (err: unknown) {
+                } catch (err: any) {
                     logger.error(`[BillingCron] Error checking alerts for org ${org.id}:`, err);
                 }
             }
@@ -168,7 +165,7 @@ class BillingCron {
                      FROM organization_seats os
                      WHERE os.billing_model IN('pay_as_you_go', 'hybrid')`,
                     [],
-                    (err: Error | null, rows: unknown) => {
+                    (err: Error | null, rows: OrganizationSeat[]) => {
                         if (err) reject(err);
                         else resolve(rows || []);
                     },
@@ -189,7 +186,7 @@ class BillingCron {
                             `[BillingCron] Generated invoice for org ${org.organization_id}: $${result.totalCost}`,
                         );
                     }
-                } catch (err: unknown) {
+                } catch (err: any) {
                     logger.error(`[BillingCron] Error generating invoice for org ${org.organization_id}:`, err);
                 }
             }
@@ -210,23 +207,14 @@ class BillingCron {
         try {
             logger.info('[BillingCron] Running updateSeatCounts...');
 
-            const orgs = await new Promise<Organization[]>((resolve, reject) => {
-                deps.db.all<Organization>(
-                    'SELECT id FROM organizations WHERE status = ?',
-                    ['active'],
-                    (err: Error | null, rows: unknown) => {
-                        if (err) reject(err);
-                        else resolve(rows || []);
-                    },
-                );
-            });
+            const orgs = await deps.db.all<Organization>('SELECT id FROM organizations WHERE status = ?', ['active']);
 
             let updated = 0;
             for (const org of orgs) {
                 try {
                     await deps.seatManagementService.updateSeatCount(org.id);
                     updated++;
-                } catch (err: unknown) {
+                } catch (err: any) {
                     logger.error(`[BillingCron] Error updating seat count for org ${org.id}:`, err);
                 }
             }
@@ -293,10 +281,3 @@ export const calculateMonthlyUsage = async (deps?: Partial<Dependencies>): Promi
 };
 
 export default BillingCron;
-
-
-
-
-
-
-

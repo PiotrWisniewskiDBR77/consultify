@@ -7,7 +7,8 @@
 
 import { Router } from 'express';
 
-import StageGateController from '../controllers/StageGateController.js';
+import StageGateControllerRaw from '../controllers/StageGateController.js';
+const StageGateController = StageGateControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';

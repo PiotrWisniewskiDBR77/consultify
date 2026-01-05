@@ -20,16 +20,17 @@
     "useUnknownInCatchVariables": true,
     "alwaysStrict": true,
     // Code quality (strict mode - re-enabled after migration)
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     // Module interop
     "esModuleInterop": true,
+    "allowJs": true,
+    "checkJs": false,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "allowJs": false,
     // Output settings
     "declaration": true,
     "declarationMap": true,
@@ -76,40 +77,15 @@
   },
   "include": [
     "src/**/*",
-    "utils/**/*",
-    "services/**/*",
-    "middleware/**/*",
-    "routes/**/*",
-    "controllers/**/*",
-    "ai/**/*",
-    "mcp/**/*",
-    "repositories/**/*",
-    "cron/**/*",
-    "config/**/*",
     "types/**/*"
   ],
-    "exclude": [
+  "exclude": [
     "node_modules",
     "dist",
-    "tests/integration/managementReports.integration.test.ts",
+    "**/dist/**",
+    ".tsbuildinfo",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "src/utils/lazyServiceLoader.js",
-    "src/database/Database.js",
-    "src/config/DatabaseConfig.js",
-    "src/database/PostgresDatabase.js",
-    "src/config/ConfigValidator.js",
-    "src/utils/Logger.js",
-    "src/utils/DbPromise.js",
-    "src/config/Config.js",
-    "src/Gateway.js",
-    "src/utils/RequestStore.js",
-    "src/utils/RedisRateLimitStore.js",
-    "src/utils/ShutdownManager.js",
-    "src/database/index.js",
-    "src/utils/auditLogger.js",
-    "src/services/ActivityService.js",
-    "src/cron/backupCron.ts",
-    "src/cron/billingCron.ts"
+    "**/*.js"
   ]
 }

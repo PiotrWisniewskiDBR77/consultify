@@ -12,8 +12,8 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -56,9 +56,9 @@ router.get(
             const errorRatePercent =
                 errorRate.total && errorRate.total > 0
                     ? (((errorRate.errors || 0) / errorRate.total) * 100).toFixed(2)
-                    : 0;
+                    : '0.00';
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     status:
@@ -75,7 +75,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting mission control status:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get status',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -110,7 +110,7 @@ router.get(
                 avg_latency_ms?: number;
             }>;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: providers.map((p) => ({
                     ...p,
@@ -120,7 +120,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting providers:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get providers',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -145,10 +145,10 @@ router.get(
             LIMIT 50
         `).catch(() => []);
 
-            res.json({ success: true, data: alerts });
+            return res.json({ success: true, data: alerts });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting alerts:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get alerts',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -187,10 +187,10 @@ router.post(
                 throw new Error(runResult.error || 'Failed to update alert');
             }
 
-            res.json({ success: true, message: 'Alert resolved' });
+            return res.json({ success: true, message: 'Alert resolved' });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error resolving alert:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to resolve alert',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -261,7 +261,7 @@ router.get(
                 avg_tokens?: number;
             };
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     period,
@@ -278,7 +278,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting performance metrics:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get metrics',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -335,7 +335,7 @@ router.get(
                 successful?: number;
             }>;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: trends.map((t) => ({
                     timestamp: t.timestamp,
@@ -347,7 +347,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting performance trends:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get trends',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -423,7 +423,7 @@ router.get(
                 requests?: number;
             }>;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     period,
@@ -441,7 +441,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting cost summary:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get costs',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -493,7 +493,7 @@ router.get(
                 requests?: number;
             }>;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: trends.map((t) => ({
                     date: t.date,
@@ -504,7 +504,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting cost trends:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get trends',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -562,7 +562,7 @@ router.get(
                 requests?: number;
             }>;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: topUsers.map((u) => ({
                     userId: u.user_id,
@@ -575,7 +575,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting costs by user:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get user costs',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -636,7 +636,7 @@ router.get(
                     ? ((metrics.total - (metrics.successful || 0)) / metrics.total) * 100
                     : 0;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     targets: slaTargets,
@@ -660,7 +660,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting SLA status:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get SLA status',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -695,7 +695,7 @@ router.get(
                 avg_latency?: number;
             }>;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: history.map((h) => ({
                     date: h.date,
@@ -707,7 +707,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting SLA history:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get SLA history',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -778,7 +778,7 @@ router.get(
             `).catch(() => []),
             ]);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     period,
@@ -792,7 +792,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting usage analytics:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get analytics',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -878,7 +878,7 @@ router.get(
                 });
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 data:
                     insights.length > 0
@@ -894,7 +894,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting insights:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get insights',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -944,7 +944,7 @@ router.get(
                     ? ((status.requests_today - (status.errors_today || 0)) / status.requests_today) * 100
                     : 100;
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     missionControl: {
@@ -963,7 +963,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Operations] Error getting summary:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get summary',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });

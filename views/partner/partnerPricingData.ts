@@ -6,7 +6,19 @@
  * and revenue share model from partnerService.ts
  */
 
-import { Award, BookOpen, Building2, Crown, Headphones, Shield, Sparkles, Target, TrendingUp, Users, Zap } from 'lucide-react';
+import {
+    Award,
+    BookOpen,
+    Building2,
+    Crown,
+    Headphones,
+    Shield,
+    Sparkles,
+    Target,
+    TrendingUp,
+    Users,
+    Zap,
+} from 'lucide-react';
 import React from 'react';
 
 import { PMODomainId, PMOStandardsMapping } from './types';
@@ -332,4 +344,3 @@ export const TIER_COLORS: Record<PartnerTierId, { bg: string; text: string; bord
         border: 'border-purple-400 dark:border-purple-600',
     },
 };
-

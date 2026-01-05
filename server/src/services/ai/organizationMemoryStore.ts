@@ -6,9 +6,9 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { aiLogger } from '../../../services/ai/logger.js';
 import { getDatabase } from '../../database/Database.js';
-import * as DbPromise from '../../utils/DbPromise.ts';
+import * as DbPromise from '../../utils/DbPromise.js';
+import { aiLogger } from '.././ai/logger.js';
 import { embeddingService } from './embeddingService.js';
 
 export const ORG_MEMORY_TYPES = {
@@ -572,9 +572,9 @@ export class OrganizationMemoryStore {
         },
     ): Promise<{ extracted: number; error?: string }> {
         try {
-            const llmModule = await import('../../../services/ai/llmService.js');
+            const llmModule = await import('.././ai/llmService.js');
             const LLMService = llmModule.LLMService as LLMServiceCtor | undefined;
-            const modelModule = await import('../../../services/ai/modelRouter.js');
+            const modelModule = await import('.././ai/modelRouter.js');
             const modelExport = (modelModule.default ?? modelModule) as { ModelRouter?: ModelRouterCtor };
             const ModelRouter = modelExport.ModelRouter;
 

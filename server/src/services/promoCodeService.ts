@@ -20,8 +20,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -43,7 +43,7 @@ export const DISCOUNT_TYPES = {
 
 export type DiscountType = (typeof DISCOUNT_TYPES)[keyof typeof DISCOUNT_TYPES];
 
-interface ValidatePromoCodeResult {
+export interface ValidatePromoCodeResult {
     valid: boolean;
     reason?: string;
     codeId?: string;
@@ -205,7 +205,7 @@ export async function validatePromoCode(code: string): Promise<ValidatePromoCode
         }
 
         return response;
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[PromoCodeService] Validation error:', err);
         throw err;
     }
@@ -344,7 +344,7 @@ export async function createPromoCode(params: CreatePromoCodeParams): Promise<Pr
             metadata,
             createdAt: new Date().toISOString(),
         };
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         if (error.message.includes('UNIQUE constraint')) {
             throw new Error('Promo code already exists');
@@ -400,7 +400,7 @@ export async function listPromoCodes(options: ListPromoCodesOptions = {}): Promi
 export async function deactivatePromoCode(codeId: string): Promise<{ success: boolean }> {
     const result = await DbPromise.run(db, `UPDATE promo_codes SET is_active = 0 WHERE id = ?`, [codeId]);
 
-    return { success: result.changes > 0 };
+    return { success: (result.changes || 0) > 0 };
 }
 
 /**

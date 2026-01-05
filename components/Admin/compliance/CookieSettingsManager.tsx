@@ -11,18 +11,7 @@
  * Design: Card-based configuration with live preview
  */
 
-import {
-    AlertCircle,
-    Check,
-    ChevronRight,
-    Cookie,
-    Eye,
-    EyeOff,
-    HelpCircle,
-    Link,
-    Save,
-    Settings,
-} from 'lucide-react';
+import { AlertCircle, Check, ChevronRight, Cookie, Eye, EyeOff, HelpCircle, Link, Save, Settings } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -108,16 +97,13 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
     const [editingText, setEditingText] = useState<string | null>(null);
 
     // Use default categories if none provided
-    const categories =
-        settings.categories.length > 0 ? settings.categories : defaultCategories;
+    const categories = settings.categories.length > 0 ? settings.categories : defaultCategories;
 
     // Toggle category
     const toggleCategory = useCallback(
         (categoryId: string) => {
             const updatedCategories = categories.map((cat) =>
-                cat.id === categoryId && !cat.required
-                    ? { ...cat, enabled: !cat.enabled }
-                    : cat,
+                cat.id === categoryId && !cat.required ? { ...cat, enabled: !cat.enabled } : cat,
             );
             onChange({ ...settings, categories: updatedCategories });
         },
@@ -144,15 +130,17 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                         <div>
                             <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                                 {t('admin.compliance.cookies.title', 'Cookie Settings')}
-                                <Tooltip content={t('admin.compliance.cookies.tooltip', 'Configure how your site handles cookies')}>
+                                <Tooltip
+                                    content={t(
+                                        'admin.compliance.cookies.tooltip',
+                                        'Configure how your site handles cookies',
+                                    )}
+                                >
                                     <HelpCircle size={16} className="text-slate-400" />
                                 </Tooltip>
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {t(
-                                    'admin.compliance.cookies.subtitle',
-                                    'Manage cookie consent and preferences',
-                                )}
+                                {t('admin.compliance.cookies.subtitle', 'Manage cookie consent and preferences')}
                             </p>
                         </div>
                     </div>
@@ -170,14 +158,10 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                             {settings.enabled ? 'Enabled' : 'Disabled'}
                         </span>
                         <button
-                            onClick={() =>
-                                onChange({ ...settings, enabled: !settings.enabled })
-                            }
+                            onClick={() => onChange({ ...settings, enabled: !settings.enabled })}
                             className={cn(
                                 'relative w-14 h-7 rounded-full transition-colors',
-                                settings.enabled
-                                    ? 'bg-emerald-500'
-                                    : 'bg-slate-200 dark:bg-navy-700',
+                                settings.enabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-navy-700',
                             )}
                         >
                             <span
@@ -206,9 +190,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                                 <input
                                     type="text"
                                     value={settings.bannerTitle}
-                                    onChange={(e) =>
-                                        updateTextField('bannerTitle', e.target.value)
-                                    }
+                                    onChange={(e) => updateTextField('bannerTitle', e.target.value)}
                                     placeholder="We use cookies"
                                     className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                                 />
@@ -216,17 +198,12 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                    {t(
-                                        'admin.compliance.cookies.privacyPolicyUrl',
-                                        'Privacy Policy URL',
-                                    )}
+                                    {t('admin.compliance.cookies.privacyPolicyUrl', 'Privacy Policy URL')}
                                 </label>
                                 <input
                                     type="text"
                                     value={settings.privacyPolicyUrl}
-                                    onChange={(e) =>
-                                        updateTextField('privacyPolicyUrl', e.target.value)
-                                    }
+                                    onChange={(e) => updateTextField('privacyPolicyUrl', e.target.value)}
                                     placeholder="https://example.com/privacy"
                                     className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                                 />
@@ -235,16 +212,11 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
 
                         <div>
                             <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                {t(
-                                    'admin.compliance.cookies.bannerDescription',
-                                    'Banner Description',
-                                )}
+                                {t('admin.compliance.cookies.bannerDescription', 'Banner Description')}
                             </label>
                             <textarea
                                 value={settings.bannerDescription}
-                                onChange={(e) =>
-                                    updateTextField('bannerDescription', e.target.value)
-                                }
+                                onChange={(e) => updateTextField('bannerDescription', e.target.value)}
                                 placeholder="We use cookies to improve your experience..."
                                 rows={3}
                                 className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white resize-none"
@@ -255,51 +227,36 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                         <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                    {t(
-                                        'admin.compliance.cookies.acceptButton',
-                                        'Accept Button',
-                                    )}
+                                    {t('admin.compliance.cookies.acceptButton', 'Accept Button')}
                                 </label>
                                 <input
                                     type="text"
                                     value={settings.acceptButtonText}
-                                    onChange={(e) =>
-                                        updateTextField('acceptButtonText', e.target.value)
-                                    }
+                                    onChange={(e) => updateTextField('acceptButtonText', e.target.value)}
                                     placeholder="Accept All"
                                     className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                    {t(
-                                        'admin.compliance.cookies.rejectButton',
-                                        'Reject Button',
-                                    )}
+                                    {t('admin.compliance.cookies.rejectButton', 'Reject Button')}
                                 </label>
                                 <input
                                     type="text"
                                     value={settings.rejectButtonText}
-                                    onChange={(e) =>
-                                        updateTextField('rejectButtonText', e.target.value)
-                                    }
+                                    onChange={(e) => updateTextField('rejectButtonText', e.target.value)}
                                     placeholder="Reject All"
                                     className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
-                                    {t(
-                                        'admin.compliance.cookies.customizeButton',
-                                        'Customize Button',
-                                    )}
+                                    {t('admin.compliance.cookies.customizeButton', 'Customize Button')}
                                 </label>
                                 <input
                                     type="text"
                                     value={settings.customizeButtonText}
-                                    onChange={(e) =>
-                                        updateTextField('customizeButtonText', e.target.value)
-                                    }
+                                    onChange={(e) => updateTextField('customizeButtonText', e.target.value)}
                                     placeholder="Manage Preferences"
                                     className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                                 />
@@ -378,34 +335,26 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                     <div
                         className={cn(
                             'absolute left-0 right-0 p-4',
-                            settings.theme === 'dark'
-                                ? 'bg-navy-800 text-white'
-                                : 'bg-white text-navy-900',
+                            settings.theme === 'dark' ? 'bg-navy-800 text-white' : 'bg-white text-navy-900',
                             settings.position === 'bottom' && 'bottom-0',
                             settings.position === 'top' && 'top-0',
                             settings.position === 'center' &&
                                 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-lg rounded-xl shadow-2xl',
-                            (settings.position === 'bottom-left' ||
-                                settings.position === 'bottom-right') &&
+                            (settings.position === 'bottom-left' || settings.position === 'bottom-right') &&
                                 'bottom-4 w-80',
                             settings.position === 'bottom-left' && 'left-4 right-auto',
                             settings.position === 'bottom-right' && 'right-4 left-auto',
                             'shadow-lg border border-slate-200 dark:border-navy-700',
                         )}
                     >
-                        <h5 className="font-semibold mb-2">
-                            {settings.bannerTitle || 'We use cookies'}
-                        </h5>
+                        <h5 className="font-semibold mb-2">{settings.bannerTitle || 'We use cookies'}</h5>
                         <p
                             className={cn(
                                 'text-sm mb-4',
-                                settings.theme === 'dark'
-                                    ? 'text-slate-300'
-                                    : 'text-slate-600',
+                                settings.theme === 'dark' ? 'text-slate-300' : 'text-slate-600',
                             )}
                         >
-                            {settings.bannerDescription ||
-                                'We use cookies to improve your experience.'}
+                            {settings.bannerDescription || 'We use cookies to improve your experience.'}
                         </p>
                         <div className="flex flex-wrap gap-2">
                             <button className="px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700">
@@ -462,10 +411,7 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                                             </h5>
                                             {category.required && (
                                                 <span className="px-2 py-0.5 text-xs font-medium bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400 rounded">
-                                                    {t(
-                                                        'admin.compliance.cookies.required',
-                                                        'Required',
-                                                    )}
+                                                    {t('admin.compliance.cookies.required', 'Required')}
                                                 </span>
                                             )}
                                         </div>
@@ -483,11 +429,8 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
                                         disabled={category.required}
                                         className={cn(
                                             'relative w-12 h-6 rounded-full transition-colors flex-shrink-0',
-                                            category.enabled
-                                                ? 'bg-emerald-500'
-                                                : 'bg-slate-300 dark:bg-navy-600',
-                                            category.required &&
-                                                'opacity-50 cursor-not-allowed',
+                                            category.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-navy-600',
+                                            category.required && 'opacity-50 cursor-not-allowed',
                                         )}
                                     >
                                         <span
@@ -517,6 +460,3 @@ export const CookieSettingsManager: React.FC<CookieSettingsManagerProps> = ({
 };
 
 export default CookieSettingsManager;
-
-
-

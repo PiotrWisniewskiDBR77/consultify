@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import _logger from '../utils/Logger.ts';
+import _logger from '../utils/Logger.js';
 
 // ==========================================
 // CONSTANTS
@@ -627,9 +627,6 @@ class IntegrationHubServiceClass {
 
 // Create singleton instance
 const integrationHubServiceInstance = new IntegrationHubServiceClass();
-
-// Export constants
-export { CATEGORIES, CONNECTORS, STATUS };
 
 // Export individual functions for backward compatibility
 export const getAvailableConnectors = (category?: IntegrationCategory | null) =>

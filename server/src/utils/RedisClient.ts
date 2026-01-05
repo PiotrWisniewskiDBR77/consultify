@@ -8,7 +8,7 @@
 
 import { createClient, type RedisClientType } from 'redis';
 
-import logger from './Logger.ts';
+import logger from './Logger.js';
 
 let redisUrl: string | null = process.env.REDIS_URL || 'redis://localhost:6379';
 
@@ -73,7 +73,6 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
         url: redisUrl,
         socket: {
             connectTimeout: connectTimeout,
-            commandTimeout: commandTimeout,
             reconnectStrategy: (retries: number) => {
                 if (retries > 10) {
                     logger.error('[Redis] Max reconnection attempts exceeded');
@@ -102,7 +101,7 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
                 await Promise.race([connectPromise, timeoutPromise]);
                 logger.info('[Redis] Successfully connected');
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[Redis] Connection Failed:', (err as Error).message);
             // Fallback to mock on connection failure
             logger.info('[Redis] Falling back to Mock Client');

@@ -1,10 +1,9 @@
 import type Stripe from 'stripe';
 
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
 import type {
-    _SeatPricing,
     BillingPlan,
     BillingServiceDependencies,
     CreatePlanData,
@@ -247,10 +246,10 @@ export class BillingCommandService {
             status: subscription.status,
             current_period_start: (subscription as any).current_period_start
                 ? new Date((subscription as any).current_period_start * 1000)
-                : null,
+                : undefined,
             current_period_end: (subscription as any).current_period_end
                 ? new Date((subscription as any).current_period_end * 1000)
-                : null,
+                : undefined,
         });
 
         this.eventService.emitEvent('billing.subscription.created', { orgId, subscriptionId: subscription.id });
@@ -338,7 +337,14 @@ export class BillingCommandService {
         const deps = this.deps();
         const id = `pm-${deps.uuidv4()}`;
 
-        let pmDetails = {
+        let pmDetails: {
+            type: string;
+            brand: string;
+            last4: string;
+            exp_month: number | null;
+            exp_year: number | null;
+            holder_name: string | null;
+        } = {
             type: 'card',
             brand: 'unknown',
             last4: '****',

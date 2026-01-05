@@ -5,12 +5,10 @@
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../utils/lazyServiceLoader.ts';
+import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadIndustryintelligence = createCachedLazyService(
-    '../../services/ai/intelligence/industryIntelligenceService.js',
-);
+const loadIndustryintelligence = createCachedLazyService('../../../ai/intelligence/industryIntelligenceService.js');
 
 // Export default instance (for backward compatibility)
 export default loadIndustryintelligence();

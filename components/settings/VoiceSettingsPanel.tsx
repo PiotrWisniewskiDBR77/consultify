@@ -433,8 +433,3 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
 };
 
 export default VoiceSettingsPanel;
-
-
-
-
-

@@ -19,7 +19,7 @@
 
 import crypto from 'crypto';
 
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 
 // ==========================================
 // CONFIGURATION
@@ -484,8 +484,3 @@ export const EncryptionService = {
 };
 
 export default EncryptionService;
-
-
-
-
-

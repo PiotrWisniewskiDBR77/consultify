@@ -12,8 +12,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -33,7 +33,7 @@ router.get(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
+            const userId = req.user?.id || (req.user as any)?.userId;
             const { source } = req.query;
 
             if (!userId) {
@@ -56,13 +56,13 @@ router.get(
 
             const memories = await dbAll(query, params);
 
-            res.json({
+            return res.json({
                 memories,
                 total: memories.length,
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[AIMemory] List error:', err);
-            res.status(500).json({ error: 'Failed to fetch memories' });
+            return res.status(500).json({ error: 'Failed to fetch memories' });
         }
     }),
 );
@@ -77,7 +77,7 @@ router.get(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
+            const userId = req.user?.id || (req.user as any)?.userId;
 
             if (!userId) {
                 return res.status(401).json({ error: 'Unauthorized' });
@@ -145,13 +145,13 @@ router.get(
                 });
             }
 
-            res.json({
+            return res.json({
                 context: contextParts.join('\n'),
                 memories: memories.map((m) => ({ key: m.key, value: m.value })),
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[AIMemory] Context error:', err);
-            res.status(500).json({ error: 'Failed to generate context' });
+            return res.status(500).json({ error: 'Failed to generate context' });
         }
     }),
 );
@@ -166,7 +166,7 @@ router.put(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
+            const userId = req.user?.id || (req.user as any)?.userId;
             const organizationId = req.user?.organizationId || req.user?.organization_id;
             const { key } = req.params;
             const { value, source = 'explicit', confidence = 1.0, context } = req.body;
@@ -224,10 +224,10 @@ router.put(
                 [userId, key],
             );
 
-            res.json(updated);
-        } catch (err: unknown) {
+            return res.json(updated);
+        } catch (err: any) {
             logger.error('[AIMemory] Set error:', err);
-            res.status(500).json({ error: 'Failed to set memory' });
+            return res.status(500).json({ error: 'Failed to set memory' });
         }
     }),
 );
@@ -242,7 +242,7 @@ router.delete(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
+            const userId = req.user?.id || (req.user as any)?.userId;
             const { key } = req.params;
 
             if (!userId) {
@@ -261,10 +261,10 @@ router.delete(
                 return res.status(404).json({ error: 'Memory not found' });
             }
 
-            res.json({ success: true, deleted: key });
-        } catch (err: unknown) {
+            return res.json({ success: true, deleted: key });
+        } catch (err: any) {
             logger.error('[AIMemory] Delete error:', err);
-            res.status(500).json({ error: 'Failed to delete memory' });
+            return res.status(500).json({ error: 'Failed to delete memory' });
         }
     }),
 );
@@ -279,7 +279,7 @@ router.post(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
+            const userId = req.user?.id || (req.user as any)?.userId;
             const organizationId = req.user?.organizationId || req.user?.organization_id;
             const { memories } = req.body;
 
@@ -350,10 +350,10 @@ router.post(
                 }
             }
 
-            res.json({ success: true, results });
-        } catch (err: unknown) {
+            return res.json({ success: true, results });
+        } catch (err: any) {
             logger.error('[AIMemory] Bulk set error:', err);
-            res.status(500).json({ error: 'Failed to set memories' });
+            return res.status(500).json({ error: 'Failed to set memories' });
         }
     }),
 );
@@ -416,10 +416,10 @@ router.post(
                 }
             }
 
-            res.json({ memories });
-        } catch (err: unknown) {
+            return res.json({ memories });
+        } catch (err: any) {
             logger.error('[AIMemory] Parse error:', err);
-            res.status(500).json({ error: 'Failed to parse response' });
+            return res.status(500).json({ error: 'Failed to parse response' });
         }
     }),
 );

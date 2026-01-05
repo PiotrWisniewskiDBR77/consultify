@@ -10,8 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import StatusMachine from '../services/statusMachine.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -128,7 +128,7 @@ export const validateTask = async (req: PMORequest, res: Response, next: NextFun
             return;
         }
         next();
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
@@ -174,7 +174,7 @@ export const validateInitiativeStatus = async (req: PMORequest, res: Response, n
         req.previousStatus = row.status;
         req.projectId = row.project_id;
         next();
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
@@ -220,7 +220,7 @@ export const validateTaskStatus = async (req: PMORequest, res: Response, next: N
         req.previousStatus = row.status;
         req.initiativeId = row.initiative_id;
         next();
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
@@ -250,7 +250,7 @@ export const logStatusChange = (entityType: string) => {
                         JSON.stringify({ status: req.previousStatus }),
                         JSON.stringify({ status: req.body.status }),
                     ]);
-                } catch (err: unknown) {
+                } catch (err: any) {
                     // Log error but don't fail the request
                     logger.error('[PMO Validation] Failed to log status change:', err);
                 }

@@ -151,7 +151,7 @@ const PiiRedactor: PiiRedactor = {
         const redacted = { ...obj };
         keys.forEach((key) => {
             if (key in redacted) {
-                redacted[key] = REDACTION_PLACEHOLDER;
+                (redacted as Record<string, unknown>)[key] = REDACTION_PLACEHOLDER;
             }
         });
         return redacted;

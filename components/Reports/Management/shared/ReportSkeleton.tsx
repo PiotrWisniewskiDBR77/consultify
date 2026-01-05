@@ -1,9 +1,9 @@
 /**
  * ReportSkeleton Component
- * 
+ *
  * Loading skeleton for management reports.
  * Shows animated placeholders while report data is being fetched.
- * 
+ *
  * PMO Standards: ISO 21500, PMBOK 7, PRINCE2
  */
 
@@ -36,10 +36,7 @@ export const ReportSkeleton: React.FC<ReportSkeletonProps> = ({ reportType = 'TE
             {/* Status Cards Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map((i) => (
-                    <div 
-                        key={i} 
-                        className="h-24 bg-slate-200 dark:bg-navy-700 rounded-xl"
-                    />
+                    <div key={i} className="h-24 bg-slate-200 dark:bg-navy-700 rounded-xl" />
                 ))}
             </div>
 
@@ -48,10 +45,7 @@ export const ReportSkeleton: React.FC<ReportSkeletonProps> = ({ reportType = 'TE
                     {/* RAG Status Grid for Steering Committee */}
                     <div className="grid grid-cols-3 gap-4">
                         {[1, 2, 3].map((i) => (
-                            <div 
-                                key={i} 
-                                className="h-20 bg-slate-200 dark:bg-navy-700 rounded-xl"
-                            />
+                            <div key={i} className="h-20 bg-slate-200 dark:bg-navy-700 rounded-xl" />
                         ))}
                     </div>
 
@@ -60,10 +54,7 @@ export const ReportSkeleton: React.FC<ReportSkeletonProps> = ({ reportType = 'TE
                         <div className="h-6 w-32 bg-slate-200 dark:bg-navy-700 rounded" />
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {[1, 2, 3, 4, 5, 6].map((i) => (
-                                <div 
-                                    key={i} 
-                                    className="h-28 bg-slate-200 dark:bg-navy-700 rounded-xl"
-                                />
+                                <div key={i} className="h-28 bg-slate-200 dark:bg-navy-700 rounded-xl" />
                             ))}
                         </div>
                     </div>
@@ -88,10 +79,7 @@ export const ReportSkeleton: React.FC<ReportSkeletonProps> = ({ reportType = 'TE
                         <div className="h-6 w-40 bg-slate-200 dark:bg-navy-700 rounded" />
                         <div className="space-y-2">
                             {[1, 2, 3, 4].map((i) => (
-                                <div 
-                                    key={i} 
-                                    className="h-12 bg-slate-200 dark:bg-navy-700 rounded-lg"
-                                />
+                                <div key={i} className="h-12 bg-slate-200 dark:bg-navy-700 rounded-lg" />
                             ))}
                         </div>
                     </div>
@@ -101,10 +89,7 @@ export const ReportSkeleton: React.FC<ReportSkeletonProps> = ({ reportType = 'TE
                         <div className="h-6 w-36 bg-slate-200 dark:bg-navy-700 rounded" />
                         <div className="space-y-2">
                             {[1, 2, 3].map((i) => (
-                                <div 
-                                    key={i} 
-                                    className="h-12 bg-slate-200 dark:bg-navy-700 rounded-lg"
-                                />
+                                <div key={i} className="h-12 bg-slate-200 dark:bg-navy-700 rounded-lg" />
                             ))}
                         </div>
                     </div>
@@ -114,10 +99,7 @@ export const ReportSkeleton: React.FC<ReportSkeletonProps> = ({ reportType = 'TE
                         <div className="h-6 w-28 bg-slate-200 dark:bg-navy-700 rounded" />
                         <div className="space-y-2">
                             {[1, 2].map((i) => (
-                                <div 
-                                    key={i} 
-                                    className="h-16 bg-slate-200 dark:bg-navy-700 rounded-lg"
-                                />
+                                <div key={i} className="h-16 bg-slate-200 dark:bg-navy-700 rounded-lg" />
                             ))}
                         </div>
                     </div>
@@ -147,10 +129,7 @@ export const ReportSkeletonCompact: React.FC = () => (
         <div className="h-6 w-48 bg-slate-200 dark:bg-navy-700 rounded" />
         <div className="grid grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
-                <div 
-                    key={i} 
-                    className="h-16 bg-slate-200 dark:bg-navy-700 rounded-lg"
-                />
+                <div key={i} className="h-16 bg-slate-200 dark:bg-navy-700 rounded-lg" />
             ))}
         </div>
         <div className="h-24 bg-slate-200 dark:bg-navy-700 rounded-lg" />
@@ -187,6 +166,3 @@ export const ReportHistoryRowSkeleton: React.FC = () => (
 );
 
 export default ReportSkeleton;
-
-
-

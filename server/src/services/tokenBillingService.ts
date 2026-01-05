@@ -15,8 +15,7 @@ import * as crypto from 'crypto';
 import * as sqliteAsync from '../../db/sqliteAsync.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
 
 // ==========================================
 // TYPES
@@ -428,7 +427,7 @@ export class TokenBillingServiceClass {
                                 ],
                                 (ledgerErr: Error | null) => {
                                     if (ledgerErr) {
-                                        logger.error('Token Ledger Insert Error (non-fatal):', ledgerErr);
+                                        console.error('Token Ledger Insert Error (non-fatal):', ledgerErr);
                                     }
                                     // Use callback for COMMIT to ensure order
                                     db.run('COMMIT', [], (commitErr: Error | null) => {

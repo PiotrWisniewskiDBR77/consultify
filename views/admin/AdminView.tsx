@@ -179,51 +179,69 @@ const getAdminSection = (view: AppView): AdminSection => {
     if (view === AppView.ADMIN_OVERVIEW || view === AppView.ADMIN_DASHBOARD) return 'dashboard';
     if (view === AppView.ADMIN_METRICS) return 'metrics';
     if (view === AppView.ADMIN_ANALYTICS) return 'analytics';
-    
+
     // Organization module
     if (view === AppView.ADMIN_ORGANIZATION || view === AppView.ADMIN_ORGANIZATION_SETTINGS) return 'profile';
-    
+
     // Team module
     if (view === AppView.ADMIN_TEAM || view === AppView.ADMIN_USERS) return 'users';
     if (view === AppView.ADMIN_INVITATIONS) return 'invitations';
     if (view === AppView.ADMIN_SETTINGS_CONSULTANTS) return 'consultants';
     if (view === AppView.ADMIN_WORK_MODE) return 'users';
-    
+
     // Workspace module
-    if (view === AppView.ADMIN_WORKSPACE || view === AppView.ADMIN_PROJECTS || view === AppView.ADMIN_PROJECT_DETAILS) return 'projects';
+    if (view === AppView.ADMIN_WORKSPACE || view === AppView.ADMIN_PROJECTS || view === AppView.ADMIN_PROJECT_DETAILS)
+        return 'projects';
     if (view === AppView.ADMIN_KNOWLEDGE) return 'knowledge';
     if (view === AppView.ADMIN_PLAYBOOK_RUNS) return 'playbooks';
     if (view === AppView.ADMIN_BULK_OPERATIONS) return 'bulk-ops';
-    
+
     // AI module
     if (view === AppView.ADMIN_AI || view === AppView.ADMIN_LLM) return 'ai-models';
     if (view === AppView.ADMIN_AI_HEALTH) return 'ai-health';
     if (view === AppView.ADMIN_TOKEN_MANAGEMENT) return 'ai-access';
     if (view === AppView.HELP_ANALYTICS) return 'ai-health';
-    
+
     // Billing module
     if (view === AppView.ADMIN_BILLING) return 'usage';
-    
+
     // Security module
     if (view === AppView.ADMIN_SECURITY || view === AppView.ADMIN_SETTINGS) return 'security-settings';
-    
+
     // Feedback module
     if (view === AppView.ADMIN_FEEDBACK) return 'feedback';
-    
+
     return 'dashboard';
 };
 
 // Get the module category for a section (for breadcrumbs)
 const getSectionModule = (section: AdminSection): string => {
     const overviewSections = ['dashboard', 'metrics', 'analytics'];
-    const orgSections = ['profile', 'branding', 'ownership', 'regional', 'fiscal-year', 'data-hosting', 'approved-domains'];
+    const orgSections = [
+        'profile',
+        'branding',
+        'ownership',
+        'regional',
+        'fiscal-year',
+        'data-hosting',
+        'approved-domains',
+    ];
     const teamSections = ['users', 'groups', 'invitations', 'roles', 'consultants', 'org-chart'];
     const workspaceSections = ['projects', 'knowledge', 'playbooks', 'bulk-ops', 'custom-statuses'];
     const aiSections = ['ai-models', 'ai-health', 'ai-policy', 'ai-access', 'ai-features', 'ai-audit'];
-    const billingSections = ['usage', 'plan', 'payment', 'invoices', 'alerts', 'billing-settings', 'cost-allocation', 'seats'];
+    const billingSections = [
+        'usage',
+        'plan',
+        'payment',
+        'invoices',
+        'alerts',
+        'billing-settings',
+        'cost-allocation',
+        'seats',
+    ];
     const securitySections = ['security-settings', 'authentication', 'api-keys', 'audit-log', 'data-management'];
     const complianceSections = ['gdpr', 'cookie-settings', 'data-requests'];
-    
+
     if (overviewSections.includes(section)) return 'overview';
     if (orgSections.includes(section)) return 'organization';
     if (teamSections.includes(section)) return 'team';
@@ -233,7 +251,7 @@ const getSectionModule = (section: AdminSection): string => {
     if (securitySections.includes(section)) return 'security';
     if (complianceSections.includes(section)) return 'compliance';
     if (section === 'feedback') return 'feedback';
-    
+
     return 'overview';
 };
 
@@ -297,11 +315,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
         else if (section === 'metrics') setCurrentView(AppView.ADMIN_METRICS);
         else if (section === 'analytics') setCurrentView(AppView.ADMIN_ANALYTICS);
         // Organization
-        else if (section === 'profile' || section === 'branding' || section === 'ownership' || 
-                 section === 'regional' || section === 'fiscal-year' || section === 'data-hosting' || 
-                 section === 'approved-domains') setCurrentView(AppView.ADMIN_ORGANIZATION);
+        else if (
+            section === 'profile' ||
+            section === 'branding' ||
+            section === 'ownership' ||
+            section === 'regional' ||
+            section === 'fiscal-year' ||
+            section === 'data-hosting' ||
+            section === 'approved-domains'
+        )
+            setCurrentView(AppView.ADMIN_ORGANIZATION);
         // Team
-        else if (section === 'users' || section === 'groups' || section === 'org-chart') setCurrentView(AppView.ADMIN_TEAM);
+        else if (section === 'users' || section === 'groups' || section === 'org-chart')
+            setCurrentView(AppView.ADMIN_TEAM);
         else if (section === 'invitations') setCurrentView(AppView.ADMIN_INVITATIONS);
         else if (section === 'roles') setCurrentView(AppView.ADMIN_TEAM);
         else if (section === 'consultants') setCurrentView(AppView.ADMIN_SETTINGS_CONSULTANTS);
@@ -312,19 +338,39 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
         else if (section === 'bulk-ops') setCurrentView(AppView.ADMIN_BULK_OPERATIONS);
         else if (section === 'custom-statuses') setCurrentView(AppView.ADMIN_WORKSPACE);
         // AI
-        else if (section === 'ai-models' || section === 'ai-policy' || section === 'ai-features' || 
-                 section === 'ai-audit') setCurrentView(AppView.ADMIN_AI);
+        else if (
+            section === 'ai-models' ||
+            section === 'ai-policy' ||
+            section === 'ai-features' ||
+            section === 'ai-audit'
+        )
+            setCurrentView(AppView.ADMIN_AI);
         else if (section === 'ai-health') setCurrentView(AppView.ADMIN_AI_HEALTH);
         else if (section === 'ai-access') setCurrentView(AppView.ADMIN_TOKEN_MANAGEMENT);
         // Billing
-        else if (section === 'usage' || section === 'plan' || section === 'payment' || 
-                 section === 'invoices' || section === 'alerts' || section === 'billing-settings' || 
-                 section === 'cost-allocation' || section === 'seats') setCurrentView(AppView.ADMIN_BILLING);
+        else if (
+            section === 'usage' ||
+            section === 'plan' ||
+            section === 'payment' ||
+            section === 'invoices' ||
+            section === 'alerts' ||
+            section === 'billing-settings' ||
+            section === 'cost-allocation' ||
+            section === 'seats'
+        )
+            setCurrentView(AppView.ADMIN_BILLING);
         // Security
-        else if (section === 'security-settings' || section === 'authentication' || 
-                 section === 'api-keys' || section === 'audit-log' || section === 'data-management') setCurrentView(AppView.ADMIN_SECURITY);
+        else if (
+            section === 'security-settings' ||
+            section === 'authentication' ||
+            section === 'api-keys' ||
+            section === 'audit-log' ||
+            section === 'data-management'
+        )
+            setCurrentView(AppView.ADMIN_SECURITY);
         // Compliance
-        else if (section === 'gdpr' || section === 'cookie-settings' || section === 'data-requests') setCurrentView(AppView.ADMIN_SECURITY);
+        else if (section === 'gdpr' || section === 'cookie-settings' || section === 'data-requests')
+            setCurrentView(AppView.ADMIN_SECURITY);
         // Feedback
         else if (section === 'feedback') setCurrentView(AppView.ADMIN_FEEDBACK);
         // Default
@@ -334,7 +380,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
     // Get section title and subtitle based on module
     const getSectionInfo = () => {
         const module = getSectionModule(activeSection);
-        
+
         switch (module) {
             case 'overview':
                 return {
@@ -802,17 +848,15 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
 
     // Build breadcrumbs based on active section
     const breadcrumbs: Breadcrumb[] = useMemo(() => {
-        const crumbs: Breadcrumb[] = [
-            { label: t('admin.breadcrumb.admin', 'Admin'), section: 'overview' },
-        ];
-        
+        const crumbs: Breadcrumb[] = [{ label: t('admin.breadcrumb.admin', 'Admin'), section: 'overview' }];
+
         if (activeSection !== 'overview') {
             crumbs.push({
                 label: sectionInfo.title,
                 section: activeSection,
             });
         }
-        
+
         return crumbs;
     }, [activeSection, sectionInfo.title, t]);
 
@@ -827,7 +871,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
             pendingDataRequests={0} // TODO: Get from API
             onBack={() => onNavigate(AppView.DASHBOARD)}
         >
-                {renderContent()}
+            {renderContent()}
         </AdminLayout>
     );
 };

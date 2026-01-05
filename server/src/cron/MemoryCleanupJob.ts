@@ -7,7 +7,7 @@
  */
 
 import { getMemoryMonitor } from '../services/MemoryMonitor.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // MEMORY CLEANUP JOB
@@ -115,7 +115,7 @@ async function cleanupCache(): Promise<{ itemsCleaned: number; memoryFreed: numb
         }));
 
         if (isRedisConnected && isRedisConnected()) {
-            const client = getRedisClient();
+            const client = (getRedisClient as any)();
             if (client) {
                 // Clean up expired keys (Redis does this automatically, but we can force cleanup)
                 // This is a placeholder - actual implementation would depend on cache structure
@@ -158,8 +158,3 @@ async function cleanupTemporaryData(): Promise<{ itemsCleaned: number; memoryFre
 export default {
     run: runMemoryCleanup,
 };
-
-
-
-
-

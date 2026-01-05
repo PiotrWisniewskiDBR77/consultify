@@ -8,7 +8,7 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
-import { getMetricsService } from '../services/MetricsService.js';
+import { getMetricsService } from '../services/metricsService.js';
 
 // ==========================================
 // MIDDLEWARE
@@ -67,8 +67,3 @@ function normalizeRoute(path: string): string {
 }
 
 export default metricsMiddleware;
-
-
-
-
-

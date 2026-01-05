@@ -7,7 +7,8 @@
 
 import { Router } from 'express';
 
-import InitiativeController from '../controllers/InitiativeController.js';
+import InitiativeControllerRaw from '../controllers/InitiativeController.js';
+const InitiativeController = InitiativeControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';

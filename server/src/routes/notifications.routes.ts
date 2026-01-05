@@ -34,9 +34,9 @@ router.get(
                 limit: limit ? parseInt(limit as string) : 50,
                 projectId: projectId as string | undefined,
             });
-            res.json(notifications);
+            return res.json(notifications);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            return res.status(500).json({ error: err.message });
         }
     }),
 );
@@ -56,9 +56,9 @@ router.get(
 
         try {
             const counts = await (service as any).getCounts(userId);
-            res.json(counts);
+            return res.json(counts);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            return res.status(500).json({ error: err.message });
         }
     }),
 );
@@ -77,9 +77,9 @@ router.get(
 
         try {
             const counts = await (service as any).getCounts(userId);
-            res.json({ count: counts.unread || 0 });
+            return res.json({ count: counts.unread || 0 });
         } catch (err: any) {
-            res.status(500).json({ error: err.message, count: 0 });
+            return res.status(500).json({ error: err.message, count: 0 });
         }
     }),
 );
@@ -98,9 +98,9 @@ router.patch(
 
         try {
             const result = await (service as any).markRead(req.params.id, userId);
-            res.json(result);
+            return res.json(result);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            return res.status(500).json({ error: err.message });
         }
     }),
 );
@@ -119,9 +119,9 @@ router.post(
 
         try {
             const result = await (service as any).markAllRead(userId);
-            res.json(result);
+            return res.json(result);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            return res.status(500).json({ error: err.message });
         }
     }),
 );
@@ -137,9 +137,9 @@ router.get(
         try {
             const { status } = req.query;
             const escalations = await service.getEscalations(req.params.projectId, status as string | undefined);
-            res.json(escalations);
+            return res.json(escalations);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            return res.status(500).json({ error: err.message });
         }
     }),
 );
@@ -165,9 +165,9 @@ router.post(
 
         try {
             const result = await service.runAutoEscalation(req.params.projectId);
-            res.json(result);
+            return res.json(result);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            return res.status(500).json({ error: err.message });
         }
     }),
 );
@@ -186,9 +186,9 @@ router.delete(
 
         try {
             const result = await (service as any).delete(req.params.id, userId);
-            res.json(result);
+            return res.json(result);
         } catch (err: any) {
-            res.status(500).json({ error: err.message });
+            return res.status(500).json({ error: err.message });
         }
     }),
 );

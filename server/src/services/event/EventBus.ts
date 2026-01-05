@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 
 export interface IEvent {
     eventName: string;

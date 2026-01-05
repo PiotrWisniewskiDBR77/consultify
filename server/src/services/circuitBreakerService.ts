@@ -4,7 +4,7 @@
  * Unified Circuit Breaker implementation for external services.
  */
 
-import * as DbPromise from '../utils/DbPromise.ts';
+import * as DbPromise from '../utils/DbPromise.js';
 import aiLogger from './ai/logger.js';
 
 type AlertsModule = {

@@ -205,10 +205,15 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                         <Clock size={20} className="text-violet-500" />
                         <h3 className="text-lg font-medium text-navy-900 dark:text-white">
                             {userName
-                                ? t('admin.team.workingHours.titleUser', '{{name}}\'s Working Hours', { name: userName })
+                                ? t('admin.team.workingHours.titleUser', "{{name}}'s Working Hours", { name: userName })
                                 : t('admin.team.workingHours.title', 'Working Hours')}
                         </h3>
-                        <Tooltip content={t('admin.team.workingHours.tooltip', 'Set availability for scheduling and workload management')}>
+                        <Tooltip
+                            content={t(
+                                'admin.team.workingHours.tooltip',
+                                'Set availability for scheduling and workload management',
+                            )}
+                        >
                             <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                                 <HelpCircle size={16} />
                             </button>
@@ -218,9 +223,7 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                         <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
                             {totalWeeklyHours.toFixed(1)}h
                         </p>
-                        <p className="text-xs text-slate-500">
-                            {t('admin.team.workingHours.perWeek', 'per week')}
-                        </p>
+                        <p className="text-xs text-slate-500">{t('admin.team.workingHours.perWeek', 'per week')}</p>
                     </div>
                 </div>
 
@@ -277,16 +280,12 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
                                     <span
                                         className={cn(
                                             'font-medium',
-                                            schedule.enabled
-                                                ? 'text-navy-900 dark:text-white'
-                                                : 'text-slate-400',
+                                            schedule.enabled ? 'text-navy-900 dark:text-white' : 'text-slate-400',
                                         )}
                                     >
                                         {day.short}
                                     </span>
-                                    {isWeekend && (
-                                        <Moon size={12} className="text-slate-400" />
-                                    )}
+                                    {isWeekend && <Moon size={12} className="text-slate-400" />}
                                 </div>
 
                                 {/* Time Range */}
@@ -328,7 +327,12 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
 
                                         {/* Copy to weekdays */}
                                         {!isWeekend && day.key === 'monday' && (
-                                            <Tooltip content={t('admin.team.workingHours.copyToWeekdays', 'Apply to all weekdays')}>
+                                            <Tooltip
+                                                content={t(
+                                                    'admin.team.workingHours.copyToWeekdays',
+                                                    'Apply to all weekdays',
+                                                )}
+                                            >
                                                 <button
                                                     onClick={() => copyToWeekdays(day.key)}
                                                     className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded transition-colors"
@@ -442,6 +446,3 @@ export const WorkingHoursEditor: React.FC<WorkingHoursEditorProps> = ({
 };
 
 export default WorkingHoursEditor;
-
-
-

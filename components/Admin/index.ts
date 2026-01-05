@@ -5,11 +5,10 @@
  */
 
 // Layout components
-export { AdminSidebar } from './AdminSidebar';
-export type { AdminSection } from './AdminSidebar';
-
-export { AdminLayout } from './AdminLayout';
 export type { Breadcrumb } from './AdminLayout';
+export { AdminLayout } from './AdminLayout';
+export type { AdminSection } from './AdminSidebar';
+export { AdminSidebar } from './AdminSidebar';
 
 // Shared components
 export * from './shared';
@@ -28,6 +27,3 @@ export * from './compliance';
 
 // Workspace components
 export * from './workspace';
-
-
-

@@ -7,6 +7,6 @@
 
 import { createLazyRoute } from '../utils/lazyRouteLoader.js';
 
-const router = createLazyRoute('../../routes/aiActions.js');
+const router = createLazyRoute('./aiActions.js');
 
 export default router;

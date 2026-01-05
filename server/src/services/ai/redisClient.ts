@@ -1,14 +1,24 @@
 /**
- * Redisclient Service
+ * Redisclient Service Bridge
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Bridge between legacy service locations and the unified RedisClient
  */
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.ts';
+import { redisClient } from '../redis/RedisClient.js';
 
-// Lazy load the JS service module
-const loadRedisclient = createCachedLazyService('../../services/ai/redisClient.js');
+/**
+ * Get internal ioredis instance
+ */
+export const getRedisClient = () => redisClient.getRedisClient();
 
-// Export default instance (for backward compatibility)
-export default loadRedisclient();
+/**
+ * Check if Redis is connected
+ */
+export const isRedisConnected = () => redisClient.isRedisConnected();
+
+// Default export for generic module loading
+export default {
+    getRedisClient,
+    isRedisConnected,
+};

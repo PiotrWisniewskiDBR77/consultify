@@ -78,7 +78,8 @@ export const ResourcesView: React.FC = () => {
                         Partner docs & forms
                     </div>
                     <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                        Wszystkie formularze (Payout, Deal Registration, Tax & Bank) są dostępne w jednym miejscu i zawierają checklisty zgodne z PMO domain SCOPE_CHANGE_CONTROL.
+                        Wszystkie formularze (Payout, Deal Registration, Tax & Bank) są dostępne w jednym miejscu i
+                        zawierają checklisty zgodne z PMO domain SCOPE_CHANGE_CONTROL.
                     </p>
                     <div className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-300">
                         <div className="flex items-center gap-2">
@@ -147,4 +148,3 @@ export const ResourcesView: React.FC = () => {
 };
 
 export default ResourcesView;
-

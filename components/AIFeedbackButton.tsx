@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../services/api';
-import { Button } from './ui/Button';
+import { Button } from './ui';
 
 interface AIFeedbackButtonProps {
     context: string; // e.g., "diagnosis", "recommendation"

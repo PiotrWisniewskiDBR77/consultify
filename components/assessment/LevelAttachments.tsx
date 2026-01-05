@@ -304,8 +304,3 @@ export const LevelAttachments: React.FC<LevelAttachmentsProps> = ({
 };
 
 export default LevelAttachments;
-
-
-
-
-

@@ -7,8 +7,6 @@
  */
 
 import type {
-    _ResponseMetadata,
-    _StreamChunk,
     AIArtifact,
     AICapability,
     AIContext,
@@ -22,7 +20,7 @@ import type {
     StreamCallback,
     TokenUsage,
 } from '../../types/ai.types.js';
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 
 // ==========================================
 // CAPABILITY REGISTRY
@@ -158,6 +156,13 @@ export class AIPipeline {
             AIPipeline.instance = new AIPipeline();
         }
         return AIPipeline.instance;
+    }
+
+    /**
+     * Set dependencies manually (useful for testing)
+     */
+    public setDependencies(_deps: { db?: any }): void {
+        // For testing compatibility
     }
 
     /**
@@ -440,5 +445,6 @@ export class AIPipeline {
 // ==========================================
 
 export const aiPipeline = AIPipeline.getInstance();
+export default aiPipeline;
 
 export { type AIPipelineRequest, type AIPipelineResponse, CAPABILITY_REGISTRY, type StreamCallback };

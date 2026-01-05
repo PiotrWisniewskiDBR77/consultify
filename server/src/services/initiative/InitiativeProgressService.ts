@@ -1,6 +1,6 @@
 import { getDatabase } from '../../database/Database.js';
 import { IDatabase } from '../../database/IDatabase.js';
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 
 export class InitiativeProgressService {
     private deps: {

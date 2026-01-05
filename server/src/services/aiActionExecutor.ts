@@ -10,7 +10,7 @@ import { all, get, run } from '../utils/DbPromise.js';
 let dbAll = all;
 let dbGet = get;
 let dbRun = run;
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import AIPolicyEngine from './aiPolicyEngine.js';
 
 // Enums and Constants
@@ -240,7 +240,7 @@ const AIActionExecutor = {
                 actionType,
                 payload,
             ).catch((err: Error | null) => {
-                logger.warn('[AIActionExecutor] Failed to send notification:', err.message);
+                logger.warn('[AIActionExecutor] Failed to send notification:', err?.message || 'Unknown error');
             });
         }
 
@@ -316,7 +316,7 @@ const AIActionExecutor = {
                     patternLearned: true,
                     patternInfo: patternResult,
                 };
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.error('[AIActionExecutor] Pattern learning error:', err);
             }
         }
@@ -365,7 +365,7 @@ const AIActionExecutor = {
                     patternLearned: true,
                     patternInfo: patternResult,
                 };
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.error('[AIActionExecutor] Pattern learning error:', err);
             }
         }
@@ -406,7 +406,7 @@ const AIActionExecutor = {
             ]);
 
             return { success: true, actionId, result };
-        } catch (err: unknown) {
+        } catch (err: any) {
             return { success: false, error: (err as Error).message };
         }
     },
@@ -620,7 +620,7 @@ const AIActionExecutor = {
                 isActionable: true,
                 actionUrl: `/ai/actions/${actionId}`,
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.warn('[AIActionExecutor] Failed to create notification:', (err as Error).message);
         }
     },

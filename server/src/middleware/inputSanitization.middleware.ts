@@ -7,7 +7,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import { sanitizeObject, sanitizeString, stripHtml } from '../utils/security.utils.js';
 
 // ==========================================
@@ -186,8 +186,3 @@ export default {
     sqlParamValidationMiddleware,
     deepSanitize,
 };
-
-
-
-
-

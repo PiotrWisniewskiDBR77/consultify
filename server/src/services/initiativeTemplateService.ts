@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
-import DbPromise from '../utils/DbPromise.ts';
+import DbPromise from '../utils/DbPromise.js';
 
 export interface InitiativeTemplate {
     id: string;

@@ -766,8 +766,3 @@ const DLPView: React.FC = () => {
 };
 
 export default DLPView;
-
-
-
-
-

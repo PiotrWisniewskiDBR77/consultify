@@ -527,14 +527,9 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeSection,
     }, [activeSection, navGroups, expandedGroups]);
 
     return (
-        <div
-            className={cn(
-                'flex flex-col h-full bg-slate-50 dark:bg-navy-900/50 border-r border-slate-200 dark:border-navy-700',
-                className,
-            )}
-        >
+        <div className={cn('flex flex-col h-full bg-white dark:bg-navy-900 shadow-sm', className)}>
             {/* Search */}
-            <div className="p-4 border-b border-slate-200 dark:border-navy-700">
+            <div className="p-4 border-b border-slate-100 dark:border-navy-800">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input
@@ -590,7 +585,9 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeSection,
                                                 <Icon
                                                     className={cn(
                                                         'w-4 h-4 flex-shrink-0',
-                                                        isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500',
+                                                        isActive
+                                                            ? 'text-violet-600 dark:text-violet-400'
+                                                            : 'text-slate-400 dark:text-slate-500',
                                                     )}
                                                 />
                                                 <span className="flex-1 text-left truncate">{item.label}</span>
@@ -618,7 +615,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeSection,
             </ScrollArea>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-200 dark:border-navy-700">
+            <div className="p-4 border-t border-slate-100 dark:border-navy-800">
                 <button
                     onClick={() => window.history.back()}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
@@ -632,6 +629,3 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeSection,
 };
 
 export default SettingsSidebar;
-
-
-

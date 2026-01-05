@@ -113,15 +113,9 @@ export const PMODomainBadge: React.FC<{ mapping: PMOStandardsMapping; showToolti
 };
 
 export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({ metrics, complianceScore, loading }) => {
-    const tierGradient = useMemo(
-        () => (metrics ? TIER_COLORS[metrics.partnerTier] : TIER_COLORS.BRONZE),
-        [metrics],
-    );
+    const tierGradient = useMemo(() => (metrics ? TIER_COLORS[metrics.partnerTier] : TIER_COLORS.BRONZE), [metrics]);
 
-    const tierLabel = useMemo(
-        () => (metrics ? TIER_LABELS[metrics.partnerTier] : TIER_LABELS.BRONZE),
-        [metrics],
-    );
+    const tierLabel = useMemo(() => (metrics ? TIER_LABELS[metrics.partnerTier] : TIER_LABELS.BRONZE), [metrics]);
 
     if (loading) {
         return (
@@ -147,9 +141,7 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({ metrics,
     return (
         <div className="space-y-6">
             {/* Partner Tier & Compliance Banner */}
-            <div
-                className={`rounded-3xl bg-gradient-to-r ${tierGradient} p-6 text-white shadow-lg`}
-            >
+            <div className={`rounded-3xl bg-gradient-to-r ${tierGradient} p-6 text-white shadow-lg`}>
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
@@ -177,7 +169,9 @@ export const EcosystemAnalytics: React.FC<EcosystemAnalyticsProps> = ({ metrics,
                             <div className="text-sm font-medium text-white/80">Network Effect</div>
                             <div className="flex items-center gap-2">
                                 <Network size={20} />
-                                <span className="text-3xl font-bold">{metrics.networkEffectMultiplier.toFixed(1)}x</span>
+                                <span className="text-3xl font-bold">
+                                    {metrics.networkEffectMultiplier.toFixed(1)}x
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -349,4 +343,3 @@ const HealthIndicator: React.FC<HealthIndicatorProps> = ({ label, status, value 
 };
 
 export default EcosystemAnalytics;
-

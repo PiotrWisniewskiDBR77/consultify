@@ -14,8 +14,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Lazy-loaded dependencies
 let PiiRedactor: any;
@@ -238,7 +238,7 @@ export async function logAudit(params: LogAuditParams): Promise<LogAuditResult> 
             [orgId],
         );
         prevHash = prevRow?.record_hash || null;
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[GovernanceAudit] Error fetching prev hash:', err);
         // Continue without hash chain if error
     }

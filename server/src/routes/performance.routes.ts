@@ -9,14 +9,14 @@
 import { type Request, type Response, Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import { getMetricsService } from '../services/MetricsService.js';
+import { getMetricsService } from '../services/metricsService.js';
 import {
     dbQueryDurationSeconds,
     httpRequestDurationSeconds,
     llmCallDurationSeconds,
-} from '../services/MetricsService.js';
-import { dbQueriesPerSecond, httpRequestsPerSecond, llmRequestsPerSecond } from '../services/MetricsService.js';
-import logger from '../utils/Logger.ts';
+} from '../services/metricsService.js';
+import { dbQueriesPerSecond, httpRequestsPerSecond, llmRequestsPerSecond } from '../services/metricsService.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -74,11 +74,11 @@ router.get('/metrics', async (_req: Request, res: Response) => {
             raw: process.env.NODE_ENV === 'development' ? prometheusMetrics : undefined,
         };
 
-        res.status(200).json(response);
+        return res.status(200).json(response);
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('[PerformanceRoutes] Error generating performance metrics:', err);
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to generate performance metrics',
             details: err.message,
         });

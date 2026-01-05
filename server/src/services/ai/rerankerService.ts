@@ -7,8 +7,8 @@
 
 import { z } from 'zod';
 
-import * as DbPromise from '../../utils/DbPromise.ts';
-import logger from '../../utils/Logger.ts';
+import * as DbPromise from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import { isOpenAIResponse, validateDatabaseRow } from '../../utils/typeGuards.js';
 
 type RerankDocument = {
@@ -98,7 +98,7 @@ const deps: {
  */
 async function initDeps(): Promise<void> {
     if (!deps.aiLogger) {
-        const { aiLogger } = await import('../../../services/ai/logger.js');
+        const { aiLogger } = await import('.././ai/logger.js');
         deps.aiLogger = aiLogger as AiLogger;
     }
     if (!deps.OpenAI) {

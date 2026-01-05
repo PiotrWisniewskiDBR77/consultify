@@ -33,8 +33,8 @@ import {
     Globe,
     History,
     Key,
-    LayoutDashboard,
     Layers,
+    LayoutDashboard,
     Lock,
     LogOut,
     Mail,
@@ -161,9 +161,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
     const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
-    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-        new Set(['overview', 'organization', 'team']),
-    );
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['overview', 'organization', 'team']));
 
     // Navigation groups configuration
     const navGroups: NavGroup[] = useMemo(
@@ -543,9 +541,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
     // Auto-expand group containing active section
     useEffect(() => {
-        const activeGroup = navGroups.find((group) =>
-            group.items.some((item) => item.id === activeSection),
-        );
+        const activeGroup = navGroups.find((group) => group.items.some((item) => item.id === activeSection));
         if (activeGroup && !expandedGroups.has(activeGroup.id)) {
             setExpandedGroups((prev) => new Set([...prev, activeGroup.id]));
         }
@@ -702,14 +698,14 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                                                 <Icon
                                                     className={cn(
                                                         'w-4 h-4 flex-shrink-0',
-                                                        isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500',
+                                                        isActive
+                                                            ? 'text-violet-600 dark:text-violet-400'
+                                                            : 'text-slate-400 dark:text-slate-500',
                                                     )}
                                                 />
                                                 <span className="flex-1 text-left truncate">{item.label}</span>
                                                 {renderBadge(item)}
-                                                {item.external && (
-                                                    <ExternalLink className="w-3 h-3 opacity-50" />
-                                                )}
+                                                {item.external && <ExternalLink className="w-3 h-3 opacity-50" />}
                                             </button>
                                         );
                                     })}
@@ -735,6 +731,3 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 };
 
 export default AdminSidebar;
-
-
-

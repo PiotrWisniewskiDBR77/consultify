@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { CommissionStatement, PartnerDeal, PARTNER_PMO_MAPPING } from '../../views/partner/types';
+import { CommissionStatement, PARTNER_PMO_MAPPING, PartnerDeal } from '../../views/partner/types';
 import { PMODomainBadge } from './EcosystemAnalytics';
 
 interface CommissionIntelligenceProps {
@@ -151,7 +151,9 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Commission Intelligence</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">AI-powered insights and predictions</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            AI-powered insights and predictions
+                        </p>
                     </div>
                     <PMODomainBadge mapping={PARTNER_PMO_MAPPING.COMMISSION_SETTLEMENT} />
                 </div>
@@ -164,9 +166,7 @@ export const CommissionIntelligence: React.FC<CommissionIntelligenceProps> = ({
                             No insights available yet. Keep registering deals to unlock AI recommendations.
                         </div>
                     ) : (
-                        aiInsights.map((insight, index) => (
-                            <InsightCard key={index} insight={insight} />
-                        ))
+                        aiInsights.map((insight, index) => <InsightCard key={index} insight={insight} />)
                     )}
                 </div>
             </div>
@@ -377,4 +377,3 @@ const DealRow: React.FC<{ deal: PartnerDeal; onView: () => void }> = ({ deal, on
 };
 
 export default CommissionIntelligence;
-

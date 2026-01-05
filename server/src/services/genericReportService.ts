@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import PDFParserService from './pdfParserService.js';
 
 /**
@@ -65,9 +65,10 @@ class GenericReportService {
             ]);
 
             // Start async processing
-            this.processReport(reportId, filePath, fileType).catch((err: Error | null) => {
-                logger.error('[GenericReport] Processing error:', err.message);
-                this.updateProcessingStatus(reportId, 'error', err.message);
+            this.processReport(reportId, filePath, fileType).catch((err: any) => {
+                const msg = err?.message || String(err);
+                logger.error('[GenericReport] Processing error:', msg);
+                this.updateProcessingStatus(reportId, 'error', msg);
             });
 
             return {

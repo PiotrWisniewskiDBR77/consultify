@@ -7,7 +7,8 @@
 
 import { Router } from 'express';
 
-import InvitationController from '../controllers/InvitationController.js';
+import InvitationControllerRaw from '../controllers/InvitationController.js';
+const InvitationController = InvitationControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';

@@ -11,8 +11,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -56,7 +56,7 @@ let aiLogger: AILoggerInterface | null = null;
 let adaptiveResponseService: AdaptiveResponseServiceInterface | null = null;
 
 try {
-    const loggerModule = await import('../../services/ai/logger.js');
+    const loggerModule = (await import('../services/ai/logger.js')) as any;
     const module = loggerModule.default || loggerModule;
     aiLogger = module.aiLogger || module;
 } catch {
@@ -64,7 +64,7 @@ try {
 }
 
 try {
-    const adaptiveModule = await import('../../services/ai/adaptiveResponseService.js');
+    const adaptiveModule = (await import('../services/ai/adaptiveResponseService.js')) as any;
     const module = adaptiveModule.default || adaptiveModule;
     adaptiveResponseService = (module.adaptiveResponseService || module) as AdaptiveResponseServiceInterface;
 } catch {
@@ -133,7 +133,7 @@ router.post(
                 aiLogger.info('AIFeedback', `Feedback submitted: ${feedbackType} for ${capability || 'unknown'}`);
             }
 
-            res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 feedbackId: id,
             });
@@ -144,7 +144,7 @@ router.post(
                     `Submit error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to submit feedback' });
+            return res.status(500).json({ error: 'Failed to submit feedback' });
         }
     }),
 );
@@ -227,7 +227,7 @@ router.get(
             const totalFeedback = helpfulCount + notHelpfulCount;
             const satisfactionScore = totalFeedback > 0 ? ((helpfulCount / totalFeedback) * 100).toFixed(1) : null;
 
-            res.json({
+            return res.json({
                 success: true,
                 period,
                 stats: {
@@ -248,7 +248,7 @@ router.get(
                     `Stats error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to fetch feedback stats' });
+            return res.status(500).json({ error: 'Failed to fetch feedback stats' });
         }
     }),
 );
@@ -294,7 +294,7 @@ router.get(
 
             const feedback = await dbAll(query, params);
 
-            res.json({
+            return res.json({
                 success: true,
                 feedback,
             });
@@ -305,7 +305,7 @@ router.get(
                     `Recent error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to fetch recent feedback' });
+            return res.status(500).json({ error: 'Failed to fetch recent feedback' });
         }
     }),
 );
@@ -392,7 +392,7 @@ router.get(
                 suggestion: generateSuggestion(area),
             }));
 
-            res.json({
+            return res.json({
                 success: true,
                 suggestions,
             });
@@ -403,7 +403,7 @@ router.get(
                     `Suggestions error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to generate suggestions' });
+            return res.status(500).json({ error: 'Failed to generate suggestions' });
         }
     }),
 );
@@ -482,7 +482,7 @@ router.post(
                 );
             }
 
-            res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 feedbackId: result.feedbackId,
                 message: 'Feedback recorded successfully',
@@ -494,7 +494,7 @@ router.post(
                     `Response feedback error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to submit response feedback' });
+            return res.status(500).json({ error: 'Failed to submit response feedback' });
         }
     }),
 );
@@ -519,7 +519,7 @@ router.get(
             const stats = await adaptiveResponseService.getUserFeedbackStats(userId);
             const recommendedMode = await adaptiveResponseService.getRecommendedMode(userId);
 
-            res.json({
+            return res.json({
                 success: true,
                 stats: stats || {
                     total_feedback: 0,
@@ -536,7 +536,7 @@ router.get(
                     `Response stats error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to get response stats' });
+            return res.status(500).json({ error: 'Failed to get response stats' });
         }
     }),
 );
@@ -584,7 +584,7 @@ router.get(
                 satisfaction_score?: number;
             } | null;
 
-            res.json({
+            return res.json({
                 success: true,
                 preferences: prefs || {
                     response_mode_preference: 'standard',
@@ -601,7 +601,7 @@ router.get(
                     `Preferences error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to get preferences' });
+            return res.status(500).json({ error: 'Failed to get preferences' });
         }
     }),
 );

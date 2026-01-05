@@ -6,8 +6,8 @@
  * Implements rate limiting and priority system
  */
 
-import logger from '../utils/Logger.ts';
-import { alerts } from './ai/alerting.js';
+import logger from '../utils/Logger.js';
+import alertingService from './ai/alerting.js';
 import { getAlertEmailService } from './AlertEmailService.js';
 
 // ==========================================
@@ -175,7 +175,7 @@ class AlertAggregator {
 
         // Send via alerting service
         try {
-            await alerts.send(alert.alertType as any, {
+            await alertingService.send(alert.alertType as any, {
                 ...alert.data,
                 aggregatedCount: alert.count,
                 firstOccurrence: alert.firstOccurrence,
@@ -300,8 +300,3 @@ export function getAlertAggregator(): AlertAggregator {
 
 export default AlertAggregator;
 export type { AggregatedAlert, AlertGroup };
-
-
-
-
-

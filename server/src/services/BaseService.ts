@@ -11,9 +11,9 @@
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -24,6 +24,9 @@ export interface QueryOptions {
     ttl?: number;
     parseJson?: boolean;
     jsonFields?: string[];
+    // Compatibility for migrated code if needed, but standardizing on cacheKey
+    _cacheKey?: string;
+    _ttl?: number;
 }
 
 export interface QueryParallelItem {
@@ -52,12 +55,12 @@ export abstract class BaseService<T extends { id: string }> {
     /**
      * Execute SELECT query returning multiple rows
      */
-    protected async queryAll<R = unknown>(
+    protected async queryAll<R extends Record<string, unknown> = Record<string, unknown>>(
         sql: string,
         params: unknown[] = [],
         options: QueryOptions = {},
     ): Promise<R[]> {
-        const { _cacheKey, _ttl, parseJson = false, jsonFields = [] } = options;
+        const { cacheKey, ttl, _cacheKey, _ttl, parseJson = false, jsonFields = [] } = options;
 
         // TODO: Implement cache integration when cacheHelper is migrated
         // if (cacheKey) {
@@ -74,12 +77,12 @@ export abstract class BaseService<T extends { id: string }> {
     /**
      * Execute SELECT query returning single row
      */
-    protected async queryOne<R = unknown>(
+    protected async queryOne<R extends Record<string, unknown> = Record<string, unknown>>(
         sql: string,
         params: unknown[] = [],
         options: QueryOptions = {},
     ): Promise<R | null> {
-        const { _cacheKey, _ttl, parseJson = false, jsonFields = [] } = options;
+        const { cacheKey, ttl, _cacheKey, _ttl, parseJson = false, jsonFields = [] } = options;
 
         // TODO: Implement cache integration when cacheHelper is migrated
         // if (cacheKey) {
@@ -107,22 +110,28 @@ export abstract class BaseService<T extends { id: string }> {
     /**
      * Internal query all implementation
      */
-    private async queryAllInternal<R = unknown>(sql: string, params: unknown[]): Promise<R[]> {
+    private async queryAllInternal<R extends Record<string, unknown> = Record<string, unknown>>(
+        sql: string,
+        params: unknown[],
+    ): Promise<R[]> {
         return await DbPromise.all<R>(sql, params);
     }
 
     /**
      * Internal query one implementation
      */
-    private async queryOneInternal<R = unknown>(sql: string, params: unknown[]): Promise<R | null> {
+    private async queryOneInternal<R extends Record<string, unknown> = Record<string, unknown>>(
+        sql: string,
+        params: unknown[],
+    ): Promise<R | null> {
         return await DbPromise.get<R>(sql, params);
     }
 
     /**
      * Parse JSON fields in a row
      */
-    private parseJsonFields(row: Record<string, unknown>, jsonFields: string[]): Record<string, unknown> {
-        const parsed = { ...row };
+    private parseJsonFields<R extends Record<string, unknown>>(row: R, jsonFields: string[]): R {
+        const parsed: any = { ...row };
         jsonFields.forEach((field) => {
             if (parsed[field] && typeof parsed[field] === 'string') {
                 try {
@@ -132,7 +141,7 @@ export abstract class BaseService<T extends { id: string }> {
                 }
             }
         });
-        return parsed;
+        return parsed as R;
     }
 
     // Abstract methods to be implemented by subclasses

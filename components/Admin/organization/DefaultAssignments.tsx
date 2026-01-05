@@ -10,16 +10,7 @@
  * Design: Form with dropdowns and toggles
  */
 
-import {
-    Briefcase,
-    CheckCircle,
-    HelpCircle,
-    Save,
-    Settings,
-    Shield,
-    Star,
-    Users,
-} from 'lucide-react';
+import { Briefcase, CheckCircle, HelpCircle, Save, Settings, Shield, Star, Users } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -77,10 +68,7 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
 
     // Update config
     const updateConfig = useCallback(
-        <K extends keyof DefaultAssignmentsConfig>(
-            key: K,
-            value: DefaultAssignmentsConfig[K],
-        ) => {
+        <K extends keyof DefaultAssignmentsConfig>(key: K, value: DefaultAssignmentsConfig[K]) => {
             onChange({ ...config, [key]: value });
         },
         [config, onChange],
@@ -93,7 +81,12 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
                 <div>
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                         {t('admin.organization.defaults.title', 'Default Assignments')}
-                        <Tooltip content={t('admin.organization.defaults.tooltip', 'Configure what happens when new users join')}>
+                        <Tooltip
+                            content={t(
+                                'admin.organization.defaults.tooltip',
+                                'Configure what happens when new users join',
+                            )}
+                        >
                             <HelpCircle size={16} className="text-slate-400" />
                         </Tooltip>
                     </h3>
@@ -126,9 +119,7 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
                         onChange={(e) => updateConfig('defaultTeamId', e.target.value || null)}
                         className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                     >
-                        <option value="">
-                            {t('admin.organization.defaults.noDefaultTeam', 'No default team')}
-                        </option>
+                        <option value="">{t('admin.organization.defaults.noDefaultTeam', 'No default team')}</option>
                         {teams.map((team) => (
                             <option key={team.id} value={team.id}>
                                 {team.name} ({team.memberCount} members)
@@ -181,16 +172,11 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
                         <select
                             value={config.defaultWorkspaceAccess}
                             onChange={(e) =>
-                                updateConfig(
-                                    'defaultWorkspaceAccess',
-                                    e.target.value as 'full' | 'limited' | 'none',
-                                )
+                                updateConfig('defaultWorkspaceAccess', e.target.value as 'full' | 'limited' | 'none')
                             }
                             className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                         >
-                            <option value="full">
-                                {t('admin.organization.defaults.accessFull', 'Full Access')}
-                            </option>
+                            <option value="full">{t('admin.organization.defaults.accessFull', 'Full Access')}</option>
                             <option value="limited">
                                 {t('admin.organization.defaults.accessLimited', 'Limited Access')}
                             </option>
@@ -247,9 +233,7 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
                         <input
                             type="checkbox"
                             checked={config.autoJoinPublicChannels}
-                            onChange={(e) =>
-                                updateConfig('autoJoinPublicChannels', e.target.checked)
-                            }
+                            onChange={(e) => updateConfig('autoJoinPublicChannels', e.target.checked)}
                             className="rounded border-slate-300"
                         />
                     </label>
@@ -269,9 +253,7 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
                         <input
                             type="checkbox"
                             checked={config.requireProfileCompletion}
-                            onChange={(e) =>
-                                updateConfig('requireProfileCompletion', e.target.checked)
-                            }
+                            onChange={(e) => updateConfig('requireProfileCompletion', e.target.checked)}
                             className="rounded border-slate-300"
                         />
                     </label>
@@ -303,9 +285,7 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
                             </label>
                             <select
                                 value={config.defaultMentorId || ''}
-                                onChange={(e) =>
-                                    updateConfig('defaultMentorId', e.target.value || undefined)
-                                }
+                                onChange={(e) => updateConfig('defaultMentorId', e.target.value || undefined)}
                                 className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                             >
                                 <option value="">
@@ -340,9 +320,7 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
                         min="0"
                         max="365"
                         value={config.probationPeriodDays}
-                        onChange={(e) =>
-                            updateConfig('probationPeriodDays', parseInt(e.target.value) || 0)
-                        }
+                        onChange={(e) => updateConfig('probationPeriodDays', parseInt(e.target.value) || 0)}
                         className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                     />
                     <p className="text-xs text-slate-500 mt-1">
@@ -361,6 +339,3 @@ export const DefaultAssignments: React.FC<DefaultAssignmentsProps> = ({
 };
 
 export default DefaultAssignments;
-
-
-

@@ -10,14 +10,14 @@
 import { Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 
 const router = Router();
 
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/user-keyboard-shortcuts.js');
-const user_keyboard_shortcutsRoutesJS = module.default || module;
+const shortcutsModule = (await import('./user-keyboard-shortcuts.js')) as any;
+const user_keyboard_shortcutsRoutesJS = shortcutsModule.default || shortcutsModule;
 
 // Apply rate limiting
 router.use(defaultRateLimiter);

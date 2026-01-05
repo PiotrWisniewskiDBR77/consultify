@@ -3,11 +3,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../../../../database/Database.js';
 import type { IDatabase } from '../../../../database/IDatabase.js';
 
-export interface CreateProjectCommand {
-    name: string;
-    organizationId: string;
-    ownerId: string;
-    summary?: string | null;
+export class CreateProjectCommand {
+    constructor(
+        public readonly name: string,
+        public readonly organizationId: string,
+        public readonly ownerId: string,
+        public readonly summary?: string | null,
+    ) {}
 }
 
 export class CreateProjectHandler {

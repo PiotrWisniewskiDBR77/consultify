@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import PDFParserService from './pdfParserService.js';
 
 /**
@@ -95,9 +95,10 @@ class ExternalAssessmentService {
 
             // Start async processing (if PDF)
             if (uploadMethod === 'PDF_PARSE') {
-                this.processAssessmentFile(assessmentId, filePath, frameworkType).catch((err: Error | null) => {
-                    logger.error('[ExternalAssessment] Processing error:', err.message);
-                    this.updateProcessingStatus(assessmentId, 'error', err.message);
+                this.processAssessmentFile(assessmentId, filePath, frameworkType).catch((err: any) => {
+                    const msg = err?.message || String(err);
+                    logger.error('[ExternalAssessment] Processing error:', msg);
+                    this.updateProcessingStatus(assessmentId, 'error', msg);
                 });
             }
 

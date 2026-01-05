@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -42,6 +42,11 @@ interface Partner {
     created_at: string;
     updated_at: string;
 }
+
+type PartnerWithMetadata = Omit<Partner, 'metadata'> & {
+    metadata?: Record<string, unknown>;
+    isActive: boolean;
+};
 
 interface PartnerCreateParams {
     name: string;
@@ -90,7 +95,7 @@ class PartnerServiceClass {
         return new Promise((resolve, reject) => {
             this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as T[]) || []);
             });
         });
     }
@@ -102,7 +107,7 @@ class PartnerServiceClass {
         return new Promise((resolve, reject) => {
             this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row || null);
+                else resolve((row as T) || null);
             });
         });
     }
@@ -122,7 +127,7 @@ class PartnerServiceClass {
     /**
      * Parse partner row from database
      */
-    private parsePartnerRow(row: Partner): Partner & { metadata?: Record<string, unknown>; isActive: boolean } {
+    private parsePartnerRow(row: Partner): PartnerWithMetadata {
         return {
             ...row,
             metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
@@ -133,9 +138,7 @@ class PartnerServiceClass {
     /**
      * Create a new partner
      */
-    async createPartner(
-        params: PartnerCreateParams,
-    ): Promise<Partner & { metadata?: Record<string, unknown>; isActive: boolean; createdAt: string }> {
+    async createPartner(params: PartnerCreateParams): Promise<PartnerWithMetadata & { createdAt: string }> {
         const {
             name,
             partnerType,
@@ -164,29 +167,27 @@ class PartnerServiceClass {
 
         logger.info(`[PartnerService] Created partner: ${name} (${partnerType})`);
 
-        const createdPartner: Partner & { metadata?: Record<string, unknown>; isActive: boolean; createdAt: string } = {
+        const createdPartner: PartnerWithMetadata & { createdAt: string } = {
             id,
             name,
             partner_type: partnerType,
             email,
             contact_name: contactName,
             default_revenue_share_percent: defaultRevenueSharePercent,
-            metadata: JSON.stringify(metadata),
+            metadata,
             is_active: 1,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             isActive: true,
             createdAt: new Date().toISOString(),
         };
-        return { ...createdPartner, metadata };
+        return createdPartner;
     }
 
     /**
      * Get partner by ID
      */
-    async getPartner(
-        id: string,
-    ): Promise<(Partner & { metadata?: Record<string, unknown>; isActive: boolean }) | null> {
+    async getPartner(id: string): Promise<PartnerWithMetadata | null> {
         const row = await this.dbGet<Partner>(`SELECT * FROM partners WHERE id = ?`, [id]);
 
         if (!row) return null;
@@ -197,9 +198,7 @@ class PartnerServiceClass {
     /**
      * Get all partners with filters
      */
-    async getPartners(
-        filters: PartnerFilters = {},
-    ): Promise<Array<Partner & { metadata?: Record<string, unknown>; isActive: boolean }>> {
+    async getPartners(filters: PartnerFilters = {}): Promise<Array<PartnerWithMetadata>> {
         let query = 'SELECT * FROM partners WHERE 1=1';
         const params: unknown[] = [];
 
@@ -232,10 +231,7 @@ class PartnerServiceClass {
     /**
      * Update partner
      */
-    async updatePartner(
-        id: string,
-        updates: PartnerUpdateParams,
-    ): Promise<(Partner & { metadata?: Record<string, unknown>; isActive: boolean }) | null> {
+    async updatePartner(id: string, updates: PartnerUpdateParams): Promise<PartnerWithMetadata | null> {
         const fields: string[] = [];
         const values: unknown[] = [];
 
@@ -287,9 +283,7 @@ class PartnerServiceClass {
     /**
      * List all partners (alias for getPartners)
      */
-    async listPartners(
-        filters: PartnerFilters = {},
-    ): Promise<Array<Partner & { metadata?: Record<string, unknown>; isActive: boolean; createdAt?: string }>> {
+    async listPartners(filters: PartnerFilters = {}): Promise<Array<PartnerWithMetadata & { createdAt?: string }>> {
         const partners = await this.getPartners(filters);
         return partners.map((p) => ({
             ...p,
@@ -448,9 +442,7 @@ class PartnerServiceClass {
     /**
      * Get partner by their partner code (for attribution lookups)
      */
-    async getByPartnerCode(
-        partnerCode: string,
-    ): Promise<(Partner & { metadata?: Record<string, unknown>; isActive: boolean }) | null> {
+    async getByPartnerCode(partnerCode: string): Promise<PartnerWithMetadata | null> {
         const row = await this.dbGet<Partner>(
             `SELECT p.* FROM partners p
              JOIN promo_codes pc ON pc.partner_id = p.id

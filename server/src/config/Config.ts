@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // ZOD SCHEMAS

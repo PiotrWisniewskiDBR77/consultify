@@ -441,14 +441,14 @@ export const FreeAssessmentView: React.FC = () => {
                     messages={
                         isStreaming
                             ? [
-                                ...messages,
-                                {
-                                    id: 'streaming-ai',
-                                    role: 'ai',
-                                    content: streamedContent,
-                                    timestamp: new Date(),
-                                } as ChatMessage,
-                            ]
+                                  ...messages,
+                                  {
+                                      id: 'streaming-ai',
+                                      role: 'ai',
+                                      content: streamedContent,
+                                      timestamp: new Date(),
+                                  } as ChatMessage,
+                              ]
                             : messages
                     }
                     onSendMessage={handleSendMessage}

@@ -8,8 +8,8 @@ import { v4 as uuid } from 'uuid';
 
 import ActivityService from '../services/ActivityService.js';
 import NotificationService from '../services/NotificationService.js';
-import DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
 import ProjectMemberService from './projectMemberService.js';
@@ -598,9 +598,9 @@ export class TaskAssignmentService {
                 projectId,
             ])) as { organization_id: string } | undefined;
 
-            if (ActivityService?.log) {
+            if (project?.organization_id && ActivityService?.log) {
                 await ActivityService.log({
-                    organizationId: project?.organization_id,
+                    organizationId: project.organization_id,
                     userId: data.assignedById || data.escalatedById || null,
                     action: type,
                     entityType: 'TASK',

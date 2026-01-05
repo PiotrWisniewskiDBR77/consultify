@@ -8,7 +8,7 @@
 import { NextFunction, Request, Response } from 'express';
 
 import usageService from '../../services/usageService.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================

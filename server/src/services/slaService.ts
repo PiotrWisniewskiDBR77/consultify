@@ -11,9 +11,9 @@ import { v4 as _uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import auditLogger from '../utils/auditLogger.ts';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import auditLogger from '../utils/auditLogger.js';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // CONSTANTS
@@ -117,7 +117,7 @@ export async function markExpired(assignmentId: string): Promise<boolean> {
     const result = await DbPromise.run(db, `UPDATE approval_assignments SET status = 'EXPIRED' WHERE id = ?`, [
         assignmentId,
     ]);
-    return result.changes > 0;
+    return (result.changes || 0) > 0;
 }
 
 /**
@@ -158,9 +158,11 @@ export async function escalateAssignment(
     }
 
     auditLogger.warn('APPROVAL_ESCALATED', {
-        assignment_id: assignmentId,
-        escalated_to: toUserId,
-        reason,
+        metadata: {
+            assignment_id: assignmentId,
+            escalated_to: toUserId,
+            reason,
+        },
     });
 
     return { assignmentId, escalatedTo: toUserId, reason };
@@ -233,7 +235,7 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
                     );
                     summary.notificationsSent++;
                 }
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err as Error;
                 logger.error(`[SLAService] Error processing assignment ${assignment.id}:`, error);
                 summary.errors.push({ assignmentId: assignment.id, error: error.message });
@@ -249,10 +251,10 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
         });
 
         return summary;
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         logger.error('[SLAService] SLA check failed:', error);
-        auditLogger.error('SLA_CHECK_FAILED', { error: error.message });
+        auditLogger.error('SLA_CHECK_FAILED', { error_message: error.message });
         throw err;
     }
 }

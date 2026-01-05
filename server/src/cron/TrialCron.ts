@@ -12,8 +12,8 @@
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -60,7 +60,7 @@ class TrialCron {
             this.deps.demoService = await import('../services/demoService.js').then((m) => m.default || m);
         }
         if (!this.deps.trialService) {
-            this.deps.trialService = await import('../services/trialService.js').then((m) => m.default || m);
+            this.deps.trialService = (await import('../services/trialService.js').then((m) => m.default || m)) as any;
         }
         return this.deps as Dependencies;
     }
@@ -79,11 +79,11 @@ class TrialCron {
             logger.info(`[TrialCron] Cleaned up ${demosCleanedUp} expired demo organization(s)`);
 
             // 2. Send trial warning notifications (T-7 days)
-            const warningsSent = await this.deps.trialService.sendTrialWarnings();
+            const warningsSent = await deps.trialService.sendTrialWarnings();
             logger.info(`[TrialCron] Sent ${warningsSent} trial warning notification(s)`);
 
             // 3. Lock expired trials
-            const trialsLocked = await this.deps.trialService.processExpiredTrials();
+            const trialsLocked = await deps.trialService.processExpiredTrials();
             logger.info(`[TrialCron] Locked ${trialsLocked} expired trial organization(s)`);
 
             logger.info('[TrialCron] Daily trial/demo tasks completed successfully');
@@ -112,7 +112,7 @@ class TrialCron {
             const deleted = result.changes || 0;
             logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
             return deleted;
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[TrialCron] Error cleaning up usage counters:', err);
             throw err;
         }

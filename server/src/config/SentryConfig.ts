@@ -12,7 +12,7 @@ import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import type { Express, NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // ZOD SCHEMAS
@@ -95,9 +95,9 @@ export function initSentry(app: Express): SentryHandlers {
         // Integrations
         integrations: [
             // Express integration for request tracing
-            expressIntegration({ app }),
+            (expressIntegration as any)({ app }),
             // HTTP integration for tracing outgoing requests
-            httpIntegration({ tracing: true }),
+            (httpIntegration as any)({ tracing: true }),
             // Profiling (optional, requires @sentry/profiling-node)
             nodeProfilingIntegration(),
         ],
@@ -164,7 +164,7 @@ export function initSentry(app: Express): SentryHandlers {
         tracingHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
 
         // Error handler - must be after routes and before other error handlers
-        errorHandler: expressErrorHandler({
+        errorHandler: (Sentry as any).Handlers.errorHandler({
             shouldHandleError(error: Error & { status?: number }) {
                 // Only report 500+ errors automatically
                 if (error.status && error.status >= 500) {

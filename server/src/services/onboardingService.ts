@@ -13,8 +13,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
-import type { _RunResult, IDatabase } from '../database/IDatabase.js';
-import _logger from '../utils/Logger.ts';
+import type { IDatabase } from '../database/IDatabase.js';
+import _logger from '../utils/Logger.js';
 
 // ============================================
 // VALIDATION
@@ -177,7 +177,7 @@ let AiService: any = null;
 
 async function getAiService() {
     if (!AiService) {
-        const module = await import('../../services/aiService.js');
+        const module = await import('./aiService.js');
         AiService = module.default || module;
     }
     return AiService;

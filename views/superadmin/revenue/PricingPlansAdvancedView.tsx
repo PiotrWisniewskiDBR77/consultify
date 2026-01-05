@@ -571,8 +571,3 @@ export const PricingPlansAdvancedView: React.FC = () => {
 };
 
 export default PricingPlansAdvancedView;
-
-
-
-
-

@@ -1,8 +1,8 @@
 import { getDatabase } from '../../../../database/Database.js';
 import type { IDatabase } from '../../../../database/IDatabase.js';
 
-export interface DeleteProjectCommand {
-    projectId: string;
+export class DeleteProjectCommand {
+    constructor(public readonly projectId: string) {}
 }
 
 export class DeleteProjectHandler {

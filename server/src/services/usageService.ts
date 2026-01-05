@@ -10,8 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -156,7 +156,7 @@ let budgetManagementService: any;
 
 async function initDeps(): Promise<void> {
     if (!billingService) {
-        const billingModule = await import('./billingService.js');
+        const billingModule = (await import('./BillingService.js')) as any;
         billingService = billingModule.default || billingModule;
     }
     if (!payAsYouGoService) {

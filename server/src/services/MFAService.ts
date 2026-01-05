@@ -1,12 +1,33 @@
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
+
+const loadMFAService = createCachedLazyService<any>('./mfaService.js');
+
 /**
- * Mfa Service
- * Enterprise SaaS Architecture - TypeScript Backend
- *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * MFA Service Wrapper
+ * Handles lazy loading and dependency injection for integration tests
  */
+const serviceWrapper = {
+    setDependencies: (deps: any) => {
+        loadMFAService().then((service) => {
+            if (service.setDependencies) {
+                service.setDependencies(deps);
+            }
+        });
+    },
+};
 
-// Lazy load the JS service module
-import service from '../../services/mfaService.js';
+// Export default proxy to handle all method calls lazily
+export default new Proxy(serviceWrapper, {
+    get: (target: any, prop: string) => {
+        if (prop in target) return target[prop];
 
-// Export default instance (for backward compatibility)
-export default service;
+        return (...args: any[]) => {
+            return loadMFAService().then((service) => {
+                if (typeof service[prop] === 'function') {
+                    return service[prop](...args);
+                }
+                return service[prop];
+            });
+        };
+    },
+});

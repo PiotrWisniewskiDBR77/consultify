@@ -175,7 +175,7 @@ import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
 import workstreamsRoutes from './routes/workstreams.routes.js';
-import logger from './utils/Logger.ts';
+import logger from './utils/Logger.js';
 
 export class ApiGateway {
     private static instance: ApiGateway;

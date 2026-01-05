@@ -214,7 +214,12 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                 <div>
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                         {t('admin.team.accountTypes.title', 'Account Types')}
-                        <Tooltip content={t('admin.team.accountTypes.tooltip', 'Different account types have different levels of access and permissions')}>
+                        <Tooltip
+                            content={t(
+                                'admin.team.accountTypes.tooltip',
+                                'Different account types have different levels of access and permissions',
+                            )}
+                        >
                             <HelpCircle size={16} className="text-slate-400" />
                         </Tooltip>
                     </h3>
@@ -225,11 +230,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                         })}
                     </p>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowComparison(!showComparison)}
-                >
+                <Button variant="outline" size="sm" onClick={() => setShowComparison(!showComparison)}>
                     {showComparison
                         ? t('admin.team.accountTypes.hideComparison', 'Hide Comparison')
                         : t('admin.team.accountTypes.showComparison', 'Compare Permissions')}
@@ -272,12 +273,8 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                             </div>
 
                             {/* Info */}
-                            <h4 className="font-semibold text-navy-900 dark:text-white mb-1">
-                                {type.name}
-                            </h4>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                                {type.description}
-                            </p>
+                            <h4 className="font-semibold text-navy-900 dark:text-white mb-1">{type.name}</h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{type.description}</p>
 
                             {/* User Count */}
                             <div className="flex items-center justify-between">
@@ -328,10 +325,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                                     {accountTypes.map((type) => {
                                         const colors = getColorClasses(type.color);
                                         return (
-                                            <th
-                                                key={type.id}
-                                                className="px-4 py-3 text-center min-w-[100px]"
-                                            >
+                                            <th key={type.id} className="px-4 py-3 text-center min-w-[100px]">
                                                 <span
                                                     className={cn(
                                                         'inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-full',
@@ -351,10 +345,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                                     <React.Fragment key={category.id}>
                                         {/* Category Header */}
                                         <tr className="bg-slate-50/50 dark:bg-navy-900/50">
-                                            <td
-                                                colSpan={accountTypes.length + 1}
-                                                className="px-4 py-2"
-                                            >
+                                            <td colSpan={accountTypes.length + 1} className="px-4 py-2">
                                                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                                     {category.name}
                                                 </span>
@@ -377,9 +368,15 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                                                     if (type.id === 'owner') {
                                                         hasPermission = true; // Owner has all permissions
                                                     } else if (type.id === 'admin') {
-                                                        hasPermission = !permission.id.includes('billing') || permission.id === 'view_billing';
+                                                        hasPermission =
+                                                            !permission.id.includes('billing') ||
+                                                            permission.id === 'view_billing';
                                                     } else if (type.id === 'member') {
-                                                        hasPermission = ['view_workspace', 'create_projects', 'view_members'].includes(permission.id);
+                                                        hasPermission = [
+                                                            'view_workspace',
+                                                            'create_projects',
+                                                            'view_members',
+                                                        ].includes(permission.id);
                                                     } else {
                                                         hasPermission = permission.id === 'view_workspace';
                                                     }
@@ -395,10 +392,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                                                             className="px-4 py-3 text-center"
                                                         >
                                                             {hasPermission ? (
-                                                                <Check
-                                                                    size={16}
-                                                                    className="mx-auto text-emerald-500"
-                                                                />
+                                                                <Check size={16} className="mx-auto text-emerald-500" />
                                                             ) : (
                                                                 <X
                                                                     size={16}
@@ -439,9 +433,7 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between mb-2">
-                                        <h4 className="font-semibold text-navy-900 dark:text-white">
-                                            {type.name}
-                                        </h4>
+                                        <h4 className="font-semibold text-navy-900 dark:text-white">{type.name}</h4>
                                         <div className="flex gap-2">
                                             {onViewUsers && type.userCount > 0 && (
                                                 <Button
@@ -476,13 +468,19 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
                                         {type.isDefault && (
                                             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                                                 <UserCheck size={14} />
-                                                {t('admin.team.accountTypes.defaultForNewUsers', 'Default for new users')}
+                                                {t(
+                                                    'admin.team.accountTypes.defaultForNewUsers',
+                                                    'Default for new users',
+                                                )}
                                             </span>
                                         )}
                                         {!type.canBeAssigned && (
                                             <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
                                                 <Shield size={14} />
-                                                {t('admin.team.accountTypes.cannotBeAssigned', 'Cannot be manually assigned')}
+                                                {t(
+                                                    'admin.team.accountTypes.cannotBeAssigned',
+                                                    'Cannot be manually assigned',
+                                                )}
                                             </span>
                                         )}
                                     </div>
@@ -497,6 +495,3 @@ export const AccountTypesManager: React.FC<AccountTypesManagerProps> = ({
 };
 
 export default AccountTypesManager;
-
-
-

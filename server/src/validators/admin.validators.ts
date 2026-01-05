@@ -53,7 +53,7 @@ export const CreateAdminAlertSchema = z.object({
     type: z.enum(['usage', 'cost', 'security', 'performance', 'compliance']),
     threshold: z.number().optional(),
     enabled: z.boolean().optional().default(true),
-    config: z.record(z.unknown()).optional(),
+    config: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ==========================================
@@ -79,8 +79,3 @@ export type CreateAccessCodeRequest = z.infer<typeof CreateAccessCodeSchema>;
 export type UpdateUserTierRequest = z.infer<typeof UpdateUserTierSchema>;
 export type CreateAdminAlertRequest = z.infer<typeof CreateAdminAlertSchema>;
 export type GetAdminDataQuery = z.infer<typeof GetAdminDataQuerySchema>;
-
-
-
-
-

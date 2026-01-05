@@ -307,8 +307,3 @@ export const SubscriptionChangesView: React.FC = () => {
 };
 
 export default SubscriptionChangesView;
-
-
-
-
-

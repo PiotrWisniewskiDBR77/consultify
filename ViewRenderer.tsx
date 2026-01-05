@@ -2,9 +2,9 @@ import { Loader2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { LoadingScreen } from './components/ui/LoadingScreen';
-import { AnimationWrapper } from './components/shared/AnimationWrapper';
 import { SplitLayout } from './components/layout/SplitLayout';
+import { AnimationWrapper } from './components/shared/AnimationWrapper';
+import { LoadingScreen } from './components/ui/LoadingScreen';
 import { AppView } from './types';
 
 // View Imports - These will match the ones in App.tsx
@@ -59,9 +59,7 @@ const DRDAuditReportView = React.lazy(() =>
 );
 const KpiOkrView = React.lazy(() => import('./views/KpiOkrView').then((m) => ({ default: m.KpiOkrView })));
 const PortfolioView = React.lazy(() => import('./views/PortfolioView'));
-const PartnerLandingView = React.lazy(() =>
-    import('./views/PartnerPortalView').then((m) => ({ default: m.default })),
-);
+const PartnerLandingView = React.lazy(() => import('./views/PartnerPortalView').then((m) => ({ default: m.default })));
 const ProviderHomeView = React.lazy(() =>
     import('./views/partner/ProviderHomeView').then((m) => ({ default: m.default })),
 );
@@ -71,21 +69,13 @@ const PartnerDashboardView = React.lazy(() =>
 const PartnerPricingView = React.lazy(() =>
     import('./views/partner/PartnerPricingView').then((m) => ({ default: m.default })),
 );
-const AppPricingView = React.lazy(() =>
-    import('./views/AppPricingView').then((m) => ({ default: m.default })),
-);
+const AppPricingView = React.lazy(() => import('./views/AppPricingView').then((m) => ({ default: m.default })));
 const ClientAccessView = React.lazy(() =>
     import('./views/partner/ClientAccessView').then((m) => ({ default: m.default })),
 );
-const CommissionView = React.lazy(() =>
-    import('./views/partner/CommissionView').then((m) => ({ default: m.default })),
-);
-const DirectoryView = React.lazy(() =>
-    import('./views/partner/DirectoryView').then((m) => ({ default: m.default })),
-);
-const ResourcesView = React.lazy(() =>
-    import('./views/partner/ResourcesView').then((m) => ({ default: m.default })),
-);
+const CommissionView = React.lazy(() => import('./views/partner/CommissionView').then((m) => ({ default: m.default })));
+const DirectoryView = React.lazy(() => import('./views/partner/DirectoryView').then((m) => ({ default: m.default })));
+const ResourcesView = React.lazy(() => import('./views/partner/ResourcesView').then((m) => ({ default: m.default })));
 const BenefitsRealizationView = React.lazy(() =>
     import('./views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView })),
 );

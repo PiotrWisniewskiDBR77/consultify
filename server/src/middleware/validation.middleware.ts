@@ -8,7 +8,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // MIDDLEWARE
@@ -26,7 +26,7 @@ export const validateBody = (schema: z.ZodSchema) => {
             if (!result.success) {
                 // Format Zod errors into a readable structure
                 const errors =
-                    result.error?.errors?.map((err: Error | null) => ({
+                    result.error?.issues?.map((err: any) => ({
                         field: err.path.join('.'),
                         message: err.message,
                         code: err.code,
@@ -42,7 +42,7 @@ export const validateBody = (schema: z.ZodSchema) => {
             // Replace body with parsed (sanitized/coerced) data
             req.body = result.data;
             next();
-        } catch (error: unknown) {
+        } catch (error: any) {
             logger.error('Validation Middleware Error:', error);
             res.status(500).json({ error: 'Internal Server Error during validation' });
         }
@@ -60,7 +60,7 @@ export const validateQuery = (schema: z.ZodSchema) => {
             const result = schema.safeParse(req.query);
             if (!result.success) {
                 const errors =
-                    result.error?.errors?.map((err: Error | null) => ({
+                    result.error?.issues?.map((err: any) => ({
                         field: err.path.join('.'),
                         message: err.message,
                         code: err.code,
@@ -75,7 +75,7 @@ export const validateQuery = (schema: z.ZodSchema) => {
 
             req.query = result.data as unknown as typeof req.query;
             next();
-        } catch (error: unknown) {
+        } catch (error: any) {
             logger.error('Validation Middleware Error:', error);
             res.status(500).json({ error: 'Internal Server Error during validation' });
         }
@@ -93,7 +93,7 @@ export const validateParams = (schema: z.ZodSchema) => {
             const result = schema.safeParse(req.params);
             if (!result.success) {
                 const errors =
-                    result.error?.errors?.map((err: Error | null) => ({
+                    result.error?.issues?.map((err: any) => ({
                         field: err.path.join('.'),
                         message: err.message,
                         code: err.code,
@@ -108,7 +108,7 @@ export const validateParams = (schema: z.ZodSchema) => {
 
             req.params = result.data as unknown as typeof req.params;
             next();
-        } catch (error: unknown) {
+        } catch (error: any) {
             logger.error('Validation Middleware Error:', error);
             res.status(500).json({ error: 'Internal Server Error during validation' });
         }

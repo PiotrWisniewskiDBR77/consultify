@@ -490,6 +490,3 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
 };
 
 export default AIUsageDashboard;
-
-
-

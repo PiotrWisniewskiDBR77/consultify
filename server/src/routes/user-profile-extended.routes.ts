@@ -10,9 +10,9 @@
 import { Router } from 'express';
 
 import { fileUploadRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/user-profile-extended.js');
+const module = (await import('./user-profile-extended.js')) as any;
 const user_profile_extendedRoutesJS = module.default || module;
 
 // Create router and apply JS routes

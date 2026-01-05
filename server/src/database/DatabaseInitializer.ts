@@ -6,9 +6,9 @@
  * Prevents table loss by verifying schema integrity
  */
 
-import { databaseConfig } from '../config/DatabaseConfig.ts';
-import logger from '../utils/Logger.ts';
-import { getDatabase, getDatabaseAsync } from './Database.ts';
+import { databaseConfig } from '../config/DatabaseConfig.js';
+import logger from '../utils/Logger.js';
+import { getDatabase, getDatabaseAsync } from './Database.js';
 
 // ==========================================
 // SCHEMA VERIFICATION
@@ -52,7 +52,7 @@ async function verifySchema(): Promise<{ valid: boolean; missing: string[]; erro
                     if (count === 0) {
                         missing.push(table);
                     }
-                } catch (err: unknown) {
+                } catch (err: any) {
                     const error = err instanceof Error ? err : new Error(String(err));
                     errors.push(`Error checking table ${table}: ${error.message}`);
                 }
@@ -72,7 +72,7 @@ async function verifySchema(): Promise<{ valid: boolean; missing: string[]; erro
                     if (count === 0) {
                         missing.push(table);
                     }
-                } catch (err: unknown) {
+                } catch (err: any) {
                     const error = err instanceof Error ? err : new Error(String(err));
                     errors.push(`Error checking table ${table}: ${error.message}`);
                 }
@@ -84,7 +84,7 @@ async function verifySchema(): Promise<{ valid: boolean; missing: string[]; erro
             missing,
             errors,
         };
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err instanceof Error ? err : new Error(String(err));
         return {
             valid: false,
@@ -121,7 +121,6 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                     logger.error(`[DatabaseInitializer] Missing critical tables: ${verification.missing.join(', ')}`);
                     // Try to initialize schema manually
                     logger.info('[DatabaseInitializer] Attempting to initialize schema...');
-                    const { initDb } = await import('./PostgresDatabase.ts');
                     // Note: initDb is not exported, so we'll trigger it by accessing the pool
                     await db.query('SELECT 1');
                     // Wait again for initDb
@@ -150,7 +149,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                 logger.warn(
                     `[DatabaseInitializer] SQLite schema incomplete. Missing tables: ${verification.missing.join(', ')}`,
                 );
-                logger.info('[DatabaseInitializer] SQLite schema should be initialized by database.sqlite.active.ts');
+                logger.info('[DatabaseInitializer] SQLite schema should be initialized by database.sqlite.active.js');
                 // SQLite initialization is handled by database.sqlite.active.js
                 // Wait a bit for initDb() to complete
                 await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -182,7 +181,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
             success: true,
             message: 'Database initialized and verified successfully',
         };
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err instanceof Error ? err : new Error(String(err));
         logger.error(`[DatabaseInitializer] Database initialization failed: ${error.message}`);
         return {
@@ -235,7 +234,7 @@ export async function verifyDatabaseHealth(): Promise<boolean> {
         }
 
         return true;
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err instanceof Error ? err : new Error(String(err));
         logger.error(`[DatabaseInitializer] Database health check failed: ${error.message}`);
         return false;

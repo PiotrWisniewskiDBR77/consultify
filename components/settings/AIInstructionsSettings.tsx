@@ -75,8 +75,3 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({ 
 };
 
 export default AIInstructionsSettings;
-
-
-
-
-

@@ -3,22 +3,15 @@
  * BCG/McKinsey style: Clear trend line, actionable insights
  */
 
-import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import {
-    TrendingUp,
-    TrendingDown,
-    Minus,
-    Activity,
-    Target,
-    Zap
-} from 'lucide-react';
+import { Activity, Minus, Target, TrendingDown, TrendingUp, Zap } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface VelocityData {
-    period: string;       // Week label (e.g., "W1", "W2")
-    completed: number;    // Tasks completed
-    target?: number;      // Target velocity
+    period: string; // Week label (e.g., "W1", "W2")
+    completed: number; // Tasks completed
+    target?: number; // Target velocity
 }
 
 interface VelocityTrendProps {
@@ -92,7 +85,7 @@ const SparklineChart: React.FC<{ data: number[]; target?: number }> = ({ data, t
                 className="text-violet-500"
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
-                transition={{ duration: 1, ease: "easeOut" }}
+                transition={{ duration: 1, ease: 'easeOut' }}
             />
 
             {/* Data points */}
@@ -118,22 +111,25 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
     currentVelocity = 0,
     previousVelocity = 0,
     targetVelocity = 0,
-    loading = false
+    loading = false,
 }) => {
     const { t } = useTranslation();
 
     // Default data if none provided
-    const displayData: VelocityData[] = data.length > 0 ? data : [
-        { period: 'W1', completed: 12, target: 15 },
-        { period: 'W2', completed: 14, target: 15 },
-        { period: 'W3', completed: 11, target: 15 },
-        { period: 'W4', completed: 16, target: 15 },
-        { period: 'W5', completed: 13, target: 15 },
-        { period: 'W6', completed: 18, target: 15 },
-        { period: 'W7', completed: 15, target: 15 },
-    ];
+    const displayData: VelocityData[] =
+        data.length > 0
+            ? data
+            : [
+                  { period: 'W1', completed: 12, target: 15 },
+                  { period: 'W2', completed: 14, target: 15 },
+                  { period: 'W3', completed: 11, target: 15 },
+                  { period: 'W4', completed: 16, target: 15 },
+                  { period: 'W5', completed: 13, target: 15 },
+                  { period: 'W6', completed: 18, target: 15 },
+                  { period: 'W7', completed: 15, target: 15 },
+              ];
 
-    const chartData = displayData.map(d => d.completed);
+    const chartData = displayData.map((d) => d.completed);
     const avgTarget = displayData[0]?.target || targetVelocity || 15;
 
     const calculatedCurrent = currentVelocity || displayData[displayData.length - 1]?.completed || 0;
@@ -181,14 +177,19 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
                 </div>
 
                 {/* Trend badge */}
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
-                    trend === 'up' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
-                    trend === 'down' ? 'bg-rose-100 dark:bg-rose-900/30' :
-                    'bg-slate-100 dark:bg-white/10'
-                }`}>
+                <div
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                        trend === 'up'
+                            ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                            : trend === 'down'
+                              ? 'bg-rose-100 dark:bg-rose-900/30'
+                              : 'bg-slate-100 dark:bg-white/10'
+                    }`}
+                >
                     <TrendIcon size={14} className={trendColor} />
                     <span className={`text-xs font-bold ${trendColor}`}>
-                        {changePercent > 0 ? '+' : ''}{changePercent}%
+                        {changePercent > 0 ? '+' : ''}
+                        {changePercent}%
                     </span>
                 </div>
             </div>
@@ -196,9 +197,7 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
             {/* Current Velocity Display */}
             <div className="flex items-end gap-4 mb-4">
                 <div>
-                    <p className="text-4xl font-bold text-navy-900 dark:text-white tabular-nums">
-                        {calculatedCurrent}
-                    </p>
+                    <p className="text-4xl font-bold text-navy-900 dark:text-white tabular-nums">{calculatedCurrent}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                         {t('team.velocity.thisWeek', 'this week')}
                     </p>
@@ -229,11 +228,15 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
                     </p>
                 </div>
                 <div className="text-center border-x border-slate-100 dark:border-white/5">
-                    <p className={`text-lg font-bold tabular-nums ${
-                        achievementRate >= 100 ? 'text-emerald-500' :
-                        achievementRate >= 80 ? 'text-amber-500' :
-                        'text-rose-500'
-                    }`}>
+                    <p
+                        className={`text-lg font-bold tabular-nums ${
+                            achievementRate >= 100
+                                ? 'text-emerald-500'
+                                : achievementRate >= 80
+                                  ? 'text-amber-500'
+                                  : 'text-rose-500'
+                        }`}
+                    >
                         {achievementRate}%
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -254,6 +257,3 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
 };
 
 export default VelocityTrend;
-
-
-

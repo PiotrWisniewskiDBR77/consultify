@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { Circle } from 'lucide-react';
+import * as React from 'react';
 
 interface RadioGroupContextValue {
     value: string;
@@ -31,7 +31,7 @@ const RadioGroup = React.forwardRef<HTMLDivElement, RadioGroupProps>(
                 <div ref={ref} className={`grid gap-2 ${className || ''}`} role="radiogroup" {...props} />
             </RadioGroupContext.Provider>
         );
-    }
+    },
 );
 RadioGroup.displayName = 'RadioGroup';
 
@@ -63,11 +63,8 @@ const RadioGroupItem = React.forwardRef<HTMLButtonElement, RadioGroupItemProps>(
                 )}
             </button>
         );
-    }
+    },
 );
 RadioGroupItem.displayName = 'RadioGroupItem';
 
 export { RadioGroup, RadioGroupItem };
-
-
-

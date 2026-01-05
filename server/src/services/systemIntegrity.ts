@@ -1,7 +1,7 @@
 import { getDatabase } from '../database/Database.js';
-import DbPromise from '../utils/DbPromise.ts';
-import Logger from '../utils/Logger.ts';
-import logger from '../utils/Logger.ts';
+import DbPromise from '../utils/DbPromise.js';
+import Logger from '../utils/Logger.js';
+import logger from '../utils/Logger.js';
 
 class SystemIntegrityService {
     private db: any;

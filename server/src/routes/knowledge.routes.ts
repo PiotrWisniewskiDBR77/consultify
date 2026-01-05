@@ -14,7 +14,7 @@ import { fileURLToPath } from 'url';
 import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -68,85 +68,32 @@ export interface IKnowledgeDocument {
     deleted_at?: string;
 }
 
-interface IKnowledgeService {
-    getCandidates: (status: string) => Promise<IKnowledgeCandidate[]>;
-    addCandidate: (
-        content: string,
-        reasoning: string,
-        source: string,
-        relatedAxis?: string | null,
-        originContext?: string,
-    ) => Promise<string>;
-    updateCandidateStatus: (id: string, status: string, adminComment?: string) => Promise<number>;
-    updateCandidate: (id: string, updates: Partial<IKnowledgeCandidate>) => Promise<number>;
-    linkIdeaToProject: (ideaId: string, projectId: string, notes?: string) => Promise<number>;
-    getApprovedIdeas: (filters: Record<string, string>) => Promise<IKnowledgeCandidate[]>;
-    getIdeasByCategory: (category: string) => Promise<IKnowledgeCandidate[]>;
-    getIdeasByProject: (projectId: string) => Promise<IKnowledgeCandidate[]>;
-    addStrategy: (title: string, description: string, createdBy: string, options: any) => Promise<string>;
-    updateStrategy: (id: string, updates: Partial<IKnowledgeStrategy>) => Promise<number>;
-    linkStrategyToDocument: (strategyId: string, docId: string) => Promise<number>;
-    linkStrategyToIdea: (strategyId: string, ideaId: string) => Promise<number>;
-    unlinkStrategyFromDocument: (strategyId: string, docId: string) => Promise<number>;
-    unlinkStrategyFromIdea: (strategyId: string, ideaId: string) => Promise<number>;
-    updateStrategyProgress: (strategyId: string, percentage: number) => Promise<number>;
-    getStrategyWithRelated: (strategyId: string) => Promise<any>;
-    toggleStrategy: (id: string, isActive: boolean) => Promise<number>;
-    getActiveStrategies: () => Promise<IKnowledgeStrategy[]>;
-    getAllStrategies: () => Promise<IKnowledgeStrategy[]>;
-    addDocument: (
-        filename: string,
-        filepath: string,
-        orgId: string,
-        projectId: string | null,
-        size: number,
-        category?: string | null,
-        tags?: string[],
-    ) => Promise<string>;
-    processDocument: (docId: string, text: string) => Promise<number>;
-    getDocuments: (orgId: string, userId?: string, role?: string) => Promise<IKnowledgeDocument[]>;
-    getDocumentsByCategory: (orgId: string, category: string) => Promise<IKnowledgeDocument[]>;
-    getDocumentsByStrategy: (strategyId: string) => Promise<IKnowledgeDocument[]>;
-    updateDocument: (docId: string, updates: Partial<IKnowledgeDocument>) => Promise<number>;
-    deleteDocument: (docId: string, orgId: string) => Promise<boolean>;
-}
-
-interface IStorageService {
-    storeFile: (
-        tempPath: string,
-        orgId: string,
-        projectId: string | null,
-        type: string,
-        originalName: string,
-    ) => Promise<string>;
-}
-
 const router = Router();
 
 // Apply rate limiting
 router.use(authRateLimiter);
 
 // Dynamic imports for services that may not be migrated yet
-let KnowledgeService: IKnowledgeService | null = null;
-let StorageService: IStorageService | null = null;
-const _NotificationOutboxService: any = null;
+let KnowledgeService: any = null;
+let StorageService: any = null;
+let NotificationOutboxService: any = null;
 
 try {
-    const knowledgeModule = await import('../../services/knowledgeService.js');
+    const knowledgeModule = (await import('../services/knowledgeService.js')) as any;
     KnowledgeService = knowledgeModule.default || knowledgeModule;
 } catch {
     logger.warn('[Knowledge] KnowledgeService not available');
 }
 
 try {
-    const storageModule = await import('../../services/storageService.js');
+    const storageModule = (await import('../services/storageService.js')) as any;
     StorageService = storageModule.default || storageModule;
 } catch {
     logger.warn('[Knowledge] StorageService not available');
 }
 
 try {
-    const notificationModule = await import('../../services/notificationOutboxService.js');
+    const notificationModule = (await import('../services/notificationOutboxService.js')) as any;
     NotificationOutboxService = notificationModule.default || notificationModule;
 } catch {
     logger.warn('[Knowledge] NotificationOutboxService not available');
@@ -179,7 +126,7 @@ let recordStorageAfterUpload: ((req: AuthRequest, size: number, type: string) =>
 let enforceProjectQuota: any = null;
 
 try {
-    const quotaModule = await import('../../middleware/quotaMiddleware.js');
+    const quotaModule = (await import('../middleware/quotaMiddleware.js')) as any;
     enforceStorageQuota = quotaModule.enforceStorageQuota;
     recordStorageAfterUpload = quotaModule.recordStorageAfterUpload;
 } catch {
@@ -187,7 +134,7 @@ try {
 }
 
 try {
-    const projectQuotaModule = await import('../../middleware/projectQuotaMiddleware.js');
+    const projectQuotaModule = (await import('../middleware/projectQuotaMiddleware.js')) as any;
     enforceProjectQuota = projectQuotaModule.default || projectQuotaModule;
 } catch {
     logger.warn('[Knowledge] Project quota middleware not available');
@@ -208,11 +155,12 @@ router.get(
         try {
             const status = (req.query.status as string) || 'pending';
             const items = await KnowledgeService.getCandidates(status);
-            res.json(items);
-        } catch (err: unknown) {
+            return res.json(items);
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -230,11 +178,12 @@ router.post(
         try {
             const { content, reasoning, source, relatedAxis, originContext } = req.body;
             const id = await KnowledgeService.addCandidate(content, reasoning, source, relatedAxis, originContext);
-            res.json({ id, message: 'Candidate submitted' });
-        } catch (err: unknown) {
+            return res.json({ id, message: 'Candidate submitted' });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -253,11 +202,12 @@ router.put(
         try {
             const { status, adminComment } = req.body;
             await KnowledgeService.updateCandidateStatus(req.params.id, status, adminComment);
-            res.json({ message: 'Status updated' });
-        } catch (err: unknown) {
+            return res.json({ message: 'Status updated' });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -285,11 +235,12 @@ router.put(
             if (req.body.status !== undefined) updates.status = req.body.status;
 
             const changes = await KnowledgeService.updateCandidate(req.params.id, updates);
-            res.json({ message: 'Candidate updated', changes });
-        } catch (err: unknown) {
+            return res.json({ message: 'Candidate updated', changes });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -307,14 +258,18 @@ router.post(
 
         try {
             const { project_id, notes } = req.body;
-            if (!project_id) return res.status(400).json({ error: 'project_id is required' });
+            if (!project_id) {
+                return res.status(400).json({ error: 'project_id is required' });
+                return;
+            }
 
             const changes = await KnowledgeService.linkIdeaToProject(req.params.id, project_id, notes || '');
-            res.json({ message: 'Idea linked to project', changes });
-        } catch (err: unknown) {
+            return res.json({ message: 'Idea linked to project', changes });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -335,11 +290,12 @@ router.get(
             if (req.query.category) filters.category = req.query.category as string;
 
             const ideas = await KnowledgeService.getApprovedIdeas(filters);
-            res.json(ideas);
-        } catch (err: unknown) {
+            return res.json(ideas);
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -357,11 +313,12 @@ router.get(
 
         try {
             const ideas = await KnowledgeService.getIdeasByCategory(req.params.category);
-            res.json(ideas);
-        } catch (err: unknown) {
+            return res.json(ideas);
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -379,32 +336,12 @@ router.get(
 
         try {
             const ideas = await KnowledgeService.getIdeasByProject(req.params.projectId);
-            res.json(ideas);
-        } catch (err: unknown) {
+            return res.json(ideas);
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
-    }),
-);
-
-/**
- * GET /api/knowledge/observations/generate
- * Generate AI observations
- */
-router.get(
-    '/observations/generate',
-    requireSuperAdmin,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            // Use unified AI pipeline for observation generation
-            const { generateObservations } = await import('../../services/ai/aiPipeline.js');
-            const observations = await generateObservations(req.user?.id, req.user?.organizationId);
-            res.json(observations);
-        } catch (err: unknown) {
-            logger.error('Observation Route Error', err);
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
-        }
+        return;
     }),
 );
 
@@ -425,11 +362,12 @@ router.get(
             const strategies = all
                 ? await KnowledgeService.getAllStrategies()
                 : await KnowledgeService.getActiveStrategies();
-            res.json(strategies);
-        } catch (err: unknown) {
+            return res.json(strategies);
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -454,11 +392,12 @@ router.post(
                 progress_percentage: progress_percentage || 0,
             };
             const id = await KnowledgeService.addStrategy(title, description, req.user?.email || 'admin', options);
-            res.json({ id, message: 'Strategy created' });
-        } catch (err: unknown) {
+            return res.json({ id, message: 'Strategy created' });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -489,11 +428,12 @@ router.put(
             if (req.body.is_active !== undefined) updates.is_active = req.body.is_active;
 
             const changes = await KnowledgeService.updateStrategy(req.params.id, updates);
-            res.json({ message: 'Strategy updated', changes });
-        } catch (err: unknown) {
+            return res.json({ message: 'Strategy updated', changes });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -511,14 +451,18 @@ router.post(
 
         try {
             const { document_id } = req.body;
-            if (!document_id) return res.status(400).json({ error: 'document_id is required' });
+            if (!document_id) {
+                return res.status(400).json({ error: 'document_id is required' });
+                return;
+            }
 
             const changes = await KnowledgeService.linkStrategyToDocument(req.params.id, document_id);
-            res.json({ message: 'Document linked to strategy', changes });
-        } catch (err: unknown) {
+            return res.json({ message: 'Document linked to strategy', changes });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -536,14 +480,18 @@ router.post(
 
         try {
             const { idea_id } = req.body;
-            if (!idea_id) return res.status(400).json({ error: 'idea_id is required' });
+            if (!idea_id) {
+                return res.status(400).json({ error: 'idea_id is required' });
+                return;
+            }
 
             const changes = await KnowledgeService.linkStrategyToIdea(req.params.id, idea_id);
-            res.json({ message: 'Idea linked to strategy', changes });
-        } catch (err: unknown) {
+            return res.json({ message: 'Idea linked to strategy', changes });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -561,11 +509,12 @@ router.delete(
 
         try {
             const changes = await KnowledgeService.unlinkStrategyFromDocument(req.params.id, req.params.docId);
-            res.json({ message: 'Document unlinked from strategy', changes });
-        } catch (err: unknown) {
+            return res.json({ message: 'Document unlinked from strategy', changes });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -583,11 +532,12 @@ router.delete(
 
         try {
             const changes = await KnowledgeService.unlinkStrategyFromIdea(req.params.id, req.params.ideaId);
-            res.json({ message: 'Idea unlinked from strategy', changes });
-        } catch (err: unknown) {
+            return res.json({ message: 'Idea unlinked from strategy', changes });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -605,15 +555,18 @@ router.put(
 
         try {
             const { progress_percentage } = req.body;
-            if (progress_percentage === undefined)
+            if (progress_percentage === undefined) {
                 return res.status(400).json({ error: 'progress_percentage is required' });
+                return;
+            }
 
             const changes = await KnowledgeService.updateStrategyProgress(req.params.id, progress_percentage);
-            res.json({ message: 'Strategy progress updated', changes });
-        } catch (err: unknown) {
+            return res.json({ message: 'Strategy progress updated', changes });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -631,12 +584,16 @@ router.get(
 
         try {
             const strategy = await KnowledgeService.getStrategyWithRelated(req.params.id);
-            if (!strategy) return res.status(404).json({ error: 'Strategy not found' });
-            res.json(strategy);
-        } catch (err: unknown) {
+            if (!strategy) {
+                return res.status(404).json({ error: 'Strategy not found' });
+                return;
+            }
+            return res.json(strategy);
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -655,11 +612,12 @@ router.put(
         try {
             const { isActive } = req.body;
             await KnowledgeService.toggleStrategy(req.params.id, isActive);
-            res.json({ message: 'Strategy toggled' });
-        } catch (err: unknown) {
+            return res.json({ message: 'Strategy toggled' });
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -676,10 +634,14 @@ router.post(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         let tempPath: string | null = null;
         try {
-            if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+            if (!req.file) {
+                return res.status(400).json({ error: 'No file uploaded' });
+                return;
+            }
 
             if (!StorageService?.storeFile || !KnowledgeService?.addDocument || !KnowledgeService?.processDocument) {
                 return res.status(503).json({ error: 'Required services not available' });
+                return;
             }
 
             const { originalname, size, path: multerPath, mimetype } = req.file;
@@ -689,7 +651,10 @@ router.post(
             // Force project_id = NULL for global knowledge docs (organization-level only)
             const projectId = null;
 
-            if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+            if (!orgId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
             // Move file to isolated storage (use null for projectId to enforce global scope)
             const finalPath = await StorageService.storeFile(tempPath, orgId, null, 'knowledge', originalname);
@@ -715,7 +680,7 @@ router.post(
             let text = '';
             try {
                 if (mimetype === 'application/pdf') {
-                    const pdfParseMod = await import('pdf-parse');
+                    const pdfParseMod = (await import('pdf-parse')) as any;
                     const pdf = pdfParseMod.default || pdfParseMod;
                     const dataBuffer = fs.readFileSync(finalPath);
                     const pdfData = await pdf(dataBuffer);
@@ -736,8 +701,8 @@ router.post(
                 await recordStorageAfterUpload(req, size, 'document_upload');
             }
 
-            res.json({ message: 'Document uploaded and indexed', docId, chunkCount });
-        } catch (err: unknown) {
+            return res.json({ message: 'Document uploaded and indexed', docId, chunkCount });
+        } catch (err: any) {
             logger.error('Upload Error', err);
             // Cleanup temp file if it still exists
             if (tempPath && fs.existsSync(tempPath)) {
@@ -746,8 +711,9 @@ router.post(
                 } catch (e) {}
             }
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
+        return;
     }),
 );
 
@@ -774,9 +740,12 @@ router.get(
             const category = req.query.category as string | undefined;
             const strategyId = req.query.strategy_id as string | undefined;
 
-            if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+            if (!orgId) {
+                return res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
 
-            let docs: IKnowledgeDocument[];
+            let docs: any[];
             if (strategyId) {
                 docs = await KnowledgeService.getDocumentsByStrategy(strategyId);
             } else if (category) {
@@ -786,103 +755,17 @@ router.get(
             }
 
             // Parse JSON fields
-            const parsed = docs.map((doc: IKnowledgeDocument) => ({
+            const parsed = docs.map((doc: any) => ({
                 ...doc,
                 tags: doc.tags ? (typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags) : [],
             }));
 
-            res.json(parsed);
-        } catch (err: unknown) {
+            return res.json(parsed);
+        } catch (err: any) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
-    }),
-);
-
-/**
- * PUT /api/knowledge/documents/:id
- * Update document
- */
-router.put(
-    '/documents/:id',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!KnowledgeService?.updateDocument) {
-            return res.status(503).json({ error: 'Knowledge service not available' });
-        }
-
-        try {
-            const updates: Partial<IKnowledgeDocument> = {};
-            if (req.body.category !== undefined) updates.category = req.body.category;
-            if (req.body.tags !== undefined) {
-                updates.tags = Array.isArray(req.body.tags) ? req.body.tags : JSON.parse(req.body.tags);
-            }
-            if (req.body.version !== undefined) updates.version = req.body.version;
-            if (req.body.parent_doc_id !== undefined) updates.parent_doc_id = req.body.parent_doc_id;
-
-            const changes = await KnowledgeService.updateDocument(req.params.id, updates);
-            res.json({ message: 'Document updated', changes });
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
-        }
-    }),
-);
-
-/**
- * GET /api/knowledge/documents/by-strategy/:strategyId
- * Get documents by strategy
- */
-router.get(
-    '/documents/by-strategy/:strategyId',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!KnowledgeService?.getDocumentsByStrategy) {
-            return res.status(503).json({ error: 'Knowledge service not available' });
-        }
-
-        try {
-            const docs = await KnowledgeService.getDocumentsByStrategy(req.params.strategyId);
-            const parsed = docs.map((doc: IKnowledgeDocument) => ({
-                ...doc,
-                tags: doc.tags ? (typeof doc.tags === 'string' ? JSON.parse(doc.tags) : doc.tags) : [],
-            }));
-            res.json(parsed);
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
-        }
-    }),
-);
-
-/**
- * DELETE /api/knowledge/documents/:id
- * Delete document
- */
-router.delete(
-    '/documents/:id',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!KnowledgeService?.deleteDocument) {
-            return res.status(503).json({ error: 'Knowledge service not available' });
-        }
-
-        try {
-            const orgId = req.user?.organizationId;
-            if (!orgId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
-
-            const success = await KnowledgeService.deleteDocument(req.params.id, orgId);
-            if (success) {
-                res.json({ message: 'Document deleted' });
-            } else {
-                res.status(404).json({ error: 'Document not found' });
-            }
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
-        }
+        return;
     }),
 );
 

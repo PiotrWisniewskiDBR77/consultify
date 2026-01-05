@@ -6,7 +6,7 @@
  */
 
 import { getDatabase } from '../database/Database.js';
-import logger from './Logger.ts';
+import logger from './Logger.js';
 
 interface Database {
     all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
@@ -33,14 +33,14 @@ interface Query {
 /**
  * Promise-based wrapper for db.all
  */
-export function queryAll(sql: string, params: unknown[] = []): Promise<unknown[]> {
+export function queryAll<T = any>(sql: string, params: unknown[] = []): Promise<T[]> {
     return new Promise((resolve, reject) => {
         getDatabase().all(sql, params, (err: Error | null, rows: unknown[]) => {
             if (err) {
                 logger.error('[QueryHelper] Error in queryAll:', err);
                 reject(err);
             } else {
-                resolve(rows || []);
+                resolve((rows as T[]) || []);
             }
         });
     });
@@ -49,14 +49,14 @@ export function queryAll(sql: string, params: unknown[] = []): Promise<unknown[]
 /**
  * Promise-based wrapper for db.get
  */
-export function queryOne(sql: string, params: unknown[] = []): Promise<unknown | null> {
+export function queryOne<T = any>(sql: string, params: unknown[] = []): Promise<T | null> {
     return new Promise((resolve, reject) => {
         getDatabase().get(sql, params, (err: Error | null, row: unknown) => {
             if (err) {
                 logger.error('[QueryHelper] Error in queryOne:', err);
                 reject(err);
             } else {
-                resolve(row || null);
+                resolve((row as T) || null);
             }
         });
     });
@@ -108,7 +108,7 @@ export function buildInPlaceholders(values: unknown[]): string {
 /**
  * Build WHERE clause for organization filtering
  */
-export function buildOrgFilter(tableAlias: string, orgId: string): string {
+export function buildOrgFilter(tableAlias: string, _orgId: string): string {
     return `${tableAlias}.organization_id = ?`;
 }
 
@@ -196,4 +196,23 @@ export function transformRow(
     });
 
     return transformed;
+}
+
+/**
+ * Enable performance tracking for database queries
+ */
+let trackingCallback: ((type: string, duration: number) => void) | null = null;
+
+export function enablePerformanceTracking(callback: (type: string, duration: number) => void): void {
+    trackingCallback = callback;
+}
+
+export function disablePerformanceTracking(): void {
+    trackingCallback = null;
+}
+
+export function recordQueryPerformance(type: string, duration: number): void {
+    if (trackingCallback) {
+        trackingCallback(type, duration);
+    }
 }

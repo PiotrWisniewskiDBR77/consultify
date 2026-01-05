@@ -8,7 +8,7 @@
 
 import { z } from 'zod';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // ZOD SCHEMAS
@@ -54,7 +54,7 @@ export function loadFeatureFlags(): FeatureFlags {
 
     if (!result.success) {
         logger.error('[Feature Flags] Configuration validation failed:');
-        result.error.issues.forEach((err: Error | null) => {
+        result.error.issues.forEach((err: any) => {
             logger.error(`  - ${err.path.join('.')}: ${err.message}`);
         });
 

@@ -1,4 +1,4 @@
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 
 export class InvitationSendingService {
     private getInviteLink(token: string): string {

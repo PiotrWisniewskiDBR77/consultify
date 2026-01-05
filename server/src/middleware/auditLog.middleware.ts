@@ -8,7 +8,7 @@
 
 import type { NextFunction, Response } from 'express';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // Dynamic import for ActivityService to avoid circular dependencies
@@ -94,7 +94,7 @@ const auditLogMiddleware = async (req: AuthRequest, res: Response, next: NextFun
                         });
                     })
                     .catch((err: Error | null) => logger.error('[AuditLog] Failed to log:', (err as Error).message));
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.error('[AuditLog] Error processing log:', err);
             }
         }

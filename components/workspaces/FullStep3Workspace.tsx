@@ -15,9 +15,9 @@ import { useTranslation } from 'react-i18next';
 
 import { FullInitiative, FullSession, Quarter, User, Wave } from '../../types';
 import { AIFeedbackButton } from '../AIFeedbackButton';
-import { PilotDecisionWorkspace } from './PilotDecisionWorkspace';
 import { RoadmapGantt } from '../RoadmapGantt';
 import { RoadmapKanban } from '../RoadmapKanban';
+import { PilotDecisionWorkspace } from './PilotDecisionWorkspace';
 
 interface FullStep3WorkspaceProps {
     fullSession: FullSession;
@@ -194,12 +194,13 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                             return (
                                 <div
                                     key={q}
-                                    className={`p-2 rounded border flex flex-col items-center justify-center relative group transition-all min-h-[80px] ${isWarning
+                                    className={`p-2 rounded border flex flex-col items-center justify-center relative group transition-all min-h-[80px] ${
+                                        isWarning
                                             ? 'bg-red-500/5 border-red-500/30'
                                             : count > 0
-                                                ? 'bg-slate-50 dark:bg-navy-900 border-slate-100 dark:border-white/5 hover:border-blue-500/30'
-                                                : 'bg-transparent border-transparent opacity-50'
-                                        }`}
+                                              ? 'bg-slate-50 dark:bg-navy-900 border-slate-100 dark:border-white/5 hover:border-blue-500/30'
+                                              : 'bg-transparent border-transparent opacity-50'
+                                    }`}
                                 >
                                     {/* ZONE C1: Quarter Actions (On Hover) */}
                                     <div className="absolute inset-0 bg-navy-950/90 rounded flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 gap-1 backdrop-blur-sm">
@@ -302,12 +303,13 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                                             </div>
                                             <div className="flex gap-1.5 mt-1">
                                                 <span
-                                                    className={`text-[10px] px-1.5 py-0.5 rounded border ${init.priority === 'High'
+                                                    className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                                                        init.priority === 'High'
                                                             ? 'border-red-500/30 text-red-400 bg-red-500/10'
                                                             : init.priority === 'Medium'
-                                                                ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10'
-                                                                : 'border-green-500/30 text-green-400 bg-green-500/10'
-                                                        }`}
+                                                              ? 'border-yellow-500/30 text-yellow-400 bg-yellow-500/10'
+                                                              : 'border-green-500/30 text-green-400 bg-green-500/10'
+                                                    }`}
                                                 >
                                                     {init.priority}
                                                 </span>

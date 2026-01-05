@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as _dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import { all as dbAll, get as _dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 // Apply rate limiting
 const router = Router();
@@ -60,7 +60,7 @@ router.get(
             created_at: string;
         }>(sql, params);
 
-        res.json(rows || []);
+        return res.json(rows || []);
     }),
 );
 
@@ -95,7 +95,7 @@ router.post(
             throw new Error(result.error || 'Failed to insert feedback');
         }
 
-        res.json({
+        return res.json({
             success: true,
             id,
             message: 'Feedback submitted successfully',
@@ -128,7 +128,7 @@ router.get(
             updated_at: string | null;
         }>('SELECT * FROM custom_prompts WHERE organization_id = ? ORDER BY created_at DESC', [organizationId]);
 
-        res.json(rows || []);
+        return res.json(rows || []);
     }),
 );
 
@@ -163,7 +163,7 @@ router.post(
             throw new Error(result.error || 'Failed to create prompt');
         }
 
-        res.json({
+        return res.json({
             success: true,
             id,
             message: 'Custom prompt created successfully',
@@ -208,7 +208,7 @@ router.put(
             return res.status(404).json({ error: 'Prompt not found' });
         }
 
-        res.json({ success: true, message: 'Prompt updated' });
+        return res.json({ success: true, message: 'Prompt updated' });
     }),
 );
 
@@ -243,7 +243,7 @@ router.get(
             [organizationId],
         );
 
-        res.json(rows || []);
+        return res.json(rows || []);
     }),
 );
 

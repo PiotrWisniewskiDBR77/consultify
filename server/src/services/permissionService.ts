@@ -347,7 +347,7 @@ export async function hasPermission(
         );
 
         return !!rolePermission;
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[PermissionService] Permission query error:', err as Error);
         return false;
     }
@@ -585,7 +585,7 @@ export async function hasContentPermission(
 
         // Fall back to general permission check
         return await hasPermission(userId, orgId, permissionKey, userRole);
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[PermissionService] Content permission query error:', err as Error);
         // Fall back to general permission check
         return await hasPermission(userId, orgId, permissionKey, userRole);

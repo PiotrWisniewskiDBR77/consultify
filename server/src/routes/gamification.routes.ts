@@ -10,7 +10,7 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -25,7 +25,7 @@ interface GamificationServiceInterface {
 let GamificationService: GamificationServiceInterface | null = null;
 
 try {
-    const gamificationModule = await import('../../services/gamificationService.js');
+    const gamificationModule = (await import('../services/gamificationService.js')) as any;
     GamificationService = (gamificationModule.default || gamificationModule) as GamificationServiceInterface;
 } catch {
     logger.warn('[Gamification Routes] GamificationService not available');
@@ -52,7 +52,7 @@ router.get(
             const profile = await GamificationService.getUserProfile(userId);
             const achievements = await GamificationService.getUserAchievements(userId);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     ...(profile as Record<string, unknown>),
@@ -61,7 +61,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('Gamification profile error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );

@@ -11,7 +11,7 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Dynamic import for NotificationService to avoid circular dependencies
 let NotificationService: {
@@ -33,7 +33,7 @@ let NotificationService: {
 async function getNotificationService() {
     if (!NotificationService) {
         const module = await import('../services/NotificationService.js');
-        NotificationService = module.default || module;
+        NotificationService = (module.default || module) as any;
     }
     return NotificationService;
 }

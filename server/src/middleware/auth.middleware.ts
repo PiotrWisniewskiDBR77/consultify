@@ -3,13 +3,13 @@
  * Enterprise SaaS Architecture - TypeScript Backend Auth
  */
 
-import { _Request, NextFunction, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { get as dbGet } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -62,7 +62,7 @@ let deps: Dependencies;
 const getDeps = async (): Promise<Dependencies> => {
     if (!deps) {
         const defaultJwt = await import('jsonwebtoken').then((m) => m.default || m);
-        const defaultConfig = await import('../../config.js').then((m) => m.default || m);
+        const defaultConfig = await import('../config/Config.js').then((m) => m.default || m);
         const defaultPermissionService = await import('../../services/permissionService.js').then(
             (m) => m.default || m,
         );
@@ -251,7 +251,7 @@ export const verifyToken = asyncHandler(async (req: AuthRequest, res: Response, 
 
     try {
         const decoded = await new Promise<JWTPayload>((resolve, reject) => {
-            jwtLib.verify(token, config.JWT_SECRET, (err, decoded) => {
+            jwtLib.verify(token, config.JWT_SECRET, (err: any, decoded: any) => {
                 if (err) return reject(err);
                 resolve(decoded as JWTPayload);
             });
@@ -282,7 +282,7 @@ export const optionalAuth = asyncHandler(
             return next();
         }
 
-        jwtLib.verify(token, config.JWT_SECRET, async (err, decoded) => {
+        jwtLib.verify(token, config.JWT_SECRET, async (err: any, decoded: any) => {
             if (err) {
                 // Invalid token, but optional - continue without user
                 return next();

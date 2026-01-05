@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 // Use vi.hoisted to ensure mock data is available to vi.mock
 const { mockDb } = vi.hoisted(() => ({
@@ -18,13 +18,13 @@ const { mockDb } = vi.hoisted(() => ({
         serialize: vi.fn(),
         close: vi.fn(),
         query: vi.fn(),
-    }
+    },
 }));
 
 // Mock the Database module
 vi.mock('../../../../src/database/Database.ts', () => ({
     getDatabase: () => mockDb,
-    default: mockDb
+    default: mockDb,
 }));
 
 import ReportVersionService from '../../../../src/services/reportVersionService.js';
@@ -43,22 +43,24 @@ describe('ReportVersionService', () => {
 
     describe('createVersion', () => {
         it('should create initial major version', async () => {
-            (mockDb.get as Mock).mockImplementation((sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
-                if (sql.includes('MAX(version_number)')) {
-                    callback(null, { max_version: null });
-                } else if (sql.includes('FROM management_reports')) {
-                    callback(null, { id: 'report1', organization_id: 'org1' });
-                } else {
-                    callback(null, null);
-                }
-            });
+            (mockDb.get as Mock).mockImplementation(
+                (sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
+                    if (sql.includes('MAX(version_number)')) {
+                        callback(null, { max_version: null });
+                    } else if (sql.includes('FROM management_reports')) {
+                        callback(null, { id: 'report1', organization_id: 'org1' });
+                    } else {
+                        callback(null, null);
+                    }
+                },
+            );
 
             const result = await ReportVersionService.createVersion(
                 'report1',
                 { executiveSummary: 'Test' },
                 'user1',
                 'Initial version',
-                'major'
+                'major',
             );
 
             expect(result.versionNumber).toBe(1);
@@ -68,16 +70,20 @@ describe('ReportVersionService', () => {
 
     describe('getVersions', () => {
         it('should return all versions ordered by version number desc', async () => {
-            (mockDb.get as Mock).mockImplementation((sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
-                callback(null, { total: 2 });
-            });
+            (mockDb.get as Mock).mockImplementation(
+                (sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
+                    callback(null, { total: 2 });
+                },
+            );
 
-            (mockDb.all as Mock).mockImplementation((sql: string, params: any[], callback: (err: Error | null, rows: any[]) => void) => {
-                callback(null, [
-                    { id: 'v3', version_number: 3, version_label: '2.0', created_at: '2025-12-20' },
-                    { id: 'v2', version_number: 2, version_label: '1.1', created_at: '2025-12-15' }
-                ]);
-            });
+            (mockDb.all as Mock).mockImplementation(
+                (sql: string, params: any[], callback: (err: Error | null, rows: any[]) => void) => {
+                    callback(null, [
+                        { id: 'v3', version_number: 3, version_label: '2.0', created_at: '2025-12-20' },
+                        { id: 'v2', version_number: 2, version_label: '1.1', created_at: '2025-12-15' },
+                    ]);
+                },
+            );
 
             const result = await ReportVersionService.getVersions('report1');
 
@@ -89,16 +95,18 @@ describe('ReportVersionService', () => {
 
     describe('getVersion', () => {
         it('should return specific version', async () => {
-            (mockDb.get as Mock).mockImplementation((sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
-                callback(null, {
-                    id: 'v2',
-                    version_number: 2,
-                    version_label: '1.1',
-                    content: JSON.stringify({ executiveSummary: 'Version 2 content' }),
-                    created_by: 'user1',
-                    created_at: '2025-12-15'
-                });
-            });
+            (mockDb.get as Mock).mockImplementation(
+                (sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
+                    callback(null, {
+                        id: 'v2',
+                        version_number: 2,
+                        version_label: '1.1',
+                        content: JSON.stringify({ executiveSummary: 'Version 2 content' }),
+                        created_by: 'user1',
+                        created_at: '2025-12-15',
+                    });
+                },
+            );
 
             const result = await ReportVersionService.getVersion('report1', 2);
 

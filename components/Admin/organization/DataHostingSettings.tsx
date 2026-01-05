@@ -127,12 +127,7 @@ interface DataHostingSettingsProps {
     className?: string;
 }
 
-export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
-    config,
-    onChange,
-    onSave,
-    className,
-}) => {
+export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({ config, onChange, onSave, className }) => {
     const { t } = useTranslation();
     const [saving, setSaving] = useState(false);
     const [showChangeModal, setShowChangeModal] = useState(false);
@@ -141,12 +136,15 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
 
     const currentRegion = DATA_REGIONS.find((r) => r.id === config?.region) || DATA_REGIONS[0];
 
-    const handleRegionSelect = useCallback((regionId: string) => {
-        if (regionId === currentRegion.id) return;
-        setSelectedRegion(regionId);
-        setShowChangeModal(true);
-        setConfirmText('');
-    }, [currentRegion.id]);
+    const handleRegionSelect = useCallback(
+        (regionId: string) => {
+            if (regionId === currentRegion.id) return;
+            setSelectedRegion(regionId);
+            setShowChangeModal(true);
+            setConfirmText('');
+        },
+        [currentRegion.id],
+    );
 
     const handleConfirmChange = useCallback(async () => {
         if (confirmText !== 'MIGRATE' || !selectedRegion) return;
@@ -191,7 +189,12 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                         <h3 className="text-lg font-medium text-navy-900 dark:text-white">
                             {t('admin.org.dataHosting.title', 'Data Hosting Location')}
                         </h3>
-                        <Tooltip content={t('admin.org.dataHosting.tooltip', 'Your data is stored and processed in this region. Changing regions may affect latency and compliance requirements.')}>
+                        <Tooltip
+                            content={t(
+                                'admin.org.dataHosting.tooltip',
+                                'Your data is stored and processed in this region. Changing regions may affect latency and compliance requirements.',
+                            )}
+                        >
                             <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                                 <HelpCircle size={16} />
                             </button>
@@ -202,7 +205,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                     {t(
                         'admin.org.dataHosting.description',
-                        'Select where your organization\'s data is stored and processed for optimal performance and compliance.'
+                        "Select where your organization's data is stored and processed for optimal performance and compliance.",
                     )}
                 </p>
 
@@ -230,9 +233,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {t('admin.org.dataHosting.latency', 'Avg. Latency')}
                             </p>
-                            <p className="text-sm font-medium text-navy-900 dark:text-white">
-                                {currentRegion.latency}
-                            </p>
+                            <p className="text-sm font-medium text-navy-900 dark:text-white">{currentRegion.latency}</p>
                         </div>
                     </div>
 
@@ -282,8 +283,8 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                                     isCurrentRegion
                                         ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-300 dark:border-violet-700 cursor-default'
                                         : region.available
-                                            ? 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-violet-300 dark:hover:border-violet-700 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 cursor-pointer'
-                                            : 'bg-slate-100 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 opacity-60 cursor-not-allowed',
+                                          ? 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-violet-300 dark:hover:border-violet-700 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 cursor-pointer'
+                                          : 'bg-slate-100 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 opacity-60 cursor-not-allowed',
                                 )}
                             >
                                 <div className="flex items-start justify-between">
@@ -343,7 +344,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                             {t(
                                 'admin.org.dataHosting.securityDescription',
-                                'All data is encrypted at rest (AES-256) and in transit (TLS 1.3). Regular backups are stored in geographically separate locations within your selected region.'
+                                'All data is encrypted at rest (AES-256) and in transit (TLS 1.3). Regular backups are stored in geographically separate locations within your selected region.',
                             )}
                         </p>
                     </div>
@@ -361,7 +362,10 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                     {/* Warning Banner */}
                     <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                         <div className="flex items-start gap-3">
-                            <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                            <AlertTriangle
+                                size={20}
+                                className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                            />
                             <div>
                                 <h4 className="font-medium text-amber-800 dark:text-amber-200">
                                     {t('admin.org.dataHosting.warningTitle', 'Important: Data Migration Required')}
@@ -369,7 +373,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                                 <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
                                     {t(
                                         'admin.org.dataHosting.warningDescription',
-                                        'Changing your data hosting region will trigger a data migration. This may cause temporary service interruptions and increased latency during the migration process.'
+                                        'Changing your data hosting region will trigger a data migration. This may cause temporary service interruptions and increased latency during the migration process.',
                                     )}
                                 </p>
                             </div>
@@ -403,9 +407,7 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
                                     <span className="text-slate-500 dark:text-slate-400">
                                         {t('admin.org.dataHosting.estimatedTime', 'Estimated Time')}:
                                     </span>
-                                    <span className="font-medium text-navy-900 dark:text-white">
-                                        2-4 hours
-                                    </span>
+                                    <span className="font-medium text-navy-900 dark:text-white">2-4 hours</span>
                                 </div>
                             </div>
                         </div>
@@ -446,6 +448,3 @@ export const DataHostingSettings: React.FC<DataHostingSettingsProps> = ({
 };
 
 export default DataHostingSettings;
-
-
-

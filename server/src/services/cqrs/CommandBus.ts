@@ -14,9 +14,10 @@ export class CommandBus {
     }
 
     async execute<TCommand>(command: TCommand): Promise<unknown> {
-        const handler = this.handlers.get(command?.constructor?.name);
+        const commandName = (command as any)?.constructor?.name;
+        const handler = commandName ? this.handlers.get(commandName) : undefined;
         if (!handler) {
-            throw new Error(`No handler registered for command "${command?.constructor?.name}"`);
+            throw new Error(`No handler registered for command "${commandName}"`);
         }
         return handler.execute(command);
     }

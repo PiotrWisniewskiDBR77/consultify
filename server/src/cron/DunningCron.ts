@@ -13,7 +13,7 @@
 
 import * as cron from 'node-cron';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -29,7 +29,7 @@ interface SentryConfig {
 
 interface Dependencies {
     dunningService: DunningService;
-    sentry?: SentryConfig;
+    sentry: SentryConfig;
 }
 
 // ==========================================
@@ -37,14 +37,11 @@ interface Dependencies {
 // ==========================================
 
 class DunningCron {
-    private deps: Dependencies;
+    private deps: any;
     private job: cron.ScheduledTask | null = null;
 
     constructor(deps?: Partial<Dependencies>) {
-        this.deps = {
-            dunningService: deps?.dunningService,
-            sentry: deps?.sentry,
-        };
+        this.deps = deps || {};
     }
 
     private async ensureDeps(): Promise<Dependencies> {
@@ -134,8 +131,3 @@ export const stopDunningJob = (deps?: Partial<Dependencies>): void => {
 };
 
 export default DunningCron;
-
-
-
-
-

@@ -9,7 +9,7 @@
 import type { RedisClientType } from 'redis';
 
 import { getRedisClient, isRedisConnected } from '../services/ai/redisClient.js';
-import logger from './Logger.ts';
+import logger from './Logger.js';
 
 // ==========================================
 // TYPES
@@ -80,7 +80,7 @@ export class RedisStore {
             const client = getRedisClient();
             if (isRedisConnected() && client) {
                 if (ttlSeconds) {
-                    await client.setEx(fullKey, ttlSeconds, value);
+                    await client.setex(fullKey, ttlSeconds, value);
                 } else {
                     await client.set(fullKey, value);
                 }
@@ -312,8 +312,3 @@ export class RedisStore {
 }
 
 export default RedisStore;
-
-
-
-
-

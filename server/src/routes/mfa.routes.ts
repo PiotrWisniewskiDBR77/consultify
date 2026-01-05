@@ -20,8 +20,8 @@ router.use(defaultRateLimiter);
 
 // Lazy load the JS implementation
 const getMfaRoutesJS = async () => {
-    const module = await import('../../routes/mfa.js');
-    return module.default || module;
+    const mfaModule = (await import('./mfa.js')) as any;
+    return mfaModule.default || mfaModule;
 };
 
 // Apply legacy routes with async handler wrapping to ensure they are loaded before use

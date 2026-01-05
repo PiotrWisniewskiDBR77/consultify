@@ -1,5 +1,5 @@
 import './index.css';
-import './i18n'; // Init i18n
+import './i18n.ts'; // Init i18n
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -18,7 +18,7 @@ try {
     root.render(
         <React.StrictMode>
             <App />
-        </React.StrictMode>
+        </React.StrictMode>,
     );
 } catch (error) {
     console.error('[index.tsx] Failed to render app:', error);

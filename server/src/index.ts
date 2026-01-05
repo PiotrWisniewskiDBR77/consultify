@@ -11,7 +11,7 @@ import 'dotenv/config';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import express, { type _NextFunction, type Express, type Request, type Response } from 'express';
+import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import helmet from 'helmet';
 import http from 'http';
@@ -25,18 +25,18 @@ import Scheduler from './cron/Scheduler.js';
 import { getDatabase, getDatabaseAsync } from './database/Database.js';
 // TypeScript routes (migrated)
 import { apiGateway } from './Gateway.js';
-import { get as dbGet } from './utils/DbPromise.ts';
-import logger from './utils/Logger.ts';
-import RedisRateLimitStore from './utils/RedisRateLimitStore.ts';
-import { correlationMiddleware } from './utils/RequestStore.ts';
-import { getShutdownManager } from './utils/ShutdownManager.ts';
+import { get as dbGet } from './utils/DbPromise.js';
+import logger from './utils/Logger.js';
+import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
+import { correlationMiddleware } from './utils/RequestStore.js';
+import { getShutdownManager } from './utils/ShutdownManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Initialize app
 const app: Express = express();
-const PORT = process.env.PORT || 3005;
+const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -93,7 +93,7 @@ const sentryHandlers = initSentry(app);
                         if (!healthy) {
                             logger.warn('[Server] Database health check failed - schema may be incomplete');
                         }
-                    } catch (err: unknown) {
+                    } catch (err: any) {
                         const error = err as Error;
                         logger.error(`[Server] Database health check error: ${error.message}`);
                     }
@@ -101,7 +101,7 @@ const sentryHandlers = initSentry(app);
                 5 * 60 * 1000,
             ); // Every 5 minutes
         }
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         logger.error(`[Server] Database initialization failed: ${error.message}`);
         if (isProduction) {
@@ -118,8 +118,8 @@ const sentryHandlers = initSentry(app);
 if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // Init Scheduler (ES modules)
     try {
-        Scheduler.init();
-    } catch (err: unknown) {
+        await Scheduler.init();
+    } catch (err: any) {
         const error = err as Error;
         logger.error('[Server] Scheduler initialization failed:', error.message);
     }
@@ -127,7 +127,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     // Init Health Check Monitor (ES modules)
     try {
         startHealthCheck();
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         logger.error('[Server] Health Check initialization failed:', error.message);
     }
@@ -136,8 +136,8 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     try {
         const { registerCQRSHandlers } = await import('./services/cqrs/registry.js');
         registerCQRSHandlers();
-    } catch (err: unknown) {
-        logger.error('[Server] CQRS initialization failed:', err);
+    } catch (err: any) {
+        logger.error('[Server] CQRS initialization failed:', { error: err });
     }
 
     // ============================================================
@@ -148,13 +148,13 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         try {
             const startupValidatorModule = await import('./services/ai/startupValidator.js');
             // Handle both named exports and default export wrapping (CJS/ESM interop)
-            // @ts-ignore
-            let validateOnStartup =
-                startupValidatorModule.validateOnStartup || startupValidatorModule.default?.validateOnStartup;
+            let validateOnStartup: any =
+                (startupValidatorModule as any).validateOnStartup ||
+                (startupValidatorModule as any).default?.validateOnStartup;
 
             // Handle case where default export is a Promise (async module init)
-            if (!validateOnStartup && startupValidatorModule.default instanceof Promise) {
-                const resolvedDefault = await startupValidatorModule.default;
+            if (!validateOnStartup && (startupValidatorModule as any).default instanceof Promise) {
+                const resolvedDefault = (await (startupValidatorModule as any).default) as any;
                 validateOnStartup = resolvedDefault.validateOnStartup;
             }
 
@@ -178,7 +178,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
             } else {
                 logger.warn('[Server] Startup validation skipped (function not found)');
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             const error = err as Error;
             logger.error('[Server] LLM Startup Validation failed:', error.message);
         }
@@ -193,7 +193,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
             service.startHealthMonitoring(60000);
             logger.info('[Server] LLM Provider Health Monitoring started');
         }
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         logger.warn('[Server] LLM Fallback Service not available:', error.message);
     }
@@ -208,8 +208,8 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         let healthMonitor = healthMonitorModule.healthMonitor || healthMonitorModule.default?.healthMonitor;
 
         // Handle case where default export is a Promise (async module init)
-        if (!healthMonitor && healthMonitorModule.default instanceof Promise) {
-            const resolvedDefault = await healthMonitorModule.default;
+        if (!healthMonitor && (healthMonitorModule as any).default instanceof Promise) {
+            const resolvedDefault = (await (healthMonitorModule as any).default) as any;
             healthMonitor = resolvedDefault.healthMonitor;
         }
 
@@ -225,7 +225,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         } else {
             logger.warn('[Server] AI Health Monitor not available (export not found)');
         }
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         logger.warn('[Server] AI Health Monitor not available:', error.message);
     }
@@ -343,7 +343,7 @@ const apiLimiter = rateLimit({
         if ((req as any).user?.id) {
             return `api:user:${(req as any).user.id}`;
         }
-        return `api:ip:${ipKeyGenerator(req)}`;
+        return `api:ip:${req.ip || 'unknown'}`;
     },
 });
 
@@ -362,13 +362,13 @@ const authLimiter = rateLimit({
     skipSuccessfulRequests: true,
     keyGenerator: (req) => {
         const email = (req.body as { email?: string })?.email;
-        const _ip = req.ip || req.socket.remoteAddress || 'unknown';
+        const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
 
         if (email) {
             return `auth:${email.toLowerCase().trim()}`;
         }
 
-        return `auth:ip:${ipKeyGenerator(req)}`;
+        return `auth:ip:${ipAddress}`;
     },
 });
 
@@ -436,7 +436,7 @@ app.use('/api/', performanceMetricsMiddleware);
 // app.use('/api/', apiLimiter);
 import auditLogMiddleware from './middleware/auditLog.middleware.js';
 // app.use('/api/', auditLogMiddleware);
-app.use(logger.requestLogger);
+app.use((logger as any).requestLogger);
 
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
@@ -472,15 +472,17 @@ app.use(
 app.use((req: Request, res: Response) => {
     // Only send index.html if it's not an API route
     if (req.path.startsWith('/api/')) {
-        return res.status(404).json({
+        res.status(404).json({
             error: {
                 code: 'NOT_FOUND',
                 message: `Route ${req.method} ${req.path} not found`,
                 timestamp: new Date().toISOString(),
             },
         });
+        return;
     }
     res.sendFile(path.join(__dirname, '../dist/index.html'));
+    return;
 });
 
 // ============================================================
@@ -495,8 +497,7 @@ import alertWatchdog from './middleware/alertWatchdog.middleware.js';
 app.use(alertWatchdog);
 
 // Error Handler Middleware (must be last, after all routes)
-import { errorHandlerMiddleware } from './utils/ErrorHandler.js';
-import logger from './utils/Logger.ts';
+import { errorHandlerMiddleware } from './utils/errorHandler.js';
 app.use(errorHandlerMiddleware);
 
 // 404 Handler (must be after error handler)
@@ -521,7 +522,7 @@ if (!isTest) {
         if (isProduction) {
             logger.error('[Server] Uncaught Exception (not exiting):', err.message);
         } else {
-            logger.error('[Server] Uncaught Exception:', err);
+            logger.error('[Server] Validator critical error:', { error: err });
         }
     });
 
@@ -564,13 +565,13 @@ if (startServer && !isTest) {
     // Initialize WebSocket server
     (async () => {
         try {
-            const realtimeServiceModule = await import('../services/realtimeService.js');
+            const realtimeServiceModule = await import('./services/realtimeService.js');
             const realtimeServicePromise = realtimeServiceModule.default || realtimeServiceModule;
             const realtimeService = await realtimeServicePromise;
             if (realtimeService && typeof realtimeService.initializeSimple === 'function') {
                 realtimeService.initializeSimple(server);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             const error = err as Error;
             logger.warn('[Server] Realtime service not available:', error.message);
         }
@@ -579,9 +580,12 @@ if (startServer && !isTest) {
     // Start token cleanup cron job
     (async () => {
         try {
-            const { startCleanupJob } = await import('../cron/cleanupRevokedTokens.js');
-            startCleanupJob();
-        } catch (err: unknown) {
+            const cleanupModule = (await import('./cron/CleanupRevokedTokens.js')) as any;
+            const startCleanupJob = cleanupModule.startCleanupJob || cleanupModule.default?.startCleanupJob;
+            if (typeof startCleanupJob === 'function') {
+                startCleanupJob();
+            }
+        } catch (err: any) {
             const error = err as Error;
             logger.warn('[Server] Token cleanup job failed to start:', error.message);
         }
@@ -590,12 +594,14 @@ if (startServer && !isTest) {
     // Start metrics snapshot job
     (async () => {
         try {
-            const snapshotMetricsModule = await import('../cron/snapshotMetrics.js');
-            const initMetricsSnapshotJob = snapshotMetricsModule.default || snapshotMetricsModule;
-            if (typeof initMetricsSnapshotJob === 'function') {
-                initMetricsSnapshotJob();
+            const metricsModule = (await import('./cron/SnapshotMetrics.js')) as any;
+            const SnapshotMetricsCron = metricsModule.SnapshotMetricsCron || metricsModule.default || metricsModule;
+            if (typeof SnapshotMetricsCron === 'function') {
+                SnapshotMetricsCron();
+            } else if (SnapshotMetricsCron && typeof SnapshotMetricsCron.start === 'function') {
+                SnapshotMetricsCron.start();
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             const error = err as Error;
             logger.warn('[Server] Metrics snapshot job failed to start:', error.message);
         }
@@ -604,19 +610,25 @@ if (startServer && !isTest) {
     // Init AI Services (Redis, Cache, Rate Limiter)
     (async () => {
         try {
-            const { initRedis, _getRedisClient } = await import('../services/ai/redisClient.js');
+            const redisModule = (await import('./services/ai/redisClient.js')) as any;
+            const initRedis = redisModule.initRedis;
             const redisUrl = process.env.REDIS_URL;
 
             initRedis(redisUrl)
-                .then(async (redisClient: unknown) => {
+                .then(async (redisClient: any) => {
                     if (redisClient) {
-                        const { cacheService } = await import('../services/ai/cacheService.js');
-                        cacheService.connectRedis(redisClient);
+                        const cacheModule = (await import('./services/ai/cacheService.js')) as any;
+                        const cacheService = cacheModule.cacheService || cacheModule.default || cacheModule;
+                        if (cacheService && typeof cacheService.connectRedis === 'function') {
+                            cacheService.connectRedis(redisClient);
+                        }
 
-                        const { rateLimiter } = await import('../services/ai/rateLimiter.js');
-                        rateLimiter.connectRedis(redisClient);
-
-                        logger.info('[AI Services] Redis connected for cache and rate limiting');
+                        const rateLimiterModule = (await import('./services/ai/rateLimiter.js')) as any;
+                        const rateLimiter =
+                            rateLimiterModule.rateLimiter || rateLimiterModule.default || rateLimiterModule;
+                        if (rateLimiter && typeof rateLimiter.connectRedis === 'function') {
+                            rateLimiter.connectRedis(redisClient);
+                        }
                     } else {
                         logger.info('[AI Services] Using in-memory fallback (Redis not available)');
                     }
@@ -624,7 +636,7 @@ if (startServer && !isTest) {
                 .catch((err: Error) => {
                     logger.warn('[AI Services] Redis init failed, using in-memory:', err.message);
                 });
-        } catch (err: unknown) {
+        } catch (err: any) {
             const error = err as Error;
             logger.warn('[Server] AI Services failed to initialize:', error.message);
         }
@@ -633,9 +645,12 @@ if (startServer && !isTest) {
     // Init AI Worker
     (async () => {
         try {
-            const { initWorker } = await import('../workers/aiWorker.js');
-            initWorker();
-        } catch (err: unknown) {
+            const workerModule = (await import('./workers/aiWorker.js')) as any;
+            const initWorker = workerModule.initWorker || workerModule.default || workerModule;
+            if (typeof initWorker === 'function') {
+                initWorker();
+            }
+        } catch (err: any) {
             const error = err as Error;
             logger.warn('[Server] AI Worker failed to start (likely Redis missing):', error.message);
         }
@@ -645,14 +660,14 @@ if (startServer && !isTest) {
     (async () => {
         if (!isTest && process.env.DISABLE_SYSTEM_INTEGRITY !== 'true') {
             try {
-                const systemIntegrityModule = await import('../services/systemIntegrity.js');
+                const systemIntegrityModule = await import('./services/systemIntegrity.js');
                 const SystemIntegrity = systemIntegrityModule.default || systemIntegrityModule;
                 if (SystemIntegrity && typeof SystemIntegrity.check === 'function') {
                     setTimeout(() => {
                         SystemIntegrity.check();
                     }, 2000);
                 }
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err as Error;
                 logger.warn('[Server] System Integrity check failed:', error.message);
             }
@@ -689,9 +704,12 @@ if (startServer && !isTest) {
     shutdownManager.registerCleanup('Redis', async () => {
         try {
             logger.info('[Shutdown] Closing Redis connections...');
-            const { getRedisClient, isRedisConnected } = await import('./services/ai/redisClient.js');
-            if (isRedisConnected()) {
-                const client = getRedisClient();
+            const redisModule = (await import('./services/ai/redisClient.js')) as any;
+            const getRedisClient = redisModule.getRedisClient;
+            const isRedisConnected = redisModule.isRedisConnected;
+
+            if (typeof isRedisConnected === 'function' && isRedisConnected()) {
+                const client = typeof getRedisClient === 'function' ? getRedisClient() : null;
                 if (client && typeof client.quit === 'function') {
                     await client.quit();
                 }
@@ -719,7 +737,7 @@ if (startServer && !isTest) {
     shutdownManager.registerCleanup('WebSocket', async () => {
         try {
             logger.info('[Shutdown] Closing WebSocket connections...');
-            const realtimeServiceModule = await import('../services/realtimeService.js').catch(() => null);
+            const realtimeServiceModule = await import('./services/realtimeService.js').catch(() => null);
             if (realtimeServiceModule) {
                 const realtimeService = realtimeServiceModule.default || realtimeServiceModule;
                 if (realtimeService && typeof realtimeService.close === 'function') {

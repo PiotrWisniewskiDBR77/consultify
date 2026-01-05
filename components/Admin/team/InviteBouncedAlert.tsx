@@ -152,9 +152,7 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
     );
 
     // Get retryable invitations
-    const retryableInvitations = bouncedInvitations.filter(
-        (inv) => getBounceInfo(inv.bounceReason).canRetry,
-    );
+    const retryableInvitations = bouncedInvitations.filter((inv) => getBounceInfo(inv.bounceReason).canRetry);
 
     if (bouncedInvitations.length === 0) {
         return null;
@@ -168,10 +166,7 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
             )}
         >
             {/* Header */}
-            <div
-                className="flex items-center gap-3 p-4 cursor-pointer"
-                onClick={() => setIsExpanded(!isExpanded)}
-            >
+            <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
                 <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
                     <MailWarning size={20} className="text-amber-600 dark:text-amber-400" />
                 </div>
@@ -186,10 +181,7 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
                         </span>
                     </div>
                     <p className="text-sm text-amber-700 dark:text-amber-300">
-                        {t(
-                            'admin.team.bounced.description',
-                            'Some invitation emails could not be delivered',
-                        )}
+                        {t('admin.team.bounced.description', 'Some invitation emails could not be delivered')}
                     </p>
                 </div>
 
@@ -283,15 +275,9 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
                                         )}
                                     >
                                         {bounceInfo.severity === 'error' ? (
-                                            <AlertCircle
-                                                size={16}
-                                                className="text-rose-600 dark:text-rose-400"
-                                            />
+                                            <AlertCircle size={16} className="text-rose-600 dark:text-rose-400" />
                                         ) : (
-                                            <AlertTriangle
-                                                size={16}
-                                                className="text-amber-600 dark:text-amber-400"
-                                            />
+                                            <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400" />
                                         )}
                                     </div>
 
@@ -310,9 +296,7 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() =>
-                                                        handleResendWithCorrection(invitation.id)
-                                                    }
+                                                    onClick={() => handleResendWithCorrection(invitation.id)}
                                                     className="h-7 w-7 p-0 text-emerald-600"
                                                 >
                                                     <Check size={14} />
@@ -379,7 +363,12 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
                                                 </Tooltip>
                                             )}
                                             {!bounceInfo.canRetry && (
-                                                <Tooltip content={t('admin.team.bounced.editAndResend', 'Edit email and resend')}>
+                                                <Tooltip
+                                                    content={t(
+                                                        'admin.team.bounced.editAndResend',
+                                                        'Edit email and resend',
+                                                    )}
+                                                >
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
@@ -430,6 +419,3 @@ export const InviteBouncedAlert: React.FC<InviteBouncedAlertProps> = ({
 };
 
 export default InviteBouncedAlert;
-
-
-

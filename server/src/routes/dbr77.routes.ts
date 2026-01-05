@@ -10,10 +10,10 @@
 import { Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/dbr77.js');
-const dbr77RoutesJS = module.default || module;
+const dbrModule = (await import('./dbr77.js')) as any;
+const dbr77RoutesJS = dbrModule.default || dbrModule;
 
 // Create router and apply JS routes
 const router = Router();

@@ -52,7 +52,7 @@ async function getPMOHealthService() {
     if (_pmoHealthServiceOverride) return _pmoHealthServiceOverride;
     if (!_pmoHealthService) {
         try {
-            const mod = (await import('../../services/pmoHealthService.js')) as any;
+            const mod = (await import('./pmoHealthService.js')) as any;
             _pmoHealthService = mod.default || mod.pmoHealthService || mod;
         } catch (e: unknown) {
             logger.warn('[AIContextBuilder] PMOHealthService not available');
@@ -79,7 +79,7 @@ async function getAISettingsService() {
     if (_aiSettingsServiceOverride) return _aiSettingsServiceOverride;
     if (!_aiSettingsService) {
         try {
-            const mod = (await import('../../services/aiSettingsService.js')) as any;
+            const mod = (await import('./aiSettingsService.js')) as any;
             _aiSettingsService = mod.default || mod.aiSettingsService || mod;
         } catch (e: unknown) {
             logger.warn('[AIContextBuilder] AISettingsService not available');
@@ -92,7 +92,7 @@ async function getKnowledgeService() {
     if (_knowledgeServiceOverride) return _knowledgeServiceOverride;
     if (!_knowledgeService) {
         try {
-            const mod = (await import('../../services/knowledgeService.js')) as any;
+            const mod = (await import('./knowledgeService.js')) as any;
             _knowledgeService = mod.default || mod.knowledgeService || mod;
         } catch (e: unknown) {
             logger.warn('[AIContextBuilder] KnowledgeService not available');
@@ -143,7 +143,7 @@ export const AIContextBuilder = {
         if (projectId && PMOHealthService && ['all', 'pmo-docs', 'project-data'].includes(focusMode)) {
             try {
                 pmo.healthSnapshot = await PMOHealthService.getHealthSnapshot(projectId);
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.warn('[AIContextBuilder] Failed to get PMO health snapshot:', (err as Error).message);
             }
         }
@@ -160,7 +160,7 @@ export const AIContextBuilder = {
         if (AISettingsService) {
             try {
                 aiSettings = await AISettingsService.getEffectiveSettings(userId, organizationId);
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.warn('[AIContextBuilder] Failed to get AI settings:', (err as Error).message);
             }
         }
@@ -426,7 +426,7 @@ export const AIContextBuilder = {
         if (organizationId && KnowledgeService) {
             try {
                 strategicDirections = await KnowledgeService.getActiveStrategies();
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.warn('[AIContextBuilder] Failed to load strategic directions:', (err as Error).message);
             }
         }
@@ -435,7 +435,7 @@ export const AIContextBuilder = {
         if (organizationId && KnowledgeService) {
             try {
                 approvedIdeas = await KnowledgeService.getApprovedIdeas({});
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.warn('[AIContextBuilder] Failed to load approved ideas:', (err as Error).message);
             }
         }
@@ -482,7 +482,7 @@ export const AIContextBuilder = {
         if (organizationId && KnowledgeService) {
             try {
                 documents = await KnowledgeService.getDocuments(organizationId);
-            } catch (err: unknown) {}
+            } catch (err: any) {}
         }
 
         return {

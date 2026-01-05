@@ -5,10 +5,10 @@
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.ts';
+import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadConversationtracker = createCachedLazyService('../../services/ai/conversationTracker.js');
+const loadConversationtracker = createCachedLazyService('../../ai/conversationTracker.js');
 
 // Export default instance (for backward compatibility)
 export default loadConversationtracker();

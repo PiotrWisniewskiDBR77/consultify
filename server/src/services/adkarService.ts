@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import _logger from '../utils/Logger.ts';
+import _logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -80,7 +80,7 @@ class ADKARServiceClass {
         return new Promise((resolve, reject) => {
             this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row || null);
+                else resolve((row as T) || null);
             });
         });
     }

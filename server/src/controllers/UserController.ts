@@ -106,7 +106,7 @@ export class UserController {
     static updateUserRole = asyncHandler(
         async (req: AuthenticatedRequest<UpdateUserRoleRequest>, res: Response): Promise<void> => {
             const { id } = req.params;
-            const { role, _reason } = req.body;
+            const { role } = req.body;
             const orgId = req.user?.organizationId;
             if (!orgId) {
                 res.status(401).json({ error: 'Unauthorized' });

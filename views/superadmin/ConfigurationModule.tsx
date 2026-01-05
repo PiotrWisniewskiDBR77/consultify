@@ -60,8 +60,3 @@ export const ConfigurationModule: React.FC<ConfigurationModuleProps> = ({ initia
 };
 
 export default ConfigurationModule;
-
-
-
-
-

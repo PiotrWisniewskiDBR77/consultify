@@ -8,9 +8,9 @@
 
 import { Pool, type PoolClient, type PoolConfig } from 'pg';
 
-import databaseConfig from '../config/DatabaseConfig.ts';
-import logger from '../utils/Logger.ts';
-import type { IDatabase, QueryResult, RunResult } from './IDatabase.ts';
+import databaseConfig from '../config/DatabaseConfig.js';
+import logger from '../utils/Logger.js';
+import type { IDatabase, QueryResult, RunResult } from './IDatabase.js';
 
 let pool: Pool | null = null;
 let readPool: Pool | null = null;
@@ -236,25 +236,27 @@ class PostgresDatabase implements IDatabase {
         };
     }
 
+    async run(sql: string, params?: unknown[]): Promise<RunResult>;
+    run(sql: string, params: unknown[], callback: (err: Error | null) => void): this;
     run(sql: string, params?: unknown[], callback?: (err: Error | null) => void): this | Promise<RunResult> {
         if (typeof params === 'function') {
-            callback = params;
+            callback = params as (err: Error | null) => void;
             params = [];
         }
         params = params || [];
 
         const adaptedSql = adaptQuery(sql);
 
-        const promise = executeWithLogging<unknown>(getPool, adaptedSql, params, 'RUN')
+        const promise = executeWithLogging<unknown>(getPool, adaptedSql, params || [], 'RUN')
             .then((res) => {
-                const result: RunResult = { changes: res.rowCount, lastID: undefined };
+                const result: RunResult = { changes: res.rowCount || 0, lastID: undefined };
                 if (callback) {
                     callback.call({ changes: res.rowCount, lastID: null }, null);
                 }
                 return result;
             })
             .catch((err: Error | null) => {
-                logger.error('[Postgres] Run Error:', err.message, adaptedSql);
+                logger.error('[Postgres] Run Error:', err?.message, adaptedSql);
                 if (callback) callback(err);
                 throw err;
             });
@@ -265,11 +267,9 @@ class PostgresDatabase implements IDatabase {
         return promise;
     }
 
-    get<T = unknown>(
-        sql: string,
-        params?: unknown[],
-        callback?: (err: Error | null, row: T | null) => void,
-    ): this | Promise<T | null> {
+    get<T = unknown>(sql: string, params?: unknown[]): Promise<T | null>;
+    get<T = unknown>(sql: string, params: unknown[], callback: (err: Error | null, row: T | null) => void): this;
+    get<T = unknown>(sql: string, params?: any, callback?: any): any {
         if (typeof params === 'function') {
             callback = params;
             params = [];
@@ -296,11 +296,9 @@ class PostgresDatabase implements IDatabase {
         return promise;
     }
 
-    all<T = unknown>(
-        sql: string,
-        params?: unknown[],
-        callback?: (err: Error | null, rows: T[]) => void,
-    ): this | Promise<T[]> {
+    all<T = unknown>(sql: string, params?: unknown[]): Promise<T[]>;
+    all<T = unknown>(sql: string, params: unknown[], callback: (err: Error | null, rows: T[]) => void): this;
+    all<T = unknown>(sql: string, params?: any, callback?: any): any {
         if (typeof params === 'function') {
             callback = params;
             params = [];
@@ -358,6 +356,7 @@ class PostgresDatabase implements IDatabase {
                         readPool = null;
                     });
                 }
+                return Promise.resolve();
             })
             .then(() => {
                 if (callback) callback(null);
@@ -401,7 +400,7 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
             const result = await getPool().query('SELECT NOW() as current_time');
             logger.info('[Postgres] Connection test successful:', result.rows[0]);
             return true;
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error(`[Postgres] Connection test failed (attempt ${i + 1}/${retries}):`, (err as Error).message);
             if (i < retries - 1) {
                 logger.info(`[Postgres] Retrying in ${delay}ms...`);
@@ -419,7 +418,10 @@ async function testConnection(retries = 3, delay = 2000): Promise<boolean> {
 /**
  * Initialize Database Schema
  */
-async function initDb(): Promise<void> {
+/**
+ * Initialize Database Schema
+ */
+export async function initDb(): Promise<void> {
     logger.info('[Postgres] Checking/Initializing Schema...');
 
     try {
@@ -1476,7 +1478,7 @@ async function initDb(): Promise<void> {
                 } else {
                     logger.info(`[Postgres] Verified table exists: ${table}`);
                 }
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const error = err instanceof Error ? err : new Error(String(err));
                 logger.error(`[Postgres] Error verifying table ${table}: ${error.message}`);
                 missingTables.push(table);
@@ -1486,7 +1488,7 @@ async function initDb(): Promise<void> {
         if (missingTables.length > 0) {
             throw new Error(`Critical tables missing after initialization: ${missingTables.join(', ')}`);
         }
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[Postgres] InitDb Failed:', err);
         // Log detailed error information
         if ((err as any).code) {

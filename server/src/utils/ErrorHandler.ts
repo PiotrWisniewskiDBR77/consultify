@@ -8,7 +8,7 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
-import logger from './Logger.ts';
+import logger from './Logger.js';
 
 /**
  * Standardized AppError Class

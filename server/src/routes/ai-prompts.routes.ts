@@ -13,8 +13,8 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -69,14 +69,14 @@ router.get(
                 is_active: Boolean(p.is_active),
             }));
 
-            res.json({
+            return res.json({
                 success: true,
                 data: parsedPrompts,
                 count: parsedPrompts.length,
             });
         } catch (error: unknown) {
             logger.error('[AI Prompts API] Error listing prompts:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list prompts',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -101,13 +101,13 @@ router.get(
             ORDER BY category
         `);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: categories,
             });
         } catch (error: unknown) {
             logger.error('[AI Prompts API] Error listing categories:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list categories',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -154,7 +154,7 @@ router.get(
                 [id],
             );
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     ...prompt,
@@ -165,7 +165,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[AI Prompts API] Error getting prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -230,13 +230,13 @@ router.post(
                 throw new Error(runResult2.error || 'Failed to create prompt version');
             }
 
-            res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 data: { id, name, category, version: 1 },
             });
         } catch (error: unknown) {
             logger.error('[AI Prompts API] Error creating prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to create prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -316,13 +316,13 @@ router.put(
                 }
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 data: { id, version: newVersion },
             });
         } catch (error: unknown) {
             logger.error('[AI Prompts API] Error updating prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -355,10 +355,10 @@ router.delete(
                 throw new Error(runResult.error || 'Failed to deactivate prompt');
             }
 
-            res.json({ success: true, message: 'Prompt deactivated' });
+            return res.json({ success: true, message: 'Prompt deactivated' });
         } catch (error: unknown) {
             logger.error('[AI Prompts API] Error deleting prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to delete prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -396,7 +396,7 @@ router.post(
             // Find unreplaced variables
             const unreplacedVars = renderedTemplate.match(/\{\{\s*\w+\s*\}\}/g) || [];
 
-            res.json({
+            return res.json({
                 success: true,
                 data: {
                     original: prompt.template,
@@ -407,7 +407,7 @@ router.post(
             });
         } catch (error: unknown) {
             logger.error('[AI Prompts API] Error testing prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to test prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -481,14 +481,14 @@ router.post(
                 throw new Error(runResult2.error || 'Failed to create prompt version');
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 message: `Restored to version ${version}`,
                 data: { currentVersion: newVersion },
             });
         } catch (error: unknown) {
             logger.error('[AI Prompts API] Error restoring version:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to restore version',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });

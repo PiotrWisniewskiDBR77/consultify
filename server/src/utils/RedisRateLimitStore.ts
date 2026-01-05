@@ -8,8 +8,8 @@
 
 import type { IncrementResponse, Store } from 'express-rate-limit';
 
-import { getRedisClient, isRedisConnected } from '../../services/ai/redisClient.js';
-import logger from './Logger.ts';
+import { getRedisClient, isRedisConnected } from '../services/ai/redisClient.js';
+import logger from './Logger.js';
 
 // ==========================================
 // TYPES
@@ -17,7 +17,6 @@ import logger from './Logger.ts';
 
 interface RedisStoreOptions {
     windowMs?: number;
-    prefix?: string;
     prefix?: string;
 }
 
@@ -33,12 +32,12 @@ export class RedisRateLimitStore implements Store {
     public prefix: string;
 
     constructor(options: RedisStoreOptions) {
-        this.windowMs = options.windowMs;
+        this.windowMs = options.windowMs || 60000;
         this.prefix = options.prefix || 'rl:';
     }
 
     init(options: RedisStoreOptions): void {
-        this.windowMs = options.windowMs;
+        this.windowMs = options.windowMs || this.windowMs;
         if (options.prefix) {
             this.prefix = options.prefix;
         }
@@ -142,8 +141,3 @@ export class RedisRateLimitStore implements Store {
 }
 
 export default RedisRateLimitStore;
-
-
-
-
-

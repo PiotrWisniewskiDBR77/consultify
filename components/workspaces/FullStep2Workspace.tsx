@@ -180,7 +180,9 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
                     <div className="w-40">
                         <Select
                             value={filterPriority}
-                            onValueChange={(value: string) => setFilterPriority(value as 'ALL' | 'High' | 'Medium' | 'Low')}
+                            onValueChange={(value: string) =>
+                                setFilterPriority(value as 'ALL' | 'High' | 'Medium' | 'Low')
+                            }
                         >
                             <SelectTrigger className="w-full bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md text-xs h-8">
                                 <SelectValue placeholder="All Priorities" />
@@ -209,8 +211,8 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
                                     {g === 'none'
                                         ? 'None'
                                         : g === 'strategicGoal'
-                                            ? 'Goal'
-                                            : g.charAt(0).toUpperCase() + g.slice(1)}
+                                          ? 'Goal'
+                                          : g.charAt(0).toUpperCase() + g.slice(1)}
                                 </button>
                             ))}
                         </div>

@@ -141,9 +141,7 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
         if (formData.street) parts.push(formData.street);
         if (formData.street2) parts.push(formData.street2);
 
-        const cityLine = [formData.city, formData.state, formData.postalCode]
-            .filter(Boolean)
-            .join(', ');
+        const cityLine = [formData.city, formData.state, formData.postalCode].filter(Boolean).join(', ');
         if (cityLine) parts.push(cityLine);
 
         const country = COUNTRIES.find((c) => c.code === formData.country)?.name || formData.country;
@@ -186,7 +184,10 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
                             value={formData.street2 || ''}
                             onChange={(e) => updateField('street2', e.target.value)}
                             placeholder="Suite 100, Floor 5"
-                            helperText={t('admin.org.address.street2Helper', 'Optional: Apartment, suite, unit, building, floor, etc.')}
+                            helperText={t(
+                                'admin.org.address.street2Helper',
+                                'Optional: Apartment, suite, unit, building, floor, etc.',
+                            )}
                         />
                     </div>
 
@@ -245,9 +246,7 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
                                 </option>
                             ))}
                         </select>
-                        {errors.country && (
-                            <p className="mt-2 text-sm text-danger-500">{errors.country}</p>
-                        )}
+                        {errors.country && <p className="mt-2 text-sm text-danger-500">{errors.country}</p>}
                     </div>
                 </div>
 
@@ -273,7 +272,10 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
                     {t('admin.org.address.taxInfo', 'Tax Information')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                    {t('admin.org.address.taxInfoDescription', 'Tax identification numbers for invoicing and compliance.')}
+                    {t(
+                        'admin.org.address.taxInfoDescription',
+                        'Tax identification numbers for invoicing and compliance.',
+                    )}
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -284,7 +286,10 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
                             value={formData.taxId || ''}
                             onChange={(e) => updateField('taxId', e.target.value)}
                             placeholder="XX-XXXXXXX"
-                            helperText={t('admin.org.address.taxIdHelper', 'Employer Identification Number (US) or equivalent')}
+                            helperText={t(
+                                'admin.org.address.taxIdHelper',
+                                'Employer Identification Number (US) or equivalent',
+                            )}
                         />
                     </div>
 
@@ -319,6 +324,3 @@ export const CompanyAddressSettings: React.FC<CompanyAddressSettingsProps> = ({
 };
 
 export default CompanyAddressSettings;
-
-
-

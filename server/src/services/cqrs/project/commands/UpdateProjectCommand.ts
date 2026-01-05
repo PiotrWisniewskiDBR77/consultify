@@ -1,13 +1,15 @@
 import { getDatabase } from '../../../../database/Database.js';
 import type { IDatabase } from '../../../../database/IDatabase.js';
 
-export interface UpdateProjectCommand {
-    projectId: string;
-    updates: Partial<{
-        name: string;
-        summary: string;
-        ownerId: string;
-    }>;
+export class UpdateProjectCommand {
+    constructor(
+        public readonly projectId: string,
+        public readonly updates: Partial<{
+            name: string;
+            summary: string;
+            ownerId: string;
+        }>,
+    ) {}
 }
 
 export class UpdateProjectHandler {

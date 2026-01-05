@@ -6,7 +6,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { AppError, AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from '../types/index.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 interface ErrorResponse {
     success: false;

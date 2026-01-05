@@ -39,7 +39,7 @@ export class ChurnAnalyticsService {
      * Get churn rate and analysis
      */
     async getChurnRate(options: ChurnRateOptions = {}): Promise<ChurnRateData> {
-        const { _period = 'monthly', months = 6 } = options;
+        const { period = 'monthly', months = 6 } = options;
 
         // Get churn events
         const churnData = await this.db.all<{

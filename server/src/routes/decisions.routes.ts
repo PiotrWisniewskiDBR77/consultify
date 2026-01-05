@@ -7,7 +7,8 @@
 
 import { Router } from 'express';
 
-import DecisionController from '../controllers/DecisionController.js';
+import DecisionControllerRaw from '../controllers/DecisionController.js';
+const DecisionController = DecisionControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';

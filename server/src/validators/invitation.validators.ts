@@ -26,6 +26,10 @@ export const ResendInvitationSchema = z.object({
 
 export const AcceptInvitationSchema = z.object({
     token: z.string().min(1),
+    email: z.string().email(),
+    firstName: z.string().min(1).max(100),
+    lastName: z.string().min(1).max(100),
+    password: z.string().min(8),
 });
 
 // ==========================================
@@ -35,8 +39,3 @@ export const AcceptInvitationSchema = z.object({
 export type CreateInvitationRequest = z.infer<typeof CreateInvitationSchema>;
 export type ResendInvitationRequest = z.infer<typeof ResendInvitationSchema>;
 export type AcceptInvitationRequest = z.infer<typeof AcceptInvitationSchema>;
-
-
-
-
-

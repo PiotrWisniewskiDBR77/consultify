@@ -18,7 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -99,7 +99,7 @@ interface TaxCalculationOptions {
 interface TaxCalculationResult {
     taxAmount: number;
     taxRate: number;
-    taxType: string | null;
+    taxType: string | undefined;
     taxBehavior: 'exclusive' | 'inclusive' | 'reverse_charge' | 'none';
     description: string;
     taxRateId?: string;
@@ -165,16 +165,16 @@ class TaxServiceClass {
         this.stripe =
             deps?.stripe ||
             (process.env.STRIPE_SECRET_KEY
-                ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' })
+                ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-12-15.clover' as any })
                 : null);
     }
 
     /**
      * Database helper: Get all rows
      */
-    private async dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
+    private async dbAll<T = any>(sql: string, params: unknown[] = []): Promise<T[]> {
         return new Promise((resolve, reject) => {
-            this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
+            this.db.all<T>(sql, params, (err: Error | null, rows: T[]) => {
                 if (err) reject(err);
                 else resolve(rows || []);
             });
@@ -184,9 +184,9 @@ class TaxServiceClass {
     /**
      * Database helper: Get single row
      */
-    private async dbGet<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
+    private async dbGet<T = any>(sql: string, params: unknown[] = []): Promise<T | null> {
         return new Promise((resolve, reject) => {
-            this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
+            this.db.get<T>(sql, params, (err: Error | null, row: T | null) => {
                 if (err) reject(err);
                 else resolve(row || null);
             });
@@ -418,15 +418,20 @@ class TaxServiceClass {
                 });
 
                 return {
-                    taxAmount: taxCalc.tax_amount_exclusive,
-                    taxRate: (taxCalc.tax_breakdown?.[0]?.tax_rate_details?.percentage_decimal || 0) * 100,
-                    taxType: taxCalc.tax_breakdown?.[0]?.tax_rate_details?.tax_type || 'sales_tax',
+                    taxAmount: (taxCalc as any).tax_amount_exclusive,
+                    taxRate:
+                        (((taxCalc as any).tax_breakdown?.[0]?.tax_rate_details?.percentage_decimal || 0) as number) *
+                        100,
+                    taxType: ((taxCalc as any).tax_breakdown?.[0]?.tax_rate_details?.tax_type || 'sales_tax') as
+                        | string
+                        | undefined,
                     taxBehavior: 'exclusive',
-                    stripeTaxCalculationId: taxCalc.id,
-                    breakdown: (taxCalc.tax_breakdown || []).map((tb) => ({
-                        name: tb.tax_rate_details?.display_name,
-                        rate: (tb.tax_rate_details?.percentage_decimal || 0) * 100,
-                        amount: tb.amount,
+                    description: 'Stripe Tax Calculation',
+                    stripeTaxCalculationId: taxCalc.id || undefined,
+                    breakdown: ((taxCalc as any).tax_breakdown || []).map((tb: any) => ({
+                        name: tb.tax_rate_details?.display_name as string | undefined,
+                        rate: ((tb.tax_rate_details?.percentage_decimal || 0) as number) * 100,
+                        amount: tb.amount as number,
                     })),
                 };
             } catch (e: unknown) {
@@ -444,7 +449,7 @@ class TaxServiceClass {
             return {
                 taxAmount: 0,
                 taxRate: 0,
-                taxType: null,
+                taxType: undefined,
                 taxBehavior: 'none',
                 description: 'No applicable tax',
                 breakdown: [],
@@ -528,7 +533,7 @@ class TaxServiceClass {
         // Try Stripe Tax ID validation first
         if (this.stripe) {
             try {
-                const validation = await this.stripe.tax.validations.create({
+                const validation = await (this.stripe.tax as any).validations.create({
                     type: this.mapCountryToTaxIdType(countryCode),
                     value: cleanedNumber,
                 });
@@ -735,12 +740,17 @@ class TaxServiceClass {
         tax_collected: number;
         total: number;
     } {
-        return rows.reduce(
+        return rows.reduce<{
+            invoice_count: number;
+            subtotal: number;
+            tax_collected: number;
+            total: number;
+        }>(
             (acc, row) => ({
-                invoice_count: acc.invoice_count + (row.invoice_count || 0),
-                subtotal: acc.subtotal + (row.subtotal || 0),
-                tax_collected: acc.tax_collected + (row.tax_collected || 0),
-                total: acc.total + (row.total || 0),
+                invoice_count: (acc.invoice_count || 0) + (row.invoice_count || 0),
+                subtotal: (acc.subtotal || 0) + (row.subtotal || 0),
+                tax_collected: (acc.tax_collected || 0) + (row.tax_collected || 0),
+                total: (acc.total || 0) + (row.total || 0),
             }),
             { invoice_count: 0, subtotal: 0, tax_collected: 0, total: 0 },
         );

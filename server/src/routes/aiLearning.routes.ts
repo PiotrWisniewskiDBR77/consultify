@@ -7,6 +7,6 @@
 
 import { createLazyRoute } from '../utils/lazyRouteLoader.js';
 
-const router = createLazyRoute('../../routes/aiLearning.js');
+const router = createLazyRoute('./aiLearning.js');
 
 export default router;

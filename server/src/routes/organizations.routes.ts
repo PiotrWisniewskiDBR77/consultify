@@ -7,14 +7,15 @@
 
 import { Router } from 'express';
 
-import OrganizationController from '../controllers/OrganizationController.js';
+import OrganizationControllerRaw from '../controllers/OrganizationController.js';
+const OrganizationController = OrganizationControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
-    _InviteMemberSchema,
     AddMemberSchema,
     CreateOrganizationSchema,
+    InviteMemberSchema,
     UpdateMemberRoleSchema,
     UpdateOrganizationSchema,
 } from '../validators/organization.validators.js';

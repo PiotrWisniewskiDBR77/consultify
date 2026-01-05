@@ -7,8 +7,8 @@
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -164,7 +164,7 @@ export class AnalyticsServiceClass {
                  VALUES (?, ?, ?, ?, ?)`,
                 [uuidv4(), organizationId, axis, score, industry],
             );
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[AnalyticsService] Failed to save maturity score:', err);
         }
     }

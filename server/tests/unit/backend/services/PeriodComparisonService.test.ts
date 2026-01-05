@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 // Use vi.hoisted to ensure mock data is available to vi.mock
 const { mockDb } = vi.hoisted(() => ({
@@ -15,13 +15,13 @@ const { mockDb } = vi.hoisted(() => ({
         serialize: vi.fn(),
         close: vi.fn(),
         query: vi.fn(),
-    }
+    },
 }));
 
 // Mock the Database module
 vi.mock('../../../../src/database/Database.ts', () => ({
     getDatabase: () => mockDb,
-    default: mockDb
+    default: mockDb,
 }));
 
 import PeriodComparisonService from '../../../../src/services/periodComparisonService.js';
@@ -39,27 +39,29 @@ describe('PeriodComparisonService', () => {
                 project_id: 'proj1',
                 report_type: 'TEAM_MEETING',
                 scope: 'PROJECT',
-                created_at: '2025-12-28T12:00:00Z'
+                created_at: '2025-12-28T12:00:00Z',
             };
 
-            (mockDb.get as Mock).mockImplementation((sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
-                if (sql.includes('FROM management_reports') && params && params[0] === 'report2') {
-                    callback(null, currentReport);
-                } else if (sql.includes('ORDER BY created_at DESC')) {
-                    callback(null, {
-                        id: 'report1',
-                        organization_id: 'org1',
-                        project_id: 'proj1',
-                        report_type: 'TEAM_MEETING',
-                        created_at: '2025-12-21T12:00:00Z',
-                        content: JSON.stringify({
-                            statusSummary: { tasksCompletedPeriod: 5, progressPercent: 40 }
-                        })
-                    });
-                } else {
-                    callback(null, null);
-                }
-            });
+            (mockDb.get as Mock).mockImplementation(
+                (sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
+                    if (sql.includes('FROM management_reports') && params && params[0] === 'report2') {
+                        callback(null, currentReport);
+                    } else if (sql.includes('ORDER BY created_at DESC')) {
+                        callback(null, {
+                            id: 'report1',
+                            organization_id: 'org1',
+                            project_id: 'proj1',
+                            report_type: 'TEAM_MEETING',
+                            created_at: '2025-12-21T12:00:00Z',
+                            content: JSON.stringify({
+                                statusSummary: { tasksCompletedPeriod: 5, progressPercent: 40 },
+                            }),
+                        });
+                    } else {
+                        callback(null, null);
+                    }
+                },
+            );
 
             const result = await PeriodComparisonService.getPreviousReport('report2');
 
@@ -74,20 +76,20 @@ describe('PeriodComparisonService', () => {
                 content: {
                     statusSummary: {
                         tasksCompletedPeriod: 15,
-                        progressPercent: 60
+                        progressPercent: 60,
                     },
-                    blockers: [{}, {}]
-                }
+                    blockers: [{}, {}],
+                },
             };
 
             const previousReport = {
                 content: {
                     statusSummary: {
                         tasksCompletedPeriod: 10,
-                        progressPercent: 45
+                        progressPercent: 45,
                     },
-                    blockers: [{}, {}, {}]
-                }
+                    blockers: [{}, {}, {}],
+                },
             };
 
             const result = PeriodComparisonService.calculateChanges(currentReport, previousReport);
@@ -112,22 +114,24 @@ describe('PeriodComparisonService', () => {
                 report_type: 'TEAM_MEETING',
                 created_at: '2025-12-28T12:00:00Z',
                 content: JSON.stringify({
-                    statusSummary: { tasksCompletedPeriod: 15, progressPercent: 60 }
-                })
+                    statusSummary: { tasksCompletedPeriod: 15, progressPercent: 60 },
+                }),
             };
 
-            (mockDb.get as Mock).mockImplementation((sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
-                if (sql.includes('FROM management_reports') && params && params[0] === 'report2') {
-                    callback(null, currentReport);
-                } else {
-                    callback(null, {
-                        id: 'report1',
-                        content: JSON.stringify({
-                            statusSummary: { tasksCompletedPeriod: 10, progressPercent: 45 }
-                        })
-                    });
-                }
-            });
+            (mockDb.get as Mock).mockImplementation(
+                (sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
+                    if (sql.includes('FROM management_reports') && params && params[0] === 'report2') {
+                        callback(null, currentReport);
+                    } else {
+                        callback(null, {
+                            id: 'report1',
+                            content: JSON.stringify({
+                                statusSummary: { tasksCompletedPeriod: 10, progressPercent: 45 },
+                            }),
+                        });
+                    }
+                },
+            );
 
             const result = await PeriodComparisonService.generateComparisonData('report2');
 

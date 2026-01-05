@@ -10,10 +10,10 @@
 import { Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/pinned-prompts.js');
-const pinned_promptsRoutesJS = module.default || module;
+const promptModule = (await import('./pinned-prompts.js')) as any;
+const pinned_promptsRoutesJS = promptModule.default || promptModule;
 
 // Apply rate limiting
 const router = Router();

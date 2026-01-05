@@ -3,7 +3,7 @@
  * Fetches full project data from the database.
  */
 
-import * as DbPromise from '../../../utils/DbPromise.ts';
+import * as DbPromise from '../../../utils/DbPromise.js';
 
 type ProjectParams = {
     projectId: string;

@@ -33,10 +33,10 @@ describe('Database', () => {
     });
 
     describe('createDatabase', () => {
-        it('should create mock database when MOCK_DB is true', () => {
+        it('should create mock database when MOCK_DB is true', async () => {
             process.env.MOCK_DB = 'true';
 
-            const db = createDatabase();
+            const db = await createDatabase();
             expect(db).toBeDefined();
             expect(typeof db.get).toBe('function');
             expect(typeof db.all).toBe('function');
@@ -47,13 +47,13 @@ describe('Database', () => {
             expect(typeof db.close).toBe('function');
         });
 
-        it('should use global test mock if available', () => {
+        it('should use global test mock if available', async () => {
             process.env.MOCK_DB = 'true';
-            const customMock = createDatabase() as MockDatabase;
+            const customMock = (await createDatabase()) as MockDatabase;
             // @ts-expect-error - setting global test mock
             global.__TEST_DB_MOCK__ = customMock;
 
-            const db = createDatabase();
+            const db = await createDatabase();
             expect(db).toBe(customMock);
 
             // @ts-expect-error - cleaning up
@@ -67,10 +67,10 @@ describe('Database', () => {
             expect(db1).toBe(db2);
         });
 
-        it('should create new instance if singleton is null', () => {
+        it('should create new instance if singleton is null', async () => {
             process.env.MOCK_DB = 'true';
             // Force reset singleton by calling createDatabase first
-            const db1 = createDatabase();
+            const db1 = await createDatabase();
             const db2 = getDatabase();
             // Both should be valid database instances
             expect(db1).toBeDefined();
@@ -81,9 +81,9 @@ describe('Database', () => {
     describe('IDatabase interface - Mock Database', () => {
         let mockDb: MockDatabase;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             process.env.MOCK_DB = 'true';
-            mockDb = createDatabase() as MockDatabase;
+            mockDb = (await createDatabase()) as MockDatabase;
         });
 
         describe('get method', () => {
@@ -218,7 +218,7 @@ describe('Database', () => {
     describe('Database Error Handling', () => {
         it('should handle database operations gracefully', async () => {
             process.env.MOCK_DB = 'true';
-            const db = createDatabase() as MockDatabase;
+            const db = (await createDatabase()) as MockDatabase;
 
             // All operations should not throw
             await expect(db.query('SELECT * FROM invalid_table')).resolves.toBeDefined();
@@ -232,9 +232,9 @@ describe('Database', () => {
             process.env.DB_TYPE = 'sqlite';
             // This will try to load SQLite database
             // In test environment, we expect it to work or fail gracefully
-            expect(() => {
+            expect(async () => {
                 try {
-                    createDatabase();
+                    await createDatabase();
                 } catch (e) {
                     // Expected if database file doesn't exist in test
                 }

@@ -10,16 +10,17 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
 
 // Service interfaces
 interface BudgetManagementServiceInterface {
-    getBudgetStatus?: (orgId: string, userId?: string | null, projectId?: string) => Promise<unknown>;
-    setUserBudget?: (orgId: string, userId: string, budget: unknown) => Promise<void>;
-    setProjectBudget?: (orgId: string, projectId: string, budget: unknown) => Promise<void>;
+    getBudgetStatus?: (orgId: string, userId?: string | null, projectId?: string) => Promise<any>;
+    setUserBudget?: (orgId: string, userId: string, budget: any) => Promise<void>;
+    setProjectBudget?: (orgId: string, projectId: string, budget: any) => Promise<void>;
+    setOrgBudget?: (orgId: string, budget: any) => Promise<void>;
 }
 
 type RequireOrgAccessMiddleware = (options: {
@@ -31,14 +32,14 @@ let budgetManagementService: BudgetManagementServiceInterface | null = null;
 let requireOrgAccess: RequireOrgAccessMiddleware | null = null;
 
 try {
-    const budgetModule = await import('../services/budgetManagementService.js');
+    const budgetModule = (await import('../services/budgetManagementService.js')) as any;
     budgetManagementService = (budgetModule.default || budgetModule) as BudgetManagementServiceInterface;
 } catch {
     logger.warn('[Budgets] budgetManagementService not available');
 }
 
 try {
-    const rbacModule = await import('../../middleware/rbac.js');
+    const rbacModule = (await import('../middleware/rbac.js')) as any;
     requireOrgAccess = rbacModule.requireOrgAccess as RequireOrgAccessMiddleware;
 } catch {
     logger.warn('[Budgets] requireOrgAccess middleware not available');
@@ -65,10 +66,12 @@ router.get(
 
             const { userId } = req.params;
             const budget = await budgetManagementService.getBudgetStatus(orgId, userId);
-            res.json({ budget });
+            return res.json({ budget });
         } catch (error: unknown) {
             logger.error('[Budgets] Get user budget error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get user budget' });
+            return res
+                .status(500)
+                .json({ error: error instanceof Error ? error.message : 'Failed to get user budget' });
         }
     }),
 );
@@ -95,10 +98,12 @@ router.put(
             const { userId } = req.params;
             const budget = req.body;
             await budgetManagementService.setUserBudget(orgId, userId, budget);
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             logger.error('[Budgets] Set user budget error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set user budget' });
+            return res
+                .status(500)
+                .json({ error: error instanceof Error ? error.message : 'Failed to set user budget' });
         }
     }),
 );
@@ -124,10 +129,12 @@ router.get(
 
             const { projectId } = req.params;
             const budget = await budgetManagementService.getBudgetStatus(orgId, null, projectId);
-            res.json({ budget });
+            return res.json({ budget });
         } catch (error: unknown) {
             logger.error('[Budgets] Get project budget error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get project budget' });
+            return res
+                .status(500)
+                .json({ error: error instanceof Error ? error.message : 'Failed to get project budget' });
         }
     }),
 );
@@ -154,10 +161,12 @@ router.put(
             const { projectId } = req.params;
             const budget = req.body;
             await budgetManagementService.setProjectBudget(orgId, projectId, budget);
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             logger.error('[Budgets] Set project budget error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set project budget' });
+            return res
+                .status(500)
+                .json({ error: error instanceof Error ? error.message : 'Failed to set project budget' });
         }
     }),
 );
@@ -182,10 +191,10 @@ router.get(
             }
 
             const budget = await budgetManagementService.getBudgetStatus(orgId);
-            res.json({ budget });
+            return res.json({ budget });
         } catch (error: unknown) {
             logger.error('[Budgets] Get org budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: error instanceof Error ? error.message : 'Failed to get organization budget',
             });
         }
@@ -213,10 +222,10 @@ router.put(
 
             const budget = req.body;
             await budgetManagementService.setOrgBudget(orgId, budget);
-            res.json({ success: true });
+            return res.json({ success: true });
         } catch (error: unknown) {
             logger.error('[Budgets] Set org budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: error instanceof Error ? error.message : 'Failed to set organization budget',
             });
         }
@@ -248,10 +257,12 @@ router.get(
                 userId as string | undefined,
                 projectId as string | undefined,
             );
-            res.json({ budget });
+            return res.json({ budget });
         } catch (error: unknown) {
             logger.error('[Budgets] Get budget status error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get budget status' });
+            return res
+                .status(500)
+                .json({ error: error instanceof Error ? error.message : 'Failed to get budget status' });
         }
     }),
 );

@@ -1,6 +1,6 @@
 import { Redis } from 'ioredis';
 
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 
 class RedisClient {
     private client: Redis | null = null;
@@ -9,6 +9,14 @@ class RedisClient {
 
     constructor() {
         // Lazy connection or init
+    }
+
+    public isRedisConnected(): boolean {
+        return this.isConnected && this.client !== null && this.client.status === 'ready';
+    }
+
+    public getRedisClient(): Redis | null {
+        return this.client;
     }
 
     public connect(url?: string): Redis {

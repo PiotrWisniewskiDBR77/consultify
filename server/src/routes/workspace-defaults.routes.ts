@@ -10,9 +10,9 @@
 import { Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/workspace-defaults.js');
+const module = (await import('./workspace-defaults.js')) as any;
 const workspace_defaultsRoutesJS = module.default || module;
 
 // Create router and apply JS routes

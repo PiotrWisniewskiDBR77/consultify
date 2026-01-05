@@ -10,14 +10,14 @@
 import { Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 
 const router = Router();
 
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/user-settings-templates.js');
-const user_settings_templatesRoutesJS = module.default || module;
+const templatesModule = (await import('./user-settings-templates.js')) as any;
+const user_settings_templatesRoutesJS = templatesModule.default || templatesModule;
 
 // Apply rate limiting
 router.use(defaultRateLimiter);

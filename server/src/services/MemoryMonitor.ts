@@ -6,9 +6,9 @@
  * Alerts when memory growth exceeds thresholds
  */
 
-import logger from '../utils/Logger.ts';
-import { getMetricsService } from './MetricsService.js';
-import { memoryUsageBytes } from './MetricsService.js';
+import logger from '../utils/Logger.js';
+import { getMetricsService } from './metricsService.js';
+import { memoryUsageBytes } from './metricsService.js';
 
 // ==========================================
 // TYPES
@@ -250,8 +250,3 @@ export function getMemoryMonitor(options?: {
 
 export default MemoryMonitor;
 export type { MemoryLeakAlert, MemorySample };
-
-
-
-
-

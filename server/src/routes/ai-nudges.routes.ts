@@ -10,7 +10,7 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -43,7 +43,7 @@ interface ProactiveNudgesInterface {
 let proactiveNudges: ProactiveNudgesInterface | null = null;
 
 try {
-    const nudgesModule = await import('../services/ai/proactiveNudges.js');
+    const nudgesModule = (await import('../services/ai/proactiveNudges.js')) as any;
     const module = nudgesModule.default || nudgesModule;
     proactiveNudges = (module.proactiveNudges || module) as ProactiveNudgesInterface;
 } catch {
@@ -80,13 +80,13 @@ router.get(
 
             const nudges = await proactiveNudges.getPendingNudges(userId, organizationId);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: nudges,
             });
         } catch (error: unknown) {
             logger.error('[AI Nudges] Error fetching pending nudges:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -131,13 +131,13 @@ router.post(
                 context: metadata,
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 nudges: nudges || [],
             });
         } catch (error: unknown) {
             logger.error('[AI Nudges] Error tracking activity:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -179,12 +179,12 @@ router.post(
 
             await proactiveNudges.dismissNudge(userId, nudgeId, reason || 'not_now');
 
-            res.json({
+            return res.json({
                 success: true,
             });
         } catch (error: unknown) {
             logger.error('[AI Nudges] Error dismissing nudge:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -226,12 +226,12 @@ router.post(
 
             await proactiveNudges.markNudgeActed(userId, nudgeId, action || 'accepted');
 
-            res.json({
+            return res.json({
                 success: true,
             });
         } catch (error: unknown) {
             logger.error('[AI Nudges] Error marking nudge as acted:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -273,12 +273,12 @@ router.post(
 
             await proactiveNudges.suppressNudgeType(userId, nudgeType, duration || 'permanent');
 
-            res.json({
+            return res.json({
                 success: true,
             });
         } catch (error: unknown) {
             logger.error('[AI Nudges] Error suppressing nudge type:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });

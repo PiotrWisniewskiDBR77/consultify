@@ -131,7 +131,9 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                                 <div className="flex items-center gap-2">
                                     <h4
                                         className={`font-semibold ${
-                                            isFuture ? 'text-slate-400 dark:text-slate-500' : 'text-navy-900 dark:text-white'
+                                            isFuture
+                                                ? 'text-slate-400 dark:text-slate-500'
+                                                : 'text-navy-900 dark:text-white'
                                         }`}
                                     >
                                         {phase.label}
@@ -149,7 +151,9 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
                                 </div>
                                 <p
                                     className={`mt-1 text-sm ${
-                                        isFuture ? 'text-slate-400 dark:text-slate-500' : 'text-slate-600 dark:text-slate-300'
+                                        isFuture
+                                            ? 'text-slate-400 dark:text-slate-500'
+                                            : 'text-slate-600 dark:text-slate-300'
                                     }`}
                                 >
                                     {phase.description}
@@ -211,4 +215,3 @@ export const TrustProgressionIndicator: React.FC<TrustProgressionIndicatorProps>
 };
 
 export default TrustProgressionIndicator;
-

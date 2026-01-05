@@ -5,7 +5,7 @@
  * Aligned with RESOURCE_RESPONSIBILITY PMO domain
  */
 
-import { Users, Link2, MapPin, Plus, Shield, UserCheck, UserX } from 'lucide-react';
+import { Link2, MapPin, Plus, Shield, UserCheck, Users, UserX } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
 import { SplitLayout } from '../../components/layout/SplitLayout';
@@ -21,19 +21,17 @@ export const ClientAccessView: React.FC = () => {
     const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
     const [showAccessModal, setShowAccessModal] = useState(false);
 
-    const handleNavigate = useCallback(
-        (view: AppView) => () => setCurrentView(view),
-        [setCurrentView],
+    const handleNavigate = useCallback((view: AppView) => () => setCurrentView(view), [setCurrentView]);
+
+    const handleRequestAccess = useCallback(
+        async (clientId: string, accessLevel: string) => {
+            await requestClientAccess(clientId, accessLevel);
+            setShowAccessModal(false);
+        },
+        [requestClientAccess],
     );
 
-    const handleRequestAccess = useCallback(async (clientId: string, accessLevel: string) => {
-        await requestClientAccess(clientId, accessLevel);
-        setShowAccessModal(false);
-    }, [requestClientAccess]);
-
-    const filteredClients = selectedRegion
-        ? clients.filter((c) => c.region === selectedRegion)
-        : clients;
+    const filteredClients = selectedRegion ? clients.filter((c) => c.region === selectedRegion) : clients;
 
     const activeEmployees = employees.filter((e) => e.status === 'ACTIVE');
     const inactiveEmployees = employees.filter((e) => e.status === 'DEACTIVATED');
@@ -204,8 +202,9 @@ export const ClientAccessView: React.FC = () => {
 
                     <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
                         <p>
-                            Wszystkie zmiany dostępu są logowane zgodnie z PMO domain <strong>RESOURCE_RESPONSIBILITY</strong>
-                            i mapowane na ISO 21500 Resource Subject Group (Clause 4.6).
+                            Wszystkie zmiany dostępu są logowane zgodnie z PMO domain{' '}
+                            <strong>RESOURCE_RESPONSIBILITY</strong>i mapowane na ISO 21500 Resource Subject Group
+                            (Clause 4.6).
                         </p>
                         <ul className="space-y-2 text-xs">
                             <li className="flex items-center gap-2">
@@ -302,14 +301,20 @@ const EmployeeRow: React.FC<EmployeeRowProps> = ({ employee, inactive }) => (
                 {employee.employeeName.substring(0, 2).toUpperCase()}
             </div>
             <div>
-                <div className={inactive ? 'text-slate-400 dark:text-slate-500' : 'font-semibold text-navy-900 dark:text-white'}>
+                <div
+                    className={
+                        inactive ? 'text-slate-400 dark:text-slate-500' : 'font-semibold text-navy-900 dark:text-white'
+                    }
+                >
                     {employee.employeeName}
                 </div>
                 <div className="text-xs text-slate-500">{employee.email}</div>
             </div>
         </div>
         <div className="text-right">
-            <div className={`text-xs font-medium ${inactive ? 'text-slate-400' : 'text-slate-600 dark:text-slate-300'}`}>
+            <div
+                className={`text-xs font-medium ${inactive ? 'text-slate-400' : 'text-slate-600 dark:text-slate-300'}`}
+            >
                 {employee.accessType.replace('_', ' ')}
             </div>
             <div className="text-xs text-slate-400">{employee.clients.length} clients</div>

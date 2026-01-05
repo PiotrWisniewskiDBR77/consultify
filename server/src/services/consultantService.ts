@@ -13,14 +13,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import _logger from '../utils/Logger.ts';
+import _logger from '../utils/Logger.js';
 
 // Dynamic import for AccessCodeService (may still be a wrapper)
 let AccessCodeService: any = null;
 
 async function getAccessCodeService() {
     if (!AccessCodeService) {
-        const module = await import('../../services/accessCodeService.js');
+        const module = await import('./accessCodeService.js');
         AccessCodeService = module.default || module;
     }
     return AccessCodeService;
@@ -303,7 +303,7 @@ class ConsultantServiceClass {
                 uses_count: null,
                 metadata: result.metadata as Record<string, unknown>,
             };
-        } catch (err: unknown) {
+        } catch (err: any) {
             throw new Error('Invalid or expired invite code');
         }
     }

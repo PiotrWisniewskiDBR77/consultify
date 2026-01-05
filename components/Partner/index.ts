@@ -8,4 +8,3 @@ export { AcademyProgress } from './AcademyProgress';
 export { CommissionIntelligence } from './CommissionIntelligence';
 export { EcosystemAnalytics, PMODomainBadge } from './EcosystemAnalytics';
 export { TrustProgressionIndicator } from './TrustProgressionIndicator';
-

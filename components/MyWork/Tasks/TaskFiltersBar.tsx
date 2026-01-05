@@ -1,7 +1,7 @@
 /**
  * TaskFiltersBar - Advanced filtering for task list
  * Part of My Work Module PMO Upgrade
- * 
+ *
  * Features:
  * - Multi-select filters
  * - Date range picker
@@ -10,26 +10,27 @@
  * - View mode toggle
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Search,
-    Filter,
-    X,
-    ChevronDown,
-    CheckSquare,
     Calendar,
-    User,
-    Tag,
-    Layers,
-    LayoutList,
-    LayoutGrid,
     CalendarDays,
-    Target,
+    CheckSquare,
+    ChevronDown,
+    Filter,
+    Layers,
+    LayoutGrid,
+    LayoutList,
     Save,
-    Trash2
+    Search,
+    Tag,
+    Target,
+    Trash2,
+    User,
+    X,
 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import type { PMOCategory } from '../../../types/myWork';
 import { PMO_CATEGORY_CONFIG } from '../shared/PMOPriorityBadge';
 
@@ -75,21 +76,21 @@ const defaultStatusOptions = [
     { value: 'todo', label: 'To Do' },
     { value: 'in_progress', label: 'In Progress' },
     { value: 'blocked', label: 'Blocked' },
-    { value: 'done', label: 'Done' }
+    { value: 'done', label: 'Done' },
 ];
 
 const defaultPriorityOptions = [
     { value: 'urgent', label: 'Urgent' },
     { value: 'high', label: 'High' },
     { value: 'medium', label: 'Medium' },
-    { value: 'low', label: 'Low' }
+    { value: 'low', label: 'Low' },
 ];
 
 const viewModeOptions: Array<{ mode: ViewMode; icon: React.ReactNode; label: string }> = [
     { mode: 'list', icon: <LayoutList size={16} />, label: 'List' },
     { mode: 'kanban', icon: <LayoutGrid size={16} />, label: 'Kanban' },
     { mode: 'calendar', icon: <CalendarDays size={16} />, label: 'Calendar' },
-    { mode: 'pmo', icon: <Target size={16} />, label: 'PMO' }
+    { mode: 'pmo', icon: <Target size={16} />, label: 'PMO' },
 ];
 
 /**
@@ -117,7 +118,7 @@ const MultiSelectDropdown: React.FC<{
 
     const toggle = (value: string) => {
         if (selected.includes(value)) {
-            onChange(selected.filter(v => v !== value));
+            onChange(selected.filter((v) => v !== value));
         } else {
             onChange([...selected, value]);
         }
@@ -132,9 +133,10 @@ const MultiSelectDropdown: React.FC<{
                 className={`
                     flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
                     border transition-all
-                    ${hasSelection
-                        ? 'bg-brand/10 border-brand/20 text-brand dark:bg-brand/20 dark:border-brand/30'
-                        : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-brand/30'
+                    ${
+                        hasSelection
+                            ? 'bg-brand/10 border-brand/20 text-brand dark:bg-brand/20 dark:border-brand/30'
+                            : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-brand/30'
                     }
                 `}
             >
@@ -164,19 +166,18 @@ const MultiSelectDropdown: React.FC<{
                                     className={`
                                         w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left
                                         transition-colors
-                                        ${selected.includes(opt.value)
-                                            ? 'bg-brand/10 text-brand dark:bg-brand/20'
-                                            : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'
+                                        ${
+                                            selected.includes(opt.value)
+                                                ? 'bg-brand/10 text-brand dark:bg-brand/20'
+                                                : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'
                                         }
                                     `}
                                 >
-                                    <CheckSquare 
-                                        size={14} 
-                                        className={selected.includes(opt.value) ? 'text-brand' : 'text-slate-300'} 
+                                    <CheckSquare
+                                        size={14}
+                                        className={selected.includes(opt.value) ? 'text-brand' : 'text-slate-300'}
                                     />
-                                    {opt.avatar && (
-                                        <img src={opt.avatar} alt="" className="w-5 h-5 rounded-full" />
-                                    )}
+                                    {opt.avatar && <img src={opt.avatar} alt="" className="w-5 h-5 rounded-full" />}
                                     <span className="truncate">{opt.label}</span>
                                 </button>
                             ))}
@@ -220,7 +221,7 @@ const PMOCategoryFilter: React.FC<{
 
     const toggle = (category: PMOCategory) => {
         if (selected.includes(category)) {
-            onChange(selected.filter(c => c !== category));
+            onChange(selected.filter((c) => c !== category));
         } else {
             onChange([...selected, category]);
         }
@@ -235,9 +236,10 @@ const PMOCategoryFilter: React.FC<{
                 className={`
                     flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
                     border transition-all
-                    ${hasSelection
-                        ? 'bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:border-purple-800/30 dark:text-purple-300'
-                        : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-purple-300'
+                    ${
+                        hasSelection
+                            ? 'bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:border-purple-800/30 dark:text-purple-300'
+                            : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-purple-300'
                     }
                 `}
             >
@@ -269,9 +271,10 @@ const PMOCategoryFilter: React.FC<{
                                         className={`
                                             w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left
                                             transition-colors
-                                            ${selected.includes(category)
-                                                ? `${config.color.bg} ${config.color.text}`
-                                                : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'
+                                            ${
+                                                selected.includes(category)
+                                                    ? `${config.color.bg} ${config.color.text}`
+                                                    : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'
                                             }
                                         `}
                                     >
@@ -304,7 +307,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
     priorityOptions = defaultPriorityOptions,
     assigneeOptions = [],
     initiativeOptions = [],
-    className = ''
+    className = '',
 }) => {
     const { t } = useTranslation();
     const [showPresetModal, setShowPresetModal] = useState(false);
@@ -322,18 +325,18 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
             assignee: [],
             initiative: [],
             pmoCategory: [],
-            dateRange: { start: null, end: null }
+            dateRange: { start: null, end: null },
         });
     };
 
-    const hasActiveFilters = 
-        filters.search || 
-        filters.status.length > 0 || 
-        filters.priority.length > 0 || 
-        filters.assignee.length > 0 || 
+    const hasActiveFilters =
+        filters.search ||
+        filters.status.length > 0 ||
+        filters.priority.length > 0 ||
+        filters.assignee.length > 0 ||
         filters.initiative.length > 0 ||
         filters.pmoCategory.length > 0 ||
-        filters.dateRange.start || 
+        filters.dateRange.start ||
         filters.dateRange.end;
 
     const handleSavePreset = () => {
@@ -432,9 +435,10 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
                             onClick={() => onViewModeChange(opt.mode)}
                             className={`
                                 p-2 rounded-md transition-all
-                                ${viewMode === opt.mode
-                                    ? 'bg-white dark:bg-navy-800 text-brand shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                ${
+                                    viewMode === opt.mode
+                                        ? 'bg-white dark:bg-navy-800 text-brand shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                                 }
                             `}
                             title={opt.label}
@@ -459,9 +463,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
             {/* Presets Row */}
             {presets.length > 0 && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                    <span className="text-xs text-slate-500 shrink-0">
-                        {t('myWork.filters.presets', 'Presets:')}
-                    </span>
+                    <span className="text-xs text-slate-500 shrink-0">{t('myWork.filters.presets', 'Presets:')}</span>
                     {presets.map((preset) => (
                         <div
                             key={preset.id}
@@ -538,10 +540,3 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
 };
 
 export default TaskFiltersBar;
-
-
-
-
-
-
-

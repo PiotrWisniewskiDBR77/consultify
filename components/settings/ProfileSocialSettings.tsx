@@ -245,8 +245,3 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({ cu
 };
 
 export default ProfileSocialSettings;
-
-
-
-
-

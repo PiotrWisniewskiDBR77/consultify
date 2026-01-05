@@ -6,8 +6,8 @@
 
 import { v4 as uuid } from 'uuid';
 
-import DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
 

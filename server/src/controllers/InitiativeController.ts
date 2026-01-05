@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
     CreateInitiativeRequest,
@@ -251,7 +251,7 @@ export class InitiativeController {
      */
     static updateInitiative = asyncHandler(
         async (req: AuthenticatedRequest<UpdateInitiativeRequest>, res: Response): Promise<void> => {
-            const { _id } = req.params;
+            const { id } = req.params;
             const orgId = req.user?.organizationId;
             if (!orgId) {
                 res.status(401).json({ error: 'Unauthorized' });
@@ -270,7 +270,7 @@ export class InitiativeController {
     static updateInitiativeStatus = asyncHandler(
         async (req: AuthenticatedRequest<UpdateInitiativeStatusRequest>, res: Response): Promise<void> => {
             const { id } = req.params;
-            const { status, _reason } = req.body;
+            const { status, reason } = req.body;
             const orgId = req.user?.organizationId;
             if (!orgId) {
                 res.status(401).json({ error: 'Unauthorized' });

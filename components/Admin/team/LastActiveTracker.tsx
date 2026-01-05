@@ -103,9 +103,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
     };
 
     // Get activity status
-    const getActivityStatus = (
-        user: UserActivity,
-    ): 'online' | 'away' | 'offline' | 'inactive' | 'warning' => {
+    const getActivityStatus = (user: UserActivity): 'online' | 'away' | 'offline' | 'inactive' | 'warning' => {
         if (user.status === 'online') return 'online';
         if (user.status === 'away') return 'away';
 
@@ -118,7 +116,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
 
     // Filter and sort users
     const filteredUsers = useMemo(() => {
-        let result = users.filter((user) => {
+        const result = users.filter((user) => {
             if (statusFilter !== 'all' && user.status !== statusFilter) return false;
             if (searchQuery.trim()) {
                 const query = searchQuery.toLowerCase();
@@ -136,9 +134,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
             if (sortBy === 'name') {
                 const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
                 const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
-                return sortOrder === 'asc'
-                    ? nameA.localeCompare(nameB)
-                    : nameB.localeCompare(nameA);
+                return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
             } else {
                 const daysA = getDaysSinceActive(a.lastActiveAt) ?? Infinity;
                 const daysB = getDaysSinceActive(b.lastActiveAt) ?? Infinity;
@@ -159,11 +155,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
         }).length;
         const warning = users.filter((u) => {
             const days = getDaysSinceActive(u.lastActiveAt);
-            return (
-                days !== null &&
-                days >= settings.warnDays &&
-                days < settings.inactiveDays
-            );
+            return days !== null && days >= settings.warnDays && days < settings.inactiveDays;
         }).length;
 
         return { online, away, inactive, warning, total: users.length };
@@ -184,9 +176,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
 
     // Select all inactive
     const selectAllInactive = useCallback(() => {
-        const inactiveIds = filteredUsers
-            .filter((u) => getActivityStatus(u) === 'inactive')
-            .map((u) => u.userId);
+        const inactiveIds = filteredUsers.filter((u) => getActivityStatus(u) === 'inactive').map((u) => u.userId);
         setSelectedUsers(new Set(inactiveIds));
     }, [filteredUsers]);
 
@@ -267,9 +257,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                         </span>
                         <Wifi size={16} className="text-emerald-500" />
                     </div>
-                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {stats.online}
-                    </p>
+                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.online}</p>
                 </div>
 
                 <div
@@ -287,9 +275,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                         </span>
                         <Clock size={16} className="text-amber-500" />
                     </div>
-                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                        {stats.away}
-                    </p>
+                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.away}</p>
                 </div>
 
                 <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
@@ -299,9 +285,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                         </span>
                         <AlertTriangle size={16} className="text-amber-500" />
                     </div>
-                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                        {stats.warning}
-                    </p>
+                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.warning}</p>
                 </div>
 
                 <div
@@ -311,9 +295,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                             ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-300 dark:border-rose-700'
                             : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-rose-300',
                     )}
-                    onClick={() =>
-                        setStatusFilter(statusFilter === 'inactive' ? 'all' : 'inactive')
-                    }
+                    onClick={() => setStatusFilter(statusFilter === 'inactive' ? 'all' : 'inactive')}
                 >
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-slate-500 dark:text-slate-400">
@@ -321,19 +303,14 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                         </span>
                         <WifiOff size={16} className="text-rose-500" />
                     </div>
-                    <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
-                        {stats.inactive}
-                    </p>
+                    <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.inactive}</p>
                 </div>
             </div>
 
             {/* Filters and Actions */}
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 relative">
-                    <Search
-                        size={16}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
                         value={searchQuery}
@@ -344,12 +321,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                 </div>
 
                 <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={selectAllInactive}
-                        disabled={stats.inactive === 0}
-                    >
+                    <Button variant="outline" size="sm" onClick={selectAllInactive} disabled={stats.inactive === 0}>
                         {t('admin.team.activity.selectInactive', 'Select Inactive')}
                     </Button>
 
@@ -439,11 +411,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                             {t('admin.team.activity.deactivate', 'Deactivate')}
                         </Button>
                     )}
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedUsers(new Set())}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedUsers(new Set())}>
                         {t('admin.team.activity.clearSelection', 'Clear')}
                     </Button>
                 </div>
@@ -456,10 +424,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                     <div className="col-span-1 flex items-center">
                         <input
                             type="checkbox"
-                            checked={
-                                selectedUsers.size > 0 &&
-                                selectedUsers.size === filteredUsers.length
-                            }
+                            checked={selectedUsers.size > 0 && selectedUsers.size === filteredUsers.length}
                             onChange={(e) => {
                                 if (e.target.checked) {
                                     setSelectedUsers(new Set(filteredUsers.map((u) => u.userId)));
@@ -483,10 +448,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                     >
                         {t('admin.team.activity.user', 'User')}
                         {sortBy === 'name' && (
-                            <ChevronDown
-                                size={14}
-                                className={cn(sortOrder === 'desc' && 'rotate-180')}
-                            />
+                            <ChevronDown size={14} className={cn(sortOrder === 'desc' && 'rotate-180')} />
                         )}
                     </div>
                     <div className="col-span-2">{t('admin.team.activity.status', 'Status')}</div>
@@ -503,15 +465,10 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                     >
                         {t('admin.team.activity.lastActive', 'Last Active')}
                         {sortBy === 'lastActive' && (
-                            <ChevronDown
-                                size={14}
-                                className={cn(sortOrder === 'desc' && 'rotate-180')}
-                            />
+                            <ChevronDown size={14} className={cn(sortOrder === 'desc' && 'rotate-180')} />
                         )}
                     </div>
-                    <div className="col-span-2 text-right">
-                        {t('admin.team.activity.actions', 'Actions')}
-                    </div>
+                    <div className="col-span-2 text-right">{t('admin.team.activity.actions', 'Actions')}</div>
                 </div>
 
                 {/* User Rows */}
@@ -525,8 +482,7 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                                 key={user.userId}
                                 className={cn(
                                     'grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-slate-50 dark:hover:bg-navy-900',
-                                    selectedUsers.has(user.userId) &&
-                                        'bg-violet-50 dark:bg-violet-900/20',
+                                    selectedUsers.has(user.userId) && 'bg-violet-50 dark:bg-violet-900/20',
                                 )}
                             >
                                 <div className="col-span-1">
@@ -553,15 +509,11 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
                                         <p className="text-xs text-slate-500">{user.email}</p>
                                     </div>
                                 </div>
-                                <div className="col-span-2 text-sm">
-                                    {getStatusBadge(status)}
-                                </div>
+                                <div className="col-span-2 text-sm">{getStatusBadge(status)}</div>
                                 <div className="col-span-3 text-sm text-slate-600 dark:text-slate-400">
                                     {formatLastActive(user.lastActiveAt)}
                                     {daysSince !== null && daysSince >= settings.warnDays && (
-                                        <span className="ml-2 text-xs text-rose-500">
-                                            ({daysSince}d)
-                                        </span>
+                                        <span className="ml-2 text-xs text-rose-500">({daysSince}d)</span>
                                     )}
                                 </div>
                                 <div className="col-span-2 flex justify-end gap-1">
@@ -606,6 +558,3 @@ export const LastActiveTracker: React.FC<LastActiveTrackerProps> = ({
 };
 
 export default LastActiveTracker;
-
-
-

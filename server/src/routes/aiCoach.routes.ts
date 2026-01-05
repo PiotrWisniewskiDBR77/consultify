@@ -7,6 +7,6 @@
 
 import { createLazyRoute } from '../utils/lazyRouteLoader.js';
 
-const router = createLazyRoute('../../routes/aiCoach.js');
+const router = createLazyRoute('./aiCoach.js');
 
 export default router;

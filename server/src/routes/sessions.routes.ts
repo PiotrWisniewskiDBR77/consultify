@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as _dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import { all as dbAll, get as _dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 const router = Router();
 
@@ -53,7 +53,7 @@ router.get(
             isCurrent: s.id === currentSessionId,
         }));
 
-        res.json({
+        return res.json({
             success: true,
             data: sessionsWithCurrent,
         });
@@ -86,7 +86,7 @@ router.post(
             throw new Error(runResult.error || 'Failed to create session');
         }
 
-        res.json({
+        return res.json({
             success: true,
             data: { sessionId: id },
         });
@@ -119,7 +119,7 @@ router.put(
             throw new Error(runResult.error || 'Failed to update session activity');
         }
 
-        res.json({ success: true });
+        return res.json({ success: true });
     }),
 );
 
@@ -144,7 +144,7 @@ router.delete(
             throw new Error(runResult.error || 'Failed to terminate session');
         }
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Session terminated',
         });
@@ -175,7 +175,7 @@ router.delete(
             throw new Error(runResult.error || 'Failed to terminate sessions');
         }
 
-        res.json({
+        return res.json({
             success: true,
             message: 'All other sessions terminated',
         });

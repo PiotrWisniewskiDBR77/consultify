@@ -9,8 +9,8 @@ import { Response, Router } from 'express';
 
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -41,7 +41,7 @@ let HealthStatusEnum: HealthStatus | null = null;
 let ErrorMessagesEnum: ErrorMessages | null = null;
 
 try {
-    const healthModule = await import('../../services/ai/llmHealthMonitor.js');
+    const healthModule = (await import('../services/ai/llmHealthMonitor.js')) as any;
     const module = healthModule.default || healthModule;
     llmHealthMonitor = module.llmHealthMonitor || module;
     HealthStatusEnum = module.HealthStatus || module;
@@ -128,7 +128,7 @@ router.get(
                 lastCheck: string;
             };
 
-            res.json({
+            return res.json({
                 success: true,
                 summary,
                 providers: results.map((r) => ({
@@ -148,7 +148,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[LLMHealth] Error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -210,7 +210,7 @@ router.get(
                 lastCheck?: string;
             };
 
-            res.json({
+            return res.json({
                 success: true,
                 provider: {
                     id: providerId,
@@ -228,7 +228,7 @@ router.get(
             });
         } catch (error: unknown) {
             logger.error('[LLMHealth] Error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -276,7 +276,7 @@ router.post(
                 lastCheck?: string;
             };
 
-            res.json({
+            return res.json({
                 success: result.status === HealthStatusEnum.HEALTHY || result.status === HealthStatusEnum.DEGRADED,
                 result: {
                     status: result.status,
@@ -291,7 +291,7 @@ router.post(
             });
         } catch (error: unknown) {
             logger.error('[LLMHealth] Test error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -339,7 +339,7 @@ router.get(
                 }
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 summary: {
                     ...summary,
@@ -355,7 +355,7 @@ router.get(
                     })),
             });
         } catch (error: unknown) {
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -377,7 +377,7 @@ router.get(
             });
         }
 
-        res.json({
+        return res.json({
             success: true,
             categories: Object.entries(ErrorMessagesEnum).map(([key, value]) => ({
                 code: key,

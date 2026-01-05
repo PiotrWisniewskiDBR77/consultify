@@ -883,8 +883,3 @@ const AIBudgetsView: React.FC = () => {
 };
 
 export default AIBudgetsView;
-
-
-
-
-

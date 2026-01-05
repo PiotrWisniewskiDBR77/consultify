@@ -9,9 +9,9 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 
-import { aiLogger } from '../../../services/ai/logger.js';
 import { getDatabase } from '../../database/Database.js';
-import * as DbPromise from '../../utils/DbPromise.ts';
+import * as DbPromise from '../../utils/DbPromise.js';
+import { aiLogger } from '.././ai/logger.js';
 import { embeddingService } from './embeddingService.js';
 
 type KnowledgeSourceConfig = {
@@ -87,6 +87,7 @@ const getPdfParse = async (): Promise<PdfParseModule | null> => {
     pdfParseAttempted = true;
     try {
         const mod = await import('pdf-parse');
+        // @ts-ignore
         pdfParse = (mod.default ?? mod) as PdfParseModule;
     } catch (error: unknown) {
         const err = error as Error;
@@ -100,6 +101,7 @@ const getXlsxParse = async (): Promise<XlsxModule | null> => {
     xlsxAttempted = true;
     try {
         const mod = await import('xlsx');
+        // @ts-ignore
         xlsxParse = (mod.default ?? mod) as XlsxModule;
     } catch (error: unknown) {
         const err = error as Error;
@@ -769,11 +771,11 @@ export class KnowledgeIndexer {
         if (this.isPg) {
             const db = getDatabase();
             const result = await db.query(sql);
-            return result.rows || [];
+            return (result.rows || []) as any;
         }
 
         const rows = await DbPromise.all(sql, [], { fallback: false });
-        return rows || [];
+        return (rows || []) as any;
     }
 
     /**

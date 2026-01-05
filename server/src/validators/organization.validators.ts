@@ -55,8 +55,3 @@ export type UpdateOrganizationRequest = z.infer<typeof UpdateOrganizationSchema>
 export type AddMemberRequest = z.infer<typeof AddMemberSchema>;
 export type UpdateMemberRoleRequest = z.infer<typeof UpdateMemberRoleSchema>;
 export type InviteMemberRequest = z.infer<typeof InviteMemberSchema>;
-
-
-
-
-

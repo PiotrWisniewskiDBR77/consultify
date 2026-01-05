@@ -48,7 +48,7 @@ export const CreateWebhookBodySchema = z.object({
 export const UpdateWebhookBodySchema = CreateWebhookBodySchema.partial();
 
 export const TestWebhookBodySchema = z.object({
-    payload: z.record(z.unknown()).optional(),
+    payload: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const RetryDeliveryBodySchema = z.object({
@@ -58,7 +58,7 @@ export const RetryDeliveryBodySchema = z.object({
 export const StripeWebhookBodySchema = z.object({
     type: z.string(),
     data: z.object({
-        object: z.record(z.unknown()),
+        object: z.record(z.string(), z.unknown()),
     }),
 });
 
@@ -75,8 +75,3 @@ export type UpdateWebhookBody = z.infer<typeof UpdateWebhookBodySchema>;
 export type TestWebhookBody = z.infer<typeof TestWebhookBodySchema>;
 export type RetryDeliveryBody = z.infer<typeof RetryDeliveryBodySchema>;
 export type StripeWebhookBody = z.infer<typeof StripeWebhookBodySchema>;
-
-
-
-
-

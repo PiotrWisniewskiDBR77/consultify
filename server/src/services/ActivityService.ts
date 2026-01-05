@@ -1,16 +1,15 @@
 /**
  * Activity Logging Service
  * Enterprise SaaS Architecture - TypeScript Backend
- * 
+ *
  * Logs user actions for audit trail and SuperAdmin dashboard
  */
 
-import type { IDatabase } from '../database/IDatabase.js';
-import { getDatabase } from '../database/Database.js';
 import { v4 as uuidv4 } from 'uuid';
-import { getCorrelationId } from '../utils/RequestStore.ts';
-import logger from '../utils/Logger.ts';
-import * as DbPromise from '../utils/DbPromise.ts';
+
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
+import { getCorrelationId } from '../utils/RequestStore.js';
 
 // ==========================================
 // TYPES
@@ -27,6 +26,7 @@ export interface ActivityLogParams {
     newValue?: unknown;
     ipAddress?: string;
     userAgent?: string;
+    metadata?: Record<string, unknown>;
 }
 
 export interface ActivityLog {
@@ -50,10 +50,37 @@ export interface ActivityLog {
 // ==========================================
 
 class ActivityService {
-    private db: IDatabase;
+    private deps = {
+        dbRun: DbPromise.run,
+        dbAll: DbPromise.all,
+        dbGet: DbPromise.get,
+    };
 
-    constructor(dbInstance?: IDatabase) {
-        this.db = dbInstance || getDatabase();
+    /**
+     * Set dependencies (for testing)
+     */
+    setDependencies(newDeps: any): void {
+        if (newDeps.db) {
+            // Mapping for backward compatibility with old mockDb.run pattern
+            this.deps.dbRun = (async (sql: string, params?: unknown[]) => {
+                return new Promise((resolve) => {
+                    newDeps.db.run(sql, params || [], (err: any) => {
+                        if (err) resolve({ success: false, error: err.message });
+                        else resolve({ success: true });
+                    });
+                });
+            }) as any;
+            this.deps.dbAll = (async (sql: string, params?: unknown[]) => {
+                return new Promise((resolve, reject) => {
+                    newDeps.db.all(sql, params || [], (err: any, rows: any) => {
+                        if (err) reject(err);
+                        else resolve(rows);
+                    });
+                });
+            }) as any;
+        }
+        if (newDeps.dbRun) this.deps.dbRun = newDeps.dbRun;
+        if (newDeps.dbAll) this.deps.dbAll = newDeps.dbAll;
     }
 
     /**
@@ -72,7 +99,8 @@ class ActivityService {
                 oldValue,
                 newValue,
                 ipAddress,
-                userAgent
+                userAgent,
+                metadata,
             } = params;
 
             const sql = `
@@ -83,7 +111,7 @@ class ActivityService {
 
             const activityId = uuidv4();
 
-            await DbPromise.run(sql, [
+            await this.deps.dbRun(sql, [
                 activityId,
                 organizationId,
                 userId || null,
@@ -92,20 +120,16 @@ class ActivityService {
                 entityId || null,
                 entityName || null,
                 oldValue ? JSON.stringify(oldValue) : null,
-                newValue ? JSON.stringify(newValue) : null,
+                newValue || metadata ? JSON.stringify(newValue || metadata) : null,
                 ipAddress || null,
                 userAgent || null,
-                correlationId
+                correlationId,
             ]);
-
-            // TODO: Stream to external SIEM when siemService is migrated
-            // deps.siemService.stream({...}).catch(() => {});
         } catch (err) {
             const error = err as Error;
             if (process.env.NODE_ENV !== 'production') {
                 logger.warn('[ActivityService] Failed to log activity:', { error: error.message });
             }
-            // resolve anyway to prevent crashing caller
         }
     }
 
@@ -124,7 +148,7 @@ class ActivityService {
             LIMIT ?
         `;
 
-        return await DbPromise.all<ActivityLog>(sql, [limit]);
+        return (await this.deps.dbAll(sql, [limit])) as ActivityLog[];
     }
 
     /**
@@ -143,7 +167,7 @@ class ActivityService {
             LIMIT ?
         `;
 
-        return await DbPromise.all<ActivityLog>(sql, [organizationId, limit]);
+        return (await this.deps.dbAll(sql, [organizationId, limit])) as ActivityLog[];
     }
 }
 

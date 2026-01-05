@@ -23,7 +23,7 @@ const Popover: React.FC<{ children: React.ReactNode; open?: boolean; onOpenChang
             }
             onOpenChange?.(newValue);
         },
-        [controlledOpen, open, onOpenChange]
+        [controlledOpen, open, onOpenChange],
     );
 
     return (
@@ -82,7 +82,4 @@ const PopoverContent = React.forwardRef<
 });
 PopoverContent.displayName = 'PopoverContent';
 
-export { Popover, PopoverTrigger, PopoverContent };
-
-
-
+export { Popover, PopoverContent, PopoverTrigger };

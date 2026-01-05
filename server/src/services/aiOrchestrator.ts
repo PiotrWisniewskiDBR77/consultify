@@ -96,13 +96,13 @@ async function initDeps() {
             import('./aiContextBuilder.js'),
             import('./aiPolicyEngine.js'),
             import('./aiMemoryManager.js'),
-            import('../../services/aiRoleGuard.js'),
-            import('../../services/regulatoryModeGuard.js'),
-            import('../../services/aiExplainabilityService.js'),
-            import('../../services/accessPolicyService.js'),
-            import('../../services/tokenBillingService.js'),
-            import('../../services/aiResponsePostProcessor.js'),
-            import('../../services/ai/agents/index.js'),
+            import('./aiRoleGuard.js'),
+            import('./regulatoryModeGuard.js'),
+            import('./aiExplainabilityService.js'),
+            import('./accessPolicyService.js'),
+            import('./TokenBillingService.js'),
+            import('./aiResponsePostProcessor.js'),
+            import('./ai/agents/index.js'),
         ])) as any[];
 
     _AIContextBuilder = aiCtx.default || aiCtx;

@@ -11,10 +11,10 @@
  * - Access dashboard features
  */
 
-import { _Request, NextFunction, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
-import { get as dbGet } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { get as dbGet } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================

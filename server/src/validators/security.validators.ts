@@ -249,7 +249,11 @@ export const CSRFTokenSchema = z.string().length(64, 'Invalid CSRF token'); // 3
 /**
  * IP Address schema
  */
-export const IPAddressSchema = z.string().ip({ message: 'Invalid IP address' });
+export const IPAddressSchema = z
+    .string()
+    .regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$|^([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}$/, {
+        message: 'Invalid IP address',
+    });
 
 // ==========================================
 // COMMON ENUMS

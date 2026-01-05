@@ -143,13 +143,13 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                 <div>
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                         {t('admin.team.stats.title', 'Membership Statistics')}
-                        <Tooltip content={t('admin.team.stats.tooltip', 'Overview of your team membership and activity')}>
+                        <Tooltip
+                            content={t('admin.team.stats.tooltip', 'Overview of your team membership and activity')}
+                        >
                             <HelpCircle size={16} className="text-slate-400" />
                         </Tooltip>
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {timeRangeLabels[timeRange]}
-                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{timeRangeLabels[timeRange]}</p>
                 </div>
 
                 {onTimeRangeChange && (
@@ -195,7 +195,8 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                             </span>
                         ) : (
                             <span className="flex items-center gap-1 text-xs font-medium text-rose-600">
-                                <TrendingDown size={12} />{stats.growthRate.toFixed(1)}%
+                                <TrendingDown size={12} />
+                                {stats.growthRate.toFixed(1)}%
                             </span>
                         )}
                         <span className="text-xs text-slate-400">
@@ -268,8 +269,7 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                     </p>
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-slate-500">
-                            {stats.pendingInvitations}{' '}
-                            {t('admin.team.stats.pendingInvites', 'pending invites')}
+                            {stats.pendingInvitations} {t('admin.team.stats.pendingInvites', 'pending invites')}
                         </span>
                     </div>
                 </div>
@@ -295,18 +295,12 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                         {stats.usersByRole.map((item) => (
                             <div key={item.role}>
                                 <div className="flex items-center justify-between mb-1">
-                                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                                        {item.role}
-                                    </span>
+                                    <span className="text-sm text-slate-600 dark:text-slate-400">{item.role}</span>
                                     <span className="text-sm font-medium text-navy-900 dark:text-white">
                                         {item.count}
                                     </span>
                                 </div>
-                                <Progress
-                                    value={(item.count / stats.totalUsers) * 100}
-                                    size="sm"
-                                    color="primary"
-                                />
+                                <Progress value={(item.count / stats.totalUsers) * 100} size="sm" color="primary" />
                             </div>
                         ))}
                     </div>
@@ -321,9 +315,7 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
-                                setShowBreakdown(showBreakdown === 'status' ? null : 'status')
-                            }
+                            onClick={() => setShowBreakdown(showBreakdown === 'status' ? null : 'status')}
                         >
                             <BarChart3 size={16} />
                         </Button>
@@ -399,9 +391,7 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
                         {t('admin.team.stats.pendingInvites', 'Pending Invites')}
                     </p>
-                    <p className="text-lg font-semibold text-navy-900 dark:text-white">
-                        {stats.pendingInvitations}
-                    </p>
+                    <p className="text-lg font-semibold text-navy-900 dark:text-white">{stats.pendingInvitations}</p>
                 </div>
             </div>
         </div>
@@ -409,6 +399,3 @@ export const MembershipStatsCard: React.FC<MembershipStatsCardProps> = ({
 };
 
 export default MembershipStatsCard;
-
-
-

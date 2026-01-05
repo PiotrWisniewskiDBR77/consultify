@@ -7,7 +7,8 @@
 
 import { Router } from 'express';
 
-import AdminDataController from '../controllers/AdminDataController.js';
+import AdminDataControllerRaw from '../controllers/AdminDataController.js';
+const AdminDataController = AdminDataControllerRaw as any;
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';

@@ -6,12 +6,12 @@
  * Checks both token and database for role verification.
  */
 
-import { _Request, NextFunction, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import config from '../../config.js';
-import { get as dbGet } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import config from '../config/Config.js';
+import { get as dbGet } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -74,7 +74,7 @@ export const verifySuperAdmin = async (req: AuthRequest, res: Response, next: Ne
 
     try {
         const decoded = await new Promise<JWTPayload>((resolve, reject) => {
-            jwtLib.verify(cleanToken, depsConfig.JWT_SECRET, (err, decoded) => {
+            jwtLib.verify(cleanToken, depsConfig.JWT_SECRET, (err: any, decoded: any) => {
                 if (err) return reject(err);
                 resolve(decoded as JWTPayload);
             });
@@ -134,7 +134,7 @@ export const verifySuperAdmin = async (req: AuthRequest, res: Response, next: Ne
         req.organizationId = decoded.organizationId || decoded.organization_id;
 
         next();
-    } catch (err: unknown) {
+    } catch (err: any) {
         res.status(401).json({ error: 'Unauthorized' });
     }
 };

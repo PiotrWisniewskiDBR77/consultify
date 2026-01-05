@@ -1,4 +1,4 @@
-import logger from '../../utils/logger.js';
+import logger from '../../utils/Logger.js';
 import { IPlugin } from './IPlugin.js';
 
 export class PluginManager {

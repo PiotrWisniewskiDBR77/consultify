@@ -8,13 +8,13 @@
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { _verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import NotificationService from '../services/NotificationService.js';
 import WhatsAppService from '../services/WhatsAppService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -81,7 +81,7 @@ router.post(
             logger.error('Failed to create notification for feedback:', noteErr);
         }
 
-        res.json({ success: true, id });
+        return res.json({ success: true, id });
     }),
 );
 
@@ -110,7 +110,7 @@ router.get(
             updated_at: string | null;
         }>(sql, []);
 
-        res.json(rows);
+        return res.json(rows);
     }),
 );
 
@@ -137,7 +137,7 @@ router.patch(
             throw new Error(runResult.error || 'Failed to update feedback status');
         }
 
-        res.json({ success: true });
+        return res.json({ success: true });
     }),
 );
 
@@ -199,7 +199,7 @@ router.post(
             }
         }
 
-        res.json({ success: true });
+        return res.json({ success: true });
     }),
 );
 
@@ -232,7 +232,7 @@ router.get(
             return res.status(404).json({ error: 'Feedback not found' });
         }
 
-        res.json(row);
+        return res.json(row);
     }),
 );
 
@@ -258,7 +258,7 @@ router.get(
         });
 
         await Promise.all(promises);
-        res.json(results);
+        return res.json(results);
     }),
 );
 

@@ -16,18 +16,9 @@ import { AppView } from '../../types';
 
 export const PartnerDashboardView: React.FC = () => {
     const { setCurrentView } = useAppStore();
-    const {
-        metrics,
-        trustProgression,
-        currentTrustPhase,
-        loading,
-        getComplianceScore,
-    } = usePartnerEcosystem();
+    const { metrics, trustProgression, currentTrustPhase, loading, getComplianceScore } = usePartnerEcosystem();
 
-    const handleNavigate = useCallback(
-        (view: AppView) => () => setCurrentView(view),
-        [setCurrentView],
-    );
+    const handleNavigate = useCallback((view: AppView) => () => setCurrentView(view), [setCurrentView]);
 
     const complianceScore = getComplianceScore();
 
@@ -57,11 +48,7 @@ export const PartnerDashboardView: React.FC = () => {
                 </div>
 
                 {/* Ecosystem Analytics */}
-                <EcosystemAnalytics
-                    metrics={metrics}
-                    complianceScore={complianceScore}
-                    loading={loading}
-                />
+                <EcosystemAnalytics metrics={metrics} complianceScore={complianceScore} loading={loading} />
 
                 {/* Quick Navigation */}
                 <div className="grid gap-4 md:grid-cols-3">
@@ -86,21 +73,28 @@ export const PartnerDashboardView: React.FC = () => {
                 <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 dark:border-white/5 dark:bg-navy-900/40">
                     <h3 className="text-sm font-semibold text-navy-900 dark:text-white">PMO Standards Compliance</h3>
                     <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                        Wszystkie działania partnerskie są mapowane na standardy ISO 21500, PMBOK 7 i PRINCE2.
-                        Każdy deal, statement i decyzja otrzymuje automatyczny audit trail z przypisaniem do odpowiedniego PMO domain.
+                        Wszystkie działania partnerskie są mapowane na standardy ISO 21500, PMBOK 7 i PRINCE2. Każdy
+                        deal, statement i decyzja otrzymuje automatyczny audit trail z przypisaniem do odpowiedniego PMO
+                        domain.
                     </p>
                     <ul className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-300">
                         <li className="flex items-center gap-2">
                             <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
-                            <span><strong>GOVERNANCE_DECISION_MAKING</strong> — Deal registration i approval</span>
+                            <span>
+                                <strong>GOVERNANCE_DECISION_MAKING</strong> — Deal registration i approval
+                            </span>
                         </li>
                         <li className="flex items-center gap-2">
                             <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-                            <span><strong>BENEFITS_REALIZATION</strong> — Commission tracking i settlements</span>
+                            <span>
+                                <strong>BENEFITS_REALIZATION</strong> — Commission tracking i settlements
+                            </span>
                         </li>
                         <li className="flex items-center gap-2">
                             <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-                            <span><strong>RESOURCE_RESPONSIBILITY</strong> — Client access management</span>
+                            <span>
+                                <strong>RESOURCE_RESPONSIBILITY</strong> — Client access management
+                            </span>
                         </li>
                     </ul>
                 </div>

@@ -14,8 +14,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -205,7 +205,7 @@ export async function addMember(params: AddMemberParams): Promise<AddMemberResul
         );
 
         return { id, organizationId, userId, role };
-    } catch (err: unknown) {
+    } catch (err: any) {
         const error = err as Error;
         // Check for unique constraint violation
         if (error.message.includes('UNIQUE constraint failed')) {

@@ -23,8 +23,8 @@ import {
     Edit2,
     GripVertical,
     HelpCircle,
-    Plus,
     Play,
+    Plus,
     Settings,
     Trash2,
     Users,
@@ -68,13 +68,7 @@ export interface RuleCondition {
 }
 
 // Rule action
-export type ActionType =
-    | 'assign_team'
-    | 'assign_user'
-    | 'add_tag'
-    | 'set_priority'
-    | 'notify'
-    | 'webhook';
+export type ActionType = 'assign_team' | 'assign_user' | 'add_tag' | 'set_priority' | 'notify' | 'webhook';
 
 export interface RuleAction {
     id: string;
@@ -171,11 +165,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
 
     // Toggle rule enabled
     const toggleRuleEnabled = useCallback((ruleId: string) => {
-        setLocalRules((prev) =>
-            prev.map((rule) =>
-                rule.id === ruleId ? { ...rule, enabled: !rule.enabled } : rule,
-            ),
-        );
+        setLocalRules((prev) => prev.map((rule) => (rule.id === ruleId ? { ...rule, enabled: !rule.enabled } : rule)));
     }, []);
 
     // Move rule up/down
@@ -185,10 +175,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
             const targetIndex = direction === 'up' ? index - 1 : index + 1;
             if (targetIndex < 0 || targetIndex >= newRules.length) return prev;
 
-            [newRules[index], newRules[targetIndex]] = [
-                newRules[targetIndex],
-                newRules[index],
-            ];
+            [newRules[index], newRules[targetIndex]] = [newRules[targetIndex], newRules[index]];
 
             // Update priorities
             return newRules.map((rule, i) => ({ ...rule, priority: i + 1 }));
@@ -196,19 +183,22 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
     }, []);
 
     // Duplicate rule
-    const duplicateRule = useCallback((rule: RoutingRule) => {
-        const newRule: RoutingRule = {
-            ...rule,
-            id: `${rule.id}-copy-${Date.now()}`,
-            name: `${rule.name} (Copy)`,
-            enabled: false,
-            priority: localRules.length + 1,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            matchCount: 0,
-        };
-        setLocalRules((prev) => [...prev, newRule]);
-    }, [localRules.length]);
+    const duplicateRule = useCallback(
+        (rule: RoutingRule) => {
+            const newRule: RoutingRule = {
+                ...rule,
+                id: `${rule.id}-copy-${Date.now()}`,
+                name: `${rule.name} (Copy)`,
+                enabled: false,
+                priority: localRules.length + 1,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                matchCount: 0,
+            };
+            setLocalRules((prev) => [...prev, newRule]);
+        },
+        [localRules.length],
+    );
 
     return (
         <div className={cn('space-y-6', className)}>
@@ -217,24 +207,22 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                 <div>
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                         {t('admin.team.routing.title', 'Team Routing Rules')}
-                        <Tooltip content={t('admin.team.routing.tooltip', 'Rules are evaluated in priority order. The first matching rule is applied.')}>
+                        <Tooltip
+                            content={t(
+                                'admin.team.routing.tooltip',
+                                'Rules are evaluated in priority order. The first matching rule is applied.',
+                            )}
+                        >
                             <HelpCircle size={16} className="text-slate-400" />
                         </Tooltip>
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {t(
-                            'admin.team.routing.subtitle',
-                            'Automatically route tasks and users to the right teams',
-                        )}
+                        {t('admin.team.routing.subtitle', 'Automatically route tasks and users to the right teams')}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
                     {onSave && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onSave(localRules)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => onSave(localRules)}>
                             {t('admin.team.routing.saveOrder', 'Save Order')}
                         </Button>
                     )}
@@ -298,9 +286,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                                         onClick={() => toggleRuleEnabled(rule.id)}
                                         className={cn(
                                             'relative w-10 h-5 rounded-full transition-colors flex-shrink-0',
-                                            rule.enabled
-                                                ? 'bg-emerald-500'
-                                                : 'bg-slate-300 dark:bg-navy-600',
+                                            rule.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-navy-600',
                                         )}
                                     >
                                         <span
@@ -314,9 +300,7 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                                     {/* Rule Info */}
                                     <div
                                         className="flex-1 min-w-0 cursor-pointer"
-                                        onClick={() =>
-                                            setExpandedRule(isExpanded ? null : rule.id)
-                                        }
+                                        onClick={() => setExpandedRule(isExpanded ? null : rule.id)}
                                     >
                                         <div className="flex items-center gap-2">
                                             <h4 className="font-medium text-navy-900 dark:text-white truncate">
@@ -375,16 +359,10 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
 
                                     {/* Expand Button */}
                                     <button
-                                        onClick={() =>
-                                            setExpandedRule(isExpanded ? null : rule.id)
-                                        }
+                                        onClick={() => setExpandedRule(isExpanded ? null : rule.id)}
                                         className="text-slate-400 hover:text-slate-600"
                                     >
-                                        {isExpanded ? (
-                                            <ChevronDown size={18} />
-                                        ) : (
-                                            <ChevronRight size={18} />
-                                        )}
+                                        {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                                     </button>
                                 </div>
 
@@ -450,8 +428,8 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
                                                             </span>
                                                             <span className="font-medium text-navy-900 dark:text-white">
                                                                 {action.type === 'assign_team'
-                                                                    ? teams.find((t) => t.id === action.value)
-                                                                          ?.name || action.value
+                                                                    ? teams.find((t) => t.id === action.value)?.name ||
+                                                                      action.value
                                                                     : action.value}
                                                             </span>
                                                         </div>
@@ -530,6 +508,3 @@ export const TeamRoutingRules: React.FC<TeamRoutingRulesProps> = ({
 };
 
 export default TeamRoutingRules;
-
-
-

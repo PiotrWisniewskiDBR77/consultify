@@ -11,8 +11,8 @@
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import { evaluateGate, getGateType, type Phase, PHASE_ORDER } from './stageGateService.js';
 
 // ==========================================
@@ -217,7 +217,7 @@ async function getTaskCounts(projectId: string): Promise<TaskCounts> {
             dueSoonCount: row?.dueSoonCount || 0,
             blockedCount: row?.blockedCount || 0,
         };
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[PMOHealthService] Task count error:', err);
         return { overdueCount: 0, dueSoonCount: 0, blockedCount: 0 };
     }
@@ -244,7 +244,7 @@ async function getDecisionCounts(projectId: string): Promise<DecisionCounts> {
             pendingCount: row?.pendingCount || 0,
             overdueCount: row?.overdueCount || 0,
         };
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[PMOHealthService] Decision count error:', err);
         return { pendingCount: 0, overdueCount: 0 };
     }
@@ -269,7 +269,7 @@ async function getInitiativeCounts(projectId: string): Promise<InitiativeCounts>
             atRiskCount: row?.atRiskCount || 0,
             blockedCount: row?.blockedCount || 0,
         };
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[PMOHealthService] Initiative count error:', err);
         return { atRiskCount: 0, blockedCount: 0 };
     }
@@ -300,7 +300,7 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
                 ref: { entityType: 'task', entityId: task.id },
             });
         }
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[PMOHealthService] Error fetching overdue tasks:', err);
     }
 
@@ -321,7 +321,7 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
                 ref: { entityType: 'decision', entityId: decision.id },
             });
         }
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[PMOHealthService] Error fetching pending decisions:', err);
     }
 
@@ -347,7 +347,7 @@ async function getBlockers(projectId: string): Promise<Blocker[]> {
                 }
             }
         }
-    } catch (err: unknown) {
+    } catch (err: any) {
         logger.error('[PMOHealthService] Error evaluating stage gate:', err);
     }
 

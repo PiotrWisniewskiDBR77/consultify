@@ -1,4 +1,4 @@
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 import { CreateSubscriptionCommand, CreateSubscriptionHandler } from './billing/CreateSubscription.js';
 import { commandBus } from './index.js';
 import { CreateInitiativeCommand, CreateInitiativeHandler } from './initiative/CreateInitiative.js';

@@ -11,7 +11,7 @@ import { Router } from 'express';
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../../middleware/superAdmin.middleware.js';
-import logger from '../../utils/Logger.ts';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
@@ -30,19 +30,19 @@ router.use(verifyAdmin);
  */
 router.get('/', async (req, res) => {
     try {
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
+        const BackupService = await import('../../services/backupService.js').then((m) => m.default || m);
         const backups = await BackupService.listBackups({
             includeExpired: req.query.includeExpired === 'true',
         });
 
-        res.json({
+        return res.json({
             backups,
             total: backups.length,
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('[BackupRoutes] Error listing backups:', err);
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to list backups',
             message: err.message,
         });
@@ -56,14 +56,14 @@ router.get('/', async (req, res) => {
  */
 router.get('/status', async (req, res) => {
     try {
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
-        const BackupCron = await import('../../cron/BackupCron.js').then((m) => m.default || m);
+        const BackupService = await import('../../services/backupService.js').then((m) => m.default || m);
+        const BackupCron = (await import('../../cron/BackupCron.js').then((m) => m.default || m)) as any;
 
         const status = await BackupService.getBackupStatus();
         const cron = BackupCron.getBackupCron();
         const metrics = cron.getMetrics();
 
-        res.json({
+        return res.json({
             ...status,
             metrics: {
                 successCount: metrics.successCount,
@@ -75,7 +75,7 @@ router.get('/status', async (req, res) => {
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('[BackupRoutes] Error getting backup status:', err);
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to get backup status',
             message: err.message,
         });
@@ -90,9 +90,9 @@ router.get('/status', async (req, res) => {
 router.get('/:id/status', async (req, res) => {
     try {
         const { id } = req.params;
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
+        const BackupService = await import('../../services/backupService.js').then((m) => m.default || m);
         const backups = await BackupService.listBackups({ includeExpired: true });
-        const backup = backups.find((b) => b.id === id);
+        const backup = backups.find((b: any) => b.id === id);
 
         if (!backup) {
             return res.status(404).json({
@@ -103,7 +103,7 @@ router.get('/:id/status', async (req, res) => {
         // Check if file exists locally
         const fs = await import('fs');
         const path = await import('path');
-        const BackupServiceModule = await import('../../../services/backupService.js');
+        const BackupServiceModule = await import('../../services/backupService.js');
         const CONFIG = (BackupServiceModule as any).CONFIG || {
             BACKUP_DIR: process.env.BACKUP_DIR || './backups',
         };
@@ -111,7 +111,7 @@ router.get('/:id/status', async (req, res) => {
         const filePath = path.resolve(CONFIG.BACKUP_DIR, backup.filename);
         const existsLocally = fs.existsSync(filePath);
 
-        res.json({
+        return res.json({
             ...backup,
             existsLocally,
             existsInCloud: backup.hasS3 || backup.hasGCS,
@@ -119,7 +119,7 @@ router.get('/:id/status', async (req, res) => {
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('[BackupRoutes] Error getting backup status:', err);
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to get backup status',
             message: err.message,
         });
@@ -145,12 +145,12 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
             });
         }
 
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
+        const BackupService = await import('../../services/backupService.js').then((m) => m.default || m);
         const result = await BackupService.restoreBackup(backupId, {
             createPreRestoreBackup,
         });
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Backup restored successfully',
             ...result,
@@ -158,7 +158,7 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('[BackupRoutes] Error restoring backup:', err);
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to restore backup',
             message: err.message,
         });
@@ -173,17 +173,17 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
 router.delete('/:id', verifySuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
+        const BackupService = await import('../../services/backupService.js').then((m) => m.default || m);
         await BackupService.deleteBackup(id);
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Backup deleted successfully',
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('[BackupRoutes] Error deleting backup:', err);
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to delete backup',
             message: err.message,
         });
@@ -198,11 +198,11 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
 router.post('/manual', verifySuperAdmin, async (req, res) => {
     try {
         const { reason = 'manual' } = req.body;
-        const BackupCron = await import('../../cron/BackupCron.js').then((m) => m.default || m);
+        const BackupCron = (await import('../../cron/BackupCron.js').then((m) => m.default || m)) as any;
         const cron = BackupCron.getBackupCron();
         const result = await cron.triggerManualBackup(reason);
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Manual backup triggered',
             backupId: result.id,
@@ -210,7 +210,7 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('[BackupRoutes] Error triggering manual backup:', err);
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to trigger manual backup',
             message: err.message,
         });
@@ -218,8 +218,3 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
 });
 
 export default router;
-
-
-
-
-

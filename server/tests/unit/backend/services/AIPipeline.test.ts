@@ -7,8 +7,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import AIPipeline from '../../../../src/services/ai/aiPipeline.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import AIPipeline from '../../../../src/services/ai/aiPipeline.js';
 
 describe('AIPipeline', () => {
     let mockDb: IDatabase;

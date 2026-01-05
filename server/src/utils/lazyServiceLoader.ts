@@ -1,11 +1,12 @@
-import { fileURLToPath } from 'url';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export async function createLazyService<T = unknown>(servicePath: string): Promise<T> {
     const absolutePath = path.resolve(__dirname, servicePath);
+
     const module = await import(absolutePath);
     return (module.default || module) as T;
 }
@@ -31,8 +32,3 @@ export function createCachedLazyService<T = unknown>(servicePath: string): () =>
         return servicePromise;
     };
 }
-
-
-
-
-

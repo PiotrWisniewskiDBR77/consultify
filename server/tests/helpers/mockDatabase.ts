@@ -101,13 +101,19 @@ export function createMockDatabaseWithContext(options: MockDatabaseContextOption
             }
             return mockDb;
         }),
-        run: vi.fn((sql: string, params: unknown[], callback?: (this: { lastID: number; changes: number }, err: Error | null) => void) => {
-            if (callback) {
-                // Simulate SQLite's callback context with this.lastID and this.changes
-                callback.call({ lastID, changes }, null);
-            }
-            return mockDb;
-        }),
+        run: vi.fn(
+            (
+                sql: string,
+                params: unknown[],
+                callback?: (this: { lastID: number; changes: number }, err: Error | null) => void,
+            ) => {
+                if (callback) {
+                    // Simulate SQLite's callback context with this.lastID and this.changes
+                    callback.call({ lastID, changes }, null);
+                }
+                return mockDb;
+            },
+        ),
         exec: vi.fn((sql: string, callback?: (err: Error | null) => void) => {
             if (callback) {
                 callback(null);
@@ -179,8 +185,3 @@ export function createMockDatabaseWithErrors(errorMessage: string = 'Database er
 
     return mockDb;
 }
-
-
-
-
-

@@ -1,9 +1,9 @@
-# UI/UX Premium Refinements v2.0
+# UI/UX Premium Refinements v3.0
 
 This document outlines the design refinements implemented to elevate the Consultify interface to premium SaaS standards (inspired by ClickUp, Slack, Linear, and HubSpot).
 
 > **Last Updated:** January 2026
-> **Version:** 2.0
+> **Version:** 3.0
 
 ---
 
@@ -18,7 +18,51 @@ This document outlines the design refinements implemented to elevate the Consult
 | **Consistent Rounding** | One rounding system across all components | `rounded-lg` (8px) for nested, `rounded-xl` (12px) for containers |
 | **Dark Mode Parity** | Equal visual weight in both themes | Standardized color pairs |
 
-### 1.2. The 8px Grid System
+### 1.2. Floating Panels Pattern (ClickUp-style)
+
+**Key Innovation v3.0:** Instead of using border lines to separate panels, we use **gap-based separation** where the page background shows through between floating panels.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  bg-slate-100 (page background)                             │
+│  ┌─────────────┐  ┌─────────────────────────────────────┐   │
+│  │   Sidebar   │  │         Main Content                │   │
+│  │  (floating) │  │         (floating)                  │   │
+│  │  bg-white   │  │         bg-white                    │   │
+│  │  shadow-sm  │  │         shadow-sm                   │   │
+│  └─────────────┘  └─────────────────────────────────────┘   │
+│         ↑  2px gap (bg-slate-100 shows through)  ↑          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Why this matters:**
+- ❌ **Before:** `border-r` creates a 1px line - feels flat
+- ✅ **After:** `gap-0.5` creates depth - panels feel "floating"
+
+**Implementation:**
+```tsx
+// Layout wrapper
+<div className="flex h-full bg-slate-100 dark:bg-navy-950 gap-0.5">
+    {/* Sidebar panel */}
+    <aside className="bg-white dark:bg-navy-900 shadow-sm">
+        {/* content */}
+    </aside>
+    
+    {/* Main content panel */}
+    <main className="flex-1 bg-white dark:bg-navy-900 lg:rounded-l-lg shadow-sm">
+        {/* content */}
+    </main>
+</div>
+```
+
+**Rules:**
+1. Remove `border-r` from sidebars
+2. Use `gap-0.5` (2px) between panels
+3. Page background: `bg-slate-100 dark:bg-navy-950`
+4. Panel background: `bg-white dark:bg-navy-900`
+5. Add `shadow-sm` for subtle depth
+
+### 1.3. The 8px Grid System
 
 All spacing should follow the 8px grid:
 
@@ -124,15 +168,30 @@ isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-sl
 + dark:border-navy-700
 ```
 
-### 4.3. Background Hierarchy
+### 4.3. Background Hierarchy (v3.0 Updated)
 
 ```
-Level 0 (App BG):     bg-slate-50       dark:bg-navy-950
-Level 1 (Panel BG):   bg-white          dark:bg-navy-900
-Level 2 (Card BG):    bg-white          dark:bg-navy-900
-Level 3 (Nested BG):  bg-slate-50       dark:bg-navy-800
-Level 4 (Hover BG):   bg-slate-100      dark:bg-navy-800/40
+Level 0 (App BG):        bg-slate-100      dark:bg-navy-950     ← Page wrapper
+Level 1 (Panel BG):      bg-white          dark:bg-navy-900     ← Sidebar, Main panels
+Level 2 (Header BG):     bg-white/80       dark:bg-navy-900/80  ← Headers with backdrop-blur
+Level 3 (Nested Card):   bg-slate-50/50    dark:bg-navy-950/30  ← Content cards within panels
+Level 4 (Hover BG):      bg-slate-100      dark:bg-navy-800/40  ← Interactive elements hover
+Level 5 (Deep Nested):   bg-slate-50       dark:bg-navy-800     ← Nested within cards
 ```
+
+### 4.4. Internal Border Standards (v3.0)
+
+For borders **inside** panels (separating sections within a floating panel):
+
+```tsx
+// Subtle internal separators (within panels)
+className="border-b border-slate-100 dark:border-navy-800"
+
+// Container borders on cards within content
+className="border border-slate-200/60 dark:border-navy-800"
+```
+
+**DO NOT** use `border-r` to separate panels - use `gap-0.5` instead.
 
 ---
 
@@ -243,6 +302,15 @@ When creating new components, verify:
 ---
 
 ## 9. Changelog
+
+### v3.0 (January 2026)
+- **NEW:** Introduced "Floating Panels" pattern (ClickUp-style)
+  - Replaced `border-r` lines with `gap-0.5` (2px) gap-based separation
+  - Page background changed to `bg-slate-100 dark:bg-navy-950`
+  - Panels use `bg-white dark:bg-navy-900 shadow-sm`
+- **Updated:** Internal borders use lighter colors: `border-slate-100 dark:border-navy-800`
+- **Updated:** Headers use semi-transparent backgrounds with backdrop blur
+- Standardized across: AdminLayout, AdminSidebar, SettingsView, SettingsSidebar, PartnerPortalView
 
 ### v2.0 (January 2026)
 - **BREAKING:** Reduced border radius from `rounded-2xl` to `rounded-xl`

@@ -10,7 +10,7 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -79,7 +79,7 @@ let DRAFT_TYPES: DraftTypes | null = null;
 let aiLogger: { error?: (category: string, message: string) => void } | null = null;
 
 try {
-    const draftModule = await import('../../services/ai/draftService.js');
+    const draftModule = (await import('../services/ai/draftService.js')) as any;
     const module = draftModule.default || draftModule;
     draftService = module.draftService || module;
     DRAFT_TYPES = module.DRAFT_TYPES || module;
@@ -88,7 +88,7 @@ try {
 }
 
 try {
-    const loggerModule = await import('../../services/ai/logger.js');
+    const loggerModule = (await import('../services/ai/logger.js')) as any;
     const module = loggerModule.default || loggerModule;
     aiLogger = module.aiLogger || module;
 } catch {
@@ -125,7 +125,7 @@ router.get(
                 limit: limit ? parseInt(limit as string, 10) : 20,
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 drafts,
                 count: Array.isArray(drafts) ? drafts.length : 0,
@@ -134,7 +134,7 @@ router.get(
             if (aiLogger?.error) {
                 aiLogger.error('DraftsAPI', `GET / error: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
-            res.status(500).json({ error: 'Failed to fetch drafts' });
+            return res.status(500).json({ error: 'Failed to fetch drafts' });
         }
     }),
 );
@@ -167,7 +167,7 @@ router.get(
                 return res.status(403).json({ error: 'Access denied' });
             }
 
-            res.json({ success: true, draft });
+            return res.json({ success: true, draft });
         } catch (error: unknown) {
             if (aiLogger?.error) {
                 aiLogger.error(
@@ -175,7 +175,7 @@ router.get(
                     `GET /:id error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to fetch draft' });
+            return res.status(500).json({ error: 'Failed to fetch draft' });
         }
     }),
 );
@@ -194,7 +194,7 @@ router.get(
         try {
             const drafts = await draftService.getDraftsForEntity(req.params.type, req.params.id);
 
-            res.json({
+            return res.json({
                 success: true,
                 drafts,
                 count: Array.isArray(drafts) ? drafts.length : 0,
@@ -206,7 +206,7 @@ router.get(
                     `GET /entity error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to fetch entity drafts' });
+            return res.status(500).json({ error: 'Failed to fetch entity drafts' });
         }
     }),
 );
@@ -271,7 +271,7 @@ router.post(
                 tokensUsed,
             });
 
-            res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 draft: result,
             });
@@ -282,7 +282,7 @@ router.post(
                     `POST / error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to create draft' });
+            return res.status(500).json({ error: 'Failed to create draft' });
         }
     }),
 );
@@ -319,7 +319,7 @@ router.patch(
             // Fetch the updated draft to return full details
             const draft = await draftService.getDraft(req.params.id);
 
-            res.json({
+            return res.json({
                 success: true,
                 status: result.status,
                 draft,
@@ -331,7 +331,7 @@ router.patch(
                     `PATCH /approve error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to approve draft' });
+            return res.status(500).json({ error: 'Failed to approve draft' });
         }
     }),
 );
@@ -364,7 +364,7 @@ router.patch(
                 return res.status(404).json({ error: result.reason || 'Failed to reject draft' });
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 status: result.status,
             });
@@ -375,7 +375,7 @@ router.patch(
                     `PATCH /reject error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to reject draft' });
+            return res.status(500).json({ error: 'Failed to reject draft' });
         }
     }),
 );
@@ -401,7 +401,7 @@ router.get(
 
             const stats = await draftService.getDraftStats(userId, organizationId);
 
-            res.json({
+            return res.json({
                 success: true,
                 stats: {
                     ...stats,
@@ -418,7 +418,7 @@ router.get(
                     `GET /stats error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to fetch stats' });
+            return res.status(500).json({ error: 'Failed to fetch stats' });
         }
     }),
 );
@@ -443,7 +443,7 @@ router.delete(
 
             const result = await draftService.expireOldDrafts();
 
-            res.json({
+            return res.json({
                 success: true,
                 expiredCount: result.expired,
             });
@@ -454,7 +454,7 @@ router.delete(
                     `DELETE /expired error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to expire drafts' });
+            return res.status(500).json({ error: 'Failed to expire drafts' });
         }
     }),
 );

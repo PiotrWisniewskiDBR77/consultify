@@ -163,12 +163,8 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                         </span>
                         <User size={16} className="text-slate-400" />
                     </div>
-                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {totals.availableSeats}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                        {t('admin.billing.seats.seatsLeft', 'seats left')}
-                    </p>
+                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{totals.availableSeats}</p>
+                    <p className="text-xs text-slate-500 mt-1">{t('admin.billing.seats.seatsLeft', 'seats left')}</p>
                 </div>
 
                 {/* Monthly Cost */}
@@ -212,7 +208,12 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                         {t('admin.billing.seats.seatTypes', 'Seat Types')}
-                        <Tooltip content={t('admin.billing.seats.seatTypesTooltip', 'Different seat types have different capabilities and pricing')}>
+                        <Tooltip
+                            content={t(
+                                'admin.billing.seats.seatTypesTooltip',
+                                'Different seat types have different capabilities and pricing',
+                            )}
+                        >
                             <HelpCircle size={16} className="text-slate-400" />
                         </Tooltip>
                     </h3>
@@ -227,9 +228,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                         return (
                             <button
                                 key={seatType.id}
-                                onClick={() =>
-                                    setSelectedSeatType(isSelected ? null : seatType.id)
-                                }
+                                onClick={() => setSelectedSeatType(isSelected ? null : seatType.id)}
                                 className={cn(
                                     'p-4 rounded-xl border text-left transition-all',
                                     isSelected
@@ -257,20 +256,12 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                                     <span className="text-2xl font-bold text-navy-900 dark:text-white">
                                         {seatType.usedSeats}
                                     </span>
-                                    <span className="text-slate-500 dark:text-slate-400">
-                                        /{seatType.totalSeats}
-                                    </span>
+                                    <span className="text-slate-500 dark:text-slate-400">/{seatType.totalSeats}</span>
                                 </div>
 
-                                <Progress
-                                    value={usagePercent}
-                                    size="sm"
-                                    color={isNearLimit ? 'danger' : 'primary'}
-                                />
+                                <Progress value={usagePercent} size="sm" color={isNearLimit ? 'danger' : 'primary'} />
 
-                                <p className="text-xs text-slate-500 mt-2">
-                                    ${seatType.priceMonthly}/seat/month
-                                </p>
+                                <p className="text-xs text-slate-500 mt-2">${seatType.priceMonthly}/seat/month</p>
                             </button>
                         );
                     })}
@@ -351,7 +342,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                     <p className="text-sm text-amber-700 dark:text-amber-300 mb-4">
                         {t(
                             'admin.billing.seats.unassignedDesc',
-                            'These users don\'t have a seat assigned. They may have limited access.'
+                            "These users don't have a seat assigned. They may have limited access.",
                         )}
                     </p>
 
@@ -372,11 +363,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                                     </span>
                                 </div>
                                 {onAssignSeat && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-xs"
-                                    >
+                                    <Button variant="ghost" size="sm" className="text-xs">
                                         {t('admin.billing.seats.assign', 'Assign')}
                                     </Button>
                                 )}
@@ -398,6 +385,3 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
 };
 
 export default SeatAllocationView;
-
-
-

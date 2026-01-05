@@ -10,10 +10,10 @@
 import { Router } from 'express';
 
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/webauthn.js');
-const webauthnRoutesJS = module.default || module;
+const authModule = (await import('./webauthn.js')) as any;
+const webauthnRoutesJS = authModule.default || authModule;
 
 // Create router and apply JS routes
 const router = Router();

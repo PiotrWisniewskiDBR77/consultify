@@ -11,8 +11,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -84,13 +84,13 @@ router.get(
                 time: entry.created_at,
             }));
 
-            res.json({
+            return res.json({
                 success: true,
                 data: formattedHistory,
             });
         } catch (error: unknown) {
             logger.error('Error fetching login history:', error);
-            res.status(500).json({ success: false, error: 'Failed to fetch login history' });
+            return res.status(500).json({ success: false, error: 'Failed to fetch login history' });
         }
     }),
 );
@@ -120,13 +120,13 @@ router.post(
                 throw new Error(runResult.error || 'Failed to record login');
             }
 
-            res.json({
+            return res.json({
                 success: true,
                 data: { id },
             });
         } catch (error: unknown) {
             logger.error('Error recording login history:', error);
-            res.status(500).json({ success: false, error: 'Failed to record login' });
+            return res.status(500).json({ success: false, error: 'Failed to record login' });
         }
     }),
 );
@@ -154,13 +154,13 @@ router.get(
                 [userId],
             );
 
-            res.json({
+            return res.json({
                 success: true,
                 data: suspicious,
             });
         } catch (error: unknown) {
             logger.error('Error fetching suspicious logins:', error);
-            res.status(500).json({ success: false, error: 'Failed to fetch suspicious logins' });
+            return res.status(500).json({ success: false, error: 'Failed to fetch suspicious logins' });
         }
     }),
 );

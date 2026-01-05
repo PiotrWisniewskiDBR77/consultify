@@ -10,10 +10,10 @@
 import { Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/calendarIntegrations.js');
-const calendarIntegrationsRoutesJS = module.default || module;
+const calendarModule = (await import('./calendarIntegrations.js')) as any;
+const calendarIntegrationsRoutesJS = calendarModule.default || calendarModule;
 
 // Apply rate limiting
 const router = Router();

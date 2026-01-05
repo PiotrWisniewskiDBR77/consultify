@@ -14,13 +14,7 @@ import React, { useCallback, useState } from 'react';
 
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
-import {
-    PARTNER_BENEFITS,
-    PARTNER_FAQS,
-    PARTNER_TIERS,
-    PartnerTier,
-    TRUST_INDICATORS,
-} from './partnerPricingData';
+import { PARTNER_BENEFITS, PARTNER_FAQS, PARTNER_TIERS, PartnerTier, TRUST_INDICATORS } from './partnerPricingData';
 
 // =============================================================================
 // MAIN COMPONENT
@@ -30,10 +24,7 @@ export const PartnerPricingView: React.FC = () => {
     const { setCurrentView } = useAppStore();
     const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-    const handleNavigate = useCallback(
-        (view: AppView) => () => setCurrentView(view),
-        [setCurrentView],
-    );
+    const handleNavigate = useCallback((view: AppView) => () => setCurrentView(view), [setCurrentView]);
 
     const handleCtaClick = useCallback(
         (tier: PartnerTier) => {
@@ -53,7 +44,7 @@ export const PartnerPricingView: React.FC = () => {
             {/* Hero Section */}
             <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-slate-50 px-6 pb-16 pt-12 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent dark:from-purple-900/20" />
-                
+
                 <div className="relative mx-auto max-w-5xl text-center">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -73,8 +64,8 @@ export const PartnerPricingView: React.FC = () => {
                         </h1>
 
                         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-                            Dołącz do ekosystemu partnerów Consultify i uzyskaj dostęp do co-sell leads,
-                            prowizji do 20%, dedykowanego wsparcia i narzędzi zgodnych z PMO standards.
+                            Dołącz do ekosystemu partnerów Consultify i uzyskaj dostęp do co-sell leads, prowizji do
+                            20%, dedykowanego wsparcia i narzędzi zgodnych z PMO standards.
                         </p>
 
                         <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -104,8 +95,8 @@ export const PartnerPricingView: React.FC = () => {
                             Wybierz poziom partnerstwa
                         </h2>
                         <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
-                            Każdy poziom oferuje progresywne korzyści. Awansuj automatycznie
-                            spełniając wymagania programu.
+                            Każdy poziom oferuje progresywne korzyści. Awansuj automatycznie spełniając wymagania
+                            programu.
                         </p>
                     </div>
 
@@ -136,9 +127,7 @@ export const PartnerPricingView: React.FC = () => {
                                     <div className="flex items-center gap-3">
                                         <div
                                             className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
-                                                tier.highlight
-                                                    ? 'bg-white/20'
-                                                    : 'bg-purple-100 dark:bg-purple-900/30'
+                                                tier.highlight ? 'bg-white/20' : 'bg-purple-100 dark:bg-purple-900/30'
                                             }`}
                                         >
                                             <Icon
@@ -153,9 +142,7 @@ export const PartnerPricingView: React.FC = () => {
                                         <div>
                                             <h3
                                                 className={`text-xl font-black ${
-                                                    tier.highlight
-                                                        ? 'text-white'
-                                                        : 'text-navy-950 dark:text-white'
+                                                    tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'
                                                 }`}
                                             >
                                                 {tier.name}
@@ -177,9 +164,7 @@ export const PartnerPricingView: React.FC = () => {
                                         <div className="flex items-baseline gap-1">
                                             <span
                                                 className={`text-4xl font-black ${
-                                                    tier.highlight
-                                                        ? 'text-white'
-                                                        : 'text-navy-950 dark:text-white'
+                                                    tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'
                                                 }`}
                                             >
                                                 {tier.commissionRate}%
@@ -208,9 +193,7 @@ export const PartnerPricingView: React.FC = () => {
                                     {/* Description */}
                                     <p
                                         className={`mt-4 text-sm ${
-                                            tier.highlight
-                                                ? 'text-purple-100'
-                                                : 'text-slate-600 dark:text-slate-400'
+                                            tier.highlight ? 'text-purple-100' : 'text-slate-600 dark:text-slate-400'
                                         }`}
                                     >
                                         {tier.description}
@@ -224,9 +207,7 @@ export const PartnerPricingView: React.FC = () => {
                                                     <Check
                                                         size={16}
                                                         className={`mt-0.5 flex-shrink-0 ${
-                                                            tier.highlight
-                                                                ? 'text-purple-200'
-                                                                : 'text-green-500'
+                                                            tier.highlight ? 'text-purple-200' : 'text-green-500'
                                                         }`}
                                                     />
                                                 ) : (
@@ -259,9 +240,7 @@ export const PartnerPricingView: React.FC = () => {
                                     {/* Requirements */}
                                     <div
                                         className={`mt-6 rounded-xl p-3 ${
-                                            tier.highlight
-                                                ? 'bg-white/10'
-                                                : 'bg-slate-50 dark:bg-navy-950'
+                                            tier.highlight ? 'bg-white/10' : 'bg-slate-50 dark:bg-navy-950'
                                         }`}
                                     >
                                         <p
@@ -275,10 +254,7 @@ export const PartnerPricingView: React.FC = () => {
                                         </p>
                                         <div className="space-y-1">
                                             {tier.requirements.map((req, rIdx) => (
-                                                <div
-                                                    key={rIdx}
-                                                    className="flex items-center justify-between text-xs"
-                                                >
+                                                <div key={rIdx} className="flex items-center justify-between text-xs">
                                                     <span
                                                         className={
                                                             tier.highlight
@@ -340,9 +316,7 @@ export const PartnerPricingView: React.FC = () => {
             <section className="bg-white px-6 py-16 dark:bg-navy-900/50">
                 <div className="mx-auto max-w-6xl">
                     <div className="mb-12 text-center">
-                        <h2 className="text-3xl font-black text-navy-950 dark:text-white">
-                            Korzyści z partnerstwa
-                        </h2>
+                        <h2 className="text-3xl font-black text-navy-950 dark:text-white">Korzyści z partnerstwa</h2>
                         <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
                             Dołącz do ekosystemu i skorzystaj z pełnego wsparcia w rozwijaniu biznesu
                         </p>
@@ -405,19 +379,12 @@ export const PartnerPricingView: React.FC = () => {
                                 className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-navy-900"
                             >
                                 <button
-                                    onClick={() =>
-                                        setExpandedFaq(expandedFaq === idx ? null : idx)
-                                    }
+                                    onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
                                     className="flex w-full items-center justify-between p-5 text-left"
                                 >
                                     <div className="flex items-start gap-3">
-                                        <HelpCircle
-                                            size={20}
-                                            className="mt-0.5 flex-shrink-0 text-purple-500"
-                                        />
-                                        <span className="font-bold text-navy-950 dark:text-white">
-                                            {faq.question}
-                                        </span>
+                                        <HelpCircle size={20} className="mt-0.5 flex-shrink-0 text-purple-500" />
+                                        <span className="font-bold text-navy-950 dark:text-white">{faq.question}</span>
                                     </div>
                                     <ChevronDown
                                         size={20}
@@ -428,9 +395,7 @@ export const PartnerPricingView: React.FC = () => {
                                 </button>
                                 {expandedFaq === idx && (
                                     <div className="border-t border-slate-100 px-5 pb-5 pt-4 dark:border-white/5">
-                                        <p className="pl-8 text-sm text-slate-600 dark:text-slate-400">
-                                            {faq.answer}
-                                        </p>
+                                        <p className="pl-8 text-sm text-slate-600 dark:text-slate-400">{faq.answer}</p>
                                     </div>
                                 )}
                             </motion.div>
@@ -442,12 +407,10 @@ export const PartnerPricingView: React.FC = () => {
             {/* CTA Section */}
             <section className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-16">
                 <div className="mx-auto max-w-4xl text-center">
-                    <h2 className="text-3xl font-black text-white">
-                        Gotowy do współpracy?
-                    </h2>
+                    <h2 className="text-3xl font-black text-white">Gotowy do współpracy?</h2>
                     <p className="mx-auto mt-4 max-w-xl text-purple-100">
-                        Dołącz do programu partnerskiego Consultify i rozwijaj swój biznes
-                        z dostępem do narzędzi, leadów i prowizji do 20%.
+                        Dołącz do programu partnerskiego Consultify i rozwijaj swój biznes z dostępem do narzędzi,
+                        leadów i prowizji do 20%.
                     </p>
                     <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                         <button
@@ -471,4 +434,3 @@ export const PartnerPricingView: React.FC = () => {
 };
 
 export default PartnerPricingView;
-

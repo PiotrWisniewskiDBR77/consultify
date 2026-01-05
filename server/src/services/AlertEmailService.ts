@@ -6,7 +6,7 @@
  * Integrates with emailService.ts for actual email delivery
  */
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import { send as sendEmail } from './emailService.js';
 
 // ==========================================
@@ -266,8 +266,3 @@ export function getAlertEmailService(): AlertEmailService {
 
 export default AlertEmailService;
 export type { AlertEmailData };
-
-
-
-
-

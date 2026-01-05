@@ -10,10 +10,10 @@
 import { Router } from 'express';
 
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/daily-brief.js');
-const daily_briefRoutesJS = module.default || module;
+const briefModule = (await import('./daily-brief.js')) as any;
+const daily_briefRoutesJS = briefModule.default || briefModule;
 
 // Create router and apply JS routes
 const router = Router();

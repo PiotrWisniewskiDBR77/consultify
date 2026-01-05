@@ -53,27 +53,23 @@ const TooltipTrigger = React.forwardRef<
 });
 TooltipTrigger.displayName = 'TooltipTrigger';
 
-const TooltipContent = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement> & { sideOffset?: number }
->(({ className, sideOffset = 4, ...props }, ref) => {
-    const context = React.useContext(TooltipContext);
-    if (!context) throw new Error('TooltipContent must be used within Tooltip');
+const TooltipContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { sideOffset?: number }>(
+    ({ className, sideOffset = 4, ...props }, ref) => {
+        const context = React.useContext(TooltipContext);
+        if (!context) throw new Error('TooltipContent must be used within Tooltip');
 
-    if (!context.open) return null;
+        if (!context.open) return null;
 
-    return (
-        <div
-            ref={ref}
-            className={`absolute z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 bottom-full left-1/2 -translate-x-1/2 mb-2 ${className || ''}`}
-            style={{ marginBottom: sideOffset }}
-            {...props}
-        />
-    );
-});
+        return (
+            <div
+                ref={ref}
+                className={`absolute z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 bottom-full left-1/2 -translate-x-1/2 mb-2 ${className || ''}`}
+                style={{ marginBottom: sideOffset }}
+                {...props}
+            />
+        );
+    },
+);
 TooltipContent.displayName = 'TooltipContent';
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
-
-
-
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

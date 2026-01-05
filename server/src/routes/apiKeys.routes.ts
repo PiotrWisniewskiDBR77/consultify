@@ -44,7 +44,7 @@ router.get(
 
         const keys = await ApiKeyService.listKeys(orgId);
 
-        res.json({
+        return res.json({
             keys,
             permissions: Object.values(API_KEY_PERMISSIONS),
         });
@@ -94,7 +94,7 @@ router.post(
         });
 
         // Return key info with full key ONCE
-        res.status(201).json({
+        return res.status(201).json({
             message: 'API key created successfully',
             warning: 'Store this key securely. It cannot be retrieved again.',
             key: {
@@ -128,7 +128,7 @@ router.post(
             userId: req.user!.id,
         });
 
-        res.json({
+        return res.json({
             message: 'API key rotated successfully',
             warning: 'Store the new key securely. Old key will expire after grace period.',
             gracePeriodHours: gracePeriodHours || 24,
@@ -157,7 +157,7 @@ router.delete(
 
         await ApiKeyService.revokeKey(keyId, req.user!.id);
 
-        res.json({
+        return res.json({
             message: 'API key revoked successfully',
             keyId,
         });
@@ -171,7 +171,7 @@ router.delete(
 router.get(
     '/permissions',
     asyncHandler(async (_req: AuthRequest, res: Response) => {
-        res.json({
+        return res.json({
             permissions: Object.entries(API_KEY_PERMISSIONS).map(([name, value]) => ({
                 name,
                 value,

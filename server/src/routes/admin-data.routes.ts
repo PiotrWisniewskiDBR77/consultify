@@ -10,12 +10,12 @@
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { _getDatabase } from '../database/Database.js';
+import { getDatabase } from '../database/Database.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
     CreateScheduledEventBodySchema,
     EventIdParamSchema,
@@ -51,7 +51,7 @@ router.get(
     '/user-tiers/:orgId',
     validateParams(OrgIdParamSchema),
     validateQuery(UserTiersQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
 
         const users = await dbAll<{
@@ -79,7 +79,7 @@ router.get(
             [orgId],
         );
 
-        res.json(users);
+        return res.json(users);
     }),
 );
 
@@ -91,7 +91,7 @@ router.put(
     '/user-tiers/:orgId/:userId',
     validateParams(UserTierParamsSchema),
     validateBody(UpdateUserTierBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId, userId } = req.params;
         const { tier } = req.body;
 
@@ -108,7 +108,7 @@ router.put(
             throw new Error(runResult.error || 'Failed to update user tier');
         }
 
-        res.json({ success: true, tier });
+        return res.json({ success: true, tier });
     }),
 );
 
@@ -119,7 +119,7 @@ router.put(
 router.get(
     '/cost-attribution/:orgId',
     validateParams(OrgIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
 
         const userCosts = await dbAll<{
@@ -188,7 +188,7 @@ router.get(
             }))
             .sort((a, b) => b.cost - a.cost);
 
-        res.json(costAttribution);
+        return res.json(costAttribution);
     }),
 );
 
@@ -204,7 +204,7 @@ router.get(
     '/security-events/:orgId',
     validateParams(OrgIdParamSchema),
     validateQuery(SecurityEventsQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
         const { limit = 50, resolved } = req.query;
 
@@ -216,62 +216,40 @@ router.get(
             params.push(resolved === 'true' ? 1 : 0);
         }
 
-        const events = await new Promise<
-            Array<{
-                id: string;
-                type: string;
-                severity: string;
-                userId: string;
-                userEmail: string;
-                details: string;
-                resolved: number;
-                timestamp: string;
-                resolved_at: string | null;
-                resolved_by: string | null;
-            }>
-        >((resolve, reject) => {
-            db.all(
-                `
-                SELECT 
-                    se.id,
-                    se.type,
-                    se.severity,
-                    se.user_id as userId,
-                    u.email as userEmail,
-                    se.details,
-                    se.resolved,
-                    se.created_at as timestamp,
-                    se.resolved_at,
-                    se.resolved_by
-                FROM security_events se
-                LEFT JOIN users u ON se.user_id = u.id
-                ${whereClause}
-                ORDER BY se.created_at DESC
-                LIMIT ?
-            `,
-                [...params, parseInt(limit as string)],
-                (err: Error | null, rows: unknown[]) => {
-                    if (err) reject(err);
-                    else
-                        resolve(
-                            (rows || []) as Array<{
-                                id: string;
-                                type: string;
-                                severity: string;
-                                userId: string;
-                                userEmail: string;
-                                details: string;
-                                resolved: number;
-                                timestamp: string;
-                                resolved_at: string | null;
-                                resolved_by: string | null;
-                            }>,
-                        );
-                },
-            );
-        });
+        const events = await dbAll<{
+            id: string;
+            type: string;
+            severity: string;
+            userId: string;
+            userEmail: string;
+            details: string;
+            resolved: number;
+            timestamp: string;
+            resolved_at: string | null;
+            resolved_by: string | null;
+        }>(
+            `
+            SELECT 
+                se.id,
+                se.type,
+                se.severity,
+                se.user_id as userId,
+                u.email as userEmail,
+                se.details,
+                se.resolved,
+                se.created_at as timestamp,
+                se.resolved_at,
+                se.resolved_by
+            FROM security_events se
+            LEFT JOIN users u ON se.user_id = u.id
+            ${whereClause}
+            ORDER BY se.created_at DESC
+            LIMIT ?
+        `,
+            [...params, parseInt(limit as string)],
+        );
 
-        res.json(events);
+        return res.json(events);
     }),
 );
 
@@ -283,31 +261,29 @@ router.put(
     '/security-events/:eventId/resolve',
     validateParams(EventIdParamSchema),
     validateBody(ResolveSecurityEventBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { eventId } = req.params;
         const userId = req.user?.id;
 
         if (!userId) {
-            res.status(401).json({ error: 'Unauthorized' });
+            return res.status(401).json({ error: 'Unauthorized' });
             return;
         }
 
-        await new Promise<void>((resolve, reject) => {
-            db.run(
-                `
-                UPDATE security_events 
-                SET resolved = 1, resolved_at = datetime('now'), resolved_by = ?
-                WHERE id = ?
-            `,
-                [userId, eventId],
-                (err: Error | null) => {
-                    if (err) reject(err);
-                    else resolve();
-                },
-            );
-        });
+        const runResult = await dbRun(
+            `
+            UPDATE security_events 
+            SET resolved = 1, resolved_at = datetime('now'), resolved_by = ?
+            WHERE id = ?
+        `,
+            [userId, eventId],
+        );
 
-        res.json({ success: true });
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to resolve security event');
+        }
+
+        return res.json({ success: true });
     }),
 );
 
@@ -323,52 +299,34 @@ router.get(
     '/recent-activity/:orgId',
     validateParams(OrgIdParamSchema),
     validateQuery(RecentActivityQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
         const { limit = 10 } = req.query;
 
-        const activity = await new Promise<
-            Array<{
-                id: string;
-                type: string;
-                description: string;
-                timestamp: string;
-                userEmail: string;
-                userName: string;
-            }>
-        >((resolve, reject) => {
-            db.all(
-                `
-                SELECT 
-                    ae.id,
-                    ae.action_type as type,
-                    json_extract(ae.metadata_json, '$.description') as description,
-                    ae.ts as timestamp,
-                    u.email as userEmail,
-                    u.first_name || ' ' || u.last_name as userName
-                FROM audit_events ae
-                LEFT JOIN users u ON ae.actor_user_id = u.id
-                WHERE ae.org_id = ?
-                ORDER BY ae.ts DESC
-                LIMIT ?
-            `,
-                [orgId, parseInt(limit as string)],
-                (err: Error | null, rows: unknown[]) => {
-                    if (err) reject(err);
-                    else
-                        resolve(
-                            (rows || []) as Array<{
-                                id: string;
-                                type: string;
-                                description: string;
-                                timestamp: string;
-                                userEmail: string;
-                                userName: string;
-                            }>,
-                        );
-                },
-            );
-        });
+        const activity = await dbAll<{
+            id: string;
+            type: string;
+            description: string;
+            timestamp: string;
+            userEmail: string;
+            userName: string;
+        }>(
+            `
+            SELECT 
+                ae.id,
+                ae.action_type as type,
+                json_extract(ae.metadata_json, '$.description') as description,
+                ae.ts as timestamp,
+                u.email as userEmail,
+                u.first_name || ' ' || u.last_name as userName
+            FROM audit_events ae
+            LEFT JOIN users u ON ae.actor_user_id = u.id
+            WHERE ae.org_id = ?
+            ORDER BY ae.ts DESC
+            LIMIT ?
+        `,
+            [orgId, parseInt(limit as string)],
+        );
 
         const formattedActivity = activity.map((a) => ({
             id: a.id,
@@ -378,7 +336,7 @@ router.get(
             user: a.userEmail,
         }));
 
-        res.json(formattedActivity);
+        return res.json(formattedActivity);
     }),
 );
 
@@ -388,7 +346,7 @@ router.get(
  */
 router.get(
     '/system-health',
-    asyncHandler(async (_req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (_req: AuthRequest, res: Response) => {
         const dbHealthy = await (async () => {
             try {
                 await dbGet('SELECT 1 as ok', []);
@@ -410,7 +368,7 @@ router.get(
             ],
         };
 
-        res.json(health);
+        return res.json(health);
     }),
 );
 
@@ -426,65 +384,43 @@ router.get(
     '/sessions/:orgId',
     validateParams(OrgIdParamSchema),
     validateQuery(SessionsQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
 
-        const sessions = await new Promise<
-            Array<{
-                id: string;
-                userId: string;
-                userEmail: string;
-                userName: string;
-                deviceName: string;
-                ipAddress: string;
-                location: string;
-                isCurrent: number;
-                lastActivity: string;
-                createdAt: string;
-            }>
-        >((resolve, reject) => {
-            db.all(
-                `
-                SELECT 
-                    us.id,
-                    us.user_id as userId,
-                    u.email as userEmail,
-                    u.first_name || ' ' || u.last_name as userName,
-                    us.device_info as deviceName,
-                    us.ip_address as ipAddress,
-                    us.location,
-                    us.is_current as isCurrent,
-                    us.last_active_at as lastActivity,
-                    us.created_at as createdAt
-                FROM user_sessions us
-                JOIN users u ON us.user_id = u.id
-                WHERE u.organization_id = ?
-                    AND (us.expires_at IS NULL OR us.expires_at > datetime('now'))
-                ORDER BY us.last_active_at DESC
-            `,
-                [orgId],
-                (err: Error | null, rows: unknown[]) => {
-                    if (err) reject(err);
-                    else
-                        resolve(
-                            (rows || []) as Array<{
-                                id: string;
-                                userId: string;
-                                userEmail: string;
-                                userName: string;
-                                deviceName: string;
-                                ipAddress: string;
-                                location: string;
-                                isCurrent: number;
-                                lastActivity: string;
-                                createdAt: string;
-                            }>,
-                        );
-                },
-            );
-        });
+        const sessions = await dbAll<{
+            id: string;
+            userId: string;
+            userEmail: string;
+            userName: string;
+            deviceName: string;
+            ipAddress: string;
+            location: string;
+            isCurrent: number;
+            lastActivity: string;
+            createdAt: string;
+        }>(
+            `
+            SELECT 
+                us.id,
+                us.user_id as userId,
+                u.email as userEmail,
+                u.first_name || ' ' || u.last_name as userName,
+                us.device_info as deviceName,
+                us.ip_address as ipAddress,
+                us.location,
+                us.is_current as isCurrent,
+                us.last_active_at as lastActivity,
+                us.created_at as createdAt
+            FROM user_sessions us
+            JOIN users u ON us.user_id = u.id
+            WHERE u.organization_id = ?
+                AND (us.expires_at IS NULL OR us.expires_at > datetime('now'))
+            ORDER BY us.last_active_at DESC
+        `,
+            [orgId],
+        );
 
-        res.json(sessions);
+        return res.json(sessions);
     }),
 );
 
@@ -496,66 +432,44 @@ router.get(
     '/login-history/:orgId',
     validateParams(OrgIdParamSchema),
     validateQuery(LoginHistoryQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
         const { limit = 50 } = req.query;
 
-        const history = await new Promise<
-            Array<{
-                id: string;
-                userId: string;
-                userEmail: string;
-                userName: string;
-                ipAddress: string;
-                userAgent: string;
-                location: string;
-                status: string;
-                failureReason: string | null;
-                timestamp: string;
-            }>
-        >((resolve, reject) => {
-            db.all(
-                `
-                SELECT 
-                    lh.id,
-                    lh.user_id as userId,
-                    u.email as userEmail,
-                    u.first_name || ' ' || u.last_name as userName,
-                    lh.ip_address as ipAddress,
-                    lh.user_agent as userAgent,
-                    lh.location,
-                    lh.status,
-                    lh.failure_reason as failureReason,
-                    lh.created_at as timestamp
-                FROM login_history lh
-                JOIN users u ON lh.user_id = u.id
-                WHERE lh.organization_id = ?
-                ORDER BY lh.created_at DESC
-                LIMIT ?
-            `,
-                [orgId, parseInt(limit as string)],
-                (err: Error | null, rows: unknown[]) => {
-                    if (err) reject(err);
-                    else
-                        resolve(
-                            (rows || []) as Array<{
-                                id: string;
-                                userId: string;
-                                userEmail: string;
-                                userName: string;
-                                ipAddress: string;
-                                userAgent: string;
-                                location: string;
-                                status: string;
-                                failureReason: string | null;
-                                timestamp: string;
-                            }>,
-                        );
-                },
-            );
-        });
+        const history = await dbAll<{
+            id: string;
+            userId: string;
+            userEmail: string;
+            userName: string;
+            ipAddress: string;
+            userAgent: string;
+            location: string;
+            status: string;
+            failureReason: string | null;
+            timestamp: string;
+        }>(
+            `
+            SELECT 
+                lh.id,
+                lh.user_id as userId,
+                u.email as userEmail,
+                u.first_name || ' ' || u.last_name as userName,
+                lh.ip_address as ipAddress,
+                lh.user_agent as userAgent,
+                lh.location,
+                lh.status,
+                lh.failure_reason as failureReason,
+                lh.created_at as timestamp
+            FROM login_history lh
+            JOIN users u ON lh.user_id = u.id
+            WHERE lh.organization_id = ?
+            ORDER BY lh.created_at DESC
+            LIMIT ?
+        `,
+            [orgId, parseInt(limit as string)],
+        );
 
-        res.json(history);
+        return res.json(history);
     }),
 );
 
@@ -566,7 +480,7 @@ router.get(
 router.delete(
     '/sessions/:sessionId',
     validateParams(SessionIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { sessionId } = req.params;
 
         const result = await dbRun('DELETE FROM user_sessions WHERE id = ?', [sessionId]);
@@ -574,7 +488,7 @@ router.delete(
             throw new Error(result.error || 'Failed to delete session');
         }
 
-        res.json({ success: true });
+        return res.json({ success: true });
     }),
 );
 
@@ -589,51 +503,33 @@ router.delete(
 router.get(
     '/compliance-reports/:orgId',
     validateParams(OrgIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
 
-        const reports = await new Promise<
-            Array<{
-                id: string;
-                name: string;
-                standard: string;
-                status: string;
-                findings: number;
-                generatedAt: string;
-            }>
-        >((resolve, reject) => {
-            db.all(
-                `
-                SELECT 
-                    id,
-                    name,
-                    standard,
-                    status,
-                    findings_count as findings,
-                    generated_at as generatedAt
-                FROM compliance_reports
-                WHERE organization_id = ?
-                ORDER BY generated_at DESC
-            `,
-                [orgId],
-                (err: Error | null, rows: unknown[]) => {
-                    if (err) reject(err);
-                    else
-                        resolve(
-                            (rows || []) as Array<{
-                                id: string;
-                                name: string;
-                                standard: string;
-                                status: string;
-                                findings: number;
-                                generatedAt: string;
-                            }>,
-                        );
-                },
-            );
-        });
+        const reports = await dbAll<{
+            id: string;
+            name: string;
+            standard: string;
+            status: string;
+            findings: number;
+            generatedAt: string;
+        }>(
+            `
+            SELECT 
+                id,
+                name,
+                standard,
+                status,
+                findings_count as findings,
+                generated_at as generatedAt
+            FROM compliance_reports
+            WHERE organization_id = ?
+            ORDER BY generated_at DESC
+        `,
+            [orgId],
+        );
 
-        res.json(reports);
+        return res.json(reports);
     }),
 );
 
@@ -644,57 +540,37 @@ router.get(
 router.get(
     '/custom-templates/:orgId',
     validateParams(OrgIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
 
-        const templates = await new Promise<
-            Array<{
-                id: string;
-                name: string;
-                description: string;
-                basedOn: string;
-                sectionsCount: number;
-                checkpointsCount: number;
-                createdAt: string;
-                updatedAt: string;
-            }>
-        >((resolve, reject) => {
-            db.all(
-                `
-                SELECT 
-                    id,
-                    name,
-                    description,
-                    based_on as basedOn,
-                    sections_count as sectionsCount,
-                    checkpoints_count as checkpointsCount,
-                    created_at as createdAt,
-                    updated_at as updatedAt
-                FROM custom_compliance_templates
-                WHERE organization_id = ?
-                ORDER BY updated_at DESC
-            `,
-                [orgId],
-                (err: Error | null, rows: unknown[]) => {
-                    if (err) reject(err);
-                    else
-                        resolve(
-                            (rows || []) as Array<{
-                                id: string;
-                                name: string;
-                                description: string;
-                                basedOn: string;
-                                sectionsCount: number;
-                                checkpointsCount: number;
-                                createdAt: string;
-                                updatedAt: string;
-                            }>,
-                        );
-                },
-            );
-        });
+        const templates = await dbAll<{
+            id: string;
+            name: string;
+            description: string;
+            basedOn: string;
+            sectionsCount: number;
+            checkpointsCount: number;
+            createdAt: string;
+            updatedAt: string;
+        }>(
+            `
+            SELECT 
+                id,
+                name,
+                description,
+                based_on as basedOn,
+                sections_count as sectionsCount,
+                checkpoints_count as checkpointsCount,
+                created_at as createdAt,
+                updated_at as updatedAt
+            FROM custom_compliance_templates
+            WHERE organization_id = ?
+            ORDER BY updated_at DESC
+        `,
+            [orgId],
+        );
 
-        res.json(templates);
+        return res.json(templates);
     }),
 );
 
@@ -709,54 +585,35 @@ router.get(
 router.get(
     '/user-groups/:orgId',
     validateParams(OrgIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
 
-        const groups = await new Promise<
-            Array<{
-                id: string;
-                name: string;
-                description: string;
-                color: string;
-                membersCount: number;
-                permissions: string;
-                createdAt: string;
-            }>
-        >((resolve, reject) => {
-            db.all(
-                `
-                SELECT 
-                    id,
-                    name,
-                    description,
-                    color,
-                    members_count as membersCount,
-                    permissions,
-                    created_at as createdAt
-                FROM user_groups
-                WHERE organization_id = ?
-                ORDER BY name ASC
-            `,
-                [orgId],
-                (err: Error | null, rows: unknown[]) => {
-                    if (err) reject(err);
-                    else
-                        resolve(
-                            (rows || []) as Array<{
-                                id: string;
-                                name: string;
-                                description: string;
-                                color: string;
-                                membersCount: number;
-                                permissions: string;
-                                createdAt: string;
-                            }>,
-                        );
-                },
-            );
-        });
+        const groups = await dbAll<{
+            id: string;
+            name: string;
+            description: string;
+            color: string;
+            membersCount: number;
+            permissions: string;
+            createdAt: string;
+        }>(
+            `
+            SELECT 
+                id,
+                name,
+                description,
+                color,
+                members_count as membersCount,
+                permissions,
+                created_at as createdAt
+            FROM user_groups
+            WHERE organization_id = ?
+            ORDER BY name ASC
+        `,
+            [orgId],
+        );
 
-        res.json(groups);
+        return res.json(groups);
     }),
 );
 
@@ -772,7 +629,7 @@ router.get(
     '/scheduled-events/:orgId',
     validateParams(OrgIdParamSchema),
     validateQuery(ScheduledEventsQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
         const { limit = 10, includeCompleted = 'false' } = req.query;
 
@@ -781,83 +638,56 @@ router.get(
             whereClause += ` AND se.status != 'COMPLETED' AND se.status != 'CANCELLED'`;
         }
 
-        const events = await new Promise<
-            Array<{
-                id: string;
-                title: string;
-                description: string;
-                eventType: string;
-                startTime: string;
-                endTime: string;
-                location: string;
-                isAllDay: number;
-                status: string;
-                projectId: string | null;
-                projectName: string | null;
-                attendees: string;
-                createdBy: string;
-                creatorEmail: string;
-                creatorName: string;
-            }>
-        >((resolve, reject) => {
-            db.all(
-                `
-                SELECT 
-                    se.id,
-                    se.title,
-                    se.description,
-                    se.event_type as eventType,
-                    se.start_time as startTime,
-                    se.end_time as endTime,
-                    se.location,
-                    se.is_all_day as isAllDay,
-                    se.status,
-                    se.project_id as projectId,
-                    p.name as projectName,
-                    se.attendees,
-                    se.created_by as createdBy,
-                    u.email as creatorEmail,
-                    u.first_name || ' ' || u.last_name as creatorName
-                FROM scheduled_events se
-                LEFT JOIN projects p ON se.project_id = p.id
-                LEFT JOIN users u ON se.created_by = u.id
-                ${whereClause}
-                ORDER BY se.start_time ASC
-                LIMIT ?
-            `,
-                [orgId, parseInt(limit as string)],
-                (err: Error | null, rows: unknown[]) => {
-                    if (err) reject(err);
-                    else
-                        resolve(
-                            (rows || []) as Array<{
-                                id: string;
-                                title: string;
-                                description: string;
-                                eventType: string;
-                                startTime: string;
-                                endTime: string;
-                                location: string;
-                                isAllDay: number;
-                                status: string;
-                                projectId: string | null;
-                                projectName: string | null;
-                                attendees: string;
-                                createdBy: string;
-                                creatorEmail: string;
-                                creatorName: string;
-                            }>,
-                        );
-                },
-            );
-        });
+        const events = await dbAll<{
+            id: string;
+            title: string;
+            description: string;
+            eventType: string;
+            startTime: string;
+            endTime: string;
+            location: string;
+            isAllDay: number;
+            status: string;
+            projectId: string | null;
+            projectName: string | null;
+            attendees: string;
+            createdBy: string;
+            creatorEmail: string;
+            creatorName: string;
+        }>(
+            `
+            SELECT 
+                se.id,
+                se.title,
+                se.description,
+                se.event_type as eventType,
+                se.start_time as startTime,
+                se.end_time as endTime,
+                se.location,
+                se.is_all_day as isAllDay,
+                se.status,
+                se.project_id as projectId,
+                p.name as projectName,
+                se.attendees,
+                se.created_by as createdBy,
+                u.email as creatorEmail,
+                u.first_name || ' ' || u.last_name as creatorName
+            FROM scheduled_events se
+            LEFT JOIN projects p ON se.project_id = p.id
+            LEFT JOIN users u ON se.created_by = u.id
+            ${whereClause}
+            ORDER BY se.start_time ASC
+            LIMIT ?
+        `,
+            [orgId, parseInt(limit as string)],
+        );
 
         const formattedEvents = events.map((e) => ({
             ...e,
             attendees: e.attendees ? JSON.parse(e.attendees) : [],
         }));
 
-        res.json(formattedEvents);
+        return res.json(formattedEvents);
     }),
 );
 
@@ -869,7 +699,7 @@ router.post(
     '/scheduled-events/:orgId',
     validateParams(OrgIdParamSchema),
     validateBody(CreateScheduledEventBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { orgId } = req.params;
         const {
             title,
@@ -885,43 +715,41 @@ router.post(
         const userId = req.user?.id;
 
         if (!userId) {
-            res.status(401).json({ error: 'Unauthorized' });
+            return res.status(401).json({ error: 'Unauthorized' });
             return;
         }
 
         const eventId = uuidv4();
 
-        await new Promise<void>((resolve, reject) => {
-            db.run(
-                `
-                INSERT INTO scheduled_events (
-                    id, organization_id, title, description, event_type, 
-                    start_time, end_time, location, is_all_day, status, 
-                    project_id, attendees, created_by, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'SCHEDULED', ?, ?, ?, datetime('now'))
-            `,
-                [
-                    eventId,
-                    orgId,
-                    title,
-                    description,
-                    eventType,
-                    startTime,
-                    endTime,
-                    location,
-                    isAllDay ? 1 : 0,
-                    projectId,
-                    JSON.stringify(attendees),
-                    userId,
-                ],
-                (err: Error | null) => {
-                    if (err) reject(err);
-                    else resolve();
-                },
-            );
-        });
+        const runResult = await dbRun(
+            `
+            INSERT INTO scheduled_events (
+                id, organization_id, title, description, event_type, 
+                start_time, end_time, location, is_all_day, status, 
+                project_id, attendees, created_by, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'SCHEDULED', ?, ?, ?, datetime('now'))
+        `,
+            [
+                eventId,
+                orgId,
+                title,
+                description,
+                eventType,
+                startTime,
+                endTime,
+                location,
+                isAllDay ? 1 : 0,
+                projectId,
+                JSON.stringify(attendees),
+                userId,
+            ],
+        );
 
-        res.status(201).json({
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to create scheduled event');
+        }
+
+        return res.status(201).json({
             id: eventId,
             title,
             description,
@@ -945,7 +773,7 @@ router.put(
     '/scheduled-events/:eventId',
     validateParams(ScheduledEventIdParamSchema),
     validateBody(UpdateScheduledEventBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { eventId } = req.params;
         const { title, description, eventType, startTime, endTime, location, isAllDay, status, projectId, attendees } =
             req.body;
@@ -997,22 +825,20 @@ router.put(
         updates.push("updated_at = datetime('now')");
         params.push(eventId);
 
-        await new Promise<void>((resolve, reject) => {
-            db.run(
-                `
-                UPDATE scheduled_events 
-                SET ${updates.join(', ')}
-                WHERE id = ?
-            `,
-                params,
-                (err: Error | null) => {
-                    if (err) reject(err);
-                    else resolve();
-                },
-            );
-        });
+        const runResult = await dbRun(
+            `
+            UPDATE scheduled_events 
+            SET ${updates.join(', ')}
+            WHERE id = ?
+        `,
+            params,
+        );
 
-        res.json({ success: true });
+        if (!runResult.success) {
+            throw new Error(runResult.error || 'Failed to update scheduled event');
+        }
+
+        return res.json({ success: true });
     }),
 );
 
@@ -1023,7 +849,7 @@ router.put(
 router.delete(
     '/scheduled-events/:eventId',
     validateParams(ScheduledEventIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const { eventId } = req.params;
 
         const result = await dbRun('DELETE FROM scheduled_events WHERE id = ?', [eventId]);
@@ -1031,7 +857,7 @@ router.delete(
             throw new Error(result.error || 'Failed to delete event');
         }
 
-        res.json({ success: true });
+        return res.json({ success: true });
     }),
 );
 

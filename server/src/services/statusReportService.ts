@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
-import DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 // import BudgetService from './budgetService.js'; // Assuming wrapper exists and works. Or import from source if migrated.
 // Given the list_dir showed budgetService.ts is small, likely a wrapper.
 // To be safe and avoid circular deps issues during testing, I might want to inject it or lazily import it,

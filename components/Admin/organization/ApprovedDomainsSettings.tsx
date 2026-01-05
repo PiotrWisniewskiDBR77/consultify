@@ -151,9 +151,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
         [onUpdate],
     );
 
-    const domainToDelete = showDeleteModal
-        ? domains.find((d) => d.id === showDeleteModal)
-        : null;
+    const domainToDelete = showDeleteModal ? domains.find((d) => d.id === showDeleteModal) : null;
 
     return (
         <div className={cn('space-y-6', className)}>
@@ -165,18 +163,18 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                         <h3 className="text-lg font-medium text-navy-900 dark:text-white">
                             {t('admin.org.domains.title', 'Approved Email Domains')}
                         </h3>
-                        <Tooltip content={t('admin.org.domains.tooltip', 'Users with email addresses from approved domains can sign up without an invitation')}>
+                        <Tooltip
+                            content={t(
+                                'admin.org.domains.tooltip',
+                                'Users with email addresses from approved domains can sign up without an invitation',
+                            )}
+                        >
                             <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                                 <HelpCircle size={16} />
                             </button>
                         </Tooltip>
                     </div>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => setShowAddModal(true)}
-                        icon={<Plus size={16} />}
-                    >
+                    <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)} icon={<Plus size={16} />}>
                         {t('admin.org.domains.addDomain', 'Add Domain')}
                     </Button>
                 </div>
@@ -184,7 +182,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                     {t(
                         'admin.org.domains.description',
-                        'Manage which email domains can automatically join your organization.'
+                        'Manage which email domains can automatically join your organization.',
                     )}
                 </p>
 
@@ -196,7 +194,10 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                             {t('admin.org.domains.empty.title', 'No approved domains')}
                         </h4>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            {t('admin.org.domains.empty.description', 'Add domains to allow users to sign up automatically')}
+                            {t(
+                                'admin.org.domains.empty.description',
+                                'Add domains to allow users to sign up automatically',
+                            )}
                         </p>
                         <Button
                             variant="outline"
@@ -270,9 +271,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                                             onClick={() => handleToggleAutoJoin(domain)}
                                             className={cn(
                                                 'relative w-10 h-6 rounded-full transition-colors',
-                                                domain.autoJoin
-                                                    ? 'bg-violet-600'
-                                                    : 'bg-slate-200 dark:bg-navy-700',
+                                                domain.autoJoin ? 'bg-violet-600' : 'bg-slate-200 dark:bg-navy-700',
                                             )}
                                         >
                                             <span
@@ -321,7 +320,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                         <p className="text-sm text-blue-700 dark:text-blue-300">
                             {t(
                                 'admin.org.domains.securityNote.description',
-                                'When auto-join is enabled, anyone with an email address from the approved domain can create an account and join your organization automatically. Make sure you only approve domains that you control.'
+                                'When auto-join is enabled, anyone with an email address from the approved domain can create an account and join your organization automatically. Make sure you only approve domains that you control.',
                             )}
                         </p>
                     </div>
@@ -361,7 +360,7 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {t(
                                     'admin.org.domains.addModal.autoJoinDescription',
-                                    'Users with this domain can sign up without invitation'
+                                    'Users with this domain can sign up without invitation',
                                 )}
                             </p>
                         </div>
@@ -403,7 +402,10 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                     <p className="text-sm text-slate-600 dark:text-slate-400">
                         {t('admin.org.domains.deleteModal.description', 'Are you sure you want to remove')}{' '}
                         <strong className="text-navy-900 dark:text-white">@{domainToDelete?.domain}</strong>
-                        {t('admin.org.domains.deleteModal.descriptionEnd', '? Users from this domain will no longer be able to auto-join.')}
+                        {t(
+                            'admin.org.domains.deleteModal.descriptionEnd',
+                            '? Users from this domain will no longer be able to auto-join.',
+                        )}
                     </p>
 
                     {(domainToDelete?.usersCount ?? 0) > 0 && (
@@ -411,7 +413,11 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
                             <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                                 <AlertCircle size={16} />
                                 <span className="text-sm">
-                                    {domainToDelete?.usersCount} {t('admin.org.domains.deleteModal.existingUsers', 'existing users from this domain will not be affected.')}
+                                    {domainToDelete?.usersCount}{' '}
+                                    {t(
+                                        'admin.org.domains.deleteModal.existingUsers',
+                                        'existing users from this domain will not be affected.',
+                                    )}
                                 </span>
                             </div>
                         </div>
@@ -432,6 +438,3 @@ export const ApprovedDomainsSettings: React.FC<ApprovedDomainsSettingsProps> = (
 };
 
 export default ApprovedDomainsSettings;
-
-
-

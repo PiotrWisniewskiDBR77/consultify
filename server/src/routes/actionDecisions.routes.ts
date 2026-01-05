@@ -5,19 +5,20 @@
  * Fully migrated to TypeScript ES modules
  */
 
-import { _Request, Response, Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
 
 // Service interfaces
 interface ActionDecisionServiceInterface {
+    [key: string]: any;
     recordDecision?: (data: {
         proposal_id: string;
         organization_id: string;
@@ -47,6 +48,7 @@ interface ActionDecisionServiceInterface {
 }
 
 interface ActionExecutionAdapterInterface {
+    [key: string]: any;
     executeDecision?: (
         decisionId: string,
         executedBy: string,
@@ -59,6 +61,7 @@ interface ActionExecutionAdapterInterface {
 }
 
 interface AuditExportServiceInterface {
+    [key: string]: any;
     exportDecisions?: (options: {
         organizationId: string;
         format: string;
@@ -72,6 +75,7 @@ interface AuditExportServiceInterface {
 }
 
 interface PolicyEngineInterface {
+    [key: string]: any;
     getAllRules?: () => Promise<unknown[]>;
     getRules?: (organizationId: string) => Promise<unknown[]>;
     toggleRule?: (id: string, enabled: boolean) => Promise<unknown>;
@@ -90,10 +94,12 @@ interface PolicyEngineInterface {
 }
 
 interface ActionProposalEngineInterface {
+    [key: string]: any;
     getProposalById?: (organizationId: string, id: string) => Promise<unknown>;
 }
 
 interface AsyncJobServiceInterface {
+    [key: string]: any;
     enqueueActionExecution?: (options: {
         decisionId: string;
         organizationId: string;
@@ -124,42 +130,42 @@ let ActionProposalEngine: ActionProposalEngineInterface | null = null;
 let AsyncJobService: AsyncJobServiceInterface | null = null;
 
 try {
-    const decisionModule = await import('../../ai/actionDecisionService.js');
+    const decisionModule = (await import('../ai/actionDecisionService.js')) as any;
     ActionDecisionService = (decisionModule.default || decisionModule) as ActionDecisionServiceInterface;
 } catch {
     logger.warn('[ActionDecisions Routes] ActionDecisionService not available');
 }
 
 try {
-    const executionModule = await import('../../ai/actionExecutionAdapter.js');
+    const executionModule = (await import('../ai/actionExecutionAdapter.js')) as any;
     ActionExecutionAdapter = (executionModule.default || executionModule) as ActionExecutionAdapterInterface;
 } catch {
     logger.warn('[ActionDecisions Routes] ActionExecutionAdapter not available');
 }
 
 try {
-    const auditModule = await import('../../ai/auditExport.js');
+    const auditModule = (await import('../ai/auditExport.js')) as any;
     AuditExportService = (auditModule.default || auditModule) as AuditExportServiceInterface;
 } catch {
     logger.warn('[ActionDecisions Routes] AuditExportService not available');
 }
 
 try {
-    const policyModule = await import('../../ai/policyEngine.js');
+    const policyModule = (await import('../ai/policyEngine.js')) as any;
     PolicyEngine = (policyModule.default || policyModule) as PolicyEngineInterface;
 } catch {
     logger.warn('[ActionDecisions Routes] PolicyEngine not available');
 }
 
 try {
-    const proposalModule = await import('../../ai/actionProposalEngine.js');
+    const proposalModule = (await import('../ai/actionProposalEngine.js')) as any;
     ActionProposalEngine = (proposalModule.default || proposalModule) as ActionProposalEngineInterface;
 } catch {
     logger.warn('[ActionDecisions Routes] ActionProposalEngine not available');
 }
 
 try {
-    const asyncModule = await import('../../ai/asyncJobService.js');
+    const asyncModule = (await import('../ai/asyncJobService.js')) as any;
     AsyncJobService = (asyncModule.default || asyncModule) as AsyncJobServiceInterface;
 } catch {
     logger.warn('[ActionDecisions Routes] AsyncJobService not available');
@@ -210,15 +216,15 @@ router.post(
                 modified_payload,
             });
 
-            res.status(201).json({
+            return res.status(201).json({
                 message: 'Decision recorded successfully',
                 audit_id: decisionRecord.id,
                 decision: decisionRecord.decision,
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[ActionDecisionsRoute] Error:', err);
             const status = (err as { status?: number })?.status || 400;
-            res.status(status).json({
+            return res.status(status).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -263,10 +269,10 @@ router.get(
                 offset: offset ? parseInt(offset as string) : 0,
             });
 
-            res.json(log);
-        } catch (err: unknown) {
+            return res.json(log);
+        } catch (err: any) {
             logger.error('[ActionAuditRoute] Error:', err);
-            res.status(500).json({ error: 'Failed to fetch audit log' });
+            return res.status(500).json({ error: 'Failed to fetch audit log' });
         }
     }),
 );
@@ -299,8 +305,9 @@ router.post(
 
             // RBAC check: ADMIN only their own org, SUPERADMIN any org
             // Fetch specific decision to check organization_id
-            const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+            const orgId = (
+                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId
+            ) as string;
             const decisions = await ActionDecisionService.getAuditLog(orgId);
             const decision = decisions.find((d) => d.id === id);
 
@@ -324,10 +331,10 @@ router.post(
             }
 
             // Include correlation_id in response (Step 9.5)
-            res.json(executionResult);
-        } catch (err: unknown) {
+            return res.json(executionResult);
+        } catch (err: any) {
             logger.error('[ActionExecutionRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -362,8 +369,9 @@ router.post(
             }
 
             // Fetch specific decision to check organization_id
-            const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+            const orgId = (
+                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId
+            ) as string;
             const decisions = await ActionDecisionService.getAuditLog(orgId);
             const decision = decisions.find((d) => d.id === id);
 
@@ -382,10 +390,10 @@ router.post(
 
             const dryRunResult = await ActionExecutionAdapter.executeDecision(id, userId, { dry_run: true });
 
-            res.json(dryRunResult);
-        } catch (err: unknown) {
+            return res.json(dryRunResult);
+        } catch (err: any) {
             logger.error('[ActionDryRunRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -436,10 +444,10 @@ router.get(
                 return res.send(typeof result.data === 'string' ? result.data : JSON.stringify(result.data));
             }
 
-            res.json(result.data);
-        } catch (err: unknown) {
+            return res.json(result.data);
+        } catch (err: any) {
             logger.error('[AuditExportRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -490,10 +498,10 @@ router.get(
                 return res.send(typeof result.data === 'string' ? result.data : JSON.stringify(result.data));
             }
 
-            res.json(result.data);
-        } catch (err: unknown) {
+            return res.json(result.data);
+        } catch (err: any) {
             logger.error('[ExecutionsExportRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -534,10 +542,10 @@ router.get(
                 rules = await PolicyEngine.getRules(organizationId);
             }
 
-            res.json(rules);
-        } catch (err: unknown) {
+            return res.json(rules);
+        } catch (err: any) {
             logger.error('[PolicyRulesRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -568,13 +576,13 @@ router.patch(
             }
 
             const result = await PolicyEngine.toggleRule(req.params.id, enabled);
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             if (err instanceof Error && err.message === 'Rule not found') {
                 return res.status(404).json({ error: err.message });
             }
             logger.error('[PolicyToggleRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -636,10 +644,10 @@ router.post(
                 created_by_user_id: userId,
             });
 
-            res.status(201).json(rule);
-        } catch (err: unknown) {
+            return res.status(201).json(rule);
+        } catch (err: any) {
             logger.error('[PolicyCreateRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -665,10 +673,10 @@ router.get(
             }
 
             const status = await PolicyEngine.getGlobalStatus();
-            res.json(status);
-        } catch (err: unknown) {
+            return res.json(status);
+        } catch (err: any) {
             logger.error('[PolicyStatusRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -705,10 +713,10 @@ router.patch(
             }
 
             const result = await PolicyEngine.setGlobalStatus(enabled, userId);
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             logger.error('[PolicyGlobalRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -749,10 +757,10 @@ router.post(
             }
 
             const result = await ActionDecisionService.evaluatePolicyForProposal(proposal, targetOrgId);
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             logger.error('[PolicyEvaluateRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -792,8 +800,9 @@ router.post(
             }
 
             // Fetch decision to validate org isolation
-            const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+            const orgId = (
+                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId
+            ) as string;
             const decisions = await ActionDecisionService.getAuditLog(orgId);
             const decision = decisions.find((d) => d.id === id);
 
@@ -822,16 +831,16 @@ router.post(
             const correlationId = decision.correlation_id || `corr-${uuidv4()}`;
             const result = await AsyncJobService.enqueueActionExecution({
                 decisionId: id,
-                organizationId: decision.organization_id || organizationId,
+                organizationId: (decision.organization_id || organizationId) as string,
                 correlationId,
                 priority,
                 createdBy: userId,
             });
 
-            res.status(202).json(result);
-        } catch (err: unknown) {
+            return res.status(202).json(result);
+        } catch (err: any) {
             logger.error('[AsyncExecuteRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -872,10 +881,10 @@ router.get(
                 return res.status(404).json({ error: 'Job not found' });
             }
 
-            res.json(job);
-        } catch (err: unknown) {
+            return res.json(job);
+        } catch (err: any) {
             logger.error('[AsyncJobStatusRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -911,8 +920,8 @@ router.post(
             }
 
             const result = await AsyncJobService.retryJob(jobId, orgId);
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             const error = err as { code?: string; message?: string };
             if (error.code === 'JOB_NOT_FOUND') {
                 return res.status(404).json({ error: error.message });
@@ -921,7 +930,7 @@ router.post(
                 return res.status(400).json({ error: error.message });
             }
             logger.error('[AsyncJobRetryRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -957,8 +966,8 @@ router.post(
             }
 
             const result = await AsyncJobService.cancelJob(jobId, orgId);
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             const error = err as { code?: string; message?: string };
             if (error.code === 'JOB_NOT_FOUND') {
                 return res.status(404).json({ error: error.message });
@@ -967,7 +976,7 @@ router.post(
                 return res.status(400).json({ error: error.message });
             }
             logger.error('[AsyncJobCancelRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -1007,10 +1016,10 @@ router.get(
                 offset: parseInt(offset as string),
             });
 
-            res.json({ jobs, count: jobs.length });
-        } catch (err: unknown) {
+            return res.json({ jobs, count: jobs.length });
+        } catch (err: any) {
             logger.error('[DeadLetterListRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -1043,10 +1052,10 @@ router.get(
 
             const stats = await AsyncJobService.getDeadLetterStats(organizationId);
 
-            res.json(stats);
-        } catch (err: unknown) {
+            return res.json(stats);
+        } catch (err: any) {
             logger.error('[JobStatsRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }

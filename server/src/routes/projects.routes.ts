@@ -7,11 +7,12 @@
 
 import { Router } from 'express';
 
-import ProjectController from '../controllers/ProjectController.js';
+import ProjectControllerRaw from '../controllers/ProjectController.js';
+const ProjectController = ProjectControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { checkPlanLimit } from '../middleware/planLimits.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import { _validateQuery, validateBody } from '../middleware/validation.middleware.js';
+import { validateBody, validateQuery } from '../middleware/validation.middleware.js';
 import {
     CreateProjectSchema,
     ProjectNotificationSettingsSchema,

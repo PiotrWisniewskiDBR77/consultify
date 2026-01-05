@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import Sub-Services
 import { AccessLimitService } from './access/AccessLimitService.js';
 import { AccessResourceService } from './access/AccessResourceService.js';

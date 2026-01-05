@@ -7,8 +7,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import UserIntegrationService from '../../../../src/services/userIntegrationService.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import UserIntegrationService from '../../../../src/services/userIntegrationService.js';
 
 describe('UserIntegrationService', () => {
     let mockDb: IDatabase;

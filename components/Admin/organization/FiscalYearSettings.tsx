@@ -48,12 +48,7 @@ interface FiscalYearSettingsProps {
     className?: string;
 }
 
-export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
-    config,
-    onChange,
-    onSave,
-    className,
-}) => {
+export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({ config, onChange, onSave, className }) => {
     const { t } = useTranslation();
     const [saving, setSaving] = useState(false);
 
@@ -182,7 +177,12 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
                         <h3 className="text-lg font-medium text-navy-900 dark:text-white">
                             {t('admin.org.fiscalYear.title', 'Fiscal Year Configuration')}
                         </h3>
-                        <Tooltip content={t('admin.org.fiscalYear.tooltip', 'A fiscal year is a 12-month period used for financial reporting. It may or may not align with the calendar year.')}>
+                        <Tooltip
+                            content={t(
+                                'admin.org.fiscalYear.tooltip',
+                                'A fiscal year is a 12-month period used for financial reporting. It may or may not align with the calendar year.',
+                            )}
+                        >
                             <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                                 <HelpCircle size={16} />
                             </button>
@@ -193,7 +193,7 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                     {t(
                         'admin.org.fiscalYear.description',
-                        'Configure your organization\'s fiscal year for financial reporting and planning.'
+                        "Configure your organization's fiscal year for financial reporting and planning.",
                     )}
                 </p>
 
@@ -228,7 +228,10 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
                             {endMonthName}
                         </div>
                         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                            {t('admin.org.fiscalYear.endMonthHelper', 'Automatically calculated (12 months from start)')}
+                            {t(
+                                'admin.org.fiscalYear.endMonthHelper',
+                                'Automatically calculated (12 months from start)',
+                            )}
                         </p>
                     </div>
 
@@ -330,9 +333,7 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
                                     </span>
                                 )}
                             </div>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                                {quarter.months}
-                            </p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">{quarter.months}</p>
                         </div>
                     ))}
                 </div>
@@ -356,6 +357,3 @@ export const FiscalYearSettings: React.FC<FiscalYearSettingsProps> = ({
 };
 
 export default FiscalYearSettings;
-
-
-

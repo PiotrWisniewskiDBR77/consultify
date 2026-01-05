@@ -10,10 +10,10 @@
 import { Router } from 'express';
 
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/conversations.js');
-const conversationsRoutesJS = module.default || module;
+const convModule = (await import('./conversations.js')) as any;
+const conversationsRoutesJS = convModule.default || convModule;
 
 // Apply rate limiting
 const router = Router();

@@ -18,7 +18,6 @@ import {
 import React, { useState } from 'react';
 
 import { FullInitiative, FullSession, Language } from '../../types';
-import { FullStep5Workspace } from './FullStep5Workspace'; // Reuse Kanban
 import { CapacityView, DecisionBoard, StatusReportBuilder } from '../Implementation';
 import { GateStatus } from '../PMO/GateStatus';
 import { PMOHealthSection } from '../PMO/PMOHealthSection';
@@ -31,6 +30,7 @@ import { RolloutPlanTab } from '../RolloutPlanTab';
 import { RolloutRisksTab } from '../RolloutRisksTab';
 import { RolloutStrategyTab } from '../RolloutStrategyTab';
 import { RolloutTeamsTab } from '../RolloutTeamsTab';
+import { FullStep5Workspace } from './FullStep5Workspace'; // Reuse Kanban
 
 interface FullRolloutWorkspaceProps {
     fullSession: FullSession;

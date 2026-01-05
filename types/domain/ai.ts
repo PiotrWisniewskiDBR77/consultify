@@ -195,7 +195,18 @@ export interface MessageFeedback {
     rating: 'positive' | 'negative';
     reason?: string;
     comment?: string;
-    createdAt: string;
+    createdAt?: string | Date;
+    timestamp?: string | Date; // Added for compatibility
+}
+
+/**
+ * Detailed Response feedback
+ */
+export interface ResponseFeedback {
+    rating: 'positive' | 'negative';
+    comment?: string;
+    timestamp: string | Date;
+    metadata?: Record<string, unknown>;
 }
 
 /**

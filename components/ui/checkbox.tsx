@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { Check } from 'lucide-react';
+import * as React from 'react';
 
 interface CheckboxProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
     checked?: boolean;
@@ -23,11 +23,8 @@ const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
                 {checked && <Check className="h-4 w-4" />}
             </button>
         );
-    }
+    },
 );
 Checkbox.displayName = 'Checkbox';
 
 export { Checkbox };
-
-
-

@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 // Use vi.hoisted to ensure mock data is available to vi.mock
 const { mockDb, mockActivityLogService } = vi.hoisted(() => ({
@@ -24,19 +24,19 @@ const { mockDb, mockActivityLogService } = vi.hoisted(() => ({
         query: vi.fn(),
     },
     mockActivityLogService: {
-        logActivity: vi.fn()
-    }
+        logActivity: vi.fn(),
+    },
 }));
 
 // Mock the Database module
 vi.mock('../../../../src/database/Database.ts', () => ({
     getDatabase: () => mockDb,
-    default: mockDb
+    default: mockDb,
 }));
 
 // Mock ActivityLogService
 vi.mock('../../../../src/services/activityLogService.js', () => ({
-    default: mockActivityLogService
+    default: mockActivityLogService,
 }));
 
 import ReportAuditService from '../../../../src/services/reportAuditService.js';
@@ -48,15 +48,17 @@ describe('ReportAuditService', () => {
 
     describe('log', () => {
         it('should log an action with full details', async () => {
-            (mockDb.get as Mock).mockImplementation((sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
-                if (sql.includes('FROM users')) {
-                    callback(null, { first_name: 'John', last_name: 'Doe', email: 'john@example.com' });
-                } else if (sql.includes('FROM management_reports')) {
-                    callback(null, { organization_id: 'org1', project_id: 'p1', title: 'Test' });
-                } else {
-                    callback(null, null);
-                }
-            });
+            (mockDb.get as Mock).mockImplementation(
+                (sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
+                    if (sql.includes('FROM users')) {
+                        callback(null, { first_name: 'John', last_name: 'Doe', email: 'john@example.com' });
+                    } else if (sql.includes('FROM management_reports')) {
+                        callback(null, { organization_id: 'org1', project_id: 'p1', title: 'Test' });
+                    } else {
+                        callback(null, null);
+                    }
+                },
+            );
 
             const req = {
                 ip: '192.168.1.1',
@@ -64,17 +66,11 @@ describe('ReportAuditService', () => {
                 user: {
                     first_name: 'John',
                     last_name: 'Doe',
-                    organization_id: 'org1'
-                }
+                    organization_id: 'org1',
+                },
             } as any;
 
-            await ReportAuditService.log(
-                'report1',
-                'CREATED',
-                'user1',
-                { reportType: 'TEAM_MEETING' },
-                req
-            );
+            await ReportAuditService.log('report1', 'CREATED', 'user1', { reportType: 'TEAM_MEETING' }, req);
 
             expect(mockDb.run).toHaveBeenCalled();
         });
@@ -88,21 +84,25 @@ describe('ReportAuditService', () => {
 
     describe('getAuditLog', () => {
         it('should return filtered audit log entries', async () => {
-            (mockDb.get as Mock).mockImplementation((sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
-                callback(null, { total: 50 });
-            });
+            (mockDb.get as Mock).mockImplementation(
+                (sql: string, params: any[], callback: (err: Error | null, row: any) => void) => {
+                    callback(null, { total: 50 });
+                },
+            );
 
-            (mockDb.all as Mock).mockImplementation((sql: string, params: any[], callback: (err: Error | null, rows: any[]) => void) => {
-                callback(null, [
-                    { id: 'log1', action: 'CREATED', actor_id: 'user1', created_at: '2025-12-20' },
-                    { id: 'log2', action: 'UPDATED', actor_id: 'user1', created_at: '2025-12-21' }
-                ]);
-            });
+            (mockDb.all as Mock).mockImplementation(
+                (sql: string, params: any[], callback: (err: Error | null, rows: any[]) => void) => {
+                    callback(null, [
+                        { id: 'log1', action: 'CREATED', actor_id: 'user1', created_at: '2025-12-20' },
+                        { id: 'log2', action: 'UPDATED', actor_id: 'user1', created_at: '2025-12-21' },
+                    ]);
+                },
+            );
 
             const result = await ReportAuditService.getAuditLog('report1', {
                 action: 'CREATED',
                 limit: 20,
-                offset: 0
+                offset: 0,
             });
 
             expect(result.entries.length).toBe(2);

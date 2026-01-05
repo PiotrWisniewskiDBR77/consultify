@@ -8,7 +8,7 @@
 
 import { z } from 'zod';
 
-import logger from './Logger.ts';
+import logger from './Logger.js';
 
 // ==========================================
 // SCHEMAS
@@ -84,8 +84,3 @@ export function validateOrFallback<T>(data: unknown, schema: z.ZodSchema<T>, fal
         return fallback;
     }
 }
-
-
-
-
-

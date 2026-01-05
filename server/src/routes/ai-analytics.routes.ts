@@ -10,8 +10,8 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -20,7 +20,7 @@ const router = Router();
 let aiLogger: { error?: (category: string, message: string) => void } | null = null;
 
 try {
-    const loggerModule = await import('../../services/ai/logger.js');
+    const loggerModule = (await import('../services/ai/logger.js')) as any;
     const module = loggerModule.default || loggerModule;
     aiLogger = module.aiLogger || module;
 } catch {
@@ -134,7 +134,7 @@ router.get(
             // Get budget information
             const budget = await getOrganizationBudget(organizationId);
 
-            res.json({
+            return res.json({
                 success: true,
                 period,
                 groupBy,
@@ -165,7 +165,7 @@ router.get(
                     `costs error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to fetch cost data' });
+            return res.status(500).json({ error: 'Failed to fetch cost data' });
         }
     }),
 );
@@ -242,7 +242,7 @@ router.get(
                 [organizationId],
             );
 
-            res.json({
+            return res.json({
                 success: true,
                 period,
                 userUsage,
@@ -256,7 +256,7 @@ router.get(
                     `usage error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to fetch usage data' });
+            return res.status(500).json({ error: 'Failed to fetch usage data' });
         }
     }),
 );
@@ -304,7 +304,7 @@ router.get(
                 tokens_used_month?: number;
             } | null;
 
-            res.json({
+            return res.json({
                 success: true,
                 userQuota: userQuota
                     ? {
@@ -334,7 +334,7 @@ router.get(
                     `quotas error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to fetch quota data' });
+            return res.status(500).json({ error: 'Failed to fetch quota data' });
         }
     }),
 );
@@ -415,7 +415,7 @@ router.get(
                 with_context?: number;
             } | null;
 
-            res.json({
+            return res.json({
                 success: true,
                 period,
                 latency: latencyStats.map((l) => ({
@@ -440,7 +440,7 @@ router.get(
                     `performance error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to fetch performance data' });
+            return res.status(500).json({ error: 'Failed to fetch performance data' });
         }
     }),
 );
@@ -482,7 +482,7 @@ router.post(
                 ],
             );
 
-            res.json({ success: true, message: 'Alert configuration saved' });
+            return res.json({ success: true, message: 'Alert configuration saved' });
         } catch (error: unknown) {
             if (aiLogger?.error) {
                 aiLogger.error(
@@ -490,7 +490,7 @@ router.post(
                     `alerts configure error: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 );
             }
-            res.status(500).json({ error: 'Failed to configure alerts' });
+            return res.status(500).json({ error: 'Failed to configure alerts' });
         }
     }),
 );

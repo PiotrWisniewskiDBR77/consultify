@@ -271,8 +271,3 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({ currentU
 };
 
 export default ProfileBioSettings;
-
-
-
-
-

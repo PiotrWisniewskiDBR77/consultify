@@ -11,14 +11,14 @@
  * - Account deletion (right to be forgotten)
  */
 
-import { type _Request, type Response, Router } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -130,7 +130,7 @@ router.get(
             );
 
             if (row) {
-                res.json({
+                return res.json({
                     success: true,
                     consents: {
                         analytics: !!row.analytics,
@@ -142,7 +142,7 @@ router.get(
                 });
             } else {
                 // Return defaults
-                res.json({
+                return res.json({
                     success: true,
                     consents: {
                         analytics: true,
@@ -153,9 +153,9 @@ router.get(
                     },
                 });
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[GDPR] Consents error:', err);
-            res.status(500).json({ error: 'Failed to get consents' });
+            return res.status(500).json({ error: 'Failed to get consents' });
         }
     }),
 );
@@ -197,10 +197,10 @@ router.put(
                 ],
             );
 
-            res.json({ success: true, message: 'Consents updated' });
-        } catch (err: unknown) {
+            return res.json({ success: true, message: 'Consents updated' });
+        } catch (err: any) {
             logger.error('[GDPR] Update consents error:', err);
-            res.status(500).json({ error: 'Failed to update consents' });
+            return res.status(500).json({ error: 'Failed to update consents' });
         }
     }),
 );
@@ -227,7 +227,7 @@ router.get(
             );
 
             if (row) {
-                res.json({
+                return res.json({
                     success: true,
                     retention: {
                         period: row.period,
@@ -235,7 +235,7 @@ router.get(
                     },
                 });
             } else {
-                res.json({
+                return res.json({
                     success: true,
                     retention: {
                         period: '365',
@@ -243,9 +243,9 @@ router.get(
                     },
                 });
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[GDPR] Retention error:', err);
-            res.status(500).json({ error: 'Failed to get retention settings' });
+            return res.status(500).json({ error: 'Failed to get retention settings' });
         }
     }),
 );
@@ -281,10 +281,10 @@ router.put(
                 [userId, retention.period, retention.autoDelete ? 1 : 0],
             );
 
-            res.json({ success: true, message: 'Retention settings updated' });
-        } catch (err: unknown) {
+            return res.json({ success: true, message: 'Retention settings updated' });
+        } catch (err: any) {
             logger.error('[GDPR] Update retention error:', err);
-            res.status(500).json({ error: 'Failed to update retention' });
+            return res.status(500).json({ error: 'Failed to update retention' });
         }
     }),
 );
@@ -313,13 +313,13 @@ router.get(
                 [userId],
             );
 
-            res.json({
+            return res.json({
                 success: true,
                 request: request || null,
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[GDPR] Export status error:', err);
-            res.status(500).json({ error: 'Failed to get export status' });
+            return res.status(500).json({ error: 'Failed to get export status' });
         }
     }),
 );
@@ -373,12 +373,12 @@ router.post(
                     WHERE id = ?`,
                         [`/api/gdpr/download-export/${requestId}`, requestId],
                     );
-                } catch (err: unknown) {
+                } catch (err: any) {
                     logger.error('[GDPR] Export processing error:', err);
                 }
             }, 2000);
 
-            res.json({
+            return res.json({
                 success: true,
                 request: {
                     id: requestId,
@@ -387,9 +387,9 @@ router.post(
                     expiresAt: expiresAt.toISOString(),
                 },
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[GDPR] Export request error:', err);
-            res.status(500).json({ error: 'Failed to request export' });
+            return res.status(500).json({ error: 'Failed to request export' });
         }
     }),
 );
@@ -428,10 +428,10 @@ router.get(
                 'Content-Disposition',
                 `attachment; filename=consultify-data-export-${new Date().toISOString().split('T')[0]}.json`,
             );
-            res.send(JSON.stringify(userData, null, 2));
-        } catch (err: unknown) {
+            return res.send(JSON.stringify(userData, null, 2));
+        } catch (err: any) {
             logger.error('[GDPR] Download export error:', err);
-            res.status(500).json({ error: 'Failed to download export' });
+            return res.status(500).json({ error: 'Failed to download export' });
         }
     }),
 );
@@ -473,7 +473,7 @@ router.post(
                 [requestId, userId, scheduledFor.toISOString()],
             );
 
-            res.json({
+            return res.json({
                 success: true,
                 request: {
                     id: requestId,
@@ -482,9 +482,9 @@ router.post(
                     scheduledFor: scheduledFor.toISOString(),
                 },
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[GDPR] Deletion request error:', err);
-            res.status(500).json({ error: 'Failed to request deletion' });
+            return res.status(500).json({ error: 'Failed to request deletion' });
         }
     }),
 );
@@ -515,10 +515,10 @@ router.post(
                 return res.status(404).json({ error: 'Deletion request not found' });
             }
 
-            res.json({ success: true, message: 'Deletion cancelled' });
-        } catch (err: unknown) {
+            return res.json({ success: true, message: 'Deletion cancelled' });
+        } catch (err: any) {
             logger.error('[GDPR] Cancel deletion error:', err);
-            res.status(500).json({ error: 'Failed to cancel deletion' });
+            return res.status(500).json({ error: 'Failed to cancel deletion' });
         }
     }),
 );
@@ -543,13 +543,13 @@ router.get(
                 [userId],
             );
 
-            res.json({
+            return res.json({
                 success: true,
                 request: request || null,
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[GDPR] Deletion status error:', err);
-            res.status(500).json({ error: 'Failed to get deletion status' });
+            return res.status(500).json({ error: 'Failed to get deletion status' });
         }
     }),
 );

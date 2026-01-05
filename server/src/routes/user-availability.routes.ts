@@ -10,13 +10,13 @@
 import { Router } from 'express';
 
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
 
 const router = Router();
 
 // Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/user-availability.js');
+const module = (await import('./user-availability.js')) as any;
 const userAvailabilityRoutesJS = module.default || module;
 
 // Apply rate limiting

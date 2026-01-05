@@ -9,7 +9,7 @@
 import type { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 
-import RedisRateLimitStore from '../utils/RedisRateLimitStore.ts';
+import RedisRateLimitStore from '../utils/RedisRateLimitStore.js';
 
 // ==========================================
 // RATE LIMIT CONFIGURATIONS
@@ -140,8 +140,3 @@ export function getRateLimiterForRoute(path: string): ReturnType<typeof rateLimi
     // Default
     return defaultRateLimiter;
 }
-
-
-
-
-

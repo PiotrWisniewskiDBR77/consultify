@@ -845,8 +845,3 @@ export default {
     DBR77_ROLE_EVOLUTION,
     DBR77_LEAN_MATURITY_LEVELS,
 };
-
-
-
-
-

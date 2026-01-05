@@ -2,7 +2,7 @@
  * Model Router - Dynamic LLM Provider Selection & Fallback
  */
 
-import * as DbPromise from '../../utils/DbPromise.ts';
+import * as DbPromise from '../../utils/DbPromise.js';
 import { appCache } from '../redis/CacheService.js';
 import type { LLMConfigService } from './llmConfigService.js';
 import { aiLogger } from './logger.js';
@@ -181,7 +181,7 @@ export class ModelRouter {
         const override = await this.getOrgOverride(organizationId, capability);
         if (override) {
             aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
-            return this.getProviderConfig(override.model_id, override.tier || tier);
+            return this.getProviderConfig(override.model_id, (override.tier || tier) as Tier);
         }
 
         const availableModels = await this.getModelsForTier(tier, organizationId);

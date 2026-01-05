@@ -82,10 +82,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
     const filteredUsers = useMemo(() => {
         return users.filter((user) => {
             if (selectedTeamFilter !== 'all') {
-                if (
-                    user.mainTeamId !== selectedTeamFilter &&
-                    !user.extraTeamIds.includes(selectedTeamFilter)
-                ) {
+                if (user.mainTeamId !== selectedTeamFilter && !user.extraTeamIds.includes(selectedTeamFilter)) {
                     return false;
                 }
             }
@@ -102,18 +99,12 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
     }, [users, selectedTeamFilter, searchQuery]);
 
     // Get team by ID
-    const getTeam = useCallback(
-        (teamId: string) => teams.find((t) => t.id === teamId),
-        [teams],
-    );
+    const getTeam = useCallback((teamId: string) => teams.find((t) => t.id === teamId), [teams]);
 
     // Get available teams for user (not already assigned)
     const getAvailableTeams = useCallback(
         (user: UserTeamAssignment) => {
-            const assignedTeamIds = new Set([
-                user.mainTeamId,
-                ...user.extraTeamIds,
-            ].filter(Boolean));
+            const assignedTeamIds = new Set([user.mainTeamId, ...user.extraTeamIds].filter(Boolean));
             return teams.filter((t) => !assignedTeamIds.has(t.id));
         },
         [teams],
@@ -146,7 +137,12 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                 <div>
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                         {t('admin.team.mainExtra.title', 'Team Assignments')}
-                        <Tooltip content={t('admin.team.mainExtra.tooltip', 'Manage primary and additional team memberships')}>
+                        <Tooltip
+                            content={t(
+                                'admin.team.mainExtra.tooltip',
+                                'Manage primary and additional team memberships',
+                            )}
+                        >
                             <HelpCircle size={16} className="text-slate-400" />
                         </Tooltip>
                     </h3>
@@ -165,9 +161,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                         </span>
                         <Users size={16} className="text-slate-400" />
                     </div>
-                    <p className="text-2xl font-bold text-navy-900 dark:text-white">
-                        {users.length}
-                    </p>
+                    <p className="text-2xl font-bold text-navy-900 dark:text-white">{users.length}</p>
                 </div>
                 <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
                     <div className="flex items-center justify-between mb-2">
@@ -176,9 +170,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                         </span>
                         <Star size={16} className="text-amber-500" />
                     </div>
-                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                        {stats.noMainTeam}
-                    </p>
+                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.noMainTeam}</p>
                 </div>
                 <div className="p-4 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
                     <div className="flex items-center justify-between mb-2">
@@ -187,19 +179,14 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                         </span>
                         <Crown size={16} className="text-violet-500" />
                     </div>
-                    <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
-                        {stats.multipleTeams}
-                    </p>
+                    <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{stats.multipleTeams}</p>
                 </div>
             </div>
 
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 relative">
-                    <Search
-                        size={16}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
                         value={searchQuery}
@@ -214,9 +201,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                     onChange={(e) => setSelectedTeamFilter(e.target.value)}
                     className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                 >
-                    <option value="all">
-                        {t('admin.team.mainExtra.allTeams', 'All Teams')}
-                    </option>
+                    <option value="all">{t('admin.team.mainExtra.allTeams', 'All Teams')}</option>
                     {teams.map((team) => (
                         <option key={team.id} value={team.id}>
                             {team.name}
@@ -253,11 +238,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                             </option>
                         ))}
                     </select>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedUsers(new Set())}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedUsers(new Set())}>
                         {t('admin.team.mainExtra.clear', 'Clear')}
                     </Button>
                 </div>
@@ -291,11 +272,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                                 />
 
                                 {/* User Info */}
-                                <Avatar
-                                    name={`${user.firstName} ${user.lastName}`}
-                                    src={user.avatarUrl}
-                                    size="sm"
-                                />
+                                <Avatar name={`${user.firstName} ${user.lastName}`} src={user.avatarUrl} size="sm" />
                                 <div className="flex-1 min-w-0">
                                     <p className="font-medium text-navy-900 dark:text-white truncate">
                                         {user.firstName} {user.lastName}
@@ -345,9 +322,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                                         </label>
                                         <select
                                             value={user.mainTeamId || ''}
-                                            onChange={(e) =>
-                                                onSetMainTeam?.(user.userId, e.target.value)
-                                            }
+                                            onChange={(e) => onSetMainTeam?.(user.userId, e.target.value)}
                                             className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm text-navy-900 dark:text-white"
                                         >
                                             <option value="">
@@ -375,9 +350,7 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
                                                     <span className="text-sm">{team.name}</span>
                                                     {onRemoveExtraTeam && (
                                                         <button
-                                                            onClick={() =>
-                                                                onRemoveExtraTeam(user.userId, team.id)
-                                                            }
+                                                            onClick={() => onRemoveExtraTeam(user.userId, team.id)}
                                                             className="text-slate-400 hover:text-rose-500"
                                                         >
                                                             <X size={12} />
@@ -443,6 +416,3 @@ export const MainExtraTeams: React.FC<MainExtraTeamsProps> = ({
 };
 
 export default MainExtraTeams;
-
-
-

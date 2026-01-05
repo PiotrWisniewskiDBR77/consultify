@@ -11,8 +11,8 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
     ActionIdParamSchema,
     ActionTypeParamSchema,
@@ -61,18 +61,14 @@ router.use(aiRateLimiter);
 
 // Lazy load services to avoid circular dependencies
 
-const getAIContextBuilder = async () => await import('../services/aiContextBuilder.js').then((m) => m.default || m);
-const getAIPolicyEngine = async () =>
-    await import('../services/aiPolicyEngine.js').then((m) => (m as any).default || m);
-const getAIMemoryManager = async () =>
-    await import('../services/aiMemoryManager.js').then((m) => (m as any).default || m);
-const getAIOrchestrator = async () =>
-    await import('../services/aiOrchestrator.js').then((m) => (m as any).default || m);
-const getAIActionExecutor = async () =>
-    await import('../services/aiActionExecutor.js').then((m) => (m as any).default || m);
-const getAIAuditLogger = async () => await import('../services/aiAuditLogger.js').then((m) => (m as any).default || m);
+const getAIContextBuilder = async () => (await import('../services/aiContextBuilder.js')).default as any;
+const getAIPolicyEngine = async () => (await import('../services/aiPolicyEngine.js')).default as any;
+const getAIMemoryManager = async () => (await import('../services/aiMemoryManager.js')).default as any;
+const getAIOrchestrator = async () => (await import('../services/aiOrchestrator.js')).default as any;
+const getAIActionExecutor = async () => (await import('../services/aiActionExecutor.js')).default as any;
+const getAIAuditLogger = async () => (await import('../services/aiAuditLogger.js')).default as any;
 const getAIPipeline = async () => {
-    const { AIPipeline } = await import('../../services/ai/aiPipeline.js');
+    const { AIPipeline } = (await import('../services/ai/aiPipeline.js')) as any;
     return new AIPipeline();
 };
 
@@ -91,10 +87,10 @@ router.get(
                 null,
                 { currentScreen: (req.query as any).screen as string | undefined },
             );
-            res.json(context);
-        } catch (err: unknown) {
+            return res.json(context);
+        } catch (err: any) {
             const error = err as Error;
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -113,10 +109,10 @@ router.get(
                 req.params.projectId,
                 { currentScreen: (req.query as any).screen as string | undefined },
             );
-            res.json(context);
-        } catch (err: unknown) {
+            return res.json(context);
+        } catch (err: any) {
             const error = err as Error;
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -184,12 +180,7 @@ router.post(
         req.socket?.on('error', connectionCleanup);
         res.on('close', connectionCleanup);
 
-        const savePartialResponse = async (
-            sessionId: string,
-            content: string,
-            userId: string,
-            orgId: string,
-        ): Promise<void> => {
+        const savePartialResponse = async (sessionId: string, content: string, userId: string, orgId: string) => {
             await dbRun(
                 `
             INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
@@ -285,7 +276,7 @@ router.post(
 
                     await dbRun(`DELETE FROM ai_partial_responses WHERE session_id = ?`, [streamSessionId]);
                 }
-                res.end();
+                return res.end();
             } else {
                 if (isClientConnected && !res.destroyed) {
                     res.write(
@@ -293,9 +284,9 @@ router.post(
                     );
                     res.write('data: [DONE]\n\n');
                 }
-                res.end();
+                return res.end();
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('Stream Error:', err);
 
             if (accumulatedContent.length > 0) {
@@ -312,13 +303,14 @@ router.post(
                         canResume: accumulatedContent.length > 0,
                     })}\n\n`,
                 );
-                res.end();
+                return res.end();
             }
         } finally {
             req.socket?.removeListener('close', connectionCleanup);
             req.socket?.removeListener('error', connectionCleanup);
             res.removeListener('close', connectionCleanup);
         }
+        return;
     }),
 );
 
@@ -338,18 +330,18 @@ router.get(
             )) as { content: string; updated_at: string } | null;
 
             if (!row) {
-                res.status(404).json({ error: 'No partial response found' });
+                return res.status(404).json({ error: 'No partial response found' });
                 return;
             }
 
-            res.json({
+            return res.json({
                 sessionId: req.params.sessionId,
                 content: row.content,
                 updatedAt: row.updated_at,
                 canResume: true,
             });
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -380,7 +372,7 @@ router.post(
                 result.contextSummary,
             );
 
-            res.json({
+            return res.json({
                 role: result.role,
                 roleDescription: AIOrchestrator.getRoleDescription(result.role),
                 intent: result.intent,
@@ -391,18 +383,18 @@ router.post(
                     (result.responseContext as { policy?: { policyLevel?: string } })?.policy?.policyLevel ||
                     'ADVISORY',
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('Chat Error:', err);
             const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
             if (error.isBudgetError) {
-                res.status(403).json({
+                return res.status(403).json({
                     error: error.message,
                     code: 'AI_BUDGET_EXHAUSTED',
                     budgetStatus: error.budgetStatus,
                 });
                 return;
             }
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -416,9 +408,9 @@ router.get(
         try {
             const AIPolicyEngine = await getAIPolicyEngine();
             const info = await (AIPolicyEngine as any).getPolicySummary(req.organizationId as string);
-            res.json(info);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(info);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -429,16 +421,16 @@ router.patch(
     validateBody(UpdatePolicyRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!req.can || !req.can('edit_organization_settings')) {
-            res.status(403).json({ error: 'Admin required' });
+            return res.status(403).json({ error: 'Admin required' });
             return;
         }
 
         try {
             const AIPolicyEngine = await getAIPolicyEngine();
             const result = await AIPolicyEngine.updatePolicy(req.organizationId!, req.body);
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -458,9 +450,9 @@ router.get(
                 projectId as string | undefined,
                 req.userId as string,
             );
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -475,9 +467,9 @@ router.get(
         try {
             const AIMemoryManager = await getAIMemoryManager();
             const memory = await AIMemoryManager.buildProjectMemorySummary(req.params.projectId);
-            res.json(memory);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(memory);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -500,9 +492,9 @@ router.post(
                 rationale,
                 req.userId!,
             );
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -514,9 +506,9 @@ router.get(
         try {
             const AIMemoryManager = await getAIMemoryManager();
             const preferences = await AIMemoryManager.getUserPreferences(req.userId!);
-            res.json(preferences);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(preferences);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -529,9 +521,9 @@ router.patch(
         try {
             const AIMemoryManager = await getAIMemoryManager();
             const result = await AIMemoryManager.updateUserPreferences(req.userId!, req.body);
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -542,16 +534,16 @@ router.delete(
     validateParams(ProjectIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!req.can || !req.can('edit_project_settings')) {
-            res.status(403).json({ error: 'Permission denied' });
+            return res.status(403).json({ error: 'Permission denied' });
             return;
         }
 
         try {
             const AIMemoryManager = await getAIMemoryManager();
             const result = await AIMemoryManager.clearProjectMemory(req.params.projectId);
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -574,9 +566,9 @@ router.post(
                 req.organizationId!,
                 projectId,
             );
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -594,9 +586,9 @@ router.get(
                 projectId as string | undefined,
                 req.organizationId as string,
             );
-            res.json(actions);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(actions);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -610,9 +602,9 @@ router.patch(
         try {
             const AIActionExecutor = await getAIActionExecutor();
             const result = await AIActionExecutor.approveAction(req.params.id, req.userId!);
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -627,9 +619,9 @@ router.patch(
         try {
             const AIActionExecutor = await getAIActionExecutor();
             const result = await AIActionExecutor.rejectAction(req.params.id, req.userId!, reason);
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -642,9 +634,9 @@ router.post(
         try {
             const AIActionExecutor = await getAIActionExecutor();
             const result = await AIActionExecutor.executeAction(req.params.id, req.userId!);
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -657,7 +649,7 @@ router.get(
         if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
             const logger = (await import('../utils/Logger.js')).default;
             logger.warn('Unauthorized proposal access attempt', { userId: req.userId, role: req.userRole });
-            res.status(403).json({ error: 'Permission denied. ADMIN or SUPERADMIN required.' });
+            return res.status(403).json({ error: 'Permission denied. ADMIN or SUPERADMIN required.' });
             return;
         }
 
@@ -665,7 +657,7 @@ router.get(
         const organizationId = req.userRole === 'SUPERADMIN' && queryOrgId ? queryOrgId : req.organizationId;
 
         if (!organizationId) {
-            res.status(400).json({ error: 'organizationId required' });
+            return res.status(400).json({ error: 'organizationId required' });
             return;
         }
 
@@ -679,26 +671,26 @@ router.get(
             });
 
             const AIContextBuilder = await getAIContextBuilder();
-            const ActionProposalEngine = await import('../../ai/actionProposalEngine.js').then(
+            const ActionProposalEngine = await import('../ai/actionProposalEngine.js').then(
                 (m) => (m as any).default || m,
             );
 
             const context = await AIContextBuilder.buildContext(undefined as any, organizationId);
             const proposals = ActionProposalEngine.generateProposals(context);
 
-            res.json(proposals);
-        } catch (err: unknown) {
+            return res.json(proposals);
+        } catch (err: any) {
             logger.error('[AI Proposals] Error:', err);
             const error = err as Error & { isBudgetError?: boolean; budgetStatus?: unknown };
             if (error.isBudgetError) {
-                res.status(403).json({
+                return res.status(403).json({
                     error: error.message,
                     code: 'AI_BUDGET_EXHAUSTED',
                     budgetStatus: error.budgetStatus,
                 });
                 return;
             }
-            res.status(500).json({ error: (err as Error).message });
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -834,7 +826,7 @@ Return as a JSON array of initiatives.`;
             }
 
             const processedInitiatives = (Array.isArray(initiatives) ? initiatives : []).map(
-                (init: Record<string, unknown>, idx: number) => ({
+                (init: any, idx: number) => ({
                     id: (init.id as string) || uuidv4(),
                     name: (init.name as string) || `Initiative ${idx + 1}`,
                     description: (init.description as string) || (init.summary as string) || '',
@@ -852,15 +844,15 @@ Return as a JSON array of initiatives.`;
                 }),
             );
 
-            res.json(processedInitiatives);
-        } catch (err: unknown) {
+            return res.json(processedInitiatives);
+        } catch (err: any) {
             logger.error('[AI Recommend] Error:', err);
             const fallbackInitiatives = generateFallbackInitiatives(
                 diagnosisReport.assessment || {},
                 diagnosisReport.goals || ['Digital Transformation'],
                 diagnosisReport.industry || 'General',
             );
-            res.json(fallbackInitiatives);
+            return res.json(fallbackInitiatives);
         }
     }),
 );
@@ -925,12 +917,12 @@ Return a structured roadmap assigning each initiative to a specific quarter.`;
                     (fallback[year][qKey] as string[]).push(init.name as string);
                 });
 
-                res.json(fallback);
+                return res.json(fallback);
                 return;
             }
 
-            res.json(roadmapData);
-        } catch (err: unknown) {
+            return res.json(roadmapData);
+        } catch (err: any) {
             logger.error('[AI Roadmap] Error:', err);
             const fallback: Record<string, Record<string, string[]>> = {
                 year1: { q1: [], q2: [], q3: [], q4: [] },
@@ -945,7 +937,7 @@ Return a structured roadmap assigning each initiative to a specific quarter.`;
                 (fallback[year][qKey] as string[]).push(init.name as string);
             });
 
-            res.json(fallback);
+            return res.json(fallback);
         }
     }),
 );
@@ -958,7 +950,7 @@ router.get(
     validateQuery(GetAuditLogsQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!req.can || !req.can('view_audit_logs')) {
-            res.status(403).json({ error: 'Permission denied' });
+            return res.status(403).json({ error: 'Permission denied' });
             return;
         }
 
@@ -976,9 +968,9 @@ router.get(
                 limit: Number(limit) || 50,
                 offset: Number(offset) || 0,
             });
-            res.json(logs);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(logs);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -992,9 +984,9 @@ router.get(
         try {
             const AIAuditLogger = await getAIAuditLogger();
             const stats = await AIAuditLogger.getAuditStats(req.organizationId!, projectId as string | undefined);
-            res.json(stats);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(stats);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -1009,9 +1001,9 @@ router.post(
         try {
             const AIAuditLogger = await getAIAuditLogger();
             const result = await AIAuditLogger.recordUserDecision(req.params.id, decision, feedback);
-            res.json(result);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(result);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -1025,7 +1017,7 @@ router.get(
     validateQuery(GetExplanationsQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!req.can || !req.can('view_audit_logs')) {
-            res.status(403).json({ error: 'Permission denied' });
+            return res.status(403).json({ error: 'Permission denied' });
             return;
         }
 
@@ -1048,13 +1040,13 @@ router.get(
                 userDecision: log.user_decision,
             }));
 
-            res.json({
+            return res.json({
                 projectId: req.params.projectId,
                 total: explanations.length,
                 explanations,
             });
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -1065,7 +1057,7 @@ router.get(
     validateQuery(ExportExplanationsQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!req.can || !req.can('view_audit_logs')) {
-            res.status(403).json({ error: 'Permission denied' });
+            return res.status(403).json({ error: 'Permission denied' });
             return;
         }
 
@@ -1125,9 +1117,9 @@ router.get(
                 'Content-Disposition',
                 `attachment; filename="ai_explanations_${new Date().toISOString().split('T')[0]}.json"`,
             );
-            res.json(exportData);
-        } catch (err: unknown) {
-            res.status(500).json({ error: (err as Error).message });
+            return res.json(exportData);
+        } catch (err: any) {
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -1138,10 +1130,10 @@ router.get(
     '/health',
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const { healthMonitor } = await import('../../services/ai/healthMonitor.js').then((m) => m);
+            const healthMonitor = (await import('../services/ai/healthMonitor.js')).default as any;
             const status = healthMonitor.getStatus();
 
-            res.json({
+            return res.json({
                 status: (status.lastCheck as { overall?: string })?.overall || 'unknown',
                 isRunning: status.isRunning,
                 lastCheck: (status.lastCheck as { timestamp?: string })?.timestamp,
@@ -1149,8 +1141,8 @@ router.get(
                 providers: status.providers,
                 checks: (status.lastCheck as { checks?: unknown[] })?.checks || [],
             });
-        } catch (err: unknown) {
-            res.status(500).json({
+        } catch (err: any) {
+            return res.status(500).json({
                 status: 'error',
                 error: (err as Error).message,
             });
@@ -1163,11 +1155,11 @@ router.post(
     verifyToken,
     asyncHandler(async (_req: AuthRequest, res: Response) => {
         try {
-            const { healthMonitor } = await import('../../services/ai/healthMonitor.js').then((m) => m);
+            const healthMonitor = (await import('../services/ai/healthMonitor.js')).default as any;
             const results = await healthMonitor.runDiagnostics();
-            res.json(results);
-        } catch (err: unknown) {
-            res.status(500).json({
+            return res.json(results);
+        } catch (err: any) {
+            return res.status(500).json({
                 status: 'error',
                 error: (err as Error).message,
             });
@@ -1184,16 +1176,16 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { projectId } = req.query as { projectId?: string };
-            const smartSuggestions = await import('../../services/ai/smartSuggestions.js').then(
+            const smartSuggestions = await import('../services/ai/smartSuggestions.js').then(
                 (m) => (m as any).default || m,
             );
 
             const suggestions = await smartSuggestions.getCachedSuggestions(req.userId!, projectId, {});
 
-            res.json({ suggestions });
-        } catch (err: unknown) {
+            return res.json({ suggestions });
+        } catch (err: any) {
             logger.error('[AI] Suggestions error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: (err as Error).message,
                 suggestions: [],
             });
@@ -1208,7 +1200,7 @@ router.post(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { projectId, conversationContext } = req.body;
-            const smartSuggestions = await import('../../services/ai/smartSuggestions.js').then(
+            const smartSuggestions = await import('../services/ai/smartSuggestions.js').then(
                 (m) => (m as any).default || m,
             );
 
@@ -1218,10 +1210,10 @@ router.post(
                 conversationContext || {},
             );
 
-            res.json({ suggestions });
-        } catch (err: unknown) {
+            return res.json({ suggestions });
+        } catch (err: any) {
             logger.error('[AI] Suggestions error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: (err as Error).message,
                 suggestions: [],
             });
@@ -1231,7 +1223,7 @@ router.post(
 
 // ==================== APPROVAL PATTERNS ====================
 
-const ApprovalPatternService = await import('../../services/approvalPatternService.js').then(
+const ApprovalPatternService = await import('../services/approvalPatternService.js').then(
     (m) => (m as any).default || m,
 );
 
@@ -1243,10 +1235,10 @@ router.get(
         try {
             const { actionType } = req.query as { actionType?: string };
             const patterns = await ApprovalPatternService.getUserPatterns(req.userId!, actionType);
-            res.json({ success: true, patterns });
-        } catch (err: unknown) {
+            return res.json({ success: true, patterns });
+        } catch (err: any) {
             logger.error('[AI] Get patterns error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1257,10 +1249,10 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const stats = await ApprovalPatternService.getPatternStats(req.userId!);
-            res.json(stats);
-        } catch (err: unknown) {
+            return res.json(stats);
+        } catch (err: any) {
             logger.error('[AI] Pattern stats error:', err);
-            res.status(500).json({ error: (err as Error).message });
+            return res.status(500).json({ error: (err as Error).message });
         }
     }),
 );
@@ -1274,10 +1266,10 @@ router.patch(
         try {
             const { enabled } = req.body;
             const result = await ApprovalPatternService.setAutoApply(req.params.patternId, enabled, req.userId!);
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             logger.error('[AI] Toggle auto-apply error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1289,10 +1281,10 @@ router.delete(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const result = await ApprovalPatternService.deletePattern(req.params.patternId, req.userId!);
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             logger.error('[AI] Delete pattern error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1309,10 +1301,10 @@ router.post(
             const result = await AIActionExecutor.approveAction((req.params as any).actionId, req.userId as string, {
                 alwaysApprove,
             });
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             logger.error('[AI] Approve action error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1332,10 +1324,10 @@ router.post(
                 reason,
                 { alwaysReject },
             );
-            res.json(result);
-        } catch (err: unknown) {
+            return res.json(result);
+        } catch (err: any) {
             logger.error('[AI] Reject action error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1365,10 +1357,10 @@ router.get(
                 }),
             );
 
-            res.json({ success: true, actions: actionsWithPatterns });
-        } catch (err: unknown) {
+            return res.json({ success: true, actions: actionsWithPatterns });
+        } catch (err: any) {
             logger.error('[AI] Get pending actions error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message, actions: [] });
+            return res.status(500).json({ success: false, error: (err as Error).message, actions: [] });
         }
     }),
 );
@@ -1387,7 +1379,7 @@ router.post(
             logger.info(`[AI Feedback] User ${userId} rated message ${messageId} as ${rating}`);
 
             try {
-                const aiLogger = await import('../../services/ai/logger.js').then((m) => (m as any).default || m);
+                const aiLogger = await import('../services/ai/logger.js').then((m) => (m as any).default || m);
                 await aiLogger.log('feedback', {
                     userId,
                     messageId,
@@ -1398,10 +1390,10 @@ router.post(
                 logger.warn('[AI] Could not log feedback:', (logErr as Error).message);
             }
 
-            res.json({ success: true });
-        } catch (err: unknown) {
+            return res.json({ success: true });
+        } catch (err: any) {
             logger.error('[AI] Feedback error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1418,7 +1410,7 @@ router.post(
             logger.error(`[AI REPORT] 🚨 User ${userId} reported message ${messageId}: ${reason}`);
 
             try {
-                const aiLogger = await import('../../services/ai/logger.js').then((m) => (m as any).default || m);
+                const aiLogger = await import('../services/ai/logger.js').then((m) => (m as any).default || m);
                 await aiLogger.log('report', {
                     userId,
                     messageId,
@@ -1430,10 +1422,10 @@ router.post(
                 logger.warn('[AI] Could not log report:', (logErr as Error).message);
             }
 
-            res.json({ success: true });
-        } catch (err: unknown) {
+            return res.json({ success: true });
+        } catch (err: any) {
             logger.error('[AI] Report error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1446,17 +1438,15 @@ router.get(
     validateQuery(GetMemoryMetricsQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const AIMemoryMetricsService = await import('../../services/ai/aiMemoryMetricsService.js').then(
-                (m) => (m as any).default || m,
-            );
+            const AIMemoryMetricsService = (await import('../services/ai/aiMemoryMetricsService.js')).default as any;
             const { period } = req.query as any;
 
             const metrics = await AIMemoryMetricsService.getDashboardMetrics(req.organizationId!, period);
 
-            res.json({ success: true, ...metrics });
-        } catch (err: unknown) {
+            return res.json({ success: true, ...metrics });
+        } catch (err: any) {
             logger.error('[AI] Memory metrics error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1467,17 +1457,15 @@ router.get(
     validateQuery(GetCurrentMemoryQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const AIMemoryMetricsService = await import('../../services/ai/aiMemoryMetricsService.js').then(
-                (m) => (m as any).default || m,
-            );
+            const AIMemoryMetricsService = (await import('../services/ai/aiMemoryMetricsService.js')).default as any;
             const { projectId } = req.query as any;
 
             const state = await AIMemoryMetricsService.getCurrentMemoryState(projectId, req.organizationId!);
 
-            res.json({ success: true, ...state });
-        } catch (err: unknown) {
+            return res.json({ success: true, ...state });
+        } catch (err: any) {
             logger.error('[AI] Current memory state error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1488,27 +1476,23 @@ router.get(
     validateQuery(GetMemoryLatencyQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const AIMemoryMetricsService = await import('../../services/ai/aiMemoryMetricsService.js').then(
-                (m) => (m as any).default || m,
-            );
+            const AIMemoryMetricsService = (await import('../services/ai/aiMemoryMetricsService.js')).default as any;
             const { hours } = req.query as any;
 
             const latency = await AIMemoryMetricsService.getLatencyPercentiles(req.organizationId!, hours);
 
-            res.json({ success: true, ...latency });
-        } catch (err: unknown) {
+            return res.json({ success: true, ...latency });
+        } catch (err: any) {
             logger.error('[AI] Latency metrics error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
 
 // ==================== PROACTIVE SUGGESTIONS ====================
 
-const ProactiveSuggestionsService = await import('../../services/ai/proactiveSuggestionsService.js').then(
-    (m) => m.default || m,
-);
-const ResponseQualityService = await import('../../services/ai/responseQualityService.js').then((m) => m.default || m);
+const ProactiveSuggestionsService = (await import('../services/ai/proactiveSuggestionsService.js')).default as any;
+const ResponseQualityService = (await import('../services/ai/responseQualityService.js')).default as any;
 
 router.get(
     '/suggestions',
@@ -1526,10 +1510,10 @@ router.get(
                 recentActions: [],
             });
 
-            res.json({ success: true, suggestions });
-        } catch (err: unknown) {
+            return res.json({ success: true, suggestions });
+        } catch (err: any) {
             logger.error('[AI] Proactive suggestions error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1544,10 +1528,10 @@ router.post(
 
             await ProactiveSuggestionsService.recordSuggestionAction(suggestionId, req.userId!, action, feedback);
 
-            res.json({ success: true });
-        } catch (err: unknown) {
+            return res.json({ success: true });
+        } catch (err: any) {
             logger.error('[AI] Suggestion action error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1562,10 +1546,10 @@ router.get(
 
             const metrics = await ProactiveSuggestionsService.getSuggestionMetrics(req.organizationId!, days);
 
-            res.json({ success: true, metrics });
-        } catch (err: unknown) {
+            return res.json({ success: true, metrics });
+        } catch (err: any) {
             logger.error('[AI] Suggestion metrics error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1590,10 +1574,10 @@ router.post(
                 sources: sources || [],
             });
 
-            res.json({ success: true, metrics });
-        } catch (err: unknown) {
+            return res.json({ success: true, metrics });
+        } catch (err: any) {
             logger.error('[AI] Quality calculation error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1608,10 +1592,10 @@ router.get(
 
             const metrics = await ResponseQualityService.getAggregateMetrics(req.organizationId!, days);
 
-            res.json({ success: true, metrics });
-        } catch (err: unknown) {
+            return res.json({ success: true, metrics });
+        } catch (err: any) {
             logger.error('[AI] Aggregate quality metrics error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );
@@ -1626,10 +1610,10 @@ router.get(
 
             const trends = await ResponseQualityService.getQualityTrends(req.organizationId!, days);
 
-            res.json({ success: true, trends });
-        } catch (err: unknown) {
+            return res.json({ success: true, trends });
+        } catch (err: any) {
             logger.error('[AI] Quality trends error:', err);
-            res.status(500).json({ success: false, error: (err as Error).message });
+            return res.status(500).json({ success: false, error: (err as Error).message });
         }
     }),
 );

@@ -151,7 +151,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
     // Get current section metadata
     const currentMeta = useMemo(() => {
         const meta = sectionMeta[activeSection];
-                return {
+        return {
             title: t(`settings.sections.${activeSection}.title`, meta.title),
             subtitle: t(`settings.sections.${activeSection}.subtitle`, meta.subtitle),
         };
@@ -276,9 +276,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
     }, [activeSection, currentUser, onUpdateUser, t]);
 
     return (
-        <div className="flex h-full bg-white dark:bg-navy-900">
-            {/* Left Sidebar */}
-            <div className="w-72 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-navy-700">
+        <div className="flex h-full bg-slate-100 dark:bg-navy-950 gap-0.5">
+            {/* Left Sidebar - Floating Panel */}
+            <div className="w-72 flex-shrink-0 flex flex-col bg-white dark:bg-navy-900 shadow-sm">
                 {/* Quick Profile Card */}
                 <QuickProfileCard
                     currentUser={currentUser}
@@ -295,10 +295,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
                 />
             </div>
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-navy-950/20">
+            {/* Main Content Area - Floating Panel */}
+            <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-navy-900 lg:rounded-l-lg shadow-sm">
                 {/* Header */}
-                <header className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
+                <header className="flex items-center justify-between px-6 h-14 border-b border-slate-100 dark:border-navy-800 bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -309,12 +309,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             {t('settings.backToDashboard', 'Back to Dashboard')}
                         </Button>
-                        <div className="h-6 w-px bg-slate-200 dark:bg-navy-700" />
+                        <div className="h-5 w-px bg-slate-200 dark:bg-navy-700" />
                         <div>
-                            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+                            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 {currentMeta.title}
                             </h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">{currentMeta.subtitle}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{currentMeta.subtitle}</p>
                         </div>
                     </div>
                 </header>
@@ -322,7 +322,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
                 {/* Content */}
                 <ScrollArea className="flex-1">
                     <div className="p-6 max-w-5xl mx-auto w-full">
-                        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm p-6">
+                        <div className="bg-slate-50/50 dark:bg-navy-950/30 rounded-xl border border-slate-100 dark:border-navy-800 p-6">
                             {renderContent()}
                         </div>
                     </div>

@@ -41,8 +41,3 @@ describe('Logger', () => {
         expect(() => logger.debug('Debug message', { key: 'value' })).not.toThrow();
     });
 });
-
-
-
-
-

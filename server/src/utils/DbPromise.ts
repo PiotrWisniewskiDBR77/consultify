@@ -86,8 +86,8 @@ const dbLogger: DbLogger = {
 // DATABASE INSTANCE
 // ==========================================
 
-import { getDatabase } from '../database/Database.ts';
-import logger from './Logger.ts';
+import { getDatabase } from '../database/Database.js';
+import logger from './Logger.js';
 
 const getDb = (): Database => {
     return getDatabase() as unknown as Database;

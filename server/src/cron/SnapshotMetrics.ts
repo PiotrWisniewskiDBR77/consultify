@@ -7,7 +7,7 @@
 
 import * as cron from 'node-cron';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -31,7 +31,7 @@ class SnapshotMetricsCron {
 
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
-            metricsPersistenceService: deps?.metricsPersistenceService,
+            metricsPersistenceService: deps?.metricsPersistenceService as any,
         };
     }
 
@@ -55,7 +55,7 @@ class SnapshotMetricsCron {
             logger.info('[Cron] Running scheduled metrics snapshot...');
             try {
                 await deps.metricsPersistenceService.saveSnapshot(true); // Save and reset
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.error('[Cron] Metrics snapshot failed:', err);
             }
         });
@@ -97,8 +97,3 @@ export const initMetricsSnapshotJob = (deps?: Partial<Dependencies>): void => {
 };
 
 export default SnapshotMetricsCron;
-
-
-
-
-

@@ -96,21 +96,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <div className={cn('flex h-full bg-slate-50 dark:bg-navy-950', className)}>
             {/* Mobile Overlay */}
             {isMobile && sidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                />
+                <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
             )}
 
             {/* Sidebar */}
             <aside
                 className={cn(
                     'fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:transform-none',
-                    isMobile
-                        ? sidebarOpen
-                            ? 'translate-x-0'
-                            : '-translate-x-full'
-                        : 'translate-x-0',
+                    isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0',
                 )}
             >
                 <AdminSidebar
@@ -135,11 +128,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                                     onClick={() => setSidebarOpen(!sidebarOpen)}
                                     className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                                 >
-                                    {sidebarOpen ? (
-                                        <X className="w-5 h-5" />
-                                    ) : (
-                                        <Menu className="w-5 h-5" />
-                                    )}
+                                    {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                                 </button>
                             )}
 
@@ -149,15 +138,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                                     <nav className="flex items-center gap-1 text-sm">
                                         {breadcrumbs.map((crumb, index) => (
                                             <React.Fragment key={index}>
-                                                {index > 0 && (
-                                                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                                                )}
+                                                {index > 0 && <ChevronRight className="w-4 h-4 text-slate-400" />}
                                                 {index < breadcrumbs.length - 1 ? (
                                                     <button
-                                                        onClick={() =>
-                                                            crumb.section &&
-                                                            onSectionChange(crumb.section)
-                                                        }
+                                                        onClick={() => crumb.section && onSectionChange(crumb.section)}
                                                         className="text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
                                                     >
                                                         {crumb.label}
@@ -177,9 +161,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                                                 {title}
                                             </h1>
                                             {subtitle && (
-                                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                                    {subtitle}
-                                                </p>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
                                             )}
                                         </div>
                                     )
@@ -202,6 +184,3 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 };
 
 export default AdminLayout;
-
-
-

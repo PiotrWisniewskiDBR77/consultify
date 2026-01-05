@@ -449,8 +449,3 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
 };
 
 export default IntegrationHealthSettings;
-
-
-
-
-

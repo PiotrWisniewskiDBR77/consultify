@@ -45,8 +45,3 @@ export const SupportModuleView: React.FC = () => {
         </TabLayout>
     );
 };
-
-
-
-
-

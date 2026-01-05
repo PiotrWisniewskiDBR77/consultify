@@ -1,12 +1,7 @@
-/**
- * Trial Service
- * Enterprise SaaS Architecture - TypeScript Backend
- *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
- */
+import { createCachedLazyService } from '../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-import service from '../../services/trialService.js';
+const loadTrialService = createCachedLazyService('./trialService.js');
 
 // Export default instance (for backward compatibility)
-export default service;
+export default loadTrialService();

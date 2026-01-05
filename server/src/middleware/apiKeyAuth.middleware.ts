@@ -18,7 +18,7 @@
 import { NextFunction, Request, Response } from 'express';
 
 import { API_KEY_PERMISSIONS, ApiKey, ApiKeyService } from '../services/ApiKeyService.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -241,8 +241,3 @@ export default {
     optionalApiKeyAuth,
     hybridAuth,
 };
-
-
-
-
-

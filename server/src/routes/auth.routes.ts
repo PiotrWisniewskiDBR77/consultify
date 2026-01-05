@@ -13,13 +13,13 @@ import _emailVerificationService from '../services/EmailVerificationService.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.ts';
+import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
-    _MFASetupRequestSchema,
     ChangePasswordRequestSchema,
     LoginRequestSchema,
     MFADisableRequestSchema,
     MFAEnableRequestSchema,
+    MFASetupRequestSchema,
     RefreshTokenRequestSchema,
     RegisterRequestSchema,
     ResetPasswordRequestSchema,
@@ -33,10 +33,10 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
-import config from '../../config.js';
+import config from '../config/Config.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import ActivityService from '../services/ActivityService.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting to all auth routes
 router.use(authRateLimiter);
@@ -66,18 +66,18 @@ router.post(
             });
 
             if (!result) {
-                res.status(401).json({ error: 'Invalid or expired refresh token' });
+                return res.status(401).json({ error: 'Invalid or expired refresh token' });
                 return;
             }
 
-            res.json({
+            return res.json({
                 token: result.accessToken,
                 refreshToken: result.refreshToken,
                 expiresIn: result.expiresIn,
             });
         } catch (error: unknown) {
             logger.error('[Auth] Refresh error:', error);
-            res.status(500).json({ error: 'Token refresh failed' });
+            return res.status(500).json({ error: 'Token refresh failed' });
         }
     }),
 );
@@ -89,10 +89,10 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const sessions = await refreshTokenService.getActiveSessions(req.user!.id);
-            res.json({ sessions });
+            return res.json({ sessions });
         } catch (error: unknown) {
             logger.error('[Auth] Get sessions error:', error);
-            res.status(500).json({ error: 'Failed to get sessions' });
+            return res.status(500).json({ error: 'Failed to get sessions' });
         }
     }),
 );
@@ -107,10 +107,10 @@ router.delete(
 
         try {
             await refreshTokenService.revokeSession(req.user!.id, id);
-            res.json({ success: true, message: 'Session revoked' });
+            return res.json({ success: true, message: 'Session revoked' });
         } catch (error: unknown) {
             logger.error('[Auth] Revoke session error:', error);
-            res.status(500).json({ error: 'Failed to revoke session' });
+            return res.status(500).json({ error: 'Failed to revoke session' });
         }
     }),
 );
@@ -143,7 +143,7 @@ router.get(
             );
 
             if (!user) {
-                res.status(404).json({ error: 'User not found' });
+                return res.status(404).json({ error: 'User not found' });
                 return;
             }
 
@@ -197,7 +197,11 @@ router.get(
                     impersonatorId: user.impersonator_id,
                     companyName: user.organization_name,
                     isAuthenticated: true,
-                    accessLevel: user.organization_status === 'active' && (user.organization_plan === 'enterprise' || user.organization_plan === 'pro') ? 'full' : 'free',
+                    accessLevel:
+                        user.organization_status === 'active' &&
+                        (user.organization_plan === 'enterprise' || user.organization_plan === 'pro')
+                            ? 'full'
+                            : 'free',
                 },
             };
 
@@ -207,11 +211,11 @@ router.get(
                 response.roleChanged = true;
             }
 
-            res.json(response);
-        } catch (err: unknown) {
+            return res.json(response);
+        } catch (err: any) {
             logger.error('[Auth] /me DB error:', err);
             // Fallback to token data if DB fails
-            res.json({
+            return res.json({
                 user: {
                     id: req.user!.id,
                     email: req.user!.email || '',
@@ -235,7 +239,7 @@ router.post(
         try {
             const authHeader = req.headers.authorization;
             if (!authHeader) {
-                res.status(401).json({ error: 'No token provided' });
+                return res.status(401).json({ error: 'No token provided' });
                 return;
             }
 
@@ -244,7 +248,7 @@ router.post(
 
             if (!decoded || !decoded.jti) {
                 // Token doesn't have jti (old token format), just acknowledge logout
-                res.json({ message: 'Logged out successfully' });
+                return res.json({ message: 'Logged out successfully' });
                 return;
             }
 
@@ -258,10 +262,10 @@ router.post(
                 expiresAt,
                 'logout',
             ]);
-            res.json({ message: 'Logged out successfully' });
+            return res.json({ message: 'Logged out successfully' });
         } catch (error: unknown) {
             logger.error('Logout error:', error);
-            res.status(500).json({ error: 'Logout failed' });
+            return res.status(500).json({ error: 'Logout failed' });
         }
     }),
 );
@@ -273,7 +277,7 @@ router.post(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         const impersonatorId = req.user!.impersonatorId;
         if (!impersonatorId) {
-            res.status(400).json({ error: 'Not currently impersonating' });
+            return res.status(400).json({ error: 'Not currently impersonating' });
             return;
         }
 
@@ -288,13 +292,13 @@ router.post(
         }>('SELECT * FROM users WHERE id = ?', [impersonatorId]);
 
         if (!adminUser) {
-            res.status(404).json({ error: 'Original admin not found' });
+            return res.status(404).json({ error: 'Original admin not found' });
             return;
         }
 
         // Verify the original user is indeed an admin/superadmin (security check)
         if (adminUser.role !== 'SUPERADMIN' && adminUser.role !== 'ADMIN') {
-            res.status(403).json({ error: 'Original user is not an admin' });
+            return res.status(403).json({ error: 'Original user is not an admin' });
             return;
         }
 
@@ -314,6 +318,7 @@ router.post(
 
         // Log the reversion
         ActivityService.log({
+            organizationId: adminUser.organization_id,
             userId: adminUser.id,
             action: 'impersonate_end',
             entityType: 'user',
@@ -335,7 +340,7 @@ router.post(
             accessLevel: 'full' as const, // Admin should have full access
         };
 
-        res.json({ user: safeUser, token });
+        return res.json({ user: safeUser, token });
     }),
 );
 
@@ -361,7 +366,7 @@ router.post(
 
             if (!user) {
                 logger.error('[Auth] Demo user not found - please run seed script');
-                res.status(404).json({
+                return res.status(404).json({
                     error: 'Demo user not found. Please contact support.',
                     code: 'DEMO_USER_NOT_FOUND',
                 });
@@ -380,6 +385,7 @@ router.post(
             });
 
             ActivityService.log({
+                organizationId: user.organization_id,
                 userId: user.id,
                 action: 'demo_login',
                 entityType: 'user',
@@ -404,7 +410,7 @@ router.post(
             };
 
             logger.info('[Auth] Demo login successful');
-            res.json({
+            return res.json({
                 user: safeUser,
                 token: tokenResult.accessToken,
                 refreshToken: tokenResult.refreshToken,
@@ -412,7 +418,7 @@ router.post(
             });
         } catch (error: unknown) {
             logger.error('[Auth] Demo login error:', error);
-            res.status(500).json({ error: 'Demo login failed. Please try again.' });
+            return res.status(500).json({ error: 'Demo login failed. Please try again.' });
         }
     }),
 );
@@ -436,37 +442,30 @@ router.post(
             partner_code,
         } = req.body;
 
-        const { default: PromoCodeService } = await import('../../services/promoCodeService.js');
-        const { default: AttributionService } = await import('../../services/attributionService.js');
+        const { default: PromoCodeService } = (await import('../services/promoCodeService.js')) as any;
+        const { default: AttributionService } = (await import('../services/attributionService.js')) as any;
 
-        let promoValidation: {
-            valid: boolean;
-            reason?: string;
-            codeId?: string;
-            partnerCode?: string;
-            discountType?: string;
-            discountValue?: number;
-        } | null = null;
+        let promoValidation: any = null;
         if (promoCode) {
             try {
                 promoValidation = await PromoCodeService.validatePromoCode(promoCode);
                 if (!promoValidation.valid) {
-                    res.status(400).json({
+                    return res.status(400).json({
                         error: promoValidation.reason,
                         errorCode: 'INVALID_PROMO_CODE',
                     });
                     return;
                 }
-            } catch (err: unknown) {
+            } catch (err: any) {
                 logger.error('[Auth] Promo validation error:', err);
-                res.status(500).json({ error: 'Failed to validate promo code' });
+                return res.status(500).json({ error: 'Failed to validate promo code' });
                 return;
             }
         }
 
         const existingUser = await dbGet<{ id: string }>('SELECT id FROM users WHERE email = ?', [email]);
         if (existingUser) {
-            res.status(400).json({ error: 'Email already in use' });
+            return res.status(400).json({ error: 'Email already in use' });
             return;
         }
 
@@ -484,7 +483,7 @@ router.post(
 
                 if (!orgResult.success) {
                     if (process.env.NODE_ENV !== 'production') logger.error('Register Org Error:', orgResult.error);
-                    res.status(500).json({ error: 'Failed to create organization' });
+                    return res.status(500).json({ error: 'Failed to create organization' });
                     return;
                 }
 
@@ -496,7 +495,7 @@ router.post(
 
                 if (!userResult.success) {
                     if (process.env.NODE_ENV !== 'production') logger.error('Register User Error:', userResult.error);
-                    res.status(500).json({ error: 'Failed to create user' });
+                    return res.status(500).json({ error: 'Failed to create user' });
                     return;
                 }
 
@@ -540,7 +539,7 @@ router.post(
                         logger.error('Error logging access request:', requestResult.error);
                     }
 
-                    res.json({
+                    return res.json({
                         status: 'pending',
                         message: 'Registration successful. Waiting for approval.',
                     });
@@ -569,7 +568,7 @@ router.post(
                     entityName: companyName,
                 });
 
-                res.json({
+                return res.json({
                     user: {
                         id: userId,
                         email,
@@ -582,21 +581,20 @@ router.post(
                     token,
                     promoApplied: promoCode
                         ? {
-                            code: promoCode,
-                            discountType: promoValidation?.discountType,
-                            discountValue: promoValidation?.discountValue,
-                        }
+                              code: promoCode,
+                              discountType: promoValidation?.discountType,
+                              discountValue: promoValidation?.discountValue,
+                          }
                         : null,
                 });
             } catch (regErr) {
                 logger.error('[Auth] Registration error:', regErr);
-                res.status(500).json({ error: 'Registration failed' });
+                return res.status(500).json({ error: 'Registration failed' });
             }
         };
 
         if (isDemo) {
-            proceedWithRegistration('active', 'trial');
-            return;
+            return await proceedWithRegistration('active', 'trial');
         }
 
         if (accessCode) {
@@ -608,12 +606,12 @@ router.post(
             }>('SELECT * FROM access_codes WHERE code = ? AND is_active = 1', [accessCode]);
 
             if (!codeRow) {
-                proceedWithRegistration('pending', 'free');
+                return await proceedWithRegistration('pending', 'free');
             } else {
                 if (codeRow.expires_at && new Date(codeRow.expires_at) < new Date()) {
-                    proceedWithRegistration('pending', 'free');
+                    return await proceedWithRegistration('pending', 'free');
                 } else if (codeRow.max_uses > 0 && codeRow.current_uses >= codeRow.max_uses) {
-                    proceedWithRegistration('pending', 'free');
+                    return await proceedWithRegistration('pending', 'free');
                 } else {
                     await dbRun('UPDATE access_codes SET current_uses = current_uses + 1 WHERE id = ?', [codeRow.id]);
                     await dbRun(`INSERT INTO access_code_usage (id, code_id, user_id) VALUES (?, ?, ?)`, [
@@ -621,11 +619,11 @@ router.post(
                         codeRow.id,
                         userId,
                     ]);
-                    proceedWithRegistration('active', 'pro');
+                    return await proceedWithRegistration('active', 'pro');
                 }
             }
         } else {
-            proceedWithRegistration('pending', 'free');
+            return await proceedWithRegistration('pending', 'free');
         }
     }),
 );
@@ -637,35 +635,31 @@ router.post(
     validateBody(RevokeAllTokensRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPERADMIN') {
-            res.status(403).json({ error: 'Not authorized' });
+            return res.status(403).json({ error: 'Not authorized' });
             return;
         }
 
         const { userId } = req.body;
         const targetUserId = userId || req.user!.id;
 
-        const performRevocation = (userIdToRevoke: string) => {
+        const performRevocation = async (userIdToRevoke: string) => {
             const marker = `revoke-all-${userIdToRevoke}-${Date.now()}`;
             const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-            dbRun(`INSERT INTO revoked_tokens (jti, user_id, expires_at, reason) VALUES (?, ?, ?, ?)`, [
-                marker,
-                userIdToRevoke,
-                expiresAt,
-                'revoke-all',
-            ])
-                .then((result) => {
-                    if (!result.success) {
-                        // logger.error('Error revoking all tokens:', result.error);
-                        res.status(500).json({ error: 'Failed to revoke tokens' });
-                        return;
-                    }
-                    res.json({ message: 'All tokens revoked successfully' });
-                })
-                .catch((err) => {
-                    logger.error('Error revoking all tokens:', err);
-                    res.status(500).json({ error: 'Failed to revoke tokens' });
-                });
+            try {
+                const result = await dbRun(
+                    `INSERT INTO revoked_tokens (jti, user_id, expires_at, reason) VALUES (?, ?, ?, ?)`,
+                    [marker, userIdToRevoke, expiresAt, 'revoke-all'],
+                );
+
+                if (!result.success) {
+                    return res.status(500).json({ error: 'Failed to revoke tokens' });
+                }
+                return res.json({ message: 'All tokens revoked successfully' });
+            } catch (err) {
+                logger.error('Error revoking all tokens:', err);
+                return res.status(500).json({ error: 'Failed to revoke tokens' });
+            }
         };
 
         if (req.user!.role !== 'SUPERADMIN' && userId && userId !== req.user!.id) {
@@ -674,16 +668,16 @@ router.post(
             }>('SELECT organization_id FROM users WHERE id = ?', [userId]);
 
             if (!targetUser) {
-                res.status(404).json({ error: 'User not found' });
-                return;
+                return res.status(404).json({ error: 'User not found' });
             }
             if (targetUser.organization_id !== req.user!.organizationId) {
-                res.status(403).json({ error: 'Not authorized to revoke tokens for users outside your organization' });
-                return;
+                return res
+                    .status(403)
+                    .json({ error: 'Not authorized to revoke tokens for users outside your organization' });
             }
-            performRevocation(targetUserId);
+            return await performRevocation(targetUserId);
         } else {
-            performRevocation(targetUserId);
+            return await performRevocation(targetUserId);
         }
     }),
 );
@@ -704,18 +698,18 @@ router.post(
             }>('SELECT id, password FROM users WHERE id = ?', [userId]);
 
             if (!user) {
-                res.status(404).json({ error: 'User not found' });
+                return res.status(404).json({ error: 'User not found' });
                 return;
             }
 
             const passwordIsValid = bcrypt.compareSync(currentPassword, user.password);
             if (!passwordIsValid) {
-                res.status(401).json({ error: 'Current password is incorrect' });
+                return res.status(401).json({ error: 'Current password is incorrect' });
                 return;
             }
 
             if (bcrypt.compareSync(newPassword, user.password)) {
-                res.status(400).json({ error: 'New password must be different from current password' });
+                return res.status(400).json({ error: 'New password must be different from current password' });
                 return;
             }
 
@@ -727,6 +721,7 @@ router.post(
             }
 
             ActivityService.log({
+                organizationId: req.user!.organizationId || '',
                 userId,
                 action: 'password_changed',
                 entityType: 'user',
@@ -736,13 +731,13 @@ router.post(
 
             await refreshTokenService.revokeAllUserTokens(userId);
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Password changed successfully. All other sessions have been logged out for security.',
             });
         } catch (error: unknown) {
             logger.error('[Auth] Change password error:', error);
-            res.status(500).json({ error: 'Failed to change password' });
+            return res.status(500).json({ error: 'Failed to change password' });
         }
     }),
 );
@@ -760,12 +755,12 @@ router.post(
         }>('SELECT * FROM password_resets WHERE token = ?', [token]);
 
         if (!resetData) {
-            res.status(400).json({ error: 'Invalid or expired token' });
+            return res.status(400).json({ error: 'Invalid or expired token' });
             return;
         }
 
         if (new Date(resetData.expires_at) < new Date()) {
-            res.status(400).json({ error: 'Token has expired' });
+            return res.status(400).json({ error: 'Token has expired' });
             return;
         }
 
@@ -776,12 +771,12 @@ router.post(
             resetData.user_id,
         ]);
         if (!updateResult.success) {
-            res.status(500).json({ error: 'Failed to update password' });
+            return res.status(500).json({ error: 'Failed to update password' });
             return;
         }
 
         await dbRun('DELETE FROM password_resets WHERE token = ?', [token]);
-        res.json({ message: 'Password updated successfully' });
+        return res.json({ message: 'Password updated successfully' });
     }),
 );
 
@@ -799,12 +794,12 @@ router.post(
             }>('SELECT * FROM users WHERE email_verification_token = ?', [token]);
 
             if (!user) {
-                res.status(400).json({ error: 'Invalid token' });
+                return res.status(400).json({ error: 'Invalid token' });
                 return;
             }
 
             if (new Date(user.email_verification_expires_at) < new Date()) {
-                res.status(400).json({ error: 'Token expired' });
+                return res.status(400).json({ error: 'Token expired' });
                 return;
             }
 
@@ -821,10 +816,10 @@ router.post(
                 throw new Error(runResult.error || 'Failed to verify email');
             }
 
-            res.json({ success: true, message: 'Email verified successfully' });
+            return res.json({ success: true, message: 'Email verified successfully' });
         } catch (error: unknown) {
             logger.error('Email verify error:', error);
-            res.status(500).json({ error: 'Verification failed' });
+            return res.status(500).json({ error: 'Verification failed' });
         }
     }),
 );
@@ -834,7 +829,7 @@ router.post(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         const userId = req.user!.id;
-        const { default: EmailService } = await import('../../services/emailService.js');
+        const { default: EmailService } = await import('../services/emailService.js');
 
         try {
             const token = crypto.randomBytes(32).toString('hex');
@@ -856,10 +851,10 @@ router.post(
                 `<a href="${verifyLink}">Click here to verify your email</a>`,
             );
 
-            res.json({ success: true, message: 'Verification email sent' });
+            return res.json({ success: true, message: 'Verification email sent' });
         } catch (error: unknown) {
             logger.error('Resend verify error:', error);
-            res.status(500).json({ error: 'Failed to send email' });
+            return res.status(500).json({ error: 'Failed to send email' });
         }
     }),
 );
@@ -871,10 +866,10 @@ router.post(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const result = await mfaService.setupMFA(req.user!.id, req.user!.email || '');
-            res.json(result);
+            return res.json(result);
         } catch (error: unknown) {
             logger.error('MFA Setup error:', error);
-            res.status(500).json({ error: 'MFA setup failed' });
+            return res.status(500).json({ error: 'MFA setup failed' });
         }
     }),
 );
@@ -888,13 +883,13 @@ router.post(
         try {
             const result = await mfaService.verifyAndEnableMFA(req.user!.id, token);
             if (!result.success) {
-                res.status(400).json(result);
+                return res.status(400).json(result);
                 return;
             }
-            res.json(result);
+            return res.json(result);
         } catch (error: unknown) {
             logger.error('MFA Enable error:', error);
-            res.status(500).json({ error: 'MFA activation failed' });
+            return res.status(500).json({ error: 'MFA activation failed' });
         }
     }),
 );
@@ -908,13 +903,13 @@ router.post(
         try {
             const result = await mfaService.disableMFA(req.user!.id, token);
             if (!result.success) {
-                res.status(400).json(result);
+                return res.status(400).json(result);
                 return;
             }
-            res.json(result);
+            return res.json(result);
         } catch (error: unknown) {
             logger.error('MFA Disable error:', error);
-            res.status(500).json({ error: 'MFA disable failed' });
+            return res.status(500).json({ error: 'MFA disable failed' });
         }
     }),
 );

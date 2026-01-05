@@ -16,7 +16,7 @@ import os from 'os';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -89,7 +89,7 @@ class SystemHealthServiceClass {
         return new Promise((resolve, reject) => {
             this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row || null);
+                else resolve((row as T) || null);
             });
         });
     }
@@ -101,7 +101,7 @@ class SystemHealthServiceClass {
         return new Promise((resolve, reject) => {
             this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as T[]) || []);
             });
         });
     }
@@ -165,7 +165,7 @@ class SystemHealthServiceClass {
                 connected: true,
                 latencyMs: duration,
             };
-        } catch (err: unknown) {
+        } catch (err: any) {
             const duration = Date.now() - start;
             return {
                 connected: false,
@@ -201,7 +201,7 @@ class SystemHealthServiceClass {
                 status: hasAnyProvider ? 'online' : 'no_keys',
                 providers,
             };
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.warn('[SystemHealth] Error checking AI services:', err);
             return {
                 status: 'unknown',
@@ -233,7 +233,7 @@ class SystemHealthServiceClass {
             }
 
             return ((errorCount?.count || 0) / totalRequests.count) * 100;
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.warn('[SystemHealth] Error calculating error rate:', err);
             return 0;
         }
@@ -290,7 +290,7 @@ class SystemHealthServiceClass {
                 total_queries: row?.total_queries || 0,
                 queries_last_hour: row?.queries_last_hour || 0,
             };
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.warn('[SystemHealth] Error getting database metrics:', err);
             return { total_queries: 0, queries_last_hour: 0 };
         }
@@ -313,7 +313,7 @@ class SystemHealthServiceClass {
                 total_requests: row?.total_requests || 0,
                 requests_last_hour: row?.requests_last_hour || 0,
             };
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.warn('[SystemHealth] Error getting API metrics:', err);
             return { total_requests: 0, requests_last_hour: 0 };
         }
@@ -350,7 +350,7 @@ class SystemHealthServiceClass {
                 total_output_tokens: row?.total_output_tokens || 0,
                 avg_latency: Math.round(row?.avg_latency || 0),
             };
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.warn('[SystemHealth] Error getting AI metrics:', err);
             return {
                 total_requests: 0,

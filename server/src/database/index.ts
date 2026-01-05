@@ -9,12 +9,7 @@ export {
     type DatabaseType,
     type PostgresConfig,
     type SQLiteConfig,
-} from '../config/DatabaseConfig.ts';
-export { createDatabase, getDatabase, type MockDatabase } from './Database.ts';
-export { default } from './Database.ts';
-export type { IDatabase, QueryResult, RunResult } from './IDatabase.ts';
-
-
-
-
-
+} from '../config/DatabaseConfig.js';
+export { createDatabase, getDatabase, type MockDatabase } from './Database.js';
+export { default } from './Database.js';
+export type { IDatabase, QueryResult, RunResult } from './IDatabase.js';

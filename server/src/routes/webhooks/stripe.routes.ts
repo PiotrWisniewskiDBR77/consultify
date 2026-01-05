@@ -10,31 +10,24 @@ import express from 'express';
 import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.ts';
-import logger from '../../utils/Logger.ts';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 
 // Helper function for async handler
-function asyncHandler(fn: (req: Request, res: Response) => Promise<void> | void) {
+function asyncHandler(fn: (req: Request, res: Response) => Promise<any> | any) {
     return (req: Request, res: Response, next: NextFunction) => {
         Promise.resolve(fn(req, res)).catch(next);
     };
 }
 
-// Billing Service interface
-interface BillingServiceInterface {
-    updateSubscription?: (subscriptionId: string, data: unknown) => Promise<void>;
-    cancelSubscription?: (subscriptionId: string) => Promise<void>;
-    createInvoice?: (invoiceData: unknown) => Promise<void>;
-}
-
 // Dynamic import for billingService (may not be migrated yet)
-let billingService: BillingServiceInterface | null = null;
+let billingService: any = null;
 
 try {
-    const billingModule = await import('../../../services/billingService.js');
-    billingService = (billingModule.default || billingModule) as BillingServiceInterface;
+    const billingModule = (await import('../../services/BillingService.js')) as any;
+    billingService = billingModule.default || billingModule;
 } catch {
     logger.warn('[Stripe Webhook] billingService not available');
 }
@@ -56,12 +49,13 @@ router.post(
         if (endpointSecret) {
             const sig = req.headers['stripe-signature'] as string;
             try {
-                const stripe = (await import('stripe')).default(process.env.STRIPE_SECRET_KEY || '');
+                const stripe = ((await import('stripe')) as any).default(process.env.STRIPE_SECRET_KEY || '');
                 event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-            } catch (err: unknown) {
+            } catch (err: any) {
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error';
                 logger.error('Webhook signature verification failed:', errorMessage);
                 return res.status(400).send(`Webhook Error: ${errorMessage}`);
+                return;
             }
         } else {
             // For development without signature verification
@@ -73,38 +67,41 @@ router.post(
         try {
             switch (event.type) {
                 case 'customer.subscription.created':
-                    await handleSubscriptionCreated(event.data.object);
+                    await handleSubscriptionCreated(event.data.object as any);
                     break;
 
                 case 'customer.subscription.updated':
-                    await handleSubscriptionUpdated(event.data.object);
+                    await handleSubscriptionUpdated(event.data.object as any);
                     break;
 
                 case 'customer.subscription.deleted':
-                    await handleSubscriptionDeleted(event.data.object);
+                    await handleSubscriptionDeleted(event.data.object as any);
                     break;
 
                 case 'invoice.paid':
-                    await handleInvoicePaid(event.data.object);
+                    await handleInvoicePaid(event.data.object as any);
                     break;
 
                 case 'invoice.payment_failed':
-                    await handleInvoicePaymentFailed(event.data.object);
+                    await handleInvoicePaymentFailed(event.data.object as any);
                     break;
 
                 case 'invoice.created':
-                    await handleInvoiceCreated(event.data.object);
+                    await handleInvoiceCreated(event.data.object as any);
                     break;
 
                 default:
                     logger.info(`Unhandled event type: ${event.type}`);
             }
 
-            res.json({ received: true });
+            return res.json({ received: true });
         } catch (error: unknown) {
             logger.error('Webhook processing error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Webhook processing failed' });
+            return res
+                .status(500)
+                .json({ error: error instanceof Error ? error.message : 'Webhook processing failed' });
         }
+        return;
     }),
 );
 
@@ -112,7 +109,7 @@ router.post(
  * Handle subscription created event
  */
 async function handleSubscriptionCreated(subscription: Stripe.Subscription): Promise<void> {
-    const customerId = subscription.customer;
+    const customerId = subscription.customer as string;
     const orgId = await getOrgIdFromCustomer(customerId);
 
     if (!orgId) {
@@ -124,8 +121,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription): Pro
         await billingService.upsertOrganizationBilling(orgId, {
             stripe_subscription_id: subscription.id,
             status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000),
-            current_period_end: new Date(subscription.current_period_end * 1000),
+            current_period_start: new Date((subscription as any).current_period_start * 1000),
+            current_period_end: new Date((subscription as any).current_period_end * 1000),
         });
     }
 
@@ -144,7 +141,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription): Pro
  * Handle subscription updated event
  */
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
-    const customerId = subscription.customer;
+    const customerId = subscription.customer as string;
     const orgId = await getOrgIdFromCustomer(customerId);
 
     if (!orgId) return;
@@ -152,8 +149,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
     if (billingService?.upsertOrganizationBilling) {
         await billingService.upsertOrganizationBilling(orgId, {
             status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000),
-            current_period_end: new Date(subscription.current_period_end * 1000),
+            current_period_start: new Date((subscription as any).current_period_start * 1000),
+            current_period_end: new Date((subscription as any).current_period_end * 1000),
         });
     }
 
@@ -164,7 +161,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
  * Handle subscription deleted event
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
-    const customerId = subscription.customer;
+    const customerId = subscription.customer as string;
     const orgId = await getOrgIdFromCustomer(customerId);
 
     if (!orgId) return;
@@ -190,7 +187,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
  * Handle invoice paid event
  */
 async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
-    const customerId = invoice.customer;
+    const customerId = invoice.customer as string;
     const orgId = await getOrgIdFromCustomer(customerId);
 
     if (!orgId) return;
@@ -221,7 +218,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
  * Handle invoice payment failed event
  */
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
-    const customerId = invoice.customer;
+    const customerId = invoice.customer as string;
     const orgId = await getOrgIdFromCustomer(customerId);
 
     if (!orgId) return;
@@ -248,7 +245,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void
  * Handle invoice created event
  */
 async function handleInvoiceCreated(invoice: Stripe.Invoice): Promise<void> {
-    const customerId = invoice.customer;
+    const customerId = invoice.customer as string;
     const orgId = await getOrgIdFromCustomer(customerId);
 
     if (!orgId) return;

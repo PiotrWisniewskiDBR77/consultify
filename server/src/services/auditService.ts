@@ -16,8 +16,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.ts';
-import logger from '../utils/Logger.ts';
+import * as DbPromise from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
@@ -155,16 +155,7 @@ interface ExpressRequestWithUser extends Request {
     orgContext?: {
         orgId?: string;
     };
-    params?: {
-        orgId?: string;
-    };
-    headers?: {
-        'x-forwarded-for'?: string;
-        'user-agent'?: string;
-        'x-org-id'?: string;
-    };
-    originalUrl?: string;
-    method?: string;
+    // method and originalUrl are already in Request
 }
 
 // ============================================
@@ -317,7 +308,7 @@ class AuditServiceClass {
                 entityType,
                 entityId,
             };
-        } catch (err: unknown) {
+        } catch (err: any) {
             logger.error('[AuditService] Failed to log event:', err instanceof Error ? err.message : String(err));
             // Fail-silent: audit failures should not break main flow
             return {
@@ -346,7 +337,7 @@ class AuditServiceClass {
 
         const actorUserId = req.user?.id || null;
         const orgId = req.org?.id || req.orgContext?.orgId || req.user?.organization_id || null;
-        const ip = req.ip || req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || null;
+        const ip = req.ip || (req.headers?.['x-forwarded-for'] as string)?.split(',')[0]?.trim() || null;
         const userAgent = req.headers?.['user-agent'] || null;
 
         return this.logEvent({

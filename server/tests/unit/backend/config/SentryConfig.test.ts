@@ -8,7 +8,7 @@
 import type { Express } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { initSentry } from '../../../../src/config/sentry.js';
+import { initSentry } from '../../../../src/config/SentryConfig.js';
 
 describe('SentryConfig', () => {
     let mockApp: Express;

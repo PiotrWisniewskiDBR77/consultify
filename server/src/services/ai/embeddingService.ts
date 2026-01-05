@@ -10,8 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { getDatabase } from '../../database/Database.js';
-import * as DbPromise from '../../utils/DbPromise.ts';
-import logger from '../../utils/Logger.ts';
+import * as DbPromise from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import { validateExternalServiceResponse } from '../../utils/typeGuards.js';
 
 export const EMBEDDING_MODEL = 'text-embedding-3-small';

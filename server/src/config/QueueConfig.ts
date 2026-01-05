@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // ZOD SCHEMAS
@@ -33,7 +33,7 @@ export type QueueConfig = z.infer<typeof QueueConfigSchema>;
 /**
  * Load and validate queue configuration
  */
-function loadQueueConfig(): QueueConfig {
+export function loadQueueConfig(): QueueConfig {
     if (process.env.MOCK_REDIS === 'true') {
         return {};
     }
@@ -51,8 +51,8 @@ function loadQueueConfig(): QueueConfig {
 
     if (!result.success) {
         logger.error('[Queue Config] Configuration validation failed:');
-        result.error.issues.forEach((err: Error | null) => {
-            logger.error(`  - ${err.path.join('.')}: ${err.message}`);
+        result.error.issues.forEach((issue) => {
+            logger.error(`  - ${issue.path.join('.')}: ${issue.message}`);
         });
 
         // In production, fail fast on invalid config

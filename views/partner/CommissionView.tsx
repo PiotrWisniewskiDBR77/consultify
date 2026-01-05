@@ -5,15 +5,15 @@
  * Aligned with BENEFITS_REALIZATION PMO domain
  */
 
-import React, { useCallback, useState } from 'react';
 import { ChartBar, FileText, HelpCircle, Send } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 
 import { SplitLayout } from '../../components/layout/SplitLayout';
 import { CommissionIntelligence } from '../../components/Partner/CommissionIntelligence';
 import { PMODomainBadge } from '../../components/Partner/EcosystemAnalytics';
 import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
-import { AppView } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '../../types';
 import { PARTNER_PMO_MAPPING } from './types';
 
 const inquiryTypes = ['Commission inquiry', 'Payment update', 'Statement question', 'Other'];
@@ -59,7 +59,9 @@ export const CommissionView: React.FC = () => {
                     deals={deals}
                     statements={statements}
                     onViewDeal={handleViewDeal}
-                    onSubmitInquiry={() => document.getElementById('inquiry-form')?.scrollIntoView({ behavior: 'smooth' })}
+                    onSubmitInquiry={() =>
+                        document.getElementById('inquiry-form')?.scrollIntoView({ behavior: 'smooth' })
+                    }
                 />
 
                 {/* Statements Section */}
@@ -84,10 +86,13 @@ export const CommissionView: React.FC = () => {
                                 className="flex items-center justify-between rounded-2xl border border-slate-100 p-4 dark:border-white/5"
                             >
                                 <div>
-                                    <div className="font-semibold text-navy-900 dark:text-white">{statement.period}</div>
+                                    <div className="font-semibold text-navy-900 dark:text-white">
+                                        {statement.period}
+                                    </div>
                                     <div className="text-xs text-slate-500">
                                         {statement.deals.length} deal{statement.deals.length !== 1 ? 's' : ''}
-                                        {statement.paidAt && ` · Paid ${new Date(statement.paidAt).toLocaleDateString()}`}
+                                        {statement.paidAt &&
+                                            ` · Paid ${new Date(statement.paidAt).toLocaleDateString()}`}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
@@ -95,13 +100,15 @@ export const CommissionView: React.FC = () => {
                                         <div className="font-semibold text-navy-900 dark:text-white">
                                             ${statement.totalAmount.toLocaleString()}
                                         </div>
-                                        <div className={`text-xs ${
-                                            statement.status === 'PAID'
-                                                ? 'text-emerald-500'
-                                                : statement.status === 'APPROVED'
-                                                  ? 'text-blue-500'
-                                                  : 'text-amber-500'
-                                        }`}>
+                                        <div
+                                            className={`text-xs ${
+                                                statement.status === 'PAID'
+                                                    ? 'text-emerald-500'
+                                                    : statement.status === 'APPROVED'
+                                                      ? 'text-blue-500'
+                                                      : 'text-amber-500'
+                                            }`}
+                                        >
                                             {statement.status}
                                         </div>
                                     </div>

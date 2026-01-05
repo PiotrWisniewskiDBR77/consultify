@@ -68,8 +68,3 @@ export type ProjectNotificationSettingsRequest = z.infer<typeof ProjectNotificat
 export type UpdateAIRoleRequest = z.infer<typeof UpdateAIRoleSchema>;
 export type UpdateRegulatoryModeRequest = z.infer<typeof UpdateRegulatoryModeSchema>;
 export type GetProjectsQuery = z.infer<typeof GetProjectsQuerySchema>;
-
-
-
-
-

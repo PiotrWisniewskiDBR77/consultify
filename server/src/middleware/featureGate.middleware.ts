@@ -9,7 +9,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -286,8 +286,3 @@ export function isFeatureAccessible(featureId: string, context: FeatureContext):
 export function getAccessibleFeatures(context: FeatureContext): string[] {
     return Object.keys(FEATURE_REQUIREMENTS).filter((featureId) => isFeatureAccessible(featureId, context));
 }
-
-
-
-
-

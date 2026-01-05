@@ -25,8 +25,8 @@ export interface AIAuditEntry {
     dataSourcesUsed?: string[];
     aiRole: string;
     policyLevel: string;
-    confidenceLevel: string;
-    aiSuggestion: string;
+    confidenceLevel?: string;
+    aiSuggestion?: string;
     userDecision?: string | null;
     userFeedback?: string | null;
     // AI Roles Model fields
@@ -124,8 +124,8 @@ export const AIAuditLogger = {
                 JSON.stringify(dataSourcesUsed || []),
                 aiRole,
                 policyLevel,
-                confidenceLevel,
-                aiSuggestion,
+                confidenceLevel || 'MEDIUM',
+                aiSuggestion || null,
                 userDecision || null,
                 userFeedback || null,
                 aiProjectRole || 'ADVISOR',

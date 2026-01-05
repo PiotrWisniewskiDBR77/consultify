@@ -8,7 +8,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import AssessmentAuditLogger from '../../../../src/utils/AssessmentAuditLogger.js';
+import {
+    AssessmentAuditLogger,
+    assessmentAuditLogger as loggerInstance,
+} from '../../../../src/utils/AssessmentAuditLogger.js';
 
 describe('AssessmentAuditLogger', () => {
     let mockDb: IDatabase;
@@ -16,29 +19,13 @@ describe('AssessmentAuditLogger', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-
-        mockDb = {
-            get: vi.fn(),
-            all: vi.fn(),
-            run: vi.fn((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                const dbObj = {
-                    ...mockDb,
-                    changes: 1,
-                    lastID: 1,
-                };
-                if (callback) {
-                    callback(null);
-                }
-                return dbObj;
-            }),
-            exec: vi.fn(),
-            serialize: vi.fn(),
-            close: vi.fn(),
-            query: vi.fn(),
-        } as unknown as IDatabase;
+        const mockDbRun = vi.fn().mockResolvedValue({ success: true, lastID: 1, changes: 1 });
 
         logger = new AssessmentAuditLogger();
-        logger.setDependencies({ db: mockDb });
+        logger.setDependencies({ dbRun: mockDbRun });
+
+        // Store for expectations
+        (logger as any)._mockDbRun = mockDbRun;
     });
 
     describe('log', () => {
@@ -57,7 +44,7 @@ describe('AssessmentAuditLogger', () => {
             const auditId = await logger.log(params);
 
             expect(auditId).toBeDefined();
-            expect(mockDb.run).toHaveBeenCalled();
+            expect((logger as any)._mockDbRun).toHaveBeenCalled();
         });
 
         it('should handle missing optional fields', async () => {
@@ -75,11 +62,7 @@ describe('AssessmentAuditLogger', () => {
         });
 
         it('should handle database errors', async () => {
-            (mockDb.run as ReturnType<typeof vi.fn>).mockImplementation(
-                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                    callback(new Error('Database error'));
-                },
-            );
+            (logger as any)._mockDbRun.mockResolvedValue({ success: false, error: 'Database error' });
 
             const params = {
                 userId: 'user-123',

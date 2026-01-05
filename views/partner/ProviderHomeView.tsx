@@ -37,27 +37,15 @@ const readinessStatus: ReadinessCardProps[] = [
 
 export const ProviderHomeView: React.FC = () => {
     const { setCurrentView } = useAppStore();
-    const {
-        trustProgression,
-        currentTrustPhase,
-        academyModules,
-        certifications,
-        loading,
-        completeAcademyModule,
-    } = usePartnerEcosystem();
+    const { trustProgression, currentTrustPhase, academyModules, certifications, loading, completeAcademyModule } =
+        usePartnerEcosystem();
 
-    const handleNavigate = useCallback(
-        (view: AppView) => () => setCurrentView(view),
-        [setCurrentView],
-    );
+    const handleNavigate = useCallback((view: AppView) => () => setCurrentView(view), [setCurrentView]);
 
-    const handleStartModule = useCallback(
-        (moduleId: string) => {
-            // In production, navigate to module or open modal
-            console.log('[Partner] Starting module:', moduleId);
-        },
-        [],
-    );
+    const handleStartModule = useCallback((moduleId: string) => {
+        // In production, navigate to module or open modal
+        console.log('[Partner] Starting module:', moduleId);
+    }, []);
 
     return (
         <SplitLayout
@@ -67,10 +55,7 @@ export const ProviderHomeView: React.FC = () => {
         >
             <div className="space-y-6 overflow-y-auto px-6 py-4">
                 {/* Trust Progression */}
-                <TrustProgressionIndicator
-                    trustProgression={trustProgression}
-                    currentPhase={currentTrustPhase}
-                />
+                <TrustProgressionIndicator trustProgression={trustProgression} currentPhase={currentTrustPhase} />
 
                 {/* Readiness Status Grid */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -87,7 +72,9 @@ export const ProviderHomeView: React.FC = () => {
                         </div>
                         <div>
                             <h3 className="font-semibold text-navy-900 dark:text-white">Checklista aktywacji</h3>
-                            <p className="text-xs text-slate-500">Ukończ wszystkie kroki, aby odblokować pełne funkcje</p>
+                            <p className="text-xs text-slate-500">
+                                Ukończ wszystkie kroki, aby odblokować pełne funkcje
+                            </p>
                         </div>
                     </div>
 
@@ -95,24 +82,38 @@ export const ProviderHomeView: React.FC = () => {
                         {onboardingSteps.map((step) => (
                             <li
                                 key={step.label}
-                                className={`flex items-center justify-between rounded-2xl border p-4 ${step.status === 'done'
-                                    ? 'border-emerald-100 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/5'
-                                    : 'border-slate-100 bg-slate-50/50 dark:border-white/5 dark:bg-navy-950/20'
-                                    }`}
+                                className={`flex items-center justify-between rounded-2xl border p-4 ${
+                                    step.status === 'done'
+                                        ? 'border-emerald-100 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/5'
+                                        : 'border-slate-100 bg-slate-50/50 dark:border-white/5 dark:bg-navy-950/20'
+                                }`}
                             >
                                 <span className="flex items-center gap-3">
                                     <CheckCircle2
                                         size={20}
-                                        className={step.status === 'done' ? 'text-emerald-500' : 'text-slate-300 dark:text-slate-600'}
+                                        className={
+                                            step.status === 'done'
+                                                ? 'text-emerald-500'
+                                                : 'text-slate-300 dark:text-slate-600'
+                                        }
                                     />
-                                    <span className={step.status === 'done' ? 'text-emerald-700 dark:text-emerald-400' : 'text-navy-900 dark:text-white'}>
+                                    <span
+                                        className={
+                                            step.status === 'done'
+                                                ? 'text-emerald-700 dark:text-emerald-400'
+                                                : 'text-navy-900 dark:text-white'
+                                        }
+                                    >
                                         {step.label}
                                     </span>
                                 </span>
-                                <span className={`rounded-full px-2 py-0.5 text-xs font-medium uppercase ${step.status === 'done'
-                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
-                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-                                    }`}>
+                                <span
+                                    className={`rounded-full px-2 py-0.5 text-xs font-medium uppercase ${
+                                        step.status === 'done'
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                                    }`}
+                                >
                                     {step.status}
                                 </span>
                             </li>
@@ -188,8 +189,6 @@ export const ProviderHomeView: React.FC = () => {
 // SUB-COMPONENTS
 // =============================================================================
 
-
-
 const ReadinessCard: React.FC<ReadinessCardProps> = ({ label, value, status }) => {
     const statusColors = {
         good: 'text-emerald-600 dark:text-emerald-400',
@@ -221,10 +220,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({ icon, title, descript
         </div>
         <h4 className="font-semibold text-navy-900 dark:text-white">{title}</h4>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{description}</p>
-        <button
-            onClick={onClick}
-            className="mt-4 text-sm font-semibold text-brand hover:underline"
-        >
+        <button onClick={onClick} className="mt-4 text-sm font-semibold text-brand hover:underline">
             {actionLabel} →
         </button>
     </div>

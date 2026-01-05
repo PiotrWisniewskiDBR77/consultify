@@ -14,7 +14,7 @@ import { fileURLToPath } from 'url';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 // Apply rate limiting
 const router = Router();
@@ -23,7 +23,7 @@ const router = Router();
 let DocumentService: any = null;
 
 try {
-    const documentModule = await import('../../services/documentService.js');
+    const documentModule = await import('../services/documentService.js');
     DocumentService = documentModule.default || documentModule;
 } catch {
     logger.warn('[Documents] DocumentService not available');
@@ -91,10 +91,10 @@ router.get(
         try {
             const { projectId } = req.params;
             const documents = await DocumentService.getProjectDocuments(projectId);
-            res.json(documents);
+            return res.json(documents);
         } catch (error: any) {
             logger.error('[Documents] Error fetching project documents:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -119,10 +119,10 @@ router.get(
             }
 
             const documents = await DocumentService.getUserDocuments(userId, organizationId);
-            res.json(documents);
+            return res.json(documents);
         } catch (error: any) {
             logger.error('[Documents] Error fetching user documents:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -152,10 +152,10 @@ router.get(
                 organizationId,
                 projectId as string | undefined,
             );
-            res.json(documents);
+            return res.json(documents);
         } catch (error: any) {
             logger.error('[Documents] Error fetching documents:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -185,10 +185,10 @@ router.get(
                 organizationId,
                 projectId as string | undefined,
             );
-            res.json(documents);
+            return res.json(documents);
         } catch (error: any) {
             logger.error('[Documents] Error fetching documents:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -210,10 +210,10 @@ router.get(
             if (!document) {
                 return res.status(404).json({ error: 'Document not found' });
             }
-            res.json(document);
+            return res.json(document);
         } catch (error: any) {
             logger.error('[Documents] Error fetching document:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -241,10 +241,10 @@ router.get(
                 return res.status(404).json({ error: 'File not found on server' });
             }
 
-            res.download(filePath, document.originalName || document.filename);
+            return res.download(filePath, document.originalName || document.filename);
         } catch (error: any) {
             logger.error('[Documents] Error downloading document:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -291,13 +291,13 @@ router.post(
                 tags: tags ? JSON.parse(tags) : [],
             });
 
-            res.status(201).json({
+            return res.status(201).json({
                 message: 'Document uploaded successfully',
                 document,
             });
         } catch (error: any) {
             logger.error('[Documents] Upload error:', error);
-            res.status(500).json({ error: error.message || 'Upload failed' });
+            return res.status(500).json({ error: error.message || 'Upload failed' });
         }
     }),
 );
@@ -327,13 +327,13 @@ router.put(
             }
 
             const document = await DocumentService.moveToProject(documentId, projectId, userId);
-            res.json({
+            return res.json({
                 message: 'Document moved to project',
                 document,
             });
         } catch (error: any) {
             logger.error('[Documents] Move error:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -362,10 +362,10 @@ router.delete(
                 return res.status(404).json({ error: 'Document not found or access denied' });
             }
 
-            res.json({ message: 'Document deleted' });
+            return res.json({ message: 'Document deleted' });
         } catch (error: any) {
             logger.error('[Documents] Delete error:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );

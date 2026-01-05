@@ -10,10 +10,10 @@
 import { Router } from 'express';
 
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 // Import the JS implementation for now (will be fully migrated later)
-// const module = await import('../../routes/aiPlaybooks.js');
-// const aiPlaybooksRoutesJS = module.default || module;
+const module = (await import('./aiPlaybooks.js')) as any;
+const aiPlaybooksRoutesJS = module.default || module;
 
 // Create router and apply JS routes
 const router = Router();
@@ -21,9 +21,6 @@ const router = Router();
 // Apply rate limiting
 router.use(aiRateLimiter);
 
-// Re-export the JS router (maintains backward compatibility)
-// The JS route file exports a router that we can use directly
-/*
 if (
     typeof aiPlaybooksRoutesJS === 'function' ||
     (aiPlaybooksRoutesJS && typeof aiPlaybooksRoutesJS.handle === 'function')
@@ -34,6 +31,5 @@ if (
     // Fallback or error
     logger.error('aiPlaybooks.js did not export a valid router');
 }
-*/
 
 export default router;

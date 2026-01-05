@@ -13,7 +13,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.ts';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
@@ -26,14 +26,14 @@ let UsageService: any = null;
 let stripe: any = null;
 
 try {
-    const tokenBillingModule = await import('../../services/tokenBillingService.js');
+    const tokenBillingModule = (await import('../services/TokenBillingService.js')) as any;
     TokenBillingService = tokenBillingModule.default || tokenBillingModule;
 } catch {
     logger.warn('[TokenBilling] TokenBillingService not available');
 }
 
 try {
-    const usageModule = await import('../../services/usageService.js');
+    const usageModule = (await import('../services/usageService.js')) as any;
     UsageService = usageModule.default || usageModule;
 } catch {
     logger.warn('[TokenBilling] UsageService not available');
@@ -42,7 +42,7 @@ try {
 // Initialize Stripe if configured
 if (process.env.STRIPE_SECRET_KEY) {
     try {
-        const stripeModule = await import('stripe');
+        const stripeModule = (await import('stripe')) as any;
         stripe = stripeModule.default(process.env.STRIPE_SECRET_KEY);
     } catch {
         logger.warn('[TokenBilling] Stripe not available');
@@ -68,10 +68,10 @@ router.get(
 
         try {
             const balance = await TokenBillingService.getBalance(userId);
-            res.json({ success: true, balance });
+            return res.json({ success: true, balance });
         } catch (error: any) {
             logger.error('Get balance error:', error);
-            res.status(500).json({ success: false, error: 'Failed to get balance' });
+            return res.status(500).json({ success: false, error: 'Failed to get balance' });
         }
     }),
 );
@@ -90,9 +90,9 @@ router.get(
 
         try {
             const packages = await TokenBillingService.getPackages();
-            res.json({ success: true, packages });
+            return res.json({ success: true, packages });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: 'Failed to get packages' });
+            return res.status(500).json({ success: false, error: 'Failed to get packages' });
         }
     }),
 );
@@ -120,9 +120,9 @@ router.get(
                 limit: parseInt(limit as string),
                 offset: parseInt(offset as string),
             });
-            res.json({ success: true, transactions });
+            return res.json({ success: true, transactions });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: 'Failed to get transactions' });
+            return res.status(500).json({ success: false, error: 'Failed to get transactions' });
         }
     }),
 );
@@ -146,9 +146,9 @@ router.get(
 
         try {
             const keys = await TokenBillingService.getUserApiKeys(userId);
-            res.json({ success: true, keys });
+            return res.json({ success: true, keys });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: 'Failed to get API keys' });
+            return res.status(500).json({ success: false, error: 'Failed to get API keys' });
         }
     }),
 );
@@ -182,10 +182,10 @@ router.post(
                 modelPreference,
                 organizationId: req.user?.organizationId,
             });
-            res.json({ success: true, key: result });
+            return res.json({ success: true, key: result });
         } catch (error: any) {
             logger.error('Add API key error:', error);
-            res.status(500).json({ success: false, error: 'Failed to add API key' });
+            return res.status(500).json({ success: false, error: 'Failed to add API key' });
         }
     }),
 );
@@ -209,9 +209,9 @@ router.delete(
 
         try {
             const result = await TokenBillingService.deleteUserApiKey(req.params.keyId, userId);
-            res.json({ success: true, ...result });
+            return res.json({ success: true, ...result });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: 'Failed to delete API key' });
+            return res.status(500).json({ success: false, error: 'Failed to delete API key' });
         }
     }),
 );
@@ -261,7 +261,7 @@ router.post(
                         bonusPercent: (pkg.bonus_percent || 0).toString(),
                     },
                 });
-                res.json({ success: true, checkoutUrl: session.url, sessionId: session.id });
+                return res.json({ success: true, checkoutUrl: session.url, sessionId: session.id });
             } else {
                 // Demo mode: directly credit tokens
                 if (!TokenBillingService?.creditTokens) {
@@ -273,11 +273,15 @@ router.post(
                     packageId,
                     organizationId: req.user?.organizationId,
                 });
-                res.json({ success: true, message: 'Tokens credited (demo mode)', tokens: pkg.tokens + bonusTokens });
+                return res.json({
+                    success: true,
+                    message: 'Tokens credited (demo mode)',
+                    tokens: pkg.tokens + bonusTokens,
+                });
             }
         } catch (error: any) {
             logger.error('Purchase error:', error);
-            res.status(500).json({ success: false, error: 'Purchase failed' });
+            return res.status(500).json({ success: false, error: 'Purchase failed' });
         }
     }),
 );
@@ -320,10 +324,10 @@ router.post(
                 });
             }
 
-            res.json({ received: true });
+            return res.json({ received: true });
         } catch (err: any) {
             logger.error('Webhook error:', err.message);
-            res.status(400).send(`Webhook Error: ${err.message}`);
+            return res.status(400).send(`Webhook Error: ${err.message}`);
         }
     }),
 );
@@ -343,9 +347,9 @@ router.get(
 
         try {
             const margins = await TokenBillingService.getMargins();
-            res.json({ success: true, margins });
+            return res.json({ success: true, margins });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: 'Failed to get margins' });
+            return res.status(500).json({ success: false, error: 'Failed to get margins' });
         }
     }),
 );
@@ -371,9 +375,9 @@ router.put(
                 minCharge,
                 isActive,
             });
-            res.json({ success: true, ...result });
+            return res.json({ success: true, ...result });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: 'Failed to update margin' });
+            return res.status(500).json({ success: false, error: 'Failed to update margin' });
         }
     }),
 );
@@ -394,9 +398,9 @@ router.get(
         try {
             const { startDate, endDate } = req.query;
             const analytics = await TokenBillingService.getRevenueAnalytics({ startDate, endDate });
-            res.json({ success: true, analytics });
+            return res.json({ success: true, analytics });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: 'Failed to get analytics' });
+            return res.status(500).json({ success: false, error: 'Failed to get analytics' });
         }
     }),
 );
@@ -420,10 +424,10 @@ router.get(
                 startDate as string | undefined,
                 endDate as string | undefined,
             );
-            res.json({ success: true, costs });
+            return res.json({ success: true, costs });
         } catch (error: any) {
             logger.error('Get costs error:', error);
-            res.status(500).json({ success: false, error: 'Failed to get operational costs' });
+            return res.status(500).json({ success: false, error: 'Failed to get operational costs' });
         }
     }),
 );
@@ -443,9 +447,9 @@ router.post(
 
         try {
             const result = await TokenBillingService.upsertPackage(req.body);
-            res.json({ success: true, package: result });
+            return res.json({ success: true, package: result });
         } catch (error: any) {
-            res.status(500).json({ success: false, error: 'Failed to save package' });
+            return res.status(500).json({ success: false, error: 'Failed to save package' });
         }
     }),
 );

@@ -11,7 +11,7 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, get as dbGet } from '../utils/DbPromise.ts';
+import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 
 // Apply rate limiting
 const router = Router();
@@ -29,10 +29,10 @@ router.use(verifyToken);
  */
 router.get(
     '/health',
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const orgId = req.user?.organizationId;
         if (!orgId) {
-            res.status(400).json({ error: 'Organization ID required' });
+            return res.status(400).json({ error: 'Organization ID required' });
             return;
         }
 
@@ -60,7 +60,7 @@ router.get(
 
         const taskRow = await dbGet<{ overdue_count: number }>(taskSql, [orgId]);
 
-        res.json({
+        return res.json({
             initiativesByStatus: rows,
             overdueTasks: taskRow ? taskRow.overdue_count : 0,
         });
@@ -73,10 +73,10 @@ router.get(
  */
 router.get(
     '/performance',
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const orgId = req.user?.organizationId;
         if (!orgId) {
-            res.status(400).json({ error: 'Organization ID required' });
+            return res.status(400).json({ error: 'Organization ID required' });
             return;
         }
 
@@ -94,7 +94,7 @@ router.get(
 
         const rows = await dbAll(sql, [orgId]);
 
-        res.json(rows);
+        return res.json(rows);
     }),
 );
 
@@ -104,10 +104,10 @@ router.get(
  */
 router.get(
     '/economics',
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    asyncHandler(async (req: AuthRequest, res: Response) => {
         const orgId = req.user?.organizationId;
         if (!orgId) {
-            res.status(400).json({ error: 'Organization ID required' });
+            return res.status(400).json({ error: 'Organization ID required' });
             return;
         }
 
@@ -137,7 +137,7 @@ router.get(
 
         const spendRow = await dbGet<{ actual_spend: number }>(spendSql, [orgId]);
 
-        res.json({
+        return res.json({
             ...row,
             actualSpend: spendRow ? spendRow.actual_spend : 0,
         });

@@ -3,7 +3,7 @@
  * MUTATION - Requires user approval before execution.
  */
 
-import * as DbPromise from '../../../utils/DbPromise.ts';
+import * as DbPromise from '../../../utils/DbPromise.js';
 
 type UpdateAssessmentScoreParams = {
     assessmentId: string;
