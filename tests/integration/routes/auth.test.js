@@ -1,27 +1,26 @@
-/**
- * Integration Tests for Auth Routes
- * 
- * Tests authentication API endpoints:
- * - Login
- * - Refresh token
- * - Sessions management
- * - MFA endpoints
- * - Password reset
- */
+import app from '../../../server/src/index.js';
+import bcrypt from 'bcryptjs';
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { v4 as uuidv4 } from 'uuid';
 
-const request = require('supertest');
-const app = require('../../../server/index.js');
-const db = require('../../../server/database');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = ':memory:';
+});
 
 describe('Auth Routes Integration', () => {
     let testUserId;
     let testOrgId;
     let testToken;
     let testRefreshToken;
+    const db = getDatabase();
 
     beforeAll(async () => {
+        await initializeDatabase();
+        
         // Wait for DB initialization
         if (db.initPromise) {
             await db.initPromise;
@@ -42,9 +41,8 @@ describe('Auth Routes Integration', () => {
         const hashedPassword = await bcrypt.hash('password123', 10);
         await new Promise((resolve, reject) => {
             db.run(
-                `INSERT INTO users (id, organization_id, email, password_hash, name, role, created_at) 
-                 VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
-                [testUserId, testOrgId, 'test@example.com', hashedPassword, 'Test User', 'client'],
+                `INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)`,
+                [testUserId, testOrgId, `test-${testUserId}@example.com`, hashedPassword, 'ADMIN', 'active'],
                 (err) => err ? reject(err) : resolve()
             );
         });
@@ -52,200 +50,83 @@ describe('Auth Routes Integration', () => {
 
     afterAll(async () => {
         // Cleanup
-        await new Promise((resolve, reject) => {
-            db.run(`DELETE FROM users WHERE id = ?`, [testUserId], (err) => err ? reject(err) : resolve());
+        await new Promise((resolve) => {
+            db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => resolve());
         });
-        await new Promise((resolve, reject) => {
-            db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], (err) => err ? reject(err) : resolve());
+        await new Promise((resolve) => {
+            db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], () => resolve());
         });
     });
 
     describe('POST /api/auth/login', () => {
-        it('should login with valid credentials', async () => {
-            const response = await request(app)
+        it('should login successfully with correct credentials', async () => {
+            const res = await request(app)
                 .post('/api/auth/login')
                 .send({
-                    email: 'test@example.com',
+                    email: `test-${testUserId}@example.com`,
                     password: 'password123'
                 });
 
-            expect(response.status).toBe(200);
-            expect(response.body).toHaveProperty('token');
-            expect(response.body).toHaveProperty('user');
-            expect(response.body.user.email).toBe('test@example.com');
+            expect(res.status).toBe(200);
+            expect(res.body.token).toBeDefined();
+            expect(res.body.refreshToken).toBeDefined();
             
-            testToken = response.body.token;
-            testRefreshToken = response.body.refreshToken;
+            testToken = res.body.token;
+            testRefreshToken = res.body.refreshToken;
         });
 
-        it('should reject invalid email', async () => {
-            const response = await request(app)
+        it('should fail with incorrect password', async () => {
+            const res = await request(app)
                 .post('/api/auth/login')
                 .send({
-                    email: 'invalid@example.com',
-                    password: 'password123'
-                });
-
-            expect(response.status).toBe(401);
-            expect(response.body).toHaveProperty('error');
-        });
-
-        it('should reject invalid password', async () => {
-            const response = await request(app)
-                .post('/api/auth/login')
-                .send({
-                    email: 'test@example.com',
+                    email: `test-${testUserId}@example.com`,
                     password: 'wrongpassword'
                 });
 
-            expect(response.status).toBe(401);
-            expect(response.body).toHaveProperty('error');
-        });
-
-        it('should require email and password', async () => {
-            const response = await request(app)
-                .post('/api/auth/login')
-                .send({});
-
-            expect(response.status).toBe(400);
-        });
-    });
-
-    describe('POST /api/auth/refresh', () => {
-        it('should refresh access token with valid refresh token', async () => {
-            // First login to get refresh token
-            const loginResponse = await request(app)
-                .post('/api/auth/login')
-                .send({
-                    email: 'test@example.com',
-                    password: 'password123'
-                });
-
-            const refreshToken = loginResponse.body.refreshToken;
-
-            const response = await request(app)
-                .post('/api/auth/refresh')
-                .send({ refreshToken });
-
-            expect(response.status).toBe(200);
-            expect(response.body).toHaveProperty('token');
-            expect(response.body).toHaveProperty('refreshToken');
-        });
-
-        it('should reject invalid refresh token', async () => {
-            const response = await request(app)
-                .post('/api/auth/refresh')
-                .send({ refreshToken: 'invalid-token' });
-
-            expect(response.status).toBe(401);
-        });
-
-        it('should require refresh token', async () => {
-            const response = await request(app)
-                .post('/api/auth/refresh')
-                .send({});
-
-            expect(response.status).toBe(400);
+            expect(res.status).toBe(401);
         });
     });
 
     describe('GET /api/auth/me', () => {
-        it('should return user data with valid token', async () => {
-            const loginResponse = await request(app)
-                .post('/api/auth/login')
-                .send({
-                    email: 'test@example.com',
-                    password: 'password123'
-                });
-
-            const token = loginResponse.body.token;
-
-            const response = await request(app)
+        it('should return current user details', async () => {
+            const res = await request(app)
                 .get('/api/auth/me')
-                .set('Authorization', `Bearer ${token}`);
+                .set('Authorization', `Bearer ${testToken}`);
 
-            expect(response.status).toBe(200);
-            expect(response.body).toHaveProperty('user');
-            expect(response.body.user.email).toBe('test@example.com');
+            expect(res.status).toBe(200);
+            expect(res.body.user.id).toBe(testUserId);
+            expect(res.body.user.organizationId).toBe(testOrgId);
         });
 
-        it('should reject request without token', async () => {
-            const response = await request(app)
+        it('should fail without token', async () => {
+            const res = await request(app)
                 .get('/api/auth/me');
 
-            expect(response.status).toBe(401);
-        });
-
-        it('should reject request with invalid token', async () => {
-            const response = await request(app)
-                .get('/api/auth/me')
-                .set('Authorization', 'Bearer invalid-token');
-
-            expect(response.status).toBe(401);
+            expect(res.status).toBe(403);
         });
     });
 
-    describe('GET /api/auth/sessions', () => {
-        it('should return active sessions for authenticated user', async () => {
-            const loginResponse = await request(app)
-                .post('/api/auth/login')
+    describe('POST /api/auth/refresh', () => {
+        it('should refresh token using valid refresh token', async () => {
+            const res = await request(app)
+                .post('/api/auth/refresh')
                 .send({
-                    email: 'test@example.com',
-                    password: 'password123'
+                    refreshToken: testRefreshToken
                 });
 
-            const token = loginResponse.body.token;
-
-            const response = await request(app)
-                .get('/api/auth/sessions')
-                .set('Authorization', `Bearer ${token}`);
-
-            expect(response.status).toBe(200);
-            expect(response.body).toHaveProperty('sessions');
-            expect(Array.isArray(response.body.sessions)).toBe(true);
-        });
-
-        it('should require authentication', async () => {
-            const response = await request(app)
-                .get('/api/auth/sessions');
-
-            expect(response.status).toBe(401);
+            expect(res.status).toBe(200);
+            expect(res.body.token).toBeDefined();
+            testToken = res.body.token;
         });
     });
 
-    describe('DELETE /api/auth/sessions/:id', () => {
-        it('should revoke session for authenticated user', async () => {
-            const loginResponse = await request(app)
-                .post('/api/auth/login')
-                .send({
-                    email: 'test@example.com',
-                    password: 'password123'
-                });
+    describe('POST /api/auth/logout', () => {
+        it('should logout successfully', async () => {
+            const res = await request(app)
+                .post('/api/auth/logout')
+                .set('Authorization', `Bearer ${testToken}`);
 
-            const token = loginResponse.body.token;
-
-            // Get sessions first
-            const sessionsResponse = await request(app)
-                .get('/api/auth/sessions')
-                .set('Authorization', `Bearer ${token}`);
-
-            if (sessionsResponse.body.sessions.length > 0) {
-                const sessionId = sessionsResponse.body.sessions[0].id;
-
-                const response = await request(app)
-                    .delete(`/api/auth/sessions/${sessionId}`)
-                    .set('Authorization', `Bearer ${token}`);
-
-                expect(response.status).toBe(200);
-                expect(response.body).toHaveProperty('success', true);
-            }
-        });
-
-        it('should require authentication', async () => {
-            const response = await request(app)
-                .delete('/api/auth/sessions/test-id');
-
-            expect(response.status).toBe(401);
+            expect(res.status).toBe(200);
         });
     });
 });

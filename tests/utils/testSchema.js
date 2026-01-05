@@ -1088,6 +1088,11 @@ export const TEST_SCHEMA = [
         error_message TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(report_id) REFERENCES admin_saved_reports(id) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS settings(
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`
 ];
 

@@ -1,6 +1,6 @@
-const request = require('supertest');
-const express = require('express');
-const demoGuard = require('../../server/middleware/demoGuard');
+import request from 'supertest';
+import express from 'express';
+import { demoGuard } from '../../server/src/middleware/demoGuard.middleware.js';
 
 describe('Demo Guard Middleware', () => {
     let app;

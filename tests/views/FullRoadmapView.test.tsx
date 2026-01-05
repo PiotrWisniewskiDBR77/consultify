@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FullRoadmapView } from '../../views/FullRoadmapView';
+import { FullRoadmapView } from '@/views/FullRoadmapView';
 
 // Mock dependencies
 vi.mock('react-i18next', () => ({
@@ -42,7 +42,7 @@ const mockInitiatives = [
     }
 ];
 
-vi.mock('../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: vi.fn(() => ({
         currentUser: { id: 'user-1', name: 'John' },
         fullSessionData: {
@@ -69,7 +69,7 @@ vi.mock('../../services/api', () => ({
     }
 }));
 
-vi.mock('../../components/SplitLayout', () => ({
+vi.mock('@/components/SplitLayout', () => ({
     SplitLayout: ({ children, title, subtitle, onSendMessage }: any) => (
         <div data-testid="split-layout">
             <div data-testid="layout-title">{title}</div>
@@ -85,7 +85,7 @@ vi.mock('../../components/SplitLayout', () => ({
     )
 }));
 
-vi.mock('../../components/workspaces/FullStep3Workspace', () => ({
+vi.mock('@/components/workspaces/FullStep3Workspace', () => ({
     FullStep3Workspace: ({ initiatives, onUpdate }: any) => (
         <div data-testid="step3-workspace">
             Workspace with {initiatives?.length || 0} initiatives
@@ -94,11 +94,11 @@ vi.mock('../../components/workspaces/FullStep3Workspace', () => ({
     )
 }));
 
-vi.mock('../../components/WorkloadChart', () => ({
+vi.mock('@/components/WorkloadChart', () => ({
     WorkloadChart: () => <div data-testid="workload-chart">Workload Chart</div>
 }));
 
-vi.mock('../../components/RoadmapSummary', () => ({
+vi.mock('@/components/RoadmapSummary', () => ({
     RoadmapSummary: ({ summary, isLoading }: any) => (
         <div data-testid="roadmap-summary">
             {isLoading ? 'Loading...' : summary?.summaryText || 'No summary'}
@@ -106,7 +106,7 @@ vi.mock('../../components/RoadmapSummary', () => ({
     )
 }));
 
-vi.mock('../../components/RebalanceModal', () => ({
+vi.mock('@/components/RebalanceModal', () => ({
     RebalanceModal: ({ isOpen, onClose }: any) => 
         isOpen ? (
             <div data-testid="rebalance-modal">
@@ -116,7 +116,7 @@ vi.mock('../../components/RebalanceModal', () => ({
         ) : null
 }));
 
-vi.mock('../../components/AIFeedbackButton', () => ({
+vi.mock('@/components/AIFeedbackButton', () => ({
     AIFeedbackButton: () => <button data-testid="ai-feedback">AI Feedback</button>
 }));
 
@@ -190,7 +190,7 @@ describe('FullRoadmapView', () => {
 
     describe('AI Chat', () => {
         it('sends message when chat is used', async () => {
-            const { useAppStore } = await import('../../store/useAppStore');
+            const { useAppStore } = await import('@/store/useAppStore');
             const mockAddChatMessage = vi.fn();
 
             (useAppStore as any).mockReturnValue({
@@ -241,7 +241,7 @@ describe('FullRoadmapView', () => {
 
     describe('Empty State', () => {
         it('handles empty initiatives', async () => {
-            const { useAppStore } = await import('../../store/useAppStore');
+            const { useAppStore } = await import('@/store/useAppStore');
 
             (useAppStore as any).mockReturnValue({
                 currentUser: { id: 'user-1' },

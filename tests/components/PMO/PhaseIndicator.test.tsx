@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { PhaseIndicator } from '../../components/PMO/PhaseIndicator';
+import { PhaseIndicator } from '@/components/PMO/PhaseIndicator';
 
 // Mock dependencies
 const mockPMOStore = {
@@ -16,19 +16,19 @@ const mockPMOStore = {
     projectName: 'Test Project'
 };
 
-vi.mock('../../../store/usePMOStore', () => ({
+vi.mock('@/store/usePMOStore', () => ({
     usePMOStore: vi.fn(() => mockPMOStore)
 }));
 
 describe('PhaseIndicator Component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValue(mockPMOStore);
+        vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValue(mockPMOStore);
     });
 
     describe('Loading State', () => {
         it('shows loading skeleton in compact mode', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 isLoading: true
             });
@@ -39,7 +39,7 @@ describe('PhaseIndicator Component', () => {
         });
 
         it('shows loading skeleton in full mode', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 isLoading: true
             });
@@ -52,7 +52,7 @@ describe('PhaseIndicator Component', () => {
 
     describe('Empty State', () => {
         it('returns null in compact mode when no phase', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: null
             });
@@ -62,7 +62,7 @@ describe('PhaseIndicator Component', () => {
         });
 
         it('shows "No project selected" in full mode when no phase', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: null
             });
@@ -112,7 +112,7 @@ describe('PhaseIndicator Component', () => {
 
     describe('Gate Status Colors', () => {
         it('applies amber color when gate is NOT_READY', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 gateStatus: 'NOT_READY'
             });
@@ -124,7 +124,7 @@ describe('PhaseIndicator Component', () => {
         });
 
         it('applies green color for Execution phase', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: 'Execution',
                 phaseNumber: 5,
@@ -138,7 +138,7 @@ describe('PhaseIndicator Component', () => {
         });
 
         it('applies purple color for early phases when ready', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: 'Context',
                 phaseNumber: 1,
@@ -154,7 +154,7 @@ describe('PhaseIndicator Component', () => {
 
     describe('Status Icons', () => {
         it('shows AlertTriangle when gate NOT_READY', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 gateStatus: 'NOT_READY'
             });
@@ -166,7 +166,7 @@ describe('PhaseIndicator Component', () => {
         });
 
         it('shows CheckCircle2 for Execution+ phases', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: 'Execution',
                 phaseNumber: 5,
@@ -180,7 +180,7 @@ describe('PhaseIndicator Component', () => {
         });
 
         it('shows Target for early phases', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: 'Context',
                 phaseNumber: 1,
@@ -196,7 +196,7 @@ describe('PhaseIndicator Component', () => {
 
     describe('Progress Dots', () => {
         it('marks completed phases as green', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: 'Initiatives',
                 phaseNumber: 3
@@ -228,7 +228,7 @@ describe('PhaseIndicator Component', () => {
 
     describe('Background Colors', () => {
         it('applies amber background when NOT_READY', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 gateStatus: 'NOT_READY'
             });
@@ -240,7 +240,7 @@ describe('PhaseIndicator Component', () => {
         });
 
         it('applies green background for Execution+', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: 'Execution',
                 phaseNumber: 5,
@@ -254,7 +254,7 @@ describe('PhaseIndicator Component', () => {
         });
 
         it('applies purple background for early phases', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: 'Context',
                 phaseNumber: 1,

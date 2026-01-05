@@ -1,8 +1,7 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { TaskCard } from '../../components/TaskCard';
-import { Task, TaskStatus } from '../../types';
+import { TaskCard } from '@/components/TaskCard';
+import { Task, TaskStatus } from '@/types';
 
 describe('Component Test: TaskCard', () => {
     const mockTask: Task = {
@@ -51,7 +50,7 @@ describe('Component Test: TaskCard', () => {
                 id: 'user-1',
                 firstName: 'John',
                 lastName: 'Doe',
-`            },`
+            },
         };
 
         render(<TaskCard task={taskWithAssignee} onClick={vi.fn()} />);
@@ -107,4 +106,3 @@ describe('Component Test: TaskCard', () => {
         });
     });
 });
-

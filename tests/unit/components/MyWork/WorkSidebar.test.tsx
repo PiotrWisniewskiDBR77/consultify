@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { WorkSidebar } from '../../../../components/MyWork/WorkSidebar';
+import { WorkSidebar } from '@/components/MyWork/WorkSidebar';
 
 // Mock i18next
 vi.mock('react-i18next', () => ({

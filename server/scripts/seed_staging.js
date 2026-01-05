@@ -3,7 +3,7 @@
  * Usage: node scripts/seed_staging.js
  */
 
-import { v4: uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import db from '../database.js';
 import bcrypt from 'bcrypt';
 

@@ -2,18 +2,18 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DecisionsList } from '../../../../components/MyWork/DecisionsList';
-import { Api } from '../../../../services/api';
+import { DecisionsList } from '@/components/MyWork/DecisionsList';
+import { Api } from '@/services/api';
 
 // Mock dependencies
-vi.mock('../../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         get: vi.fn(),
     }
 }));
 
 const mockUseAppStore = vi.fn();
-vi.mock('../../../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: (selector: any) => mockUseAppStore(selector)
 }));
 

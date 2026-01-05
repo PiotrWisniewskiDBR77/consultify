@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { VersionHistory } from '../../../../components/Reports/Management/VersionHistory';
+import { VersionHistory } from '../@/components/Reports/Management/VersionHistory';
 
 const mockVersions = [
     { id: 'v1', version: 1, createdAt: '2025-12-01T10:00:00Z', createdBy: 'John', status: 'DRAFT', changeSummary: 'Initial draft' },

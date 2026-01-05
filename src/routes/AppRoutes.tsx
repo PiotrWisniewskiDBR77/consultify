@@ -5,6 +5,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
@@ -209,39 +211,43 @@ export const AppRoutes: React.FC = () => {
                         }
                     />
 
-                    {/* Context Builder with nested routes */}
+                    {/* Context Builder with nested routes - Error Boundary */}
                     <Route
                         path={`${ROUTES.CONTEXT_BUILDER.ROOT}/*`}
                         element={
-                            <AnimationWrapper variant="slideUp">
-                                <Routes>
-                                    <Route index element={<ContextBuilderView initialTab={1} />} />
-                                    <Route path="profile" element={<ContextBuilderView initialTab={1} />} />
-                                    <Route path="goals" element={<ContextBuilderView initialTab={2} />} />
-                                    <Route path="challenges" element={<ContextBuilderView initialTab={3} />} />
-                                    <Route path="megatrends" element={<ContextBuilderView initialTab={4} />} />
-                                    <Route path="strategy" element={<ContextBuilderView initialTab={5} />} />
-                                </Routes>
-                            </AnimationWrapper>
+                            <RouteErrorBoundary>
+                                <AnimationWrapper variant="slideUp">
+                                    <Routes>
+                                        <Route index element={<ContextBuilderView initialTab={1} />} />
+                                        <Route path="profile" element={<ContextBuilderView initialTab={1} />} />
+                                        <Route path="goals" element={<ContextBuilderView initialTab={2} />} />
+                                        <Route path="challenges" element={<ContextBuilderView initialTab={3} />} />
+                                        <Route path="megatrends" element={<ContextBuilderView initialTab={4} />} />
+                                        <Route path="strategy" element={<ContextBuilderView initialTab={5} />} />
+                                    </Routes>
+                                </AnimationWrapper>
+                            </RouteErrorBoundary>
                         }
                     />
 
-                    {/* Assessment with nested framework routes */}
+                    {/* Assessment with nested framework routes - Error Boundary */}
                     <Route
                         path={`${ROUTES.ASSESSMENT.ROOT}/*`}
                         element={
-                            <AnimationWrapper variant="fade">
-                                <Routes>
-                                    <Route index element={<AssessmentHubDashboard organizationId={currentUser?.organizationId || ''} projectId="default" />} />
-                                    <Route path="drd" element={<AssessmentModuleHub framework="DRD" />} />
-                                    <Route path="siri" element={<AssessmentModuleHub framework="SIRI" />} />
-                                    <Route path="adma" element={<AssessmentModuleHub framework="ADMA" />} />
-                                    <Route path="cmmi" element={<AssessmentModuleHub framework="CMMI" />} />
-                                    <Route path="lean" element={<AssessmentModuleHub framework="LEAN" />} />
-                                    <Route path="overview" element={<AssessmentHubDashboard organizationId={currentUser?.organizationId || ''} projectId="default" />} />
-                                    <Route path="summary" element={<AssessmentHubDashboard organizationId={currentUser?.organizationId || ''} projectId="default" />} />
-                                </Routes>
-                            </AnimationWrapper>
+                            <RouteErrorBoundary>
+                                <AnimationWrapper variant="fade">
+                                    <Routes>
+                                        <Route index element={<AssessmentHubDashboard organizationId={currentUser?.organizationId || ''} projectId="default" />} />
+                                        <Route path="drd" element={<AssessmentModuleHub framework="DRD" />} />
+                                        <Route path="siri" element={<AssessmentModuleHub framework="SIRI" />} />
+                                        <Route path="adma" element={<AssessmentModuleHub framework="ADMA" />} />
+                                        <Route path="cmmi" element={<AssessmentModuleHub framework="CMMI" />} />
+                                        <Route path="lean" element={<AssessmentModuleHub framework="LEAN" />} />
+                                        <Route path="overview" element={<AssessmentHubDashboard organizationId={currentUser?.organizationId || ''} projectId="default" />} />
+                                        <Route path="summary" element={<AssessmentHubDashboard organizationId={currentUser?.organizationId || ''} projectId="default" />} />
+                                    </Routes>
+                                </AnimationWrapper>
+                            </RouteErrorBoundary>
                         }
                     />
 
@@ -258,31 +264,39 @@ export const AppRoutes: React.FC = () => {
                     <Route path={ROUTES.KPI_OKR} element={<AnimationWrapper variant="slideUp"><KpiOkrView /></AnimationWrapper>} />
                     <Route path={ROUTES.BENEFITS} element={<AnimationWrapper variant="slideUp"><BenefitsRealizationView /></AnimationWrapper>} />
 
-                    {/* Settings with nested routes */}
+                    {/* Settings with nested routes - Protected & Error Boundary */}
                     <Route
                         path={`${ROUTES.SETTINGS.ROOT}/*`}
                         element={
-                            <AnimationWrapper variant="fade">
-                                <SettingsView
-                                    currentUser={currentUser}
-                                    onUpdateUser={(updates) => setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)}
-                                    theme={theme as 'light' | 'dark' | 'system'}
-                                    toggleTheme={toggleTheme}
-                                />
-                            </AnimationWrapper>
+                            <ProtectedRoute requireAuth={true}>
+                                <RouteErrorBoundary>
+                                    <AnimationWrapper variant="fade">
+                                        <SettingsView
+                                            currentUser={currentUser}
+                                            onUpdateUser={(updates) => setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)}
+                                            theme={theme as 'light' | 'dark' | 'system'}
+                                            toggleTheme={toggleTheme}
+                                        />
+                                    </AnimationWrapper>
+                                </RouteErrorBoundary>
+                            </ProtectedRoute>
                         }
                     />
 
-                    {/* Admin with nested routes */}
+                    {/* Admin with nested routes - Protected (ADMIN role) & Error Boundary */}
                     <Route
                         path={`${ROUTES.ADMIN.ROOT}/*`}
                         element={
-                            <AnimationWrapper variant="fade">
-                                <AdminView
-                                    currentUser={currentUser}
-                                    onNavigate={(view) => setCurrentView(view as AppView)}
-                                />
-                            </AnimationWrapper>
+                            <ProtectedRoute requiredRole="ADMIN">
+                                <RouteErrorBoundary>
+                                    <AnimationWrapper variant="fade">
+                                        <AdminView
+                                            currentUser={currentUser}
+                                            onNavigate={(view) => setCurrentView(view as AppView)}
+                                        />
+                                    </AnimationWrapper>
+                                </RouteErrorBoundary>
+                            </ProtectedRoute>
                         }
                     />
 

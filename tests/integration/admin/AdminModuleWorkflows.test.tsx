@@ -5,9 +5,9 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Import components
-import { AdminLayout } from '../../../components/admin/AdminLayout';
-import { AdminSidebar, AdminSection } from '../../../components/admin/AdminSidebar';
-import { EnhancedDataTable } from '../../../components/admin/shared/EnhancedDataTable';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AdminSidebar, AdminSection } from '@/components/admin/AdminSidebar';
+import { EnhancedDataTable } from '@/components/admin/shared/EnhancedDataTable';
 
 /**
  * Admin Module Integration Tests

@@ -35,7 +35,7 @@ export function ResetPasswordView() {
             await Api.resetPassword(token, newPassword);
             setSuccess(true);
             setTimeout(() => navigate('/login'), 2000);
-        } catch (err: any) {
+        } catch (err: unknown) {
             setError(err.message || 'Failed to reset password. Token may be expired.');
         } finally {
             setLoading(false);

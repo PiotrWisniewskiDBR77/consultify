@@ -5,10 +5,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { SuperAdminMetricsView } from '../../../views/superadmin/SuperAdminMetricsView';
-import { Api } from '../../../services/api';
+import { Api } from '@/services/api';
 
 // Mock API
-vi.mock('../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         getMetricsFunnels: vi.fn(),
         getMetricsWarnings: vi.fn(),

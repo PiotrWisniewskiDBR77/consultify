@@ -5,11 +5,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BioAboutSection } from '../../components/settings/BioAboutSection';
-import { Api } from '../../../services/api';
+import { BioAboutSection } from '@/components/settings/BioAboutSection';
+import { Api } from '@/services/api';
 
 // Mock API
-vi.mock('../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         get: vi.fn(),
         put: vi.fn()

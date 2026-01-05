@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AlertService from '../../../../server/services/alertService.js';
-import TaskAssignmentService from '../../../../server/services/taskAssignmentService.js';
+import AlertService from '../../../../server/src/services/alertService.js';
+import TaskAssignmentService from '../../../../server/src/services/taskAssignmentService.js';
 import DbPromise from '../../../../server/src/utils/DbPromise';
 
 // Mock dependencies

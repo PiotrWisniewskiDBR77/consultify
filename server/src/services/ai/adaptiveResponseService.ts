@@ -1,14 +1,27 @@
 /**
- * Adaptiveresponse Service
+ * Adaptive Response Service
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Stub implementation Replacing broken lazy-loader
  */
+import logger from '../../utils/Logger.js';
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
+class AdaptiveResponseService {
+    async generateResponse(context: any) {
+        logger.warn('[AdaptiveResponseService] generateResponse called on stub');
+        return "This is a stubbed adaptive response.";
+    }
 
-// Lazy load the JS service module
-const loadAdaptiveresponse = createCachedLazyService('../../ai/adaptiveResponseService.js');
+    async analyzeFeedback(feedback: any) {
+        logger.warn('[AdaptiveResponseService] analyzeFeedback called on stub');
+        return { analyzed: true };
+    }
 
-// Export default instance (for backward compatibility)
-export default loadAdaptiveresponse();
+    async adaptTone(content: string, tone: string) {
+        logger.warn('[AdaptiveResponseService] adaptTone called on stub');
+        return content;
+    }
+}
+
+export const adaptiveResponseService = new AdaptiveResponseService();
+export default adaptiveResponseService;

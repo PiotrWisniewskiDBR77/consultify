@@ -269,14 +269,14 @@ describe('User Experience Verification', () => {
 
     describe('5.1 Feedback Integration', () => {
         test('UnifiedChatPanel should import InlineResponseFeedback', () => {
-            const panelPath = path.join(__dirname, '../../components/AIChat/UnifiedChatPanel.tsx');
+            const panelPath = path.join(__dirname, '@/components/AIChat/UnifiedChatPanel.tsx');
             const content = fs.readFileSync(panelPath, 'utf8');
 
             expect(content).toContain('InlineResponseFeedback');
         });
 
         test('UnifiedChatPanel should have feedback handling', () => {
-            const panelPath = path.join(__dirname, '../../components/AIChat/UnifiedChatPanel.tsx');
+            const panelPath = path.join(__dirname, '@/components/AIChat/UnifiedChatPanel.tsx');
             const content = fs.readFileSync(panelPath, 'utf8');
 
             expect(content.includes('handleFeedback') || content.includes('onFeedback') || content.includes('submitFeedback')).toBe(true);
@@ -330,14 +330,14 @@ describe('User Experience Verification', () => {
 
     describe('5.6 Pending Actions Indicator', () => {
         test('should have PendingActionsIndicator component', () => {
-            const componentPath = path.join(__dirname, '../../components/AIChat/PendingActionsIndicator.tsx');
+            const componentPath = path.join(__dirname, '@/components/AIChat/PendingActionsIndicator.tsx');
             expect(fs.existsSync(componentPath)).toBe(true);
         });
     });
 
     describe('5.7 Response Quality Indicator', () => {
         test('should have ResponseQualityIndicator component', () => {
-            const componentPath = path.join(__dirname, '../../components/AIChat/ResponseQualityIndicator.tsx');
+            const componentPath = path.join(__dirname, '@/components/AIChat/ResponseQualityIndicator.tsx');
             expect(fs.existsSync(componentPath)).toBe(true);
         });
     });

@@ -24,6 +24,11 @@ export default {
         },
         extend: {
             colors: {
+                border: "hsl(var(--border))",
+                input: "hsl(var(--input))",
+                ring: "hsl(var(--ring))",
+                background: "hsl(var(--background))",
+                foreground: "hsl(var(--foreground))",
                 // ========================================
                 // DBR77 COLOR SYSTEM STANDARD
                 // See: docs/00_foundation/COLOR_SYSTEM_STANDARD.md

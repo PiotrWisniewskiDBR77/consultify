@@ -5,9 +5,9 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { useConversationStore } from '../../store/useConversationStore';
-import { AppView } from '../../types';
-import { createWorkspaceContext, getDefaultWorkspaceType } from '../../types/workspace';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
+import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 
 // Mock localStorage
 const localStorageMock = (() => {

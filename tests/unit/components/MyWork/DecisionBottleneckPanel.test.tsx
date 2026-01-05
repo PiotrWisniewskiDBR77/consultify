@@ -2,18 +2,18 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DecisionBottleneckPanel } from '../../../../components/MyWork/DecisionBottleneckPanel';
-import { Api } from '../../../../services/api';
-import { useAppStore } from '../../../../store/useAppStore';
+import { DecisionBottleneckPanel } from '@/components/MyWork/DecisionBottleneckPanel';
+import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 
 // Mock services
-vi.mock('../../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         get: vi.fn()
     }
 }));
 
-vi.mock('../../../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: vi.fn()
 }));
 

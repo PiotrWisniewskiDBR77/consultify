@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { parseArtifactsFromResponse, createArtifact } from '../../../store/useArtifactsStore';
-import { Artifact } from '../../../types';
+import { parseArtifactsFromResponse, createArtifact } from '@/store/useArtifactsStore';
+import { Artifact } from '@/types';
 
 describe('Artifacts Integration', () => {
   describe('parseArtifactsFromResponse', () => {

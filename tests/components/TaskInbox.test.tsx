@@ -8,10 +8,10 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { TaskInbox } from '../../components/MyWork/TaskInbox';
-import { Api } from '../../services/api';
+import { TaskInbox } from '@/components/MyWork/TaskInbox';
+import { Api } from '@/services/api';
 
-vi.mock('../../services/api');
+vi.mock('@/services/api');
 vi.mock('react-hot-toast', () => ({
     default: {
         success: vi.fn(),

@@ -2,14 +2,14 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { MyWorkView } from '../../../views/MyWorkView';
+import { MyWorkView } from '@/views/MyWorkView';
 
 // Mock child components
-vi.mock('../../../components/SplitLayout', () => ({
+vi.mock('@/components/SplitLayout', () => ({
     SplitLayout: ({ children, title }: any) => <div data-testid="split-layout"><h3>{title}</h3>{children}</div>
 }));
 
-vi.mock('../../../components/MyWork/WorkCenter', () => ({
+vi.mock('@/components/MyWork/WorkCenter', () => ({
     WorkCenter: ({ onCreateTask }: any) => (
         <div data-testid="work-center">
             <button onClick={onCreateTask}>Create Task</button>
@@ -17,11 +17,11 @@ vi.mock('../../../components/MyWork/WorkCenter', () => ({
     )
 }));
 
-vi.mock('../../../components/MyWork/NotificationsHub', () => ({
+vi.mock('@/components/MyWork/NotificationsHub', () => ({
     NotificationsHub: () => <div data-testid="notifications-hub">Notifications</div>
 }));
 
-vi.mock('../../../components/MyWork/TaskDetailModal', () => ({
+vi.mock('@/components/MyWork/TaskDetailModal', () => ({
     TaskDetailModal: ({ isOpen, onClose }: any) => (
         isOpen ? <div data-testid="task-modal"><button onClick={onClose}>Close</button></div> : null
     )

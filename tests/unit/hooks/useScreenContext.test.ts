@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
-import { useScreenContext } from '../../../hooks/useScreenContext';
+import { useScreenContext } from '../@/hooks/useScreenContext';
 import { useAIContext } from '../../../contexts/AIContext';
 
 vi.mock('../../../contexts/AIContext');

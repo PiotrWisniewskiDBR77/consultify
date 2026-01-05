@@ -3,18 +3,18 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import RevenueModule from '../../../views/superadmin/RevenueModule';
+import RevenueModule from '@/views/superadmin/RevenueModule';
 
 // Mock child components
-vi.mock('../../../views/superadmin/BillingCenterView', () => ({
+vi.mock('@/views/superadmin/BillingCenterView', () => ({
     BillingCenterView: () => <div data-testid="billing-view">Billing Content</div>
 }));
 
-vi.mock('../../../views/superadmin/InvoiceCenterView', () => ({
+vi.mock('@/views/superadmin/InvoiceCenterView', () => ({
     InvoiceCenterView: () => <div data-testid="invoices-view">Invoices Content</div>
 }));
 
-vi.mock('../../../services/api', () => ({
+vi.mock('../../services/api', () => ({
     Api: {
         get: vi.fn().mockResolvedValue({}),
         getTasks: vi.fn().mockResolvedValue([]),

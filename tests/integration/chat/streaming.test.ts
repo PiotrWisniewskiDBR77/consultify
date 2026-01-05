@@ -4,18 +4,18 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useAIStream } from '../../../hooks/useAIStream';
-import { Api } from '../../../services/api';
+import { useAIStream } from '../@/hooks/useAIStream';
+import { Api } from '../../services/api';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useAppStore } from '../../../store/useAppStore';
-import { useArtifactsStore, parseArtifactsFromResponse } from '../../../store/useArtifactsStore';
+import { useAppStore } from '@/store/useAppStore';
+import { useArtifactsStore, parseArtifactsFromResponse } from '@/store/useArtifactsStore';
 
 // Mock stores
-vi.mock('../../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
   useAppStore: vi.fn()
 }));
 
-vi.mock('../../../store/useArtifactsStore', () => ({
+vi.mock('@/store/useArtifactsStore', () => ({
   useArtifactsStore: vi.fn(),
   parseArtifactsFromResponse: vi.fn(() => [])
 }));

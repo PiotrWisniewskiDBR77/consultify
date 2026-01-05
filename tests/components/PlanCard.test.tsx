@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { PlanCard } from '../../components/billing/PlanCard';
+import { PlanCard } from '@/components/billing/PlanCard';
 
 describe('Component Test: PlanCard', () => {
     const mockPlan = {

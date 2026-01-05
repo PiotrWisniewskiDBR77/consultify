@@ -8,7 +8,7 @@ describe('ConnectorRegistry', () => {
 
     beforeEach(async () => {
         vi.resetModules();
-        connectorRegistry = require('../../server/services/connectorRegistry');
+        connectorRegistry = require('../../server/services/connectorRegistry.cjs');
     });
 
     describe('getAllConnectors', () => {

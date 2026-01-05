@@ -2,19 +2,19 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { TaskDropdown } from '../../../components/TaskDropdown';
-import { Api } from '../../../services/api';
-import { useAppStore } from '../../../store/useAppStore';
+import { TaskDropdown } from '@/components/TaskDropdown';
+import { Api } from '../../services/api';
+import { useAppStore } from '@/store/useAppStore';
 
 // Mock dependencies
-vi.mock('../../../services/api', () => ({
+vi.mock('../../services/api', () => ({
     Api: {
         getTasks: vi.fn()
     }
 }));
 
 const mockSetCurrentView = vi.fn();
-vi.mock('../../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: () => ({
         setCurrentView: mockSetCurrentView
     })

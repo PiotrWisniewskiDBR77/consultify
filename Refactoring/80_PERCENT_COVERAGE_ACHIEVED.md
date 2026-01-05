@@ -112,3 +112,4 @@
 **Następny cel: Component integration testing + Visual regression + 85% coverage!**
 
 
+

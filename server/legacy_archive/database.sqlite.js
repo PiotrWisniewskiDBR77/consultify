@@ -17,32 +17,53 @@ const __dirname = path.dirname(__filename);
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
-const dbPath = path.resolve(__dirname, 'consultify.db');
+console.log('[Legacy DB] database.sqlite.js module LOADED. SQLITE_PATH:', process.env.SQLITE_PATH);
+const dbPath = process.env.SQLITE_PATH || path.resolve(__dirname, 'consultify.db');
+const GLOBAL_KEY = '__CONSULTIFY_SQLITE_INSTANCE__';
 
-let db;
+/**
+ * Get or create the SQLite database instance
+ */
+export function getDatabaseInstance() {
+    let db = process[GLOBAL_KEY];
+    if (!db) db = global[GLOBAL_KEY];
 
-// Allow bypassing real DB connection for Unit Tests
-if (process.env.MOCK_DB === 'true') {
-    console.log('Using MOCKED DB (No connection)');
-    db = {
-        prepare: () => ({ run: () => { }, finalize: () => { } }),
-        run: () => { },
-        all: () => { },
-        get: () => { },
-        serialize: (cb) => cb && cb()
-    };
-} else {
-    db = new sqlite3.Database(dbPath, (err) => {
-        if (err) {
-            console.error('Error opening database', err.message);
-        } else {
-            console.log('Connected to the SQLite database.');
-            initDb();
-        }
-    });
+    if (db) {
+        // console.log('[SQLite] Reusing existing global instance');
+        return db;
+    }
+
+    console.log('[SQLite] Connecting. PID:', process.pid, 'CWD:', process.cwd(), 'Path:', dbPath);
+
+    // Allow bypassing real DB connection for Unit Tests
+    if (process.env.MOCK_DB === 'true') {
+        console.log('Using MOCKED DB (No connection)');
+        db = {
+            prepare: () => ({ run: () => { }, finalize: () => { } }),
+            run: () => { },
+            all: () => { },
+            get: () => { },
+            serialize: (cb) => cb && cb()
+        };
+    } else {
+        db = new sqlite3.Database(dbPath, (err) => {
+            if (err) {
+                console.error('Error opening database', err.message);
+            } else {
+                console.log('Connected to the SQLite database.');
+                if (process.env.NODE_ENV !== 'test') {
+                    initDb(db);
+                }
+            }
+        });
+    }
+
+    process[GLOBAL_KEY] = db;
+    global[GLOBAL_KEY] = db;
+    return db;
 }
 
-function initDb() {
+export function initDb(db) {
     db.serialize(() => {
         // Organizations Table (New)
         db.run(`CREATE TABLE IF NOT EXISTS organizations (
@@ -71,10 +92,14 @@ function initDb() {
             role TEXT, 
             status TEXT DEFAULT 'active',
             avatar_url TEXT,
+            impersonator_id TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             last_login DATETIME,
             FOREIGN KEY(organization_id) REFERENCES organizations(id)
         )`);
+
+        // Migrations
+        db.run(`ALTER TABLE users ADD COLUMN impersonator_id TEXT`, (err) => { });
 
         // Sessions Table (Linked to user_id and optionally project_id)
         db.run(`CREATE TABLE IF NOT EXISTS sessions(
@@ -97,15 +122,27 @@ function initDb() {
 
         // Projects Table
         db.run(`CREATE TABLE IF NOT EXISTS projects(
-                                                        id TEXT PRIMARY KEY,
-                                                        organization_id TEXT,
-                                                        name TEXT,
-                                                        context_data TEXT,
-                                                        status TEXT DEFAULT 'active',
-                                                        owner_id TEXT,
-                                                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                                        FOREIGN KEY(organization_id) REFERENCES organizations(id)
-                                                    )`);
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            status TEXT DEFAULT 'active',
+            start_date TEXT,
+            end_date TEXT,
+            budget REAL,
+            currency TEXT DEFAULT 'USD',
+            lead_id TEXT,
+            priority TEXT DEFAULT 'medium',
+            phase TEXT DEFAULT 'planning',
+            settings TEXT,
+            metadata TEXT,
+            context_data TEXT,
+            owner_id TEXT,
+            rag_enabled INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id)
+        )`);
 
         // Migration: Add context_data to projects if it doesn't exist
         db.run(`ALTER TABLE projects ADD COLUMN context_data TEXT`, (err) => { });
@@ -188,6 +225,72 @@ function initDb() {
         )`);
 
         // Custom Workflow Statuses per Organization
+        db.run(`CREATE TABLE IF NOT EXISTS projects (
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    status TEXT DEFAULT 'active',
+                    start_date TEXT,
+                    end_date TEXT,
+                    budget REAL,
+                    currency TEXT DEFAULT 'USD',
+                    lead_id TEXT,
+                    priority TEXT DEFAULT 'medium',
+                    phase TEXT DEFAULT 'planning',
+                    settings TEXT,
+                    metadata TEXT,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    updated_at TEXT DEFAULT (datetime('now')),
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id)
+                )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS tasks (
+                    id TEXT PRIMARY KEY,
+                    project_id TEXT,
+                    organization_id TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    status TEXT DEFAULT 'todo',
+                    priority TEXT DEFAULT 'medium',
+                    assignee_id TEXT,
+                    reporter_id TEXT,
+                    due_date TEXT,
+                    estimated_hours REAL,
+                    checklist TEXT DEFAULT '[]',
+                    attachments TEXT DEFAULT '[]',
+                    tags TEXT DEFAULT '[]',
+                    task_type TEXT DEFAULT 'task',
+                    initiative_id TEXT,
+                    why TEXT,
+                    expected_outcome TEXT,
+                    decision_impact TEXT,
+                    evidence_required TEXT,
+                    strategic_contribution TEXT,
+                    roadmap_initiative_id TEXT,
+                    kpi_id TEXT,
+                    raid_item_id TEXT,
+                    assignees TEXT DEFAULT '[]',
+                    progress INTEGER DEFAULT 0,
+                    blocked_reason TEXT,
+                    sla_hours INTEGER,
+                    sla_due_at TEXT,
+                    escalation_level INTEGER DEFAULT 0,
+                    escalated_to_id TEXT,
+                    last_escalated_at TEXT,
+                    custom_status_id TEXT,
+                    step_phase TEXT,
+                    budget_allocated REAL,
+                    budget_spent REAL,
+                    risk_rating TEXT,
+                    acceptance_criteria TEXT,
+                    blocking_issues TEXT,
+                    completed_at TEXT,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    updated_at TEXT DEFAULT (datetime('now')),
+                    FOREIGN KEY(organization_id) REFERENCES organizations(id),
+                    FOREIGN KEY(project_id) REFERENCES projects(id)
+                )`);
         db.run(`CREATE TABLE IF NOT EXISTS custom_statuses (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
@@ -206,19 +309,43 @@ function initDb() {
             organization_id TEXT NOT NULL,
             title TEXT NOT NULL,
             description TEXT,
-            status TEXT DEFAULT 'todo', -- todo, in_progress, review, done, blocked, on_hold
-            priority TEXT DEFAULT 'medium', -- low, medium, high, urgent
+            status TEXT DEFAULT 'todo',
+            priority TEXT DEFAULT 'medium',
             assignee_id TEXT,
             reporter_id TEXT,
             due_date DATETIME,
             estimated_hours REAL,
-            checklist TEXT, -- JSON array of {id, text, completed}
-            attachments TEXT, -- JSON array of {id, name, url}
-            tags TEXT, -- JSON array of strings
+            checklist TEXT DEFAULT '[]',
+            attachments TEXT DEFAULT '[]',
+            tags TEXT DEFAULT '[]',
+            task_type TEXT DEFAULT 'task',
+            initiative_id TEXT,
+            why TEXT,
+            expected_outcome TEXT,
+            decision_impact TEXT,
+            evidence_required TEXT,
+            strategic_contribution TEXT,
+            roadmap_initiative_id TEXT,
+            kpi_id TEXT,
+            raid_item_id TEXT,
+            assignees TEXT DEFAULT '[]',
+            progress INTEGER DEFAULT 0,
+            blocked_reason TEXT,
+            sla_hours INTEGER,
+            sla_due_at TEXT,
+            escalation_level INTEGER DEFAULT 0,
+            escalated_to_id TEXT,
+            last_escalated_at TEXT,
             custom_status_id TEXT,
+            step_phase TEXT,
+            budget_allocated REAL,
+            budget_spent REAL,
+            risk_rating TEXT,
+            acceptance_criteria TEXT,
+            blocking_issues TEXT,
+            completed_at DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            completed_at DATETIME,
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(assignee_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -487,6 +614,25 @@ function initDb() {
             expires_at DATETIME NOT NULL,
             revoked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             reason TEXT DEFAULT 'logout',
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Refresh Tokens Table (Critical for Auth)
+        // DROP to ensure schema update since we are fixing it
+        db.run(`DROP TABLE IF EXISTS refresh_tokens`);
+        db.run(`CREATE TABLE IF NOT EXISTS refresh_tokens (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            token_hash TEXT NOT NULL,
+            token_family TEXT NOT NULL,
+            device_info TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            expires_at DATETIME NOT NULL,
+            revoked_at DATETIME,
+            revoked_reason TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_used_at DATETIME,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
@@ -1446,4 +1592,4 @@ function initDb() {
     });
 }
 
-export default db;
+export default getDatabaseInstance();

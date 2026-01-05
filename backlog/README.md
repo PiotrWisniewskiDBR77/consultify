@@ -267,3 +267,4 @@ Raporty są generowane automatycznie i dostępne w katalogu `metrics/`:
 **Kontakt:** [piotr@consultify.com](mailto:piotr@consultify.com)
 **Ostatnia aktualizacja:** 2026-01-05
 
+

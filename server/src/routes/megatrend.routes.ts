@@ -28,7 +28,7 @@ interface MegatrendServiceInterface {
 let MegatrendService: MegatrendServiceInterface | null = null;
 
 try {
-    const megatrendModule = (await import('../../models/megatrend.js')) as any;
+    const megatrendModule = (await import('../models/megatrend.js')) as any;
     MegatrendService = (megatrendModule.default || megatrendModule) as MegatrendServiceInterface;
 } catch {
     // Service may not exist or not migrated yet

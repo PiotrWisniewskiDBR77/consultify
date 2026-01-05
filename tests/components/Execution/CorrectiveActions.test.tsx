@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { CorrectiveActions } from '../../components/Execution/CorrectiveActions';
+import { CorrectiveActions } from '@/components/Execution/CorrectiveActions';
 
 describe('CorrectiveActions Component', () => {
     const defaultProps = {

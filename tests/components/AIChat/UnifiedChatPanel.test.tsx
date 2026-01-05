@@ -8,29 +8,29 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '../../../i18n';
-import { UnifiedChatPanel } from '../../components/AIChat/UnifiedChatPanel';
-import { useAppStore } from '../../../store/useAppStore';
-import { useConversationStore } from '../../../store/useConversationStore';
-import { AppView } from '../../../types';
-import { createWorkspaceContext } from '../../../types/workspace';
+import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
+import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
+import { createWorkspaceContext } from '@/types/workspace';
 
 // Mock stores
-vi.mock('../../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: vi.fn()
 }));
 
-vi.mock('../../../store/useConversationStore', () => ({
+vi.mock('@/store/useConversationStore', () => ({
     useConversationStore: vi.fn()
 }));
 
-vi.mock('../../../store/useArtifactsStore', () => ({
+vi.mock('@/store/useArtifactsStore', () => ({
     useArtifactsStore: () => ({
         addArtifact: vi.fn(),
         togglePanel: vi.fn()
     })
 }));
 
-vi.mock('../../../hooks/useAIStream', () => ({
+vi.mock('../@/hooks/useAIStream', () => ({
     useAIStream: () => ({
         startStream: vi.fn(),
         isStreaming: false,
@@ -38,7 +38,7 @@ vi.mock('../../../hooks/useAIStream', () => ({
     })
 }));
 
-vi.mock('../../../hooks/useVoiceChat', () => ({
+vi.mock('../@/hooks/useVoiceChat', () => ({
     useVoiceChat: () => ({
         speak: vi.fn(),
         stopSpeaking: vi.fn(),
@@ -49,7 +49,7 @@ vi.mock('../../../hooks/useVoiceChat', () => ({
 }));
 
 // Mock ChatSlidingPanel
-vi.mock('../../../components/AIChat/ChatSlidingPanel', () => ({
+vi.mock('@/components/AIChat/ChatSlidingPanel', () => ({
     ChatSlidingPanel: () => <div data-testid="chat-sliding-panel" />
 }));
 

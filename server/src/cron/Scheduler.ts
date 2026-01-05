@@ -24,23 +24,23 @@ export const Scheduler = {
         logger.info('[Scheduler] Initializing Cron Jobs...');
 
         // Resolve lazy services
-        const [kls_p, amms_p, accs_p, slas_p, srs_p, amm_p, fs_p] = await Promise.all([
-            import('../services/ai/learningSystem.js').then((m) => m.default),
-            import('../services/ai/aiMemoryMetricsService.js').then((m) => m.default),
-            import('../services/aiCostControlService.js').then((m) => m.default),
-            import('../services/slaService.js').then((m) => m.default),
-            import('../services/storageReconciliationService.js').then((m) => m.default),
-            import('../services/aiMemoryManager.js').then((m) => m.default),
-            import('../services/feedbackService.js').then((m) => m.default),
+        const [amms_p, accs_p, slas_p, amm_p, fs_p] = await Promise.all([
+            // import('../services/ai/learningSystem.js').then((m) => m.default),
+            import('../services/ai/aiMemoryMetricsService').then((m) => m.default),
+            import('../services/aiCostControlService').then((m) => m.default),
+            import('../services/slaService').then((m) => m.default),
+            // import('../services/storageReconciliationService').then((m) => m.default),
+            import('../services/aiMemoryManager').then((m) => m.default),
+            import('../services/feedbackService').then((m) => m.default),
         ]);
 
-        learningSystem = (await kls_p).learningSystem;
-        aiMemoryMetricsService = await amms_p;
-        aiCostControlService = await accs_p;
-        slaService = await slas_p;
-        storageReconciliationService = await srs_p;
-        aiMemoryManager = await amm_p;
-        feedbackService = await fs_p;
+        // learningSystem = (await kls_p).learningSystem;
+        aiMemoryMetricsService = amms_p;
+        aiCostControlService = accs_p;
+        slaService = slas_p;
+        // storageReconciliationService = await srs_p;
+        aiMemoryManager = amm_p;
+        feedbackService = fs_p;
 
         // 1. Retention Policy Cleanup - Run every day at 3:00 AM
         const job1 = cron.schedule('0 3 * * *', () => {
@@ -49,12 +49,12 @@ export const Scheduler = {
         });
         this.jobs.push(job1);
 
-        // 2. Storage Reconciliation - Run every Sunday at 4:00 AM
-        const job2 = cron.schedule('0 4 * * 0', () => {
-            logger.info('[Scheduler] Running Weekly Storage Reconciliation Audit');
-            storageReconciliationService.runReconciliation();
-        });
-        this.jobs.push(job2);
+        // // 2. Storage Reconciliation - Run every Sunday at 4:00 AM
+        // const job2 = cron.schedule('0 4 * * 0', () => {
+        //     logger.info('[Scheduler] Running Weekly Storage Reconciliation Audit');
+        //     storageReconciliationService.runReconciliation();
+        // });
+        // this.jobs.push(job2);
 
         // 3. Trial/Demo Daily Tasks - Run every day at 2:30 AM
         const job3 = cron.schedule('30 2 * * *', () => {
@@ -128,47 +128,47 @@ export const Scheduler = {
         // ============================================================
 
         // 11. AI Pattern Extraction - Run every 6 hours
-        const job11 = cron.schedule('0 */6 * * *', async () => {
-            logger.info('[Scheduler] Running AI Pattern Extraction');
-            try {
-                const result = await learningSystem.extractAllPatterns();
-                logger.info(
-                    `[Scheduler] AI Pattern Extraction completed: ${result.patternsExtracted} patterns from ${result.recordsProcessed} records`,
-                );
-            } catch (err: any) {
-                const error = err as Error;
-                logger.error('[Scheduler] AI Pattern Extraction failed:', error.message);
-            }
-        });
-        this.jobs.push(job11);
+        // const job11 = cron.schedule('0 */6 * * *', async () => {
+        //     logger.info('[Scheduler] Running AI Pattern Extraction');
+        //     try {
+        //         const result = await learningSystem.extractAllPatterns();
+        //         logger.info(
+        //             `[Scheduler] AI Pattern Extraction completed: ${result.patternsExtracted} patterns from ${result.recordsProcessed} records`,
+        //         );
+        //     } catch (err: any) {
+        //         const error = err as Error;
+        //         logger.error('[Scheduler] AI Pattern Extraction failed:', error.message);
+        //     }
+        // });
+        // this.jobs.push(job11);
 
         // 12. AI Learning Consolidation - Run daily at 4:30 AM
-        const job12 = cron.schedule('30 4 * * *', async () => {
-            logger.info('[Scheduler] Running AI Learning Consolidation');
-            try {
-                const result = await learningSystem.consolidateLearnings();
-                logger.info(
-                    `[Scheduler] AI Learning Consolidation completed: ${result.strategiesCreated} strategies created`,
-                );
-            } catch (err: any) {
-                const error = err as Error;
-                logger.error('[Scheduler] AI Learning Consolidation failed:', error.message);
-            }
-        });
-        this.jobs.push(job12);
+        // const job12 = cron.schedule('30 4 * * *', async () => {
+        //     logger.info('[Scheduler] Running AI Learning Consolidation');
+        //     try {
+        //         const result = await learningSystem.consolidateLearnings();
+        //         logger.info(
+        //             `[Scheduler] AI Learning Consolidation completed: ${result.strategiesCreated} strategies created`,
+        //         );
+        //     } catch (err: any) {
+        //         const error = err as Error;
+        //         logger.error('[Scheduler] AI Learning Consolidation failed:', error.message);
+        //     }
+        // });
+        // this.jobs.push(job12);
 
         // 13. AI Learning Data Cleanup - Run weekly on Monday at 5:00 AM
-        const job13 = cron.schedule('0 5 * * 1', async () => {
-            logger.info('[Scheduler] Running AI Learning Data Cleanup');
-            try {
-                const result = await learningSystem.cleanupOldData();
-                logger.info(`[Scheduler] AI Learning Cleanup completed: ${result.deleted} old records deleted`);
-            } catch (err: any) {
-                const error = err as Error;
-                logger.error('[Scheduler] AI Learning Cleanup failed:', error.message);
-            }
-        });
-        this.jobs.push(job13);
+        // const job13 = cron.schedule('0 5 * * 1', async () => {
+        //     logger.info('[Scheduler] Running AI Learning Data Cleanup');
+        //     try {
+        //         const result = await learningSystem.cleanupOldData();
+        //         logger.info(`[Scheduler] AI Learning Cleanup completed: ${result.deleted} old records deleted`);
+        //     } catch (err: any) {
+        //         const error = err as Error;
+        //         logger.error('[Scheduler] AI Learning Cleanup failed:', error.message);
+        //     }
+        // });
+        // this.jobs.push(job13);
 
         // 14. AI Memory Cleanup - Run weekly on Sunday at 2:00 AM
         // Cleans up old project memory, partial responses, and feedback

@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PMOStatusBanner, PMOPhaseIndicator, PMOBlockingBadge } from '../../components/PMO/PMOStatusBanner';
+import { PMOStatusBanner, PMOPhaseIndicator, PMOBlockingBadge } from '@/components/PMO/PMOStatusBanner';
 
 // Mock dependencies
 
@@ -25,7 +25,7 @@ const mockPMOStore = {
     isLoading: false
 };
 
-vi.mock('../../../store/usePMOStore', () => ({
+vi.mock('@/store/usePMOStore', () => ({
     usePMOStore: () => mockPMOStore
 }));
 
@@ -36,7 +36,7 @@ describe('PMOStatusBanner Component', () => {
 
     describe('Loading State', () => {
         it('returns null when loading', async () => {
-            const { usePMOStore } = await import('../../../store/usePMOStore');
+            const { usePMOStore } = await import('@/store/usePMOStore');
             vi.mocked(usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 isLoading: true
@@ -47,7 +47,7 @@ describe('PMOStatusBanner Component', () => {
         });
 
         it('returns null when no phase', async () => {
-            const { usePMOStore } = await import('../../../store/usePMOStore');
+            const { usePMOStore } = await import('@/store/usePMOStore');
             vi.mocked(usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 currentPhase: null
@@ -126,7 +126,7 @@ describe('PMOStatusBanner Component', () => {
 
     describe('Gate Status Ready', () => {
         it('shows Ready badge when gate is ready', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 gateStatus: 'READY',
                 blockingIssues: []
@@ -138,7 +138,7 @@ describe('PMOStatusBanner Component', () => {
         });
 
         it('shows Ready badge in compact mode', () => {
-            vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+            vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                 ...mockPMOStore,
                 gateStatus: 'READY',
                 blockingIssues: []
@@ -155,7 +155,7 @@ describe('PMOStatusBanner Component', () => {
 
         phases.forEach((phase, index) => {
             it(`applies correct color for ${phase} phase`, () => {
-                vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+                vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
                     ...mockPMOStore,
                     currentPhase: phase,
                     phaseNumber: index + 1
@@ -204,7 +204,7 @@ describe('PMOPhaseIndicator Component', () => {
     });
 
     it('returns null when loading', () => {
-        vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+        vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
             ...mockPMOStore,
             isLoading: true
         });
@@ -214,7 +214,7 @@ describe('PMOPhaseIndicator Component', () => {
     });
 
     it('returns null when no phase', () => {
-        vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+        vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
             ...mockPMOStore,
             currentPhase: null
         });
@@ -234,7 +234,7 @@ describe('PMOBlockingBadge Component', () => {
     });
 
     it('returns null when no blockers', () => {
-        vi.mocked(require('../../../store/usePMOStore').usePMOStore).mockReturnValueOnce({
+        vi.mocked(require('@/store/usePMOStore').usePMOStore).mockReturnValueOnce({
             ...mockPMOStore,
             blockingIssues: []
         });

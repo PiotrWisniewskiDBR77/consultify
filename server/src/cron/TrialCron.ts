@@ -56,9 +56,9 @@ class TrialCron {
     }
 
     private async ensureDeps(): Promise<Dependencies> {
-        if (!this.deps.demoService) {
-            this.deps.demoService = await import('../services/demoService.js').then((m) => m.default || m);
-        }
+        // if (!this.deps.demoService) {
+        //     this.deps.demoService = await import('../services/demoService.js').then((m) => m.default || m);
+        // }
         if (!this.deps.trialService) {
             this.deps.trialService = (await import('../services/trialService.js').then((m) => m.default || m)) as any;
         }
@@ -74,9 +74,10 @@ class TrialCron {
         logger.info('[TrialCron] Starting daily trial/demo tasks...');
 
         try {
-            // 1. Cleanup expired demo organizations
-            const demosCleanedUp = await deps.demoService.cleanupExpiredDemos();
-            logger.info(`[TrialCron] Cleaned up ${demosCleanedUp} expired demo organization(s)`);
+            // // 1. Cleanup expired demo organizations
+            // const demosCleanedUp = await deps.demoService.cleanupExpiredDemos();
+            // logger.info(`[TrialCron] Cleaned up ${demosCleanedUp} expired demo organization(s)`);
+            const demosCleanedUp = 0;
 
             // 2. Send trial warning notifications (T-7 days)
             const warningsSent = await deps.trialService.sendTrialWarnings();

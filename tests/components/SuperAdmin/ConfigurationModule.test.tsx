@@ -3,14 +3,14 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import ConfigurationModule from '../../../views/superadmin/ConfigurationModule';
+import ConfigurationModule from '@/views/superadmin/ConfigurationModule';
 
 // Mock child components
-vi.mock('../../../views/superadmin/SystemSettings', () => ({
+vi.mock('@/views/superadmin/SystemSettings', () => ({
     SystemSettings: () => <div data-testid="settings-view">System Settings</div>
 }));
 
-vi.mock('../../../views/superadmin/WhitelabelStudioView', () => ({
+vi.mock('@/views/superadmin/WhitelabelStudioView', () => ({
     WhitelabelStudioView: () => <div data-testid="whitelabel-view">Whitelabel Studio</div>
 }));
 

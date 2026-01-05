@@ -1,15 +1,27 @@
-// @vitest-environment node
-import { describe, it, expect, beforeAll } from 'vitest';
-import request from 'supertest';
 import app from '../../../server/src/index.js';
-import db from '../../../server/src/database/Database.js';
 import bcrypt from 'bcryptjs';
+import db from '../../../server/src/database/Database.js';
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = ':memory:';
+});
+
+// @vitest-environment node
+
+
+
 
 /**
  * Level 2: Integration Tests - Knowledge
  * Tests Idea Candidates and Strategies
  */
 describe('Integration Test: Knowledge Routes', () => {
+    const db = getDatabase();
     let authToken;
     const testId = Date.now();
     const testOrgId = `know-org-${testId}`;
@@ -17,6 +29,7 @@ describe('Integration Test: Knowledge Routes', () => {
     const testEmail = `know-${testId}@test.com`;
 
     beforeAll(async () => {
+        await initializeDatabase();
         const hash = bcrypt.hashSync('test123', 8);
 
         await new Promise((resolve) => {
@@ -47,6 +60,7 @@ describe('Integration Test: Knowledge Routes', () => {
     });
 
     describe('GET /api/knowledge/candidates', () => {
+    const db = getDatabase();
         it('should list candidates (superadmin)', async () => {
             if (!authToken) return;
 
@@ -59,6 +73,7 @@ describe('Integration Test: Knowledge Routes', () => {
     });
 
     describe('POST /api/knowledge/candidates', () => {
+    const db = getDatabase();
         it('should submit new candidate', async () => {
             if (!authToken) return;
 
@@ -76,6 +91,7 @@ describe('Integration Test: Knowledge Routes', () => {
     });
 
     describe('GET /api/knowledge/strategies', () => {
+    const db = getDatabase();
         it('should list strategies', async () => {
             if (!authToken) return;
 

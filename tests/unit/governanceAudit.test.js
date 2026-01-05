@@ -6,8 +6,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Import real modules
-const GovernanceAuditService = require('../../server/services/governanceAuditService');
-const db = require('../../server/database');
+import GovernanceAuditService from '../../server/src/services/governanceAuditService.js';
+import db from '../../server/src/database/Database.js';
 
 describe('GovernanceAuditService', () => {
     let dbGetSpy;

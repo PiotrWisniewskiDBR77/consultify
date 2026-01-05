@@ -7,8 +7,8 @@ import {
     PMOCategoryDot,
     getPMOCategory,
     PMO_CATEGORY_CONFIG
-} from '../../../../../components/MyWork/shared/PMOPriorityBadge';
-import { PMOCategory } from '../../../../../types/myWork';
+} from '@/components/MyWork/shared/PMOPriorityBadge';
+import { PMOCategory } from '@/types/myWork';
 
 describe('PMOPriorityBadge', () => {
     it('renders with correct label and icon for each category', () => {

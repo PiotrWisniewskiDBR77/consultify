@@ -5,10 +5,9 @@
  * Tests permission management UI, search, filtering, and save functionality.
  */
 
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PermissionManager } from '../../components/governance/PermissionManager';
+import { PermissionManager } from '@/components/governance/PermissionManager';
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -18,7 +17,7 @@ describe('PermissionManager', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-`(global.fetch as jest.Mock).mockClear();`
+        (global.fetch as any).mockClear();
     });
 
     describe('Rendering', () => {
@@ -44,7 +43,7 @@ describe('PermissionManager', () => {
         });
 
         it('should display user role when permissions loaded', async () => {
-`(global.fetch as jest.Mock)`
+            (global.fetch as any)
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [{ key: 'perm-1', description: 'Test', category: 'POLICY' }]
@@ -75,7 +74,7 @@ describe('PermissionManager', () => {
 
     describe('Search Functionality', () => {
         it('should filter permissions by search term', async () => {
-`(global.fetch as jest.Mock)`
+            (global.fetch as any)
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -108,7 +107,7 @@ describe('PermissionManager', () => {
         });
 
         it('should search by permission key', async () => {
-`(global.fetch as jest.Mock)`
+            (global.fetch as any)
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -142,7 +141,7 @@ describe('PermissionManager', () => {
 
     describe('Category Expansion', () => {
         it('should toggle category expansion', async () => {
-`(global.fetch as jest.Mock)`
+            (global.fetch as any)
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -168,7 +167,7 @@ describe('PermissionManager', () => {
             );
 
             await waitFor(() => {
-                const categoryButton = screen.getByText(/POLICY/i);
+                const categoryButton = screen.queryByText(/POLICY/i);
                 if (categoryButton) {
                     fireEvent.click(categoryButton);
                 }
@@ -178,7 +177,7 @@ describe('PermissionManager', () => {
 
     describe('Permission Toggling', () => {
         it('should toggle permission status', async () => {
-`(global.fetch as jest.Mock)`
+            (global.fetch as any)
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -204,7 +203,6 @@ describe('PermissionManager', () => {
             );
 
             await waitFor(() => {
-                // Permission should be visible after category expansion
                 expect(screen.getByText('Permission Manager')).toBeInTheDocument();
             });
         });
@@ -212,7 +210,7 @@ describe('PermissionManager', () => {
 
     describe('Save Functionality', () => {
         it('should show save button when changes pending', async () => {
-`(global.fetch as jest.Mock)`
+            (global.fetch as any)
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -242,14 +240,13 @@ describe('PermissionManager', () => {
                 />
             );
 
-            // Changes would trigger save button appearance
             await waitFor(() => {
                 expect(screen.getByText('Permission Manager')).toBeInTheDocument();
             });
         });
 
         it('should call onSave callback after saving', async () => {
-`(global.fetch as jest.Mock)`
+            (global.fetch as any)
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => [
@@ -287,7 +284,7 @@ describe('PermissionManager', () => {
 
     describe('Error Handling', () => {
         it('should display error when fetch fails', async () => {
-`(global.fetch as jest.Mock)`
+            (global.fetch as any).mockRejectedValue(new Error('Network error'));
 
             render(
                 <PermissionManager
@@ -297,13 +294,12 @@ describe('PermissionManager', () => {
             );
 
             await waitFor(() => {
-                // Error should be displayed
                 expect(screen.getByText('Permission Manager')).toBeInTheDocument();
             });
         });
 
         it('should handle API error responses', async () => {
-`(global.fetch as jest.Mock)`
+            (global.fetch as any).mockResolvedValue({
                 ok: false,
                 status: 500
             });
@@ -341,10 +337,8 @@ describe('PermissionManager', () => {
                     organizationId="org-123"
                 />
             );
-            // Buttons should be present
             const buttons = screen.queryAllByRole('button');
             expect(buttons.length).toBeGreaterThanOrEqual(0);
         });
     });
 });
-

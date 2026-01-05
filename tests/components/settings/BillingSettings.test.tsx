@@ -7,11 +7,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { BillingSettings } from '../../components/settings/BillingSettings';
-import { User } from '../../../types';
+import { BillingSettings } from '@/components/settings/BillingSettings';
+import { User } from '@/types';
 
 // Mock hooks
-vi.mock('../../../hooks/usePermissions', () => ({
+vi.mock('../@/hooks/usePermissions', () => ({
     usePermissions: () => ({
         isAdmin: true,
         canManageOrgBilling: true
@@ -19,7 +19,7 @@ vi.mock('../../../hooks/usePermissions', () => ({
 }));
 
 // Mock BillingCore component
-vi.mock('../../../components/shared/BillingCore', () => ({
+vi.mock('@/components/shared/BillingCore', () => ({
     BillingCore: ({ mode, currentUser, showUserLicense, showCurrentPlan, showUsageMeters, showAvailablePlans, showInvoices }: any) => (
         <div data-testid="billing-core">
             <div>Mode: {mode}</div>
@@ -34,7 +34,7 @@ vi.mock('../../../components/shared/BillingCore', () => ({
 }));
 
 // Mock InfoButton
-vi.mock('../../../components/shared/InfoButton', () => ({
+vi.mock('@/components/shared/InfoButton', () => ({
     InfoButton: () => <div data-testid="info-button">Info</div>
 }));
 
@@ -122,7 +122,7 @@ describe('BillingSettings', () => {
 
     describe('BillingCore Props - User Mode', () => {
         beforeEach(() => {
-            vi.mocked(require('../../../hooks/usePermissions').usePermissions).mockReturnValue({
+            vi.mocked(require('../@/hooks/usePermissions').usePermissions).mockReturnValue({
                 isAdmin: false,
                 canManageOrgBilling: false
             });

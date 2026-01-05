@@ -1,3 +1,28 @@
+import app from '../../../server/src/index.js';
+import audioProcessor from '../../../server/services/ai/processors/audioProcessor';
+import docxProcessor from '../../../server/services/ai/processors/docxProcessor';
+import express from 'express';
+import fs from 'fs';
+import imageProcessor from '../../../server/services/ai/processors/imageProcessor';
+import mediaIngestionRoutes from '../../../server/routes/media-ingestion';
+import path from 'path';
+import pptxProcessor from '../../../server/services/ai/processors/pptxProcessor';
+import request from 'supertest';
+import spreadsheetProcessor from '../../../server/services/ai/processors/spreadsheetProcessor';
+import urlProcessor from '../../../server/services/ai/processors/urlProcessor';
+import videoProcessor from '../../../server/services/ai/processors/videoProcessor';
+import youtubeProcessor from '../../../server/services/ai/processors/youtubeProcessor';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { mediaIngestionService } from '../../../server/services/ai/mediaIngestionService';
+import { mediaIngestionService: service } from '../../../server/services/ai/mediaIngestionService';
+
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = ':memory:';
+});
+
 /**
  * Media Ingestion API Integration Tests
  * 
@@ -6,9 +31,6 @@
  * @version 1.0.0
  */
 
-const request = require('supertest');
-const path = require('path');
-const fs = require('fs');
 
 // Mock the auth middleware
 jest.mock('../../../server/middleware/authMiddleware', () => {
@@ -44,17 +66,15 @@ jest.mock('../../../server/services/ai/mediaIngestionService', () => ({
 }));
 
 describe('Media Ingestion API', () => {
+    const db = getDatabase();
     let app;
-    const { mediaIngestionService } = require('../../../server/services/ai/mediaIngestionService');
-
+    
     beforeAll(() => {
         // Create express app with routes
-        const express = require('express');
-        app = express();
+                app = express();
         app.use(express.json());
         
-        const mediaIngestionRoutes = require('../../../server/routes/media-ingestion');
-        app.use('/api/media-ingestion', mediaIngestionRoutes);
+                app.use('/api/media-ingestion', mediaIngestionRoutes);
     });
 
     beforeEach(() => {
@@ -62,6 +82,7 @@ describe('Media Ingestion API', () => {
     });
 
     describe('GET /api/media-ingestion/supported-types', () => {
+    const db = getDatabase();
         it('should return list of supported types', async () => {
             const response = await request(app)
                 .get('/api/media-ingestion/supported-types')
@@ -74,6 +95,7 @@ describe('Media Ingestion API', () => {
     });
 
     describe('GET /api/media-ingestion/capabilities', () => {
+    const db = getDatabase();
         it('should return processing capabilities', async () => {
             const response = await request(app)
                 .get('/api/media-ingestion/capabilities')
@@ -85,6 +107,7 @@ describe('Media Ingestion API', () => {
     });
 
     describe('POST /api/media-ingestion/validate', () => {
+    const db = getDatabase();
         it('should validate supported file types', async () => {
             const response = await request(app)
                 .post('/api/media-ingestion/validate')
@@ -130,6 +153,7 @@ describe('Media Ingestion API', () => {
     });
 
     describe('POST /api/media-ingestion/ingest/youtube', () => {
+    const db = getDatabase();
         it('should process YouTube URL', async () => {
             mediaIngestionService.ingest.mockResolvedValue({
                 success: true,
@@ -184,6 +208,7 @@ describe('Media Ingestion API', () => {
     });
 
     describe('POST /api/media-ingestion/ingest/url', () => {
+    const db = getDatabase();
         it('should process web URL', async () => {
             mediaIngestionService.ingest.mockResolvedValue({
                 success: true,
@@ -221,6 +246,7 @@ describe('Media Ingestion API', () => {
     });
 
     describe('POST /api/media-ingestion/ingest (file upload)', () => {
+    const db = getDatabase();
         it('should reject request without file or URL', async () => {
             const response = await request(app)
                 .post('/api/media-ingestion/ingest')
@@ -232,6 +258,7 @@ describe('Media Ingestion API', () => {
     });
 
     describe('Error handling', () => {
+    const db = getDatabase();
         it('should handle service errors gracefully', async () => {
             mediaIngestionService.ingest.mockRejectedValue(
                 new Error('Service unavailable')
@@ -251,9 +278,10 @@ describe('Media Ingestion API', () => {
 });
 
 describe('Processor Unit Tests', () => {
+    const db = getDatabase();
     describe('DOCX Processor', () => {
-        const docxProcessor = require('../../../server/services/ai/processors/docxProcessor');
-
+    const db = getDatabase();
+        
         it('should have required methods', () => {
             expect(docxProcessor.process).toBeDefined();
             expect(docxProcessor.isSupported).toBeDefined();
@@ -273,8 +301,8 @@ describe('Processor Unit Tests', () => {
     });
 
     describe('Spreadsheet Processor', () => {
-        const spreadsheetProcessor = require('../../../server/services/ai/processors/spreadsheetProcessor');
-
+    const db = getDatabase();
+        
         it('should have required methods', () => {
             expect(spreadsheetProcessor.process).toBeDefined();
             expect(spreadsheetProcessor.isSupported).toBeDefined();
@@ -298,8 +326,8 @@ describe('Processor Unit Tests', () => {
     });
 
     describe('PPTX Processor', () => {
-        const pptxProcessor = require('../../../server/services/ai/processors/pptxProcessor');
-
+    const db = getDatabase();
+        
         it('should have required methods', () => {
             expect(pptxProcessor.process).toBeDefined();
             expect(pptxProcessor.isSupported).toBeDefined();
@@ -312,8 +340,8 @@ describe('Processor Unit Tests', () => {
     });
 
     describe('YouTube Processor', () => {
-        const youtubeProcessor = require('../../../server/services/ai/processors/youtubeProcessor');
-
+    const db = getDatabase();
+        
         it('should have required methods', () => {
             expect(youtubeProcessor.process).toBeDefined();
             expect(youtubeProcessor.extractVideoId).toBeDefined();
@@ -341,8 +369,8 @@ describe('Processor Unit Tests', () => {
     });
 
     describe('Audio Processor', () => {
-        const audioProcessor = require('../../../server/services/ai/processors/audioProcessor');
-
+    const db = getDatabase();
+        
         it('should have required methods', () => {
             expect(audioProcessor.process).toBeDefined();
             expect(audioProcessor.isSupported).toBeDefined();
@@ -365,8 +393,8 @@ describe('Processor Unit Tests', () => {
     });
 
     describe('Video Processor', () => {
-        const videoProcessor = require('../../../server/services/ai/processors/videoProcessor');
-
+    const db = getDatabase();
+        
         it('should have required methods', () => {
             expect(videoProcessor.process).toBeDefined();
             expect(videoProcessor.isSupported).toBeDefined();
@@ -388,8 +416,8 @@ describe('Processor Unit Tests', () => {
     });
 
     describe('Image Processor', () => {
-        const imageProcessor = require('../../../server/services/ai/processors/imageProcessor');
-
+    const db = getDatabase();
+        
         it('should have required methods', () => {
             expect(imageProcessor.process).toBeDefined();
             expect(imageProcessor.isSupported).toBeDefined();
@@ -412,8 +440,8 @@ describe('Processor Unit Tests', () => {
     });
 
     describe('URL Processor', () => {
-        const urlProcessor = require('../../../server/services/ai/processors/urlProcessor');
-
+    const db = getDatabase();
+        
         it('should have required methods', () => {
             expect(urlProcessor.process).toBeDefined();
             expect(urlProcessor.isValidUrl).toBeDefined();
@@ -443,10 +471,10 @@ describe('Processor Unit Tests', () => {
 });
 
 describe('Media Ingestion Service', () => {
+    const db = getDatabase();
     it('should have FILE_PROCESSORS mapping', () => {
         // Import the service
-        const { mediaIngestionService: service } = require('../../../server/services/ai/mediaIngestionService');
-        
+                
         // Verify the service has expected methods
         expect(service.getSupportedTypes).toBeDefined();
         expect(service.getCapabilities).toBeDefined();
@@ -461,4 +489,3 @@ describe('Media Ingestion Service', () => {
         expect(types.images).toBeDefined();
     });
 });
-

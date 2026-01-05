@@ -4,10 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { StudioView } from '../../../views/StudioView';
+import { StudioView } from '@/views/StudioView';
 
 // Mock Studio components
-vi.mock('../../../components/Studio/StudioCanvas', () => ({
+vi.mock('@/components/Studio/StudioCanvas', () => ({
     StudioCanvas: ({ nodes, edges }: any) => (
         <div data-testid="studio-canvas">
             <div>Nodes: {nodes.length}</div>
@@ -16,7 +16,7 @@ vi.mock('../../../components/Studio/StudioCanvas', () => ({
     )
 }));
 
-vi.mock('../../../components/Studio/StudioChat', () => ({
+vi.mock('@/components/Studio/StudioChat', () => ({
     StudioChat: ({ messages, isProcessing }: any) => (
         <div data-testid="studio-chat">
             <div>Messages: {messages.length}</div>
@@ -25,24 +25,24 @@ vi.mock('../../../components/Studio/StudioChat', () => ({
     )
 }));
 
-vi.mock('../../../components/Studio/StudioToolbar', () => ({
+vi.mock('@/components/Studio/StudioToolbar', () => ({
     StudioToolbar: () => <div data-testid="studio-toolbar">Toolbar</div>
 }));
 
-vi.mock('../../../components/Studio/StudioSidebar', () => ({
+vi.mock('@/components/Studio/StudioSidebar', () => ({
     StudioSidebar: () => <div data-testid="studio-sidebar">Sidebar</div>
 }));
 
-vi.mock('../../../components/Studio/StudioExportModal', () => ({
+vi.mock('@/components/Studio/StudioExportModal', () => ({
     StudioExportModal: () => <div data-testid="studio-export-modal">Export Modal</div>
 }));
 
-vi.mock('../../../components/Studio/StudioLinkModal', () => ({
+vi.mock('@/components/Studio/StudioLinkModal', () => ({
     StudioLinkModal: () => <div data-testid="studio-link-modal">Link Modal</div>
 }));
 
 // Mock hooks
-vi.mock('../../../components/Studio/hooks/useStudioDocument', () => ({
+vi.mock('@/components/Studio/hooks/useStudioDocument', () => ({
     useStudioDocument: () => ({
         document: { id: 'doc-1', name: 'Test Document', type: 'process_flow' },
         nodes: [],
@@ -61,7 +61,7 @@ vi.mock('../../../components/Studio/hooks/useStudioDocument', () => ({
     })
 }));
 
-vi.mock('../../../components/Studio/hooks/useStudioAI', () => ({
+vi.mock('@/components/Studio/hooks/useStudioAI', () => ({
     useStudioAI: () => ({
         messages: [],
         isProcessing: false,

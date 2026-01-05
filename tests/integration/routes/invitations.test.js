@@ -1,3 +1,17 @@
+import app from '../../../server/src/index.js';
+import bcrypt from 'bcryptjs';
+import db from '../../../server/database';
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { v4 as uuidv4 } from 'uuid';
+
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = ':memory:';
+});
+
 /**
  * Integration Tests for Invitation Routes
  * 
@@ -9,13 +23,12 @@
  * - Audit trail logging
  */
 
-const request = require('supertest');
-const app = require('../../../server/index.js');
-const db = require('../../../server/database');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+
+
+
 
 describe('Invitation Routes', () => {
+    const db = getDatabase();
     let adminToken;
     let testOrgId;
     let testProjectId;
@@ -25,6 +38,7 @@ describe('Invitation Routes', () => {
 
     // Setup test data before all tests
     beforeAll(async () => {
+        await initializeDatabase();
         // Create test organization
         testOrgId = uuidv4();
         await new Promise((resolve, reject) => {
@@ -93,6 +107,7 @@ describe('Invitation Routes', () => {
     // ==========================================
 
     describe('POST /api/invitations/org', () => {
+    const db = getDatabase();
         it('should create an organization invitation', async () => {
             const res = await request(app)
                 .post('/api/invitations/org')
@@ -155,6 +170,7 @@ describe('Invitation Routes', () => {
     // ==========================================
 
     describe('GET /api/invitations/org', () => {
+    const db = getDatabase();
         it('should list organization invitations', async () => {
             const res = await request(app)
                 .get('/api/invitations/org')
@@ -183,9 +199,11 @@ describe('Invitation Routes', () => {
     // ==========================================
 
     describe('GET /api/invitations/validate/:token', () => {
+    const db = getDatabase();
         let validToken;
 
         beforeAll(async () => {
+        await initializeDatabase();
             // Get a valid token from the database
             const invitation = await new Promise((resolve, reject) => {
                 db.get(
@@ -222,6 +240,7 @@ describe('Invitation Routes', () => {
     // ==========================================
 
     describe('POST /api/invitations/accept', () => {
+    const db = getDatabase();
         it('should reject acceptance with wrong email', async () => {
             const res = await request(app)
                 .post('/api/invitations/accept')
@@ -290,9 +309,11 @@ describe('Invitation Routes', () => {
     // ==========================================
 
     describe('POST /api/invitations/:id/resend', () => {
+    const db = getDatabase();
         let resendInvitationId;
 
         beforeAll(async () => {
+        await initializeDatabase();
             // Create a new invitation for resend test
             const res = await request(app)
                 .post('/api/invitations/org')
@@ -330,9 +351,11 @@ describe('Invitation Routes', () => {
     // ==========================================
 
     describe('POST /api/invitations/:id/revoke', () => {
+    const db = getDatabase();
         let revokeInvitationId;
 
         beforeAll(async () => {
+        await initializeDatabase();
             // Create a new invitation for revoke test
             const res = await request(app)
                 .post('/api/invitations/org')
@@ -369,6 +392,7 @@ describe('Invitation Routes', () => {
     // ==========================================
 
     describe('GET /api/invitations/:id/audit', () => {
+    const db = getDatabase();
         it('should return audit trail for invitation', async () => {
             const res = await request(app)
                 .get(`/api/invitations/${testInvitationId}/audit`)
@@ -390,6 +414,7 @@ describe('Invitation Routes', () => {
     // ==========================================
 
     describe('POST /api/invitations/project', () => {
+    const db = getDatabase();
         it('should create a project invitation', async () => {
             const res = await request(app)
                 .post('/api/invitations/project')
@@ -425,11 +450,13 @@ describe('Invitation Routes', () => {
     // ==========================================
 
     describe('Enterprise+ Security - DEMO Org Blocking', () => {
+    const db = getDatabase();
         let demoOrgId;
         let demoAdminId;
         let demoAdminToken;
 
         beforeAll(async () => {
+        await initializeDatabase();
             // Create DEMO organization
             demoOrgId = uuidv4();
             await new Promise((resolve, reject) => {
@@ -484,9 +511,11 @@ describe('Invitation Routes', () => {
     });
 
     describe('Enterprise+ Security - Resend Limits', () => {
+    const db = getDatabase();
         let resendLimitInvitationId;
 
         beforeAll(async () => {
+        await initializeDatabase();
             // Create a new invitation for resend limit test
             const res = await request(app)
                 .post('/api/invitations/org')
@@ -514,10 +543,12 @@ describe('Invitation Routes', () => {
     });
 
     describe('Enterprise+ Security - Race Condition Protection', () => {
+    const db = getDatabase();
         let raceInvitationId;
         let raceInvitationToken;
 
         beforeAll(async () => {
+        await initializeDatabase();
             // Create invitation for race test
             const res = await request(app)
                 .post('/api/invitations/org')

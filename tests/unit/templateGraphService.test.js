@@ -11,7 +11,7 @@ vi.mock('uuid', () => ({
 }));
 
 // Import after mocking
-const templateGraphService = require('../../server/ai/templateGraphService');
+import templateGraphService from '../../server/src/ai/templateGraphService.js';
 
 describe('templateGraphService', () => {
     const { NODE_TYPES, EDGE_LABELS, stepsToGraph, graphToSteps, validateDAG, findDeadEnds, findBranchesWithoutElse, createEmptyGraph } = templateGraphService;

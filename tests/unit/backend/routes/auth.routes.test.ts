@@ -19,7 +19,9 @@ const mockAuthService = vi.hoisted(() => ({
 
 const mockLogger = vi.hoisted(() => ({
   info: vi.fn(),
+  warn: vi.fn(),
   error: vi.fn(),
+  debug: vi.fn(),
 }));
 
 vi.mock('../../../../server/src/services/AuthService.ts', () => ({

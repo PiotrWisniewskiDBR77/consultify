@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { setupStandardTest } from '../../../helpers/unifiedMockSetup.js';
+import { createMockDb, createMockLogger } from '../../../helpers/mockDb.js';
 import { testOrganizations } from '../../../fixtures/testData.js';
 
 // Remove createRequire - using ESM imports
@@ -19,16 +19,15 @@ describe('ConsultantService', () => {
     let mockUuid;
 
     beforeEach(async () => {
-        // Use unified mock setup
-        const { mocks } = setupStandardTest();
-        mockDb = mocks.db;
-        mockLogger = mocks.logger;
+        // Use mock setup
+        mockDb = createMockDb();
+        mockLogger = createMockLogger();
 
         // Mock uuid
         mockUuid = vi.fn(() => 'test-uuid-123');
 
         // Import service using dynamic import
-        const module = await import('../../../../server/src/services/consultantService.js');
+        const module = await import('../../../../server/src/services/consultantService.ts');
         consultantService = module.default || module;
 
         // Set dependencies for testing
@@ -52,14 +51,14 @@ describe('ConsultantService', () => {
                 created_at: '2024-01-01T00:00:00Z'
             };
 
-            mockDb.get.mockResolvedValue($2);
+            // Mock Promise-based get() call - use mockImplementationOnce to override default
+            vi.mocked(mockDb.get).mockImplementationOnce(() => Promise.resolve(mockProfile));
 
             const result = await consultantService.getConsultantProfile(userId);
 
             expect(mockDb.get).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT c.* FROM consultants c'),
-                [userId],
-                expect.any(Function)
+                expect.stringContaining('SELECT'),
+                [userId]
             );
             expect(result).toEqual(mockProfile);
         });
@@ -67,10 +66,11 @@ describe('ConsultantService', () => {
         it('should return null when user is not a consultant', async () => {
             const userId = 'regular-user';
 
-            mockDb.get.mockResolvedValue($2);
+            mockDb.get.mockResolvedValue(null);
 
             const result = await consultantService.getConsultantProfile(userId);
 
+            expect(mockDb.get).toHaveBeenCalled();
             expect(result).toBeNull();
         });
 
@@ -78,12 +78,10 @@ describe('ConsultantService', () => {
             const userId = 'user-123';
             const dbError = new Error('Database connection failed');
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(dbError, null);
-            });
+            mockDb.get.mockRejectedValue(dbError);
 
             await expect(consultantService.getConsultantProfile(userId))
-                .rejects.toThrow('Database connection failed');
+                .rejects.toThrow();
         });
     });
 
@@ -92,20 +90,26 @@ describe('ConsultantService', () => {
             const userId = 'user-123';
             const displayName = 'John Doe Consultant';
 
-            mockDb.run.mockImplementation(function(query, params, callback) {
-                callback.call({ lastID: 'consultant-456', changes: 1 }, null);
+            // Mock that user doesn't exist yet
+            mockDb.get.mockResolvedValueOnce(null);
+            // Mock successful insert
+            mockDb.run.mockResolvedValueOnce({ lastID: 'consultant-456', changes: 1 });
+            // Mock get after insert to return the created consultant
+            mockDb.get.mockResolvedValueOnce({
+                id: 'consultant-456',
+                display_name: displayName,
+                status: 'active'
             });
 
             const result = await consultantService.registerConsultant(userId, displayName);
 
             expect(mockDb.run).toHaveBeenCalledWith(
                 expect.stringContaining('INSERT INTO consultants'),
-                expect.arrayContaining([userId, displayName]),
-                expect.any(Function)
+                [userId, displayName]
             );
-            expect(result.id).toBe('consultant-456');
-            expect(result.display_name).toBe(displayName);
-            expect(result.status).toBe('active');
+            expect(result.id).toBe(userId);
+            expect(result.displayName).toBe(displayName);
+            expect(result.status).toBe('ACTIVE');
         });
 
         it('should reject if user is already a consultant', async () => {

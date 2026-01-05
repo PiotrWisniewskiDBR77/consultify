@@ -9,6 +9,8 @@
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
 import { getDatabase, getDatabaseAsync } from './Database.js';
+// @ts-ignore - Dynamic import of legacy module
+const getLegacySqlite = async () => import('../../legacy_archive/database.sqlite.js');
 
 // ==========================================
 // SCHEMA VERIFICATION
@@ -27,6 +29,10 @@ const CRITICAL_TABLES = [
     'invitations',
     'notifications',
     'settings',
+    'revoked_tokens',
+    'superadmin_ai_settings',
+    'organization_ai_settings',
+    'user_ai_settings',
 ];
 
 /**
@@ -149,10 +155,38 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                 logger.warn(
                     `[DatabaseInitializer] SQLite schema incomplete. Missing tables: ${verification.missing.join(', ')}`,
                 );
-                logger.info('[DatabaseInitializer] SQLite schema should be initialized by database.sqlite.active.js');
-                // SQLite initialization is handled by database.sqlite.active.js
-                // Wait a bit for initDb() to complete
-                await new Promise((resolve) => setTimeout(resolve, 2000));
+
+                // Manually trigger schema initialization
+                logger.info('[DatabaseInitializer] Manually triggering SQLite schema initialization...');
+                
+                // Use TEST_SCHEMA if available
+                try {
+                    const { TEST_SCHEMA } = await import('../../../tests/utils/testSchema.js');
+                    logger.info('[DatabaseInitializer] Using TEST_SCHEMA for initialization');
+                    for (const sql of TEST_SCHEMA) {
+                        await new Promise<void>((resolve, reject) => {
+                            db.run(sql, (err: Error | null) => {
+                                if (err) {
+                                    logger.error(`[DatabaseInitializer] Error executing schema SQL: ${err.message}`);
+                                    // Some errors like "table already exists" might be okay if using IF NOT EXISTS
+                                    if (err.message.includes('already exists')) resolve();
+                                    else reject(err);
+                                } else {
+                                    resolve();
+                                }
+                            });
+                        });
+                    }
+                } catch (schemaErr) {
+                    logger.warn('[DatabaseInitializer] TEST_SCHEMA not found, falling back to legacy init');
+                    const sqliteModule = await getLegacySqlite();
+                    if (sqliteModule && sqliteModule.initDb) {
+                        sqliteModule.initDb(db);
+                        // Wait a bit for callbacks to fire
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+
                 // Verify again
                 const recheck = await verifySchema();
                 if (!recheck.valid && recheck.missing.length > 0) {

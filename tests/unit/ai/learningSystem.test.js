@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { initTestDb, cleanTables, dbRun, db } = require('../../helpers/dbHelper.cjs');
-const { LearningSystem } = require('../../../server/services/ai/learningSystem');
-const crypto = require('crypto');
+import crypto from 'crypto';
+import { initTestDb, cleanTables, dbRun, db } from '../../helpers/dbHelper.cjs';
+import { LearningSystem } from '../../../server/src/services/ai/learningSystem.js';
 
 describe('LearningSystem', () => {
     let service;

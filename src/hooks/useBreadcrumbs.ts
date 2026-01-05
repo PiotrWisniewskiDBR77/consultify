@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
-import { useAppStore } from '../../store/useAppStore';
-import { AppView } from '../../types';
+import { useAppStore } from '../store/useAppStore';
+import { AppView } from '../types';
 
 export const useBreadcrumbs = () => {
     const { t } = useTranslation();

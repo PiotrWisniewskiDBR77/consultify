@@ -69,40 +69,45 @@ export default tseslint.config(
             // CRITICAL RULES
             // ==========================================
             'react-hooks/rules-of-hooks': 'error',
-            'react-hooks/exhaustive-deps': 'off',
+            'react-hooks/exhaustive-deps': 'warn',
             'no-var': 'error',
             'no-debugger': 'error',
-            'no-console': 'off',
+            'no-console': 'warn',
             'no-async-promise-executor': 'error',
             'prefer-const': 'error',
             'eqeqeq': ['error', 'always', { 'null': 'ignore' }],
 
             // ==========================================
-            // TYPESCRIPT
+            // TYPESCRIPT - STRICTER RULES
             // ==========================================
-            '@typescript-eslint/no-explicit-any': 'off',
-            '@typescript-eslint/no-unused-vars': 'off',
-            '@typescript-eslint/no-non-null-assertion': 'off',
-            '@typescript-eslint/ban-ts-comment': 'off',
+            '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/no-unused-vars': ['warn', { 
+                argsIgnorePattern: '^_',
+                varsIgnorePattern: '^_',
+                caughtErrorsIgnorePattern: '^_'
+            }],
+            '@typescript-eslint/no-non-null-assertion': 'warn',
+            '@typescript-eslint/ban-ts-comment': 'warn',
+            '@typescript-eslint/prefer-nullish-coalescing': 'off',
+            '@typescript-eslint/prefer-optional-chain': 'warn',
 
             // ==========================================
             // REACT
             // ==========================================
             'react-refresh/only-export-components': [
-                'off',
+                'warn',
                 { allowConstantExport: true },
             ],
 
             // ==========================================
-            // DISABLED FOR CLEANUP
+            // CODE QUALITY - RE-ENABLED
             // ==========================================
-            'no-empty': 'off',
-            'no-useless-catch': 'off',
-            'no-case-declarations': 'off',
-            '@typescript-eslint/no-empty-object-type': 'off',
-            '@typescript-eslint/no-unsafe-function-type': 'off',
-            'prefer-const': 'off',
-            '@typescript-eslint/no-require-imports': 'off',
+            'no-empty': 'warn',
+            'no-useless-catch': 'warn',
+            'no-case-declarations': 'warn',
+            '@typescript-eslint/no-empty-object-type': 'warn',
+            '@typescript-eslint/no-unsafe-function-type': 'warn',
+            '@typescript-eslint/no-require-imports': 'warn',
         },
     },
 );

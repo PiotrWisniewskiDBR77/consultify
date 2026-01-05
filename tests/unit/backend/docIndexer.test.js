@@ -35,8 +35,8 @@ describe('DocIndexer Service', () => {
         fs.existsSync.mockReturnValue(true);
         fs.readFileSync.mockReturnValue('# Test Document\n\n## Section 1\n\nContent here.\n\n## Section 2\n\nMore content.');
 
-        const module = await import('../../../server/src/services/ai/docIndexer.js');
-        DocIndexer = module.DocIndexer || module.default?.DocIndexer;
+        const module = await import('../../../server/src/services/ai/docIndexer.ts');
+        DocIndexer = module.DocIndexer;
         docIndexer = new DocIndexer();
     });
 
@@ -236,7 +236,7 @@ describe('DocIndexer Service', () => {
 
     describe('PROMPT_ENGINEERING_KB', () => {
         it('should export prompt engineering knowledge base', async () => {
-            const module = await import('../../../server/src/services/ai/docIndexer.js');
+            const module = await import('../../../server/src/services/ai/docIndexer.ts');
             expect(module.PROMPT_ENGINEERING_KB).toBeDefined();
             expect(module.PROMPT_ENGINEERING_KB.length).toBeGreaterThan(0);
         });

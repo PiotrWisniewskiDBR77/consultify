@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { QuickFilterBar } from '../../../../components/MyWork/QuickFilterBar';
+import { QuickFilterBar } from '@/components/MyWork/QuickFilterBar';
 
 // Mock i18next
 vi.mock('react-i18next', () => ({

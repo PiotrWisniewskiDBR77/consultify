@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateInitiatives } from '../../services/transformationEngine';
-import { FullSession } from '../../types';
+import { FullSession } from '@/types';
 
 describe('Service Test: transformationEngine', () => {
     const createMockSession = (): FullSession => ({

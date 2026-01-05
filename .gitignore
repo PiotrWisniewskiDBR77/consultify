@@ -111,3 +111,6 @@ parse_*.py
 test-*.js
 test-*.cjs
 secure_backups/
+
+# Legacy and archived files
+archive/

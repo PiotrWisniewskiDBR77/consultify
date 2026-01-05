@@ -3,10 +3,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import ContentModule from '../../../views/superadmin/ContentModule';
+import ContentModule from '@/views/superadmin/ContentModule';
 
 // Mock child components
-vi.mock('../../../views/superadmin/PlaybookTemplatesListView', () => ({
+vi.mock('@/views/superadmin/PlaybookTemplatesListView', () => ({
     PlaybookTemplatesListView: () => <div data-testid="playbooks-view">Playbooks Content</div>
 }));
 

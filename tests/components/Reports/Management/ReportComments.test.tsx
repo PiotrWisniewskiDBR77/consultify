@@ -3,8 +3,8 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ReportComments } from '../../../../components/Reports/Management/ReportComments';
-import { ManagementReport } from '../../../../types';
+import { ReportComments } from '../@/components/Reports/Management/ReportComments';
+import { ManagementReport } from '../@/types';
 
 const mockReport: ManagementReport = {
     id: 'rep-1',

@@ -61,7 +61,7 @@ async function initDeps(): Promise<void> {
     if (db && nodemailer) return;
 
     const [dbModule, nodemailerModule, configModule] = await Promise.all([
-        import('../../src/database/index.js'),
+        import('../database/index.js'),
         // @ts-ignore
         import('nodemailer') as any,
         import('../config/Config.js'),

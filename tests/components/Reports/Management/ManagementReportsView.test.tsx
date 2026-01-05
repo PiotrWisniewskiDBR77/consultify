@@ -3,11 +3,11 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ManagementReportsView } from '../../../../components/Reports/Management/ManagementReportsView';
-import { Api } from '../../../../services/api';
+import { ManagementReportsView } from '../@/components/Reports/Management/ManagementReportsView';
+import { Api } from '@/services/api';
 
 // Mock Api service
-vi.mock('../../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         get: vi.fn(),
         post: vi.fn()

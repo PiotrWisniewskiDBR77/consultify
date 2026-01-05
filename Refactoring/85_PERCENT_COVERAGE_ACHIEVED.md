@@ -111,3 +111,4 @@
 **Następny cel: 90%+ z E2E workflows, visual regression i advanced performance testing!**
 
 
+

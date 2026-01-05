@@ -7,7 +7,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Mock dependencies before importing component
-vi.mock('../../../services/api', () => ({
+vi.mock('../../services/api', () => ({
     Api: {
         get: vi.fn(),
         put: vi.fn(),
@@ -32,12 +32,12 @@ vi.mock('react-hot-toast', () => ({
     }
 }));
 
-vi.mock('../../../components/shared/InfoButton', () => ({
+vi.mock('@/components/shared/InfoButton', () => ({
     InfoButton: () => null
 }));
 
-import { PrivacyDataSettings } from '../../../components/settings/PrivacyDataSettings';
-import { Api } from '../../../services/api';
+import { PrivacyDataSettings } from '@/components/settings/PrivacyDataSettings';
+import { Api } from '../../services/api';
 
 const mockUser = {
     id: 'user-123',

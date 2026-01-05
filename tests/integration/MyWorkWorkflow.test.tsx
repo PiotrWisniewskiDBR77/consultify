@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MyWorkView } from '../../views/MyWorkView';
+import { MyWorkView } from '@/views/MyWorkView';
 import { Api } from '../../services/api';
 
 // Mock Api
@@ -15,12 +15,12 @@ vi.mock('../../services/api', () => ({
 }));
 
 // Mock SplitLayout to avoid complex AI chat dependencies
-vi.mock('../../components/SplitLayout', () => ({
+vi.mock('@/components/SplitLayout', () => ({
     SplitLayout: ({ children }: any) => <div data-testid="split-layout">{children}</div>
 }));
 
 // Mock useAppStore (only what's needed by MyWork components)
-vi.mock('../../store/useAppStore', () => {
+vi.mock('@/store/useAppStore', () => {
     const defaultState = {
         user: { id: 'user1', name: 'Test User' },
         currentView: 'my-work',
@@ -54,7 +54,7 @@ vi.mock('react-hot-toast', () => ({
 // Only Mock leaf components that are troublesome or external.
 // TaskDetailModal might contain complex logic/API calls. We might want to mock it OR mock its internal API calls.
 // Let's mock TaskDetailModal to simplify checking if it "opened".
-vi.mock('../../components/MyWork/TaskDetailModal', () => ({
+vi.mock('@/components/MyWork/TaskDetailModal', () => ({
     TaskDetailModal: ({ isOpen, taskId, onClose }: any) => isOpen ? (
         <div data-testid="task-detail-modal">
             <h1>Task Detail Modal</h1>

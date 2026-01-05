@@ -5,12 +5,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { sendMessageToAI, sendMessageToAIStream, refineContent, SYSTEM_PROMPTS } from '../../../../services/ai/gemini';
-import { UnifiedAI } from '../../../../services/ai/unified';
-import { useAppStore } from '../../../../store/useAppStore';
+import { sendMessageToAI, sendMessageToAIStream, refineContent, SYSTEM_PROMPTS } from '../../../services/ai/gemini';
+import { UnifiedAI } from '../../../services/ai/unified';
+import { useAppStore } from '../@/store/useAppStore';
 
 // Mock UnifiedAI
-vi.mock('../../../../services/ai/unified', () => ({
+vi.mock('../../../services/ai/unified', () => ({
     UnifiedAI: {
         sendMessage: vi.fn(),
         sendMessageStream: vi.fn()
@@ -18,7 +18,7 @@ vi.mock('../../../../services/ai/unified', () => ({
 }));
 
 // Mock useAppStore
-vi.mock('../../../../store/useAppStore', () => ({
+vi.mock('../@/store/useAppStore', () => ({
     useAppStore: {
         getState: vi.fn()
     }

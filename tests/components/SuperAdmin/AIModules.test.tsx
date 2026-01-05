@@ -11,65 +11,65 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import AIInfrastructureModule from '../../../views/superadmin/AIInfrastructureModule';
-import AIDevelopmentModule from '../../../views/superadmin/AIDevelopmentModule';
-import AIOperationsModule from '../../../views/superadmin/AIOperationsModule';
+import AIInfrastructureModule from '@/views/superadmin/AIInfrastructureModule';
+import AIDevelopmentModule from '@/views/superadmin/AIDevelopmentModule';
+import AIOperationsModule from '@/views/superadmin/AIOperationsModule';
 
 // Mock all child components
-vi.mock('../../../views/superadmin/LLMManagementView', () => ({
+vi.mock('@/views/superadmin/LLMManagementView', () => ({
     LLMManagementView: () => <div data-testid="llm-management">LLM Management</div>
 }));
 
-vi.mock('../../../components/SuperAdmin/ModelTierAssignments', () => ({
+vi.mock('@/components/SuperAdmin/ModelTierAssignments', () => ({
     ModelTierAssignments: () => <div data-testid="tier-assignments">Tier Assignments</div>
 }));
 
-vi.mock('../../../components/SuperAdmin/SuperAdminAISettings', () => ({
+vi.mock('@/components/SuperAdmin/SuperAdminAISettings', () => ({
     SuperAdminAISettings: () => <div data-testid="ai-settings">AI Settings</div>
 }));
 
-vi.mock('../../../components/Admin/LLMHealthPanel', () => ({
+vi.mock('@/components/Admin/LLMHealthPanel', () => ({
     LLMHealthPanel: () => <div data-testid="health-panel">Health Panel</div>
 }));
 
-vi.mock('../../../components/Admin/PromptManagementUI', () => ({
+vi.mock('@/components/Admin/PromptManagementUI', () => ({
     PromptManagementUI: () => <div data-testid="prompt-management">Prompt Management</div>
 }));
 
-vi.mock('../../../views/superadmin/AIIntelligenceView', () => ({
+vi.mock('@/views/superadmin/AIIntelligenceView', () => ({
     AIIntelligenceView: () => <div data-testid="ai-intelligence">AI Intelligence</div>
 }));
 
-vi.mock('../../../components/Admin/ABTestingDashboard', () => ({
+vi.mock('@/components/Admin/ABTestingDashboard', () => ({
     ABTestingDashboard: () => <div data-testid="ab-testing">AB Testing</div>
 }));
 
-vi.mock('../../../views/admin/AdminKnowledgeView', () => ({
+vi.mock('@/views/admin/AdminKnowledgeView', () => ({
     AdminKnowledgeView: () => <div data-testid="knowledge-view">Knowledge View</div>
 }));
 
-vi.mock('../../../components/Admin/AIMissionControl', () => ({
+vi.mock('@/components/Admin/AIMissionControl', () => ({
     AIMissionControl: () => <div data-testid="mission-control">Mission Control</div>
 }));
 
-vi.mock('../../../components/Admin/AIPerformanceDashboard', () => ({
+vi.mock('@/components/Admin/AIPerformanceDashboard', () => ({
     AIPerformanceDashboard: () => <div data-testid="performance-dashboard">Performance Dashboard</div>
 }));
 
-vi.mock('../../../components/Admin/AICostDashboard', () => ({
+vi.mock('@/components/Admin/AICostDashboard', () => ({
     AICostDashboard: () => <div data-testid="cost-dashboard">Cost Dashboard</div>
 }));
 
-vi.mock('../../../components/Admin/SLADashboard', () => ({
+vi.mock('@/components/Admin/SLADashboard', () => ({
     SLADashboard: () => <div data-testid="sla-dashboard">SLA Dashboard</div>
 }));
 
-vi.mock('../../../components/Admin/AI/UsageAnalyticsDashboard', () => ({
+vi.mock('@/components/Admin/AI/UsageAnalyticsDashboard', () => ({
     UsageAnalyticsDashboard: () => <div data-testid="analytics-dashboard">Analytics Dashboard</div>
 }));
 
 // Mock TabLayout
-vi.mock('../../../components/SuperAdmin/TabLayout', () => ({
+vi.mock('@/components/SuperAdmin/TabLayout', () => ({
     TabLayout: ({ children, title, tabs, activeTab, onTabChange }: any) => (
         <div data-testid="tab-layout">
             <h1>{title}</h1>

@@ -5,6 +5,7 @@
 
 import { Request, Response } from 'express';
 
+
 import type { IDatabase } from '../database/IDatabase.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
@@ -45,10 +46,10 @@ const getDeps = async (): Promise<Dependencies> => {
     if (!depsPromise) {
         depsPromise = (async () => {
             const [dbModule, bcryptModule, activityModule, redisModule] = await Promise.all([
-                import('../../src/database/index.js'),
+                import('../database/index.js'),
                 import('bcryptjs'),
                 import('../services/ActivityService.js').then((m) => m.default || m),
-                import('../../utils/redisRateLimitStore.js'),
+                import('../utils/RedisRateLimitStore.js'),
             ]);
 
             deps = {
@@ -82,8 +83,8 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
     const dependencies = await getDeps();
-    const body = req.body as LoginRequest;
 
+    const body = req.body as LoginRequest;
     logger.info('[Auth] Login request received for:', body.email || 'no email');
     const { email, password, mfaToken, deviceFingerprint, trustDevice } = body;
 

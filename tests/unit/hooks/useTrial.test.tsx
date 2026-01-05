@@ -7,10 +7,10 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { useTrial, TrialProvider } from '../../../contexts/TrialContext';
-import { useAppStore } from '../../../store/useAppStore';
+import { useAppStore } from '@/store/useAppStore';
 
 // Mock dependencies
-vi.mock('../../../store/useAppStore');
+vi.mock('@/store/useAppStore');
 
 // Mock fetch
 global.fetch = vi.fn();

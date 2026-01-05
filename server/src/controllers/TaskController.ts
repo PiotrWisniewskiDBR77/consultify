@@ -231,20 +231,20 @@ export class TaskController {
             assigneeId: t.assignee_id,
             assignee: t.assignee_id
                 ? {
-                      id: t.assignee_id,
-                      firstName: t.assignee_first_name,
-                      lastName: t.assignee_last_name,
-                      avatarUrl: t.assignee_avatar,
-                  }
+                    id: t.assignee_id,
+                    firstName: t.assignee_first_name,
+                    lastName: t.assignee_last_name,
+                    avatarUrl: t.assignee_avatar,
+                }
                 : null,
             reporterId: t.reporter_id,
             reporter: t.reporter_id
                 ? {
-                      id: t.reporter_id,
-                      firstName: t.reporter_first_name,
-                      lastName: t.reporter_last_name,
-                      avatarUrl: t.reporter_avatar,
-                  }
+                    id: t.reporter_id,
+                    firstName: t.reporter_first_name,
+                    lastName: t.reporter_last_name,
+                    avatarUrl: t.reporter_avatar,
+                }
                 : null,
             dueDate: t.due_date,
             estimatedHours: t.estimated_hours,
@@ -330,20 +330,20 @@ export class TaskController {
             assigneeId: t.assignee_id,
             assignee: t.assignee_id
                 ? {
-                      id: t.assignee_id,
-                      firstName: t.assignee_first_name,
-                      lastName: t.assignee_last_name,
-                      avatarUrl: t.assignee_avatar,
-                  }
+                    id: t.assignee_id,
+                    firstName: t.assignee_first_name,
+                    lastName: t.assignee_last_name,
+                    avatarUrl: t.assignee_avatar,
+                }
                 : null,
             reporterId: t.reporter_id,
             reporter: t.reporter_id
                 ? {
-                      id: t.reporter_id,
-                      firstName: t.reporter_first_name,
-                      lastName: t.reporter_last_name,
-                      avatarUrl: t.reporter_avatar,
-                  }
+                    id: t.reporter_id,
+                    firstName: t.reporter_first_name,
+                    lastName: t.reporter_last_name,
+                    avatarUrl: t.reporter_avatar,
+                }
                 : null,
             dueDate: t.due_date,
             estimatedHours: t.estimated_hours,
@@ -454,7 +454,7 @@ export class TaskController {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        await DbPromise.run(sql, [
+        const result = await DbPromise.run(sql, [
             id,
             projectId,
             orgId,
@@ -483,6 +483,12 @@ export class TaskController {
             now,
             now,
         ]);
+
+        if (!result.success) {
+            logger.error('[TaskController] Task creation failed:', result.error);
+            res.status(500).json({ error: 'Task creation failed', details: result.error });
+            return;
+        }
 
         // Notifications
         if (assigneeId && assigneeId !== userId) {
@@ -541,7 +547,10 @@ export class TaskController {
             }
         }
 
+        logger.info(`[TaskController DEBUG] Attempting to retrieve created task. ID: ${id}`);
         const createdTask = await DbPromise.get<TaskRow>(`SELECT * FROM tasks WHERE id = ?`, [id]);
+        logger.info(`[TaskController DEBUG] Retrieved task:`, createdTask);
+
         res.status(201).json(createdTask);
     });
 

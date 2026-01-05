@@ -204,7 +204,8 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
      */
     async consolidateLearning(): Promise<ConsolidateLearningResult> {
         // Dynamic import to avoid circular dependency
-        const { default: AiService } = await import('./aiService.js');
+        // const { default: AiService } = await import('./aiService.js');
+        const { default: AiService } = { default: {} } as any; // Stubbed missing service
 
         logger.info('[GlobalLearning] Starting consolidation...');
 

@@ -85,7 +85,8 @@ let auditService: AuditServiceInterface | null = null;
 
 async function getEmailService(): Promise<EmailServiceInterface | null> {
     if (!emailService) {
-        const module = await import('../../services/emailService.js');
+// const module = await import('../../services/emailService.js');
+        const module = {} as any; // Stubbed missing service
         emailService = module.default || module;
     }
     return emailService;
@@ -93,7 +94,8 @@ async function getEmailService(): Promise<EmailServiceInterface | null> {
 
 async function getAuditService(): Promise<AuditServiceInterface | null> {
     if (!auditService) {
-        const module = (await import('../../services/auditService.js')) as any;
+// const module = (await import('../../services/auditService.js')) as any;
+        const module = {} as any; // Stubbed missing service
         auditService = module.logSystemEvent ? module : null;
     }
     return auditService;

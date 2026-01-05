@@ -1,18 +1,30 @@
+import app from '../../../server/server';
+import app from '../../../server/src/index.js';
+import request from 'supertest';
+import { User, Organization, Project } from '../../../server/models';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { sequelize } from '../../../server/models';
+
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = ':memory:';
+});
+
 // AI Analytics Routes Integration Tests
 // Tests AI analytics dashboard and metrics collection
 
-const request = require('supertest');
-const app = require('../../../server/server');
-const { sequelize } = require('../../../server/models');
-const { User, Organization, Project } = require('../../../server/models');
 
 describe('AI Analytics Routes Integration Tests', () => {
+    const db = getDatabase();
     let testUser;
     let testOrg;
     let testProject;
     let authToken;
 
     beforeAll(async () => {
+        await initializeDatabase();
         // Create test data
         testOrg = await Organization.create({
             name: 'Test AI Analytics Org',
@@ -43,6 +55,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('GET /api/analytics/ai/dashboard', () => {
+    const db = getDatabase();
         it('should return complete AI analytics dashboard', async () => {
             const response = await request(app)
                 .get('/api/analytics/ai/dashboard')
@@ -90,6 +103,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('GET /api/analytics/ai/actions', () => {
+    const db = getDatabase();
         it('should return AI action analytics', async () => {
             const response = await request(app)
                 .get('/api/analytics/ai/actions')
@@ -145,6 +159,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('GET /api/analytics/ai/playbooks', () => {
+    const db = getDatabase();
         it('should return AI playbook analytics', async () => {
             const response = await request(app)
                 .get('/api/analytics/ai/playbooks')
@@ -188,6 +203,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('GET /api/analytics/ai/policies', () => {
+    const db = getDatabase();
         it('should return AI policy analytics', async () => {
             const response = await request(app)
                 .get('/api/analytics/ai/policies')
@@ -232,6 +248,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('GET /api/analytics/ai/roi', () => {
+    const db = getDatabase();
         it('should return AI ROI analytics', async () => {
             const response = await request(app)
                 .get('/api/analytics/ai/roi')
@@ -281,6 +298,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('GET /api/analytics/ai/export', () => {
+    const db = getDatabase();
         it('should export AI analytics data', async () => {
             const response = await request(app)
                 .get('/api/analytics/ai/export')
@@ -337,6 +355,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('GET /api/analytics/ai/actions/:actionId', () => {
+    const db = getDatabase();
         it('should return detailed action analytics', async () => {
             // First get a list of actions to pick one
             const listResponse = await request(app)
@@ -371,6 +390,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('GET /api/analytics/ai/playbooks/:playbookId', () => {
+    const db = getDatabase();
         it('should return detailed playbook analytics', async () => {
             // Similar to action details - would need existing playbook data
             const response = await request(app)
@@ -389,6 +409,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('Performance Metrics', () => {
+    const db = getDatabase();
         it('should handle large datasets efficiently', async () => {
             const startTime = Date.now();
 
@@ -426,6 +447,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('Data Consistency', () => {
+    const db = getDatabase();
         it('should maintain consistent metrics across endpoints', async () => {
             const [dashboardResponse, actionsResponse] = await Promise.all([
                 request(app)
@@ -463,6 +485,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('Admin-only Endpoints', () => {
+    const db = getDatabase();
         it('should require admin access for sensitive analytics', async () => {
             // This would require testing with different user roles
             // For now, just verify that regular users can access basic analytics
@@ -475,6 +498,7 @@ describe('AI Analytics Routes Integration Tests', () => {
     });
 
     describe('Error Handling', () => {
+    const db = getDatabase();
         it('should handle database connection errors gracefully', async () => {
             // This would require mocking database failures
             // For now, just verify normal operation

@@ -6,12 +6,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-import { AppView } from '../../types';
-import { SuperAdminSidebar, sectionToAppView, appViewToSection } from '../../components/SuperAdminSidebar';
-import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '@/types';
+import { SuperAdminSidebar, sectionToAppView, appViewToSection } from '@/components/SuperAdminSidebar';
+import { useAppStore } from '@/store/useAppStore';
 
 // Mock the store
-vi.mock('../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: vi.fn()
 }));
 

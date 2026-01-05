@@ -1,9 +1,9 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { useIndependentAI } from '../../../hooks/useIndependentAI';
-import { Api } from '../../../services/api';
+import { useIndependentAI } from '../@/hooks/useIndependentAI';
+import { Api } from '../../services/api';
 
-vi.mock('../../../services/api');
+vi.mock('../../services/api');
 
 describe('useIndependentAI', () => {
     beforeEach(() => {

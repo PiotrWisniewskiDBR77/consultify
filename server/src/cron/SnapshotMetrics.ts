@@ -97,3 +97,4 @@ export const initMetricsSnapshotJob = (deps?: Partial<Dependencies>): void => {
 };
 
 export default SnapshotMetricsCron;
+

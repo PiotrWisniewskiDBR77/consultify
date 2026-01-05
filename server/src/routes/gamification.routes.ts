@@ -25,7 +25,7 @@ interface GamificationServiceInterface {
 let GamificationService: GamificationServiceInterface | null = null;
 
 try {
-    const gamificationModule = (await import('../services/gamificationService.js')) as any;
+//     const gamificationModule = (await import('../services/gamificationService.js')) as any;
     GamificationService = (gamificationModule.default || gamificationModule) as GamificationServiceInterface;
 } catch {
     logger.warn('[Gamification Routes] GamificationService not available');

@@ -3,14 +3,14 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import SystemModule from '../../../views/superadmin/SystemModule';
+import SystemModule from '@/views/superadmin/SystemModule';
 
 // Mock child components that have their own API calls
-vi.mock('../../../components/SystemHealth', () => ({
+vi.mock('@/components/SystemHealth', () => ({
     SystemHealth: () => <div data-testid="system-health">System Health</div>
 }));
 
-vi.mock('../../../components/Admin/AuditLogViewer', () => ({
+vi.mock('@/components/Admin/AuditLogViewer', () => ({
     AuditLogViewer: () => <div data-testid="audit-log-viewer">Audit Log Viewer</div>,
     default: () => <div data-testid="audit-log-viewer">Audit Log Viewer</div>
 }));

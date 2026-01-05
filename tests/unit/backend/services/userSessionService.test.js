@@ -2,65 +2,94 @@
  * User Session Service Tests
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getDatabase } from '../../../../server/src/database/index.js';
-import UserSessionService from '../../../../server/services/userSessionService.js';
+import userSessionService from '../../../../server/src/services/userSessionService.js';
+
+// Mock sessionCache
+const mockSessionCache = {
+    set: vi.fn().mockResolvedValue(undefined),
+    get: vi.fn().mockResolvedValue(null),
+    del: vi.fn().mockResolvedValue(undefined)
+};
+
+vi.mock('../../../../server/src/services/redis/CacheService.js', () => ({
+    sessionCache: mockSessionCache
+}));
 
 describe('UserSessionService', () => {
-    let db;
-
     beforeEach(() => {
         vi.clearAllMocks();
-        db = getDatabase();
-        db.run.mockClear();
-        db.get.mockClear();
-        db.all.mockClear();
     });
 
     describe('createSession', () => {
         it('should create a session', async () => {
-            db.run.mockImplementation(function (sql, params, cb) {
-                const callback = cb || params;
-                if (typeof callback === 'function') {
-                    callback.call({ changes: 1 }, null);
-                }
-            });
+            await userSessionService.createSession('user-1', 'token-123', { ip: '127.0.0.1' });
 
-            const result = await UserSessionService.createSession(
-                'user-1', 'org-1', 'token', '127.0.0.1', 'agent', {}, '2025-01-01'
+            expect(mockSessionCache.set).toHaveBeenCalledWith(
+                'user-1',
+                expect.objectContaining({
+                    userId: 'user-1',
+                    token: 'token-123',
+                    metadata: { ip: '127.0.0.1' }
+                }),
+                expect.any(Number)
             );
-
-            expect(result.id).toBeDefined();
-            expect(result.isActive).toBe(true);
-            expect(db.run).toHaveBeenCalledTimes(1);
         });
     });
 
-    describe('getActiveSessions', () => {
-        it('should return active sessions', async () => {
-            const sessions = [{ id: 's1', user_id: 'user-1' }];
-            db.all.mockImplementation((sql, params, cb) => {
-                const callback = cb || params;
-                if (typeof callback === 'function') {
-                    callback(null, sessions);
-                }
-            });
+    describe('getSession', () => {
+        it('should return session when it exists', async () => {
+            const mockSession = {
+                userId: 'user-1',
+                token: 'token-123',
+                expiresAt: Date.now() + 86400000,
+                metadata: {}
+            };
+            mockSessionCache.get.mockResolvedValueOnce(mockSession);
 
-            const result = await UserSessionService.getActiveSessions('user-1');
-            expect(result).toEqual(sessions);
+            const result = await userSessionService.getSession('user-1');
+            expect(result).toEqual(mockSession);
+            expect(mockSessionCache.get).toHaveBeenCalledWith('user-1');
+        });
+
+        it('should return null when session does not exist', async () => {
+            mockSessionCache.get.mockResolvedValueOnce(null);
+
+            const result = await userSessionService.getSession('user-1');
+            expect(result).toBeNull();
         });
     });
 
-    describe('revokeAllSessions', () => {
-        it('should revoke all sessions', async () => {
-            db.run.mockImplementation(function (sql, params, cb) {
-                const callback = cb || params;
-                if (typeof callback === 'function') {
-                    callback.call({ changes: 2 }, null);
-                }
-            });
+    describe('isValidSession', () => {
+        it('should return true for valid session', async () => {
+            const mockSession = {
+                userId: 'user-1',
+                token: 'token-123',
+                expiresAt: Date.now() + 86400000
+            };
+            mockSessionCache.get.mockResolvedValueOnce(mockSession);
 
-            const result = await UserSessionService.revokeAllSessions('user-1');
-            expect(result.revoked).toBe(true);
+            const result = await userSessionService.isValidSession('user-1', 'token-123');
+            expect(result).toBe(true);
+        });
+
+        it('should return false for invalid token', async () => {
+            const mockSession = {
+                userId: 'user-1',
+                token: 'token-123',
+                expiresAt: Date.now() + 86400000
+            };
+            mockSessionCache.get.mockResolvedValueOnce(mockSession);
+
+            const result = await userSessionService.isValidSession('user-1', 'wrong-token');
+            expect(result).toBe(false);
+        });
+    });
+
+    describe('invalidateSession', () => {
+        it('should invalidate a session', async () => {
+            await userSessionService.invalidateSession('user-1');
+
+            expect(mockSessionCache.del).toHaveBeenCalledWith('user-1');
         });
     });
 });

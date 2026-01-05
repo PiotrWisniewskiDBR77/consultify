@@ -54,12 +54,12 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // Mock InfoButton
-vi.mock('../../components/shared/InfoButton', () => ({
+vi.mock('@/components/shared/InfoButton', () => ({
     InfoButton: () => null
 }));
 
 // Mock TabLayout
-vi.mock('../../components/SuperAdmin/TabLayout', () => ({
+vi.mock('@/components/SuperAdmin/TabLayout', () => ({
     TabLayout: ({ children, tabs }: { children: React.ReactNode; tabs: Array<{ id: string; label: string }> }) => (
         <div>
             <div data-testid="tabs">
@@ -77,11 +77,11 @@ vi.mock('../../components/SuperAdmin/TabLayout', () => ({
 import { Api } from '../../services/api';
 
 // Import components
-import { SecurityDashboard } from '../../components/settings/SecurityDashboard';
-import { TrustedDevicesSettings } from '../../components/settings/TrustedDevicesSettings';
-import { SecurityEventsSettings } from '../../components/settings/SecurityEventsSettings';
-import { DataControlsSettings } from '../../components/settings/DataControlsSettings';
-import { MFASetup } from '../../components/Profile/MFASetup';
+import { SecurityDashboard } from '@/components/settings/SecurityDashboard';
+import { TrustedDevicesSettings } from '@/components/settings/TrustedDevicesSettings';
+import { SecurityEventsSettings } from '@/components/settings/SecurityEventsSettings';
+import { DataControlsSettings } from '@/components/settings/DataControlsSettings';
+import { MFASetup } from '@/components/Profile/MFASetup';
 
 // Test utilities
 const mockUser = {

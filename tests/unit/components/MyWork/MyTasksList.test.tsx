@@ -2,11 +2,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MyTasksList } from '../../../../components/MyWork/MyTasksList';
-import { Api } from '../../../../services/api';
+import { MyTasksList } from '@/components/MyWork/MyTasksList';
+import { Api } from '@/services/api';
 
 // Mock dependencies
-vi.mock('../../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         getTasks: vi.fn(),
         updateTask: vi.fn(),

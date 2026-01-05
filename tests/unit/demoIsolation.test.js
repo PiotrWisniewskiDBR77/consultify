@@ -1,7 +1,7 @@
-const request = require('supertest');
-const express = require('express');
-const bodyParser = require('body-parser');
-const demoGuard = require('../../server/middleware/demoGuard');
+import request from 'supertest';
+import express from 'express';
+import bodyParser from 'body-parser';
+import { demoGuard } from '../../server/src/middleware/demoGuard.middleware.js';
 
 describe('Demo Guard Isolation Extension', () => {
     let app;

@@ -8,10 +8,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 // Note: This test verifies the integration flow conceptually
 // Actual StudioView import may need adjustment based on file structure
-import { Api } from '../../../services/api';
+import { Api } from '../../services/api';
 
 // Mock all dependencies
-vi.mock('../../../services/api', () => ({
+vi.mock('../../services/api', () => ({
     Api: {
         get: vi.fn(),
         post: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // Mock Studio components
-vi.mock('../../../components/Studio/StudioCanvas', () => ({
+vi.mock('@/components/Studio/StudioCanvas', () => ({
     StudioCanvas: ({ onExport, onSnapshot }: any) => (
         <div data-testid="canvas">
             <button onClick={onExport}>Export</button>
@@ -37,7 +37,7 @@ vi.mock('../../../components/Studio/StudioCanvas', () => ({
     )
 }));
 
-vi.mock('../../../components/Studio/StudioChat', () => ({
+vi.mock('@/components/Studio/StudioChat', () => ({
     StudioChat: ({ onSendMessage }: any) => (
         <div data-testid="chat">
             <input 
@@ -52,15 +52,15 @@ vi.mock('../../../components/Studio/StudioChat', () => ({
     )
 }));
 
-vi.mock('../../../components/Studio/StudioToolbar', () => ({
+vi.mock('@/components/Studio/StudioToolbar', () => ({
     StudioToolbar: () => <div data-testid="toolbar" />
 }));
 
-vi.mock('../../../components/Studio/StudioSidebar', () => ({
+vi.mock('@/components/Studio/StudioSidebar', () => ({
     StudioSidebar: () => <div data-testid="sidebar" />
 }));
 
-vi.mock('../../../components/Studio/StudioExportModal', () => ({
+vi.mock('@/components/Studio/StudioExportModal', () => ({
     StudioExportModal: ({ onClose }: any) => (
         <div data-testid="export-modal">
             <button onClick={onClose}>Close</button>
@@ -68,7 +68,7 @@ vi.mock('../../../components/Studio/StudioExportModal', () => ({
     )
 }));
 
-vi.mock('../../../components/Studio/StudioLinkModal', () => ({
+vi.mock('@/components/Studio/StudioLinkModal', () => ({
     StudioLinkModal: ({ onLink, onClose }: any) => (
         <div data-testid="link-modal">
             <button onClick={() => onLink({ taskId: 'task-1' })}>Link</button>
@@ -84,7 +84,7 @@ const mockUpdateMetadata = vi.fn();
 const mockSendMessage = vi.fn();
 const mockReplaceAll = vi.fn();
 
-vi.mock('../../../components/Studio/hooks/useStudioDocument', () => ({
+vi.mock('@/components/Studio/hooks/useStudioDocument', () => ({
     useStudioDocument: () => ({
         document: { id: 'doc-1', name: 'Test Doc', type: 'process_flow' },
         nodes: [{ id: 'n1', type: 'processStep', data: { label: 'Step 1' } }],
@@ -103,7 +103,7 @@ vi.mock('../../../components/Studio/hooks/useStudioDocument', () => ({
     })
 }));
 
-vi.mock('../../../components/Studio/hooks/useStudioAI', () => ({
+vi.mock('@/components/Studio/hooks/useStudioAI', () => ({
     useStudioAI: () => ({
         messages: [],
         isProcessing: false,

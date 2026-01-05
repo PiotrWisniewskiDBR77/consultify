@@ -3,10 +3,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { SuperAdminSidebar } from '../../components/SuperAdminSidebar';
-import { useAppStore } from '../../store/useAppStore';
+import { SuperAdminSidebar } from '@/components/SuperAdminSidebar';
+import { useAppStore } from '@/store/useAppStore';
 
-vi.mock('../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: vi.fn()
 }));
 

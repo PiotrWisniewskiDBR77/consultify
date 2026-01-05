@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { beforeAll, vi, beforeEach, afterEach } from 'vitest';
 import { mockLLMApi } from './__mocks__/llmApi.js';
-import { setupAutoCleanup } from './helpers/testCleanup.js';
+import { setupAutoCleanup } from './helpers/testCleanup';
 
 // Setup automatic cleanup for all tests
 setupAutoCleanup();
@@ -123,7 +123,42 @@ const mockDb: any = {
     allAsync: vi.fn().mockResolvedValue([]),
     execAsync: vi.fn().mockResolvedValue(undefined),
     // Polyfill for Postgres compatibility (Promise-based)
-    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 })
+    query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    // Prepared statement support
+    prepare: vi.fn().mockReturnValue({
+        run: vi.fn().mockReturnThis(),
+        get: vi.fn((cb?: any) => {
+            if (typeof cb === 'function') {
+                process.nextTick(() => cb(null, null));
+            }
+        }),
+        all: vi.fn((cb?: any) => {
+            if (typeof cb === 'function') {
+                process.nextTick(() => cb(null, []));
+            }
+        }),
+        finalize: vi.fn((cb?: any) => {
+            if (typeof cb === 'function') {
+                process.nextTick(() => cb(null));
+            }
+        })
+    }),
+    // Transaction support
+    beginTransaction: vi.fn((cb?: any) => {
+        if (typeof cb === 'function') {
+            process.nextTick(() => cb(null));
+        }
+    }),
+    commit: vi.fn((cb?: any) => {
+        if (typeof cb === 'function') {
+            process.nextTick(() => cb(null));
+        }
+    }),
+    rollback: vi.fn((cb?: any) => {
+        if (typeof cb === 'function') {
+            process.nextTick(() => cb(null));
+        }
+    })
 };
 
 // Improved callback handling using process.nextTick for async simulation
@@ -214,15 +249,20 @@ if (typeof process !== 'undefined' && process.env) {
     process.env.DB_TYPE = process.env.DB_TYPE || 'sqlite';
     process.env.MOCK_REDIS = process.env.MOCK_REDIS || 'true';
     process.env.MOCK_DB = process.env.MOCK_DB || 'true';
-    // Keep DB in-memory in tests (db chooses :memory: when NODE_ENV === 'test')
-    process.env.SQLITE_PATH = process.env.SQLITE_PATH || ':memory:';
+    // Use :memory: only as a fallback for unit tests. 
+    // Integration tests should specify their own persistent path via SQLITE_PATH environment variable.
+    if (!process.env.SQLITE_PATH) {
+        process.env.SQLITE_PATH = ':memory:';
+    }
     // Stub API keys to prevent real calls if mocking is accidentally bypassed
     process.env.GEMINI_API_KEY = 'test-gemini-key';
     process.env.OPENAI_API_KEY = 'sk-test-openai-key';
+    // Ensure consistent JWT secret (must be >= 32 chars for Config.ts validation)
+    process.env.JWT_SECRET = 'test-jwt-secret-key-min-32-chars-long-for-validation';
 
     // Assign to global for server/database.js to use
     (global as any).__TEST_DB_MOCK__ = mockDb;
-    
+
     // Export helper function for tests that need custom mocks
     // Note: Tests should import createMockDb directly from './helpers/mockDb.js'
     // This is kept for backward compatibility
@@ -232,8 +272,8 @@ if (typeof process !== 'undefined' && process.env) {
         return mockDbModule.createMockDb();
     };
 
-// Remove require usage - use dynamic imports instead
-// const someModule = await import('./path/to/module.js');
+    // Remove require usage - use dynamic imports instead
+    // const someModule = await import('./path/to/module.js');
 }
 
 // Removed global jsonwebtoken mock to allow real JWT usage in integration tests
@@ -309,15 +349,15 @@ vi.mock('../server/src/services/MFAService.js', () => ({
     }
 }));
 
-vi.mock('../server/src/services/RefreshTokenService.js', () => ({
-    default: {
-        generateTokenPair: vi.fn().mockResolvedValue({
-            accessToken: 'mock_access_token',
-            refreshToken: 'mock_refresh_token',
-            expiresIn: 3600
-        }),
-    }
-}));
+// vi.mock('../server/src/services/RefreshTokenService.js', () => ({
+//     default: {
+//         generateTokenPair: vi.fn().mockResolvedValue({
+//             accessToken: 'mock_access_token',
+//             refreshToken: 'mock_refresh_token',
+//             expiresIn: 3600
+//         }),
+//     }
+// }));
 
 vi.mock('../server/src/services/EmailVerificationService.js', () => ({
     default: {
@@ -353,26 +393,127 @@ vi.mock('../server/src/middleware/inputSanitization.middleware.js', () => ({
 // }));
 
 // Mock Auth Middleware to bypass complex checks and DB calls
-vi.mock('../server/src/middleware/auth.middleware.js', () => ({
-    verifyToken: (req, res, next) => {
-        // console.log('[MockAuth] Bypassing verifyToken');
-        req.user = {
-            id: 'user-flow-1',
-            email: 'flow@test.com',
-            role: 'ADMIN',
-            organizationId: 'org-flow-1',
-            isSuperAdmin: true, // simplified
-            isDemo: false
-        };
-        req.userId = 'user-flow-1';
-        req.organizationId = 'org-flow-1';
-        next();
-    },
-    requireRole: () => (req, res, next) => next(),
-    requireSuperAdmin: (req, res, next) => next(),
-    requireOrganization: (req, res, next) => next(),
-    requirePermission: () => (req, res, next) => next(),
-    optionalAuth: (req, res, next) => next()
+// Mock Auth Middleware to bypass complex checks and DB calls
+// vi.mock('../server/src/middleware/auth.middleware.js', () => ({
+//     verifyToken: (req, res, next) => {
+//         // console.log('[MockAuth] Bypassing verifyToken');
+//         req.user = {
+//             id: 'user-flow-1',
+//             email: 'flow@test.com',
+//             role: 'ADMIN',
+//             organizationId: 'org-flow-1',
+//             isSuperAdmin: true, // simplified
+//             isDemo: false
+//         };
+//         req.userId = 'user-flow-1';
+//         req.organizationId = 'org-flow-1';
+//         next();
+//     },
+//     requireRole: () => (req, res, next) => next(),
+//     requireSuperAdmin: (req, res, next) => next(),
+//     requireOrganization: (req, res, next) => next(),
+//     requirePermission: () => (req, res, next) => next(),
+//     optionalAuth: (req, res, next) => next()
+// }));
+
+// Global mock for Api service to prevent actual API calls in component tests
+const mockApiModule = {
+    Api: {
+        // Auth
+        login: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
+        register: vi.fn().mockResolvedValue({ id: 'user-1' }),
+        getMe: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
+        logout: vi.fn().mockResolvedValue(undefined),
+
+        // Organizations
+        getOrganizations: vi.fn().mockResolvedValue([]),
+        getOrganization: vi.fn().mockResolvedValue(null),
+
+        // SuperAdmin
+        getSuperAdminDashboard: vi.fn().mockResolvedValue({ counts: {}, ai: {}, live: {}, activities: [] }),
+        getSystemHealth: vi.fn().mockResolvedValue({ status: 'healthy', uptime: 99.9 }),
+        getAuditLogs: vi.fn().mockResolvedValue([]),
+        getFeatureFlags: vi.fn().mockResolvedValue([]),
+        getUsageByOrganization: vi.fn().mockResolvedValue([]),
+
+        // Tasks
+        getTasks: vi.fn().mockResolvedValue([]),
+        getTask: vi.fn().mockResolvedValue(null),
+        createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+        updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+        deleteTask: vi.fn().mockResolvedValue(undefined),
+
+        // Projects
+        getProjects: vi.fn().mockResolvedValue([]),
+        getProject: vi.fn().mockResolvedValue(null),
+        createProject: vi.fn().mockResolvedValue({ id: 'project-1' }),
+
+        // Initiatives
+        getInitiatives: vi.fn().mockResolvedValue([]),
+        getInitiative: vi.fn().mockResolvedValue(null),
+
+        // AI
+        chat: vi.fn().mockResolvedValue({ message: 'Response' }),
+        streamChat: vi.fn().mockResolvedValue(new ReadableStream()),
+
+        // Generic catch-all
+        get: vi.fn().mockResolvedValue({}),
+        post: vi.fn().mockResolvedValue({}),
+        put: vi.fn().mockResolvedValue({}),
+        delete: vi.fn().mockResolvedValue({}),
+    }
+};
+
+vi.mock('../services/api', () => mockApiModule);
+vi.mock('@/services/api', () => mockApiModule);
+vi.mock('services/api', () => mockApiModule);
+
+// Additional mock for backwards compatibility (keeping original pattern below)
+vi.mock('../services/api', () => ({
+    Api: {
+        // Auth
+        login: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
+        register: vi.fn().mockResolvedValue({ id: 'user-1' }),
+        getMe: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
+        logout: vi.fn().mockResolvedValue(undefined),
+
+        // Organizations
+        getOrganizations: vi.fn().mockResolvedValue([]),
+        getOrganization: vi.fn().mockResolvedValue(null),
+
+        // SuperAdmin
+        getSuperAdminDashboard: vi.fn().mockResolvedValue({ counts: {}, ai: {}, live: {}, activities: [] }),
+        getSystemHealth: vi.fn().mockResolvedValue({ status: 'healthy', uptime: 99.9 }),
+        getAuditLogs: vi.fn().mockResolvedValue([]),
+        getFeatureFlags: vi.fn().mockResolvedValue([]),
+        getUsageByOrganization: vi.fn().mockResolvedValue([]),
+
+        // Tasks
+        getTasks: vi.fn().mockResolvedValue([]),
+        getTask: vi.fn().mockResolvedValue(null),
+        createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+        updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+        deleteTask: vi.fn().mockResolvedValue(undefined),
+
+        // Projects
+        getProjects: vi.fn().mockResolvedValue([]),
+        getProject: vi.fn().mockResolvedValue(null),
+        createProject: vi.fn().mockResolvedValue({ id: 'project-1' }),
+
+        // Initiatives
+        getInitiatives: vi.fn().mockResolvedValue([]),
+        getInitiative: vi.fn().mockResolvedValue(null),
+
+        // AI
+        chat: vi.fn().mockResolvedValue({ message: 'Response' }),
+        streamChat: vi.fn().mockResolvedValue(new ReadableStream()),
+
+        // Generic catch-all
+        get: vi.fn().mockResolvedValue({}),
+        post: vi.fn().mockResolvedValue({}),
+        put: vi.fn().mockResolvedValue({}),
+        delete: vi.fn().mockResolvedValue({}),
+    }
 }));
 
 // Global Setup
@@ -380,6 +521,18 @@ beforeAll(async () => {
     mockLLMApi.reset();
     // Ensure call history is cleared but implementations remain
     vi.clearAllMocks();
+});
+
+import { afterAll } from 'vitest';
+
+afterAll(async () => {
+    // Clean up database connection to prevent locking/leaks
+    const db = (global as any).__ACTIVE_DB_INSTANCE__;
+    if (db && typeof db.close === 'function') {
+        // console.log('[Setup] Closing active database connection');
+        await Promise.resolve(db.close());
+        (global as any).__ACTIVE_DB_INSTANCE__ = undefined;
+    }
 });
 
 // Reset LLM API mocks before each test
@@ -621,17 +774,4 @@ if (typeof window !== 'undefined') {
 }
 
 // Handle uncaught exceptions - log but don't rethrow to prevent Vitest worker crashes
-// Previously throwing here caused "Worker exited unexpectedly" errors
-// Real failures will surface in individual test assertions
-if (typeof process !== 'undefined' && process.on) {
-    process.on('uncaughtException', (err: any) => {
-        // Log the error for debugging but don't crash the worker
-        console.error('[Test Setup] Uncaught exception (logged, not rethrown):', err?.message || err);
-        // Don't rethrow - let the test framework handle assertion failures
-    });
-
-    process.on('unhandledRejection', (reason: any) => {
-        console.error('[Test Setup] Unhandled rejection (logged, not rethrown):', (reason as Error)?.message || reason);
-        // Don't throw - let the test framework handle it
-    });
-}
+// Uncaught exceptions and rejections will now cause test failures (as they should).

@@ -1,14 +1,27 @@
 /**
- * Proactivenudges Service
+ * Proactive Nudges Service
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Stub implementation Replacing broken lazy-loader
  */
+import logger from '../../utils/Logger.js';
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
+class ProactiveNudgesService {
+    async generateNudges(userId: string) {
+        logger.warn(`[ProactiveNudgesService] generateNudges(${userId}) called on stub`);
+        return [];
+    }
 
-// Lazy load the JS service module
-const loadProactivenudges = createCachedLazyService('../../ai/proactiveNudges.js');
+    async dismissNudge(id: string) {
+        logger.warn(`[ProactiveNudgesService] dismissNudge(${id}) called on stub`);
+        return { dismissed: true };
+    }
 
-// Export default instance (for backward compatibility)
-export default loadProactivenudges();
+    async getActiveNudges(userId: string) {
+        logger.warn(`[ProactiveNudgesService] getActiveNudges(${userId}) called on stub`);
+        return [];
+    }
+}
+
+export const proactiveNudgesService = new ProactiveNudgesService();
+export default proactiveNudgesService;

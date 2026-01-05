@@ -1,11 +1,18 @@
-const sqlite3 = require('sqlite3').verbose();
 import path from 'path';
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
+const sqlite3 = require('sqlite3').verbose();
 const dbPath = path.resolve(__dirname, '../consultify.db');
 const db = new sqlite3.Database(dbPath);
-
-import { v4: uuidv4 } from 'uuid';
 
 const providers = [
     {
@@ -57,11 +64,6 @@ db.serialize(() => {
     const stmt = db.prepare(`INSERT OR REPLACE INTO llm_providers (id, name, provider, model_id, api_key, is_active, is_default, cost_per_1k, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
     providers.forEach(p => {
-        // Generate a deterministic ID based on provider+model to avoid duplicates on re-seed if possible, 
-        // OR just use a new UUID. Since we use REPLACE, let's try to find existing ID or just insert.
-        // Actually, without an ID known, REPLACE might create new rows if ID is PK.
-        // Let's first DELETE matching provider/models to avoid duplicates, then INSERT.
-
         db.run("DELETE FROM llm_providers WHERE provider = ? AND model_id = ?", [p.provider, p.model_id], (err) => {
             if (!err) {
                 const newId = uuidv4();
@@ -73,7 +75,7 @@ db.serialize(() => {
         });
     });
 
-    // Wait a bit for asyncs (lazy way) or use promises, but for seed script callbacks are fine if we wait before verify.
+    // Wait a bit for asyncs (lazy way)
     setTimeout(() => {
         stmt.finalize();
         console.log('Seeding initiated.');

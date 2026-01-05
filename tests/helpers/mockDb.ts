@@ -99,7 +99,7 @@ export function createMockDb(options: {
             initPromise: Promise.resolve()
         };
 
-        // Default implementations - callback-style (SQLite3)
+        // Default implementations - callback-style (SQLite3) and Promise-based
         // Handle both (sql, callback) and (sql, params, callback) signatures
         db.get!.mockImplementation(function (sql: string, params?: any, callback?: any) {
             const cb = typeof params === 'function' ? params : callback;
@@ -117,8 +117,17 @@ export function createMockDb(options: {
                         }
                     }
                 });
+                return this;
+            } else {
+                // Promise-based API - check if mockResolvedValue was called
+                // If mockResolvedValue was called, it will override this
+                // Otherwise return default result
+                const mockResult = (db.get as any).mock?.results?.[(db.get as any).mock?.calls?.length - 1]?.value;
+                if (mockResult !== undefined && Promise.resolve(mockResult) === mockResult) {
+                    return mockResult;
+                }
+                return Promise.resolve(defaultGetResult);
             }
-            return this;
         });
 
         db.all!.mockImplementation(function (sql: string, params?: any, callback?: any) {
@@ -156,8 +165,11 @@ export function createMockDb(options: {
                         }
                     }
                 });
+                return this;
+            } else {
+                // Promise-based API - return Promise
+                return Promise.resolve({ lastID: defaultRunResult.lastID, changes: defaultRunResult.changes });
             }
-            return this;
         });
 
         db.exec!.mockImplementation(function (sql: string, callback?: any) {

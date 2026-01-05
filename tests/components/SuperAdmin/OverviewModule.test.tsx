@@ -3,23 +3,23 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import OverviewModule from '../../../views/superadmin/OverviewModule';
-import { Api } from '../../../services/api';
+import OverviewModule from '@/views/superadmin/OverviewModule';
+import { Api } from '@/services/api';
 
 // Mock child components
-vi.mock('../../../views/superadmin/SuperAdminDashboard', () => ({
+vi.mock('@/views/superadmin/SuperAdminDashboard', () => ({
     SuperAdminDashboard: () => <div data-testid="dashboard-content">Dashboard Content</div>
 }));
 
-vi.mock('../../../views/superadmin/SuperAdminMetricsView', () => ({
+vi.mock('@/views/superadmin/SuperAdminMetricsView', () => ({
     SuperAdminMetricsView: () => <div data-testid="metrics-content">Metrics Content</div>
 }));
 
-vi.mock('../../../components/SuperAdmin/SuperAdminSignalCenter', () => ({
+vi.mock('@/components/SuperAdmin/SuperAdminSignalCenter', () => ({
     SuperAdminSignalCenter: () => <div data-testid="signals-content">Signals Content</div>
 }));
 
-vi.mock('../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         getOrganizations: vi.fn(),
         getSuperAdminDashboard: vi.fn(),

@@ -8,7 +8,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { ActionProposalList, ActionProposal } from '../../components/ai/ActionProposalList';
+import { ActionProposalList, ActionProposal } from '@/components/ai/ActionProposalList';
 
 describe('ActionProposalList', () => {
     const mockProposals: ActionProposal[] = [

@@ -4,7 +4,7 @@
  * Tests for runtime type checking, database result validation, and API response validation.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { z } from 'zod';
 
 // Import type guards - using dynamic import for ESM

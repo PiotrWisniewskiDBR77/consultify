@@ -1,7 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 describe('SecretsVault Service', () => {
     let secretsVault;
@@ -10,7 +7,7 @@ describe('SecretsVault Service', () => {
         vi.resetModules();
         // Clear env to use default dev key
         delete process.env.CONNECTOR_ENCRYPTION_KEY;
-        secretsVault = require('../../server/services/secretsVault');
+        secretsVault = await import('../../server/src/services/secretsVault.cjs');
     });
 
     describe('Encryption/Decryption', () => {

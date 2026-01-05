@@ -5,10 +5,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SuperAdminOrgDetailsModal } from '../../../views/superadmin/SuperAdminOrgDetailsModal';
-import { Api } from '../../../services/api';
+import { Api } from '@/services/api';
 
 // Mock API
-vi.mock('../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         getOrganizationBillingDetails: vi.fn(),
         updateOrganization: vi.fn()

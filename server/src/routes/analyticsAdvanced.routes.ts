@@ -29,19 +29,19 @@ interface ExperimentServiceInterface {
 let CohortService: CohortServiceInterface | null = null;
 let ExperimentService: ExperimentServiceInterface | null = null;
 
-try {
-    const cohortModule = (await import('../services/cohortService.js')) as any;
-    CohortService = (cohortModule.default || cohortModule) as CohortServiceInterface;
-} catch {
-    logger.warn('[AnalyticsAdvanced Routes] CohortService not available');
-}
+// try {
+//     const cohortModule = (await import('../services/cohortService.js')) as any;
+//     CohortService = (cohortModule.default || cohortModule) as CohortServiceInterface;
+// } catch {
+//     logger.warn('[AnalyticsAdvanced Routes] CohortService not available');
+// }
 
-try {
-    const experimentModule = (await import('../services/experimentService.js')) as any;
-    ExperimentService = (experimentModule.default || experimentModule) as ExperimentServiceInterface;
-} catch {
-    logger.warn('[AnalyticsAdvanced Routes] ExperimentService not available');
-}
+// try {
+//     const experimentModule = (await import('../services/experimentService.js')) as any;
+//     ExperimentService = (experimentModule.default || experimentModule) as ExperimentServiceInterface;
+// } catch {
+//     logger.warn('[AnalyticsAdvanced Routes] ExperimentService not available');
+// }
 
 /**
  * GET /api/analytics/cohorts

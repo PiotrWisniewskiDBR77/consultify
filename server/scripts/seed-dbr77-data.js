@@ -5,9 +5,16 @@
  * for the DBR77 Digital Transformation project
  */
 
-const sqlite3 = require('sqlite3').verbose();
 import path from 'path';
-import { v4: uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import { v4 as uuidv4 } from 'uuid';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
+const sqlite3 = require('sqlite3').verbose();
 
 const DB_PATH = path.join(__dirname, '..', 'consultify.db');
 const db = new sqlite3.Database(DB_PATH);
@@ -15,7 +22,7 @@ const db = new sqlite3.Database(DB_PATH);
 // Helper to run SQL
 const run = (sql, params = []) => {
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
+        db.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
@@ -50,14 +57,14 @@ async function seedDBR77Data() {
             console.error('❌ No DBR77 organization found. Please create one first.');
             return;
         }
-        
+
         const orgId = org.id;
         console.log(`✅ Using organization: ${org.name} (${orgId})`);
 
         // 2. Get existing users
         const existingUsers = await all('SELECT * FROM users WHERE organization_id = ?', [orgId]);
         console.log(`\n👥 Found ${existingUsers.length} existing users`);
-        
+
         const userIds = existingUsers.map(u => u.id);
 
         // 3. Create security events table and data
@@ -151,7 +158,7 @@ async function seedDBR77Data() {
                 { requests: 156, tokens: 58000, cost: 5.40 },
                 { requests: 89, tokens: 32000, cost: 2.90 },
             ][i] || { requests: 50, tokens: 20000, cost: 1.50 };
-            
+
             await run(`
                 INSERT INTO ai_usage_stats (id, organization_id, project_id, period_start, period_end, requests_count, tokens_used, cost_usd)
                 VALUES (?, ?, ?, date('now', '-7 days'), date('now'), ?, ?, ?)
@@ -162,7 +169,7 @@ async function seedDBR77Data() {
         // 5. Create audit events if table exists
         console.log('\n📝 Creating audit events...');
         const auditTableExists = await get("SELECT name FROM sqlite_master WHERE type='table' AND name='audit_events'");
-        
+
         if (auditTableExists) {
             const auditEvents = [
                 { type: 'USER_LOGIN', description: 'Admin logged in from Warsaw, Poland' },
@@ -194,7 +201,7 @@ async function seedDBR77Data() {
         // 6. Create login history
         console.log('\n🔐 Creating login history...');
         const loginHistoryExists = await get("SELECT name FROM sqlite_master WHERE type='table' AND name='login_history'");
-        
+
         if (loginHistoryExists) {
             // Clear and add new login history
             await run('DELETE FROM login_history WHERE organization_id = ?', [orgId]);
@@ -226,7 +233,7 @@ async function seedDBR77Data() {
         // 7. Create active sessions
         console.log('\n💻 Creating active sessions...');
         const sessionsTableExists = await get("SELECT name FROM sqlite_master WHERE type='table' AND name='user_sessions'");
-        
+
         if (sessionsTableExists) {
             // Clear old sessions for users in this org
             await run('DELETE FROM user_sessions WHERE user_id IN (SELECT id FROM users WHERE organization_id = ?)', [orgId]);
@@ -253,7 +260,7 @@ async function seedDBR77Data() {
         // 8. Update billing data
         console.log('\n💰 Updating billing data...');
         const billingExists = await get('SELECT * FROM organization_billing WHERE organization_id = ?', [orgId]);
-        
+
         if (!billingExists) {
             await run(`
                 INSERT INTO organization_billing 
@@ -278,7 +285,7 @@ async function seedDBR77Data() {
         // 9. Create invoices
         console.log('\n🧾 Creating invoices...');
         const invoicesTableExists = await get("SELECT name FROM sqlite_master WHERE type='table' AND name='invoices'");
-        
+
         if (invoicesTableExists) {
             // Clear old invoices
             await run('DELETE FROM invoices WHERE organization_id = ?', [orgId]);
@@ -348,8 +355,8 @@ async function seedDBR77Data() {
                     mission_statement, vision_statement, digital_maturity_overall, growth_stage, profile_completeness)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                uuidv4(), 
-                orgId, 
+                uuidv4(),
+                orgId,
                 'Technology',
                 '51-200',
                 120,
@@ -401,16 +408,16 @@ async function seedDBR77Data() {
 
         // Find owner user
         const ownerUser = existingUsers.find(u => u.role === 'ADMIN' || u.is_owner === 1) || existingUsers[0];
-        
+
         await run(`
             INSERT OR REPLACE INTO organization_ownership 
             (id, organization_id, owner_user_id, billing_email, billing_name, tax_id, vat_number, billing_address, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')
         `, [
-            uuidv4(), 
-            orgId, 
-            ownerUser?.id, 
-            'billing@dbr77.com', 
+            uuidv4(),
+            orgId,
+            ownerUser?.id,
+            'billing@dbr77.com',
             `${ownerUser?.first_name || 'Admin'} ${ownerUser?.last_name || 'DBR77'}`,
             'PL1234567890',
             'EU1234567890',

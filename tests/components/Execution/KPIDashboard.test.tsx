@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { KPIDashboard } from '../../components/Execution/KPIDashboard';
+import { KPIDashboard } from '@/components/Execution/KPIDashboard';
 
 describe('KPIDashboard Component', () => {
     const defaultProps = {

@@ -5,8 +5,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ArtifactsPanel } from '../../components/AIChat/Artifacts/ArtifactsPanel';
-import { Artifact } from '../../../types';
+import { ArtifactsPanel } from '@/components/AIChat/Artifacts/ArtifactsPanel';
+import { Artifact } from '@/types';
 
 // Mock react-i18next
 vi.mock('react-i18next', () => ({

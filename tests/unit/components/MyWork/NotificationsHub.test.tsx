@@ -2,11 +2,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NotificationsHub } from '../../../../components/MyWork/NotificationsHub';
-import { Api } from '../../../../services/api';
+import { NotificationsHub } from '@/components/MyWork/NotificationsHub';
+import { Api } from '@/services/api';
 
 // Mock Dependencies
-vi.mock('../../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         getNotifications: vi.fn(),
         markNotificationRead: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('../../../../services/api', () => ({
     }
 }));
 
-vi.mock('../../../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: (selector: any) => selector({
         user: { id: 'user1' }
     })

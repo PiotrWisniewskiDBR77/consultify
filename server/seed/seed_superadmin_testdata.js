@@ -11,7 +11,7 @@
  *   node server/seed/seed_superadmin_testdata.js
  */
 
-import { v4: uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 // Detect database type
 const isPostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');

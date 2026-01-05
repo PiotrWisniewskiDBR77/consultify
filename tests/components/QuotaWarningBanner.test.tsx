@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { QuotaWarningBanner } from '../../components/billing/QuotaWarningBanner';
+import { QuotaWarningBanner } from '@/components/billing/QuotaWarningBanner';
 
 describe('Component Test: QuotaWarningBanner', () => {
     it('does not render when usage is below threshold', () => {

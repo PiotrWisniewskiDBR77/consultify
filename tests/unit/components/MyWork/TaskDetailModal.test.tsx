@@ -2,13 +2,13 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { TaskDetailModal } from '../../../../components/MyWork/TaskDetailModal';
-import { Api } from '../../../../services/api';
-import { InitiativeService } from '../../../../services/initiativeService';
+import { TaskDetailModal } from '@/components/MyWork/TaskDetailModal';
+import { Api } from '@/services/api';
+import { InitiativeService } from '../../../services/initiativeService';
 import toast from 'react-hot-toast';
 
 // Mock services
-vi.mock('../../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         get: vi.fn(),
         post: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock('../../../../services/api', () => ({
     }
 }));
 
-vi.mock('../../../../services/initiativeService', () => ({
+vi.mock('../../../services/initiativeService', () => ({
     InitiativeService: {
         getAll: vi.fn()
     }

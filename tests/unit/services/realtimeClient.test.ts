@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { realtimeClient } from '../../../services/realtimeClient';
+import { realtimeClient } from '../../services/realtimeClient';
 
 // Mock window.location for WebSocket URL construction
 Object.defineProperty(window, 'location', {

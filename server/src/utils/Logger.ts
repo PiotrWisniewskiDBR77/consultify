@@ -27,7 +27,7 @@ const levels = {
 
 const level = () => {
     const env = process.env.NODE_ENV || 'development';
-    const isDevelopment = env === 'development';
+    const isDevelopment = env === 'development' || env === 'test';
     return isDevelopment ? 'debug' : 'warn';
 };
 

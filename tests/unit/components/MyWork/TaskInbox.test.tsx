@@ -4,11 +4,11 @@ import { screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../../../test-utils';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { TaskInbox } from '../../../../components/MyWork/TaskInbox';
-import { Api } from '../../../../services/api';
+import { TaskInbox } from '@/components/MyWork/TaskInbox';
+import { Api } from '@/services/api';
 
 // Mock dependencies
-vi.mock('../../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         getTasks: vi.fn(),
         updateTask: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock('../../../../services/api', () => ({
 }));
 
 const mockUsePMOStore = vi.fn();
-vi.mock('../../../../store/usePMOStore', () => ({
+vi.mock('@/store/usePMOStore', () => ({
     usePMOStore: (selector: any) => mockUsePMOStore(selector),
     PMOTaskLabel: {}
 }));

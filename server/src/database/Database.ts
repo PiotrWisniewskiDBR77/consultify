@@ -7,72 +7,84 @@
  */
 
 import { createRequire } from 'module';
-
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import type { IDatabase } from './IDatabase.js';
 import PostgresDatabase from './PostgresDatabase.js';
-const require = createRequire(import.meta.url);
 import logger from '../utils/Logger.js';
 
-// SQLiteDatabase will be imported using dynamic import for ES modules compatibility
+const require = createRequire(import.meta.url);
+const GLOBAL_DB_KEY = '__CONSULTIFY_GLOBAL_DB_INSTANCE__';
 
-// Mock database for tests
-export interface MockDatabase extends IDatabase {
-    _mockData?: Record<string, unknown[]>;
+// Local references to the global singleton
+let dbInstance: IDatabase | null = (process as any)[GLOBAL_DB_KEY] || (globalThis as any)[GLOBAL_DB_KEY] || null;
+let dbInstancePromise: Promise<IDatabase> | null = null;
+
+if (dbInstance) {
+    console.log('[Database] Initialized from global.');
 }
 
 /**
- * Create a mock database for testing
+ * Shims the .query method onto a database handle if it doesn't have it
  */
-function createMockDatabase(): MockDatabase {
-    const mockData: Record<string, unknown[]> = {};
+function shimQuery(db: any) {
+    if (db && typeof db.query !== 'function') {
+        db.query = function (text: string, params: any[]) {
+            return new Promise((resolve, reject) => {
+                db.all(text, params, (err: Error | null, rows: any[]) => {
+                    if (err) reject(err);
+                    else resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
+                });
+            });
+        };
+    }
+}
 
+/**
+ * Ensures we have a single global instance across all module loads
+ */
+function syncWithGlobal() {
+    const globalHandle = (process as any)[GLOBAL_DB_KEY] || (globalThis as any)[GLOBAL_DB_KEY];
+    if (globalHandle && (!dbInstance || (dbInstance as any).__CLOSED__)) {
+        dbInstance = globalHandle;
+    }
+}
+
+/**
+ * Mock database for tests
+ */
+export interface MockDatabase extends IDatabase {
+    _mockData?: Record<string, unknown[]>;
+    isMock: boolean;
+}
+
+function createMockDatabase(): MockDatabase {
     return {
-        _mockData: mockData,
-        get<T = unknown>(
-            _sql: string,
-            _params?: unknown[],
-            callback?: (err: Error | null, row: T | null) => void,
-        ): any {
-            if (callback) {
-                callback(null, null);
-                return this;
-            }
+        isMock: true,
+        get: (_sql, _params, callback) => {
+            if (callback) callback(null, null);
             return Promise.resolve(null);
         },
-        all<T = unknown>(_sql: string, _params?: unknown[], callback?: (err: Error | null, rows: T[]) => void): any {
-            if (callback) {
-                callback(null, []);
-                return this;
-            }
+        all: (_sql, _params, callback) => {
+            if (callback) callback(null, []);
             return Promise.resolve([]);
         },
-        run(_sql: string, _params?: unknown[], callback?: (err: Error | null) => void): any {
+        run(_sql, _params, callback) {
             if (callback) {
-                // @ts-ignore - Mock sqlite context
+                // @ts-ignore
                 callback.call({ lastID: 0, changes: 0 }, null);
-                return this;
             }
             return Promise.resolve({ lastID: 0, changes: 0 });
         },
-        exec(_sql: string, callback?: (err: Error | null) => void): any {
-            if (callback) {
-                callback(null);
-                return this;
-            }
+        exec(_sql, callback) {
+            if (callback) callback(null);
             return Promise.resolve();
         },
-        serialize(callback: () => void): void {
-            callback();
-        },
-        close(callback?: (err: Error | null) => void): Promise<void> | void {
-            if (callback) {
-                callback(null);
-                return;
-            }
+        serialize: (cb) => cb(),
+        close: (callback) => {
+            if (callback) callback(null);
             return Promise.resolve();
         },
-        async query<T = unknown>(_text: string, _params?: unknown[]): Promise<{ rows: T[]; rowCount: number }> {
+        async query(_text, _params) {
             return { rows: [], rowCount: 0 };
         },
     };
@@ -80,155 +92,245 @@ function createMockDatabase(): MockDatabase {
 
 /**
  * Create database instance based on configuration
- *
- * Full TypeScript ES modules implementation
  */
 export async function createDatabase(): Promise<IDatabase> {
-    // Mock database for tests
+    syncWithGlobal();
+    if (dbInstance && !(dbInstance as any).__CLOSED__ && !(dbInstance as any).isMock) {
+        return dbInstance;
+    }
+
+    console.log('[Database] createDatabase() called. MOCK_DB:', process.env.MOCK_DB);
+
+    // BRUTAL TEST ISOLATION
+    if (process.env.NODE_ENV === 'test' && process.env.MOCK_DB === 'false' && process.env.SQLITE_PATH) {
+        console.log('[Database] FORCING SQLITE_PATH FOR TEST:', process.env.SQLITE_PATH);
+        const sqliteModule = await import('../../legacy_archive/database.sqlite.js').then((m) => m.default || m);
+        const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
+        shimQuery(db);
+        dbInstance = db;
+        (process as any)[GLOBAL_DB_KEY] = db;
+        (globalThis as any)[GLOBAL_DB_KEY] = db;
+        return db;
+    }
+
     if (process.env.MOCK_DB === 'true' || (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false')) {
-        logger.info('[Database] Using test/mock database');
-        const mockDb = global.__TEST_DB_MOCK__ as MockDatabase | undefined;
-        if (mockDb) {
-            return mockDb;
-        }
-        return createMockDatabase();
+        console.log('[Database] Using MOCK database.');
+        const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
+        dbInstance = mockDb;
+        (process as any)[GLOBAL_DB_KEY] = mockDb;
+        (globalThis as any)[GLOBAL_DB_KEY] = mockDb;
+        return mockDb;
     }
 
-    // Use TypeScript implementations
-    if (databaseConfig.type === 'postgres') {
-        logger.info('[Database] Selected: PostgreSQL');
-        return PostgresDatabase as unknown as IDatabase;
-    } else {
-        logger.info('[Database] Selected: SQLite (Legacy)');
-        // Use dynamic import for ES modules compatibility
-        try {
-            const sqliteModule = await import('../../database.sqlite.js').then((m) => m.default || m);
-            const db = (sqliteModule.default || sqliteModule) as IDatabase;
-
-            // SHIM: Ensure .query exists (critical for DatabaseInitializer)
-            if (db && typeof (db as any).query !== 'function') {
-                logger.info('[Database] Shimming .query() method on async SQLite instance');
-                (db as any).query = function (text: string, params: any[]) {
-                    return new Promise((resolve, reject) => {
-                        db.all(text, params, (err: Error | null, rows: any[]) => {
-                            if (err) reject(err);
-                            else resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
-                        });
-                    });
-                };
-            }
-
-            return db;
-        } catch (err: any) {
-            logger.error('[Database] Failed to load legacy SQLite database:', err);
-            // Fallback to mock to prevent total crash in some environments, or re-throw
-            throw err;
-        }
+    const { type } = databaseConfig;
+    if (type === 'postgres') {
+        const db = PostgresDatabase as unknown as IDatabase;
+        dbInstance = db;
+        (process as any)[GLOBAL_DB_KEY] = db;
+        (globalThis as any)[GLOBAL_DB_KEY] = db;
+        return db;
     }
+
+    // Default to SQLite
+    const sqliteModule = await import('../../legacy_archive/database.sqlite.js').then((m) => m.default || m);
+    const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
+    shimQuery(db);
+    dbInstance = db;
+    (process as any)[GLOBAL_DB_KEY] = db;
+    (globalThis as any)[GLOBAL_DB_KEY] = db;
+    return db;
 }
-
-// Singleton instance
-let dbInstance: IDatabase | null = null;
-let dbInstancePromise: Promise<IDatabase> | null = null;
 
 /**
  * Get database singleton instance (async)
  */
 export async function getDatabaseAsync(): Promise<IDatabase> {
-    if (dbInstance) {
+    syncWithGlobal();
+    if (dbInstance && !(dbInstance as any).__CLOSED__) {
         return dbInstance;
     }
-    if (!dbInstancePromise) {
-        dbInstancePromise = createDatabase().then((db) => {
-            dbInstance = db;
-            return db;
-        });
+
+    if (dbInstancePromise) {
+        const resolved = await dbInstancePromise;
+        dbInstance = resolved;
+        (process as any)[GLOBAL_DB_KEY] = resolved;
+        (globalThis as any)[GLOBAL_DB_KEY] = resolved;
+        return resolved;
     }
-    return dbInstancePromise;
+
+    dbInstancePromise = createDatabase();
+    const resolved = await dbInstancePromise;
+    dbInstance = resolved;
+    (process as any)[GLOBAL_DB_KEY] = resolved;
+    (globalThis as any)[GLOBAL_DB_KEY] = resolved;
+    return resolved;
 }
 
 /**
- * Get database singleton instance (synchronous for backward compatibility)
- * Note: This will initialize synchronously if possible, otherwise returns a mock
+ * Get internal database singleton instance (synchronous)
  */
-export function getDatabase(): IDatabase {
-    if (dbInstance) {
-        return dbInstance;
-    }
-
-    // Mock database logic:
-    // 1. Explicitly enabled via MOCK_DB='true'
-    // 2. Implicitly enabled in 'test' env, UNLESS explicitly disabled via MOCK_DB='false'
-    const shouldMock =
-        process.env.MOCK_DB === 'true' || (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false');
-
-    logger.debug('[Database:DEBUG] Initialization state', {
-        MOCK_DB: process.env.MOCK_DB,
-        NODE_ENV: process.env.NODE_ENV,
-        shouldMock,
-    });
-
-    if (shouldMock) {
-        const globalMock = (global as any).__TEST_DB_MOCK__ as MockDatabase | undefined;
-        if (globalMock) {
-            dbInstance = globalMock;
-            return dbInstance;
+export function getDatabaseInstance(): IDatabase {
+    // FORCE SYNC with global on every access
+    const globalHandle = (process as any)[GLOBAL_DB_KEY] || (globalThis as any)[GLOBAL_DB_KEY];
+    if (globalHandle && !(globalHandle as any).__CLOSED__) {
+        if (dbInstance !== globalHandle) {
+            dbInstance = globalHandle;
         }
-        dbInstance = createMockDatabase();
+        return globalHandle;
+    }
+
+    if (dbInstance && !(dbInstance as any).__CLOSED__) {
         return dbInstance;
     }
 
-    // Load configuration to check for postgres
-    // const databaseConfig = require('../../config/database.config'); // Dynamic require if needed
+    console.log('[Database] getDatabaseInstance() (SYNC) needs initialization.');
 
-    // For backward compatibility, try to initialize synchronously
-    // If async initialization is needed, use getDatabaseAsync()
-    if (databaseConfig.type === 'postgres') {
-        dbInstance = PostgresDatabase as unknown as IDatabase;
-        return dbInstance;
+    // BRUTAL SYNC FALLBACK FOR TESTS
+    if (process.env.NODE_ENV === 'test' && process.env.SQLITE_PATH && process.env.MOCK_DB === 'false') {
+        console.log('[Database] Sync fallback to legacy. PATH:', process.env.SQLITE_PATH);
+        const sqliteModule = require('../../legacy_archive/database.sqlite.js');
+        const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
+        shimQuery(db);
+        dbInstance = db;
+        (process as any)[GLOBAL_DB_KEY] = db;
+        (globalThis as any)[GLOBAL_DB_KEY] = db;
+        return db;
     }
 
-    // For SQLite, try to load synchronously using require
-    // This is a fallback for synchronous access
-    try {
-        // Try to dynamically import synchronously using a createRequire trick
-        // const { createRequire } = require('module'); // BROKEN IN ESM
-        // const requireSync = createRequire(import.meta.url); // Already created at top level
-        // Dynamic import for ESM compatibility - using createRequire for synchronous access
-        const sqliteModule = require('../../database.sqlite.js');
 
-        dbInstance = (sqliteModule.default || sqliteModule) as IDatabase;
+    if (databaseConfig.type === 'sqlite') {
+        const sqliteModule = require('../../legacy_archive/database.sqlite.js');
+        const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
+        shimQuery(db);
+        dbInstance = db;
+        (process as any)[GLOBAL_DB_KEY] = db;
+        (globalThis as any)[GLOBAL_DB_KEY] = db;
+        dbInstancePromise = Promise.resolve(db);
+        return db;
+    }
 
-        // SHIM: Ensure .query exists (critical for DatabaseInitializer)
-        if (dbInstance && typeof (dbInstance as any).query !== 'function') {
-            logger.info('[Database] Shimming .query() method on synchronous SQLite instance');
-            (dbInstance as any).query = function (text: string, params: any[]) {
-                return new Promise((resolve, reject) => {
-                    this.all(text, params, (err: Error | null, rows: any[]) => {
-                        if (err) reject(err);
-                        else resolve({ rows: rows || [], rowCount: rows ? rows.length : 0 });
-                    });
-                });
+    // Fallback for tests if not initialized
+    if (process.env.NODE_ENV === 'test') {
+        const mockDb = createMockDatabase();
+        dbInstance = mockDb;
+        (process as any)[GLOBAL_DB_KEY] = mockDb;
+        (globalThis as any)[GLOBAL_DB_KEY] = mockDb;
+        return mockDb;
+    }
+
+    throw new Error('Database not initialized. Call getDatabaseAsync() first.');
+}
+
+/**
+ * Global Database Instance Proxy
+ */
+export const dbProxy = new Proxy({} as IDatabase, {
+    get(_, prop) {
+        if (prop === '__CLOSED__') {
+            syncWithGlobal();
+            return dbInstance ? (dbInstance as any).__CLOSED__ : false;
+        }
+
+        const instance = getDatabaseInstance();
+        const value = (instance as any)[prop];
+
+        if (typeof value === 'function') {
+            return (...args: any[]) => {
+                const callWithRetry = (retryCount = 0): any => {
+                    const currentDb = getDatabaseInstance();
+                    const fn = (currentDb as any)[prop];
+
+                    if (!fn) {
+                        throw new Error(`Database instance does not have method: ${String(prop)}`);
+                    }
+
+                    // Handle callback-based methods
+                    const lastArgIndex = args.length - 1;
+                    const lastArg = args[lastArgIndex];
+
+                    if (typeof lastArg === 'function') {
+                        const originalCallback = lastArg;
+                        const wrappedArgs = [...args];
+                        wrappedArgs[lastArgIndex] = function (this: any, err: any, ...results: any[]) {
+                            if (err && err.message && err.message.includes('Database is closed') && retryCount < 1) {
+                                resetConnectionLocally();
+                                return callWithRetry(retryCount + 1);
+                            }
+                            return originalCallback.apply(this, [err, ...results]);
+                        };
+                        return fn.apply(currentDb, wrappedArgs);
+                    }
+
+                    // Handle Promise-based methods
+                    try {
+                        const result = fn.apply(currentDb, args);
+                        if (result instanceof Promise) {
+                            return result.catch((err: any) => {
+                                if (err.message && err.message.includes('Database is closed') && retryCount < 1) {
+                                    resetConnectionLocally();
+                                    return callWithRetry(retryCount + 1);
+                                }
+                                throw err;
+                            });
+                        }
+                        return result;
+                    } catch (err: any) {
+                        if (err.message && err.message.includes('Database is closed') && retryCount < 1) {
+                            resetConnectionLocally();
+                            return callWithRetry(retryCount + 1);
+                        }
+                        throw err;
+                    }
+                };
+                return callWithRetry();
             };
         }
+        return value;
+    },
+});
 
-        logger.info('[Database] Loaded SQLite synchronously');
-        return dbInstance;
-    } catch (err: any) {
-        logger.warn('[Database] Could not load SQLite synchronously, using mock. Call getDatabaseAsync() first.');
-        // Return a proxy that will queue requests until real db is ready
-        if (!dbInstance) {
-            dbInstance = createMockDatabase();
+function resetConnectionLocally() {
+    dbInstance = null;
+    (process as any)[GLOBAL_DB_KEY] = null;
+    (globalThis as any)[GLOBAL_DB_KEY] = null;
+    dbInstancePromise = null;
+
+    // Also clear legacy module internal key
+    const SQLITE_GLOBAL_KEY = '__CONSULTIFY_SQLITE_INSTANCE__';
+    (process as any)[SQLITE_GLOBAL_KEY] = null;
+    (globalThis as any)[SQLITE_GLOBAL_KEY] = null;
+    (global as any)[SQLITE_GLOBAL_KEY] = null;
+}
+
+/**
+ * Force close connection and reset singleton
+ */
+export async function resetConnection(): Promise<void> {
+    syncWithGlobal();
+    const db = dbInstance;
+
+    resetConnectionLocally();
+
+    if (db) {
+        console.log('[Database] Closing database handle...');
+        (db as any).__CLOSED__ = true;
+        if ((db as any).close) {
+            await new Promise<void>((resolve) => {
+                (db as any).close((err: any) => {
+                    if (err) console.error('[Database] Error closing DB handle', err);
+                    resolve();
+                });
+            });
         }
-        return dbInstance;
     }
 }
 
-// Export default instance
-const db = getDatabase();
-export default db;
+export function getDatabase(): IDatabase {
+    return dbProxy;
+}
 
-// Type guard for global test mock
+export default dbProxy;
+
 declare global {
-    var __TEST_DB_MOCK__: MockDatabase | undefined;
+    var __TEST_DB_MOCK__: any;
 }

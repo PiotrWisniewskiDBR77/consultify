@@ -1,11 +1,24 @@
+import app from '../../../server/src/index.js';
+import crypto from 'crypto';
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { jest } from '@jest/globals';
+
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = ':memory:';
+});
+
 /**
  * Integration Tests for Billing Routes
  * Tests webhook handling, email delivery, and subscription lifecycle
  */
 
-import { jest } from '@jest/globals';
-import request from 'supertest';
-import crypto from 'crypto';
+
+
+
 
 // Create test app with mocked authentication
 const createTestApp = async () => {
@@ -34,13 +47,16 @@ const createTestApp = async () => {
 };
 
 describe('Billing API Integration', () => {
+    const db = getDatabase();
     let app;
 
     beforeAll(async () => {
+        await initializeDatabase();
         app = await createTestApp();
     });
 
     describe('GET /api/billing/invoices', () => {
+    const db = getDatabase();
         it('should return invoices for organization', async () => {
             const response = await request(app)
                 .get('/api/billing/invoices')
@@ -64,6 +80,7 @@ describe('Billing API Integration', () => {
     });
 
     describe('GET /api/billing/payment-methods', () => {
+    const db = getDatabase();
         it('should return payment methods for organization', async () => {
             const response = await request(app)
                 .get('/api/billing/payment-methods')
@@ -75,6 +92,7 @@ describe('Billing API Integration', () => {
     });
 
     describe('GET /api/billing/spending-alerts', () => {
+    const db = getDatabase();
         it('should return spending alerts', async () => {
             const response = await request(app)
                 .get('/api/billing/spending-alerts')
@@ -86,6 +104,7 @@ describe('Billing API Integration', () => {
     });
 
     describe('POST /api/billing/spending-alerts', () => {
+    const db = getDatabase();
         it('should create spending alert with valid data', async () => {
             const alertData = {
                 type: 'ai_tokens',
@@ -121,6 +140,7 @@ describe('Billing API Integration', () => {
     });
 
     describe('GET /api/billing/usage-summary', () => {
+    const db = getDatabase();
         it('should return usage summary', async () => {
             const response = await request(app)
                 .get('/api/billing/usage-summary')
@@ -146,9 +166,11 @@ describe('Billing API Integration', () => {
 });
 
 describe('Stripe Webhook Integration', () => {
+    const db = getDatabase();
     let app;
 
     beforeAll(async () => {
+        await initializeDatabase();
         app = await createTestApp();
     });
 
@@ -160,6 +182,7 @@ describe('Stripe Webhook Integration', () => {
     });
 
     describe('POST /webhooks/stripe', () => {
+    const db = getDatabase();
         it('should handle customer.subscription.created event', async () => {
             const payload = createWebhookPayload('customer.subscription.created', {
                 id: 'sub_test_123',
@@ -312,13 +335,16 @@ describe('Stripe Webhook Integration', () => {
 });
 
 describe('Subscription Lifecycle Integration', () => {
+    const db = getDatabase();
     let app;
 
     beforeAll(async () => {
+        await initializeDatabase();
         app = await createTestApp();
     });
 
     describe('Subscription state transitions', () => {
+    const db = getDatabase();
         it('should transition from trial to active on payment', async () => {
             // Create subscription
             const createPayload = {

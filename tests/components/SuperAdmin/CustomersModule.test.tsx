@@ -3,10 +3,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import CustomersModule from '../../../views/superadmin/CustomersModule';
-import { Api } from '../../../services/api';
+import CustomersModule from '@/views/superadmin/CustomersModule';
+import { Api } from '@/services/api';
 
-vi.mock('../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         getOrganizations: vi.fn(),
         getFeedback: vi.fn(),

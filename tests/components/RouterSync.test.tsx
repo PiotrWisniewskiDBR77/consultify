@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { RouterSync } from '../../components/RouterSync';
-import { useAppStore } from '../../store/useAppStore';
-import { AppView, SessionMode, AuthStep } from '../../types';
+import { RouterSync } from '@/components/RouterSync';
+import { useAppStore } from '@/store/useAppStore';
+import { AppView, SessionMode, AuthStep } from '@/types';
 import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
 
 // Mock store
-vi.mock('../../store/useAppStore');
+vi.mock('@/store/useAppStore');
 
 describe('RouterSync', () => {
     const mockSetCurrentView = vi.fn();

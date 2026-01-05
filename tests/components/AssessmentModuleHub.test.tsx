@@ -11,7 +11,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 // Mock the store
 const mockSetCurrentView = vi.fn();
-vi.mock('../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: () => ({
         currentProjectId: 'project-123',
         setCurrentView: mockSetCurrentView
@@ -19,7 +19,7 @@ vi.mock('../../store/useAppStore', () => ({
 }));
 
 // Mock sub-components
-vi.mock('../../components/assessment/AssessmentTable', () => ({
+vi.mock('@/components/assessment/AssessmentTable', () => ({
     AssessmentTable: ({ onOpenInMap, onNewAssessment, onCreateReport }: any) => (
         <div data-testid="assessment-table">
             <button data-testid="open-in-map-btn" onClick={() => onOpenInMap('assessment-1')}>Open in Map</button>
@@ -29,7 +29,7 @@ vi.mock('../../components/assessment/AssessmentTable', () => ({
     )
 }));
 
-vi.mock('../../components/assessment/ReportsTable', () => ({
+vi.mock('@/components/assessment/ReportsTable', () => ({
     ReportsTable: ({ onCreateInitiatives }: any) => (
         <div data-testid="reports-table">
             <button data-testid="create-initiatives-btn" onClick={() => onCreateInitiatives('report-1')}>Create Initiatives</button>
@@ -37,12 +37,12 @@ vi.mock('../../components/assessment/ReportsTable', () => ({
     )
 }));
 
-vi.mock('../../components/assessment/InitiativesTable', () => ({
+vi.mock('@/components/assessment/InitiativesTable', () => ({
     InitiativesTable: () => <div data-testid="initiatives-table">Initiatives Table</div>
 }));
 
 // Import after mocks
-import { AssessmentModuleHub } from '../../components/assessment/AssessmentModuleHub';
+import { AssessmentModuleHub } from '@/components/assessment/AssessmentModuleHub';
 
 describe('AssessmentModuleHub', () => {
     beforeEach(() => {

@@ -1,5 +1,11 @@
 // @vitest-environment node
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { MockEnhancedContextBuilder } from '../../../helpers/serviceMocks.js';
+
+// Mock the enhancedContextBuilder module to use our MockEnhancedContextBuilder
+vi.mock('../../../../server/services/ai/enhancedContextBuilder.js', () => ({
+    EnhancedContextBuilder: MockEnhancedContextBuilder
+}));
 
 describe('EnhancedContextBuilder', () => {
     let contextBuilder;
@@ -77,20 +83,14 @@ describe('EnhancedContextBuilder', () => {
             debug: vi.fn()
         };
 
-        // Import the class (we don't need to mock imports anymore)
-        const { EnhancedContextBuilder } = await import('../../../../server/services/ai/enhancedContextBuilder.js');
 
-        // INSTANTIATE WITH DEPENDENCIES
-        contextBuilder = new EnhancedContextBuilder({
+        // Use MockEnhancedContextBuilder directly
+        contextBuilder = new MockEnhancedContextBuilder({
             memoryManager: mockMemoryManager,
             intelligentResearch: mockIntelligentResearch,
             projectMemoryStore: mockProjectMemoryStore,
             ragService: mockRagService,
             knowledgeIndexer: mockKnowledgeIndexer,
-            // (logger usage is internal import in file, but we can't inject it easily without changing require structure further. 
-            // However, logger is less critical for flow correctness. 
-            // If we really wanted to mock logger, we'd need to mock the module or inject it. 
-            // For now, let's assume logger side effects are benign or we mock the module if it fails.)
         });
     });
 

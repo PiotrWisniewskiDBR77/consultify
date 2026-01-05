@@ -28,10 +28,32 @@ export default defineConfig(({ mode }) => {
         },
         resolve: {
             alias: {
-                '@': path.resolve(__dirname, '.'),
+                '@': path.resolve(__dirname, './src'),
             },
         },
+        optimizeDeps: {
+            include: [
+                'react',
+                'react-dom',
+                'react-router-dom',
+                'zustand',
+                'lucide-react',
+                'framer-motion',
+                'date-fns',
+                'clsx',
+                'tailwind-merge',
+            ],
+            exclude: [
+                // Large libs that should be lazy loaded
+                'mermaid',
+                'reactflow',
+                '@tiptap/react',
+                'jspdf',
+                'xlsx',
+            ],
+        },
         build: {
+            cssCodeSplit: true,
             rollupOptions: {
                 output: {
                     manualChunks: (id) => {
@@ -185,12 +207,22 @@ export default defineConfig(({ mode }) => {
             },
             // Increase warning limit slightly since we've optimized chunks
             chunkSizeWarningLimit: 500,
-            // Enable source maps for production debugging
+            // Disable source maps in production for smaller bundle
             sourcemap: false,
             // Minification settings
             minify: 'esbuild',
             // Target modern browsers
             target: 'es2020',
+            // Reduce bundle size
+            reportCompressedSize: true,
+            // Tree shaking optimization
+            treeshake: {
+                moduleSideEffects: 'no-external',
+            },
+        },
+        // CSS optimization
+        css: {
+            devSourcemap: true,
         },
     };
 });

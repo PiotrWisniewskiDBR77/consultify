@@ -403,3 +403,4 @@ Po zakończeniu wszystkich batchów:
 
 
 
+

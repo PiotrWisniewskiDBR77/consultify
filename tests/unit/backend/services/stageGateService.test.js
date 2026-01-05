@@ -15,7 +15,7 @@ vi.mock('../../../../server/src/database/index.js', () => ({
 }));
 
 // Import service (will inject mock)
-const StageGateServiceModule = await import('../../../../server/services/stageGateService.js');
+const StageGateServiceModule = await import('../../../../server/src/services/stageGateService.js');
 const StageGateService = StageGateServiceModule.default;
 
 describe('StageGateService', () => {

@@ -2,10 +2,10 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { WorkCenter } from '../../../../components/MyWork/WorkCenter';
+import { WorkCenter } from '@/components/MyWork/WorkCenter';
 
 // Mock child components
-vi.mock('../../../../components/MyWork/PillNavigation', () => ({
+vi.mock('@/components/MyWork/PillNavigation', () => ({
     PillNavigation: ({ activeTab, onTabChange, onCreateNew }: any) => (
         <div data-testid="pill-nav">
             <button onClick={() => onTabChange('tasks')}>Tasks Tab</button>
@@ -17,7 +17,7 @@ vi.mock('../../../../components/MyWork/PillNavigation', () => ({
     )
 }));
 
-vi.mock('../../../../components/MyWork/QuickFilterBar', () => ({
+vi.mock('@/components/MyWork/QuickFilterBar', () => ({
     QuickFilterBar: ({ activeFilter, onFilterChange, visible }: any) => visible ? (
         <div data-testid="quick-filter">
             <button onClick={() => onFilterChange('overdue')}>Overdue Filter</button>
@@ -26,19 +26,19 @@ vi.mock('../../../../components/MyWork/QuickFilterBar', () => ({
     ) : null
 }));
 
-vi.mock('../../../../components/MyWork/MyTasksList', () => ({
+vi.mock('@/components/MyWork/MyTasksList', () => ({
     MyTasksList: ({ activeTimeGroup }: any) => <div data-testid="tasks-list">Tasks: {activeTimeGroup}</div>
 }));
 
-vi.mock('../../../../components/MyWork/DecisionsList', () => ({
+vi.mock('@/components/MyWork/DecisionsList', () => ({
     DecisionsList: () => <div data-testid="decisions-list">Decisions List</div>
 }));
 
-vi.mock('../../../../components/MyWork/MyProjects', () => ({
+vi.mock('@/components/MyWork/MyProjects', () => ({
     MyProjects: () => <div data-testid="projects-list">Projects List</div>
 }));
 
-vi.mock('../../../../components/MyWork/DecisionDetailModal', () => ({
+vi.mock('@/components/MyWork/DecisionDetailModal', () => ({
     DecisionDetailModal: ({ onClose }: any) => (
         <div data-testid="decision-modal">
             <button onClick={onClose}>Close Modal</button>
@@ -46,7 +46,7 @@ vi.mock('../../../../components/MyWork/DecisionDetailModal', () => ({
     )
 }));
 
-vi.mock('../../../../components/MyWork/DecisionBottleneckPanel', () => ({
+vi.mock('@/components/MyWork/DecisionBottleneckPanel', () => ({
     DecisionBottleneckPanel: () => <div data-testid="bottleneck-panel">Bottleneck Panel</div>
 }));
 

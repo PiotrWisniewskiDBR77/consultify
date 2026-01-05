@@ -3,8 +3,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { SteeringCommitteeReport } from '../../../../components/Reports/Management/SteeringCommitteeReport';
-import { ManagementReport, SteeringCommitteeReportContent } from '../../../../types';
+import { SteeringCommitteeReport } from '../@/components/Reports/Management/SteeringCommitteeReport';
+import { ManagementReport, SteeringCommitteeReportContent } from '../@/types';
 
 const mockContent: SteeringCommitteeReportContent = {
     executiveSummary: 'Project is on track with major milestones achieved.',

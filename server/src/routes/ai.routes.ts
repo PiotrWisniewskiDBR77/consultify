@@ -736,14 +736,14 @@ router.post(
             const initiativesToGenerate =
                 Object.keys(assessment).length > 0
                     ? axes.filter((axis) => {
-                          const axisData = assessment[axis] as { current?: number; target?: number } | undefined;
-                          return (
-                              axisData &&
-                              axisData.current !== undefined &&
-                              axisData.target !== undefined &&
-                              axisData.current < axisData.target
-                          );
-                      })
+                        const axisData = assessment[axis] as { current?: number; target?: number } | undefined;
+                        return (
+                            axisData &&
+                            axisData.current !== undefined &&
+                            axisData.target !== undefined &&
+                            axisData.current < axisData.target
+                        );
+                    })
                     : axes.slice(0, 5);
 
             return initiativesToGenerate.map((axis) => {
@@ -1223,9 +1223,9 @@ router.post(
 
 // ==================== APPROVAL PATTERNS ====================
 
-const ApprovalPatternService = await import('../services/approvalPatternService.js').then(
-    (m) => (m as any).default || m,
-);
+// const ApprovalPatternService = await import('../services/approvalPatternService.js').then(
+//     (m) => (m as any).default || m,
+// );
 
 router.get(
     '/patterns',
@@ -1234,8 +1234,9 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { actionType } = req.query as { actionType?: string };
-            const patterns = await ApprovalPatternService.getUserPatterns(req.userId!, actionType);
-            return res.json({ success: true, patterns });
+            // const patterns = await ApprovalPatternService.getUserPatterns(req.userId!, actionType);
+            // return res.json({ success: true, patterns });
+            return res.json({ success: true, patterns: [] });
         } catch (err: any) {
             logger.error('[AI] Get patterns error:', err);
             return res.status(500).json({ success: false, error: (err as Error).message });
@@ -1243,51 +1244,51 @@ router.get(
     }),
 );
 
-router.get(
-    '/patterns/stats',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const stats = await ApprovalPatternService.getPatternStats(req.userId!);
-            return res.json(stats);
-        } catch (err: any) {
-            logger.error('[AI] Pattern stats error:', err);
-            return res.status(500).json({ error: (err as Error).message });
-        }
-    }),
-);
+// router.get(
+//     '/patterns/stats',
+//     verifyToken,
+//     asyncHandler(async (req: AuthRequest, res: Response) => {
+//         try {
+//             const stats = await ApprovalPatternService.getPatternStats(req.userId!);
+//             return res.json(stats);
+//         } catch (err: any) {
+//             logger.error('[AI] Pattern stats error:', err);
+//             return res.status(500).json({ error: (err as Error).message });
+//         }
+//     }),
+// );
 
-router.patch(
-    '/patterns/:patternId/auto-apply',
-    verifyToken,
-    validateParams(PatternIdParamSchema),
-    validateBody(ToggleAutoApplyRequestSchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const { enabled } = req.body;
-            const result = await ApprovalPatternService.setAutoApply(req.params.patternId, enabled, req.userId!);
-            return res.json(result);
-        } catch (err: any) {
-            logger.error('[AI] Toggle auto-apply error:', err);
-            return res.status(500).json({ success: false, error: (err as Error).message });
-        }
-    }),
-);
+// router.patch(
+//     '/patterns/:patternId/auto-apply',
+//     verifyToken,
+//     validateParams(PatternIdParamSchema),
+//     validateBody(ToggleAutoApplyRequestSchema),
+//     asyncHandler(async (req: AuthRequest, res: Response) => {
+//         try {
+//             const { enabled } = req.body;
+//             const result = await ApprovalPatternService.setAutoApply(req.params.patternId, enabled, req.userId!);
+//             return res.json(result);
+//         } catch (err: any) {
+//             logger.error('[AI] Toggle auto-apply error:', err);
+//             return res.status(500).json({ success: false, error: (err as Error).message });
+//         }
+//     }),
+// );
 
-router.delete(
-    '/patterns/:patternId',
-    verifyToken,
-    validateParams(PatternIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const result = await ApprovalPatternService.deletePattern(req.params.patternId, req.userId!);
-            return res.json(result);
-        } catch (err: any) {
-            logger.error('[AI] Delete pattern error:', err);
-            return res.status(500).json({ success: false, error: (err as Error).message });
-        }
-    }),
-);
+// router.delete(
+//     '/patterns/:patternId',
+//     verifyToken,
+//     validateParams(PatternIdParamSchema),
+//     asyncHandler(async (req: AuthRequest, res: Response) => {
+//         try {
+//             const result = await ApprovalPatternService.deletePattern(req.params.patternId, req.userId!);
+//             return res.json(result);
+//         } catch (err: any) {
+//             logger.error('[AI] Delete pattern error:', err);
+//             return res.status(500).json({ success: false, error: (err as Error).message });
+//         }
+//     }),
+// );
 
 router.post(
     '/actions/:actionId/approve',

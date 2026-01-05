@@ -1,0 +1,181 @@
+import React, { useCallback, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { DashboardExecutionSnapshot } from '../components/dashboard/DashboardExecutionSnapshot';
+import { DashboardOverview } from '../components/dashboard/DashboardOverview';
+import { SplitLayout } from '../components/layout/SplitLayout';
+import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
+import { GateStatus } from '../components/PMO/GateStatus'; // CRIT-01
+import { PMOHealthSection } from '../components/PMO/PMOHealthSection'; // Step A: PMO Health
+import { useDashboardShortcuts } from '../hooks/useDashboardShortcuts';
+import { Api } from '@/services/api';
+import { useAppStore } from '../store/useAppStore';
+import { AppView } from '../types';
+
+interface UserDashboardViewProps {
+    currentUser: any;
+    onNavigate: (view: AppView) => void;
+}
+
+import { useScreenContext } from '../hooks/useScreenContext';
+
+export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUser, onNavigate }) => {
+    const {
+        fullSessionData,
+        currentView,
+        addChatMessage: addMessage,
+        activeChatMessages: messages,
+        setIsBotTyping: setTyping,
+        currentProjectId,
+    } = useAppStore();
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const { t } = useTranslation();
+
+    // Simple Render Logic based on currentView
+    // Default to Overview if generic dashboard view
+    const isSnapshot = currentView === AppView.DASHBOARD_SNAPSHOT;
+
+    // Register Context for AI
+    const screenContextData = useMemo(
+        () => ({
+            mode: isSnapshot ? 'Snapshot' : 'Overview',
+            projectStatus: fullSessionData?.step5Completed
+                ? 'Execution'
+                : fullSessionData?.step3Completed
+                  ? 'Roadmap'
+                  : 'Planning',
+            keyMetrics: fullSessionData?.kpiResults || {},
+        }),
+        [isSnapshot, fullSessionData?.step5Completed, fullSessionData?.step3Completed, fullSessionData?.kpiResults],
+    );
+
+    useScreenContext(
+        'user_dashboard',
+        isSnapshot ? 'Execution Snapshot' : 'Executive Dashboard',
+        screenContextData,
+        'User is reviewing their transformation progress and high-level KPIs.',
+    );
+
+    const handleStartTransformation = useCallback(() => {
+        onNavigate(AppView.FULL_STEP1_CONTEXT);
+    }, [onNavigate]);
+
+    const handleCreateTask = useCallback(() => {
+        setSelectedTaskId(null);
+        setIsCreateModalOpen(true);
+    }, []);
+
+    const handleEditTask = useCallback((taskId: string) => {
+        setSelectedTaskId(taskId);
+        setIsCreateModalOpen(true);
+    }, []);
+
+    const handleCloseModal = useCallback(() => {
+        setIsCreateModalOpen(false);
+    }, []);
+
+    const handleTaskSaved = useCallback(() => {
+        setRefreshTrigger((prev) => prev + 1);
+        setIsCreateModalOpen(false);
+    }, []);
+
+    // Keyboard Shortcuts Handlers
+    const handleMarkAllRead = useCallback(async () => {
+        try {
+            await Api.markAllNotificationsRead();
+            toast.success(t('dashboard.shortcuts.allMarkedRead', 'Wszystkie powiadomienia oznaczone jako przeczytane'));
+        } catch (error) {
+            console.error('Failed to mark all as read', error);
+            toast.error(t('dashboard.shortcuts.error', 'Wystąpił błąd'));
+        }
+    }, [t]);
+
+    const handleEscapeKey = useCallback(() => {
+        if (isCreateModalOpen) {
+            setIsCreateModalOpen(false);
+        }
+    }, [isCreateModalOpen]);
+
+    // Register keyboard shortcuts
+    useDashboardShortcuts({
+        onNewTask: handleCreateTask,
+        onMarkAllRead: handleMarkAllRead,
+        onEscape: handleEscapeKey,
+    });
+
+    // NOTE: We pass undefined to let SplitLayout use its default AI handler
+    // The default handler in SplitLayout properly calls startStream() which sends to backend
+
+    // Step C: Handle "Explain This" click from PMO Health section
+    const handleExplainPMO = useCallback(
+        (snapshot: any) => {
+            const prompt = `Explain the current PMO situation for project "${snapshot.projectName}":
+
+**Current Phase:** ${snapshot.phase.name} (${snapshot.phase.number}/6)
+**Gate Status:** ${snapshot.stageGate.isReady ? 'Ready' : `Not Ready - ${snapshot.stageGate.missingCriteria.length} criteria missing`}
+**Blockers:** ${snapshot.blockers.length} items blocking progress
+**Overdue Tasks:** ${snapshot.tasks.overdueCount}
+**Pending Decisions:** ${snapshot.decisions.pendingCount}
+
+Please explain:
+1. What is blocking progress (bullets)
+2. What to do next (ordered steps)
+3. Who should act on each item`;
+
+            addMessage({ id: Date.now().toString(), role: 'user', content: prompt, timestamp: new Date() });
+        },
+        [addMessage],
+    );
+
+    const handleProceed = useCallback(() => setRefreshTrigger((prev) => prev + 1), []);
+
+    return (
+        <SplitLayout
+            title={t('dashboard.chatTitle', 'Executive Assistant')}
+            subtitle={t('dashboard.chatSubtitle', 'Strategic guidance & insights')}
+        >
+            <div className="flex h-full flex-col bg-slate-50 dark:bg-navy-950">
+                <div className="flex-1 p-2 lg:p-4 overflow-auto">
+                    {/* Step A: PMO Health Section - canonical health snapshot */}
+                    {currentProjectId && (
+                        <div className="mb-4">
+                            <PMOHealthSection projectId={currentProjectId} onExplainClick={handleExplainPMO} />
+                        </div>
+                    )}
+
+                    {/* CRIT-01: Gate Status - shows progression blockers */}
+                    {currentProjectId && (
+                        <div className="mb-4">
+                            <GateStatus projectId={currentProjectId} compact={false} onProceed={handleProceed} />
+                        </div>
+                    )}
+
+                    {isSnapshot ? (
+                        <DashboardExecutionSnapshot session={fullSessionData} onNavigate={onNavigate} />
+                    ) : (
+                        <DashboardOverview
+                            onStartModule1={handleStartTransformation}
+                            session={fullSessionData}
+                            onCreateTask={handleCreateTask}
+                            onEditTask={handleEditTask}
+                            refreshTrigger={refreshTrigger}
+                        />
+                    )}
+                </div>
+
+                {/* Task Create/Edit Modal */}
+                {isCreateModalOpen && (
+                    <TaskDetailModal
+                        taskId={selectedTaskId}
+                        isOpen={isCreateModalOpen}
+                        onClose={handleCloseModal}
+                        onTaskSaved={handleTaskSaved}
+                    />
+                )}
+            </div>
+        </SplitLayout>
+    );
+};

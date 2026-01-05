@@ -13,7 +13,7 @@ export const RegisterView = () => {
         try {
             await Api.register({ email, password, companyName });
             window.location.href = '/login';
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(err.message || 'Registration failed');
         }
     };

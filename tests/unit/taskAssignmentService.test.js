@@ -9,11 +9,12 @@
  * - PRINCE2 - Progress Theme, Exception Handling
  */
 
-const TaskAssignmentService = require('../../server/services/taskAssignmentService');
-const ProjectMemberService = require('../../server/services/projectMemberService');
-const db = require('../../server/database');
-const NotificationService = require('../../server/services/notificationService');
-const ActivityService = require('../../server/services/activityService');
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import TaskAssignmentService from '../../server/src/services/taskAssignmentService.js';
+import ProjectMemberService from '../../server/src/services/projectMemberService.js';
+import db from '../../server/src/database/Database.js';
+import NotificationService from '../../server/src/services/notificationService.js';
+import ActivityService from '../../server/src/services/activityService.js';
 
 describe('TaskAssignmentService', () => {
   beforeEach(() => {

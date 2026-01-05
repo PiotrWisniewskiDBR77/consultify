@@ -24,7 +24,7 @@ const mockGovernanceAuditService = {
     }
 };
 
-const BreakGlassService = require('../../server/services/breakGlassService');
+import BreakGlassService from '../../server/src/services/breakGlassService.js';
 
 describe('BreakGlassService', () => {
     beforeEach(() => {

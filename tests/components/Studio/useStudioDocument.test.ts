@@ -4,12 +4,12 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { useStudioDocument } from '../../../components/Studio/hooks/useStudioDocument';
-import { Api } from '../../../services/api';
+import { useStudioDocument } from '@/components/Studio/hooks/useStudioDocument';
+import { Api } from '@/services/api';
 import { toast } from 'react-hot-toast';
 
 // Mock API
-vi.mock('../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         get: vi.fn(),
         post: vi.fn(),

@@ -50,3 +50,4 @@ export type UpdateProjectRequest = z.infer<typeof UpdateProjectRequestSchema>;
 export type UpdateNotificationSettings = z.infer<typeof UpdateNotificationSettingsSchema>;
 export type UpdateAIRole = z.infer<typeof UpdateAIRoleSchema>;
 export type UpdateRegulatoryMode = z.infer<typeof UpdateRegulatoryModeSchema>;
+

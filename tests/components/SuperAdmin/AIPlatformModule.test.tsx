@@ -8,43 +8,43 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import AIPlatformModule from '../../../views/superadmin/AIPlatformModule';
+import AIPlatformModule from '@/views/superadmin/AIPlatformModule';
 
 // Mock all child components
-vi.mock('../../../views/superadmin/LLMManagementView', () => ({
+vi.mock('@/views/superadmin/LLMManagementView', () => ({
     LLMManagementView: () => <div data-testid="llm-management">LLM Management Content</div>
 }));
 
-vi.mock('../../../views/superadmin/AIIntelligenceView', () => ({
+vi.mock('@/views/superadmin/AIIntelligenceView', () => ({
     AIIntelligenceView: () => <div data-testid="ai-intelligence">AI Intelligence Content</div>
 }));
 
-vi.mock('../../../views/admin/AdminKnowledgeView', () => ({
+vi.mock('@/views/admin/AdminKnowledgeView', () => ({
     AdminKnowledgeView: () => <div data-testid="knowledge-view">Knowledge Content</div>
 }));
 
-vi.mock('../../../components/Admin/AICostDashboard', () => ({
+vi.mock('@/components/Admin/AICostDashboard', () => ({
     AICostDashboard: () => <div data-testid="cost-dashboard">Cost Dashboard Content</div>
 }));
 
-vi.mock('../../../components/Admin/LLMHealthPanel', () => ({
+vi.mock('@/components/Admin/LLMHealthPanel', () => ({
     LLMHealthPanel: () => <div data-testid="health-panel">Health Panel Content</div>
 }));
 
 // New mocks for expanded tabs
-vi.mock('../../../components/Admin/ABTestingDashboard', () => ({
+vi.mock('@/components/Admin/ABTestingDashboard', () => ({
     ABTestingDashboard: () => <div data-testid="ab-testing">A/B Testing Dashboard Content</div>
 }));
 
-vi.mock('../../../components/Admin/PromptManagementUI', () => ({
+vi.mock('@/components/Admin/PromptManagementUI', () => ({
     PromptManagementUI: () => <div data-testid="prompt-management">Prompt Management Content</div>
 }));
 
-vi.mock('../../../components/Admin/AIMissionControl', () => ({
+vi.mock('@/components/Admin/AIMissionControl', () => ({
     AIMissionControl: () => <div data-testid="mission-control">Mission Control Content</div>
 }));
 
-vi.mock('../../../components/Admin/AIPerformanceDashboard', () => ({
+vi.mock('@/components/Admin/AIPerformanceDashboard', () => ({
     AIPerformanceDashboard: () => <div data-testid="performance-dashboard">Performance Dashboard Content</div>
 }));
 

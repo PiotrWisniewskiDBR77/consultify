@@ -9,7 +9,8 @@ import { Response, Router } from 'express';
 import { login } from '../controllers/AuthController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
-import _emailVerificationService from '../services/EmailVerificationService.js';
+// import _emailVerificationService from '../services/EmailVerificationService.js';
+const _emailVerificationService = {} as any; // Stubbed missing service
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -144,8 +145,8 @@ router.get(
 
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
-                return;
             }
+
 
             // Check if role changed in database - if so, generate new token
             let newToken: string | null = null;
@@ -199,7 +200,7 @@ router.get(
                     isAuthenticated: true,
                     accessLevel:
                         user.organization_status === 'active' &&
-                        (user.organization_plan === 'enterprise' || user.organization_plan === 'pro')
+                            (user.organization_plan === 'enterprise' || user.organization_plan === 'pro')
                             ? 'full'
                             : 'free',
                 },
@@ -581,10 +582,10 @@ router.post(
                     token,
                     promoApplied: promoCode
                         ? {
-                              code: promoCode,
-                              discountType: promoValidation?.discountType,
-                              discountValue: promoValidation?.discountValue,
-                          }
+                            code: promoCode,
+                            discountType: promoValidation?.discountType,
+                            discountValue: promoValidation?.discountValue,
+                        }
                         : null,
                 });
             } catch (regErr) {

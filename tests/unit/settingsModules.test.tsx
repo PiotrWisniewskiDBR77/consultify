@@ -12,7 +12,7 @@ import i18n from '../../i18n';
 
 // Mock the store
 import { Api } from '../../services/api';
-vi.mock('../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: vi.fn(() => ({
         currentView: 'SETTINGS_PROFILE_MODULE',
         setCurrentView: vi.fn(),
@@ -51,14 +51,14 @@ vi.mock('../../services/api', () => ({
 }));
 
 // Import components
-import { SettingsSidebar, SettingsSection, settingsSectionToAppView, appViewToSettingsSection } from '../../components/SettingsSidebar';
-import { ProfileModule } from '../../views/settings/ProfileModule';
-import { AIPreferencesModule } from '../../views/settings/AIPreferencesModule';
-import { NotificationsModule } from '../../views/settings/NotificationsModule';
-import { SecurityPrivacyModule } from '../../views/settings/SecurityPrivacyModule';
-import { IntegrationsModule } from '../../views/settings/IntegrationsModule';
-import { AppearanceModule } from '../../views/settings/AppearanceModule';
-import { AppView } from '../../types';
+import { SettingsSidebar, SettingsSection, settingsSectionToAppView, appViewToSettingsSection } from '@/components/SettingsSidebar';
+import { ProfileModule } from '@/views/settings/ProfileModule';
+import { AIPreferencesModule } from '@/views/settings/AIPreferencesModule';
+import { NotificationsModule } from '@/views/settings/NotificationsModule';
+import { SecurityPrivacyModule } from '@/views/settings/SecurityPrivacyModule';
+import { IntegrationsModule } from '@/views/settings/IntegrationsModule';
+import { AppearanceModule } from '@/views/settings/AppearanceModule';
+import { AppView } from '@/types';
 
 import { MemoryRouter } from 'react-router-dom';
 

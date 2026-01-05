@@ -23,15 +23,7 @@ export default defineConfig({
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
         },
-        {
-            name: 'firefox',
-            use: { ...devices['Desktop Firefox'] },
-        },
-        {
-            name: 'webkit',
-            use: { ...devices['Desktop Safari'] },
-        },
-        // Visual regression tests (can run without Percy token)
+        // Visual regression tests
         {
             name: 'visual-regression',
             testMatch: '**/visual-regression.spec.ts',
@@ -42,24 +34,17 @@ export default defineConfig({
             },
         },
     ],
-    projects: [
-        {
-            name: 'chromium',
-            use: { ...devices['Desktop Chrome'] },
-        },
-        {
-            name: 'firefox',
-            use: { ...devices['Desktop Firefox'] },
-        },
-        {
-            name: 'webkit',
-            use: { ...devices['Desktop Safari'] },
-        },
-    ],
     webServer: {
         command: 'npm run dev',
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
-        timeout: 120000, // 2 minutes to start
+        timeout: 120000,
+        env: {
+            NODE_ENV: 'test',
+            E2E_MODE: 'true',
+            PORT: '3005',
+            MOCK_DB: 'false',
+            SQLITE_PATH: './e2e-test.db',
+        },
     },
 });

@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { StudioChat } from '../../components/Studio/StudioChat';
+import { StudioChat } from '@/components/Studio/StudioChat';
 
 // Mock scrollIntoView
 Element.prototype.scrollIntoView = vi.fn();

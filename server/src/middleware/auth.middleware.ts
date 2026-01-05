@@ -63,7 +63,7 @@ const getDeps = async (): Promise<Dependencies> => {
     if (!deps) {
         const defaultJwt = await import('jsonwebtoken').then((m) => m.default || m);
         const defaultConfig = await import('../config/Config.js').then((m) => m.default || m);
-        const defaultPermissionService = await import('../../services/permissionService.js').then(
+        const defaultPermissionService = await import('../services/permissionService.js').then(
             (m) => m.default || m,
         );
 

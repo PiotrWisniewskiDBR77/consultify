@@ -7,12 +7,12 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { useOrgContext, useCurrentOrg, OrgProvider } from '../../../contexts/OrgContext';
-import { useAppStore } from '../../../store/useAppStore';
-import { Api } from '../../../services/api';
+import { useAppStore } from '@/store/useAppStore';
+import { Api } from '../../services/api';
 
 // Mock dependencies
-vi.mock('../../../store/useAppStore');
-vi.mock('../../../services/api');
+vi.mock('@/store/useAppStore');
+vi.mock('../../services/api');
 
 // Mock OrgProvider wrapper
 const createWrapper = (mockStore: any) => {

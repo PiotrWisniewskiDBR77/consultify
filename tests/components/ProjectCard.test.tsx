@@ -3,15 +3,15 @@ import { screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../../test-utils';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ProjectCard } from '../../../components/ProjectCard';
+import { ProjectCard } from '@/components/ProjectCard';
 
 // Mock dependencies
 const mockUseAppStore = vi.fn();
-vi.mock('../../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: (selector: any) => mockUseAppStore(selector),
 }));
 
-vi.mock('../../../services/api', () => ({
+vi.mock('../../services/api', () => ({
     Api: {
         updateProject: vi.fn().mockResolvedValue({}),
         deleteProject: vi.fn().mockResolvedValue({}),
@@ -362,7 +362,7 @@ describe('ProjectCard Component', () => {
     describe('Loading States', () => {
         it('should show loading state when fetching stats', () => {
             // Mock slow API response
-            const { Api } = require('../../../services/api');
+            const { Api } = require('../../services/api');
             Api.getProjectStats.mockImplementation(() => new Promise(() => {}));
 
             renderWithProviders(
@@ -377,7 +377,7 @@ describe('ProjectCard Component', () => {
         });
 
         it('should handle stats loading errors', async () => {
-            const { Api } = require('../../../services/api');
+            const { Api } = require('../../services/api');
             Api.getProjectStats.mockRejectedValue(new Error('Stats unavailable'));
 
             renderWithProviders(
@@ -588,5 +588,6 @@ describe('ProjectCard Component', () => {
         });
     });
 });
+
 
 

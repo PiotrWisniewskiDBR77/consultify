@@ -4,9 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-
-// Import CJS module
-const PiiRedactor = require('../../server/utils/piiRedactor');
+import PiiRedactor from '../../server/src/utils/piiRedactor.js';
 
 describe('PII Redactor', () => {
     describe('redactEmails', () => {

@@ -1,0 +1,757 @@
+/**
+ * BenefitsRealizationView
+ *
+ * Module 5: Benefits Realization / Realizacja
+ * Shows completed, blocked, cancelled, and archived initiatives
+ * Includes KPI Dashboard for tracking post-implementation benefits
+ */
+
+import {
+    AlertCircle,
+    AlertTriangle,
+    Archive,
+    Ban,
+    BarChart3,
+    Building2,
+    Calendar,
+    CheckCircle2,
+    ChevronRight,
+    FileText,
+    Lightbulb,
+    Loader2,
+    MapPin,
+    Plus,
+    RefreshCw,
+    Search,
+    Target,
+    TrendingDown,
+    TrendingUp,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+
+import { StatusTransitionDropdown } from '../components/PMO/StatusTransitionDropdown';
+import { Api } from '@/services/api';
+import { InitiativeKPI, InitiativeStatus } from '../types';
+
+interface Initiative {
+    id: string;
+    name: string;
+    summary?: string;
+    axis: string;
+    status: InitiativeStatus;
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    costCapex?: number;
+    expectedRoi?: number;
+    completedAt?: string;
+    cancelledAt?: string;
+    blockedAt?: string;
+    archivedAt?: string;
+    blockedReason?: string;
+    cancelledReason?: string;
+    projectId?: string;
+    projectName?: string;
+    locationId?: string;
+    locationName?: string;
+    ownerBusiness?: { id: string; firstName: string; lastName: string; avatarUrl?: string };
+    createdAt: string;
+    updatedAt: string;
+}
+
+type TabType = 'initiatives' | 'kpis';
+type InitiativeFilter = 'all' | 'done' | 'blocked' | 'cancelled' | 'archived';
+
+const STATUS_CONFIG = {
+    [InitiativeStatus.DONE]: {
+        label: 'Done',
+        color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+        icon: <CheckCircle2 size={14} />,
+    },
+    [InitiativeStatus.BLOCKED]: {
+        label: 'Blocked',
+        color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+        icon: <AlertTriangle size={14} />,
+    },
+    [InitiativeStatus.CANCELLED]: {
+        label: 'Cancelled',
+        color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+        icon: <Ban size={14} />,
+    },
+    [InitiativeStatus.ARCHIVED]: {
+        label: 'Archived',
+        color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+        icon: <Archive size={14} />,
+    },
+};
+
+export const BenefitsRealizationView: React.FC = () => {
+    const [activeTab, setActiveTab] = useState<TabType>('initiatives');
+    const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+    const [kpis, setKpis] = useState<{ initiative: Initiative; kpis: InitiativeKPI[] }[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterStatus, setFilterStatus] = useState<InitiativeFilter>('all');
+    const [selectedInitiative, setSelectedInitiative] = useState<Initiative | null>(null);
+    const [showKpiModal, setShowKpiModal] = useState(false);
+    const [newKpi, setNewKpi] = useState({
+        name: '',
+        description: '',
+        targetValue: '',
+        unit: '',
+        measurementFrequency: 'MONTHLY',
+        alertThreshold: '',
+    });
+
+    // Fetch initiatives
+    const fetchInitiatives = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await Api.get('/initiatives/by-status/DONE,BLOCKED,CANCELLED,ARCHIVED');
+            const mapped = (response.initiatives || []) as Initiative[];
+            setInitiatives(mapped);
+
+            // Fetch KPIs for DONE initiatives
+            const doneInitiatives = mapped.filter((i) => i.status === InitiativeStatus.DONE);
+            const kpiPromises = doneInitiatives.map(async (i) => {
+                try {
+                    const kpiResponse = await Api.get(`/initiatives/${i.id}/kpis`);
+                    return { initiative: i, kpis: kpiResponse.kpis || [] };
+                } catch {
+                    return { initiative: i, kpis: [] };
+                }
+            });
+            const kpiResults = await Promise.all(kpiPromises);
+            setKpis(kpiResults);
+        } catch (err) {
+            console.error('[BenefitsRealization] Error:', err);
+            toast.error('Failed to load data');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchInitiatives();
+    }, [fetchInitiatives]);
+
+    // Handle status change
+    const handleStatusChange = useCallback((initiativeId: string, newStatus: InitiativeStatus) => {
+        setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i)));
+    }, []);
+
+    // Create KPI
+    const handleCreateKpi = async () => {
+        if (!selectedInitiative || !newKpi.name) return;
+
+        try {
+            await Api.post(`/initiatives/${selectedInitiative.id}/kpis`, {
+                name: newKpi.name,
+                description: newKpi.description || undefined,
+                targetValue: newKpi.targetValue ? parseFloat(newKpi.targetValue) : undefined,
+                unit: newKpi.unit || undefined,
+                measurementFrequency: newKpi.measurementFrequency,
+                alertThreshold: newKpi.alertThreshold ? parseFloat(newKpi.alertThreshold) : undefined,
+            });
+
+            toast.success('KPI created');
+            setShowKpiModal(false);
+            setNewKpi({
+                name: '',
+                description: '',
+                targetValue: '',
+                unit: '',
+                measurementFrequency: 'MONTHLY',
+                alertThreshold: '',
+            });
+            fetchInitiatives();
+        } catch (error: unknown) {
+            toast.error(error.response?.data?.error || 'Failed to create KPI');
+        }
+    };
+
+    // Filter initiatives
+    const filteredInitiatives = initiatives.filter((initiative) => {
+        if (filterStatus !== 'all') {
+            const statusMap: Record<InitiativeFilter, InitiativeStatus | undefined> = {
+                all: undefined,
+                done: InitiativeStatus.DONE,
+                blocked: InitiativeStatus.BLOCKED,
+                cancelled: InitiativeStatus.CANCELLED,
+                archived: InitiativeStatus.ARCHIVED,
+            };
+            if (statusMap[filterStatus] && initiative.status !== statusMap[filterStatus]) return false;
+        }
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            return (
+                initiative.name.toLowerCase().includes(query) ||
+                (initiative.summary || '').toLowerCase().includes(query)
+            );
+        }
+        return true;
+    });
+
+    // Stats
+    const stats = {
+        done: initiatives.filter((i) => i.status === InitiativeStatus.DONE).length,
+        blocked: initiatives.filter((i) => i.status === InitiativeStatus.BLOCKED).length,
+        cancelled: initiatives.filter((i) => i.status === InitiativeStatus.CANCELLED).length,
+        archived: initiatives.filter((i) => i.status === InitiativeStatus.ARCHIVED).length,
+    };
+
+    // KPI stats
+    const kpiStats = kpis.reduce(
+        (acc, item) => {
+            item.kpis.forEach((kpi) => {
+                if (kpi.isOnTarget) acc.onTarget++;
+                else acc.belowTarget++;
+            });
+            return acc;
+        },
+        { onTarget: 0, belowTarget: 0, total: kpis.reduce((sum, item) => sum + item.kpis.length, 0) },
+    );
+
+    // Format currency
+    const formatCurrency = (amount: number | undefined) => {
+        if (!amount) return '-';
+        if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M PLN`;
+        if (amount >= 1000) return `${(amount / 1000).toFixed(0)}k PLN`;
+        return `${amount} PLN`;
+    };
+
+    return (
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950">
+            {/* Header */}
+            <div className="shrink-0 px-6 py-4 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">Benefits Realization</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            Track completed initiatives and measure benefits
+                        </p>
+                    </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-950 rounded-lg p-1 w-fit">
+                    <button
+                        onClick={() => setActiveTab('initiatives')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                            activeTab === 'initiatives'
+                                ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                    >
+                        <FileText size={16} />
+                        Initiatives
+                        <span className="px-1.5 py-0.5 text-xs bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300 rounded-full">
+                            {initiatives.length}
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('kpis')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                            activeTab === 'kpis'
+                                ? 'bg-white dark:bg-navy-800 text-navy-900 dark:text-white shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                    >
+                        <BarChart3 size={16} />
+                        KPI Dashboard
+                        {kpiStats.belowTarget > 0 && (
+                            <span className="px-1.5 py-0.5 text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full">
+                                {kpiStats.belowTarget} alert
+                            </span>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-auto p-6">
+                {activeTab === 'initiatives' ? (
+                    <>
+                        {/* Status Filters */}
+                        <div className="flex items-center gap-3 mb-6">
+                            <button
+                                onClick={() => setFilterStatus('all')}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                                    filterStatus === 'all'
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700'
+                                }`}
+                            >
+                                All ({initiatives.length})
+                            </button>
+                            <button
+                                onClick={() => setFilterStatus('done')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                                    filterStatus === 'done'
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700'
+                                }`}
+                            >
+                                <CheckCircle2 size={14} />
+                                Done ({stats.done})
+                            </button>
+                            <button
+                                onClick={() => setFilterStatus('blocked')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                                    filterStatus === 'blocked'
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700'
+                                }`}
+                            >
+                                <AlertTriangle size={14} />
+                                Blocked ({stats.blocked})
+                            </button>
+                            <button
+                                onClick={() => setFilterStatus('cancelled')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                                    filterStatus === 'cancelled'
+                                        ? 'bg-gray-600 text-white'
+                                        : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700'
+                                }`}
+                            >
+                                <Ban size={14} />
+                                Cancelled ({stats.cancelled})
+                            </button>
+                            <button
+                                onClick={() => setFilterStatus('archived')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                                    filterStatus === 'archived'
+                                        ? 'bg-slate-600 text-white'
+                                        : 'bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700'
+                                }`}
+                            >
+                                <Archive size={14} />
+                                Archived ({stats.archived})
+                            </button>
+
+                            <div className="flex-1" />
+
+                            <div className="relative w-64">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search..."
+                                    className="w-full pl-9 pr-4 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+                                />
+                            </div>
+
+                            <button
+                                onClick={fetchInitiatives}
+                                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+                            >
+                                <RefreshCw size={16} />
+                            </button>
+                        </div>
+
+                        {/* Initiatives List */}
+                        {isLoading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                            </div>
+                        ) : filteredInitiatives.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-64 text-center">
+                                <Archive className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+                                <p className="text-slate-500 dark:text-slate-400">No initiatives found</p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-4">
+                                {filteredInitiatives.map((initiative) => {
+                                    const statusConfig = STATUS_CONFIG[initiative.status as keyof typeof STATUS_CONFIG];
+                                    return (
+                                        <div
+                                            key={initiative.id}
+                                            className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-4"
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <div
+                                                    className={`p-3 rounded-xl shrink-0 ${
+                                                        initiative.status === InitiativeStatus.DONE
+                                                            ? 'bg-green-100 dark:bg-green-900/30'
+                                                            : initiative.status === InitiativeStatus.BLOCKED
+                                                              ? 'bg-red-100 dark:bg-red-900/30'
+                                                              : 'bg-slate-100 dark:bg-slate-800'
+                                                    }`}
+                                                >
+                                                    {initiative.status === InitiativeStatus.DONE ? (
+                                                        <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                                    ) : initiative.status === InitiativeStatus.BLOCKED ? (
+                                                        <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                                    ) : (
+                                                        <Lightbulb className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+                                                    )}
+                                                </div>
+
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div>
+                                                            <h3 className="font-semibold text-navy-900 dark:text-white">
+                                                                {initiative.name}
+                                                            </h3>
+                                                            {initiative.summary && (
+                                                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
+                                                                    {initiative.summary}
+                                                                </p>
+                                                            )}
+                                                            {(initiative.blockedReason ||
+                                                                initiative.cancelledReason) && (
+                                                                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                                                                    Reason:{' '}
+                                                                    {initiative.blockedReason ||
+                                                                        initiative.cancelledReason}
+                                                                </p>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2">
+                                                            {statusConfig && (
+                                                                <span
+                                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
+                                                                >
+                                                                    {statusConfig.icon}
+                                                                    {statusConfig.label}
+                                                                </span>
+                                                            )}
+                                                            {initiative.status === InitiativeStatus.DONE && (
+                                                                <StatusTransitionDropdown
+                                                                    initiativeId={initiative.id}
+                                                                    currentStatus={initiative.status}
+                                                                    onStatusChange={(newStatus) =>
+                                                                        handleStatusChange(initiative.id, newStatus)
+                                                                    }
+                                                                    size="sm"
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-4 mt-3 text-sm">
+                                                        {initiative.projectName && (
+                                                            <span className="flex items-center gap-1 text-slate-500">
+                                                                <Building2 size={12} />
+                                                                {initiative.projectName}
+                                                            </span>
+                                                        )}
+                                                        {initiative.costCapex && (
+                                                            <span className="text-slate-500">
+                                                                Budget: {formatCurrency(initiative.costCapex)}
+                                                            </span>
+                                                        )}
+                                                        {initiative.expectedRoi && initiative.expectedRoi > 0 && (
+                                                            <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                                                <TrendingUp size={12} />
+                                                                {initiative.expectedRoi}x ROI
+                                                            </span>
+                                                        )}
+
+                                                        {initiative.status === InitiativeStatus.DONE && (
+                                                            <>
+                                                                <div className="flex-1" />
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setSelectedInitiative(initiative);
+                                                                        setShowKpiModal(true);
+                                                                    }}
+                                                                    className="flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:text-purple-500 font-medium"
+                                                                >
+                                                                    <Plus size={14} />
+                                                                    Add KPI
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    /* KPI Dashboard */
+                    <>
+                        {/* KPI Summary */}
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                                        <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Total KPIs</p>
+                                        <p className="text-2xl font-bold text-navy-900 dark:text-white">
+                                            {kpiStats.total}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                                        <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">On Target</p>
+                                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                            {kpiStats.onTarget}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                                        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Below Target</p>
+                                        <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                                            {kpiStats.belowTarget}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* KPIs by Initiative */}
+                        {isLoading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                            </div>
+                        ) : kpis.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-64 text-center">
+                                <BarChart3 className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+                                <p className="text-slate-500 dark:text-slate-400">No KPIs defined yet</p>
+                                <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                                    Complete initiatives and add KPIs to track benefits
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {kpis.map(({ initiative, kpis: initiativeKpis }) => (
+                                    <div
+                                        key={initiative.id}
+                                        className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden"
+                                    >
+                                        <div className="px-4 py-3 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-white/10">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                                    <h3 className="font-semibold text-navy-900 dark:text-white">
+                                                        {initiative.name}
+                                                    </h3>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedInitiative(initiative);
+                                                        setShowKpiModal(true);
+                                                    }}
+                                                    className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-500 font-medium"
+                                                >
+                                                    <Plus size={14} />
+                                                    Add KPI
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {initiativeKpis.length === 0 ? (
+                                            <div className="p-6 text-center text-slate-500 dark:text-slate-400">
+                                                No KPIs defined for this initiative
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-slate-100 dark:divide-white/5">
+                                                {initiativeKpis.map((kpi) => (
+                                                    <div
+                                                        key={kpi.id}
+                                                        className="p-4 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <div
+                                                                    className={`p-2 rounded-lg ${
+                                                                        kpi.isOnTarget
+                                                                            ? 'bg-green-100 dark:bg-green-900/30'
+                                                                            : 'bg-red-100 dark:bg-red-900/30'
+                                                                    }`}
+                                                                >
+                                                                    {kpi.isOnTarget ? (
+                                                                        <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                                                    ) : (
+                                                                        <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                                                    )}
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="font-medium text-navy-900 dark:text-white">
+                                                                        {kpi.name}
+                                                                    </h4>
+                                                                    {kpi.description && (
+                                                                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                                            {kpi.description}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-6">
+                                                                <div className="text-right">
+                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                                        Current
+                                                                    </p>
+                                                                    <p
+                                                                        className={`text-lg font-bold ${
+                                                                            kpi.isOnTarget
+                                                                                ? 'text-green-600 dark:text-green-400'
+                                                                                : 'text-red-600 dark:text-red-400'
+                                                                        }`}
+                                                                    >
+                                                                        {kpi.latestValue ?? '-'} {kpi.unit}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                                        Target
+                                                                    </p>
+                                                                    <p className="text-lg font-bold text-navy-900 dark:text-white">
+                                                                        {kpi.targetValue ?? '-'} {kpi.unit}
+                                                                    </p>
+                                                                </div>
+                                                                <ChevronRight className="w-5 h-5 text-slate-400" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+
+            {/* Create KPI Modal */}
+            {showKpiModal && selectedInitiative && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+                        <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-4">
+                            Add KPI for {selectedInitiative.name}
+                        </h3>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    KPI Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newKpi.name}
+                                    onChange={(e) => setNewKpi({ ...newKpi, name: e.target.value })}
+                                    placeholder="e.g., Cost Reduction %"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Description
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newKpi.description}
+                                    onChange={(e) => setNewKpi({ ...newKpi, description: e.target.value })}
+                                    placeholder="What this KPI measures"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Target Value
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={newKpi.targetValue}
+                                        onChange={(e) => setNewKpi({ ...newKpi, targetValue: e.target.value })}
+                                        placeholder="100"
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Unit
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={newKpi.unit}
+                                        onChange={(e) => setNewKpi({ ...newKpi, unit: e.target.value })}
+                                        placeholder="%"
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Frequency
+                                    </label>
+                                    <select
+                                        value={newKpi.measurementFrequency}
+                                        onChange={(e) => setNewKpi({ ...newKpi, measurementFrequency: e.target.value })}
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white"
+                                    >
+                                        <option value="DAILY">Daily</option>
+                                        <option value="WEEKLY">Weekly</option>
+                                        <option value="MONTHLY">Monthly</option>
+                                        <option value="QUARTERLY">Quarterly</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Alert Threshold
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={newKpi.alertThreshold}
+                                        onChange={(e) => setNewKpi({ ...newKpi, alertThreshold: e.target.value })}
+                                        placeholder="80"
+                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-navy-900 dark:text-white"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button
+                                onClick={() => {
+                                    setShowKpiModal(false);
+                                    setSelectedInitiative(null);
+                                }}
+                                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleCreateKpi}
+                                disabled={!newKpi.name}
+                                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500 disabled:opacity-50"
+                            >
+                                Create KPI
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default BenefitsRealizationView;

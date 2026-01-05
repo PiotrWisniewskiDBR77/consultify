@@ -3,8 +3,8 @@
  * 
  * Tests for A/B testing service for AI prompts.
  */
-
-const { abTesting, ABTestingService } = require('../../../server/services/ai/abTesting');
+import { describe, it, expect } from 'vitest';
+import { abTesting, ABTestingService } from '../../../server/src/services/ai/abTesting.js';
 
 describe('ABTesting', () => {
     describe('createExperiment()', () => {

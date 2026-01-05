@@ -1,28 +1,38 @@
-// @vitest-environment node
-import { describe, it, expect, beforeAll } from 'vitest';
+import app from '../../../server/src/index.js';
+import bcrypt from 'bcryptjs';
 import request from 'supertest';
-import { createRequire } from 'module';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
-const require = createRequire(import.meta.url);
-const app = require('../../../server/index.js');
-const db = require('../../../server/database.js');
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = ':memory:';
+});
+
+// @vitest-environment node
+
+
+
 
 /**
  * Level 2: Integration Tests - Users Routes
  * Tests users API endpoints
  */
 describe('Integration Test: Users Routes', () => {
+    console.log('[DEBUG] NODE_ENV:', process.env.NODE_ENV);
     let authToken;
     const testId = Date.now();
     const testOrgId = `users-org-${testId}`;
     const testUserId = `users-user-${testId}`;
     const testEmail = `users-${testId}@test.com`;
+    const db = getDatabase();
 
     beforeAll(async () => {
+        await initializeDatabase();
         await db.initPromise;
 
-        const bcrypt = require('bcryptjs');
-        const hash = bcrypt.hashSync('test123', 8);
+                const hash = bcrypt.hashSync('test123', 8);
 
         await new Promise((resolve) => {
             db.serialize(() => {
@@ -61,6 +71,10 @@ describe('Integration Test: Users Routes', () => {
             const res = await request(app)
                 .get('/api/users')
                 .set('Authorization', `Bearer ${authToken}`);
+
+            if (res.status === 500) {
+                console.log('[DEBUG] 500 Error Body:', JSON.stringify(res.body, null, 2));
+            }
 
             expect([200, 403]).toContain(res.status); // May require admin
         });
@@ -125,4 +139,3 @@ describe('Integration Test: Users Routes', () => {
         });
     });
 });
-

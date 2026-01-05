@@ -39,7 +39,7 @@ export const VerifyEmail: React.FC = () => {
                         setMessage(res.data.error || 'Verification failed.');
                     });
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 queueMicrotask(() => {
                     setStatus('error');
                     setMessage(err.response?.data?.error || 'Verification failed. The token may be expired.');

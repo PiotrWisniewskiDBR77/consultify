@@ -6,9 +6,46 @@
  */
 
 import { vi, beforeEach, afterEach } from 'vitest';
-import { createUnifiedTestSetup, resetDependencies } from './dependencyInjector.js';
-import { setupAutoCleanup, registerCleanup } from './testCleanup.js';
-import { resetAllMocks, flushPromises } from './flakyTestFixer.js';
+// Simplified dependency injector - create inline since dependencyInjector doesn't exist
+function createUnifiedTestSetup(options: any) {
+    const mocks = {
+        db: createMockDb(),
+        logger: createMockLogger(),
+        redis: null,
+        llm: null,
+        ...options.customMocks
+    };
+    
+    return {
+        ...mocks,
+        reset: () => {
+            vi.clearAllMocks();
+        },
+        cleanup: async () => {
+            // Cleanup if needed
+        }
+    };
+}
+
+function resetDependencies() {
+    // Reset if needed
+}
+// Stub functions for testCleanup and flakyTestFixer
+function setupAutoCleanup() {
+    // Auto cleanup setup
+}
+
+function registerCleanup(fn: () => Promise<void>) {
+    // Register cleanup function
+}
+
+function resetAllMocks() {
+    vi.clearAllMocks();
+}
+
+async function flushPromises() {
+    await new Promise(resolve => process.nextTick(resolve));
+}
 import { createMockDb, createMockLogger, createMockDependencies } from './mockDb.js';
 
 export interface MockSetupOptions {

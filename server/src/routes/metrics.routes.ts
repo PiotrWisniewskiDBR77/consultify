@@ -5,7 +5,9 @@ import { getMetricsService } from '../services/metricsService.js';
 import logger from '../utils/Logger.js';
 // Import legacy router
 // @ts-ignore
-import legacyMetricsRouter from './metrics.js';
+// // import legacyMetricsRouter from "./metrics.js";
+
+const legacyMetricsRouter = Router(); // Stubbed legacy router
 
 const router = Router();
 

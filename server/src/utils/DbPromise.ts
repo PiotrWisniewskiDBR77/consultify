@@ -9,6 +9,9 @@
  * - Logging for debugging
  */
 
+import dbProxy from '../database/Database.js';
+import logger from './Logger.js';
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -86,11 +89,8 @@ const dbLogger: DbLogger = {
 // DATABASE INSTANCE
 // ==========================================
 
-import { getDatabase } from '../database/Database.js';
-import logger from './Logger.js';
-
 const getDb = (): Database => {
-    return getDatabase() as unknown as Database;
+    return dbProxy as unknown as Database;
 };
 
 // ==========================================
@@ -143,7 +143,7 @@ export function all<T = unknown>(
                 clearTimeout(timeoutId);
 
                 if (err) {
-                    dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100) });
+                    dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100), params });
                     if (fallback) {
                         resolve([]);
                     } else {
@@ -156,7 +156,7 @@ export function all<T = unknown>(
         } catch (error: unknown) {
             clearTimeout(timeoutId);
             const err = error as Error;
-            dbLogger.error('Query exception', { error: err.message, sql: sql.substring(0, 100) });
+            dbLogger.error('Query exception', { error: err.message, stack: err.stack, sql: sql.substring(0, 100) });
             if (fallback) {
                 resolve([]);
             } else {
@@ -216,7 +216,7 @@ export function get<T = unknown>(
                 clearTimeout(timeoutId);
 
                 if (err) {
-                    dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100) });
+                    dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100), params });
                     if (fallback) {
                         resolve(null);
                     } else {
@@ -229,7 +229,7 @@ export function get<T = unknown>(
         } catch (error: unknown) {
             clearTimeout(timeoutId);
             const err = error as Error;
-            dbLogger.error('Query exception', { error: err.message, sql: sql.substring(0, 100) });
+            dbLogger.error('Query exception', { error: err.message, stack: err.stack, sql: sql.substring(0, 100) });
             if (fallback) {
                 resolve(null);
             } else {
@@ -282,7 +282,7 @@ export function run(
                 clearTimeout(timeoutId);
 
                 if (err) {
-                    dbLogger.warn('Statement error', { error: err.message, sql: sql.substring(0, 100) });
+                    dbLogger.warn('Statement error', { error: err.message, sql: sql.substring(0, 100), params });
                     if (fallback) {
                         resolve({ success: false, error: err.message });
                     } else {
@@ -299,7 +299,7 @@ export function run(
         } catch (error: unknown) {
             clearTimeout(timeoutId);
             const err = error as Error;
-            dbLogger.error('Statement exception', { error: err.message, sql: sql.substring(0, 100) });
+            dbLogger.error('Statement exception', { error: err.message, stack: err.stack, sql: sql.substring(0, 100) });
             if (fallback) {
                 resolve({ success: false, error: err.message });
             } else {

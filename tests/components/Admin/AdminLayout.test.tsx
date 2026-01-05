@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { renderWithProviders } from '../../test-utils';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { AdminLayout } from '../../../components/admin/AdminLayout';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 
 /**
  * AdminLayout Component Tests

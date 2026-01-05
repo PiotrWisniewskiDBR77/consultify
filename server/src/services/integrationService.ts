@@ -205,6 +205,19 @@ class IntegrationServiceClass {
             sync_config = {},
         } = integrationData;
 
+        // Validate required fields
+        if (!type || type.trim() === '') {
+            throw new Error('Integration type is required');
+        }
+
+        if (!name || name.trim() === '') {
+            throw new Error('Integration name is required');
+        }
+
+        if (!organization_id) {
+            throw new Error('Organization ID is required');
+        }
+
         const id = this.deps.uuidv4();
         const now = new Date().toISOString();
 
@@ -290,7 +303,12 @@ class IntegrationServiceClass {
         params.push(new Date().toISOString());
         params.push(id);
 
-        await this.deps.db.run(`UPDATE integrations SET ${updatesList.join(', ')} WHERE id = ?`, params);
+        const result = (await this.deps.db.run(`UPDATE integrations SET ${updatesList.join(', ')} WHERE id = ?`, params)) as RunResult;
+
+        // Check if any rows were updated
+        if (result.changes === 0) {
+            throw new Error('Integration not found');
+        }
 
         const updated = await this.getIntegrationById(id);
         if (!updated) {
@@ -302,10 +320,14 @@ class IntegrationServiceClass {
     /**
      * Delete an integration
      */
-    async deleteIntegration(id: string): Promise<{ deleted: boolean }> {
+    async deleteIntegration(id: string): Promise<boolean> {
         const result = (await this.deps.db.run('DELETE FROM integrations WHERE id = ?', [id])) as RunResult;
 
-        return { deleted: result.changes > 0 };
+        if (result.changes === 0) {
+            throw new Error('Integration not found');
+        }
+
+        return true;
     }
 
     /**
@@ -315,6 +337,10 @@ class IntegrationServiceClass {
         const integration = await this.getIntegrationById(id);
         if (!integration) {
             throw new Error('Integration not found');
+        }
+
+        if (!integration.enabled) {
+            throw new Error('Integration is disabled');
         }
 
         const syncLogId = this.deps.uuidv4();
@@ -491,20 +517,24 @@ class IntegrationServiceClass {
      * @private
      */
     private _formatIntegration(row: IntegrationRecord): Integration {
-        return {
-            id: row.id,
-            organizationId: row.organization_id,
-            type: row.type,
-            name: row.name,
-            config: row.config ? (JSON.parse(row.config) as Record<string, unknown>) : {},
-            authConfig: row.auth_config ? (JSON.parse(row.auth_config) as Record<string, unknown>) : {},
-            enabled: row.enabled === 1,
-            syncConfig: row.sync_config ? (JSON.parse(row.sync_config) as Record<string, unknown>) : {},
-            lastSyncAt: row.last_sync_at || undefined,
-            lastSyncStatus: row.last_sync_status || undefined,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        };
+        try {
+            return {
+                id: row.id,
+                organizationId: row.organization_id,
+                type: row.type,
+                name: row.name,
+                config: row.config ? (JSON.parse(row.config) as Record<string, unknown>) : {},
+                authConfig: row.auth_config ? (JSON.parse(row.auth_config) as Record<string, unknown>) : {},
+                enabled: row.enabled === 1,
+                syncConfig: row.sync_config ? (JSON.parse(row.sync_config) as Record<string, unknown>) : {},
+                lastSyncAt: row.last_sync_at || undefined,
+                lastSyncStatus: row.last_sync_status || undefined,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+            };
+        } catch (error) {
+            throw new Error('Failed to parse integration configuration');
+        }
     }
 }
 

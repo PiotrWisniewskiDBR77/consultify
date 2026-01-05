@@ -5,10 +5,9 @@
  * Tests AI action approval/rejection dialog with reason input.
  */
 
-import React from 'react';
-`'waitFor' as waitForFunction`
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ActionDecisionDialog } from '../../components/ai/ActionDecisionDialog';
+import { ActionDecisionDialog } from '@/components/ai/ActionDecisionDialog';
 
 describe('ActionDecisionDialog', () => {
     const mockOnClose = vi.fn();
@@ -251,7 +250,7 @@ describe('ActionDecisionDialog', () => {
 
     describe('Accessibility', () => {
         it('should have proper semantic structure', () => {
-`'container' as containerElement`
+            const { container } = render(
                 <ActionDecisionDialog
                     isOpen={true}
                     onClose={mockOnClose}

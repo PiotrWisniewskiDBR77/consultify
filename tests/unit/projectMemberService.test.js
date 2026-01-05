@@ -11,9 +11,11 @@
 
 
 
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+
 // Mock database
-const ProjectMemberService = require('../../server/services/projectMemberService');
-const db = require('../../server/database');
+import ProjectMemberService from '../../server/src/services/projectMemberService.js';
+import db from '../../server/src/database/Database.js';
 
 // Manually patch the DB instance
 db.getAsync = vi.fn();

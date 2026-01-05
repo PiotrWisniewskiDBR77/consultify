@@ -7,6 +7,8 @@ import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 
 import { RouterSync } from './components/RouterSync';
 import { RouterSyncProvider } from './providers/RouterSyncProvider';
+import { usePageTracking } from '@/hooks/usePageTracking';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { Api } from '@/services/api';
 import { AppProviders } from './providers/AppProviders';
 import { AppRoutes } from './routes/AppRoutes';
@@ -66,6 +68,12 @@ function AppContent() {
             document.documentElement.classList.remove('dark');
         }
     }, [theme]);
+
+    // Analytics tracking
+    usePageTracking();
+
+    // SEO meta tags
+    usePageMeta();
 
     // Web Vitals & Metrics Init
     useEffect(() => {

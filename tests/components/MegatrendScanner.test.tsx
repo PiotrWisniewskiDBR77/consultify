@@ -1,9 +1,8 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import TrendDetailCard from '../../components/Megatrend/TrendDetailCard';
-import { IndustryBaselineCard } from '../../components/Megatrend/IndustryBaselineCard';
-import { MegatrendDetail } from '../../components/Megatrend/TrendDetailCard';
+import TrendDetailCard from '@/components/Megatrend/TrendDetailCard';
+import { IndustryBaselineCard } from '@/components/Megatrend/IndustryBaselineCard';
+import type { MegatrendDetail } from '@/components/Megatrend/TrendDetailCard';
 
 // Mock Megatrend Data
 const mockTrend: MegatrendDetail = {
@@ -24,6 +23,11 @@ const mockTrend: MegatrendDetail = {
         actions: ['Pilot tool']
     }
 };
+
+const mockTrends: Array<{ id: string, label: string, shortDescription: string, type: string, baseImpactScore: number }> = [
+    { id: 't1', label: 'Trend 1', shortDescription: 'Desc 1', type: 'Technology', baseImpactScore: 5 },
+    { id: 't2', label: 'Trend 2', shortDescription: 'Desc 2', type: 'Business', baseImpactScore: 3 }
+];
 
 describe('Component Test: TrendDetailCard', () => {
     it('renders trend details when data is provided', () => {
@@ -61,23 +65,14 @@ describe('Component Test: TrendDetailCard', () => {
         const handleClose = vi.fn();
         render(<TrendDetailCard trend={mockTrend} onClose={handleClose} />);
 
-        // Find the X button (usually identifiable by icon or aria-label, here relying on lucide icon potentially)
-        // Since we don't have aria-label on the X button in the code I modified, I might need to target by class or add aria-label.
-        // Assuming the button is present. In my manual edit I didn't verify if I added aria-label.
-        // Let's assume there's a button.
         const buttons = screen.getAllByRole('button');
-        const closeBtn = buttons[0]; // Usually the first one if header
+        const closeBtn = buttons[0];
         fireEvent.click(closeBtn);
         expect(handleClose).toHaveBeenCalled();
     });
 });
 
 describe('Component Test: IndustryBaselineCard', () => {
-`const mockTrends: Array<{ id: string, label: string, shortDescription: string, type: string, baseImpactScore: number }> = [`
-        { id: 't1', label: 'Trend 1', shortDescription: 'Desc 1', type: 'Technology', baseImpactScore: 5 },
-        { id: 't2', label: 'Trend 2', shortDescription: 'Desc 2', type: 'Business', baseImpactScore: 3 }
-    ];
-
     it('renders list of trends', () => {
         render(<IndustryBaselineCard megatrends={mockTrends} industry="General" onTrendSelect={vi.fn()} />);
         expect(screen.getByText('Trend 1')).toBeInTheDocument();
@@ -86,7 +81,6 @@ describe('Component Test: IndustryBaselineCard', () => {
 
     it('renders loading state', () => {
         render(<IndustryBaselineCard loading={true} industry="General" megatrends={[]} onTrendSelect={vi.fn()} />);
-        // Expect text content based on component implementation
         expect(screen.getByText(/Loading industry baseline/i)).toBeInTheDocument();
     });
 
@@ -95,7 +89,7 @@ describe('Component Test: IndustryBaselineCard', () => {
         render(<IndustryBaselineCard megatrends={mockTrends} industry="General" onTrendSelect={handleSelect} />);
 
         const buttons = screen.getAllByText(/See Strategic Impact/i);
-        fireEvent.click(buttons[0]); // Click the first one (Trend 1)
+        fireEvent.click(buttons[0]);
         expect(handleSelect).toHaveBeenCalledWith('t1');
     });
 });

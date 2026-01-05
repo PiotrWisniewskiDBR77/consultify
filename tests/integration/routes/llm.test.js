@@ -1,17 +1,27 @@
-// @vitest-environment node
-import { describe, it, expect, beforeAll } from 'vitest';
+import app from '../../../server/src/index.js';
+import bcrypt from 'bcryptjs';
 import request from 'supertest';
-import { createRequire } from 'module';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initTestDb } from '../../helpers/dbHelper.cjs';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
-const require = createRequire(import.meta.url);
-const app = require('../../../server/index.js');
-const db = require('../../../server/database.js');
-const { initTestDb } = require('../../helpers/dbHelper.cjs');
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = ':memory:';
+});
+
+// @vitest-environment node
+
+
+
+
 
 /**
  * Level 2: Integration Tests - LLM Routes
  * Tests LLM API endpoints
  */
+const db = getDatabase();
 describe('Integration Test: LLM Routes', () => {
     let authToken;
     const testId = Date.now();
@@ -21,10 +31,10 @@ describe('Integration Test: LLM Routes', () => {
     const testProviderId = `llm-provider-${testId}`;
 
     beforeAll(async () => {
+        await initializeDatabase();
         await db.initPromise;
 
-        const bcrypt = require('bcryptjs');
-        const hash = bcrypt.hashSync('test123', 8);
+                const hash = bcrypt.hashSync('test123', 8);
 
         await new Promise((resolve) => {
             db.serialize(() => {
@@ -176,4 +186,3 @@ describe('Integration Test: LLM Routes', () => {
         });
     });
 });
-

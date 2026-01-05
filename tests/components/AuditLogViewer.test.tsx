@@ -5,10 +5,9 @@
  * Tests audit log viewing, filtering, pagination, and export functionality.
  */
 
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AuditLogViewer } from '../../components/governance/AuditLogViewer';
+import { AuditLogViewer } from '@/components/governance/AuditLogViewer';
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -39,12 +38,12 @@ describe('AuditLogViewer', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-`(global.fetch as jest.Mock).mockClear();`
+        (global.fetch as any).mockClear();
     });
 
     describe('Rendering', () => {
         it('should render audit log viewer', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -61,7 +60,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should display audit entries', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -73,13 +72,12 @@ describe('AuditLogViewer', () => {
             );
 
             await waitFor(() => {
-                // Entries should be rendered
                 expect(screen.getByText(/audit/i)).toBeInTheDocument();
             });
         });
 
         it('should show loading state initially', () => {
-`(global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {}));`
+            (global.fetch as any).mockImplementation(() => new Promise(() => { }));
 
             render(
                 <AuditLogViewer
@@ -87,14 +85,13 @@ describe('AuditLogViewer', () => {
                 />
             );
 
-            // Loading state should be shown
             expect(screen.getByText(/audit/i)).toBeInTheDocument();
         });
     });
 
     describe('Filtering', () => {
         it('should filter by action type', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -106,13 +103,12 @@ describe('AuditLogViewer', () => {
             );
 
             await waitFor(() => {
-                // Filter controls should be present
                 expect(screen.getByText(/audit/i)).toBeInTheDocument();
             });
         });
 
         it('should filter by resource type', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -129,7 +125,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should filter by date range', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -146,7 +142,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should search entries', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -168,7 +164,7 @@ describe('AuditLogViewer', () => {
 
     describe('Pagination', () => {
         it('should paginate entries', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -185,7 +181,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should navigate to next page', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -205,7 +201,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should navigate to previous page', async () => {
-`(global.fetch as jest.Mock).mockResolvedValueOnce({`
+            (global.fetch as any).mockResolvedValueOnce({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -227,7 +223,7 @@ describe('AuditLogViewer', () => {
 
     describe('Export Functionality', () => {
         it('should export as JSON', async () => {
-`(global.fetch as jest.Mock).mockResolvedValueOnce({`
+            (global.fetch as any)
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => ({ entries: mockEntries })
@@ -237,7 +233,6 @@ describe('AuditLogViewer', () => {
                     blob: async () => new Blob(['{}'], { type: 'application/json' })
                 });
 
-            // Mock URL.createObjectURL
             global.URL.createObjectURL = vi.fn(() => 'blob:url');
 
             render(
@@ -252,7 +247,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should export as CSV', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any)
                 .mockResolvedValueOnce({
                     ok: true,
                     json: async () => ({ entries: mockEntries })
@@ -278,7 +273,7 @@ describe('AuditLogViewer', () => {
 
     describe('Entry Details', () => {
         it('should show entry details when selected', async () => {
-`(global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -297,7 +292,7 @@ describe('AuditLogViewer', () => {
 
     describe('Error Handling', () => {
         it('should display error when fetch fails', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockRejectedValue(new Error('Network error'));
 
             render(
                 <AuditLogViewer
@@ -311,7 +306,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should handle API error responses', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: false,
                 status: 500
             });
@@ -330,7 +325,7 @@ describe('AuditLogViewer', () => {
 
     describe('Multi-Tenant Isolation', () => {
         it('should filter by organizationId when provided', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -350,7 +345,7 @@ describe('AuditLogViewer', () => {
         });
 
         it('should allow superadmin to view all entries', async () => {
-`(global.fetch as jest.Mock).mockResolvedValue({`
+            (global.fetch as any).mockResolvedValue({
                 ok: true,
                 json: async () => ({ entries: mockEntries })
             });
@@ -367,4 +362,3 @@ describe('AuditLogViewer', () => {
         });
     });
 });
-

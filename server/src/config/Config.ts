@@ -87,8 +87,8 @@ function loadConfig(): AppConfig {
             (isProduction
                 ? undefined
                 : isTest
-                  ? 'test-secret-key-for-testing-only-min-32-chars'
-                  : 'supersecretkey_change_this_in_production'),
+                    ? 'test-secret-key-for-testing-only-min-32-chars'
+                    : 'supersecretkey_change_this_in_production'),
         JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '365d',
         REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',
         TOKEN_CLEANUP_INTERVAL: parseInt(process.env.TOKEN_CLEANUP_INTERVAL || '3600000', 10),

@@ -79,21 +79,21 @@ let StorageService: any = null;
 let NotificationOutboxService: any = null;
 
 try {
-    const knowledgeModule = (await import('../services/knowledgeService.js')) as any;
+    //     const knowledgeModule = (await import('../services/knowledgeService.js')) as any;
     KnowledgeService = knowledgeModule.default || knowledgeModule;
 } catch {
     logger.warn('[Knowledge] KnowledgeService not available');
 }
 
 try {
-    const storageModule = (await import('../services/storageService.js')) as any;
+    //     const storageModule = (await import('../services/storageService.js')) as any;
     StorageService = storageModule.default || storageModule;
 } catch {
     logger.warn('[Knowledge] StorageService not available');
 }
 
 try {
-    const notificationModule = (await import('../services/notificationOutboxService.js')) as any;
+    //     const notificationModule = (await import('../services/notificationOutboxService.js')) as any;
     NotificationOutboxService = notificationModule.default || notificationModule;
 } catch {
     logger.warn('[Knowledge] NotificationOutboxService not available');
@@ -134,7 +134,7 @@ try {
 }
 
 try {
-    const projectQuotaModule = (await import('../middleware/projectQuotaMiddleware.js')) as any;
+    const projectQuotaModule = await import('../middleware/projectQuota.middleware.js');
     enforceProjectQuota = projectQuotaModule.default || projectQuotaModule;
 } catch {
     logger.warn('[Knowledge] Project quota middleware not available');
@@ -708,7 +708,7 @@ router.post(
             if (tempPath && fs.existsSync(tempPath)) {
                 try {
                     fs.unlinkSync(tempPath);
-                } catch (e) {}
+                } catch (e) { }
             }
             const message = err instanceof Error ? err.message : 'Unknown error';
             return res.status(500).json({ error: message });

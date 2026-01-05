@@ -4,7 +4,7 @@
  * Tests canonical UserState Machine per 01_USER_STATE_MACHINE.md
  */
 
-const UserStateMachine = require('../../server/services/userStateMachine');
+import UserStateMachine from '../../server/src/services/userStateMachine.js';
 
 describe('UserStateMachine', () => {
     describe('State Constants', () => {

@@ -2,12 +2,12 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AISettings } from '../../../../components/settings/AISettings';
-import { Api } from '../../../../services/api';
-import { User } from '../../../../types';
+import { AISettings } from '@/components/settings/AISettings';
+import { Api } from '@/services/api';
+import { User } from '@/types';
 
 // Mock Api
-vi.mock('../../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         get: vi.fn(),
         put: vi.fn(),
@@ -34,7 +34,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 // Mock hooks
-vi.mock('../../../../hooks/useRealtimeCosts', () => ({
+vi.mock('@/hooks/useRealtimeCosts', () => ({
     useRealtimeCosts: () => ({
         connected: true,
         summary: {

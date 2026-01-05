@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateAnalytics, generateBurnDownData, generateVelocityData } from '../../services/analytics';
-import { FullInitiative, Task, TaskStatus, InitiativeStatus } from '../../types';
+import { FullInitiative, Task, TaskStatus, InitiativeStatus } from '@/types';
 
 describe('Service Test: Analytics', () => {
     describe('calculateAnalytics', () => {

@@ -3,8 +3,8 @@
  * 
  * Tests for AI performance monitoring and optimization service.
  */
-
-const { performanceOptimizer, PerformanceOptimizer } = require('../../../server/services/ai/performanceOptimizer');
+import { describe, it, expect } from 'vitest';
+import { performanceOptimizer, PerformanceOptimizer } from '../../../server/src/services/ai/performanceOptimizer.js';
 
 describe('PerformanceOptimizer', () => {
     describe('recordMetrics()', () => {

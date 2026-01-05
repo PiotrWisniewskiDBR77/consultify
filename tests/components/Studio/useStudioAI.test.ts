@@ -4,11 +4,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { useStudioAI } from '../../../components/Studio/hooks/useStudioAI';
-import { Api } from '../../../services/api';
+import { useStudioAI } from '@/components/Studio/hooks/useStudioAI';
+import { Api } from '@/services/api';
 
 // Mock API
-vi.mock('../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         post: vi.fn()
     }

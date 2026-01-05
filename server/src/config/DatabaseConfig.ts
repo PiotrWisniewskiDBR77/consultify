@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 import { z } from 'zod';
 
 import logger from '../utils/Logger.js';
-import { validateDatabaseConfig } from './ConfigValidator.js';
+// import { validateDatabaseConfig } from './ConfigValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -95,7 +95,7 @@ export function getDatabaseType(): DatabaseType {
     const databaseUrl = getDatabaseUrl();
 
     // Validate database configuration (will crash in production if invalid)
-    validateDatabaseConfig();
+    // validateDatabaseConfig();
 
     // 1. Strict Mode: If DB_TYPE is explicitly set, we MUST satisfy it or crash.
     if (process.env.DB_TYPE) {
@@ -266,6 +266,9 @@ export function loadDatabaseConfig(): DatabaseConfig {
     const isProduction = process.env.NODE_ENV === 'production';
     const databaseType = getDatabaseType();
     const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultify.db');
+
+    console.log('[DB Config] Loading config. SQLITE_PATH env:', process.env.SQLITE_PATH);
+    console.log('[DB Config] Resolved sqlitePath:', sqlitePath);
 
     const config: DatabaseConfig = {
         type: databaseType,

@@ -5,11 +5,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UnifiedAI } from '../../../../services/ai/unified';
-import { Api } from '../../../../services/api';
+import { UnifiedAI } from '../../../services/ai/unified';
+import { Api } from '@/services/api';
 
 // Mock Api
-vi.mock('../../../../services/api', () => ({
+vi.mock('@/services/api', () => ({
     Api: {
         chatWithAI: vi.fn(),
         chatWithAIStream: vi.fn()

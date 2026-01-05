@@ -3,9 +3,12 @@
     // Build settings
     "target": "ES2022",
     "module": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "jsx": "react-jsx",
-    
     // Module resolution
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -14,12 +17,12 @@
     "moduleDetection": "force",
     "allowJs": true,
     "noEmit": true,
-    
     // Path aliases
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
-    
     // Type checking - STRICT MODE (Enterprise SaaS Standard)
     "strict": true,
     "noImplicitAny": true,
@@ -30,7 +33,6 @@
     "noImplicitThis": true,
     "useUnknownInCatchVariables": true,
     "alwaysStrict": true,
-    
     // Code quality checks
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -40,14 +42,11 @@
     "noPropertyAccessFromIndexSignature": false,
     "forceConsistentCasingInFileNames": true,
     "exactOptionalPropertyTypes": false,
-    
     // Decorators (for DI/ORM if needed)
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
-    
     // Performance
     "skipLibCheck": true,
-    
     // Types
     "types": [
       "node",
@@ -57,13 +56,8 @@
   },
   "include": [
     "src",
-    "components",
-    "views",
-    "hooks",
-    "services",
-    "store",
-    "contexts",
-    "utils",
+    "server",
+    "tests",
     "*.ts",
     "*.tsx"
   ],

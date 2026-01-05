@@ -3,8 +3,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { TeamMeetingReport } from '../../../../components/Reports/Management/TeamMeetingReport';
-import { ManagementReport, TeamMeetingReportContent } from '../../../../types';
+import { TeamMeetingReport } from '../@/components/Reports/Management/TeamMeetingReport';
+import { ManagementReport, TeamMeetingReportContent } from '../@/types';
 
 const mockContent: TeamMeetingReportContent = {
     statusSummary: {

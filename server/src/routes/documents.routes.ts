@@ -23,8 +23,8 @@ const router = Router();
 let DocumentService: any = null;
 
 try {
-    const documentModule = await import('../services/documentService.js');
-    DocumentService = documentModule.default || documentModule;
+    // const documentModule = await import('../services/documentService.js');
+    // DocumentService = documentModule.default || documentModule;
 } catch {
     logger.warn('[Documents] DocumentService not available');
 }

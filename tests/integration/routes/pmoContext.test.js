@@ -1,25 +1,37 @@
+import app from '../../../server/index';
+import app from '../../../server/src/index.js';
+import bcrypt from 'bcryptjs';
+import db from '../../../server/database';
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initTestDb } from '../../helpers/dbHelper.cjs';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { v4 as uuidv4 } from 'uuid';
+
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = ':memory:';
+});
+
 // Integration test for PMO Context API endpoint
 // Tests /api/pmo-context/:projectId routes
 
-const request = require('supertest');
-const app = require('../../../server/index');
-const db = require('../../../server/database');
-const { v4: uuidv4 } = require('uuid');
 
 describe('PMO Context API', () => {
+    const db = getDatabase();
     let testUserId;
     let testProjectId;
     let testEmail;
     let authToken;
 
     beforeAll(async () => {
+        await initializeDatabase();
         // Initialize standard DB schema
-        const { initTestDb } = require('../../helpers/dbHelper.cjs');
-        await initTestDb();
+                await initTestDb();
         await db.initPromise;
 
-        const bcrypt = require('bcryptjs');
-        const hash = bcrypt.hashSync('test123', 8);
+                const hash = bcrypt.hashSync('test123', 8);
 
         // Create test user and get auth token
         testUserId = uuidv4();
@@ -96,6 +108,7 @@ describe('PMO Context API', () => {
     });
 
     describe('GET /api/pmo-context/:projectId', () => {
+    const db = getDatabase();
         it('should return PMO context with phase information', async () => {
             const response = await request(app)
                 .get(`/api/pmo-context/${testProjectId}`)
@@ -144,9 +157,11 @@ describe('PMO Context API', () => {
     });
 
     describe('GET /api/pmo-context/:projectId/task-labels', () => {
+    const db = getDatabase();
         let testTaskId;
 
         beforeAll(async () => {
+        await initializeDatabase();
             // Create a test task with overdue date
             testTaskId = uuidv4();
             const overdueDate = new Date();

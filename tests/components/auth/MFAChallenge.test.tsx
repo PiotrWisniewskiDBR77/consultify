@@ -23,7 +23,7 @@ const localStorageMock = {
 };
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
-import MFAChallenge from '../../components/auth/MFAChallenge';
+import MFAChallenge from '@/components/auth/MFAChallenge';
 
 describe('MFAChallenge', () => {
     const mockOnVerify = vi.fn();

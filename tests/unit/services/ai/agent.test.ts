@@ -5,12 +5,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Agent } from '../../../../services/ai/agent';
-import * as geminiModule from '../../../../services/ai/gemini';
-import { FullInitiative, CompanyProfile, FullSession, InitiativeStatus } from '../../../../types';
+import { Agent } from '../../../services/ai/agent';
+import * as geminiModule from '../../../services/ai/gemini';
+import { FullInitiative, CompanyProfile, FullSession, InitiativeStatus } from '../@/types';
 
 // Mock gemini module
-vi.mock('../../../../services/ai/gemini', () => ({
+vi.mock('../../../services/ai/gemini', () => ({
     sendMessageToAI: vi.fn()
 }));
 

@@ -15,10 +15,10 @@ import {
     useIsTrialExpired,
     AccessPolicyProvider
 } from '../../../contexts/AccessPolicyContext';
-import { useAppStore } from '../../../store/useAppStore';
+import { useAppStore } from '@/store/useAppStore';
 
 // Mock dependencies
-vi.mock('../../../store/useAppStore');
+vi.mock('@/store/useAppStore');
 
 // Mock fetch
 global.fetch = vi.fn();

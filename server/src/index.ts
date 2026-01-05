@@ -63,28 +63,28 @@ const sentryHandlers = initSentry(app);
 // ============================================================
 
 // Initialize database asynchronously and verify schema
-(async () => {
-    try {
-        logger.info('[Server] Initializing database...');
-        const db = await getDatabaseAsync();
-        logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
+if (!isTest || process.env.E2E_MODE === 'true') {
+    (async () => {
+        try {
+            logger.info('[Server] Initializing database...');
+            const db = await getDatabaseAsync();
+            logger.info('[Server] Database instance created:', db ? 'OK' : 'MOCK');
 
-        // Initialize and verify schema
-        const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
-        const initResult = await initializeDatabase();
+            // Initialize and verify schema
+            const { initializeDatabase } = await import('./database/DatabaseInitializer.js');
+            const initResult = await initializeDatabase();
 
-        if (!initResult.success) {
-            logger.error(`[Server] Database initialization failed: ${initResult.message}`);
-            if (isProduction) {
-                logger.error('[Server] CRITICAL: Database schema incomplete. Application may not function correctly.');
-                // In production, we might want to exit, but for now we'll continue with warnings
+            if (!initResult.success) {
+                logger.error(`[Server] Database initialization failed: ${initResult.message}`);
+                if (isProduction) {
+                    logger.error('[Server] CRITICAL: Database schema incomplete. Application may not function correctly.');
+                    // In production, we might want to exit, but for now we'll continue with warnings
+                }
+            } else {
+                logger.info(`[Server] Database initialized successfully: ${initResult.message}`);
             }
-        } else {
-            logger.info(`[Server] Database initialized successfully: ${initResult.message}`);
-        }
 
-        // Schedule periodic schema verification (every 5 minutes)
-        if (!isTest) {
+            // Schedule periodic schema verification (every 5 minutes)
             setInterval(
                 async () => {
                     try {
@@ -100,16 +100,16 @@ const sentryHandlers = initSentry(app);
                 },
                 5 * 60 * 1000,
             ); // Every 5 minutes
+        } catch (err: any) {
+            const error = err as Error;
+            logger.error(`[Server] Database initialization failed: ${error.message}`);
+            if (isProduction) {
+                logger.error('[Server] CRITICAL: Cannot proceed without database. Exiting...');
+                process.exit(1);
+            }
         }
-    } catch (err: any) {
-        const error = err as Error;
-        logger.error(`[Server] Database initialization failed: ${error.message}`);
-        if (isProduction) {
-            logger.error('[Server] CRITICAL: Cannot proceed without database. Exiting...');
-            process.exit(1);
-        }
-    }
-})();
+    })();
+}
 
 // ============================================================
 // SCHEDULER & HEALTH CHECKS INITIALIZATION
@@ -186,13 +186,13 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
 
     // Init LLM Provider Health Monitoring (Auto-Fallback)
     try {
-        const llmFallbackService = await import('./services/llmFallbackService.js');
-        // @ts-ignore
-        const service = llmFallbackService.default || llmFallbackService;
-        if (service && typeof service.startHealthMonitoring === 'function') {
-            service.startHealthMonitoring(60000);
-            logger.info('[Server] LLM Provider Health Monitoring started');
-        }
+        // const llmFallbackService = await import('./services/llmFallbackService.js');
+        // // @ts-ignore
+        // const service = llmFallbackService.default || llmFallbackService;
+        // if (service && typeof service.startHealthMonitoring === 'function') {
+        //     service.startHealthMonitoring(60000);
+        //     logger.info('[Server] LLM Provider Health Monitoring started');
+        // }
     } catch (err: any) {
         const error = err as Error;
         logger.warn('[Server] LLM Fallback Service not available:', error.message);
@@ -240,42 +240,42 @@ app.use(
     helmet({
         contentSecurityPolicy: isProduction
             ? {
-                  directives: {
-                      defaultSrc: ["'self'"],
-                      scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
-                      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-                      imgSrc: [
-                          "'self'",
-                          'data:',
-                          'blob:',
-                          'https://www.transparenttextures.com',
-                          'https://*.stripe.com',
-                          'https://www.gravatar.com',
-                          'https://*.googleusercontent.com',
-                      ],
-                      connectSrc: [
-                          "'self'",
-                          'wss:',
-                          'https://api.openai.com',
-                          'https://generativelanguage.googleapis.com',
-                          'https://api.anthropic.com',
-                          'https://api.mistral.ai',
-                          'https://api.stripe.com',
-                          'https://*.sentry.io',
-                      ],
-                      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-                      objectSrc: ["'none'"],
-                      mediaSrc: ["'self'", 'blob:'],
-                      frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
-                      workerSrc: ["'self'", 'blob:'],
-                      childSrc: ["'self'", 'blob:'],
-                      formAction: ["'self'"],
-                      frameAncestors: ["'none'"],
-                      baseUri: ["'self'"],
-                      upgradeInsecureRequests: isProduction ? [] : null,
-                  },
-                  reportOnly: false,
-              }
+                directives: {
+                    defaultSrc: ["'self'"],
+                    scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+                    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+                    imgSrc: [
+                        "'self'",
+                        'data:',
+                        'blob:',
+                        'https://www.transparenttextures.com',
+                        'https://*.stripe.com',
+                        'https://www.gravatar.com',
+                        'https://*.googleusercontent.com',
+                    ],
+                    connectSrc: [
+                        "'self'",
+                        'wss:',
+                        'https://api.openai.com',
+                        'https://generativelanguage.googleapis.com',
+                        'https://api.anthropic.com',
+                        'https://api.mistral.ai',
+                        'https://api.stripe.com',
+                        'https://*.sentry.io',
+                    ],
+                    fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+                    objectSrc: ["'none'"],
+                    mediaSrc: ["'self'", 'blob:'],
+                    frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
+                    workerSrc: ["'self'", 'blob:'],
+                    childSrc: ["'self'", 'blob:'],
+                    formAction: ["'self'"],
+                    frameAncestors: ["'none'"],
+                    baseUri: ["'self'"],
+                    upgradeInsecureRequests: isProduction ? [] : null,
+                },
+                reportOnly: false,
+            }
             : false,
         hsts: {
             maxAge: 31536000,
@@ -337,13 +337,13 @@ const apiLimiter = rateLimit({
     store: redisStore,
     skip: (req) => isTest || req.originalUrl.includes('/api/auth/'),
     message: { error: 'Too many requests, please try again later.' },
-    keyGenerator: (req) => {
+    keyGenerator: (req, res) => {
         // Intelligent Rate Limiting: Key by User ID if auth, else IP
         // This solves the "Office IP" problem where all users share one IP
         if ((req as any).user?.id) {
             return `api:user:${(req as any).user.id}`;
         }
-        return `api:ip:${req.ip || 'unknown'}`;
+        return `api:ip:${ipKeyGenerator(req, res)}`;
     },
 });
 
@@ -360,15 +360,14 @@ const authLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true,
-    keyGenerator: (req) => {
+    keyGenerator: (req, res) => {
         const email = (req.body as { email?: string })?.email;
-        const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
 
         if (email) {
             return `auth:${email.toLowerCase().trim()}`;
         }
 
-        return `auth:ip:${ipAddress}`;
+        return `auth:ip:${ipKeyGenerator(req, res)}`;
     },
 });
 
@@ -436,7 +435,10 @@ app.use('/api/', performanceMetricsMiddleware);
 // app.use('/api/', apiLimiter);
 import auditLogMiddleware from './middleware/auditLog.middleware.js';
 // app.use('/api/', auditLogMiddleware);
-app.use((logger as any).requestLogger);
+app.use((req: Request, res: Response, next: NextFunction) => {
+    logger.http(`${req.method} ${req.url}`);
+    next();
+});
 
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
@@ -549,7 +551,7 @@ if (!isTest) {
 // Only listen if the file is run directly (not imported)
 const startServer = true; // Always start server when running via tsx
 
-if (startServer && !isTest) {
+if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
     const server = http.createServer(app);
     const shutdownManager = getShutdownManager(30000); // 30 second timeout
 
@@ -564,47 +566,47 @@ if (startServer && !isTest) {
 
     // Initialize WebSocket server
     (async () => {
-        try {
-            const realtimeServiceModule = await import('./services/realtimeService.js');
-            const realtimeServicePromise = realtimeServiceModule.default || realtimeServiceModule;
-            const realtimeService = await realtimeServicePromise;
-            if (realtimeService && typeof realtimeService.initializeSimple === 'function') {
-                realtimeService.initializeSimple(server);
-            }
-        } catch (err: any) {
-            const error = err as Error;
-            logger.warn('[Server] Realtime service not available:', error.message);
-        }
+        // try {
+        //     const realtimeServiceModule = await import('./services/realtimeService.js');
+        //     const realtimeServicePromise = realtimeServiceModule.default || realtimeServiceModule;
+        //     const realtimeService = await realtimeServicePromise;
+        //     if (realtimeService && typeof realtimeService.initializeSimple === 'function') {
+        //         realtimeService.initializeSimple(server);
+        //     }
+        // } catch (err: any) {
+        //     const error = err as Error;
+        //     logger.warn('[Server] Realtime service not available:', error.message);
+        // }
     })();
 
     // Start token cleanup cron job
     (async () => {
-        try {
-            const cleanupModule = (await import('./cron/CleanupRevokedTokens.js')) as any;
-            const startCleanupJob = cleanupModule.startCleanupJob || cleanupModule.default?.startCleanupJob;
-            if (typeof startCleanupJob === 'function') {
-                startCleanupJob();
-            }
-        } catch (err: any) {
-            const error = err as Error;
-            logger.warn('[Server] Token cleanup job failed to start:', error.message);
-        }
+        // try {
+        //     const cleanupModule = (await import('./cron/CleanupRevokedTokens.js')) as any;
+        //     const startCleanupJob = cleanupModule.startCleanupJob || cleanupModule.default?.startCleanupJob;
+        //     if (typeof startCleanupJob === 'function') {
+        //         startCleanupJob();
+        //     }
+        // } catch (err: any) {
+        //     const error = err as Error;
+        //     logger.warn('[Server] Token cleanup job failed to start:', error.message);
+        // }
     })();
 
     // Start metrics snapshot job
     (async () => {
-        try {
-            const metricsModule = (await import('./cron/SnapshotMetrics.js')) as any;
-            const SnapshotMetricsCron = metricsModule.SnapshotMetricsCron || metricsModule.default || metricsModule;
-            if (typeof SnapshotMetricsCron === 'function') {
-                SnapshotMetricsCron();
-            } else if (SnapshotMetricsCron && typeof SnapshotMetricsCron.start === 'function') {
-                SnapshotMetricsCron.start();
-            }
-        } catch (err: any) {
-            const error = err as Error;
-            logger.warn('[Server] Metrics snapshot job failed to start:', error.message);
-        }
+        // try {
+        //     const metricsModule = (await import('./cron/SnapshotMetrics.js')) as any;
+        //     const SnapshotMetricsCron = metricsModule.SnapshotMetricsCron || metricsModule.default || metricsModule;
+        //     if (typeof SnapshotMetricsCron === 'function') {
+        //         SnapshotMetricsCron();
+        //     } else if (SnapshotMetricsCron && typeof SnapshotMetricsCron.start === 'function') {
+        //         SnapshotMetricsCron.start();
+        //     }
+        // } catch (err: any) {
+        //     const error = err as Error;
+        //     logger.warn('[Server] Metrics snapshot job failed to start:', error.message);
+        // }
     })();
 
     // Init AI Services (Redis, Cache, Rate Limiter)
@@ -735,20 +737,20 @@ if (startServer && !isTest) {
     });
 
     shutdownManager.registerCleanup('WebSocket', async () => {
-        try {
-            logger.info('[Shutdown] Closing WebSocket connections...');
-            const realtimeServiceModule = await import('./services/realtimeService.js').catch(() => null);
-            if (realtimeServiceModule) {
-                const realtimeService = realtimeServiceModule.default || realtimeServiceModule;
-                if (realtimeService && typeof realtimeService.close === 'function') {
-                    await realtimeService.close();
-                }
-            }
-            logger.info('[Shutdown] WebSocket connections closed');
-        } catch (error: unknown) {
-            const err = error instanceof Error ? error : new Error(String(error));
-            logger.error('[Shutdown] Error closing WebSocket:', err.message);
-        }
+        // try {
+        //     logger.info('[Shutdown] Closing WebSocket connections...');
+        //     const realtimeServiceModule = await import('./services/realtimeService.js').catch(() => null);
+        //     if (realtimeServiceModule) {
+        //         const realtimeService = realtimeServiceModule.default || realtimeServiceModule;
+        //         if (realtimeService && typeof realtimeService.close === 'function') {
+        //             await realtimeService.close();
+        //         }
+        //     }
+        //     logger.info('[Shutdown] WebSocket connections closed');
+        // } catch (error: unknown) {
+        //     const err = error instanceof Error ? error : new Error(String(error));
+        //     logger.error('[Shutdown] Error closing WebSocket:', err.message);
+        // }
     });
 
     // Register signal handlers

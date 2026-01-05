@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import { renderWithProviders } from '../../../test-utils';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { EnhancedDataTable } from '../../../../components/admin/shared/EnhancedDataTable';
+import { EnhancedDataTable } from '../@/components/admin/shared/EnhancedDataTable';
 
 /**
  * EnhancedDataTable Component Tests

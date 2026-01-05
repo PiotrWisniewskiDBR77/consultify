@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { QuickActions, QuickActionButton, MoreActionsButton } from '../../../../../components/MyWork/shared/QuickActions';
+import { QuickActions, QuickActionButton, MoreActionsButton } from '@/components/MyWork/shared/QuickActions';
 
 // Mock i18next
 vi.mock('react-i18next', () => ({

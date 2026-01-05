@@ -28,7 +28,7 @@ export const LoginView = () => {
                 localStorage.setItem('refreshToken', res.data.refreshToken);
                 window.location.reload();
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(err.response?.data?.error || err.message || 'Login failed');
         }
     };

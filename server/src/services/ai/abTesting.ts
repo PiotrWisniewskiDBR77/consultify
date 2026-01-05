@@ -2,13 +2,42 @@
  * Abtesting Service
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Stub implementation Replacing broken lazy-loader
  */
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
+import logger from '../../utils/Logger.js';
 
-// Lazy load the JS service module
-const loadAbtesting = createCachedLazyService('../../ai/abTesting.js');
+class ABTestingService {
+    async getExperiment(id: string) {
+        logger.warn(`[ABTestingService] getExperiment(${id}) called on stub`);
+        return null;
+    }
 
-// Export default instance (for backward compatibility)
-export default loadAbtesting();
+    async createExperiment(data: any) {
+        logger.warn('[ABTestingService] createExperiment called on stub');
+        return { id: 'stub-experiment-id', ...data };
+    }
+
+    async updateExperiment(id: string, data: any) {
+        logger.warn(`[ABTestingService] updateExperiment(${id}) called on stub`);
+        return { id, ...data };
+    }
+
+    async deleteExperiment(id: string) {
+        logger.warn(`[ABTestingService] deleteExperiment(${id}) called on stub`);
+        return { deleted: true };
+    }
+
+    async enrollUser(experimentId: string, userId: string) {
+        logger.warn(`[ABTestingService] enrollUser(${experimentId}, ${userId}) called on stub`);
+        return { variant: 'control' }; // Default to control
+    }
+
+    async recordMetric(experimentId: string, userId: string, metric: string, value: any) {
+        logger.warn(`[ABTestingService] recordMetric(${experimentId}, ${userId}, ${metric}) called on stub`);
+        return { recorded: true };
+    }
+}
+
+export const abTestingService = new ABTestingService();
+export default abTestingService;

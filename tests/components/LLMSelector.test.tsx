@@ -1,12 +1,11 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { LLMSelector } from '../../components/LLMSelector';
-import { useAppStore } from '../../store/useAppStore';
-import { Api } from '../../services/api';
+import { LLMSelector } from '@/components/LLMSelector';
+import { useAppStore } from '@/store/useAppStore';
+import { Api } from '@/services/api';
 
-vi.mock('../../store/useAppStore');
-vi.mock('../../services/api');
+vi.mock('@/store/useAppStore');
+vi.mock('@/services/api');
 
 describe('Component Test: LLMSelector', () => {
     const mockSetAIConfig = vi.fn();
@@ -14,7 +13,7 @@ describe('Component Test: LLMSelector', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-`(useAppStore as jest.Mock).mockReturnValue({`
+        (useAppStore as any).mockReturnValue({
             aiConfig: {
                 autoMode: false,
                 selectedModelId: null,
@@ -22,7 +21,7 @@ describe('Component Test: LLMSelector', () => {
             setAIConfig: mockSetAIConfig,
             currentUser: mockCurrentUser,
         });
-`(Api.getPublicLLMProviders as jest.Mock).mockResolvedValue([`
+        (Api.getPublicLLMProviders as any).mockResolvedValue([
             { id: 'model-1', name: 'GPT-4', provider: 'OpenAI' },
             { id: 'model-2', name: 'Claude', provider: 'Anthropic' },
         ]);
@@ -99,4 +98,3 @@ describe('Component Test: LLMSelector', () => {
         expect(mockSetAIConfig).toHaveBeenCalled();
     });
 });
-

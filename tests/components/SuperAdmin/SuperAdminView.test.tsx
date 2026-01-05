@@ -4,11 +4,11 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { SuperAdminView } from '../../../views/superadmin/SuperAdminView';
-import { AppView } from '../../../types';
-import { useAppStore } from '../../../store/useAppStore';
+import { SuperAdminView } from '@/views/superadmin/SuperAdminView';
+import { AppView } from '@/types';
+import { useAppStore } from '@/store/useAppStore';
 
-vi.mock('../../../store/useAppStore', () => ({
+vi.mock('@/store/useAppStore', () => ({
     useAppStore: vi.fn()
 }));
 
@@ -20,31 +20,31 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // Mock all floating widgets and side panels to avoid context issues
-vi.mock('../../../components/Help/HelpSidePanel', () => ({
+vi.mock('@/components/Help/HelpSidePanel', () => ({
     HelpSidePanel: () => null
 }));
 
-vi.mock('../../../components/DocumentSidePanel', () => ({
+vi.mock('@/components/DocumentSidePanel', () => ({
     DocumentSidePanel: () => null,
     default: () => null
 }));
 
-vi.mock('../../../components/Feedback/FeedbackSidePanel', () => ({
+vi.mock('@/components/Feedback/FeedbackSidePanel', () => ({
     FeedbackSidePanel: () => null
 }));
 
-vi.mock('../../../components/UserProfileMenu', () => ({
+vi.mock('@/components/UserProfileMenu', () => ({
     UserProfileMenu: () => null
 }));
 
 // Mock OverviewModule to avoid its API calls
-vi.mock('../../../views/superadmin/OverviewModule', () => ({
+vi.mock('@/views/superadmin/OverviewModule', () => ({
     OverviewModule: () => <div data-testid="overview-module">Overview Module Content</div>,
     default: () => <div data-testid="overview-module">Overview Module Content</div>
 }));
 
 // Mock services/api
-vi.mock('../../../services/api', () => ({
+vi.mock('../../services/api', () => ({
     Api: {
         getAccessRequests: vi.fn().mockResolvedValue([]),
         getOrganizations: vi.fn().mockResolvedValue([]),

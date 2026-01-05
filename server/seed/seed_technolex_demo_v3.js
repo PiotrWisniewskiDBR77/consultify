@@ -22,7 +22,7 @@
  * @module seed_technolex_demo_v3
  */
 
-import { v4: uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import path from 'path';
 

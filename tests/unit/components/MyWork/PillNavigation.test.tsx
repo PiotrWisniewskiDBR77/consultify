@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { PillNavigation } from '../../../../components/MyWork/PillNavigation';
+import { PillNavigation } from '@/components/MyWork/PillNavigation';
 
 // Mock i18next
 vi.mock('react-i18next', () => ({

@@ -10,13 +10,20 @@
  */
 
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import { v4 as uuidv4 } from 'uuid';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
 const db = require(path.join(__dirname, '../database'));
-import { v4: uuidv4 } from 'uuid';
 
 // Promisified helpers
 const run = (sql, params = []) => {
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
+        db.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
@@ -48,7 +55,7 @@ async function seedBillingData() {
         // Find DBR77 organization - prioritize org-dbr77-test where user is assigned
         const org = await get(`SELECT id, name FROM organizations WHERE id = 'org-dbr77-test' LIMIT 1`)
             || await get(`SELECT id, name FROM organizations WHERE name LIKE '%DBR77%' LIMIT 1`);
-        
+
         if (!org) {
             console.error('❌ DBR77 organization not found. Please run seed-dbr77-data.js first.');
             process.exit(1);
@@ -110,12 +117,12 @@ async function seedBillingData() {
         // Generate invoices for past 6 months (using existing table structure)
         const invoices = [];
         const now = new Date();
-        
+
         for (let i = 0; i < 6; i++) {
             const invoiceDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const isPaid = i > 0; // Current month is pending, rest are paid
             const total = i % 2 === 0 ? 358.80 : 299;
-            
+
             invoices.push({
                 id: uuidv4(),
                 stripeId: `in_test_${Date.now()}_${i}`,
@@ -269,4 +276,3 @@ seedBillingData().then(() => {
     console.error('Fatal error:', err);
     process.exit(1);
 });
-
