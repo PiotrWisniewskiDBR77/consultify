@@ -28,11 +28,11 @@ import { AIInstructionsSettings } from '../components/settings/AIInstructionsSet
 import { AIMemorySettings } from '../components/settings/AIMemorySettings';
 import { AIModelSelectionSettings } from '../components/settings/AIModelSelectionSettings';
 import { AIParametersSettings } from '../components/settings/AIParametersSettings';
-import { AIPersonalitySettings } from '../components/settings/AIPersonalitySettings';
+// import { AIPersonalitySettings } from '../components/settings/AIPersonalitySettings';
 // New components (to be created)
 import { AIUsageDashboard } from '../components/settings/AIUsageDashboard';
 import { APIAccessSettings } from '../components/settings/APIAccessSettings';
-import { AvatarUploader } from '../components/settings/AvatarUploader';
+// import { AvatarUploader } from '../components/settings/AvatarUploader';
 import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
 import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
 import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
@@ -63,7 +63,7 @@ import { WebhooksSettings } from '../components/settings/WebhooksSettings';
 import { WorkingHoursSettings } from '../components/settings/WorkingHoursSettings';
 import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesSettings';
 // UI components
-import { Button } from '../components/ui/Button';
+import { Button } from '../components/ui/primitives/Button';
 import { ScrollArea } from '../components/ui/scroll-area';
 // Store and types
 import { useAppStore } from '../store/useAppStore';
@@ -164,7 +164,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
             case 'profile':
                 return <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
             case 'avatar':
-                return <AvatarUploader currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+                // return <AvatarUploader currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+                return <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
             case 'signatures':
                 return <EmailSignaturesSettings currentUser={currentUser} />;
             case 'working-hours':
@@ -194,7 +195,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
             case 'ai-memory':
                 return <AIMemorySettings />;
             case 'ai-personality':
-                return <AIPersonalitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+                return null; // <AIPersonalitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
             case 'ai-autocomplete':
                 return <AIAutoCompleteSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
 
@@ -290,7 +291,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
                 <SettingsSidebar
                     activeSection={activeSection}
                     onSectionChange={handleSectionChange}
-                    onPartnerPortal={() => setCurrentView(AppView.PARTNER_LANDING)}
+                    // onPartnerPortal={() => setCurrentView(AppView.PARTNER_LANDING)}
                     className="flex-1"
                 />
             </div>

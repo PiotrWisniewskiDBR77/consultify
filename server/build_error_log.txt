@@ -1,0 +1,187 @@
+
+> server@1.0.0 build
+> tsc --build
+
+src/config/FeatureFlags.ts(57,37): error TS2345: Argument of type '(err: Error | null) => void' is not assignable to parameter of type '(value: $ZodIssue, index: number, array: $ZodIssue[]) => void'.
+  Types of parameters 'err' and 'value' are incompatible.
+    Type '$ZodIssue' is not assignable to type 'Error | null'.
+      Property 'name' is missing in type '$ZodIssueUnrecognizedKeys' but required in type 'Error'.
+src/config/FeatureFlags.ts(58,33): error TS18047: 'err' is possibly 'null'.
+src/config/FeatureFlags.ts(58,37): error TS2339: Property 'path' does not exist on type 'Error'.
+src/config/FeatureFlags.ts(58,56): error TS18047: 'err' is possibly 'null'.
+src/config/SentryConfig.ts(98,32): error TS2554: Expected 0 arguments, but got 1.
+src/config/SentryConfig.ts(100,31): error TS2353: Object literal may only specify known properties, and 'tracing' does not exist in type 'HttpOptions'.
+src/config/SentryConfig.ts(167,23): error TS2304: Cannot find name 'expressErrorHandler'.
+src/config/swagger.ts(1,26): error TS2307: Cannot find module 'swagger-jsdoc' or its corresponding type declarations.
+src/controllers/AdminAlertController.ts(48,57): error TS2345: Argument of type '{ name: string; type: "cost" | "usage" | "compliance" | "security" | "performance"; enabled: boolean; threshold?: number | undefined; config?: Record<string, unknown> | undefined; }' is not assignable to parameter of type 'AlertConfig'.
+  Property 'alertType' is missing in type '{ name: string; type: "cost" | "usage" | "compliance" | "security" | "performance"; enabled: boolean; threshold?: number | undefined; config?: Record<string, unknown> | undefined; }' but required in type 'AlertConfig'.
+src/controllers/StageGateController.ts(80,13): error TS2783: 'gateType' is specified more than once, so this usage will be overwritten.
+src/controllers/UserController.ts(109,27): error TS2339: Property '_reason' does not exist on type '{ role: "REVIEWER" | "ADMIN" | "USER" | "SUPERADMIN" | "MANAGER" | "LEADER"; reason?: string | undefined; }'.
+src/cron/MemoryCleanupJob.ts(118,28): error TS2721: Cannot invoke an object which is possibly 'null'.
+src/cron/MemoryCleanupJob.ts(118,28): error TS18047: 'getRedisClient' is possibly 'null'.
+src/cron/Scheduler.ts(37,26): error TS2571: Object is of type 'unknown'.
+src/cron/SnapshotMetrics.ts(34,13): error TS2322: Type 'MetricsPersistenceService | undefined' is not assignable to type 'MetricsPersistenceService'.
+  Type 'undefined' is not assignable to type 'MetricsPersistenceService'.
+src/cron/TrialCron.ts(63,13): error TS2322: Type 'unknown' is not assignable to type 'TrialService | undefined'.
+src/cron/TrialCron.ts(82,40): error TS2532: Object is possibly 'undefined'.
+src/cron/TrialCron.ts(86,40): error TS2532: Object is possibly 'undefined'.
+src/database/DatabaseInitializer.ts(124,29): error TS2339: Property 'initDb' does not exist on type 'typeof import("/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/PostgresDatabase", { with: { "resolution-mode": "import" } })'.
+src/index.ts(438,16): error TS2339: Property 'requestLogger' does not exist on type 'Logger'.
+src/middleware/alertWatchdog.middleware.ts(36,9): error TS2322: Type 'NotificationService' is not assignable to type '{ create: (data: { userId: string; organizationId: string; projectId: string | null; type: string; severity: string; title: string; message: string; relatedObjectType: string; relatedObjectId: string | null; isActionable: boolean; }) => Promise<...>; }'.
+  Types of property 'create' are incompatible.
+    Type '(payload: NotificationPayload) => Promise<any>' is not assignable to type '(data: { userId: string; organizationId: string; projectId: string | null; type: string; severity: string; title: string; message: string; relatedObjectType: string; relatedObjectId: string | null; isActionable: boolean; }) => Promise<...>'.
+      Types of parameters 'payload' and 'data' are incompatible.
+        Type '{ userId: string; organizationId: string; projectId: string | null; type: string; severity: string; title: string; message: string; relatedObjectType: string; relatedObjectId: string | null; isActionable: boolean; }' is not assignable to type 'NotificationPayload'.
+          Types of property 'projectId' are incompatible.
+            Type 'string | null' is not assignable to type 'string | undefined'.
+              Type 'null' is not assignable to type 'string | undefined'.
+src/middleware/fileUpload.middleware.ts(69,5): error TS2554: Expected 2 arguments, but got 1.
+src/middleware/fileUpload.middleware.ts(81,5): error TS2322: Type '(_req: Request, file: Express.Multer.File, cb: (error: Error | null, acceptFile: boolean) => void) => void' is not assignable to type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, file: File, callback: FileFilterCallback) => void'.
+  Types of parameters 'cb' and 'callback' are incompatible.
+    Type 'FileFilterCallback' is not assignable to type '(error: Error | null, acceptFile: boolean) => void'.
+      Types of parameters 'error' and 'error' are incompatible.
+        Type 'Error | null' is not assignable to type 'Error'.
+          Type 'null' is not assignable to type 'Error'.
+src/routes/admin/backup.routes.ts(63,33): error TS2339: Property 'getBackupCron' does not exist on type 'typeof BackupCron'.
+src/routes/admin/backup.routes.ts(95,38): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/routes/admin/backup.routes.ts(202,33): error TS2339: Property 'getBackupCron' does not exist on type 'typeof BackupCron'.
+src/routes/aiMemory.routes.ts(36,54): error TS2339: Property 'userId' does not exist on type 'AuthenticatedUser'.
+src/routes/aiMemory.routes.ts(80,54): error TS2339: Property 'userId' does not exist on type 'AuthenticatedUser'.
+src/routes/aiMemory.routes.ts(169,54): error TS2339: Property 'userId' does not exist on type 'AuthenticatedUser'.
+src/routes/aiMemory.routes.ts(245,54): error TS2339: Property 'userId' does not exist on type 'AuthenticatedUser'.
+src/routes/aiMemory.routes.ts(282,54): error TS2339: Property 'userId' does not exist on type 'AuthenticatedUser'.
+src/routes/billing.routes.ts(17,5): error TS2724: '"../validators/billing.validators.js"' has no exported member named '_CreditNoteIdParamSchema'. Did you mean 'CreditNoteIdParamSchema'?
+src/routes/billing.routes.ts(265,48): error TS2304: Cannot find name 'InvoiceRow'.
+src/routes/billing.routes.ts(278,41): error TS2339: Property 'line_items' does not exist on type 'InvoiceDetailRow'.
+src/routes/billing.routes.ts(278,73): error TS2339: Property 'line_items' does not exist on type 'InvoiceDetailRow'.
+src/routes/billing.routes.ts(279,39): error TS2339: Property 'metadata' does not exist on type 'InvoiceDetailRow'.
+src/routes/billing.routes.ts(279,69): error TS2339: Property 'metadata' does not exist on type 'InvoiceDetailRow'.
+src/routes/billing.routes.ts(1372,58): error TS2339: Property 'object' does not exist on type '{}'.
+src/routes/feedback.routes.ts(11,10): error TS2724: '"../middleware/auth.middleware.js"' has no exported member named '_verifyToken'. Did you mean 'verifyToken'?
+src/routes/gdpr.routes.ts(14,15): error TS2724: '"express"' has no exported member named '_Request'. Did you mean 'Request'?
+src/routes/organizations.routes.ts(16,5): error TS2724: '"../validators/organization.validators.js"' has no exported member named '_InviteMemberSchema'. Did you mean 'InviteMemberSchema'?
+src/routes/projects.routes.ts(15,10): error TS2724: '"../middleware/validation.middleware.js"' has no exported member named '_validateQuery'. Did you mean 'validateQuery'?
+src/routes/superadmin.routes.ts(15,7): error TS2451: Cannot redeclare block-scoped variable 'SuperAdminController'.
+src/routes/superadmin.routes.ts(16,7): error TS2451: Cannot redeclare block-scoped variable 'SuperAdminController'.
+src/routes/webhooks/stripe.routes.ts(29,40): error TS1149: File name '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/billingService.ts' differs from already included file name '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/BillingService.ts' only in casing.
+  The file is in the program because:
+    Imported via './BillingService.js' from file '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/usageService.ts'
+    Imported via '../services/BillingService.js' from file '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/controllers/SuperAdminController.js'
+    Imported via '../../BillingService.js' from file '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/cqrs/billing/CreateSubscription.ts'
+    Imported via '../../services/billingService.js' from file '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/webhooks/stripe.routes.ts'
+    Matched by include pattern 'src/**/*' in '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/tsconfig.json'
+  File is ECMAScript module because '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/package.json' has field "type" with value "module"
+src/routes/webhooks/stripe.routes.ts(122,57): error TS2339: Property 'current_period_start' does not exist on type 'Subscription'.
+src/routes/webhooks/stripe.routes.ts(123,55): error TS2339: Property 'current_period_end' does not exist on type 'Subscription'.
+src/routes/webhooks/stripe.routes.ts(150,57): error TS2339: Property 'current_period_start' does not exist on type 'Subscription'.
+src/routes/webhooks/stripe.routes.ts(151,55): error TS2339: Property 'current_period_end' does not exist on type 'Subscription'.
+src/services/adkarService.ts(83,30): error TS2345: Argument of type '{} | null' is not assignable to parameter of type 'T | PromiseLike<T | null> | null'.
+  Type '{}' is not assignable to type 'T | PromiseLike<T | null> | null'.
+src/services/adminAuditService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/adminSessionService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/ai/aiPipeline.ts(10,5): error TS2724: '"../../types/ai.types.js"' has no exported member named '_ResponseMetadata'. Did you mean 'ResponseMetadata'?
+src/services/ai/aiPipeline.ts(11,5): error TS2724: '"../../types/ai.types.js"' has no exported member named '_StreamChunk'. Did you mean 'StreamChunk'?
+src/services/ai/alerting.ts(112,21): error TS2322: Type '"error" | "critical"' is not assignable to type 'SeverityLevel | undefined'.
+  Type '"critical"' is not assignable to type 'SeverityLevel | undefined'.
+src/services/ai/alerting.ts(116,47): error TS2345: Argument of type '{ level: string; tags: { organizationId?: string | undefined; providerId?: string | undefined; alertType: string; severity: "error" | "critical"; environment: string; }; extra: AlertData; }' is not assignable to parameter of type '"error" | "info" | "warning" | undefined'.
+src/services/ai/ingestionPipeline.ts(90,108): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/services/ai/ingestionPipeline.ts(425,50): error TS2345: Argument of type 'string' is not assignable to parameter of type '".md" | ".mdx" | ".txt" | ".json"'.
+src/services/ai/knowledgeIndexer.ts(90,25): error TS2339: Property 'default' does not exist on type 'typeof import("/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/node_modules/pdf-parse/dist/pdf-parse/esm/index", { with: { "resolution-mode": "import" } })'.
+src/services/ai/knowledgeIndexer.ts(772,13): error TS2322: Type 'unknown[]' is not assignable to type '{ source_type: string; doc_count: number; chunk_count: number; last_indexed: string; }[]'.
+  Type 'unknown' is not assignable to type '{ source_type: string; doc_count: number; chunk_count: number; last_indexed: string; }'.
+src/services/ai/knowledgeIndexer.ts(776,9): error TS2322: Type 'unknown[]' is not assignable to type '{ source_type: string; doc_count: number; chunk_count: number; last_indexed: string; }[]'.
+  Type 'unknown' is not assignable to type '{ source_type: string; doc_count: number; chunk_count: number; last_indexed: string; }'.
+src/services/ai/learningSystem.ts(14,39): error TS2339: Property 'learningSystem' does not exist on type 'Promise<unknown>'.
+src/services/ai/learningSystem.ts(15,39): error TS2339: Property 'LearningSystem' does not exist on type 'Promise<unknown>'.
+src/services/ai/learningSystem.ts(16,31): error TS2339: Property 'CONFIG' does not exist on type 'Promise<unknown>'.
+src/services/ai/modelRouter.ts(184,62): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Tier'.
+src/services/ai/tools/index.ts(14,54): error TS2345: Argument of type '(params: ProjectParams) => Promise<Record<string, unknown>>' is not assignable to parameter of type 'ToolHandler'.
+  Types of parameters 'params' and 'params' are incompatible.
+    Type 'unknown' is not assignable to type 'ProjectParams'.
+src/services/ai/tools/index.ts(15,56): error TS2345: Argument of type '(params: SearchParams, context?: SearchContext) => Promise<{ results: { content: string; source: string; relevance: number; }[]; totalFound: number; }>' is not assignable to parameter of type 'ToolHandler'.
+  Types of parameters 'params' and 'params' are incompatible.
+    Type 'unknown' is not assignable to type 'SearchParams'.
+src/services/ai/tools/index.ts(16,54): error TS2345: Argument of type '(params: RoiParams) => Promise<Record<string, unknown>>' is not assignable to parameter of type 'ToolHandler'.
+  Types of parameters 'params' and 'params' are incompatible.
+    Type 'unknown' is not assignable to type 'RoiParams'.
+src/services/ai/tools/index.ts(17,52): error TS2345: Argument of type '(params: CreateInitiativeParams, context?: ToolContext) => Promise<Record<string, unknown>>' is not assignable to parameter of type 'ToolHandler'.
+  Types of parameters 'params' and 'params' are incompatible.
+    Type 'unknown' is not assignable to type 'CreateInitiativeParams'.
+src/services/ai/tools/index.ts(18,58): error TS2345: Argument of type '(params: UpdateAssessmentScoreParams, context?: ToolContext) => Promise<Record<string, unknown>>' is not assignable to parameter of type 'ToolHandler'.
+  Types of parameters 'params' and 'params' are incompatible.
+    Type 'unknown' is not assignable to type 'UpdateAssessmentScoreParams'.
+src/services/ai/tools/searchKnowledgeBase.ts(52,9): error TS2304: Cannot find name 'logger'.
+src/services/aiActionExecutor.ts(243,80): error TS18047: 'err' is possibly 'null'.
+src/services/aiAnalyticsService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiAssessmentFormHelper.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiAssessmentPartnerService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiAssessmentReportGenerator.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiBudgetService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiCharterGeneratorService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiContextValidator.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiCostControlService.ts(215,30): error TS2345: Argument of type '{} | null' is not assignable to parameter of type 'T | PromiseLike<T | null> | null'.
+  Type '{}' is not assignable to type 'T | PromiseLike<T | null> | null'.
+src/services/aiCostControlService.ts(227,30): error TS2345: Argument of type '{}' is not assignable to parameter of type 'T[] | PromiseLike<T[]>'.
+src/services/aiDecisionGovernance.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiExecutiveReporting.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiExplainabilityService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiExternalDataControl.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiFailureHandler.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiIntegrationService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiKnowledgeManager.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiMaturityMonitor.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiModeEnforcer.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiModeResolver.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiProactivityEngine.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiPromptHierarchy.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiRecommendationService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiReplayService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiRiskChangeControl.ts(105,33): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(sql: string, params?: unknown[] | undefined, options?: QueryOptions | undefined): Promise<T[]>', gave the following error.
+    Argument of type 'Database' is not assignable to parameter of type 'string'.
+  Overload 2 of 2, '(db: Database, sql: string, params?: unknown[] | undefined, options?: QueryOptions | undefined): Promise<T[]>', gave the following error.
+    Argument of type 'Database' is not assignable to parameter of type 'import("/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/DbPromise", { with: { "resolution-mode": "import" } }).Database'.
+      Property 'exec' is missing in type 'Database' but required in type 'import("/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/DbPromise", { with: { "resolution-mode": "import" } }).Database'.
+src/services/aiRiskChangeControl.ts(113,33): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(sql: string, params?: unknown[] | undefined, options?: QueryOptions | undefined): Promise<T | null>', gave the following error.
+    Argument of type 'Database' is not assignable to parameter of type 'string'.
+  Overload 2 of 2, '(db: Database, sql: string, params?: unknown[] | undefined, options?: QueryOptions | undefined): Promise<T | null>', gave the following error.
+    Argument of type 'Database' is not assignable to parameter of type 'import("/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/DbPromise", { with: { "resolution-mode": "import" } }).Database'.
+      Property 'exec' is missing in type 'Database' but required in type 'import("/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/DbPromise", { with: { "resolution-mode": "import" } }).Database'.
+src/services/aiRiskChangeControl.ts(121,30): error TS2345: Argument of type 'Database' is not assignable to parameter of type 'import("/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/DbPromise", { with: { "resolution-mode": "import" } }).Database'.
+  Property 'exec' is missing in type 'Database' but required in type 'import("/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/DbPromise", { with: { "resolution-mode": "import" } }).Database'.
+src/services/aiRiskChangeControl.ts(745,9): error TS2322: Type '{ affected_entities: AffectedEntity[]; ownerName: string; id: string; risk_type: string; severity: string; title: string; description: string; trigger_conditions: string; detected_at?: string | ... 1 more ... | undefined; status?: string | ... 1 more ... | undefined; owner_first?: string | ... 1 more ... | undefined...' is not assignable to type '(RiskRow & { affected_entities: AffectedEntity[]; ownerName: string; })[]'.
+  Type '{ affected_entities: AffectedEntity[]; ownerName: string; id: string; risk_type: string; severity: string; title: string; description: string; trigger_conditions: string; detected_at?: string | null; status?: string | null; owner_first?: string | null; owner_last?: string | null; }' is not assignable to type 'RiskRow & { affected_entities: AffectedEntity[]; ownerName: string; }'.
+    Type '{ affected_entities: AffectedEntity[]; ownerName: string; id: string; risk_type: string; severity: string; title: string; description: string; trigger_conditions: string; detected_at?: string | null; status?: string | null; owner_first?: string | null; owner_last?: string | null; }' is not assignable to type 'RiskRow'.
+      Types of property 'affected_entities' are incompatible.
+        Type 'AffectedEntity[]' is not assignable to type 'string'.
+src/services/aiRoleGuard.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiSettingsService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/aiWorkloadIntelligence.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/AlertAggregator.ts(178,26): error TS2339: Property 'send' does not exist on type '{ circuitOpen: (providerId: string, failures?: number | undefined, cooldown?: number | undefined) => Promise<void>; circuitClosed: (providerId: string) => Promise<void>; ... 6 more ...; errorSpike: (errorCount: number, errorRate: number, windowMinutes?: number | undefined) => Promise<...>; }'.
+src/services/alertService.ts(99,17): error TS2304: Cannot find name 'logger'.
+src/services/alertService.ts(112,29): error TS2353: Object literal may only specify known properties, and 'expiresAt' does not exist in type 'NotificationPayload'.
+src/services/alertService.ts(116,21): error TS2304: Cannot find name 'logger'.
+src/services/alertService.ts(119,17): error TS2304: Cannot find name 'logger'.
+src/services/approvalPatternService.ts(12,1): error TS2303: Circular definition of import alias 'service'.
+src/services/auditLogService.ts(96,13): error TS2564: Property '_db' has no initializer and is not definitely assigned in the constructor.
+src/services/auditLogService.ts(99,14): error TS2339: Property 'db' does not exist on type 'AuditLogService'.
+src/services/auditService.ts(146,11): error TS2430: Interface 'ExpressRequestWithUser' incorrectly extends interface 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+  Types of property 'method' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/services/BaseService.ts(60,17): error TS2339: Property '_cacheKey' does not exist on type 'QueryOptions'.
+src/services/BaseService.ts(60,28): error TS2339: Property '_ttl' does not exist on type 'QueryOptions'.
+src/services/BaseService.ts(71,28): error TS2322: Type 'Record<string, unknown>[]' is not assignable to type 'R[]'.
+  Type 'Record<string, unknown>' is not assignable to type 'R'.
+    'R' could be instantiated with an arbitrary type which could be unrelated to 'Record<string, unknown>'.
+src/services/BaseService.ts(71,65): error TS2345: Argument of type 'R' is not assignable to parameter of type 'Record<string, unknown>'.
+src/services/BaseService.ts(82,17): error TS2339: Property '_cacheKey' does not exist on type 'QueryOptions'.
+src/services/BaseService.ts(82,28): error TS2339: Property '_ttl' does not exist on type 'QueryOptions'.
+src/services/BaseService.ts(93,35): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'R'.
+  'R' could be instantiated with an arbitrary type which could be unrelated to 'Record<string, unknown>'.
+src/services/billing/BillingCommandService.ts(247,13): error TS2322: Type 'Date | null' is not assignable to type 'Date | undefined'.
+  Type 'null' is not assignable to type 'Date | undefined'.
+src/services/billing/BillingCommandService.ts(250,13): error TS2322: Type 'Date | null' is not assignable to type 'Date | undefined'.
+  Type 'null' is not assignable to type 'Date | undefined'.

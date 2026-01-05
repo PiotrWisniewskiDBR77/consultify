@@ -90,8 +90,8 @@ describe('Component Test: InitiativeCard', () => {
     it('handles different status values', () => {
         const statuses: Array<Initiative['status']> = [
             InitiativeStatus.PLANNING,
-            InitiativeStatus.IN_EXECUTION,
-            InitiativeStatus.COMPLETED,
+            InitiativeStatus.EXECUTING,
+            InitiativeStatus.DONE,
             InitiativeStatus.BLOCKED
         ];
 

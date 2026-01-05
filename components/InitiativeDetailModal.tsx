@@ -45,8 +45,8 @@ import {
 import { InitiativeFinancialIntegration } from './Economics/InitiativeFinancialIntegration';
 import { InitiativeIntelligenceTab } from './InitiativeIntelligenceTab';
 import { InitiativeTasksTab } from './InitiativeTasksTab';
-import { Button } from './ui/Button';
-import { Select } from './ui/Select';
+import { Button } from './ui/primitives/Button';
+import { Select } from './ui/select';
 
 interface InitiativeDetailModalProps {
     initiative: FullInitiative;
@@ -372,22 +372,20 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 return (
                                     <React.Fragment key={mod.module}>
                                         <div
-                                            className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
-                                                isActive
+                                            className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold transition-all ${isActive
                                                     ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 shadow-sm'
                                                     : isPassed
-                                                      ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
-                                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
-                                            }`}
+                                                        ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'
+                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
+                                                }`}
                                         >
                                             <span
-                                                className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${
-                                                    isActive
+                                                className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${isActive
                                                         ? 'bg-blue-500 text-white'
                                                         : isPassed
-                                                          ? 'bg-green-500 text-white'
-                                                          : 'bg-slate-300 dark:bg-slate-600 text-white'
-                                                }`}
+                                                            ? 'bg-green-500 text-white'
+                                                            : 'bg-slate-300 dark:bg-slate-600 text-white'
+                                                    }`}
                                             >
                                                 {isPassed && !isActive ? '✓' : mod.icon}
                                             </span>
@@ -406,8 +404,8 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                 {initiative.status === 'ARCHIVED'
                                     ? `📦 ${t('status.ARCHIVED')}`
                                     : initiative.status === 'CANCELLED'
-                                      ? `❌ ${t('status.CANCELLED')}`
-                                      : ''}
+                                        ? `❌ ${t('status.CANCELLED')}`
+                                        : ''}
                             </span>
                         </div>
 
@@ -431,15 +429,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                         </span>
                                         <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
                                         <span
-                                            className={`uppercase font-bold ${
-                                                initiative.status === 'BLOCKED'
+                                            className={`uppercase font-bold ${initiative.status === 'BLOCKED'
                                                     ? 'text-red-400'
                                                     : initiative.status === 'DONE'
-                                                      ? 'text-green-400'
-                                                      : initiative.status === 'EXECUTING'
-                                                        ? 'text-blue-400'
-                                                        : 'text-amber-400'
-                                            }`}
+                                                        ? 'text-green-400'
+                                                        : initiative.status === 'EXECUTING'
+                                                            ? 'text-blue-400'
+                                                            : 'text-amber-400'
+                                                }`}
                                         >
                                             {t(`status.${initiative.status || 'DRAFT'}`).replace('_', ' ')}
                                         </span>
@@ -487,11 +484,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                                className={`flex items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${
-                                    activeTab === tab.id
+                                className={`flex items-center gap-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
                                         ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500'
                                         : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-navy-900 dark:hover:text-white'
-                                } `}
+                                    } `}
                             >
                                 <tab.icon size={16} />
                                 {tab.label}
@@ -538,7 +534,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                         </label>
                                         <Select
                                             value={initiative.decisionOwnerId || ''}
-                                            onChange={(val) => setInitiative({ ...initiative, decisionOwnerId: val })}
+                                            onChange={(val: string) => setInitiative({ ...initiative, decisionOwnerId: val })}
                                             placeholder="Select Owner..."
                                             options={users.map((u) => ({
                                                 value: u.id,
@@ -687,7 +683,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             <InputGroup label={t('initiative.strategicIntentLabel')}>
                                                 <Select
                                                     value={initiative.strategicIntent || ''}
-                                                    onChange={(val) =>
+                                                    onChange={(val: string) =>
                                                         setInitiative({
                                                             ...initiative,
                                                             strategicIntent: val as StrategicIntent,
@@ -779,7 +775,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                         {Object.entries(readinessData.details).map(([key, score]) => {
                                                             const maxScore =
                                                                 readinessData.maxScores[
-                                                                    key as keyof typeof readinessData.maxScores
+                                                                key as keyof typeof readinessData.maxScores
                                                                 ] || 15;
                                                             const percentage = (score / maxScore) * 100;
                                                             const isComplete = score >= maxScore;
@@ -850,7 +846,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 <div className="space-y-2">
                                                     {(
                                                         initiative.targetState?.[
-                                                            type.toLowerCase() as keyof typeof initiative.targetState
+                                                        type.toLowerCase() as keyof typeof initiative.targetState
                                                         ] || []
                                                     ).map((item: string, idx: number) => (
                                                         <div key={idx} className="flex gap-1 group">
@@ -1055,7 +1051,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 </label>
                                                 <Select
                                                     value={initiative.strategicRole || ''}
-                                                    onChange={(val) =>
+                                                    onChange={(val: string) =>
                                                         setInitiative({ ...initiative, strategicRole: val as any })
                                                     }
                                                     placeholder="Select Role..."
@@ -1151,7 +1147,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                                 className="w-full accent-blue-500 h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
                                                                 value={
                                                                     initiative.effortProfile?.[
-                                                                        metric.key as keyof typeof initiative.effortProfile
+                                                                    metric.key as keyof typeof initiative.effortProfile
                                                                     ] || 1
                                                                 }
                                                                 onChange={(e) => {
@@ -1535,11 +1531,10 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                         <button
                                             onClick={generateExecutionStrategy}
                                             disabled={isGenerating}
-                                            className={`text-xs flex items-center gap-1 border rounded px-2 py-1 transition-colors ${
-                                                isGenerating
+                                            className={`text-xs flex items-center gap-1 border rounded px-2 py-1 transition-colors ${isGenerating
                                                     ? 'text-slate-500 border-slate-700 bg-transparent cursor-not-allowed'
                                                     : 'text-purple-400 hover:text-purple-300 border-purple-500/30 bg-purple-500/10'
-                                            }`}
+                                                }`}
                                         >
                                             <Sparkles size={12} className={isGenerating ? 'animate-spin' : ''} />
                                             {isGenerating ? t('common.generating') : t('initiative.autoFillExecution')}
@@ -1685,13 +1680,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                                     {t('initiative.decision')}:
                                                                 </span>
                                                                 <select
-                                                                    className={`text-xs border rounded px-2 py-0.5 outline-none ${
-                                                                        m.decision === 'stop'
+                                                                    className={`text-xs border rounded px-2 py-0.5 outline-none ${m.decision === 'stop'
                                                                             ? 'bg-red-500/20 text-red-400 border-red-500/30'
                                                                             : m.decision === 'adjust'
-                                                                              ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                                                                              : 'bg-green-500/20 text-green-400 border-green-500/30'
-                                                                    } `}
+                                                                                ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                                                                : 'bg-green-500/20 text-green-400 border-green-500/30'
+                                                                        } `}
                                                                     value={m.decision || 'continue'}
                                                                     onChange={(e) => {
                                                                         const list = [...(initiative.milestones || [])];
@@ -2079,24 +2073,22 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             <React.Fragment key={step.status}>
                                                 <div className="flex flex-col items-center">
                                                     <div
-                                                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
-                                                            initiative.status === step.status
+                                                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${initiative.status === step.status
                                                                 ? 'bg-blue-500 border-blue-500 text-white'
                                                                 : step.done
-                                                                  ? 'bg-green-500/20 border-green-500 text-green-400'
-                                                                  : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-400'
-                                                        }`}
+                                                                    ? 'bg-green-500/20 border-green-500 text-green-400'
+                                                                    : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-400'
+                                                            }`}
                                                     >
                                                         {step.done && initiative.status !== step.status ? '✓' : idx + 1}
                                                     </div>
                                                     <span
-                                                        className={`text-xs mt-2 font-medium ${
-                                                            initiative.status === step.status
+                                                        className={`text-xs mt-2 font-medium ${initiative.status === step.status
                                                                 ? 'text-blue-400'
                                                                 : step.done
-                                                                  ? 'text-green-400'
-                                                                  : 'text-slate-500'
-                                                        }`}
+                                                                    ? 'text-green-400'
+                                                                    : 'text-slate-500'
+                                                            }`}
                                                     >
                                                         {step.label}
                                                     </span>
@@ -2118,15 +2110,14 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                             </h4>
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className={`w-3 h-3 rounded-full ${
-                                                        initiative.status === 'BLOCKED'
+                                                    className={`w-3 h-3 rounded-full ${initiative.status === 'BLOCKED'
                                                             ? 'bg-red-500'
                                                             : initiative.status === 'DONE'
-                                                              ? 'bg-green-500'
-                                                              : initiative.status === 'EXECUTING'
-                                                                ? 'bg-blue-500 animate-pulse'
-                                                                : 'bg-amber-500'
-                                                    }`}
+                                                                ? 'bg-green-500'
+                                                                : initiative.status === 'EXECUTING'
+                                                                    ? 'bg-blue-500 animate-pulse'
+                                                                    : 'bg-amber-500'
+                                                        }`}
                                                 />
                                                 <span className="text-lg font-bold text-navy-900 dark:text-white">
                                                     {initiative.status.replace('_', ' ')}
@@ -2711,13 +2702,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                 <div key={version.id} className="flex gap-4">
                                                     <div className="flex flex-col items-center">
                                                         <div
-                                                            className={`w-3 h-3 rounded-full ${
-                                                                version.changeType === 'APPROVAL'
+                                                            className={`w-3 h-3 rounded-full ${version.changeType === 'APPROVAL'
                                                                     ? 'bg-teal-500'
                                                                     : version.changeType === 'STATUS_CHANGE'
-                                                                      ? 'bg-blue-500'
-                                                                      : 'bg-slate-400'
-                                                            }`}
+                                                                        ? 'bg-blue-500'
+                                                                        : 'bg-slate-400'
+                                                                }`}
                                                         />
                                                         {idx < (initiative.versions || []).length - 1 && (
                                                             <div className="w-0.5 h-full bg-slate-200 dark:bg-slate-700" />
@@ -2729,13 +2719,12 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                                                                 v{version.version}
                                                             </span>
                                                             <span
-                                                                className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                                                    version.changeType === 'APPROVAL'
+                                                                className={`text-[10px] px-1.5 py-0.5 rounded ${version.changeType === 'APPROVAL'
                                                                         ? 'bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400'
                                                                         : version.changeType === 'STATUS_CHANGE'
-                                                                          ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
-                                                                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-                                                                }`}
+                                                                            ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'
+                                                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                                                                    }`}
                                                             >
                                                                 {version.changeType.replace('_', ' ')}
                                                             </span>

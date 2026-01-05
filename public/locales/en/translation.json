@@ -925,8 +925,8 @@
             "Define clear team boundaries",
             "Link strategic priorities to assessments"
           ]
-  },
-  "settings": {
+        },
+        "settings": {
           "name": "Settings",
           "description": "Configure your personal preferences, notifications, and account settings. Customize the application to match your workflow.",
           "purpose": "Personalize your experience and manage account security.",
@@ -1975,7 +1975,7 @@
       "lastName": "Last Name",
       "company": "Company",
       "role": "Role / Job Title",
-      "email": "Email Address (Managed by Admin)",
+      "emailAddress": "Email Address (Managed by Admin)",
       "preferences": "Preferences",
       "theme": "Interface Theme",
       "light": "Light",

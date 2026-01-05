@@ -396,6 +396,15 @@ export const Api = {
         return json.data;
     },
 
+    getAssessmentReport: async (reportId: string): Promise<any> => {
+        const res = await fetch(`${API_URL}/assessment/reports/${reportId}`, {
+            headers: getHeaders(),
+        });
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json;
+    },
+
     saveSession: async (userId: string, type: SessionMode, data: any, projectId?: string): Promise<void> => {
         if (userId && projectId) {
             // We won't block session saves usually, but if we do:

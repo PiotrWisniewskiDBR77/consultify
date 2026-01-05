@@ -1,0 +1,8 @@
+/**
+ * Studio Hooks Export
+ */
+
+export type { AIMessage } from './useStudioAI';
+export { useStudioAI } from './useStudioAI';
+export type { StudioDocument } from './useStudioDocument';
+export { useStudioDocument } from './useStudioDocument';

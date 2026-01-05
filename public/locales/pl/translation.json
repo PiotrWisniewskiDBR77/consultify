@@ -2706,7 +2706,7 @@
       "lastName": "Nazwisko",
       "company": "Firma",
       "role": "Stanowisko",
-      "email": "Adres Email",
+      "emailAddress": "Adres Email",
       "preferences": "Preferencje",
       "theme": "Motyw Interfejsu",
       "light": "Jasny",

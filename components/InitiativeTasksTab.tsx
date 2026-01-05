@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { FullInitiative, InitiativeStatus, Task, TaskStatus, User } from '../types';
 import { TaskDetailModal } from './TaskDetailModal';
-import { Button } from './ui/Button';
+import { Button } from './ui/primitives/Button';
 
 interface Props {
     initiativeId: string;
@@ -278,11 +278,10 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
                         <div
                             key={task.id}
                             onClick={() => setSelectedTask(task)}
-                            className={`bg-white dark:bg-navy-950 border rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none ${
-                                selectedTaskIds.has(task.id)
+                            className={`bg-white dark:bg-navy-950 border rounded-lg p-3 hover:border-blue-500/30 transition-colors cursor-pointer group flex items-center gap-4 shadow-sm dark:shadow-none ${selectedTaskIds.has(task.id)
                                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
                                     : 'border-slate-200 dark:border-white/5'
-                            }`}
+                                }`}
                         >
                             {/* Checkbox */}
                             <button
