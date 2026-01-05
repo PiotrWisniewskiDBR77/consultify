@@ -171,7 +171,7 @@ jobs:
           MOCK_DB: 'true'
 
       - name: Upload Shared Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: shared-build
           path: packages/shared/dist/**
@@ -308,7 +308,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: consultify-test-results-${{ matrix.test-type }}
           path: |
@@ -357,7 +357,7 @@ jobs:
           NODE_ENV: production
 
       - name: Upload Consultify Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: consultify-build
           path: |
@@ -449,7 +449,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: new-app-test-results-${{ matrix.test-type }}
           path: |
@@ -498,7 +498,7 @@ jobs:
           NODE_ENV: production
 
       - name: Upload New-App Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: new-app-build
           path: |

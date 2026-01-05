@@ -109,7 +109,7 @@ jobs:
           tar -czf deployment-${{ github.event.inputs.app }}-${{ github.event.inputs.environment }}.tar.gz deployment/
 
       - name: Upload Deployment Package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: deployment-${{ github.event.inputs.app }}-${{ github.event.inputs.environment }}
           path: deployment-${{ github.event.inputs.app }}-${{ github.event.inputs.environment }}.tar.gz
