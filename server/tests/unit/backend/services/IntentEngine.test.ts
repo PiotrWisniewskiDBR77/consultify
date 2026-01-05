@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import IntentEngine from '../../../../src/services/intentEngine.js';
+import IntentEngine from '../../../../src/services/ai/intentEngine.js';
 
 describe('IntentEngine', () => {
     let mockDb: IDatabase;

@@ -3,16 +3,24 @@
  * BCG/McKinsey style: Data-dense, multiple views, actionable insights
  */
 
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, BarChart3, Calendar, Clock, RefreshCw, Target, TrendingUp, Users } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
+import {
+    Users,
+    RefreshCw,
+    TrendingUp,
+    Clock,
+    AlertTriangle,
+    BarChart3,
+    Calendar,
+    Target
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
-import { Api } from '../../../services/api';
-import { BottleneckMap } from './BottleneckMap';
-import { CapacityForecast } from './CapacityForecast';
 import { VelocityTrend } from './VelocityTrend';
+import { CapacityForecast } from './CapacityForecast';
+import { BottleneckMap } from './BottleneckMap';
+import { Api } from '../../../services/api';
+import toast from 'react-hot-toast';
 
 interface TeamMetrics {
     teamSize: number;
@@ -41,7 +49,7 @@ const QuickStat: React.FC<{
         success: 'text-emerald-500',
         warning: 'text-amber-500',
         danger: 'text-rose-500',
-        neutral: 'text-navy-900 dark:text-white',
+        neutral: 'text-navy-900 dark:text-white'
     };
 
     return (
@@ -55,17 +63,15 @@ const QuickStat: React.FC<{
                         {label}
                     </p>
                     <div className="flex items-baseline gap-2">
-                        <span className={`text-2xl font-bold tabular-nums ${statusColors[status]}`}>{value}</span>
+                        <span className={`text-2xl font-bold tabular-nums ${statusColors[status]}`}>
+                            {value}
+                        </span>
                         {trend && trendValue && (
-                            <span
-                                className={`text-xs font-medium ${
-                                    trend === 'up'
-                                        ? 'text-emerald-500'
-                                        : trend === 'down'
-                                          ? 'text-rose-500'
-                                          : 'text-slate-400'
-                                }`}
-                            >
+                            <span className={`text-xs font-medium ${
+                                trend === 'up' ? 'text-emerald-500' :
+                                trend === 'down' ? 'text-rose-500' :
+                                'text-slate-400'
+                            }`}>
                                 {trendValue}
                             </span>
                         )}
@@ -76,7 +82,10 @@ const QuickStat: React.FC<{
     );
 };
 
-export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({ onMemberClick, onBottleneckResolve }) => {
+export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({
+    onMemberClick,
+    onBottleneckResolve
+}) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -86,7 +95,7 @@ export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({ onMe
         currentVelocity: 0,
         targetVelocity: 15,
         bottlenecks: 0,
-        onTimeRate: 0,
+        onTimeRate: 0
     });
 
     // Fetch team data
@@ -101,30 +110,30 @@ export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({ onMe
             // Parallel API calls
             const [workloadRes, statsRes] = await Promise.allSettled([
                 Api.get('/my-work/team-workload'),
-                Api.get('/my-work/stats?period=week'),
+                Api.get('/my-work/stats?period=week')
             ]);
 
             // Process workload
             if (workloadRes.status === 'fulfilled' && Array.isArray(workloadRes.value)) {
                 const team = workloadRes.value;
                 const avgCapacity = Math.round(
-                    team.reduce((sum: number, m: any) => sum + (m.capacity || 80), 0) / team.length,
+                    team.reduce((sum: number, m: any) => sum + (m.capacity || 80), 0) / team.length
                 );
-
-                setMetrics((prev) => ({
+                
+                setMetrics(prev => ({
                     ...prev,
                     teamSize: team.length,
-                    avgCapacity,
+                    avgCapacity
                 }));
             }
 
             // Process stats
             if (statsRes.status === 'fulfilled' && statsRes.value) {
                 const stats = statsRes.value;
-                setMetrics((prev) => ({
+                setMetrics(prev => ({
                     ...prev,
                     currentVelocity: stats.velocityHistory?.[stats.velocityHistory.length - 1] || prev.currentVelocity,
-                    onTimeRate: stats.onTimeRate || prev.onTimeRate,
+                    onTimeRate: stats.onTimeRate || prev.onTimeRate
                 }));
             }
         } catch (error) {
@@ -136,7 +145,7 @@ export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({ onMe
                 currentVelocity: 15,
                 targetVelocity: 15,
                 bottlenecks: 3,
-                onTimeRate: 78,
+                onTimeRate: 78
             });
         } finally {
             setLoading(false);
@@ -231,7 +240,11 @@ export const TeamPerformancePanel: React.FC<TeamPerformancePanelProps> = ({ onMe
 
                 {/* Right Column: Bottlenecks */}
                 <div>
-                    <BottleneckMap loading={loading} onResolve={handleResolve} onEscalate={handleEscalate} />
+                    <BottleneckMap
+                        loading={loading}
+                        onResolve={handleResolve}
+                        onEscalate={handleEscalate}
+                    />
                 </div>
             </div>
 

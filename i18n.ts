@@ -20,8 +20,11 @@ i18n.use(Backend)
         },
 
         react: {
-            useSuspense: true,
+            useSuspense: false, // Changed to false to prevent white screen on load errors
         },
+    })
+    .catch((error) => {
+        console.error('[i18n] Failed to initialize:', error);
     });
 
 export default i18n;

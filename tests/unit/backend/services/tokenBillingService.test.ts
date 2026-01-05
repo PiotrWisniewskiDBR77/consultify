@@ -77,9 +77,7 @@ describe('TokenBillingService', () => {
         dailyUsage: 50,
       };
 
-      mockDb.get.mockImplementation((sql, params, callback) => {
-        callback(null, mockUsage);
-      });
+      mockDb.get.mockResolvedValue($2);
 
       const result = await service.getUsage(orgId);
 

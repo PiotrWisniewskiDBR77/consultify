@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import CoThinkerPrompts from '../../../../src/services/coThinkerPrompts.js';
+import CoThinkerPrompts from '../../../../src/services/ai/coThinkerPrompts.js';
 
 describe('CoThinkerPrompts', () => {
     let mockDb: IDatabase;

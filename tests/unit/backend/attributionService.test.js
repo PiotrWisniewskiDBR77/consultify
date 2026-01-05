@@ -176,9 +176,7 @@ describe('AttributionService', () => {
         });
 
         it('should return empty array for org with no attribution', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await AttributionService.getOrganizationAttribution('org-new');
             expect(result).toEqual([]);
@@ -212,9 +210,7 @@ describe('AttributionService', () => {
         });
 
         it('should return null for org with no attribution', async () => {
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await AttributionService.getFirstAttribution('org-new');
             expect(result).toBeNull();
@@ -279,9 +275,7 @@ describe('AttributionService', () => {
         });
 
         it('should export all without filters', async () => {
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await AttributionService.exportAttribution();
             expect(result).toEqual([]);

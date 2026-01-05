@@ -1,13 +1,15 @@
 /**
- * AdminView - Main Admin Panel with 7-Module Tab Structure
+ * AdminView - Main Admin Panel with Two-Column Layout
  *
- * Modules: Overview | Organization | Team | Workspace | AI | Billing | Security
+ * Modules: Overview | Organization | Team | Workspace | AI | Billing | Security | Feedback
+ *
+ * Features:
+ * - Sidebar navigation with grouped sections (HubSpot-style)
+ * - Search functionality with Cmd+K
+ * - Badge support for pending items
+ * - Responsive two-column layout
  *
  * Best practices from: ClickUp, HubSpot, Replit, Notion
- * - Owner/Billing Admin role management
- * - Organization profile & branding
- * - User groups & permissions
- * - Spending controls & alerts
  */
 
 import {
@@ -42,6 +44,10 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+// New Layout Components
+import { AdminLayout, type Breadcrumb } from '../../components/Admin/AdminLayout';
+import { AdminSection } from '../../components/Admin/AdminSidebar';
 
 // New AI Admin Components (6-tab structure)
 // New AI Admin Components (6-tab structure) - Lazy Loaded
@@ -165,58 +171,69 @@ const UsageDashboardView = React.lazy(() =>
 );
 const UserGroupsView = React.lazy(() => import('./UserGroupsView').then((m) => ({ default: m.UserGroupsView })));
 
-// Admin section type - expanded to 8 modules (with dedicated Feedback module)
-type AdminSection = 'overview' | 'organization' | 'team' | 'workspace' | 'ai' | 'billing' | 'security' | 'feedback';
+// Note: AdminSection type is imported from AdminSidebar
 
-// Map AppView to AdminSection
+// Map AppView to new AdminSection values (specific sections)
 const getAdminSection = (view: AppView): AdminSection => {
-    // New module-based navigation (8 modules)
-    if (view === AppView.ADMIN_OVERVIEW) return 'overview';
-    if (view === AppView.ADMIN_ORGANIZATION) return 'organization';
-    if (view === AppView.ADMIN_TEAM) return 'team';
-    if (view === AppView.ADMIN_WORKSPACE) return 'workspace';
-    if (view === AppView.ADMIN_AI) return 'ai';
-    if (view === AppView.ADMIN_BILLING) return 'billing';
-    if (view === AppView.ADMIN_SECURITY) return 'security';
-    if (view === AppView.ADMIN_FEEDBACK) return 'feedback';
-    if (view === AppView.ADMIN_SETTINGS) return 'security'; // Legacy redirect
-
-    // Legacy views mapping
-    if (view === AppView.ADMIN_DASHBOARD || view === AppView.ADMIN_METRICS || view === AppView.ADMIN_ANALYTICS) {
-        return 'overview';
-    }
+    // Overview module
+    if (view === AppView.ADMIN_OVERVIEW || view === AppView.ADMIN_DASHBOARD) return 'dashboard';
+    if (view === AppView.ADMIN_METRICS) return 'metrics';
+    if (view === AppView.ADMIN_ANALYTICS) return 'analytics';
+    
     // Organization module
-    if (view === AppView.ADMIN_ORGANIZATION_SETTINGS) {
-        return 'organization';
-    }
+    if (view === AppView.ADMIN_ORGANIZATION || view === AppView.ADMIN_ORGANIZATION_SETTINGS) return 'profile';
+    
     // Team module
-    if (
-        view === AppView.ADMIN_USERS ||
-        view === AppView.ADMIN_INVITATIONS ||
-        view === AppView.ADMIN_WORK_MODE ||
-        view === AppView.ADMIN_SETTINGS_CONSULTANTS
-    ) {
-        return 'team';
-    }
+    if (view === AppView.ADMIN_TEAM || view === AppView.ADMIN_USERS) return 'users';
+    if (view === AppView.ADMIN_INVITATIONS) return 'invitations';
+    if (view === AppView.ADMIN_SETTINGS_CONSULTANTS) return 'consultants';
+    if (view === AppView.ADMIN_WORK_MODE) return 'users';
+    
     // Workspace module
-    if (
-        view === AppView.ADMIN_PROJECTS ||
-        view === AppView.ADMIN_PROJECT_DETAILS ||
-        view === AppView.ADMIN_KNOWLEDGE ||
-        view === AppView.ADMIN_PLAYBOOK_RUNS ||
-        view === AppView.ADMIN_BULK_OPERATIONS
-    ) {
-        return 'workspace';
-    }
+    if (view === AppView.ADMIN_WORKSPACE || view === AppView.ADMIN_PROJECTS || view === AppView.ADMIN_PROJECT_DETAILS) return 'projects';
+    if (view === AppView.ADMIN_KNOWLEDGE) return 'knowledge';
+    if (view === AppView.ADMIN_PLAYBOOK_RUNS) return 'playbooks';
+    if (view === AppView.ADMIN_BULK_OPERATIONS) return 'bulk-ops';
+    
     // AI module
-    if (
-        view === AppView.ADMIN_LLM ||
-        view === AppView.ADMIN_AI_HEALTH ||
-        view === AppView.HELP_ANALYTICS ||
-        view === AppView.ADMIN_TOKEN_MANAGEMENT
-    ) {
-        return 'ai';
-    }
+    if (view === AppView.ADMIN_AI || view === AppView.ADMIN_LLM) return 'ai-models';
+    if (view === AppView.ADMIN_AI_HEALTH) return 'ai-health';
+    if (view === AppView.ADMIN_TOKEN_MANAGEMENT) return 'ai-access';
+    if (view === AppView.HELP_ANALYTICS) return 'ai-health';
+    
+    // Billing module
+    if (view === AppView.ADMIN_BILLING) return 'usage';
+    
+    // Security module
+    if (view === AppView.ADMIN_SECURITY || view === AppView.ADMIN_SETTINGS) return 'security-settings';
+    
+    // Feedback module
+    if (view === AppView.ADMIN_FEEDBACK) return 'feedback';
+    
+    return 'dashboard';
+};
+
+// Get the module category for a section (for breadcrumbs)
+const getSectionModule = (section: AdminSection): string => {
+    const overviewSections = ['dashboard', 'metrics', 'analytics'];
+    const orgSections = ['profile', 'branding', 'ownership', 'regional', 'fiscal-year', 'data-hosting', 'approved-domains'];
+    const teamSections = ['users', 'groups', 'invitations', 'roles', 'consultants', 'org-chart'];
+    const workspaceSections = ['projects', 'knowledge', 'playbooks', 'bulk-ops', 'custom-statuses'];
+    const aiSections = ['ai-models', 'ai-health', 'ai-policy', 'ai-access', 'ai-features', 'ai-audit'];
+    const billingSections = ['usage', 'plan', 'payment', 'invoices', 'alerts', 'billing-settings', 'cost-allocation', 'seats'];
+    const securitySections = ['security-settings', 'authentication', 'api-keys', 'audit-log', 'data-management'];
+    const complianceSections = ['gdpr', 'cookie-settings', 'data-requests'];
+    
+    if (overviewSections.includes(section)) return 'overview';
+    if (orgSections.includes(section)) return 'organization';
+    if (teamSections.includes(section)) return 'team';
+    if (workspaceSections.includes(section)) return 'workspace';
+    if (aiSections.includes(section)) return 'ai';
+    if (billingSections.includes(section)) return 'billing';
+    if (securitySections.includes(section)) return 'security';
+    if (complianceSections.includes(section)) return 'compliance';
+    if (section === 'feedback') return 'feedback';
+    
     return 'overview';
 };
 
@@ -273,42 +290,52 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
         initData();
     }, []);
 
-    // Handle section change - using new module AppView values (8 modules)
-    const handleSectionChange = (section: string) => {
-        switch (section) {
-            case 'overview':
-                setCurrentView(AppView.ADMIN_OVERVIEW);
-                break;
-            case 'organization':
-                setCurrentView(AppView.ADMIN_ORGANIZATION);
-                break;
-            case 'team':
-                setCurrentView(AppView.ADMIN_TEAM);
-                break;
-            case 'workspace':
-                setCurrentView(AppView.ADMIN_WORKSPACE);
-                break;
-            case 'ai':
-                setCurrentView(AppView.ADMIN_AI);
-                break;
-            case 'billing':
-                setCurrentView(AppView.ADMIN_BILLING);
-                break;
-            case 'security':
-                setCurrentView(AppView.ADMIN_SECURITY);
-                break;
-            case 'feedback':
-                setCurrentView(AppView.ADMIN_FEEDBACK);
-                break;
-            case 'settings': // Legacy redirect
-                setCurrentView(AppView.ADMIN_SECURITY);
-                break;
-        }
+    // Handle section change - maps sidebar sections to AppViews
+    const handleSectionChange = (section: AdminSection) => {
+        // Overview
+        if (section === 'dashboard') setCurrentView(AppView.ADMIN_OVERVIEW);
+        else if (section === 'metrics') setCurrentView(AppView.ADMIN_METRICS);
+        else if (section === 'analytics') setCurrentView(AppView.ADMIN_ANALYTICS);
+        // Organization
+        else if (section === 'profile' || section === 'branding' || section === 'ownership' || 
+                 section === 'regional' || section === 'fiscal-year' || section === 'data-hosting' || 
+                 section === 'approved-domains') setCurrentView(AppView.ADMIN_ORGANIZATION);
+        // Team
+        else if (section === 'users' || section === 'groups' || section === 'org-chart') setCurrentView(AppView.ADMIN_TEAM);
+        else if (section === 'invitations') setCurrentView(AppView.ADMIN_INVITATIONS);
+        else if (section === 'roles') setCurrentView(AppView.ADMIN_TEAM);
+        else if (section === 'consultants') setCurrentView(AppView.ADMIN_SETTINGS_CONSULTANTS);
+        // Workspace
+        else if (section === 'projects') setCurrentView(AppView.ADMIN_PROJECTS);
+        else if (section === 'knowledge') setCurrentView(AppView.ADMIN_KNOWLEDGE);
+        else if (section === 'playbooks') setCurrentView(AppView.ADMIN_PLAYBOOK_RUNS);
+        else if (section === 'bulk-ops') setCurrentView(AppView.ADMIN_BULK_OPERATIONS);
+        else if (section === 'custom-statuses') setCurrentView(AppView.ADMIN_WORKSPACE);
+        // AI
+        else if (section === 'ai-models' || section === 'ai-policy' || section === 'ai-features' || 
+                 section === 'ai-audit') setCurrentView(AppView.ADMIN_AI);
+        else if (section === 'ai-health') setCurrentView(AppView.ADMIN_AI_HEALTH);
+        else if (section === 'ai-access') setCurrentView(AppView.ADMIN_TOKEN_MANAGEMENT);
+        // Billing
+        else if (section === 'usage' || section === 'plan' || section === 'payment' || 
+                 section === 'invoices' || section === 'alerts' || section === 'billing-settings' || 
+                 section === 'cost-allocation' || section === 'seats') setCurrentView(AppView.ADMIN_BILLING);
+        // Security
+        else if (section === 'security-settings' || section === 'authentication' || 
+                 section === 'api-keys' || section === 'audit-log' || section === 'data-management') setCurrentView(AppView.ADMIN_SECURITY);
+        // Compliance
+        else if (section === 'gdpr' || section === 'cookie-settings' || section === 'data-requests') setCurrentView(AppView.ADMIN_SECURITY);
+        // Feedback
+        else if (section === 'feedback') setCurrentView(AppView.ADMIN_FEEDBACK);
+        // Default
+        else setCurrentView(AppView.ADMIN_OVERVIEW);
     };
 
-    // Get section title and subtitle
+    // Get section title and subtitle based on module
     const getSectionInfo = () => {
-        switch (activeSection) {
+        const module = getSectionModule(activeSection);
+        
+        switch (module) {
             case 'overview':
                 return {
                     title: t('admin.overview.title', 'Overview'),
@@ -340,6 +367,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                     subtitle: t('admin.billing.subtitle', 'Plans, payments, invoices, and spending controls'),
                 };
             case 'security':
+            case 'compliance':
                 return {
                     title: t('admin.security.title', 'Security & Compliance'),
                     subtitle: t(
@@ -370,10 +398,12 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
             </div>
         );
 
+        const module = getSectionModule(activeSection);
+
         return (
             <React.Suspense fallback={<FallbackLoader />}>
                 {(() => {
-                    switch (activeSection) {
+                    switch (module) {
                         case 'overview':
                             return (
                                 <Tabs defaultValue="dashboard" className="w-full">
@@ -701,6 +731,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                             );
 
                         case 'security':
+                        case 'compliance':
                             return (
                                 <Tabs defaultValue="security-settings" className="w-full">
                                     <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
@@ -769,19 +800,35 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
         );
     };
 
-    return (
-        <div className="h-full overflow-auto">
-            <div className="p-6">
-                {/* Header - Clean minimal */}
-                <div className="mb-6 pb-4 border-b border-slate-200 dark:border-[var(--admin-border)]">
-                    <h1 className="text-lg font-medium text-navy-900 dark:text-white">{sectionInfo.title}</h1>
-                    <p className="text-sm text-slate-600 dark:text-slate-500 mt-0.5">{sectionInfo.subtitle}</p>
-                </div>
+    // Build breadcrumbs based on active section
+    const breadcrumbs: Breadcrumb[] = useMemo(() => {
+        const crumbs: Breadcrumb[] = [
+            { label: t('admin.breadcrumb.admin', 'Admin'), section: 'overview' },
+        ];
+        
+        if (activeSection !== 'overview') {
+            crumbs.push({
+                label: sectionInfo.title,
+                section: activeSection,
+            });
+        }
+        
+        return crumbs;
+    }, [activeSection, sectionInfo.title, t]);
 
-                {/* Content with tabs */}
+    return (
+        <AdminLayout
+            activeSection={activeSection}
+            onSectionChange={handleSectionChange}
+            title={sectionInfo.title}
+            subtitle={sectionInfo.subtitle}
+            breadcrumbs={breadcrumbs}
+            pendingInvites={0} // TODO: Get from API
+            pendingDataRequests={0} // TODO: Get from API
+            onBack={() => onNavigate(AppView.DASHBOARD)}
+        >
                 {renderContent()}
-            </div>
-        </div>
+        </AdminLayout>
     );
 };
 

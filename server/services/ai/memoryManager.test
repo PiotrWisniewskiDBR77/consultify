@@ -1,0 +1,565 @@
+/**
+ * Memory Manager Tests
+ * Tests for unified 5-layer memory system
+ */
+
+const { describe, it, expect, beforeEach, vi, afterEach } = require('vitest');
+const { MemoryManager, SessionMemoryStore, LAYER_CONFIG } = require('./memoryManager');
+
+// Mock dependencies
+vi.mock('./projectMemoryStore', () => ({
+    projectMemoryStore: {
+        getProjectContext: vi.fn().mockResolvedValue({ context: 'Project context data' }),
+        addMemory: vi.fn().mockResolvedValue({}),
+        recordDecision: vi.fn().mockResolvedValue({}),
+        recordLearning: vi.fn().mockResolvedValue({}),
+        getApplicableLearnings: vi.fn().mockResolvedValue([]),
+        getProjectMemory: vi.fn().mockResolvedValue([])
+    }
+}));
+
+vi.mock('./organizationMemoryStore', () => ({
+    organizationMemoryStore: {
+        searchPatterns: vi.fn().mockResolvedValue([]),
+        getRecentPatterns: vi.fn().mockResolvedValue([]),
+        extractPatternsFromProject: vi.fn().mockResolvedValue({})
+    }
+}));
+
+vi.mock('./embeddingService', () => ({
+    embeddingService: {
+        search: vi.fn().mockResolvedValue([])
+    }
+}));
+
+vi.mock('./logger', () => ({
+    aiLogger: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn()
+    }
+}));
+
+describe('MemoryManager', () => {
+    let memoryManager;
+
+    beforeEach(() => {
+        memoryManager = new MemoryManager();
+        vi.clearAllMocks();
+    });
+
+    describe('retrieve()', () => {
+        it('should retrieve from all default layers', async () => {
+            const result = await memoryManager.retrieve({
+                userId: 'user-1',
+                organizationId: 'org-1',
+                projectId: 'proj-1',
+                queryText: 'What is the project status?'
+            });
+
+            expect(result).toBeDefined();
+            expect(result.chunks).toBeInstanceOf(Array);
+            expect(result.sources).toBeDefined();
+            expect(result.latency).toBeGreaterThanOrEqual(0);
+        });
+
+        it('should handle missing optional parameters', async () => {
+            const result = await memoryManager.retrieve({
+                queryText: 'General query'
+            });
+
+            expect(result).toBeDefined();
+            expect(result.chunks).toBeInstanceOf(Array);
+        });
+
+        it('should include external layer when requested', async () => {
+            const result = await memoryManager.retrieve({
+                userId: 'user-1',
+                queryText: 'Search query',
+                includeExternal: true
+            });
+
+            expect(result.sources).toHaveProperty('external');
+        });
+
+        it('should respect maxTokens limit', async () => {
+            const result = await memoryManager.retrieve({
+                userId: 'user-1',
+                queryText: 'Test query',
+                maxTokens: 100
+            });
+
+            expect(result.totalTokens).toBeLessThanOrEqual(150); // Some buffer allowed
+        });
+
+        it('should return query in result', async () => {
+            const query = 'What is the status?';
+            const result = await memoryManager.retrieve({
+                userId: 'user-1',
+                queryText: query
+            });
+
+            expect(result.query).toBe(query);
+        });
+    });
+
+    describe('recordIfSignificant()', () => {
+        it('should not record when significance is below threshold', async () => {
+            const result = await memoryManager.recordIfSignificant({
+                userId: 'user-1',
+                organizationId: 'org-1',
+                type: 'note',
+                content: 'Low significance note',
+                significance: 0.3
+            });
+
+            expect(result.recorded).toBe(false);
+            expect(result.reason).toContain('threshold');
+        });
+
+        it('should record when significance meets threshold', async () => {
+            const result = await memoryManager.recordIfSignificant({
+                userId: 'user-1',
+                organizationId: 'org-1',
+                projectId: 'proj-1',
+                type: 'decision',
+                content: 'Important decision',
+                significance: 0.8
+            });
+
+            expect(result.recorded).toBe(true);
+        });
+
+        it('should add to project memory for high significance', async () => {
+            const { projectMemoryStore } = require('./projectMemoryStore');
+
+            await memoryManager.recordIfSignificant({
+                userId: 'user-1',
+                projectId: 'proj-1',
+                type: 'decision',
+                content: 'Strategic decision',
+                significance: 0.75
+            });
+
+            expect(projectMemoryStore.addMemory).toHaveBeenCalledWith(
+                'proj-1',
+                expect.objectContaining({
+                    type: 'DECISION',
+                    content: 'Strategic decision'
+                })
+            );
+        });
+
+        it('should always update session', async () => {
+            const sessionAddSpy = vi.spyOn(memoryManager.sessionStore, 'addMessage');
+
+            await memoryManager.recordIfSignificant({
+                userId: 'user-1',
+                type: 'note',
+                content: 'Test note',
+                significance: 0.7
+            });
+
+            expect(sessionAddSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('recordDecision()', () => {
+        it('should delegate to project store', async () => {
+            const { projectMemoryStore } = require('./projectMemoryStore');
+            const decision = { title: 'Test Decision', description: 'Description' };
+
+            await memoryManager.recordDecision('proj-1', decision);
+
+            expect(projectMemoryStore.recordDecision).toHaveBeenCalledWith('proj-1', decision);
+        });
+    });
+
+    describe('recordLearning()', () => {
+        it('should delegate to project store', async () => {
+            const { projectMemoryStore } = require('./projectMemoryStore');
+            const learning = { topic: 'Test Learning', insight: 'Insight' };
+
+            await memoryManager.recordLearning('proj-1', learning);
+
+            expect(projectMemoryStore.recordLearning).toHaveBeenCalledWith('proj-1', learning);
+        });
+    });
+
+    describe('serializeForPrompt()', () => {
+        it('should return empty string for empty result', () => {
+            const result = memoryManager.serializeForPrompt({ chunks: [] });
+
+            expect(result).toBe('');
+        });
+
+        it('should return empty string for null result', () => {
+            const result = memoryManager.serializeForPrompt(null);
+
+            expect(result).toBe('');
+        });
+
+        it('should format project context', () => {
+            const result = memoryManager.serializeForPrompt({
+                chunks: [
+                    { layer: 'project', content: 'Project info' }
+                ]
+            });
+
+            expect(result).toContain('## Project Context');
+            expect(result).toContain('Project info');
+        });
+
+        it('should format organization patterns', () => {
+            const result = memoryManager.serializeForPrompt({
+                chunks: [
+                    { layer: 'organization', content: 'Org pattern' }
+                ]
+            });
+
+            expect(result).toContain('## Organization Patterns');
+            expect(result).toContain('Org pattern');
+        });
+
+        it('should format knowledge base', () => {
+            const result = memoryManager.serializeForPrompt({
+                chunks: [
+                    { layer: 'knowledge', content: 'Knowledge item' }
+                ]
+            });
+
+            expect(result).toContain('## Knowledge Base');
+        });
+
+        it('should format external research', () => {
+            const result = memoryManager.serializeForPrompt({
+                chunks: [
+                    { layer: 'external', content: 'External data' }
+                ]
+            });
+
+            expect(result).toContain('## External Research');
+        });
+
+        it('should combine multiple layers', () => {
+            const result = memoryManager.serializeForPrompt({
+                chunks: [
+                    { layer: 'project', content: 'Project info' },
+                    { layer: 'organization', content: 'Org pattern' },
+                    { layer: 'knowledge', content: 'Knowledge item' }
+                ]
+            });
+
+            expect(result).toContain('## Project Context');
+            expect(result).toContain('## Organization Patterns');
+            expect(result).toContain('## Knowledge Base');
+        });
+    });
+
+    describe('getStats()', () => {
+        it('should return stats structure', async () => {
+            const stats = await memoryManager.getStats('org-1', 'proj-1');
+
+            expect(stats).toHaveProperty('session');
+            expect(stats).toHaveProperty('project');
+            expect(stats).toHaveProperty('organization');
+            expect(stats).toHaveProperty('knowledge');
+            expect(stats).toHaveProperty('external');
+        });
+
+        it('should mark session as always available', async () => {
+            const stats = await memoryManager.getStats();
+
+            expect(stats.session.available).toBe(true);
+        });
+
+        it('should mark project as available when projectId provided', async () => {
+            const stats = await memoryManager.getStats(null, 'proj-1');
+
+            expect(stats.project.available).toBe(true);
+        });
+
+        it('should mark project as unavailable without projectId', async () => {
+            const stats = await memoryManager.getStats(null, null);
+
+            expect(stats.project.available).toBe(false);
+        });
+    });
+
+    describe('_estimateTokens()', () => {
+        it('should estimate tokens based on character count', () => {
+            const chunks = [
+                { content: 'This is a test' }, // 14 chars = ~4 tokens
+                { content: 'Another chunk' }   // 13 chars = ~4 tokens
+            ];
+
+            const tokens = memoryManager._estimateTokens(chunks);
+
+            expect(tokens).toBeGreaterThan(0);
+            expect(tokens).toBeLessThan(20);
+        });
+
+        it('should handle empty chunks', () => {
+            const tokens = memoryManager._estimateTokens([]);
+
+            expect(tokens).toBe(0);
+        });
+
+        it('should handle chunks with no content', () => {
+            const tokens = memoryManager._estimateTokens([{ metadata: 'only' }]);
+
+            expect(tokens).toBe(0);
+        });
+    });
+
+    describe('_mergeAndRank()', () => {
+        it('should sort by weighted relevance', () => {
+            const results = [
+                {
+                    layer: 'session',
+                    chunks: [{ content: 'Session', relevance: 0.8 }]
+                },
+                {
+                    layer: 'knowledge',
+                    chunks: [{ content: 'Knowledge', relevance: 0.9 }]
+                }
+            ];
+
+            const merged = memoryManager._mergeAndRank(results, 10000);
+
+            // Session has higher weight (1.0) vs knowledge (0.7)
+            // Session: 0.8 * 1.0 = 0.8
+            // Knowledge: 0.9 * 0.7 = 0.63
+            expect(merged[0].content).toBe('Session');
+        });
+
+        it('should respect token limit', () => {
+            const results = [
+                {
+                    layer: 'session',
+                    chunks: [
+                        { content: 'A'.repeat(1000), relevance: 0.9 },
+                        { content: 'B'.repeat(1000), relevance: 0.8 }
+                    ]
+                }
+            ];
+
+            const merged = memoryManager._mergeAndRank(results, 100); // Very low limit
+
+            expect(merged.length).toBeLessThan(2);
+        });
+    });
+
+    describe('_summarizeSources()', () => {
+        it('should count chunks per layer', () => {
+            const results = [
+                { layer: 'session', chunks: [1, 2, 3] },
+                { layer: 'project', chunks: [1] }
+            ];
+
+            const summary = memoryManager._summarizeSources(results);
+
+            expect(summary.session.count).toBe(3);
+            expect(summary.project.count).toBe(1);
+        });
+
+        it('should include error if present', () => {
+            const results = [
+                { layer: 'external', chunks: [], error: 'Connection failed' }
+            ];
+
+            const summary = memoryManager._summarizeSources(results);
+
+            expect(summary.external.error).toBe('Connection failed');
+        });
+    });
+});
+
+describe('SessionMemoryStore', () => {
+    let sessionStore;
+
+    beforeEach(() => {
+        sessionStore = new SessionMemoryStore();
+    });
+
+    describe('addMessage()', () => {
+        it('should add message to session', async () => {
+            await sessionStore.addMessage('user-1', {
+                role: 'user',
+                content: 'Hello',
+                timestamp: new Date().toISOString()
+            });
+
+            const context = await sessionStore.getRecentContext('user-1');
+
+            expect(context.length).toBe(1);
+            expect(context[0].content).toContain('Hello');
+        });
+
+        it('should create new session if none exists', async () => {
+            await sessionStore.addMessage('new-user', {
+                role: 'user',
+                content: 'First message'
+            });
+
+            const context = await sessionStore.getRecentContext('new-user');
+
+            expect(context.length).toBe(1);
+        });
+
+        it('should limit messages to 50', async () => {
+            for (let i = 0; i < 60; i++) {
+                await sessionStore.addMessage('user-1', {
+                    role: 'user',
+                    content: `Message ${i}`
+                });
+            }
+
+            const session = sessionStore.sessions.get('user-1');
+            expect(session.messages.length).toBeLessThanOrEqual(50);
+        });
+    });
+
+    describe('getRecentContext()', () => {
+        it('should return empty array for unknown user', async () => {
+            const context = await sessionStore.getRecentContext('unknown');
+
+            expect(context).toEqual([]);
+        });
+
+        it('should respect limit parameter', async () => {
+            for (let i = 0; i < 10; i++) {
+                await sessionStore.addMessage('user-1', {
+                    role: 'user',
+                    content: `Message ${i}`
+                });
+            }
+
+            const context = await sessionStore.getRecentContext('user-1', 5);
+
+            expect(context.length).toBe(5);
+        });
+
+        it('should return chunks with proper format', async () => {
+            await sessionStore.addMessage('user-1', {
+                role: 'assistant',
+                content: 'Response',
+                timestamp: '2024-01-01T00:00:00Z'
+            });
+
+            const context = await sessionStore.getRecentContext('user-1');
+
+            expect(context[0]).toHaveProperty('content');
+            expect(context[0]).toHaveProperty('source', 'session');
+            expect(context[0]).toHaveProperty('relevance');
+            expect(context[0].metadata).toHaveProperty('timestamp');
+        });
+    });
+
+    describe('clearSession()', () => {
+        it('should remove session', async () => {
+            await sessionStore.addMessage('user-1', { role: 'user', content: 'Test' });
+
+            await sessionStore.clearSession('user-1');
+
+            const context = await sessionStore.getRecentContext('user-1');
+            expect(context).toEqual([]);
+        });
+
+        it('should handle non-existent session', async () => {
+            await expect(sessionStore.clearSession('non-existent')).resolves.not.toThrow();
+        });
+    });
+
+    describe('cleanup()', () => {
+        it('should remove expired sessions', async () => {
+            await sessionStore.addMessage('user-1', { role: 'user', content: 'Test' });
+
+            // Manually expire the session
+            const session = sessionStore.sessions.get('user-1');
+            session.expiresAt = Date.now() - 1000;
+
+            sessionStore.cleanup();
+
+            expect(sessionStore.sessions.has('user-1')).toBe(false);
+        });
+
+        it('should keep non-expired sessions', async () => {
+            await sessionStore.addMessage('user-1', { role: 'user', content: 'Test' });
+
+            sessionStore.cleanup();
+
+            expect(sessionStore.sessions.has('user-1')).toBe(true);
+        });
+    });
+
+    describe('TTL behavior', () => {
+        it('should return empty for expired session', async () => {
+            await sessionStore.addMessage('user-1', { role: 'user', content: 'Test' });
+
+            // Manually expire
+            const session = sessionStore.sessions.get('user-1');
+            session.expiresAt = Date.now() - 1000;
+
+            const context = await sessionStore.getRecentContext('user-1');
+
+            expect(context).toEqual([]);
+        });
+
+        it('should extend TTL on new message', async () => {
+            await sessionStore.addMessage('user-1', { role: 'user', content: 'Test 1' });
+            const firstExpiry = sessionStore.sessions.get('user-1').expiresAt;
+
+            // Small delay
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            await sessionStore.addMessage('user-1', { role: 'user', content: 'Test 2' });
+            const secondExpiry = sessionStore.sessions.get('user-1').expiresAt;
+
+            expect(secondExpiry).toBeGreaterThan(firstExpiry);
+        });
+    });
+});
+
+describe('LAYER_CONFIG', () => {
+    it('should export layer configuration', () => {
+        expect(LAYER_CONFIG).toBeDefined();
+        expect(LAYER_CONFIG.session).toBeDefined();
+        expect(LAYER_CONFIG.project).toBeDefined();
+        expect(LAYER_CONFIG.organization).toBeDefined();
+        expect(LAYER_CONFIG.knowledge).toBeDefined();
+        expect(LAYER_CONFIG.external).toBeDefined();
+    });
+
+    it('should have correct weights', () => {
+        expect(LAYER_CONFIG.session.weight).toBe(1.0);
+        expect(LAYER_CONFIG.project.weight).toBe(0.9);
+        expect(LAYER_CONFIG.organization.weight).toBe(0.8);
+        expect(LAYER_CONFIG.knowledge.weight).toBe(0.7);
+        expect(LAYER_CONFIG.external.weight).toBe(0.6);
+    });
+
+    it('should have external layer disabled by default', () => {
+        expect(LAYER_CONFIG.external.enabled).toBe(false);
+    });
+
+    it('should have session TTL configured', () => {
+        expect(LAYER_CONFIG.session.ttlMinutes).toBe(120);
+    });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

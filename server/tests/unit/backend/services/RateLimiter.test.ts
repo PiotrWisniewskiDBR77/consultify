@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import RateLimiter from '../../../../src/services/rateLimiter.js';
+import RateLimiter from '../../../../src/services/ai/rateLimiter.js';
 
 describe('RateLimiter', () => {
     let mockDb: IDatabase;

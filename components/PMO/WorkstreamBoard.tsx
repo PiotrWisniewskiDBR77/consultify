@@ -613,6 +613,3 @@ const WorkstreamModal: React.FC<WorkstreamModalProps> = ({ projectId, workstream
 };
 
 export default WorkstreamBoard;
-
-
-

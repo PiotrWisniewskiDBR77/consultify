@@ -62,7 +62,7 @@ function dbAll(sql, params = []) {
 
 function dbRun(sql, params = []) {
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
+        db.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
@@ -287,7 +287,7 @@ const ReportApprovalService = {
         }
 
         // Log audit
-        const ReportAuditService = require('./reportAuditService');
+        const { default: ReportAuditService } = await import('./reportAuditService.js');
         await ReportAuditService.log(reportId, 'APPROVED', userId, {
             level: pendingApproval.approval_level,
             role: pendingApproval.required_role,
@@ -378,7 +378,7 @@ const ReportApprovalService = {
         }
 
         // Log audit
-        const ReportAuditService = require('./reportAuditService');
+        const { default: ReportAuditService } = await import('./reportAuditService.js');
         await ReportAuditService.log(reportId, 'REJECTED', userId, {
             level: pendingApproval.approval_level,
             role: pendingApproval.required_role,
@@ -421,7 +421,7 @@ const ReportApprovalService = {
         `, [reportId]);
 
         const currentPending = approvals.find(a => a.status === APPROVAL_STATUSES.PENDING);
-        const currentLevel = currentPending?.approval_level || 
+        const currentLevel = currentPending?.approval_level ||
             (approvals.length > 0 ? Math.max(...approvals.map(a => a.approval_level)) + 1 : 0);
 
         let canApprove = false;
@@ -588,7 +588,7 @@ const ReportApprovalService = {
         }
 
         // Log audit
-        const ReportAuditService = require('./reportAuditService');
+        const { default: ReportAuditService } = await import('./reportAuditService.js');
         await ReportAuditService.log(reportId, 'APPROVED', userId, {
             level,
             action: 'SKIPPED',
@@ -733,6 +733,8 @@ const ReportApprovalService = {
 };
 
 export default ReportApprovalService;
+
+
 
 
 

@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import EnhancedContextBuilder from '../../../../src/services/enhancedContextBuilder.js';
+import EnhancedContextBuilder from '../../../../src/services/ai/enhancedContextBuilder.js';
 
 describe('EnhancedContextBuilder', () => {
     let mockDb: IDatabase;

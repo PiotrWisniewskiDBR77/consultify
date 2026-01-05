@@ -151,7 +151,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
     // Get current section metadata
     const currentMeta = useMemo(() => {
         const meta = sectionMeta[activeSection];
-        return {
+                return {
             title: t(`settings.sections.${activeSection}.title`, meta.title),
             subtitle: t(`settings.sections.${activeSection}.subtitle`, meta.subtitle),
         };
@@ -290,12 +290,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
                 <SettingsSidebar
                     activeSection={activeSection}
                     onSectionChange={handleSectionChange}
+                    onPartnerPortal={() => setCurrentView(AppView.PARTNER_LANDING)}
                     className="flex-1"
                 />
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-navy-950/20">
                 {/* Header */}
                 <header className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
                     <div className="flex items-center gap-4">
@@ -320,7 +321,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdat
 
                 {/* Content */}
                 <ScrollArea className="flex-1">
-                    <div className="p-6 max-w-4xl">{renderContent()}</div>
+                    <div className="p-6 max-w-5xl mx-auto w-full">
+                        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm p-6">
+                            {renderContent()}
+                        </div>
+                    </div>
                 </ScrollArea>
             </div>
         </div>

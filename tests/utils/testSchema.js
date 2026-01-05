@@ -549,6 +549,7 @@ export const TEST_SCHEMA = [
         id TEXT PRIMARY KEY,
         name TEXT,
         plan TEXT DEFAULT 'free',
+        subscription_plan TEXT,
         status TEXT DEFAULT 'active',
         mfa_required INTEGER DEFAULT 0,
         mfa_grace_period_days INTEGER,
@@ -1063,6 +1064,30 @@ export const TEST_SCHEMA = [
         initiatives_count INTEGER DEFAULT 0,
         storage_used_mb INTEGER DEFAULT 0,
         UNIQUE(organization_id, counter_date)
+    )`,
+    // Admin Report Tables
+    `CREATE TABLE IF NOT EXISTS admin_saved_reports (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        report_type TEXT NOT NULL,
+        filters_json TEXT DEFAULT '{}',
+        columns_json TEXT DEFAULT '[]',
+        schedule_json TEXT,
+        created_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS admin_report_executions (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        executed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        completed_at DATETIME,
+        result_json TEXT,
+        error_message TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(report_id) REFERENCES admin_saved_reports(id) ON DELETE CASCADE
     )`
 ];
 

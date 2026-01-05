@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 import { User } from '../../types';
-import { Button } from '../ui/button';
+import { Button } from '../ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
@@ -71,7 +71,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
                         {
                             id: '1',
                             name: 'Professional',
-                            content: `Best regards,\n${currentUser.firstName || currentUser.displayName || 'User'} ${currentUser.lastName || ''}\n${currentUser.title || ''}\n${currentUser.email}`,
+                            content: `Best regards,\n${currentUser.firstName || currentUser.displayName || 'User'} ${currentUser.lastName || ''}\n${currentUser.jobTitle || ''}\n${currentUser.email}`,
                             isDefault: true,
                             createdAt: new Date().toISOString(),
                         },
@@ -84,7 +84,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
                     {
                         id: '1',
                         name: 'Professional',
-                        content: `Best regards,\n${currentUser.firstName || currentUser.displayName || 'User'} ${currentUser.lastName || ''}\n${currentUser.title || ''}\n${currentUser.email}`,
+                        content: `Best regards,\n${currentUser.firstName || currentUser.displayName || 'User'} ${currentUser.lastName || ''}\n${currentUser.jobTitle || ''}\n${currentUser.email}`,
                         isDefault: true,
                         createdAt: new Date().toISOString(),
                     },

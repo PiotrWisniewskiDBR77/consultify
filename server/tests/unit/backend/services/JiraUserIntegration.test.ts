@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import JiraUserIntegration from '../../../../src/services/jiraUserIntegration.js';
+import JiraUserIntegration from '../../../../src/services/integrations/jiraUserIntegration.js';
 
 describe('JiraUserIntegration', () => {
     let mockDb: IDatabase;

@@ -7,7 +7,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import UserNotificationPreferencesService from '../../../../services/userNotificationPreferencesService.js';
+import UserNotificationPreferencesService from '../../../../src/services/userNotificationPreferencesService.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
 describe('UserNotificationPreferencesService', () => {

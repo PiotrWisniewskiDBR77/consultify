@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import ProactiveSuggestionsService from '../../../../src/services/proactiveSuggestionsService.js';
+import ProactiveSuggestionsService from '../../../../src/services/ai/proactiveSuggestionsService.js';
 
 describe('ProactiveSuggestionsService', () => {
     let mockDb: IDatabase;

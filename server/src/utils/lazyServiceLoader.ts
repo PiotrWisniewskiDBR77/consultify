@@ -1,17 +1,12 @@
-/**
- * Lazy Service Loader Utility
- * Enterprise SaaS Architecture - TypeScript Backend
- *
- * Utility for lazy-loading ES module services to replace wrapper services
- */
+import { fileURLToPath } from 'url';
+import path from 'path';
 
-/**
- * Create a lazy-loaded service wrapper
- * @param servicePath - Path to the service module (e.g., '../../services/serviceName.js')
- * @returns Promise that resolves to the service module
- */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export async function createLazyService<T = unknown>(servicePath: string): Promise<T> {
-    const module = await import(servicePath);
+    const absolutePath = path.resolve(__dirname, servicePath);
+    const module = await import(absolutePath);
     return (module.default || module) as T;
 }
 
@@ -36,6 +31,8 @@ export function createCachedLazyService<T = unknown>(servicePath: string): () =>
         return servicePromise;
     };
 }
+
+
 
 
 

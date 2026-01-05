@@ -72,6 +72,70 @@ export function createMockDatabaseWithResults(results: Record<string, QueryResul
 }
 
 /**
+ * Mock database context options for SQLite callback simulation
+ */
+export interface MockDatabaseContextOptions {
+    lastID?: number;
+    changes?: number;
+    getResult?: unknown;
+    allResult?: unknown[];
+}
+
+/**
+ * Create a mock database with proper SQLite callback context simulation
+ * This is critical for tests that rely on `this.lastID` and `this.changes` in callbacks
+ */
+export function createMockDatabaseWithContext(options: MockDatabaseContextOptions = {}): IDatabase {
+    const { lastID = 1, changes = 1, getResult = null, allResult = [] } = options;
+
+    const mockDb: IDatabase = {
+        get: vi.fn((sql: string, params: unknown[], callback?: (err: Error | null, row: unknown) => void) => {
+            if (callback) {
+                callback(null, getResult);
+            }
+            return mockDb;
+        }),
+        all: vi.fn((sql: string, params: unknown[], callback?: (err: Error | null, rows: unknown[]) => void) => {
+            if (callback) {
+                callback(null, allResult);
+            }
+            return mockDb;
+        }),
+        run: vi.fn((sql: string, params: unknown[], callback?: (this: { lastID: number; changes: number }, err: Error | null) => void) => {
+            if (callback) {
+                // Simulate SQLite's callback context with this.lastID and this.changes
+                callback.call({ lastID, changes }, null);
+            }
+            return mockDb;
+        }),
+        exec: vi.fn((sql: string, callback?: (err: Error | null) => void) => {
+            if (callback) {
+                callback(null);
+            }
+            return mockDb;
+        }),
+        serialize: vi.fn((callback: () => void) => {
+            callback();
+        }),
+        close: vi.fn((callback?: (err: Error | null) => void) => {
+            if (callback) {
+                callback(null);
+            }
+        }),
+        query: vi.fn().mockResolvedValue([]),
+    };
+
+    return mockDb;
+}
+
+/**
+ * Create a simple mock database for basic testing
+ */
+export function createMockDatabase(): IDatabase {
+    return createMockDatabaseWithContext();
+}
+
+/**
  * Create a mock database that throws errors
  */
 export function createMockDatabaseWithErrors(errorMessage: string = 'Database error'): IDatabase {
@@ -115,6 +179,8 @@ export function createMockDatabaseWithErrors(errorMessage: string = 'Database er
 
     return mockDb;
 }
+
+
 
 
 

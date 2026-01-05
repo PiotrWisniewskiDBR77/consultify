@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import KnowledgeIndexer from '../../../../src/services/knowledgeIndexer.js';
+import KnowledgeIndexer from '../../../../src/services/ai/knowledgeIndexer.js';
 
 describe('KnowledgeIndexer', () => {
     let mockDb: IDatabase;

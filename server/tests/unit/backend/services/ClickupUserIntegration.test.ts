@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import ClickupUserIntegration from '../../../../src/services/clickupUserIntegration.js';
+import ClickupUserIntegration from '../../../../src/services/integrations/clickupUserIntegration.js';
 
 describe('ClickupUserIntegration', () => {
     let mockDb: IDatabase;

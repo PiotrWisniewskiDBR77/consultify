@@ -15,8 +15,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AxisId, FullSession } from '../../types';
-import { AIInterviewModal } from './AIInterviewModal';
-import { RadarChart } from './RadarChart';
+import { AIInterviewModal } from '../AIInterviewModal';
+import { RadarChart } from '../RadarChart';
 
 interface FullStep1WorkspaceProps {
     fullSession: FullSession;
@@ -140,11 +140,10 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                                         disabled={isCompleted}
                                         className={`
                                         group relative overflow-hidden text-left p-4 rounded-lg border transition-all duration-300
-                                        ${
-                                            isCompleted
+                                        ${isCompleted
                                                 ? 'bg-slate-50 dark:bg-navy-900/50 border-slate-200 dark:border-white/5 opacity-60'
                                                 : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/5 hover:border-blue-500/50 hover:bg-slate-50 dark:hover:bg-navy-800 hover:shadow-lg'
-                                        }
+                                            }
                                     `}
                                     >
                                         <div className="flex justify-between items-start mb-3">
@@ -221,11 +220,10 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                                 disabled={!allCompleted}
                                 className={`
                                 flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 shadow-xl
-                                ${
-                                    allCompleted
+                                ${allCompleted
                                         ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/20 dark:shadow-blue-900/20'
                                         : 'bg-slate-100 dark:bg-navy-800/50 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-white/5'
-                                }
+                                    }
                             `}
                             >
                                 {allCompleted ? (
@@ -248,7 +246,7 @@ export const FullStep1Workspace: React.FC<FullStep1WorkspaceProps> = ({
                     onClose={() => setInterviewAxis(null)}
                     axisId={interviewAxis.id}
                     axisLabel={interviewAxis.label}
-                    onComplete={(score, reasoning) => {
+                    onComplete={(score: number, reasoning: string) => {
                         console.log('AI Interview Completed', { axis: interviewAxis.id, score, reasoning });
                         setInterviewAxis(null);
                     }}

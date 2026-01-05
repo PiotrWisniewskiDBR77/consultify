@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import StartupValidator from '../../../../src/services/startupValidator.js';
+import StartupValidator from '../../../../src/services/ai/startupValidator.js';
 
 describe('StartupValidator', () => {
     let mockDb: IDatabase;

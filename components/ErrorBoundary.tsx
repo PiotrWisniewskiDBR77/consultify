@@ -20,7 +20,24 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        console.error('Uncaught error:', error, errorInfo);
+        console.error('[ErrorBoundary] Uncaught error:', error);
+        console.error('[ErrorBoundary] Error info:', errorInfo);
+        console.error('[ErrorBoundary] Error stack:', error.stack);
+        
+        // Try to send error to backend if available
+        if (typeof window !== 'undefined' && window.fetch) {
+            fetch('/api/errors', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: error.message,
+                    stack: error.stack,
+                    componentStack: errorInfo.componentStack,
+                }),
+            }).catch(() => {
+                // Ignore fetch errors
+            });
+        }
     }
 
     private handleReset = () => {

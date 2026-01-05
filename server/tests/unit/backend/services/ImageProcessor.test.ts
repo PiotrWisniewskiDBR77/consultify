@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import ImageProcessor from '../../../../src/services/imageProcessor.js';
+import ImageProcessor from '../../../../src/services/ai/processors/imageProcessor.js';
 
 describe('ImageProcessor', () => {
     let mockDb: IDatabase;

@@ -84,9 +84,7 @@ describe('DunningService', () => {
                 status: 'active'
             };
 
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, mockDunning);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await dunningService.getDunningState('org-1');
 
@@ -94,9 +92,7 @@ describe('DunningService', () => {
         });
 
         it('should return null when no active dunning', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await dunningService.getDunningState('org-1');
 
@@ -129,9 +125,7 @@ describe('DunningService', () => {
         });
 
         it('should return error when no active dunning', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
             mockDb.all.mockImplementation((sql, params, callback) => callback(null, []));
 
             const result = await dunningService.advanceDunningStep('org-1');
@@ -187,9 +181,7 @@ describe('DunningService', () => {
         });
 
         it('should handle case when no dunning exists', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await dunningService.resolveDunning('org-1');
 
@@ -239,9 +231,7 @@ describe('DunningService', () => {
         });
 
         it('should return empty results when no pending dunning', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback(null, []);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await dunningService.processPendingDunning();
 
@@ -270,13 +260,9 @@ describe('DunningService', () => {
                 { current_step: 2, count: 1 }
             ];
 
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, mockStats);
-            });
+            mockDb.get.mockResolvedValue($2);
 
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback(null, mockByStep);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await dunningService.getDunningStats();
 

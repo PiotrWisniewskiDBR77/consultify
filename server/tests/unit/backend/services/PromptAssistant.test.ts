@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import PromptAssistant from '../../../../src/services/promptAssistant.js';
+import PromptAssistant from '../../../../src/services/ai/promptAssistant.js';
 
 describe('PromptAssistant', () => {
     let mockDb: IDatabase;

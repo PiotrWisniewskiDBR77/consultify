@@ -143,9 +143,9 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
 
     return (
         <div className="min-h-full bg-slate-50 dark:bg-navy-950 py-10">
-            <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
-                <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-8 shadow-lg shadow-slate-900/5 backdrop-blur dark:border-white/5 dark:bg-navy-900/60">
-                    <div className="text-slate-500 dark:text-slate-400">Partner Portal</div>
+            <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+                    <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Partner Portal</div>
                     <h1 className="mt-3 text-3xl font-bold text-navy-900 dark:text-white">
                         Zbuduj program partnerski w stylu HubSpot
                     </h1>
@@ -153,16 +153,16 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                         Umożliw partnerom zgłaszanie klientów, współdzielenie umów i dostęp do zasobów. Kopiujemy
                         sprawdzony flow HubSpot: landing, dashboard, commision, katalog usług i community.
                     </p>
-                    <div className="mt-6 flex flex-wrap gap-3">
+                    <div className="mt-4 flex flex-wrap gap-3">
                         <button
                             onClick={() => onNavigate(AppView.PARTNER_PROVIDER_HOME)}
-                            className="rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-brand/40 transition hover:bg-brand-dark"
+                            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 active:scale-[0.98]"
                         >
                             Startuj partner hub
                         </button>
                         <button
                             onClick={() => onNavigate(AppView.PARTNER_DIRECTORY)}
-                            className="rounded-full border border-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+                            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 dark:border-navy-600 dark:text-slate-300 dark:hover:border-violet-500/50 active:scale-[0.98]"
                         >
                             Zobacz katalog partnerów
                         </button>
@@ -171,13 +171,13 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                         {sections.slice(0, 3).map((section) => (
                             <div
                                 key={section.view}
-                                className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600 dark:border-white/5 dark:bg-navy-900/40 dark:text-slate-300"
+                                className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-300"
                             >
                                 <div className="flex items-center gap-2 font-semibold text-slate-800 dark:text-white">
-                                    <section.icon size={16} />
+                                    <section.icon size={16} className="text-brand" />
                                     {section.title}
                                 </div>
-                                <p className="mt-2 text-xs">{section.description}</p>
+                                <p className="mt-2 text-xs leading-relaxed">{section.description}</p>
                             </div>
                         ))}
                     </div>
@@ -187,33 +187,33 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                     {partnerBenefits.map((benefit) => (
                         <article
                             key={benefit.title}
-                            className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-white/5 dark:bg-navy-900/60"
+                            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900"
                         >
                             <h3 className="text-sm font-semibold text-navy-900 dark:text-white">{benefit.title}</h3>
-                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">{benefit.body}</p>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-300 leading-relaxed">{benefit.body}</p>
                         </article>
                     ))}
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-slate-50/80 p-6 shadow-sm dark:border-white/5 dark:bg-navy-900/60">
+                <section className="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-6 shadow-sm dark:border-navy-700 dark:from-navy-900 dark:to-navy-900">
                     <div className="flex items-center justify-between">
                         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Jak działa współpraca</h3>
-                        <span className="text-xs uppercase tracking-wide text-slate-400">Kolejne etapy</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Kolejne etapy</span>
                     </div>
-                    <ol className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                    <ol className="mt-6 space-y-6 text-sm text-slate-600 dark:text-slate-300">
                         {collaborationSteps.map((step, idx) => (
-                            <li key={step.title} className="flex gap-3">
-                                <span className="font-semibold text-brand">{idx + 1}.</span>
+                            <li key={step.title} className="flex gap-4">
+                                <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-brand/10 text-brand font-bold text-sm">{idx + 1}</span>
                                 <div>
                                     <p className="font-semibold text-navy-900 dark:text-white">{step.title}</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{step.detail}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{step.detail}</p>
                                 </div>
                             </li>
                         ))}
                     </ol>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm dark:border-white/5 dark:bg-navy-900/60">
+                <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-900">
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Zasady współpracy</h3>
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                         Partnerzy pracują w oparciu o Meta-PMO Framework: każdy etap dealu ma przypisane domeny PMO i śledzimy mappingi
@@ -221,51 +221,51 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                     </p>
                     <ul className="mt-4 grid gap-3 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-2">
                         {partnershipPrinciples.map((principle) => (
-                            <li key={principle} className="flex items-start gap-2 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 dark:border-white/5 dark:bg-navy-950/40">
-                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-brand" />
-                                {principle}
+                            <li key={principle} className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+                                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-brand flex-shrink-0" />
+                                <span className="leading-relaxed">{principle}</span>
                             </li>
                         ))}
                     </ul>
-                    <div className="mt-4 flex flex-wrap gap-3">
+                    <div className="mt-4 flex flex-wrap gap-2">
                         <button
                             onClick={() => onNavigate(AppView.PARTNER_PROVIDER_HOME)}
-                            className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-dark"
+                            className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98]"
                         >
                             Startuj partner hub
                         </button>
                         <button
                             onClick={() => onNavigate(AppView.PARTNER_RESOURCES)}
-                            className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300"
+                            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-violet-300 dark:border-navy-600 dark:text-slate-300 dark:hover:border-violet-500/50 active:scale-[0.98]"
                         >
                             Poznaj zasoby
                         </button>
                     </div>
                 </section>
 
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2">
                     {sections.map((section) => {
                         const isActive = section.view === activeSection.view;
                         return (
                             <section
                                 key={section.view}
-                                className={`rounded-2xl border ${
+                                className={`rounded-xl border ${
                                     isActive
-                                        ? 'border-brand bg-white dark:bg-navy-900'
-                                        : 'border-slate-200 bg-white/70 dark:border-white/5 dark:bg-navy-900/60'
-                                } p-5 shadow-sm transition hover:border-brand`}
+                                        ? 'border-violet-300 bg-white dark:border-violet-600/50 dark:bg-navy-900 ring-2 ring-violet-100 dark:ring-violet-900/30'
+                                        : 'border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900'
+                                } p-5 shadow-sm transition-all hover:border-violet-300 dark:hover:border-violet-600/50 hover:shadow-md active:scale-[0.99]`}
                             >
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                                         {section.title}
                                     </h3>
-                                    <section.icon size={20} className="text-slate-400" />
+                                    <section.icon size={20} className={isActive ? 'text-brand' : 'text-slate-400'} />
                                 </div>
-                                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{section.description}</p>
-                                <ul className="mt-3 space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{section.description}</p>
+                                <ul className="mt-4 space-y-2 text-xs text-slate-600 dark:text-slate-300">
                                     {section.bullets.map((item) => (
                                         <li key={item} className="flex items-center gap-2">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+                                            <span className="h-1 w-1 rounded-full bg-brand" />
                                             {item}
                                         </li>
                                     ))}
@@ -273,9 +273,10 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                                 <button
                                     type="button"
                                     onClick={() => onNavigate(section.view)}
-                                    className="mt-4 text-sm font-semibold text-brand hover:underline"
+                                    className="mt-6 text-sm font-bold text-brand hover:underline flex items-center gap-1"
                                 >
                                     {section.callToAction}
+                                    <ChevronRight size={14} />
                                 </button>
                             </section>
                         );
@@ -283,78 +284,82 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <div className="space-y-5 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-white/5 dark:bg-navy-900/60">
+                    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900">
                         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Shared selling</h3>
                         <div className="grid gap-3 sm:grid-cols-3">
                             {sharedSellingStats.map((item) => (
                                 <div
                                     key={item.label}
-                                    className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-center dark:border-white/5 dark:bg-navy-950/40"
+                                    className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-center dark:border-navy-700 dark:bg-navy-800"
                                 >
-                                    <div className="text-sm text-slate-500 dark:text-slate-400">{item.label}</div>
+                                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{item.label}</div>
                                     <div className="mt-2 text-3xl font-bold text-navy-900 dark:text-white">
                                         {item.value}
                                     </div>
-                                    <div className="text-xs text-slate-400 dark:text-slate-500">{item.caption}</div>
+                                    <div className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-tighter">{item.caption}</div>
                                 </div>
                             ))}
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                             {commissionStatements.map((statement) => (
                                 <div
                                     key={statement.label}
-                                    className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3 text-sm dark:border-white/5"
+                                    className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-3 py-2.5 text-sm dark:border-navy-700 dark:bg-navy-800"
                                 >
                                     <div>
                                         <p className="font-semibold text-slate-900 dark:text-white">
                                             {statement.label}
                                         </p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">{statement.date}</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">{statement.date}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                        <p className="text-sm font-bold text-navy-900 dark:text-white">
                                             {statement.amount}
                                         </p>
-                                        <p className="text-xs text-slate-500">{statement.status}</p>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
+                                            statement.status === 'Paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/20'
+                                        }`}>
+                                            {statement.status}
+                                        </span>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div className="space-y-5 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-white/5 dark:bg-navy-900/60">
+                    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900">
                         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Client Access Manager</h3>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Clients</p>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Clients</p>
                             <ul className="mt-2 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                                 {clientList.map((client) => (
                                     <li
                                         key={client.name}
-                                        className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2 dark:border-white/5"
+                                        className="flex items-center justify-between rounded-lg border border-slate-100 bg-white px-3 py-2 dark:border-navy-700 dark:bg-navy-800"
                                     >
                                         <div>
                                             <p className="font-semibold text-slate-900 dark:text-white">
                                                 {client.name}
                                             </p>
-                                            <p className="text-xs text-slate-400">{client.region}</p>
+                                            <p className="text-[10px] text-slate-400 uppercase font-medium">{client.region}</p>
                                         </div>
-                                        <span className="text-xs text-brand">{client.status}</span>
+                                        <span className="text-[10px] font-bold text-brand uppercase tracking-wider">{client.status}</span>
                                     </li>
                                 ))}
                             </ul>
                         </div>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Employees</p>
-                            <ul className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-300">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Employees</p>
+                            <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                                 {employeeList.map((employee) => (
-                                    <li key={employee.name} className="flex items-center justify-between">
+                                    <li key={employee.name} className="flex items-center justify-between px-1">
                                         <div>
                                             <p className="font-semibold text-slate-900 dark:text-white">
                                                 {employee.name}
                                             </p>
-                                            <p className="text-xs text-slate-400">{employee.access}</p>
+                                            <p className="text-[10px] text-slate-400 uppercase font-medium">{employee.access}</p>
                                         </div>
-                                        <span className="text-xs text-slate-500">{employee.status}</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{employee.status}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -362,7 +367,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                         <button
                             type="button"
                             onClick={() => onNavigate(AppView.PARTNER_CLIENT_ACCESS)}
-                            className="w-full rounded-2xl border border-brand/60 px-3 py-2 text-sm font-semibold text-brand transition hover:bg-brand/5"
+                            className="w-full rounded-lg border border-violet-200 px-3 py-2.5 text-sm font-semibold text-violet-700 transition-all hover:bg-violet-50 active:scale-[0.98] dark:border-violet-700/50 dark:text-violet-400 dark:hover:bg-violet-900/20"
                         >
                             Get access link
                         </button>
@@ -370,61 +375,61 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-white/5 dark:bg-navy-900/60">
+                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900 flex flex-col">
                         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                             Directory profile snapshot
                         </h3>
-                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                             Wypełnij informacje o firmie, opis, budżety i regiony. Każdy profil trafia do katalogu
                             Solutions Directory.
                         </p>
-                        <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                            <li className="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-white/5">
-                                <span>Company size</span>
+                        <ul className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300 flex-1">
+                            <li className="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-navy-700">
+                                <span className="text-slate-500 dark:text-slate-400">Company size</span>
                                 <span className="font-semibold text-slate-900 dark:text-white">11-50</span>
                             </li>
-                            <li className="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-white/5">
-                                <span>Regions</span>
+                            <li className="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-navy-700">
+                                <span className="text-slate-500 dark:text-slate-400">Regions</span>
                                 <span className="font-semibold text-slate-900 dark:text-white">EMEA, APAC</span>
                             </li>
                             <li className="flex items-center justify-between">
-                                <span>Languages</span>
+                                <span className="text-slate-500 dark:text-slate-400">Languages</span>
                                 <span className="font-semibold text-slate-900 dark:text-white">English, Polish</span>
                             </li>
                         </ul>
                         <button
                             type="button"
                             onClick={() => onNavigate(AppView.PARTNER_DIRECTORY)}
-                            className="mt-4 rounded-2xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark"
+                            className="mt-6 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98] shadow-sm"
                         >
                             Edytuj profil katalogu
                         </button>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-white/5 dark:bg-navy-900/60">
+                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900">
                         <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                             Partner Commission Inquiry
                         </h3>
-                        <form className="mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                        <form className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
                             <label className="block space-y-1">
-                                <span className="text-xs uppercase tracking-wide text-slate-500">Your name</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 ml-1">Your name</span>
                                 <input
                                     type="text"
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:ring-0 dark:border-white/5 dark:bg-navy-900 dark:text-white"
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white"
                                     placeholder="Imię i nazwisko"
                                 />
                             </label>
                             <label className="block space-y-1">
-                                <span className="text-xs uppercase tracking-wide text-slate-500">Email</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 ml-1">Email</span>
                                 <input
                                     type="email"
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:ring-0 dark:border-white/5 dark:bg-navy-900 dark:text-white"
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white"
                                     placeholder="partner@consultify.com"
                                 />
                             </label>
                             <label className="block space-y-1">
-                                <span className="text-xs uppercase tracking-wide text-slate-500">Ticket type</span>
-                                <select className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:ring-0 dark:border-white/5 dark:bg-navy-900 dark:text-white">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 ml-1">Ticket type</span>
+                                <select className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white">
                                     <option>Commission inquiry</option>
                                     <option>Payment update</option>
                                     <option>Other</option>
@@ -433,50 +438,53 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                             <button
                                 type="button"
                                 onClick={() => onNavigate(AppView.PARTNER_COMMISSION)}
-                                className="w-full rounded-2xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark"
+                                className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98] shadow-sm mt-1"
                             >
                                 Wyślij zgłoszenie
                             </button>
                         </form>
                     </div>
                 </div>
-                <div className="grid gap-5 lg:grid-cols-3">
+                <div className="grid gap-4 lg:grid-cols-3">
                     {resourceCards.map((card) => (
                         <article
                             key={card.title}
-                            className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-white/5 dark:bg-navy-900/60"
+                            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900 flex flex-col hover:border-violet-300 dark:hover:border-violet-600/50 transition-colors"
                         >
-                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                                 {card.title}
                             </div>
-                            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{card.body}</p>
+                            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed flex-1">{card.body}</p>
                             <button
                                 type="button"
                                 onClick={() => onNavigate(card.view)}
-                                className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:underline"
+                                className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline"
                             >
                                 {card.label}
+                                <ChevronRight size={14} />
                             </button>
                         </article>
                     ))}
                 </div>
 
-                <div className="rounded-2xl border border-brand/40 bg-brand/5 p-6 text-slate-800 dark:text-white">
-                    <h3 className="text-xl font-semibold">Odkryj poziomy partnerstwa</h3>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-200">
-                        Poznaj nasze cztery poziomy partnerstwa: Bronze, Silver, Gold i Platinum. Każdy poziom oferuje
-                        progresywne korzyści — od 10% do 20% prowizji, co-sell leads i dedykowane wsparcie.
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
+                <div className="rounded-xl border border-violet-200 bg-violet-50 p-6 text-slate-800 dark:border-violet-700/50 dark:bg-violet-900/20 dark:text-white flex flex-col md:flex-row items-center gap-4">
+                    <div className="flex-1">
+                        <h3 className="text-xl font-bold">Odkryj poziomy partnerstwa</h3>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-200 leading-relaxed">
+                            Poznaj nasze cztery poziomy partnerstwa: Bronze, Silver, Gold i Platinum. Każdy poziom oferuje
+                            progresywne korzyści — od 10% do 20% prowizji, co-sell leads i dedykowane wsparcie.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-3 flex-shrink-0">
                         <button
                             onClick={() => onNavigate(AppView.PARTNER_PRICING)}
-                            className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark"
+                            className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 active:scale-[0.98]"
                         >
                             Zobacz cennik partnerski
                         </button>
                         <button
                             onClick={() => onNavigate(AppView.PARTNER_PROVIDER_HOME)}
-                            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand/40 dark:border-white/20 dark:bg-transparent dark:text-white"
+                            className="rounded-lg border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 dark:border-navy-600 dark:bg-navy-800 dark:text-white dark:hover:border-violet-500/50 active:scale-[0.98]"
                         >
                             Otwórz hub partnerów
                         </button>

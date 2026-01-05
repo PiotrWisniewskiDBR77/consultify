@@ -3,10 +3,9 @@
  * Header with title, period, and metadata
  */
 
-import { Building2, Calendar, Clock, FileText } from 'lucide-react';
 import React from 'react';
-
-import { ManagementReportScope, ManagementReportType, RAGStatus } from '../../../../types';
+import { Calendar, Clock, FileText, Building2 } from 'lucide-react';
+import { ManagementReportType, ManagementReportScope, RAGStatus } from '../../../../types';
 import { RAGIndicator } from './RAGIndicator';
 
 interface ReportHeaderProps {
@@ -25,12 +24,12 @@ interface ReportHeaderProps {
 
 const reportTypeLabels = {
     TEAM_MEETING: { label: 'Team Meeting Report', icon: '📋', color: 'bg-blue-500' },
-    STEERING_COMMITTEE: { label: 'Steering Committee Report', icon: '🏛️', color: 'bg-violet-500' },
+    STEERING_COMMITTEE: { label: 'Steering Committee Report', icon: '🏛️', color: 'bg-violet-500' }
 };
 
 const scopeLabels = {
     PROJECT: 'Single Project',
-    PORTFOLIO: 'Portfolio',
+    PORTFOLIO: 'Portfolio'
 };
 
 export const ReportHeader: React.FC<ReportHeaderProps> = ({
@@ -44,14 +43,12 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
     projectName,
     organizationName,
     overallHealth,
-    className = '',
+    className = ''
 }) => {
     const typeConfig = reportTypeLabels[reportType] || reportTypeLabels.TEAM_MEETING;
 
     return (
-        <div
-            className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 ${className}`}
-        >
+        <div className={`bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 ${className}`}>
             {/* Top row - type badge and health */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -62,11 +59,15 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                         {scopeLabels[scope]}
                     </span>
                 </div>
-                {overallHealth && <RAGIndicator status={overallHealth} size="lg" showLabel />}
+                {overallHealth && (
+                    <RAGIndicator status={overallHealth} size="lg" showLabel />
+                )}
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">{title}</h1>
+            <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">
+                {title}
+            </h1>
 
             {/* Metadata grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -113,7 +114,9 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                         <FileText size={16} className="text-slate-400" />
                         <div>
                             <span className="text-slate-500 dark:text-slate-400">By: </span>
-                            <span className="font-medium text-navy-900 dark:text-white">{generatedBy}</span>
+                            <span className="font-medium text-navy-900 dark:text-white">
+                                {generatedBy}
+                            </span>
                         </div>
                     </div>
                 )}

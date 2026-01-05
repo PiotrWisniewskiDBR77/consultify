@@ -5,9 +5,10 @@
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
+import { createCachedLazyService } from '../../utils/lazyServiceLoader.ts';
+
 // Lazy load the JS service module
-import service from '../../../services/integrations/jiraUserIntegration.js';
-import { createCachedLazyService } from '../../../utils/lazyServiceLoader.ts';
+const loadJirauserintegration = createCachedLazyService('../../../services/integrations/jiraUserIntegration.js');
 
 // Export default instance (for backward compatibility)
-export default service;
+export default loadJirauserintegration();

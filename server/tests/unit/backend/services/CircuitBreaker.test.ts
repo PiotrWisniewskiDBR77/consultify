@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import CircuitBreaker from '../../../../src/services/circuitBreaker.js';
+import CircuitBreaker from '../../../../src/services/ai/circuitBreaker.js';
 
 describe('CircuitBreaker', () => {
     let mockDb: IDatabase;

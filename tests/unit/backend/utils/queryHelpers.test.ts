@@ -56,9 +56,7 @@ describe('Query Helpers', () => {
                 { id: 2, name: 'Item 2' }
             ];
 
-            mockDb.all.mockImplementation((sql: string, params: any[], callback: Function) => {
-                callback(null, mockRows);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const sql = 'SELECT * FROM items';
             const result = await queryHelpers.queryAll(sql);
@@ -68,9 +66,7 @@ describe('Query Helpers', () => {
         });
 
         it('should resolve with empty array when no rows returned', async () => {
-            mockDb.all.mockImplementation((sql: string, params: any[], callback: Function) => {
-                callback(null, null);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await queryHelpers.queryAll('SELECT * FROM empty_table');
 
@@ -119,9 +115,7 @@ describe('Query Helpers', () => {
         it('should resolve with single row for successful query', async () => {
             const mockRow = { id: 1, name: 'Single Item', status: 'active' };
 
-            mockDb.get.mockImplementation((sql: string, params: any[], callback: Function) => {
-                callback(null, mockRow);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await queryHelpers.queryOne('SELECT * FROM items WHERE id = ?', [1]);
 
@@ -134,9 +128,7 @@ describe('Query Helpers', () => {
         });
 
         it('should resolve with null when no row found', async () => {
-            mockDb.get.mockImplementation((sql: string, params: any[], callback: Function) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await queryHelpers.queryOne('SELECT * FROM items WHERE id = ?', [999]);
 
@@ -144,9 +136,7 @@ describe('Query Helpers', () => {
         });
 
         it('should handle undefined row result', async () => {
-            mockDb.get.mockImplementation((sql: string, params: any[], callback: Function) => {
-                callback(null, undefined);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await queryHelpers.queryOne('SELECT * FROM items WHERE id = ?', [1]);
 

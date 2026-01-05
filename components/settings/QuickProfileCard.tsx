@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { User as UserType } from '../../types';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Button } from '../ui/button';
+import { Button } from '../ui/Button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -78,7 +78,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
 
     // User role display
     const roleDisplay = useMemo(() => {
-        const role = currentUser.role || currentUser.title;
+        const role = currentUser.role || currentUser.jobTitle;
         if (role) {
             return String(role).charAt(0).toUpperCase() + String(role).slice(1).toLowerCase();
         }
@@ -205,7 +205,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
                     {t('settings.profile.edit', 'Edit Profile')}
                 </Button>
 
-                <DropdownMenu open={isViewAsOpen} onOpenChange={setIsViewAsOpen}>
+                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
                             variant="ghost"

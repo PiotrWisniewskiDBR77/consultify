@@ -18,19 +18,19 @@ import {
 import React, { useState } from 'react';
 
 import { FullInitiative, FullSession, Language } from '../../types';
-import { FullStep5Workspace } from './workspaces/FullStep5Workspace'; // Reuse Kanban
+import { FullStep5Workspace } from './FullStep5Workspace'; // Reuse Kanban
 import { CapacityView, DecisionBoard, StatusReportBuilder } from '../Implementation';
 import { GateStatus } from '../PMO/GateStatus';
 import { PMOHealthSection } from '../PMO/PMOHealthSection';
 import { RACIMatrix } from '../PMO/RACIMatrix';
 import { WorkstreamBoard } from '../PMO/WorkstreamBoard';
-import { RolloutChangeTab } from './RolloutChangeTab';
-import { RolloutClosureTab } from './RolloutClosureTab';
-import { RolloutKPITab } from './RolloutKPITab';
-import { RolloutPlanTab } from './RolloutPlanTab';
-import { RolloutRisksTab } from './RolloutRisksTab';
-import { RolloutStrategyTab } from './RolloutStrategyTab';
-import { RolloutTeamsTab } from './RolloutTeamsTab';
+import { RolloutChangeTab } from '../RolloutChangeTab';
+import { RolloutClosureTab } from '../RolloutClosureTab';
+import { RolloutKPITab } from '../RolloutKPITab';
+import { RolloutPlanTab } from '../RolloutPlanTab';
+import { RolloutRisksTab } from '../RolloutRisksTab';
+import { RolloutStrategyTab } from '../RolloutStrategyTab';
+import { RolloutTeamsTab } from '../RolloutTeamsTab';
 
 interface FullRolloutWorkspaceProps {
     fullSession: FullSession;
@@ -99,7 +99,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     const renderTeams = () => (
         <RolloutTeamsTab
             data={fullSession.rollout || {}}
-            onUpdate={(updatedData) => {
+            onUpdate={(updatedData: Record<string, unknown>) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
@@ -121,7 +121,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
         <RolloutPlanTab
             data={fullSession.rollout || {}}
             initiatives={fullSession.initiatives}
-            onUpdate={(updatedData) => {
+            onUpdate={(updatedData: Record<string, unknown>) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
@@ -147,7 +147,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
         <RolloutRisksTab
             data={fullSession.rollout || {}}
             initiatives={fullSession.initiatives}
-            onUpdate={(updatedData) => {
+            onUpdate={(updatedData: Record<string, unknown>) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
@@ -161,7 +161,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     const renderChange = () => (
         <RolloutChangeTab
             data={fullSession.rollout || {}}
-            onUpdate={(updatedData) => {
+            onUpdate={(updatedData: Record<string, unknown>) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
@@ -185,7 +185,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     const renderClosure = () => (
         <RolloutClosureTab
             data={fullSession.rollout || {}}
-            onUpdate={(updatedData) => {
+            onUpdate={(updatedData: Record<string, unknown>) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,

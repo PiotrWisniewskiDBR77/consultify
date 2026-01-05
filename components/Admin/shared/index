@@ -1,0 +1,23 @@
+/**
+ * Shared Admin Components Index
+ *
+ * Export all shared admin components
+ */
+
+export { EnhancedDataTable } from './EnhancedDataTable';
+export type { Column, RowAction } from './EnhancedDataTable';
+
+export { PermissionMatrix } from './PermissionMatrix';
+export type { Permission, Role } from './PermissionMatrix';
+
+export { AdvancedFilters } from './AdvancedFilters';
+export type { Filter, FilterPreset, FilterValue, SavedFilter } from './AdvancedFilters';
+
+export { AdminBreadcrumbs } from './AdminBreadcrumbs';
+export type { BreadcrumbItem } from './AdminBreadcrumbs';
+
+export { ExportMembersDialog } from './ExportMembersDialog';
+export type { ExportField, ExportFilter, ExportFormat, ExportOptions } from './ExportMembersDialog';
+
+export { ColumnSelector } from './ColumnSelector';
+export type { ColumnConfig } from './ColumnSelector';

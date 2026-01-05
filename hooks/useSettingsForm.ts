@@ -95,7 +95,7 @@ export function useSettingsForm<T extends Record<string, unknown>>(
     useEffect(() => {
         if (!warnOnNavigate) return;
 
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent): string | undefined => {
             if (isDirty()) {
                 const message = t(
                     'settings.unsavedChanges',
@@ -104,6 +104,7 @@ export function useSettingsForm<T extends Record<string, unknown>>(
                 e.returnValue = message;
                 return message;
             }
+            return undefined;
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);

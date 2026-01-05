@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import MediaIngestionService from '../../../../src/services/mediaIngestionService.js';
+import MediaIngestionService from '../../../../src/services/ai/mediaIngestionService.js';
 
 describe('MediaIngestionService', () => {
     let mockDb: IDatabase;

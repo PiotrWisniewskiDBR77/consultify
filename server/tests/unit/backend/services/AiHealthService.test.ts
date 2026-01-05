@@ -7,7 +7,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import AiHealthService from '../../../../services/ai/aiHealthService.js';
+import AiHealthService from '../../../../src/services/ai/aiHealthService.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
 describe('AiHealthService', () => {

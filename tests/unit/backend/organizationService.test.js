@@ -167,9 +167,7 @@ describe('OrganizationService', () => {
         it('should throw error when organization not found', async () => {
             const orgId = 'non-existent';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             await expect(
                 OrganizationService.getOrganization(orgId)
@@ -386,9 +384,7 @@ describe('OrganizationService', () => {
             const orgId = testOrganizations.org1.id;
             const userId = 'non-existent-user';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await OrganizationService.getMemberRole(orgId, userId);
 

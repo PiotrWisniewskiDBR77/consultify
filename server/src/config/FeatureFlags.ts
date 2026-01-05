@@ -31,7 +31,7 @@ export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 /**
  * Load and validate feature flags
  */
-function loadFeatureFlags(): FeatureFlags {
+export function loadFeatureFlags(): FeatureFlags {
     const rawFlags = {
         // Enable execution of AI-proposed actions (Dangerous)
         ENABLE_ACTION_EXECUTION: process.env.ENABLE_ACTION_EXECUTION === 'true' || false,

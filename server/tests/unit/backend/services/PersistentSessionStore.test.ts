@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import PersistentSessionStore from '../../../../src/services/persistentSessionStore.js';
+import PersistentSessionStore from '../../../../src/services/ai/persistentSessionStore.js';
 
 describe('PersistentSessionStore', () => {
     let mockDb: IDatabase;

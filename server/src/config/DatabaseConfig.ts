@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 import { z } from 'zod';
 
 import logger from '../utils/Logger.ts';
-import { validateDatabaseConfig } from './ConfigValidator.js';
+import { validateDatabaseConfig } from './ConfigValidator.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -72,20 +72,28 @@ export type SQLiteConfig = z.infer<typeof SQLiteConfigSchema>;
 // CONFIGURATION
 // ==========================================
 
-const isProduction = process.env.NODE_ENV === 'production';
-let databaseUrl: string | undefined = process.env.DATABASE_URL;
+// ==========================================
+// CONFIGURATION HELPERS
+// ==========================================
 
-// Check if Railway variable expansion didn't work (still contains ${{)
-if (databaseUrl && databaseUrl.includes('${{')) {
-    logger.warn('[DB Config] DATABASE_URL appears to contain unexpanded Railway variable:', databaseUrl);
-    logger.warn('[DB Config] Falling back to individual DB_* variables');
-    databaseUrl = undefined; // Force fallback to individual variables
+function getDatabaseUrl(): string | undefined {
+    let url = process.env.DATABASE_URL;
+    // Check if Railway variable expansion didn't work (still contains ${{)
+    if (url && url.includes('${{')) {
+        logger.warn('[DB Config] DATABASE_URL appears to contain unexpanded Railway variable:', url);
+        logger.warn('[DB Config] Falling back to individual DB_* variables');
+        return undefined;
+    }
+    return url;
 }
 
 /**
  * Determine database type from environment
  */
-function getDatabaseType(): DatabaseType {
+export function getDatabaseType(): DatabaseType {
+    // Re-read environment variables inside the function for testing support
+    const databaseUrl = getDatabaseUrl();
+
     // Validate database configuration (will crash in production if invalid)
     validateDatabaseConfig();
 
@@ -119,8 +127,6 @@ function getDatabaseType(): DatabaseType {
     logger.warn('To prevent this, set DB_TYPE=sqlite or DB_TYPE=postgres in your .env file.\n');
     return 'sqlite';
 }
-
-const databaseType = getDatabaseType();
 
 // Database paths for SQLite
 const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultify.db');
@@ -177,6 +183,7 @@ function parsePostgresUrl(url: string): PostgresConfig | null {
  * Get PostgreSQL config from environment variables
  */
 function getPostgresConfig(): PostgresConfig {
+    const databaseUrl = getDatabaseUrl();
     if (databaseUrl) {
         const parsed = parsePostgresUrl(databaseUrl);
         if (parsed) {
@@ -227,6 +234,11 @@ function getPostgresConfig(): PostgresConfig {
 function getReadReplicaConfig(): PostgresConfig | undefined {
     const readUrl = process.env.DB_READ_URL || process.env.DATABASE_READ_URL;
     if (readUrl) {
+        // Check if readUrl also has unexpanded Railway variables
+        if (readUrl.includes('${{')) {
+            logger.warn('[DB Config] DATABASE_READ_URL appears to contain unexpanded Railway variable');
+            return undefined;
+        }
         const parsed = parsePostgresUrl(readUrl);
         if (parsed) return parsed;
     }
@@ -248,8 +260,13 @@ function getReadReplicaConfig(): PostgresConfig | undefined {
 
 /**
  * Create and validate database configuration
+ * Renamed to loadDatabaseConfig for consistency with tests and exported for testing support
  */
-function createDatabaseConfig(): DatabaseConfig {
+export function loadDatabaseConfig(): DatabaseConfig {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const databaseType = getDatabaseType();
+    const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultify.db');
+
     const config: DatabaseConfig = {
         type: databaseType,
         sqlite: {
@@ -274,6 +291,6 @@ function createDatabaseConfig(): DatabaseConfig {
     return result.data;
 }
 
-export const databaseConfig = createDatabaseConfig();
+export const databaseConfig = loadDatabaseConfig();
 
 export default databaseConfig;

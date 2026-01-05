@@ -77,9 +77,7 @@ describe('BudgetManagementService', () => {
                 hard_limit_enabled: 1
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, budget);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await BudgetManagementService.checkBudgetLimit(orgId, userId, null, 'tokens', 100);
             expect(result.allowed).toBe(true);
@@ -95,9 +93,7 @@ describe('BudgetManagementService', () => {
                 hard_limit_enabled: 1
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, budget);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await BudgetManagementService.checkBudgetLimit(orgId, userId, null, 'tokens', 100);
             expect(result.allowed).toBe(false);
@@ -116,9 +112,7 @@ describe('BudgetManagementService', () => {
                 storage_used_this_month_gb: 2
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, budget);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await BudgetManagementService.getBudgetStatus(orgId, userId);
             expect(result.tokenUsagePercent).toBe('75.00');

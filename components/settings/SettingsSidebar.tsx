@@ -48,7 +48,6 @@ import {
     Sun,
     Trash2,
     User,
-    Users,
     Volume2,
     Webhook,
     Zap,
@@ -560,19 +559,19 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeSection,
                             {/* Group Header */}
                             <button
                                 onClick={() => toggleGroup(group.id)}
-                                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                                className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
                             >
                                 <span>{group.label}</span>
                                 {expandedGroups.has(group.id) ? (
-                                    <ChevronDown className="w-4 h-4" />
+                                    <ChevronDown className="w-3 h-3" />
                                 ) : (
-                                    <ChevronRight className="w-4 h-4" />
+                                    <ChevronRight className="w-3 h-3" />
                                 )}
                             </button>
 
                             {/* Group Items */}
                             {expandedGroups.has(group.id) && (
-                                <div className="space-y-0.5 mt-1">
+                                <div className="space-y-1 mt-1">
                                     {group.items.map((item) => {
                                         const isActive = activeSection === item.id;
                                         const Icon = item.icon;
@@ -582,16 +581,16 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeSection,
                                                 key={item.id}
                                                 onClick={() => onSectionChange(item.id)}
                                                 className={cn(
-                                                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150',
+                                                    'w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-150 active:scale-[0.98]',
                                                     isActive
-                                                        ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-medium'
-                                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-900 dark:hover:text-white',
+                                                        ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-medium border-l-2 border-violet-600 -ml-px'
+                                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white',
                                                 )}
                                             >
                                                 <Icon
                                                     className={cn(
                                                         'w-4 h-4 flex-shrink-0',
-                                                        isActive ? 'text-violet-600 dark:text-violet-400' : '',
+                                                        isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500',
                                                     )}
                                                 />
                                                 <span className="flex-1 text-left truncate">{item.label}</span>
@@ -607,7 +606,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ activeSection,
                                                         {item.badge}
                                                     </span>
                                                 )}
-                                                {item.external && <ExternalLink className="w-3 h-3 text-slate-400" />}
+                                                {item.external && <ExternalLink className="w-3 h-3 opacity-50" />}
                                             </button>
                                         );
                                     })}

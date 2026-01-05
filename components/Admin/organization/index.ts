@@ -11,7 +11,7 @@ export { FiscalYearSettings } from './FiscalYearSettings';
 export type { FiscalYearConfig } from './FiscalYearSettings';
 
 export { DataHostingSettings } from './DataHostingSettings';
-export type { DataHostingConfig, DataRegion } from './DataHostingSettings';
+export type { DataHostingConfig } from './DataHostingSettings';
 
 export { ApprovedDomainsSettings } from './ApprovedDomainsSettings';
 export type { ApprovedDomain } from './ApprovedDomainsSettings';

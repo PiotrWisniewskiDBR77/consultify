@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import TeamsUserIntegration from '../../../../src/services/teamsUserIntegration.js';
+import TeamsUserIntegration from '../../../../src/services/integrations/teamsUserIntegration.js';
 
 describe('TeamsUserIntegration', () => {
     let mockDb: IDatabase;

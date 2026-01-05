@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import YoutubeProcessor from '../../../../src/services/youtubeProcessor.js';
+import YoutubeProcessor from '../../../../src/services/ai/processors/youtubeProcessor.js';
 
 describe('YoutubeProcessor', () => {
     let mockDb: IDatabase;

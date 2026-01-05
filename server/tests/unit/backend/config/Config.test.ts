@@ -6,10 +6,10 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { config } from '../../../src/config/Config.js';
-import { databaseConfig } from '../../../src/config/DatabaseConfig.js';
-import { featureFlags } from '../../../src/config/FeatureFlags.js';
-import { queueConfig } from '../../../src/config/QueueConfig.js';
+import { config } from '../../../../src/config/Config.js';
+import { databaseConfig } from '../../../../src/config/DatabaseConfig.js';
+import { featureFlags } from '../../../../src/config/FeatureFlags.js';
+import { queueConfig } from '../../../../src/config/QueueConfig.js';
 
 describe('Config', () => {
     let originalEnv: NodeJS.ProcessEnv;

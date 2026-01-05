@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import SocraticEngine from '../../../../src/services/socraticEngine.js';
+import SocraticEngine from '../../../../src/services/ai/socraticEngine.js';
 
 describe('SocraticEngine', () => {
     let mockDb: IDatabase;

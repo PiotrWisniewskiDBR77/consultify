@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import EmailService from '../../../../services/emailService.js';
+import EmailService from '../../../../src/services/emailService.js';
 
 describe('EmailService', () => {
     let mockDb;

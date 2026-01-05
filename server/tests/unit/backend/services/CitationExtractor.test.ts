@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import CitationExtractor from '../../../../src/services/citationExtractor.js';
+import CitationExtractor from '../../../../src/services/ai/citationExtractor.js';
 
 describe('CitationExtractor', () => {
     let mockDb: IDatabase;

@@ -5,13 +5,11 @@
  */
 
 export { BulkUserImport } from './BulkUserImport';
-export type { ImportUser } from './BulkUserImport';
+export type { ImportUserRow } from './BulkUserImport';
 
 export { WorkingHoursEditor } from './WorkingHoursEditor';
-export type { DaySchedule, WorkingHours } from './WorkingHoursEditor';
 
 export { ManagerSelector } from './ManagerSelector';
-export type { ManagerCandidate } from './ManagerSelector';
 
 export { OrganizationChart } from './OrganizationChart';
 export type { OrgNode } from './OrganizationChart';

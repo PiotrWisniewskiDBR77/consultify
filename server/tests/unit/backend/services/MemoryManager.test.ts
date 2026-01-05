@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import MemoryManager from '../../../../src/services/memoryManager.js';
+import MemoryManager from '../../../../src/services/ai/memoryManager.js';
 
 describe('MemoryManager', () => {
     let mockDb: IDatabase;

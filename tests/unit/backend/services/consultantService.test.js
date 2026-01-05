@@ -52,9 +52,7 @@ describe('ConsultantService', () => {
                 created_at: '2024-01-01T00:00:00Z'
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, mockProfile);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await consultantService.getConsultantProfile(userId);
 
@@ -69,9 +67,7 @@ describe('ConsultantService', () => {
         it('should return null when user is not a consultant', async () => {
             const userId = 'regular-user';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await consultantService.getConsultantProfile(userId);
 
@@ -182,9 +178,7 @@ describe('ConsultantService', () => {
         it('should return empty array when consultant has no links', async () => {
             const consultantId = 'consultant-no-links';
 
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await consultantService.getLinkedOrganizations(consultantId);
 
@@ -227,9 +221,7 @@ describe('ConsultantService', () => {
             const consultantId = 'consultant-123';
             const organizationId = 'org-no-access';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await consultantService.verifyAccess(consultantId, organizationId);
 
@@ -297,9 +289,7 @@ describe('ConsultantService', () => {
                 expires_at: new Date(Date.now() + 86400000).toISOString() // Future date
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, mockInvite);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await consultantService.validateInvite(inviteCode);
 
@@ -314,9 +304,7 @@ describe('ConsultantService', () => {
                 expires_at: new Date(Date.now() - 86400000).toISOString() // Past date
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, mockInvite);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             await expect(consultantService.validateInvite(inviteCode))
                 .rejects.toThrow('Invite has expired');
@@ -330,9 +318,7 @@ describe('ConsultantService', () => {
                 status: 'used'
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, mockInvite);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             await expect(consultantService.validateInvite(inviteCode))
                 .rejects.toThrow('Invite has already been used');
@@ -341,9 +327,7 @@ describe('ConsultantService', () => {
         it('should return null for non-existent invite', async () => {
             const inviteCode = 'non-existent';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await consultantService.validateInvite(inviteCode);
 
@@ -374,9 +358,7 @@ describe('ConsultantService', () => {
                 }
             });
 
-            mockDb.run.mockImplementation(function(query, params, callback) {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await consultantService.acceptInvite(inviteCode, userId, targetOrgId);
 
@@ -389,9 +371,7 @@ describe('ConsultantService', () => {
             const inviteCode = 'invalid-code';
             const userId = 'user-123';
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             await expect(consultantService.acceptInvite(inviteCode, userId))
                 .rejects.toThrow('Invalid invite code');
@@ -407,15 +387,10 @@ describe('ConsultantService', () => {
                 target_organization_id: 'org-456'
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, mockInvite);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             let runCallCount = 0;
-            mockDb.run.mockImplementation(function(query, params, callback) {
-                runCallCount++;
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             await consultantService.acceptInvite(inviteCode, userId);
 
@@ -431,13 +406,9 @@ describe('ConsultantService', () => {
             const permissions = { read: true, write: false };
 
             // Mock that link doesn't exist
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
-            mockDb.run.mockImplementation(function(query, params, callback) {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await consultantService.ensureLink(
                 consultantId,
@@ -465,9 +436,7 @@ describe('ConsultantService', () => {
                 organization_id: organizationId
             };
 
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, existingLink);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await consultantService.ensureLink(
                 consultantId,
@@ -485,9 +454,7 @@ describe('ConsultantService', () => {
         it('should successfully revoke consultant link', async () => {
             const linkId = 'link-123';
 
-            mockDb.run.mockImplementation(function(query, params, callback) {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await consultantService.revokeLink(linkId);
 
@@ -530,9 +497,7 @@ describe('ConsultantService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, mockInvites);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await consultantService.getConsultantInvites(consultantId);
 
@@ -549,9 +514,7 @@ describe('ConsultantService', () => {
         it('should return empty array when consultant has no invites', async () => {
             const consultantId = 'consultant-no-invites';
 
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await consultantService.getConsultantInvites(consultantId);
 

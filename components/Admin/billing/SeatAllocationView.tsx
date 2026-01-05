@@ -265,7 +265,7 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
                                 <Progress
                                     value={usagePercent}
                                     size="sm"
-                                    color={isNearLimit ? 'warning' : 'primary'}
+                                    color={isNearLimit ? 'danger' : 'primary'}
                                 />
 
                                 <p className="text-xs text-slate-500 mt-2">
@@ -398,4 +398,6 @@ export const SeatAllocationView: React.FC<SeatAllocationViewProps> = ({
 };
 
 export default SeatAllocationView;
+
+
 

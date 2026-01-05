@@ -7,7 +7,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import UserIntegrationService from '../../../../services/userIntegrationService.js';
+import UserIntegrationService from '../../../../src/services/userIntegrationService.js';
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
 
 describe('UserIntegrationService', () => {

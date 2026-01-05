@@ -6,8 +6,8 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AuthenticatedRequest, NextFunction, Response } from '../../../src/types/index.js';
-import { asyncHandler, createAsyncHandler } from '../../../src/utils/asyncHandler.js';
+import type { AuthenticatedRequest, NextFunction, Response } from '../../../../src/types/index.js';
+import { asyncHandler, createAsyncHandler } from '../../../../src/utils/asyncHandler.js';
 
 describe('asyncHandler', () => {
     let mockReq: Partial<AuthenticatedRequest>;
@@ -116,6 +116,8 @@ describe('asyncHandler', () => {
         });
     });
 });
+
+
 
 
 

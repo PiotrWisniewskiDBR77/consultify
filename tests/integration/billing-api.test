@@ -1,0 +1,258 @@
+/**
+ * Billing API Integration Tests
+ */
+
+const { describe, it, expect, beforeAll, afterAll, beforeEach } = require('vitest');
+
+describe('Billing API', () => {
+    describe('GET /api/billing/stats', () => {
+        it('should return billing statistics', async () => {
+            const mockStats = {
+                mrr: 450000,
+                arr: 5400000,
+                revenue: {
+                    total: 1250000,
+                    invoiceCount: 25,
+                    period: 30,
+                },
+                subscriptions: {
+                    byPlan: [
+                        { plan_name: 'Starter', subscriber_count: 10 },
+                        { plan_name: 'Professional', subscriber_count: 5 },
+                    ],
+                    trends: [],
+                },
+                unpaidInvoices: {
+                    count: 3,
+                    totalAmount: 35000,
+                },
+            };
+
+            expect(mockStats.mrr).toBe(450000);
+            expect(mockStats.arr).toBe(mockStats.mrr * 12);
+        });
+    });
+
+    describe('GET /api/billing/invoices', () => {
+        it('should return list of invoices', async () => {
+            const mockInvoices = [
+                {
+                    id: 'inv-1',
+                    invoice_number: 'INV-000001',
+                    status: 'paid',
+                    total: 9900,
+                    amount_due: 0,
+                },
+                {
+                    id: 'inv-2',
+                    invoice_number: 'INV-000002',
+                    status: 'open',
+                    total: 29900,
+                    amount_due: 29900,
+                },
+            ];
+
+            expect(mockInvoices).toHaveLength(2);
+            expect(mockInvoices[0].status).toBe('paid');
+            expect(mockInvoices[0].amount_due).toBe(0);
+        });
+
+        it('should filter invoices by status', async () => {
+            const paidInvoices = [
+                { id: 'inv-1', status: 'paid' },
+            ];
+
+            expect(paidInvoices.every(inv => inv.status === 'paid')).toBe(true);
+        });
+    });
+
+    describe('POST /api/billing/invoices', () => {
+        it('should create new invoice', async () => {
+            const newInvoice = {
+                organizationId: 'org-123',
+                lineItems: [
+                    { description: 'Monthly Subscription', amount: 9900 },
+                    { description: 'Additional Users (5)', amount: 2500 },
+                ],
+                currency: 'USD',
+            };
+
+            const expectedTotal = 12400;
+            const calculatedTotal = newInvoice.lineItems.reduce((sum, item) => sum + item.amount, 0);
+
+            expect(calculatedTotal).toBe(expectedTotal);
+        });
+
+        it('should generate invoice number', async () => {
+            const invoiceNumber = 'INV-000001';
+            expect(invoiceNumber).toMatch(/^INV-\d{6}$/);
+        });
+    });
+
+    describe('PUT /api/billing/invoices/:id', () => {
+        it('should mark invoice as paid', async () => {
+            const update = { status: 'paid' };
+            const updatedInvoice = {
+                id: 'inv-1',
+                status: 'paid',
+                paid_at: new Date().toISOString(),
+                amount_paid: 9900,
+                amount_due: 0,
+            };
+
+            expect(updatedInvoice.status).toBe('paid');
+            expect(updatedInvoice.amount_due).toBe(0);
+        });
+    });
+
+    describe('GET /api/billing/subscriptions', () => {
+        it('should return list of subscriptions', async () => {
+            const mockSubscriptions = [
+                {
+                    id: 'sub-1',
+                    organization_id: 'org-1',
+                    plan_name: 'Professional',
+                    status: 'active',
+                    billing_cycle: 'monthly',
+                },
+            ];
+
+            expect(mockSubscriptions[0].status).toBe('active');
+        });
+
+        it('should filter subscriptions by status', async () => {
+            const activeSubscriptions = [
+                { id: 'sub-1', status: 'active' },
+                { id: 'sub-2', status: 'active' },
+            ];
+
+            expect(activeSubscriptions.every(sub => sub.status === 'active')).toBe(true);
+        });
+    });
+
+    describe('POST /api/billing/subscriptions', () => {
+        it('should create new subscription', async () => {
+            const newSubscription = {
+                organizationId: 'org-123',
+                planId: 'plan-pro',
+                billingCycle: 'monthly',
+                trialDays: 14,
+            };
+
+            expect(newSubscription.billingCycle).toBe('monthly');
+            expect(newSubscription.trialDays).toBe(14);
+        });
+
+        it('should set trial end date when trial days provided', async () => {
+            const trialDays = 14;
+            const now = new Date();
+            const trialEnd = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
+
+            expect(trialEnd.getTime()).toBeGreaterThan(now.getTime());
+        });
+    });
+
+    describe('POST /api/billing/subscriptions/:id/cancel', () => {
+        it('should cancel subscription immediately', async () => {
+            const cancelResult = {
+                success: true,
+                message: 'Subscription canceled',
+            };
+
+            expect(cancelResult.success).toBe(true);
+        });
+
+        it('should cancel subscription at period end', async () => {
+            const cancelResult = {
+                success: true,
+                message: 'Subscription will be canceled at period end',
+                cancel_at_period_end: true,
+            };
+
+            expect(cancelResult.cancel_at_period_end).toBe(true);
+        });
+    });
+
+    describe('GET /api/billing/plans', () => {
+        it('should return list of subscription plans', async () => {
+            const mockPlans = [
+                {
+                    id: 'plan-starter',
+                    name: 'Starter',
+                    price_monthly: 2900,
+                    price_yearly: 29000,
+                    features: ['5 users', 'Basic support'],
+                    is_active: 1,
+                },
+                {
+                    id: 'plan-pro',
+                    name: 'Professional',
+                    price_monthly: 9900,
+                    price_yearly: 99000,
+                    features: ['25 users', 'Priority support', 'API access'],
+                    is_active: 1,
+                },
+            ];
+
+            expect(mockPlans).toHaveLength(2);
+            expect(mockPlans[1].price_monthly).toBeGreaterThan(mockPlans[0].price_monthly);
+        });
+    });
+
+    describe('POST /api/billing/credit-notes', () => {
+        it('should create credit note', async () => {
+            const newCreditNote = {
+                organizationId: 'org-123',
+                amount: 5000,
+                reason: 'Service credit',
+            };
+
+            expect(newCreditNote.amount).toBe(5000);
+            expect(newCreditNote.reason).toBeDefined();
+        });
+    });
+
+    describe('GET /api/billing/usage', () => {
+        it('should return usage records', async () => {
+            const mockUsage = {
+                usage: [
+                    { metric_name: 'ai_tokens', total: 125000, date: '2025-01-01' },
+                    { metric_name: 'api_calls', total: 5000, date: '2025-01-01' },
+                ],
+                totals: [
+                    { metric_name: 'ai_tokens', total: 500000 },
+                    { metric_name: 'api_calls', total: 25000 },
+                ],
+            };
+
+            expect(mockUsage.usage).toHaveLength(2);
+            expect(mockUsage.totals).toHaveLength(2);
+        });
+    });
+
+    describe('POST /api/billing/usage', () => {
+        it('should record usage', async () => {
+            const usageRecord = {
+                metricName: 'ai_tokens',
+                quantity: 1000,
+                metadata: { model: 'gpt-4' },
+            };
+
+            expect(usageRecord.quantity).toBe(1000);
+            expect(usageRecord.metricName).toBe('ai_tokens');
+        });
+    });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+

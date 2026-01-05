@@ -284,9 +284,7 @@ describe('Concurrent Operations Performance', () => {
             const burstSize = 100;
             const start = Date.now();
 
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, []);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const promises = Array(burstSize).fill(null).map(() =>
                 new Promise((resolve) => {

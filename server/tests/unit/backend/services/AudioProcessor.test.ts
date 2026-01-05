@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import AudioProcessor from '../../../../src/services/audioProcessor.js';
+import AudioProcessor from '../../../../src/services/ai/processors/audioProcessor.js';
 
 describe('AudioProcessor', () => {
     let mockDb: IDatabase;

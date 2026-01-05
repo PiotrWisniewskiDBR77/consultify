@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import VoiceHealthMonitor from '../../../../src/services/voiceHealthMonitor.js';
+import VoiceHealthMonitor from '../../../../src/services/ai/voiceHealthMonitor.js';
 
 describe('VoiceHealthMonitor', () => {
     let mockDb: IDatabase;

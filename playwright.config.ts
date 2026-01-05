@@ -31,6 +31,30 @@ export default defineConfig({
             name: 'webkit',
             use: { ...devices['Desktop Safari'] },
         },
+        // Visual regression tests (can run without Percy token)
+        {
+            name: 'visual-regression',
+            testMatch: '**/visual-regression.spec.ts',
+            use: {
+                ...devices['Desktop Chrome'],
+                viewport: { width: 1280, height: 720 },
+                screenshot: 'on',
+            },
+        },
+    ],
+    projects: [
+        {
+            name: 'chromium',
+            use: { ...devices['Desktop Chrome'] },
+        },
+        {
+            name: 'firefox',
+            use: { ...devices['Desktop Firefox'] },
+        },
+        {
+            name: 'webkit',
+            use: { ...devices['Desktop Safari'] },
+        },
     ],
     webServer: {
         command: 'npm run dev',

@@ -6,9 +6,10 @@
 
 // Layout components
 export { AdminSidebar } from './AdminSidebar';
-export type { AdminNavGroup, AdminNavItem } from './AdminSidebar';
+export type { AdminSection } from './AdminSidebar';
 
 export { AdminLayout } from './AdminLayout';
+export type { Breadcrumb } from './AdminLayout';
 
 // Shared components
 export * from './shared';
@@ -27,4 +28,6 @@ export * from './compliance';
 
 // Workspace components
 export * from './workspace';
+
+
 

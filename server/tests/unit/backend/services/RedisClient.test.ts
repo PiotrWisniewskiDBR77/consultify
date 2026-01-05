@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import RedisClient from '../../../../src/services/redisClient.js';
+import RedisClient from '../../../../src/services/ai/redisClient.js';
 
 describe('RedisClient', () => {
     let mockDb: IDatabase;

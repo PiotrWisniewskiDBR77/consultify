@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import TitleGenerator from '../../../../src/services/titleGenerator.js';
+import TitleGenerator from '../../../../src/services/ai/titleGenerator.js';
 
 describe('TitleGenerator', () => {
     let mockDb: IDatabase;

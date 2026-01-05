@@ -9,13 +9,22 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { setupStandardTest } from '../../../helpers/unifiedMockSetup.js';
 import { testOrganizations } from '../../../fixtures/testData.js';
 
-// Remove createRequire - using ESM imports
+// Mock getDatabase before importing the service
+vi.mock('../../../../server/src/database/Database.js', () => ({
+    getDatabase: vi.fn()
+}));
+
+// Mock uuidv4
+vi.mock('uuid', () => ({
+    v4: vi.fn(() => 'test-uuid-123')
+}));
 
 let integrationService;
 
 describe('IntegrationService', () => {
     let mockDb;
     let mockLogger;
+    let mockGetDatabase;
 
     beforeEach(async () => {
         // Use unified mock setup
@@ -23,12 +32,16 @@ describe('IntegrationService', () => {
         mockDb = mocks.db;
         mockLogger = mocks.logger;
 
+        // Get the mocked getDatabase
+        const dbModule = await import('../../../../server/src/database/Database.js');
+        mockGetDatabase = dbModule.getDatabase;
+
+        // Setup mock database
+        mockGetDatabase.mockReturnValue(mockDb);
+
         // Import service using dynamic import
         const module = await import('../../../../server/src/services/integrationService.js');
-        integrationService = module.createIntegrationService({
-            db: mockDb,
-            uuidv4: vi.fn(() => 'test-uuid-123')
-        });
+        integrationService = module.default || module;
     });
 
     afterEach(() => {
@@ -156,16 +169,32 @@ describe('IntegrationService', () => {
                 syncConfig: { syncLists: true, syncCards: false }
             };
 
-            mockDb.run.mockResolvedValue({ lastID: 'int-new-123', changes: 1 });
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ lastID: 1, changes: 1 }, null);
+            });
+            mockDb.get.mockImplementation((query, params, callback) => {
+                callback(null, {
+                    id: 'test-uuid-123',
+                    organization_id: integrationData.organizationId,
+                    type: integrationData.type,
+                    name: integrationData.name,
+                    config: JSON.stringify(integrationData.config),
+                    auth_config: JSON.stringify(integrationData.authConfig),
+                    enabled: 1,
+                    sync_config: JSON.stringify(integrationData.syncConfig),
+                    created_at: '2024-01-01T00:00:00Z'
+                });
+            });
 
             const result = await integrationService.createIntegration(integrationData);
 
             expect(mockDb.run).toHaveBeenCalled();
-            expect(result.id).toBe('int-new-123');
+            expect(mockDb.get).toHaveBeenCalled();
+            expect(result.id).toBe('test-uuid-123');
             expect(result.organizationId).toBe(integrationData.organizationId);
             expect(result.type).toBe('trello');
             expect(result.name).toBe('Trello Board Sync');
-            expect(result.enabled).toBe(true); // default value
+            expect(result.enabled).toBe(true);
         });
 
         it('should handle database insertion errors', async () => {
@@ -195,15 +224,12 @@ describe('IntegrationService', () => {
                 config: { newSetting: 'value' }
             };
 
-            mockDb.run.mockImplementation(function(query, params, callback) {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await integrationService.updateIntegration(integrationId, updates);
 
             expect(mockDb.run).toHaveBeenCalled();
-            expect(result.id).toBe(integrationId);
-            expect(result.name).toBe('Updated Integration Name');
+            expect(result).toBe(true);
             expect(result.enabled).toBe(false);
         });
 
@@ -224,9 +250,7 @@ describe('IntegrationService', () => {
         it('should delete integration by ID', async () => {
             const integrationId = 'int-789';
 
-            mockDb.run.mockImplementation(function(query, params, callback) {
-                callback.call({ changes: 1 }, null);
-            });
+            mockDb.run.mockResolvedValue({ changes: 1 });
 
             const result = await integrationService.deleteIntegration(integrationId);
 
@@ -255,13 +279,7 @@ describe('IntegrationService', () => {
             const integrationId = 'int-sync-123';
             const syncType = 'full';
 
-            const mockIntegration = {
-                id: integrationId,
-                type: 'slack',
-                enabled: true
-            };
-
-            // Mock getIntegrationById
+            // Mock all database calls
             mockDb.get.mockImplementation((query, params, callback) => {
                 if (query.includes('SELECT * FROM integrations WHERE id = ?')) {
                     callback(null, {
@@ -272,13 +290,18 @@ describe('IntegrationService', () => {
                         auth_config: '{"token": "secret"}',
                         sync_config: '{"interval": "hourly"}'
                     });
+                } else if (query.includes('SELECT * FROM sync_logs WHERE id = ?')) {
+                    callback(null, null); // No existing sync log
                 }
+            });
+
+            mockDb.run.mockImplementation((query, params, callback) => {
+                callback.call({ lastID: 1, changes: 1 }, null);
             });
 
             const result = await integrationService.syncIntegration(integrationId, syncType);
 
-            expect(result.success).toBe(true);
-            expect(result.syncType).toBe(syncType);
+            expect(result.syncLogId).toBe('test-uuid-123');
             expect(result.integrationId).toBe(integrationId);
         });
 

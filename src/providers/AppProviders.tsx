@@ -15,6 +15,11 @@ interface AppProvidersProps {
 }
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
+    // Log initialization for debugging
+    React.useEffect(() => {
+        console.log('[AppProviders] Initializing providers...');
+    }, []);
+
     return (
         <ErrorBoundary>
             <BrowserRouter>

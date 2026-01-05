@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import PerformanceOptimizer from '../../../../src/services/performanceOptimizer.js';
+import PerformanceOptimizer from '../../../../src/services/ai/performanceOptimizer.js';
 
 describe('PerformanceOptimizer', () => {
     let mockDb: IDatabase;

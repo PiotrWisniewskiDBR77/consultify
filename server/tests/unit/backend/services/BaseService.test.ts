@@ -5,8 +5,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { IDatabase } from '../../../src/database/IDatabase.js';
-import { BaseService } from '../../../src/services/BaseService.js';
+import type { IDatabase } from '../../../../src/database/IDatabase.js';
+import { BaseService } from '../../../../src/services/BaseService.js';
 
 // Mock implementation for testing
 class TestService extends BaseService<{ id: string; name: string }> {
@@ -61,6 +61,8 @@ describe('BaseService', () => {
         expect((service as unknown as { db: IDatabase }).db).toBeDefined();
     });
 });
+
+
 
 
 

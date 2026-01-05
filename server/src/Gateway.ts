@@ -384,10 +384,10 @@ export class ApiGateway {
             app.use('/api/metrics', metricsRoutes);
             app.use('/api/performance-metrics', performanceMetricsRoutes);
             app.use('/api/performance', performanceRoutes);
-            // Chaos engineering endpoints (development only)
-            if (process.env.NODE_ENV !== 'production') {
-                app.use('/api/chaos', chaosRoutes);
-            }
+            // Chaos engineering endpoints (development only) - disabled
+            // if (process.env.NODE_ENV !== 'production') {
+            //     app.use('/api/chaos', chaosRoutes);
+            // }
             app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
 
             // Other routes

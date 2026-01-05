@@ -1,0 +1,280 @@
+/**
+ * RoadmapCapacityHeatmap
+ *
+ * Shows resource capacity and workload across the roadmap timeline.
+ * Highlights overallocation and helps with workload balancing.
+ */
+
+import { AlertTriangle, Calendar, TrendingUp, Users, Zap } from 'lucide-react';
+import React, { useMemo } from 'react';
+
+import { FullInitiative } from '../types';
+
+interface CapacityData {
+    month: string;
+    year: number;
+    initiativeCount: number;
+    totalEffort: number;
+    capacity: number;
+    utilizationPercent: number;
+    isOverloaded: boolean;
+}
+
+interface RoadmapCapacityHeatmapProps {
+    initiatives: FullInitiative[];
+    teamCapacity?: number; // Hours per month
+    onMonthClick?: (month: string, year: number) => void;
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export const RoadmapCapacityHeatmap: React.FC<RoadmapCapacityHeatmapProps> = ({
+    initiatives,
+    teamCapacity = 160, // Default: 1 FTE
+    onMonthClick,
+}) => {
+    // Calculate capacity data per month
+    const capacityData = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const data: CapacityData[] = [];
+
+        // Generate 24 months of data
+        for (let i = 0; i < 24; i++) {
+            const monthIndex = i % 12;
+            const year = currentYear + Math.floor(i / 12);
+            const monthStart = new Date(year, monthIndex, 1);
+            const monthEnd = new Date(year, monthIndex + 1, 0);
+
+            // Count initiatives active in this month
+            let initiativeCount = 0;
+            let totalEffort = 0;
+
+            initiatives.forEach((init) => {
+                const initAsAny = init as any;
+                let initStart: Date | null = null;
+                let initEnd: Date | null = null;
+
+                // Try to get dates from initiative
+                if (initAsAny.plannedStartDate && initAsAny.plannedEndDate) {
+                    initStart = new Date(initAsAny.plannedStartDate);
+                    initEnd = new Date(initAsAny.plannedEndDate);
+                } else if (initAsAny.quarter) {
+                    const qIndex = parseInt(initAsAny.quarter.replace('Q', '')) - 1;
+                    initStart = new Date(currentYear, qIndex * 3, 1);
+                    initEnd = new Date(currentYear, (qIndex + 1) * 3, 0);
+                }
+
+                if (initStart && initEnd) {
+                    // Check if initiative overlaps with this month
+                    if (initStart <= monthEnd && initEnd >= monthStart) {
+                        initiativeCount++;
+                        // Estimate effort (simplified: 40 hours per initiative per month)
+                        totalEffort += 40;
+                    }
+                }
+            });
+
+            const utilizationPercent = Math.round((totalEffort / teamCapacity) * 100);
+
+            data.push({
+                month: MONTHS[monthIndex],
+                year,
+                initiativeCount,
+                totalEffort,
+                capacity: teamCapacity,
+                utilizationPercent,
+                isOverloaded: utilizationPercent > 100,
+            });
+        }
+
+        return data;
+    }, [initiatives, teamCapacity]);
+
+    // Get color based on utilization
+    const getUtilizationColor = (percent: number): string => {
+        if (percent === 0) return 'bg-slate-100 dark:bg-slate-800';
+        if (percent <= 50) return 'bg-green-200 dark:bg-green-900/50';
+        if (percent <= 75) return 'bg-green-400 dark:bg-green-700';
+        if (percent <= 100) return 'bg-amber-400 dark:bg-amber-600';
+        if (percent <= 125) return 'bg-orange-500 dark:bg-orange-600';
+        return 'bg-red-500 dark:bg-red-600';
+    };
+
+    // Calculate summary stats
+    const stats = useMemo(() => {
+        const overloaded = capacityData.filter((d) => d.isOverloaded).length;
+        const avgUtilization = capacityData.reduce((sum, d) => sum + d.utilizationPercent, 0) / capacityData.length;
+        const peakMonth = capacityData.reduce((max, d) => (d.utilizationPercent > max.utilizationPercent ? d : max));
+
+        return {
+            overloadedMonths: overloaded,
+            avgUtilization: Math.round(avgUtilization),
+            peakMonth,
+        };
+    }, [capacityData]);
+
+    // Group by year
+    const yearGroups = useMemo(() => {
+        const groups: { year: number; months: CapacityData[] }[] = [];
+        let currentYear = -1;
+
+        capacityData.forEach((d) => {
+            if (d.year !== currentYear) {
+                currentYear = d.year;
+                groups.push({ year: d.year, months: [] });
+            }
+            groups[groups.length - 1].months.push(d);
+        });
+
+        return groups;
+    }, [capacityData]);
+
+    return (
+        <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-white/10">
+                <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-navy-900 dark:text-white flex items-center gap-2">
+                        <Users size={18} className="text-purple-500" />
+                        Capacity Overview
+                    </h3>
+                    <div className="flex items-center gap-4 text-xs">
+                        {stats.overloadedMonths > 0 && (
+                            <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
+                                <AlertTriangle size={14} />
+                                {stats.overloadedMonths} months overloaded
+                            </div>
+                        )}
+                        <div className="flex items-center gap-1 text-slate-500">
+                            <TrendingUp size={14} />
+                            Avg: {stats.avgUtilization}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-4 gap-4 p-4 border-b border-slate-200 dark:border-white/10">
+                <div className="text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Team Capacity</p>
+                    <p className="text-lg font-bold text-navy-900 dark:text-white">{teamCapacity}h/mo</p>
+                </div>
+                <div className="text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Avg Utilization</p>
+                    <p
+                        className={`text-lg font-bold ${
+                            stats.avgUtilization > 100
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-green-600 dark:text-green-400'
+                        }`}
+                    >
+                        {stats.avgUtilization}%
+                    </p>
+                </div>
+                <div className="text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Peak Month</p>
+                    <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                        {stats.peakMonth.month} {stats.peakMonth.year}
+                    </p>
+                </div>
+                <div className="text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Overloaded</p>
+                    <p
+                        className={`text-lg font-bold ${
+                            stats.overloadedMonths > 0
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-green-600 dark:text-green-400'
+                        }`}
+                    >
+                        {stats.overloadedMonths} months
+                    </p>
+                </div>
+            </div>
+
+            {/* Heatmap Grid */}
+            <div className="p-4">
+                {yearGroups.map((group) => (
+                    <div key={group.year} className="mb-4 last:mb-0">
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">{group.year}</p>
+                        <div className="grid grid-cols-12 gap-1">
+                            {group.months.map((d, idx) => (
+                                <div
+                                    key={idx}
+                                    onClick={() => onMonthClick?.(d.month, d.year)}
+                                    className={`relative group rounded-md p-2 cursor-pointer transition-all hover:ring-2 hover:ring-purple-500 ${getUtilizationColor(
+                                        d.utilizationPercent,
+                                    )}`}
+                                >
+                                    <p className="text-[10px] font-medium text-center text-slate-700 dark:text-slate-200">
+                                        {d.month}
+                                    </p>
+                                    <p
+                                        className={`text-xs font-bold text-center ${
+                                            d.isOverloaded ? 'text-white' : 'text-slate-600 dark:text-slate-300'
+                                        }`}
+                                    >
+                                        {d.utilizationPercent}%
+                                    </p>
+                                    {d.isOverloaded && (
+                                        <div className="absolute -top-1 -right-1">
+                                            <AlertTriangle size={12} className="text-white drop-shadow" />
+                                        </div>
+                                    )}
+
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20">
+                                        <div className="bg-navy-900 dark:bg-navy-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+                                            <p className="font-semibold">
+                                                {d.month} {d.year}
+                                            </p>
+                                            <p>{d.initiativeCount} initiatives</p>
+                                            <p>
+                                                {d.totalEffort}h / {d.capacity}h
+                                            </p>
+                                            <p className={d.isOverloaded ? 'text-red-400' : 'text-green-400'}>
+                                                {d.utilizationPercent}% utilized
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Legend */}
+            <div className="px-4 py-3 bg-slate-50 dark:bg-navy-950 border-t border-slate-200 dark:border-white/10">
+                <div className="flex items-center justify-center gap-4 text-xs">
+                    <span className="text-slate-500">Utilization:</span>
+                    <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-800" />
+                        <span>0%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 rounded bg-green-200 dark:bg-green-900/50" />
+                        <span>1-50%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 rounded bg-green-400 dark:bg-green-700" />
+                        <span>51-75%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 rounded bg-amber-400 dark:bg-amber-600" />
+                        <span>76-100%</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 rounded bg-red-500 dark:bg-red-600" />
+                        <span>&gt;100%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default RoadmapCapacityHeatmap;
+
+
+
+

@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import AgentCoordinator from '../../../../src/services/agentCoordinator.js';
+import AgentCoordinator from '../../../../src/services/ai/agents/agentCoordinator.js';
 
 describe('AgentCoordinator', () => {
     let mockDb: IDatabase;

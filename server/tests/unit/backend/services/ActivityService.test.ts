@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import ActivityService from '../../../../services/activityService.js';
+import ActivityService from '../../../../src/services/activityService.js';
 
 describe('ActivityService', () => {
     let mockDb;
@@ -36,6 +36,8 @@ describe('ActivityService', () => {
         expect(typeof ActivityService.getRecent).toBe('function');
     });
 });
+
+
 
 
 

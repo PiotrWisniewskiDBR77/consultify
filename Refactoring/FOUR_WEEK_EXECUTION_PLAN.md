@@ -151,3 +151,5 @@
 
 **Plan w trakcie wykonania - systematyczna migracja do enterprise standard!** 🚀
 
+
+

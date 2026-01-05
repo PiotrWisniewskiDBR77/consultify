@@ -35,7 +35,7 @@ function dbAll(sql, params = []) {
 
 function dbRun(sql, params = []) {
     return new Promise((resolve, reject) => {
-        db.run(sql, params, function(err) {
+        db.run(sql, params, function (err) {
             if (err) reject(err);
             else resolve({ lastID: this.lastID, changes: this.changes });
         });
@@ -65,9 +65,9 @@ const ReportVersionService = {
             'SELECT MAX(version_number) as max_version FROM management_report_versions WHERE report_id = ?',
             [reportId]
         );
-        
+
         const newVersionNumber = (currentVersion?.max_version || 0) + 1;
-        
+
         // Calculate version label based on type
         const versionLabel = ReportVersionService._calculateVersionLabel(
             newVersionNumber,
@@ -75,7 +75,7 @@ const ReportVersionService = {
         );
 
         const id = uuidv4();
-        
+
         // Parse content if it's a string
         let contentJson = content;
         if (typeof content === 'string') {
@@ -110,7 +110,7 @@ const ReportVersionService = {
         `, [newVersionNumber, reportId]);
 
         // Log audit
-        const ReportAuditService = require('./reportAuditService');
+        const { default: ReportAuditService } = await import('./reportAuditService.js');
         await ReportAuditService.log(reportId, 'VERSION_CREATED', userId, {
             versionNumber: newVersionNumber,
             versionLabel,
@@ -343,14 +343,14 @@ const ReportVersionService = {
      */
     incrementVersion: async (reportId, type = 'minor') => {
         const currentVersion = await ReportVersionService.getCurrentVersion(reportId);
-        
+
         if (!currentVersion) {
             return '1.0';
         }
 
         const label = currentVersion.versionLabel || '1.0';
         const parts = label.split('.').map(Number);
-        
+
         switch (type) {
             case 'major':
                 parts[0] = (parts[0] || 1) + 1;
@@ -410,8 +410,8 @@ const ReportVersionService = {
                     type: 'removed',
                     oldValue: val1
                 });
-            } else if (typeof val1 === 'object' && typeof val2 === 'object' && 
-                       val1 !== null && val2 !== null && !Array.isArray(val1) && !Array.isArray(val2)) {
+            } else if (typeof val1 === 'object' && typeof val2 === 'object' &&
+                val1 !== null && val2 !== null && !Array.isArray(val1) && !Array.isArray(val2)) {
                 // Recurse into objects
                 changes.push(...ReportVersionService._compareContents(val1, val2, currentPath));
             } else if (JSON.stringify(val1) !== JSON.stringify(val2)) {
@@ -464,12 +464,14 @@ const ReportVersionService = {
         }
 
         const content = report.content ? JSON.parse(report.content) : {};
-        
+
         return ReportVersionService.createVersion(reportId, content, userId, changeSummary);
     }
 };
 
 export default ReportVersionService;
+
+
 
 
 

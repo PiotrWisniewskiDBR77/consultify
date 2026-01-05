@@ -5,7 +5,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import logger from '../../../src/utils/Logger.js';
+import logger from '../../../../src/utils/Logger.js';
 
 describe('Logger', () => {
     beforeEach(() => {
@@ -41,6 +41,8 @@ describe('Logger', () => {
         expect(() => logger.debug('Debug message', { key: 'value' })).not.toThrow();
     });
 });
+
+
 
 
 

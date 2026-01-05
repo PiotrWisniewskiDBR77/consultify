@@ -54,9 +54,7 @@ describe('EmailQueueService', () => {
         });
 
         it('should skip when no recipient found', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await emailQueueService.queueBillingEmail({
                 type: 'invoice_created',
@@ -124,9 +122,7 @@ describe('EmailQueueService', () => {
                 error_message: null
             };
 
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, mockEmail);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await emailQueueService.getEmailStatus('email-1');
 
@@ -136,9 +132,7 @@ describe('EmailQueueService', () => {
         });
 
         it('should return not found when email does not exist', async () => {
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, null);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await emailQueueService.getEmailStatus('nonexistent');
 
@@ -162,9 +156,7 @@ describe('EmailQueueService', () => {
                 }
             ];
 
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback(null, mockFailedEmails);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await emailQueueService.retryFailedEmails();
 
@@ -172,9 +164,7 @@ describe('EmailQueueService', () => {
         });
 
         it('should return zero when no failed emails', async () => {
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback(null, []);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await emailQueueService.retryFailedEmails();
 
@@ -191,9 +181,7 @@ describe('EmailQueueService', () => {
                 failed: 5
             };
 
-            mockDb.get.mockImplementation((sql, params, callback) => {
-                callback(null, mockStats);
-            });
+            mockDb.get.mockResolvedValue($2);
 
             const result = await emailQueueService.getQueueStats();
 

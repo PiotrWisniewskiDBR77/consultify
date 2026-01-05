@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import SlackUserIntegration from '../../../../src/services/slackUserIntegration.js';
+import SlackUserIntegration from '../../../../src/services/integrations/slackUserIntegration.js';
 
 describe('SlackUserIntegration', () => {
     let mockDb: IDatabase;

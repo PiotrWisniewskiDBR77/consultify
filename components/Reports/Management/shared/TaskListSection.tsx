@@ -3,11 +3,18 @@
  * Reusable list for tasks, blockers, decisions
  */
 
-import { AlertTriangle, Calendar, CheckCircle2, ChevronRight, Circle, Clock, User } from 'lucide-react';
 import React from 'react';
-
-import { RAGStatus } from '../../../../types';
+import { 
+    CheckCircle2, 
+    Clock, 
+    AlertTriangle, 
+    Circle,
+    User,
+    Calendar,
+    ChevronRight
+} from 'lucide-react';
 import { RAGIndicator } from './RAGIndicator';
+import { RAGStatus } from '../../../../types';
 
 interface TaskItem {
     id: string;
@@ -38,23 +45,23 @@ const variantStyles = {
     default: {
         container: 'bg-white dark:bg-navy-900',
         itemBorder: 'border-slate-100 dark:border-white/5',
-        icon: <Circle size={16} className="text-slate-400" />,
+        icon: <Circle size={16} className="text-slate-400" />
     },
     completed: {
         container: 'bg-emerald-50/50 dark:bg-emerald-900/10',
         itemBorder: 'border-emerald-100 dark:border-emerald-500/10',
-        icon: <CheckCircle2 size={16} className="text-emerald-500" />,
+        icon: <CheckCircle2 size={16} className="text-emerald-500" />
     },
     blocked: {
         container: 'bg-red-50/50 dark:bg-red-900/10',
         itemBorder: 'border-red-100 dark:border-red-500/10',
-        icon: <AlertTriangle size={16} className="text-red-500" />,
+        icon: <AlertTriangle size={16} className="text-red-500" />
     },
     pending: {
         container: 'bg-amber-50/50 dark:bg-amber-900/10',
         itemBorder: 'border-amber-100 dark:border-amber-500/10',
-        icon: <Clock size={16} className="text-amber-500" />,
-    },
+        icon: <Clock size={16} className="text-amber-500" />
+    }
 };
 
 export const TaskListSection: React.FC<TaskListSectionProps> = ({
@@ -66,7 +73,7 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({
     maxItems = 10,
     showViewAll = false,
     onViewAll,
-    className = '',
+    className = ''
 }) => {
     const styles = variantStyles[variant];
     const displayItems = items.slice(0, maxItems);
@@ -99,7 +106,9 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({
             {/* Items */}
             <div className="divide-y divide-slate-100 dark:divide-white/5">
                 {displayItems.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">{emptyMessage}</div>
+                    <div className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">
+                        {emptyMessage}
+                    </div>
                 ) : (
                     displayItems.map((item) => (
                         <div
@@ -114,21 +123,21 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({
                                             {item.title}
                                         </span>
                                         {item.severity && (
-                                            <span
-                                                className={`px-2 py-0.5 text-xs font-medium rounded ${
-                                                    item.severity === 'CRITICAL' || item.severity === 'HIGH'
-                                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                                        : item.severity === 'MEDIUM'
-                                                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                          : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                                                }`}
-                                            >
+                                            <span className={`px-2 py-0.5 text-xs font-medium rounded ${
+                                                item.severity === 'CRITICAL' || item.severity === 'HIGH'
+                                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                    : item.severity === 'MEDIUM'
+                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                                            }`}>
                                                 {item.severity}
                                             </span>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-                                        {item.projectName && <span className="truncate">{item.projectName}</span>}
+                                        {item.projectName && (
+                                            <span className="truncate">{item.projectName}</span>
+                                        )}
                                         {item.assignee && (
                                             <span className="flex items-center gap-1">
                                                 <User size={12} />
@@ -141,8 +150,12 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({
                                                 {item.dueDate}
                                             </span>
                                         )}
-                                        {item.daysInfo && <span className="text-xs">{item.daysInfo}</span>}
-                                        {item.meta && <span className="text-xs">{item.meta}</span>}
+                                        {item.daysInfo && (
+                                            <span className="text-xs">{item.daysInfo}</span>
+                                        )}
+                                        {item.meta && (
+                                            <span className="text-xs">{item.meta}</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>

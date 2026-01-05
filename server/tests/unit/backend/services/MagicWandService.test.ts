@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import MagicWandService from '../../../../src/services/magicWandService.js';
+import MagicWandService from '../../../../src/services/ai/magicWandService.js';
 
 describe('MagicWandService', () => {
     let mockDb: IDatabase;

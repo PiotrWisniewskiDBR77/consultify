@@ -401,3 +401,5 @@ Po zakończeniu wszystkich batchów:
 
 
 
+
+

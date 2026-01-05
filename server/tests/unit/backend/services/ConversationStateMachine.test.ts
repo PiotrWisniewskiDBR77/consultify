@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import ConversationStateMachine from '../../../../src/services/conversationStateMachine.js';
+import ConversationStateMachine from '../../../../src/services/ai/conversationStateMachine.js';
 
 describe('ConversationStateMachine', () => {
     let mockDb: IDatabase;

@@ -307,9 +307,7 @@ describe('StripeService', () => {
                 { id: 'credit-2', amount: 3000, used_amount: 0 }
             ];
 
-            mockDb.all.mockImplementation((sql, params, callback) => {
-                callback(null, mockCredits);
-            });
+            mockDb.all.mockResolvedValue($2);
 
             const result = await stripeService.getAvailableCredits('org-1');
 

@@ -16,7 +16,7 @@ import {
     PrioritizedListSchema,
     ROIEstimateSchema,
     validateOrFallback,
-} from '../../../src/utils/AISchemaValidator.js';
+} from '../../../../src/utils/AISchemaValidator.js';
 
 describe('AISchemaValidator', () => {
     describe('validateOrFallback', () => {
@@ -170,6 +170,8 @@ describe('AISchemaValidator', () => {
         });
     });
 });
+
+
 
 
 
