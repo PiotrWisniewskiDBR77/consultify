@@ -103,7 +103,7 @@
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^3.0.4",
-    "lucide-react": "^0.556.0",
+    "lucide-react": "^0.562.0",
     "mermaid": "^11.12.2",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
