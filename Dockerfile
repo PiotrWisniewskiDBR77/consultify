@@ -4,7 +4,7 @@
 # ==========================================
 # STAGE 1: Dependencies
 # ==========================================
-FROM node:20-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 
 # Install security updates
@@ -21,7 +21,7 @@ RUN cd server && npm ci --omit=dev
 # ==========================================
 # STAGE 2: Frontend Builder
 # ==========================================
-FROM node:20-alpine AS frontend-builder
+FROM node:25-alpine AS frontend-builder
 WORKDIR /app
 
 # Copy package files and install all dependencies (including dev)
@@ -35,7 +35,7 @@ RUN npm run build
 # ==========================================
 # STAGE 3: Backend Builder
 # ==========================================
-FROM node:20-alpine AS backend-builder
+FROM node:25-alpine AS backend-builder
 WORKDIR /app
 
 # Copy package files and install all dependencies (including dev)
@@ -49,7 +49,7 @@ RUN npm run build:backend || echo "Backend build step"
 # ==========================================
 # STAGE 4: Production API
 # ==========================================
-FROM node:20-alpine AS api
+FROM node:25-alpine AS api
 WORKDIR /app
 
 # Security: Create non-root user
