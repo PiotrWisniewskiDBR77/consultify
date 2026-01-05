@@ -327,7 +327,7 @@ jobs:
     if: always()
     steps:
       - name: Download All Reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: reports/
         continue-on-error: true

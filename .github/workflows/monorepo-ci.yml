@@ -227,7 +227,7 @@ jobs:
         run: npm ci
 
       - name: Download Shared Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: shared-build
           path: packages/shared/dist
@@ -283,7 +283,7 @@ jobs:
         run: npm ci
 
       - name: Download Shared Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: shared-build
           path: packages/shared/dist
@@ -336,7 +336,7 @@ jobs:
         run: npm ci
 
       - name: Download Shared Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: shared-build
           path: packages/shared/dist
@@ -387,7 +387,7 @@ jobs:
         run: npm ci
 
       - name: Download Shared Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: shared-build
           path: packages/shared/dist
@@ -424,7 +424,7 @@ jobs:
         run: npm ci
 
       - name: Download Shared Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: shared-build
           path: packages/shared/dist
@@ -477,7 +477,7 @@ jobs:
         run: npm ci
 
       - name: Download Shared Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: shared-build
           path: packages/shared/dist
@@ -592,7 +592,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download all test results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: '*-test-results-*'
           path: test-results/
