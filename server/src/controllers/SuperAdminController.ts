@@ -1,5 +1,5 @@
 import { AppError, asyncHandler as catchAsync } from '../utils/errorHandler.js';
-import db from '../database/index.js';
+import { getDatabaseInstance } from '../database/index.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { config } from '../config/index.js';
@@ -7,7 +7,7 @@ import * as uuid from 'uuid';
 
 // Default Dependencies
 const deps = {
-    db: db,
+    db: getDatabaseInstance(),
     ActivityService: import("../services/ActivityService.js"),
     BillingService: null, // Lazy loaded
     UsageService: import('../services/usageService.js'),
