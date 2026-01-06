@@ -633,6 +633,21 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
+    `CREATE TABLE IF NOT EXISTS organization_members (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'MEMBER',
+        status TEXT DEFAULT 'ACTIVE',
+        invited_by_user_id TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY(invited_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+        UNIQUE(organization_id, user_id)
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_org_members_org ON organization_members(organization_id)`,
     `CREATE TABLE IF NOT EXISTS organization_billing (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL UNIQUE,
@@ -1160,5 +1175,24 @@ export const TEST_SCHEMA = [
         budget_limit_usd REAL,
         last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(organization_id, month)
+    )`,
+    `CREATE TABLE IF NOT EXISTS access_requests(
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL,
+        first_name TEXT,
+        last_name TEXT,
+        phone TEXT,
+        organization_id TEXT,
+        organization_name TEXT,
+        requested_role TEXT DEFAULT 'USER',
+        status TEXT DEFAULT 'pending',
+        request_type TEXT DEFAULT 'new_user',
+        metadata TEXT,
+        requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        reviewed_by TEXT,
+        reviewed_at TIMESTAMP,
+        rejection_reason TEXT,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+        FOREIGN KEY(reviewed_by) REFERENCES users(id) ON DELETE SET NULL
     )`,
 ];

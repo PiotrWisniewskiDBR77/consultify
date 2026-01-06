@@ -1,8 +1,9 @@
 import app from '../../../server/src/index.js';
 import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import bcrypt from 'bcryptjs';
 
 vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
@@ -10,65 +11,67 @@ vi.hoisted(() => {
     process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
-/**
- * Integration tests for SuperAdmin Support endpoints
- */
-
-const express = require('express');
-const router = require('../../../../server/routes/superadmin');
-const { createTestToken } = require('../../helpers/auth');
-
-const app = express();
-app.use(express.json());
-app.use('/api/superadmin', router);
-
-describe('SuperAdmin Support API', () => {
+describe('SuperAdmin Support API Integration', () => {
     const db = getDatabase();
-    let authToken;
+    let superAdminToken;
+    const testId = Date.now();
+    const adminEmail = `superadmin-${testId}@test.com`;
 
-    beforeAll(() => {
-        authToken = createTestToken({ role: 'SUPERADMIN', id: 'admin-001' });
-    });
+    beforeAll(async () => {
+        await initializeDatabase();
+        await db.initPromise;
 
-    describe('GET /api/superadmin/support/tickets', () => {
-    const db = getDatabase();
-        it('should return support tickets', async () => {
-            const response = await request(app)
-                .get('/api/superadmin/support/tickets')
-                .set('Authorization', `Bearer ${authToken}`)
-                .expect(200);
+        const hash = bcrypt.hashSync('test123', 8);
 
-            expect(Array.isArray(response.body)).toBe(true);
+        // Create superadmin user
+        await new Promise((resolve, reject) => {
+            db.run(
+                'INSERT INTO users (id, email, password, first_name, role, status) VALUES (?, ?, ?, ?, ?, ?)',
+                [`admin-${testId}`, adminEmail, hash, 'Super', 'SUPERADMIN', 'active'],
+                (err) => (err ? reject(err) : resolve()),
+            );
         });
+
+        // Login to get token
+        const loginRes = await request(app).post('/api/auth/login').send({ email: adminEmail, password: 'test123' });
+
+        superAdminToken = loginRes.body.token;
     });
 
-    describe('POST /api/superadmin/support/tickets', () => {
-    const db = getDatabase();
+    describe('Support Tickets', () => {
+        it('should return support tickets', async () => {
+            const res = await request(app)
+                .get('/api/superadmin/support/tickets')
+                .set('Authorization', `Bearer ${superAdminToken}`);
+
+            expect(res.status).toBe(200);
+            expect(Array.isArray(res.body)).toBe(true);
+        });
+
         it('should create a support ticket', async () => {
-            const response = await request(app)
+            const res = await request(app)
                 .post('/api/superadmin/support/tickets')
-                .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${superAdminToken}`)
                 .send({
                     organizationId: 'org-123',
                     subject: 'Test Ticket',
                     description: 'Test Description',
-                    priority: 'medium'
-                })
-                .expect(200);
+                    priority: 'medium',
+                });
 
-            expect(response.body).toHaveProperty('ticketNumber');
+            expect(res.status).toBe(200);
+            expect(res.body).toHaveProperty('ticketNumber');
         });
     });
 
-    describe('GET /api/superadmin/organizations/:id/customer-success/notes', () => {
-    const db = getDatabase();
+    describe('Customer Success Notes', () => {
         it('should return customer success notes', async () => {
-            const response = await request(app)
+            const res = await request(app)
                 .get('/api/superadmin/organizations/org-123/customer-success/notes')
-                .set('Authorization', `Bearer ${authToken}`)
-                .expect(200);
+                .set('Authorization', `Bearer ${superAdminToken}`);
 
-            expect(Array.isArray(response.body)).toBe(true);
+            expect(res.status).toBe(200);
+            expect(Array.isArray(res.body)).toBe(true);
         });
     });
 });

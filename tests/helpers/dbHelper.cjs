@@ -137,6 +137,8 @@ async function cleanAllTestTables() {
         'tasks',
         'projects',
         'users',
+        'organization_members',
+        'organization_seats',
         'organizations',
         'sessions',
         'settings',
@@ -145,7 +147,11 @@ async function cleanAllTestTables() {
         'audit_logs',
         'initiatives',
         'stage_gates',
-        'maturity_assessments'
+        'maturity_assessments',
+        'decisions',
+        'refresh_tokens',
+        'teams',
+        'team_members'
     ];
 
     return cleanTables(testTables);

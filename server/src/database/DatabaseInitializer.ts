@@ -70,6 +70,7 @@ const CRITICAL_TABLES = [
     'ai_feature_control',
     'ai_conversations',
     'ai_cost_tracking',
+    'access_requests',
 ];
 
 /**

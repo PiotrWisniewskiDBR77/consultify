@@ -1,0 +1,136 @@
+{"numTotalTestSuites":5,"numPassedTestSuites":0,"numFailedTestSuites":5,"numPendingTestSuites":0,"numTotalTests":6,"numPassedT    <testsuite name="tests/integration/routes/decisions.test.js" timestamp="2026-01-06T14:17:05.038Z" hostname="MacBook-Pro-Piotr.local" tests="6" failures="6" errors="0" skipped="0" time="1.165065834">
+        <testcase classname="tests/integration/routes/decisions.test.js" name="Decisions Routes &gt; GET /api/decisions &gt; returns list of decisions" time="0.004499583">
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/decisions.test.js" name="Decisions Routes &gt; GET /api/decisions &gt; filters by projectId" time="0.001019459">
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/decisions.test.js" name="Decisions Routes &gt; GET /api/decisions &gt; handles database errors gracefully" time="0.001201">
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/decisions.test.js" name="Decisions Routes &gt; GET /api/decisions/:id &gt; returns single decision" time="0.000886583">
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/decisions.test.js" name="Decisions Routes &gt; GET /api/decisions/:id &gt; returns 404 for non-existent decision" time="0.001155875">
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/decisions.test.js" name="Decisions Routes &gt; POST /api/decisions &gt; creates new decision" time="0.001013">
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+            <failure message="SQLITE_ERROR: no such table: decisions" type="Error">
+Error: SQLITE_ERROR: no such table: decisions
+ ❯ server/src/database/Database.ts:237:32
+ ❯ callWithRetry server/src/database/Database.ts:222:32
+ ❯ Proxy.&lt;anonymous&gt; server/src/database/Database.ts:262:24
+ ❯ tests/integration/routes/decisions.test.js:41:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: 1, code: &apos;SQLITE_ERROR&apos;, __augmented: true }
+            </failure>
+        </testcase>
+    </testsuite>
+</testsuites>
+ecisions creates new decision","status":"failed","title":"creates new decision","duration":1.01299999999992,"failureMessages":["Error: SQLITE_ERROR: no such table: decisions\n--> in Database#run('DELETE FROM decisions', [Function: callback])\n    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/Database.ts:237:32\n    at new Promise (<anonymous>)\n    at callWithRetry (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/Database.ts:222:32)\n    at Proxy.<anonymous> (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/Database.ts:262:24)\n    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/routes/decisions.test.js:41:18","Error: SQLITE_ERROR: no such table: decisions\n--> in Database#run('DELETE FROM decisions', [Function: callback])\n    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/Database.ts:237:32\n    at new Promise (<anonymous>)\n    at callWithRetry (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/Database.ts:222:32)\n    at Proxy.<anonymous> (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/Database.ts:262:24)\n    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/routes/decisions.test.js:41:18"],"meta":{}}],"startTime":1767709025004,"endTime":1767709025014.013,"status":"failed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/integration/routes/decisions.test.js"}]}

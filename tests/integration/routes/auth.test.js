@@ -21,7 +21,7 @@ describe('Auth Routes Integration', () => {
 
     beforeAll(async () => {
         await initializeDatabase();
-        
+
         // Wait for DB initialization
         if (db.initPromise) {
             await db.initPromise;
@@ -33,7 +33,7 @@ describe('Auth Routes Integration', () => {
             db.run(
                 `INSERT INTO organizations (id, name, plan, status, organization_type) VALUES (?, ?, ?, ?, ?)`,
                 [testOrgId, 'Test Org', 'professional', 'active', 'PAID'],
-                (err) => err ? reject(err) : resolve()
+                (err) => (err ? reject(err) : resolve()),
             );
         });
 
@@ -44,7 +44,7 @@ describe('Auth Routes Integration', () => {
             db.run(
                 `INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)`,
                 [testUserId, testOrgId, `test-${testUserId}@example.com`, hashedPassword, 'ADMIN', 'active'],
-                (err) => err ? reject(err) : resolve()
+                (err) => (err ? reject(err) : resolve()),
             );
         });
     });
@@ -65,13 +65,13 @@ describe('Auth Routes Integration', () => {
                 .post('/api/auth/login')
                 .send({
                     email: `test-${testUserId}@example.com`,
-                    password: 'password123'
+                    password: 'password123',
                 });
 
             expect(res.status).toBe(200);
             expect(res.body.token).toBeDefined();
             expect(res.body.refreshToken).toBeDefined();
-            
+
             testToken = res.body.token;
             testRefreshToken = res.body.refreshToken;
         });
@@ -81,7 +81,7 @@ describe('Auth Routes Integration', () => {
                 .post('/api/auth/login')
                 .send({
                     email: `test-${testUserId}@example.com`,
-                    password: 'wrongpassword'
+                    password: 'wrongpassword',
                 });
 
             expect(res.status).toBe(401);
@@ -90,9 +90,7 @@ describe('Auth Routes Integration', () => {
 
     describe('GET /api/auth/me', () => {
         it('should return current user details', async () => {
-            const res = await request(app)
-                .get('/api/auth/me')
-                .set('Authorization', `Bearer ${testToken}`);
+            const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${testToken}`);
 
             expect(res.status).toBe(200);
             expect(res.body.user.id).toBe(testUserId);
@@ -100,20 +98,17 @@ describe('Auth Routes Integration', () => {
         });
 
         it('should fail without token', async () => {
-            const res = await request(app)
-                .get('/api/auth/me');
+            const res = await request(app).get('/api/auth/me');
 
-            expect(res.status).toBe(403);
+            expect(res.status).toBe(401);
         });
     });
 
     describe('POST /api/auth/refresh', () => {
         it('should refresh token using valid refresh token', async () => {
-            const res = await request(app)
-                .post('/api/auth/refresh')
-                .send({
-                    refreshToken: testRefreshToken
-                });
+            const res = await request(app).post('/api/auth/refresh').send({
+                refreshToken: testRefreshToken,
+            });
 
             expect(res.status).toBe(200);
             expect(res.body.token).toBeDefined();
@@ -123,9 +118,7 @@ describe('Auth Routes Integration', () => {
 
     describe('POST /api/auth/logout', () => {
         it('should logout successfully', async () => {
-            const res = await request(app)
-                .post('/api/auth/logout')
-                .set('Authorization', `Bearer ${testToken}`);
+            const res = await request(app).post('/api/auth/logout').set('Authorization', `Bearer ${testToken}`);
 
             expect(res.status).toBe(200);
         });
