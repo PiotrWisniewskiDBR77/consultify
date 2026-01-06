@@ -363,6 +363,8 @@ router.post(
                 selectedObjectType,
             });
 
+            console.log('[AI Routes] Chat result:', JSON.stringify(result, null, 2));
+
             await AIAuditLogger.logSuggestion(
                 req.userId!,
                 req.organizationId!,
@@ -410,6 +412,7 @@ router.get(
             const info = await (AIPolicyEngine as any).getPolicySummary(req.organizationId as string);
             return res.json(info);
         } catch (err: any) {
+            console.error('[AI Routes] Policy GET error:', err);
             return res.status(500).json({ error: (err as Error).message });
         }
     }),
@@ -422,7 +425,6 @@ router.patch(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!req.can || !req.can('edit_organization_settings')) {
             return res.status(403).json({ error: 'Admin required' });
-            return;
         }
 
         try {
@@ -430,6 +432,7 @@ router.patch(
             const result = await AIPolicyEngine.updatePolicy(req.organizationId!, req.body);
             return res.json(result);
         } catch (err: any) {
+            console.error('[AI Routes] Policy PATCH error:', err);
             return res.status(500).json({ error: (err as Error).message });
         }
     }),

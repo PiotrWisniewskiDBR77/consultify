@@ -34,37 +34,23 @@ router.use(authRateLimiter);
  * GET /api/invitations
  * Get all invitations for organization
  */
-router.get('/', InvitationController.getInvitations);
-
-/**
- * POST /api/invitations
- * Create invitation
- */
-router.post('/', validateBody(CreateInvitationSchema), InvitationController.createInvitation);
-
-/**
- * POST /api/invitations/resend
- * Resend invitation
- */
-router.post('/resend', validateBody(ResendInvitationSchema), InvitationController.resendInvitation);
-
-/**
- * GET /api/invitations
- * Get all invitations for organization
- */
 router.get('/', verifyToken, InvitationController.getInvitations);
+router.get('/org', verifyToken, InvitationController.getInvitations);
 
 /**
  * POST /api/invitations
  * Create invitation
  */
 router.post('/', verifyToken, validateBody(CreateInvitationSchema), InvitationController.createInvitation);
+router.post('/org', verifyToken, validateBody(CreateInvitationSchema), InvitationController.createInvitation);
+router.post('/project', verifyToken, validateBody(CreateInvitationSchema), InvitationController.createInvitation);
 
 /**
  * POST /api/invitations/resend
  * Resend invitation
  */
 router.post('/resend', verifyToken, validateBody(ResendInvitationSchema), InvitationController.resendInvitation);
+router.post('/:id/resend', verifyToken, InvitationController.resendInvitation);
 
 /**
  * POST /api/invitations/accept
@@ -73,15 +59,23 @@ router.post('/resend', verifyToken, validateBody(ResendInvitationSchema), Invita
 router.post('/accept', validateBody(AcceptInvitationSchema), InvitationController.acceptInvitation);
 
 /**
- * DELETE /api/invitations/:id
- * Cancel invitation
+ * GET /api/invitations/validate/:token
+ * Validate token
  */
-router.delete('/:id', verifyToken, InvitationController.cancelInvitation);
+router.get('/validate/:token', InvitationController.validateToken || ((req, res) => res.status(501).json({ error: 'Not implemented' })));
 
 /**
  * DELETE /api/invitations/:id
  * Cancel invitation
  */
-router.delete('/:id', InvitationController.cancelInvitation);
+router.delete('/:id', verifyToken, InvitationController.cancelInvitation);
+router.post('/:id/revoke', verifyToken, InvitationController.cancelInvitation);
+
+/**
+ * GET /api/invitations/:id/audit
+ * Get audit trail
+ */
+router.get('/:id/audit', verifyToken, InvitationController.getInvitationAudit || ((req, res) => res.status(501).json({ error: 'Not implemented' })));
+
 
 export default router;

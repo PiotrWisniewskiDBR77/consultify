@@ -83,11 +83,42 @@ export class InvitationController {
             const { token, email, firstName, lastName, password } = req.body;
 
             const { acceptInvitation } = await import('../services/invitationService.js');
-            const result = await acceptInvitation({ token, email, firstName, lastName, password });
-
-            res.json(result);
+            try {
+                const result = await acceptInvitation({ token, email, firstName, lastName, password });
+                res.json(result);
+            } catch (error: any) {
+                const status = error.message.includes('match') || error.message.includes('accepted') ? 400 : 500;
+                res.status(status).json({ error: error.message });
+            }
         },
     );
+
+    /**
+     * Validate token
+     */
+    static validateToken = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        const { token } = req.params;
+
+        const { validateInvitationToken } = await import('../services/invitationService.js');
+        try {
+            const result = await validateInvitationToken(token);
+            res.json({ valid: true, ...result });
+        } catch (error: any) {
+            res.status(404).json({ error: error.message });
+        }
+    });
+
+    /**
+     * Get invitation audit trail
+     */
+    static getInvitationAudit = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        const { id } = req.params;
+
+        const InvitationService = (await import('../services/invitationService.js')).default;
+        const audit = await InvitationService.getInvitationAudit(id);
+
+        res.json(audit);
+    });
 
     /**
      * Cancel invitation

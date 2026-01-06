@@ -660,6 +660,49 @@ export class InvitationServiceClass {
     async cancelInvitation(invitationId: string, performedByUserId: string): Promise<any> {
         return this.revokeInvitation(invitationId, performedByUserId);
     }
+
+    async validateInvitationToken(token: string): Promise<any> {
+        const tokenHash = this.deps.tokenService.hashToken(token);
+        const invitation = await this.deps.dataService.getInvitationByTokenHash(tokenHash);
+
+        if (!invitation) {
+            throw new Error('Invalid invitation token');
+        }
+
+        if (invitation.status !== INVITATION_STATUS.PENDING) {
+            throw new Error(`Invitation is already ${invitation.status}`);
+        }
+
+        if (new Date(invitation.expires_at) < new Date()) {
+            await this.deps.dataService.markAsExpired(invitation.id);
+            throw new Error('Invitation has expired');
+        }
+
+        return {
+            id: invitation.id,
+            email: invitation.email,
+            organizationId: invitation.organization_id,
+            organizationName: invitation.organization_name,
+            invitationType: invitation.invitation_type,
+            projectId: invitation.project_id,
+            projectName: invitation.project_name,
+        };
+    }
+
+    async getInvitationAudit(invitationId: string): Promise<any> {
+        const events = await this.deps.dataService.getInvitationEvents(invitationId);
+        return events.map(e => ({
+            id: e.id,
+            eventType: e.event_type,
+            performedBy: e.performed_by_user_id ? {
+                id: e.performed_by_user_id,
+                name: `${e.first_name || ''} ${e.last_name || ''}`.trim(),
+                email: e.email
+            } : null,
+            metadata: e.metadata ? JSON.parse(e.metadata) : {},
+            createdAt: e.created_at
+        }));
+    }
 }
 
 const instance = new InvitationServiceClass();
@@ -671,3 +714,5 @@ export const createInvitation = (params: any) => instance.createInvitation(param
 export const resendInvitation = (id: string, userId: string) => instance.resendInvitation(id, userId);
 export const cancelInvitation = (id: string, userId: string) => instance.cancelInvitation(id, userId);
 export const getInvitations = (orgId: string) => instance.getInvitations(orgId);
+export const validateInvitationToken = (token: string) => instance.validateInvitationToken(token);
+export const getInvitationAudit = (id: string) => instance.getInvitationAudit(id);

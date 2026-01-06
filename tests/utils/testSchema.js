@@ -923,6 +923,7 @@ export const TEST_SCHEMA = [
         project_id TEXT,
         title TEXT NOT NULL,
         description TEXT,
+        outcome TEXT,
         pmo_domain TEXT,
         decision_owner_id TEXT,
         related_object_type TEXT,

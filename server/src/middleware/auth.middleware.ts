@@ -252,7 +252,7 @@ export const verifyToken = asyncHandler(async (req: AuthRequest, res: Response, 
             return next();
         }
 
-        res.status(403).json({ error: 'No token provided' });
+        res.status(401).json({ error: 'No token provided' });
         return;
     }
 

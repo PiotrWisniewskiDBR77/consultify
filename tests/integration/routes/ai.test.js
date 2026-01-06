@@ -56,7 +56,8 @@ describe('AI Routes Integration Tests', () => {
 
         console.log('[Test Setup] Seeding data...');
         // Use db.query instead of db.run for simpler promise handling
-        await db.query('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [testOrgId, 'Test AI Org', 'free', 'active']);
+        await db.query('INSERT INTO organizations (id, name, plan, status, token_balance, billing_status, organization_type) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+            [testOrgId, 'Test AI Org', 'free', 'active', 10000, 'ACTIVE', 'PAID']);
         await db.query('INSERT INTO users (id, organization_id, email, password, first_name, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)', [testUserId, testOrgId, `ai-${testUserId}@test.com`, hash, 'AI', 'USER', 'active']);
         await db.query('INSERT INTO projects (id, organization_id, name, owner_id, status) VALUES (?, ?, ?, ?, ?)', [testProjectId, testOrgId, 'AI Test Project', testUserId, 'active']);
         
@@ -189,7 +190,7 @@ describe('AI Routes Integration Tests', () => {
             if (response.status === 501) return;
 
             expect(response.status).toBe(200);
-            expect(response.body).toHaveProperty('policyLevel');
+            expect(response.body).toHaveProperty('currentLevel');
         });
     });
 

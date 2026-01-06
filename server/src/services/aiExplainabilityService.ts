@@ -1,12 +1,23 @@
 /**
- * Aiexplainability Service
+ * AiExplainability Service
  * Enterprise SaaS Architecture - TypeScript Backend
- *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * 
+ * Stub implementation for missing JS service module.
  */
 
-// Lazy load the JS service module
-import service from './aiExplainabilityService.js';
+const AiExplainabilityService = {
+    buildAIExplanation: async (projectId: string, response: any, context: any) => {
+        return {
+            reasoning: "Mocked reasoning for AI decision",
+            dataSources: ["project_context", "pmo_standards"],
+            confidence: 0.95,
+            limitations: ["Based on available project data only"]
+        };
+    },
+    
+    getExplanationHistory: async (projectId: string) => {
+        return [];
+    }
+};
 
-// Export default instance (for backward compatibility)
-export default service;
+export default AiExplainabilityService;

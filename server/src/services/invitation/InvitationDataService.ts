@@ -174,4 +174,15 @@ export class InvitationDataService {
 
         return { id };
     }
+
+    async getInvitationEvents(invitationId: string): Promise<InvitationEventRecord[]> {
+        return (await this.deps.db.all<InvitationEventRecord>(
+            `SELECT ie.*, u.first_name, u.last_name, u.email 
+             FROM invitation_events ie
+             LEFT JOIN users u ON ie.performed_by_user_id = u.id
+             WHERE ie.invitation_id = ? 
+             ORDER BY ie.created_at ASC`,
+            [invitationId],
+        )) || [];
+    }
 }

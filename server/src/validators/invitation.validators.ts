@@ -15,9 +15,12 @@ import { MemberRoleEnum } from './organization.validators.js';
 
 export const CreateInvitationSchema = z.object({
     email: z.string().email(),
-    role: MemberRoleEnum,
-    organizationId: z.string().uuid(),
+    role: MemberRoleEnum.optional(),
+    organizationId: z.string().uuid().optional(),
     message: z.string().max(500).optional(),
+    projectId: z.string().uuid().optional(),
+    projectRole: z.string().optional(),
+    orgRole: MemberRoleEnum.optional(),
 });
 
 export const ResendInvitationSchema = z.object({
