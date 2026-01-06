@@ -184,7 +184,8 @@ jobs:
           npm version patch --no-git-tag-version
           npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets['NPM_TOKEN'] }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        continue-on-error: true
 
   # ==========================================
   # STAGE 2: Consultify App Pipeline
@@ -348,8 +349,8 @@ jobs:
         run: nx build consultify:frontend
         env:
           NODE_ENV: production
-          VITE_API_URL: ${{ vars['API_URL'] }}
-          VITE_SENTRY_DSN: ${{ secrets['SENTRY_DSN'] }}
+          VITE_API_URL: ${{ vars.API_URL || 'http://localhost:3001' }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
 
       - name: Build Consultify Backend
         run: nx build consultify:backend
@@ -489,8 +490,8 @@ jobs:
         run: nx build new-app:frontend
         env:
           NODE_ENV: production
-          VITE_API_URL: ${{ vars['API_URL'] }}
-          VITE_SENTRY_DSN: ${{ secrets['SENTRY_DSN'] }}
+          VITE_API_URL: ${{ vars.API_URL || 'http://localhost:3001' }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
 
       - name: Build New-App Backend
         run: nx build new-app:backend

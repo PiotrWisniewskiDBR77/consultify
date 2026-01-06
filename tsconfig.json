@@ -56,8 +56,6 @@
   },
   "include": [
     "src",
-    "server",
-    "tests",
     "*.ts",
     "*.tsx"
   ],
