@@ -11,7 +11,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
-    process.env.SQLITE_PATH = ':memory:';
+    const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
 // Integration test for PMO Context API endpoint

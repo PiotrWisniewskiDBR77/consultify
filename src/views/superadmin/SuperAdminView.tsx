@@ -236,7 +236,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     };
 
     return (
-        <div className="flex h-full bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white overflow-hidden">
+        <div className="flex h-full bg-slate-100 dark:bg-navy-950 gap-0.5 text-slate-900 dark:text-white overflow-hidden">
             {/* Sidebar (Fixed Position) */}
             <SuperAdminSidebar
                 activeSection={activeSection}

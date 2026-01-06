@@ -10,8 +10,8 @@ interface SubAreaNavigatorProps {
 
 export const SubAreaNavigator: React.FC<SubAreaNavigatorProps> = ({ areas, currentAreaKey, onSelect, scores }) => {
     return (
-        <div className="w-64 bg-navy-950/30 border-r border-white/5 flex flex-col h-full shrink-0">
-            <div className="p-4 border-b border-white/5">
+        <div className="w-64 bg-white dark:bg-navy-900 shadow-sm flex flex-col h-full shrink-0">
+            <div className="p-4 border-b border-slate-100 dark:border-navy-800">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Focus Areas</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">

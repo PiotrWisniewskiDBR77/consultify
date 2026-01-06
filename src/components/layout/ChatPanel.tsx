@@ -384,9 +384,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     );
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-navy-800 relative">
+        <div className="flex flex-col h-full bg-white dark:bg-navy-900 shadow-sm relative">
             {/* Chat Header */}
-            <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800 flex justify-between items-center bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm sticky top-0 z-10">
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-800 flex justify-between items-center bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm sticky top-0 z-10">
                 <div>
                     <h2 className="text-xs font-bold text-navy-900 dark:text-white tracking-wide uppercase">
                         {displayTitle}

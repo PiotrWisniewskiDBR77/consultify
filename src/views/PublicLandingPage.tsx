@@ -159,9 +159,23 @@ export const PublicLandingPage: React.FC = () => {
                         </a>
                     </div>
 
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-white/20 uppercase tracking-[0.4em]">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-white/20 uppercase tracking-[0.4em] relative">
                         <Shield size={12} className="mb-0.5" />
                         Zabezpieczone przez DBR77 Governance
+
+                        {/* Hidden System Health Icon - Triple-click to access */}
+                        <div
+                            className="absolute -right-8 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-green-500/20 hover:bg-green-500/40 cursor-pointer transition-all group"
+                            onClick={(e) => {
+                                if (e.detail === 3) {
+                                    // Triple-click detected
+                                    window.location.href = '/system/health';
+                                }
+                            }}
+                            title="Triple-click for system diagnostics"
+                        >
+                            <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-20 group-hover:opacity-40" />
+                        </div>
                     </div>
                 </div>
             </footer>

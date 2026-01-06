@@ -154,8 +154,8 @@ describe('AIExplainabilityService', () => {
             expect(result).toContain('---');
             expect(result).toContain('**Why this recommendation?**');
             expect(result).toContain('Based on 3 overdue tasks');
-            expect(result).toContain('Confidence: Medium');
-            expect(result).toContain('AI Role: Advisor');
+            expect(result).toContain('**Confidence:** Medium');
+            expect(result).toContain('**AI Role:** Advisor');
         });
     });
 });

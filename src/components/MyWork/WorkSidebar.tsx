@@ -121,9 +121,9 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
     ];
 
     return (
-        <div className="w-60 bg-white dark:bg-navy-900 border-r border-slate-200 dark:border-white/10 h-full flex flex-col">
+        <div className="w-60 bg-white dark:bg-navy-900 shadow-sm h-full flex flex-col">
             {/* Header */}
-            <div className="px-4 py-4 border-b border-slate-100 dark:border-white/5">
+            <div className="px-4 py-4 border-b border-slate-100 dark:border-navy-800">
                 <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     {t('myWork.title', 'My Work')}
                 </h2>

@@ -99,8 +99,8 @@ export const LevelNavigator: React.FC<LevelNavigatorProps> = ({
 
     // Desktop vertical mode
     return (
-        <div className="w-80 bg-white dark:bg-navy-950 border-r border-slate-200 dark:border-white/5 flex flex-col shrink-0 hidden lg:flex">
-            <div className="p-6 border-b border-slate-200 dark:border-white/5">
+        <div className="w-80 bg-white dark:bg-navy-900 shadow-sm flex flex-col shrink-0 hidden lg:flex">
+            <div className="p-6 border-b border-slate-100 dark:border-navy-800">
                 <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                     {t('assessment.workspace.maturityLevels')}
                 </h3>

@@ -9,7 +9,8 @@ import { sequelize } from '../../../server/models';
 
 vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
-    process.env.SQLITE_PATH = ':memory:';
+    const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
 // AI Analytics Routes Integration Tests

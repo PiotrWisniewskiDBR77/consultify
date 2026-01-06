@@ -1,12 +1,14 @@
 /**
  * Database Module - Enhanced with Connection Pooling
- * Exports connection pool, health monitor, and database instance
+ * Exports connection pool, health monitor, metrics, and database instance
  */
 
-import logger from '../utils/Logger.js';
-import { ConnectionHealthMonitor } from './ConnectionHealthMonitor.js';
 import { ConnectionPool } from './ConnectionPool.js';
+import { ConnectionHealthMonitor } from './ConnectionHealthMonitor.js';
 import { createDatabase } from './Database.js';
+import { getDatabaseMetrics } from './DatabaseMetrics.js';
+import { getSlowQueryLogger } from './SlowQueryLogger.js';
+import logger from '../utils/Logger.js';
 
 let connectionPool: ConnectionPool | null = null;
 let healthMonitor: ConnectionHealthMonitor | null = null;
@@ -40,6 +42,10 @@ export async function initializeConnectionPool(): Promise<void> {
         });
 
         await connectionPool.initialize();
+
+        // Initialize metrics with pool reference
+        getDatabaseMetrics(connectionPool);
+        getSlowQueryLogger();
 
         // Create health monitor
         healthMonitor = new ConnectionHealthMonitor(connectionPool);
@@ -101,3 +107,7 @@ export async function shutdownConnectionPool(): Promise<void> {
 // Export everything from Database.ts
 export * from './Database.js';
 export * from './IDatabase.js';
+export { ConnectionPool } from './ConnectionPool.js';
+export { ConnectionHealthMonitor } from './ConnectionHealthMonitor.js';
+export { SlowQueryLogger, getSlowQueryLogger } from './SlowQueryLogger.js';
+export { DatabaseMetrics, getDatabaseMetrics } from './DatabaseMetrics.js';

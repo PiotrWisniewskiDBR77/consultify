@@ -8,7 +8,7 @@ export default defineConfig({
     resolve: {
         alias: [
             { find: '@', replacement: path.resolve(__dirname, './src') },
-            // Universal server/src alias to catch everything
+            // Universal server/src alias
             {
                 find: /^.*\/server\/src\/(.*)\.js$/,
                 replacement: path.resolve(__dirname, 'server/src/$1.ts'),

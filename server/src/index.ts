@@ -48,6 +48,8 @@ app.set('trust proxy', 1);
 import { HealthCheckController } from './controllers/HealthCheckController.js';
 import dbHealthRoutes from './routes/health.routes.js';
 import healthRoutes from './routes/healthRoutes.js';
+import dbMetricsRoutes from './routes/db-metrics.routes.js';
+import systemHealthRoutes from './routes/system-health.routes.js';
 
 // Health Check (Ping) - synchronous
 app.get('/ping', HealthCheckController.ping);
@@ -55,6 +57,8 @@ app.get('/ping', HealthCheckController.ping);
 // Mount Health Check Routes
 app.use('/api/health', healthRoutes);
 app.use('/api/health', dbHealthRoutes);
+app.use('/api/metrics', dbMetricsRoutes);
+app.use('/api/system', systemHealthRoutes);
 
 // Initialize Sentry (must be before other middleware)
 const sentryHandlers = initSentry(app);
@@ -258,42 +262,42 @@ app.use(
     helmet({
         contentSecurityPolicy: isProduction
             ? {
-                  directives: {
-                      defaultSrc: ["'self'"],
-                      scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
-                      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-                      imgSrc: [
-                          "'self'",
-                          'data:',
-                          'blob:',
-                          'https://www.transparenttextures.com',
-                          'https://*.stripe.com',
-                          'https://www.gravatar.com',
-                          'https://*.googleusercontent.com',
-                      ],
-                      connectSrc: [
-                          "'self'",
-                          'wss:',
-                          'https://api.openai.com',
-                          'https://generativelanguage.googleapis.com',
-                          'https://api.anthropic.com',
-                          'https://api.mistral.ai',
-                          'https://api.stripe.com',
-                          'https://*.sentry.io',
-                      ],
-                      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-                      objectSrc: ["'none'"],
-                      mediaSrc: ["'self'", 'blob:'],
-                      frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
-                      workerSrc: ["'self'", 'blob:'],
-                      childSrc: ["'self'", 'blob:'],
-                      formAction: ["'self'"],
-                      frameAncestors: ["'none'"],
-                      baseUri: ["'self'"],
-                      upgradeInsecureRequests: isProduction ? [] : null,
-                  },
-                  reportOnly: false,
-              }
+                directives: {
+                    defaultSrc: ["'self'"],
+                    scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+                    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+                    imgSrc: [
+                        "'self'",
+                        'data:',
+                        'blob:',
+                        'https://www.transparenttextures.com',
+                        'https://*.stripe.com',
+                        'https://www.gravatar.com',
+                        'https://*.googleusercontent.com',
+                    ],
+                    connectSrc: [
+                        "'self'",
+                        'wss:',
+                        'https://api.openai.com',
+                        'https://generativelanguage.googleapis.com',
+                        'https://api.anthropic.com',
+                        'https://api.mistral.ai',
+                        'https://api.stripe.com',
+                        'https://*.sentry.io',
+                    ],
+                    fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+                    objectSrc: ["'none'"],
+                    mediaSrc: ["'self'", 'blob:'],
+                    frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
+                    workerSrc: ["'self'", 'blob:'],
+                    childSrc: ["'self'", 'blob:'],
+                    formAction: ["'self'"],
+                    frameAncestors: ["'none'"],
+                    baseUri: ["'self'"],
+                    upgradeInsecureRequests: isProduction ? [] : null,
+                },
+                reportOnly: false,
+            }
             : false,
         hsts: {
             maxAge: 31536000,

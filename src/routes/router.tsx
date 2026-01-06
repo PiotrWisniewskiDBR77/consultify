@@ -20,6 +20,9 @@ import { ROUTES } from './routeConfig';
 const MainLayout = React.lazy(() => import('@/layouts/MainLayout'));
 const AuthLayout = React.lazy(() => import('@/layouts/AuthLayout'));
 
+// System Health
+const SystemHealthDashboard = React.lazy(() => import('@/views/SystemHealthDashboard'));
+
 // Main Views
 const AIChatWelcomeView = React.lazy(() =>
     import('@/views/AIChatWelcomeView').then((m) => ({ default: m.AIChatWelcomeView }))
@@ -476,6 +479,16 @@ export const router = createBrowserRouter([
                 ),
             },
         ],
+    },
+
+    // System Health Dashboard (Hidden)
+    {
+        path: '/system/health',
+        element: (
+            <SuspenseWrapper>
+                <SystemHealthDashboard />
+            </SuspenseWrapper>
+        ),
     },
 
     // 404 Fallback

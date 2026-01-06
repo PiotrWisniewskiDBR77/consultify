@@ -15,6 +15,8 @@ import { EventEmitter } from 'events';
 
 import logger from '../utils/Logger.js';
 import type { IDatabase } from './IDatabase.js';
+import { getSlowQueryLogger } from './SlowQueryLogger.js';
+import { getDatabaseMetrics } from './DatabaseMetrics.js';
 
 interface PoolConfig {
     minConnections: number;
@@ -149,16 +151,33 @@ export class ConnectionPool extends EventEmitter {
      */
     async query<T = any>(sql: string, params: any[] = []): Promise<T> {
         const connection = await this.acquire();
+        const startTime = Date.now();
 
         try {
             const result = await this.executeWithTimeout(
                 () => connection.connection.query(sql, params),
-                this.config.queryTimeout,
+                this.config.queryTimeout
             );
+
+            const executionTime = Date.now() - startTime;
+
+            // Track metrics
+            const metrics = getDatabaseMetrics(this);
+            metrics.recordQuery(executionTime, true);
+
+            // Log slow queries
+            const slowQueryLogger = getSlowQueryLogger();
+            await slowQueryLogger.logQuery(sql, params, executionTime);
 
             this.onQuerySuccess(connection);
             return result as T;
         } catch (error) {
+            const executionTime = Date.now() - startTime;
+
+            // Track failed query
+            const metrics = getDatabaseMetrics(this);
+            metrics.recordQuery(executionTime, false);
+
             this.onQueryFailure(connection, error);
             throw error;
         } finally {

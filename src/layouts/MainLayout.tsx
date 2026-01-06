@@ -34,7 +34,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs })
     const isSessionView = true; // MainLayout is only used for session views
 
     return (
-        <div className="flex h-screen w-full bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
+        <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
             {/* Global Floating Help Buttons */}
             <div className="fixed right-0 top-[66%] z-50 flex flex-col gap-3 items-end translate-x-0 pointer-events-none">
                 <div className="pointer-events-auto">
@@ -80,7 +80,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs })
                     <AIFreezeBanner />
                     <TrialBanner />
 
-                    <div className="h-12 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
+                    <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setIsSidebarOpen(true)}

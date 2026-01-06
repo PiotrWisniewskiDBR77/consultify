@@ -148,7 +148,7 @@ isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-sl
 | `bg-white` | `dark:bg-navy-900` | Main panel backgrounds |
 | `bg-slate-50` | `dark:bg-navy-800` | Nested backgrounds, inputs |
 | `border-slate-200` | `dark:border-navy-700` | All borders (STANDARD) |
-| `border-slate-100` | `dark:border-navy-700` | Subtle separators |
+| `border-slate-100` | `dark:border-navy-800` | Subtle/internal separators |
 | `text-slate-900` | `dark:text-white` | Primary text |
 | `text-slate-600` | `dark:text-slate-400` | Secondary text |
 | `text-slate-500` | `dark:text-slate-400` | Muted/placeholder text |
@@ -301,7 +301,55 @@ When creating new components, verify:
 
 ---
 
-## 9. Changelog
+## 9. Migration Status
+
+### 9.1. Components Updated to v3.0 Standard
+
+**Sidebars (Floating Panels - no `border-r`):**
+| Component | Status |
+|-----------|--------|
+| `components/Admin/AdminSidebar.tsx` | ✅ Updated |
+| `components/settings/SettingsSidebar.tsx` | ✅ Updated |
+| `src/components/Admin/AdminSidebar.tsx` | ✅ Updated |
+| `src/components/MyWork/WorkSidebar.tsx` | ✅ Updated |
+| `src/components/assessment/LevelNavigator.tsx` | ✅ Updated |
+| `src/components/assessment/SubAreaNavigator.tsx` | ✅ Updated |
+| `src/components/assessment/ReportBuilderWorkspace.tsx` | ✅ Updated |
+| `src/components/layout/SplitLayout.tsx` | ✅ Updated |
+| `src/components/layout/ChatPanel.tsx` | ✅ Updated |
+| `src/components/Studio/StudioSidebar.tsx` | ✅ Updated |
+
+**Layouts (gap-0.5, bg-slate-100):**
+| Component | Status |
+|-----------|--------|
+| `components/Admin/AdminLayout.tsx` | ✅ Updated |
+| `views/SettingsView.tsx` | ✅ Updated |
+| `src/layouts/MainLayout.tsx` | ✅ Updated |
+| `src/components/assessment/AssessmentModuleLayout.tsx` | ✅ Updated |
+| `src/components/SuperAdmin/TabLayout.tsx` | ✅ Updated |
+
+**Views (two-column layout):**
+| Component | Status |
+|-----------|--------|
+| `src/views/MyWorkView.tsx` | ✅ Updated |
+| `src/views/superadmin/SuperAdminView.tsx` | ✅ Updated |
+| `views/PartnerPortalView.tsx` | ✅ Updated |
+
+### 9.2. Known Issues - Legacy Patterns
+
+**DEPRECATED patterns still in codebase (migration pending):**
+
+| Pattern | Count | Replacement |
+|---------|-------|-------------|
+| `dark:border-white/5` | ~228 files | `dark:border-navy-800` |
+| `dark:border-white/10` | ~405 files | `dark:border-navy-800` |
+
+These are primarily in content components, modals, and cards. The high count is due to legacy code.
+Priority migration: Focus on sidebars and layouts first (completed), then cards, then modals.
+
+---
+
+## 10. Changelog
 
 ### v3.0 (January 2026)
 - **NEW:** Introduced "Floating Panels" pattern (ClickUp-style)
@@ -310,7 +358,8 @@ When creating new components, verify:
   - Panels use `bg-white dark:bg-navy-900 shadow-sm`
 - **Updated:** Internal borders use lighter colors: `border-slate-100 dark:border-navy-800`
 - **Updated:** Headers use semi-transparent backgrounds with backdrop blur
-- Standardized across: AdminLayout, AdminSidebar, SettingsView, SettingsSidebar, PartnerPortalView
+- **Audited:** 10 sidebars, 5 layouts, 3 main views updated to new standard
+- Standardized across: AdminLayout, AdminSidebar, SettingsView, SettingsSidebar, PartnerPortalView, WorkSidebar, LevelNavigator, MainLayout, MyWorkView, SuperAdminView
 
 ### v2.0 (January 2026)
 - **BREAKING:** Reduced border radius from `rounded-2xl` to `rounded-xl`
@@ -325,3 +374,11 @@ When creating new components, verify:
 - Initial design system based on pill-style navigation
 - Used `rounded-2xl` as primary border radius
 - Used `p-8` for card padding
+
+---
+
+## 11. Next Steps
+
+1. **High Priority:** Migrate remaining `dark:border-white/*` patterns in cards/modals
+2. **Medium Priority:** Add `shadow-sm` to all floating panels
+3. **Low Priority:** Standardize hover states to `dark:hover:bg-navy-800/40`

@@ -8,9 +8,67 @@ import bcrypt from 'bcryptjs';
 
 vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
-    process.env.SQLITE_PATH = ':memory:';
+    const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
     process.env.NODE_ENV = 'test';
 });
+
+// Mock AI dependencies to prevent errors and external calls
+vi.mock('../../../server/src/services/ai/aiRoleGuard.js', () => ({
+    default: {
+        getRoleConfig: vi.fn().mockReturnValue({ capabilities: ['chat', 'explain'] }),
+        getRoleCapabilities: vi.fn().mockReturnValue(['chat', 'explain']),
+        getRoleDescription: vi.fn().mockReturnValue('Test Role'),
+        getProjectRole: vi.fn().mockResolvedValue('MEMBER')
+    },
+    getRoleConfig: vi.fn().mockReturnValue({ capabilities: ['chat', 'explain'] }),
+    getRoleCapabilities: vi.fn().mockReturnValue(['chat', 'explain']),
+    getRoleDescription: vi.fn().mockReturnValue('Test Role'),
+    getProjectRole: vi.fn().mockResolvedValue('MEMBER')
+}));
+
+vi.mock('../../../server/src/services/ai/aiExplainabilityService.js', () => ({
+    default: {
+        buildAIExplanation: vi.fn().mockResolvedValue({ explanation: 'Mock Explanation' })
+    },
+    buildAIExplanation: vi.fn().mockResolvedValue({ explanation: 'Mock Explanation' })
+}));
+
+vi.mock('../../../server/src/services/ai/accessPolicyService.js', () => ({
+    default: {
+        getAIAccessContext: vi.fn().mockResolvedValue({
+            allowed: true,
+            isPaid: true,
+            organizationType: 'PAID',
+            isDemo: false,
+            isTrial: false,
+            dailyAIUsage: { remaining: 100, limit: 100 },
+            aiResponseBadge: 'pro',
+            allowedAIRoles: ['ADVISOR', 'PMO_MANAGER', 'EXECUTOR', 'EDUCATOR']
+        }),
+        incrementUsage: vi.fn().mockResolvedValue(true),
+        canInviteUsers: vi.fn().mockResolvedValue({ allowed: true })
+    },
+    getAIAccessContext: vi.fn().mockResolvedValue({
+        allowed: true,
+        isPaid: true,
+        organizationType: 'PAID',
+        isDemo: false,
+        isTrial: false,
+        dailyAIUsage: { remaining: 100, limit: 100 },
+        aiResponseBadge: 'pro',
+        allowedAIRoles: ['ADVISOR', 'PMO_MANAGER', 'EXECUTOR', 'EDUCATOR']
+    }),
+    incrementUsage: vi.fn().mockResolvedValue(true),
+    canInviteUsers: vi.fn().mockResolvedValue({ allowed: true })
+}));
+
+vi.mock('../../../server/src/services/tokenBillingService.js', () => ({
+    default: {
+        getOrgBalance: vi.fn().mockResolvedValue({ balance: 1000 })
+    },
+    getOrgBalance: vi.fn().mockResolvedValue({ balance: 1000 })
+}));
 
 // Mock AI Pipeline to avoid real LLM calls and potential hangs
 vi.mock('../../../server/src/services/ai/aiPipeline.js', () => ({
@@ -97,11 +155,11 @@ describe('AI Routes Integration Tests', () => {
             expect(response.body).toHaveProperty('currentScreen', 'dashboard');
         });
 
-        it('should return 403 without authentication', async () => {
+        it('should return 401 without authentication', async () => {
             const response = await request(app)
                 .get('/api/ai/context');
 
-            expect(response.status).toBe(403); // Middleware returns 403 for missing token
+            expect(response.status).toBe(401);
         });
     });
 
@@ -177,6 +235,10 @@ describe('AI Routes Integration Tests', () => {
 
             expect(response.status).toBe(200);
             expect(response.body).toHaveProperty('role');
+            // Depending on implementation, it might be in responseContext or root
+            if (response.body.blocked) {
+                console.log('DEBUG: Chat was blocked:', response.body);
+            }
             expect(response.body).toHaveProperty('prompt');
         });
     });

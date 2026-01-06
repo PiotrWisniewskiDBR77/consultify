@@ -16,7 +16,8 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
 
 vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
-    process.env.SQLITE_PATH = ':memory:';
+    const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
 /**

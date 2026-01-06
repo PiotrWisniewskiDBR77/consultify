@@ -54,6 +54,14 @@
         "db:migrate:backfill": "tsx server/scripts/migrate.ts backfill",
         "db:backup": "bash server/scripts/backup-database.sh",
         "db:restore": "bash server/scripts/restore-database.sh",
+        "db:rollback": "tsx server/scripts/rollback-migration.ts",
+        "db:generate-er": "tsx server/scripts/generate-er-diagram.ts",
+        "db:check-integrity": "tsx server/scripts/check-data-integrity.ts",
+        "db:test": "tsx server/scripts/test-database-auth.ts",
+        "db:health": "curl http://localhost:3005/api/health/database",
+        "db:metrics": "curl http://localhost:3005/api/metrics/database",
+        "db:slow-queries": "curl http://localhost:3005/api/metrics/slow-queries",
+        "test:database": "vitest run tests/database",
         "prepare": "husky"
     },
     "dependencies": {

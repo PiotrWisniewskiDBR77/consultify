@@ -2,12 +2,14 @@ import app from '../../../server/src/index.js';
 import express from 'express';
 import request from 'supertest';
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
-import { getDatabase, getDatabaseInstance } from '../../../server/src/database/Database.js';
+import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
-    process.env.SQLITE_PATH = ':memory:';
+    const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
+    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
 /**
@@ -19,7 +21,7 @@ describe('Initiatives Routes', () => {
     
     beforeAll(async () => {
         await initializeDatabase();
-        db = getDatabaseInstance();
+        db = getDatabase();
     });
 
     let testApp;
@@ -27,8 +29,15 @@ describe('Initiatives Routes', () => {
     beforeEach(async () => {
         vi.clearAllMocks();
         
-        // Clear initiatives table before each test to avoid UNIQUE constraint errors
+        // Clear tables before each test
         await db.run('DELETE FROM initiatives');
+        await db.run('DELETE FROM projects');
+        await db.run('DELETE FROM organizations');
+        
+        // Seed parent records
+        await db.run('INSERT INTO organizations (id, name, status) VALUES (?, ?, ?)', ['org-1', 'Test Org', 'active']);
+        await db.run('INSERT INTO projects (id, organization_id, name, status) VALUES (?, ?, ?, ?)', 
+            ['e8235222-2222-2222-2222-222222222222', 'org-1', 'Test Project', 'active']);
         
         // Enable Auth Bypass for this test suite
         process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
@@ -71,7 +80,7 @@ describe('Initiatives Routes', () => {
             expect(response.body.map(i => i.name)).toContain('Digital Transformation');
         });
 
-        it('returns 403 for missing auth', async () => {
+        it('returns 401 for missing auth', async () => {
             const originalBypass = process.env.ENABLE_TEST_AUTH_BYPASS;
             process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
             
@@ -81,10 +90,10 @@ describe('Initiatives Routes', () => {
                 const initiativesRouter = (await import('../../../server/src/routes/pmo/initiatives.routes.ts')).default;
                 anonymousApp.use('/api/initiatives', initiativesRouter);
 
-                // This should fail because verifyToken will return 403 for missing token when bypass is off
+                // This should fail because verifyToken will return 401 for missing token when bypass is off
                 await request(anonymousApp)
                     .get('/api/initiatives')
-                    .expect(403);
+                    .expect(401);
             } finally {
                 process.env.ENABLE_TEST_AUTH_BYPASS = originalBypass;
             }

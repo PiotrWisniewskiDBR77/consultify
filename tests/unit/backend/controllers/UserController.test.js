@@ -24,7 +24,7 @@ describe('UserController', () => {
 
     beforeEach(() => {
         // Use unified mock setup
-        const { mocks } = setupStandardTest();
+        const mocks = setupStandardTest();
         mockDb = mocks.db;
 
         // Setup request/response mocks

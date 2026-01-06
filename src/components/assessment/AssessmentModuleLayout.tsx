@@ -66,7 +66,7 @@ export const AssessmentModuleLayout: React.FC<AssessmentModuleLayoutProps> = ({
     return (
         <div className="flex flex-col h-full bg-white dark:bg-navy-900">
             {/* Tab Navigation Header */}
-            <div className="shrink-0 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900">
+            <div className="shrink-0 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900">
                 <div className="flex items-center justify-between px-6">
                     {/* Tabs */}
                     <div className="flex items-center gap-1">

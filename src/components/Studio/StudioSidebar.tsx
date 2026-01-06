@@ -69,9 +69,9 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ currentDocumentId,
     };
 
     return (
-        <div className="w-64 shrink-0 flex flex-col bg-slate-900 border-r border-white/10">
+        <div className="w-64 shrink-0 flex flex-col bg-white dark:bg-navy-900 shadow-sm">
             {/* Header */}
-            <div className="shrink-0 p-4 flex items-center justify-between border-b border-white/10">
+            <div className="shrink-0 p-4 flex items-center justify-between border-b border-slate-100 dark:border-navy-800">
                 <div className="flex items-center gap-2">
                     <FolderOpen size={18} className="text-slate-400" />
                     <span className="font-medium text-white">Documents</span>

@@ -7,7 +7,8 @@ import { initializeDatabase } from '../../../server/src/database/DatabaseInitial
 
 vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
-    process.env.SQLITE_PATH = ':memory:';
+    const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
 /**
@@ -71,7 +72,7 @@ describe('Billing Phase 2 API Routes', () => {
                 { id: 'cn-2', credit_note_number: 'CN-2024-000002', total: 2500, status: 'applied' }
             ];
 
-            mockDb.all.mockResolvedValue($2);
+            mockDb.all.mockResolvedValue(mockCreditNotes);
 
             // Would need to import and setup actual router, simplified here
             expect(mockCreditNotes).toHaveLength(2);
@@ -126,7 +127,7 @@ describe('Billing Phase 2 API Routes', () => {
                 { id: 'tr-3', country_code: 'DE', tax_type: 'vat', rate: 0.19 }
             ];
 
-            mockDb.all.mockResolvedValue($2);
+            mockDb.all.mockResolvedValue(mockTaxRates);
 
             expect(mockTaxRates).toHaveLength(3);
             expect(mockTaxRates[1].rate).toBe(0.20);
@@ -174,7 +175,7 @@ describe('Billing Phase 2 API Routes', () => {
                 { id: 'tmpl-2', name: 'Custom Template', is_default: 0, organization_id: 'org-123' }
             ];
 
-            mockDb.all.mockResolvedValue($2);
+            mockDb.all.mockResolvedValue(mockTemplates);
 
             expect(mockTemplates).toHaveLength(2);
             expect(mockTemplates[0].is_default).toBe(1);
@@ -227,7 +228,7 @@ describe('Billing Phase 2 API Routes', () => {
                 { month: '2024-02', mrr: 12000, new_subscriptions: 8, canceled_subscriptions: 2 }
             ];
 
-            mockDb.all.mockResolvedValue($2);
+            mockDb.all.mockResolvedValue(mockMrrData);
 
             expect(mockMrrData[1].mrr).toBeGreaterThan(mockMrrData[0].mrr);
         });
@@ -238,7 +239,7 @@ describe('Billing Phase 2 API Routes', () => {
                 { month: '2024-02', churnRate: 1.8, churnedCustomers: 4, activeCustomers: 220 }
             ];
 
-            mockDb.all.mockResolvedValue($2);
+            mockDb.all.mockResolvedValue(mockChurnData);
 
             // Lower churn in month 2 is good
             expect(mockChurnData[1].churnRate).toBeLessThan(mockChurnData[0].churnRate);
@@ -251,7 +252,7 @@ describe('Billing Phase 2 API Routes', () => {
                 avgChurnRate: '2.5%'
             };
 
-            mockDb.get.mockResolvedValue($2);
+            mockDb.get.mockResolvedValue(mockLtvData);
 
             expect(parseFloat(mockLtvData.ltv)).toBeGreaterThan(0);
         });
@@ -262,7 +263,7 @@ describe('Billing Phase 2 API Routes', () => {
                 { month: '2024-02', expansion_mrr: 1200 }
             ];
 
-            mockDb.all.mockResolvedValue($2);
+            mockDb.all.mockResolvedValue(mockExpansionData);
 
             const totalExpansion = mockExpansionData.reduce((sum, d) => sum + d.expansion_mrr, 0);
             expect(totalExpansion).toBe(1700);
@@ -277,7 +278,7 @@ describe('Billing Phase 2 API Routes', () => {
                 { id: 'evt-2', event_type: 'subscription.created', status: 'sent' }
             ];
 
-            mockDb.all.mockResolvedValue($2);
+            mockDb.all.mockResolvedValue(mockEvents);
 
             expect(mockEvents).toHaveLength(2);
         });

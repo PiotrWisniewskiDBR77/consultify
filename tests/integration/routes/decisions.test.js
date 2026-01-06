@@ -7,7 +7,11 @@ import { initializeDatabase } from '../../../server/src/database/DatabaseInitial
 
 vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
-    process.env.SQLITE_PATH = ':memory:';
+    // Use unique DB per worker to avoid concurrency issues
+    const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
+    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+    process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
 });
 
 /**
@@ -16,10 +20,12 @@ vi.hoisted(() => {
 
 describe('Decisions Routes', () => {
     let db;
+    let rawDb;
     
     beforeAll(async () => {
         await initializeDatabase();
-        db = getDatabaseInstance();
+        db = getDatabase();
+        rawDb = getDatabaseInstance();
     });
 
     let testApp;
@@ -27,9 +33,19 @@ describe('Decisions Routes', () => {
     beforeEach(async () => {
         vi.clearAllMocks();
         
-        // Clear decisions table before each test to avoid UNIQUE constraint errors
+        // Clear tables before each test
         await db.run('DELETE FROM decisions');
+        await db.run('DELETE FROM projects');
+        await db.run('DELETE FROM organizations');
+        await db.run('DELETE FROM users');
         
+        // Seed parent records
+        await db.run('INSERT INTO organizations (id, name, status) VALUES (?, ?, ?)', ['org-1', 'Test Org', 'active']);
+        await db.run('INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)', 
+            ['user-1', 'org-1', 'admin@test.com', 'hash', 'ADMIN', 'active']);
+        await db.run('INSERT INTO projects (id, organization_id, name, status, owner_id) VALUES (?, ?, ?, ?, ?)', 
+            ['00000000-0000-0000-0000-000000000099', 'org-1', 'Test Project', 'active', 'user-1']);
+
         // Enable Auth Bypass for this test suite
         process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
         process.env.NODE_ENV = 'test';
@@ -82,8 +98,8 @@ describe('Decisions Routes', () => {
         });
 
         it('handles database errors gracefully', async () => {
-            // Mock db.all to return error
-            vi.spyOn(db, 'all').mockImplementation((sql, params, callback) => {
+            // Mock rawDb.all to return error
+            vi.spyOn(rawDb, 'all').mockImplementation((sql, params, callback) => {
                 const cb = typeof params === 'function' ? params : callback;
                 if (cb) cb(new Error('Database error'), null);
             });

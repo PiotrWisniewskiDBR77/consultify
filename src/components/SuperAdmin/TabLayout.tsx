@@ -38,7 +38,7 @@ export const TabLayout: React.FC<TabLayoutProps> = ({
     return (
         <div className="h-full flex flex-col overflow-hidden">
             {/* Header with title and tabs */}
-            <div className="shrink-0 bg-white/50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-white/5">
+            <div className="shrink-0 bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border-b border-slate-100 dark:border-navy-800">
                 {/* Title row */}
                 {(title || actions) && (
                     <div className="px-6 pt-6 pb-4 flex items-center justify-between">

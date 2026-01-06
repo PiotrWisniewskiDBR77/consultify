@@ -18,7 +18,7 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 console.log('[Legacy DB] database.sqlite.js module LOADED. SQLITE_PATH:', process.env.SQLITE_PATH);
-const dbPath = process.env.SQLITE_PATH || path.resolve(__dirname, 'consultify.db');
+const dbPath = process.env.SQLITE_PATH || path.resolve(__dirname, '../consultify.db');
 const GLOBAL_KEY = '__CONSULTIFY_SQLITE_INSTANCE__';
 
 /**

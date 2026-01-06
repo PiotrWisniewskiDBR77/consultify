@@ -72,9 +72,9 @@ export const MyWorkView: React.FC<MyWorkViewProps> = ({ currentUser, onNavigate 
                 }
                 subtitle={t('myWork.chatSubtitle', 'Help with tasks & planning')}
             >
-                <div className="flex h-full bg-slate-50 dark:bg-navy-950 overflow-hidden">
+                <div className="flex h-full bg-slate-100 dark:bg-navy-950 gap-0.5 overflow-hidden">
                     {/* Work Center - 65% */}
-                    <div className="w-[65%] flex flex-col border-r border-slate-200 dark:border-white/10">
+                    <div className="w-[65%] flex flex-col bg-white dark:bg-navy-900 shadow-sm">
                         <WorkCenter
                             onTaskClick={handleTaskClick}
                             onDecisionClick={handleDecisionClick}
@@ -84,7 +84,7 @@ export const MyWorkView: React.FC<MyWorkViewProps> = ({ currentUser, onNavigate 
                     </div>
 
                     {/* Notifications Hub - 35% */}
-                    <div className="w-[35%] flex flex-col">
+                    <div className="w-[35%] flex flex-col bg-white dark:bg-navy-900 shadow-sm">
                         <NotificationsHub onOpenTask={handleTaskClick} onOpenDecision={handleDecisionClick} />
                     </div>
                 </div>

@@ -223,7 +223,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                 <div
                     ref={sidebarRef}
                     style={{ width: chatPanelWidth }}
-                    className="shrink-0 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex flex-col hidden lg:flex h-full transition-none relative"
+                    className="shrink-0 shadow-sm bg-white dark:bg-navy-900 flex flex-col hidden lg:flex h-full transition-none relative"
                 >
                     {/* Collapse button - only for legacy chat panel */}
                     {!useUnifiedChat && (
@@ -285,7 +285,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
             )}
             {/* Desktop Collapsed Trigger */}
             {isChatCollapsed && (
-                <div className="hidden lg:flex w-12 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-navy-950 flex-col items-center py-4 gap-4 h-full shrink-0">
+                <div className="hidden lg:flex w-12 shadow-sm bg-white dark:bg-navy-900 flex-col items-center py-4 gap-4 h-full shrink-0">
                     <button
                         onClick={() => toggleChatCollapse()}
                         className="w-8 h-8 rounded bg-brand/10 text-brand flex items-center justify-center hover:bg-brand/20 transition-colors"

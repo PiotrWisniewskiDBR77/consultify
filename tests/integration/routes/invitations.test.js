@@ -10,6 +10,7 @@ vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
     // Use unique DB per worker to avoid concurrency issues
     const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
     process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
     process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
 });

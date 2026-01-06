@@ -130,6 +130,29 @@ vi.mock('react-i18next', () => {
 });
 
 // --------------------------------------------------------
+// Global Mock for react-hot-toast
+// --------------------------------------------------------
+const mockToast = Object.assign(
+    vi.fn((message: any) => 'toast-id'),
+    {
+        success: vi.fn(() => 'toast-id'),
+        error: vi.fn(() => 'toast-id'),
+        loading: vi.fn(() => 'toast-id'),
+        dismiss: vi.fn(),
+        remove: vi.fn(),
+        custom: vi.fn(() => 'toast-id'),
+        promise: vi.fn((promise: any) => promise),
+    }
+);
+
+vi.mock('react-hot-toast', () => ({
+    default: mockToast,
+    toast: mockToast,
+    Toaster: () => null,
+    useToasterStore: vi.fn(() => ({ toasts: [] })),
+}));
+
+// --------------------------------------------------------
 // Global Database Mock (SQLite-compatible)
 // --------------------------------------------------------
 // We define this on global so server/database.js picks it up.
