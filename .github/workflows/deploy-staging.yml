@@ -62,6 +62,7 @@ jobs:
       - name: Build frontend
         run: npm run build
         env:
+          # Note: || syntax is valid GitHub Actions - IDE warnings are false positives
           VITE_API_URL: ${{ vars.STAGING_API_URL || 'http://localhost:3001' }}
           VITE_SENTRY_DSN: ${{ secrets.STAGING_SENTRY_DSN || '' }}
       
@@ -91,6 +92,7 @@ jobs:
         with:
           service: consultify-staging
         env:
+          # Note: Secret access is valid - IDE warning is false positive
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
           RAILWAY_ENVIRONMENT: staging
         continue-on-error: true

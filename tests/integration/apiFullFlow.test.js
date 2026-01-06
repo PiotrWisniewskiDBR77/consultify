@@ -20,12 +20,24 @@ vi.mock('../../server/src/Gateway.ts', async () => {
     // Dynamically import only valid routes needed for the test flow
     // Using simple mocks/requires due to hoisting limits or async imports
     const authRoutes = await import('../../server/src/routes/auth.routes.js');
+    
+    console.log('[MockGateway] authRoutes.default type:', typeof authRoutes.default);
+    console.log('[MockGateway] authRoutes.default is function:', typeof authRoutes.default === 'function');
+    if (typeof authRoutes.default === 'function') {
+        console.log('[MockGateway] authRoutes.default string:', authRoutes.default.toString().substring(0, 100));
+    }
+
     const projectRoutes = await import('../../server/src/routes/pmo/projects.routes.js');
     const taskRoutes = await import('../../server/src/routes/pmo/tasks.routes.js');
     const sessionsRoutes = await import('../../server/src/routes/user/sessions.routes.js');
 
     const initializeRoutes = (app) => {
         console.log('[MockGateway] Initializing vertical slice routes (Auth, Projects, Tasks, Sessions)...');
+        
+        app.get('/api/test-direct', (req, res) => {
+            res.json({ direct: true });
+        });
+
         app.use('/api/auth', authRoutes.default);
         app.use('/api/projects', projectRoutes.default);
         app.use('/api/tasks', taskRoutes.default);
@@ -61,6 +73,12 @@ describe('Integration Test: Full API Flow', () => {
     let testProjectId;
     let db;
 
+    it('should respond to a direct test route', async () => {
+        const res = await request(app).get('/api/test-direct');
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ direct: true });
+    });
+
     beforeAll(async () => {
         db = await getDatabaseAsync();
         
@@ -95,6 +113,8 @@ describe('Integration Test: Full API Flow', () => {
         const res = await request(app)
             .post('/api/auth/login')
             .send({ email, password });
+
+        console.log('[Test Login] Status:', res.status, 'Body:', JSON.stringify(res.body));
 
         if (res.status !== 200) {
             console.error('Login failed in apiFullFlow setup:', res.status, res.body);

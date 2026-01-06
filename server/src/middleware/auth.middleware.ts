@@ -253,9 +253,11 @@ export const verifyToken = asyncHandler(async (req: AuthRequest, res: Response, 
     try {
         const { jwt: jwtLib, config } = await getDeps();
         
-        if (!config.JWT_SECRET) {
-            logger.error('[AuthMiddleware] CRITICAL: config.JWT_SECRET is missing!');
+        if (!config || !config.JWT_SECRET) {
+            logger.error(`[AuthMiddleware] CRITICAL: config object is ${typeof config}, keys: ${config ? Object.keys(config) : 'none'}, JWT_SECRET is ${config?.JWT_SECRET ? 'present' : 'missing'}`);
         }
+
+        logger.info(`[AuthMiddleware] Verifying token: ${token.substring(0, 10)}... with secret length: ${config.JWT_SECRET?.length}`);
 
         const decoded = await new Promise<JWTPayload>((resolve, reject) => {
             jwtLib.verify(token, config.JWT_SECRET, (err: any, decoded: any) => {

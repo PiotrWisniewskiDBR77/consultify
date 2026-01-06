@@ -32,6 +32,13 @@ vi.mock('../../../../server/src/database/Database.js', () => ({
   default: mocks.db
 }));
 
+// Mock DbPromise module
+vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
+  get: mocks.db.get,
+  all: mocks.db.all,
+  run: mocks.db.run
+}));
+
 // Mock logger
 vi.mock('../../../../server/src/utils/Logger.js', () => ({
   default: mocks.logger
@@ -52,7 +59,7 @@ vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
   })
 }));
 
-// Mock rate limiting to avoid delays
+// Mock rate limiting
 vi.mock('../../../../server/src/middleware/rateLimiting.middleware.js', () => ({
   defaultRateLimiter: (req: any, res: any, next: any) => next(),
   authRateLimiter: (req: any, res: any, next: any) => next()
@@ -86,15 +93,19 @@ describe('Billing Routes', () => {
       mocks.db.get.mockResolvedValueOnce({ count: 2, total_amount: 1000 }); // unpaidResult
 
       const response = await request(app)
-        .get('/api/billing/stats?period=30')
-        .expect(200);
+        .get('/api/billing/stats?period=30');
+      
+      if (response.status !== 200) {
+        console.error('Error response:', response.body);
+      }
+      
+      expect(response.status).toBe(200);
 
       expect(response.body.mrr).toBe(15000);
       expect(response.body.revenue.total).toBe(50000);
     });
 
     it('should require superadmin access for stats', async () => {
-      // Temporarily override the mock for this test
       vi.mocked(authMiddleware.requireSuperAdmin).mockImplementationOnce((req: any, res: any, next: any) => {
           return res.status(403).json({ error: 'Forbidden' });
       });

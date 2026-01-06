@@ -429,104 +429,74 @@ vi.mock('../server/src/middleware/inputSanitization.middleware.js', () => ({
 // }));
 
 // Global mock for Api service to prevent actual API calls in component tests
-const mockApiModule = {
-    Api: {
-        // Auth
-        login: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
-        register: vi.fn().mockResolvedValue({ id: 'user-1' }),
-        getMe: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
-        logout: vi.fn().mockResolvedValue(undefined),
-
-        // Organizations
-        getOrganizations: vi.fn().mockResolvedValue([]),
-        getOrganization: vi.fn().mockResolvedValue(null),
-
-        // SuperAdmin
-        getSuperAdminDashboard: vi.fn().mockResolvedValue({ counts: {}, ai: {}, live: {}, activities: [] }),
-        getSystemHealth: vi.fn().mockResolvedValue({ status: 'healthy', uptime: 99.9 }),
-        getAuditLogs: vi.fn().mockResolvedValue([]),
-        getFeatureFlags: vi.fn().mockResolvedValue([]),
-        getUsageByOrganization: vi.fn().mockResolvedValue([]),
-
-        // Tasks
-        getTasks: vi.fn().mockResolvedValue([]),
-        getTask: vi.fn().mockResolvedValue(null),
-        createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
-        updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
-        deleteTask: vi.fn().mockResolvedValue(undefined),
-
-        // Projects
-        getProjects: vi.fn().mockResolvedValue([]),
-        getProject: vi.fn().mockResolvedValue(null),
-        createProject: vi.fn().mockResolvedValue({ id: 'project-1' }),
-
-        // Initiatives
-        getInitiatives: vi.fn().mockResolvedValue([]),
-        getInitiative: vi.fn().mockResolvedValue(null),
-
-        // AI
-        chat: vi.fn().mockResolvedValue({ message: 'Response' }),
-        streamChat: vi.fn().mockResolvedValue(new ReadableStream()),
-
-        // Generic catch-all
-        get: vi.fn().mockResolvedValue({}),
-        post: vi.fn().mockResolvedValue({}),
-        put: vi.fn().mockResolvedValue({}),
-        delete: vi.fn().mockResolvedValue({}),
+vi.mock('../services/api', async (importOriginal) => {
+    if (process.env.TEST_TYPE === 'integration') {
+        return await importOriginal();
     }
-};
+    return {
+        Api: {
+            // Auth
+            login: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
+            register: vi.fn().mockResolvedValue({ id: 'user-1' }),
+            getMe: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
+            logout: vi.fn().mockResolvedValue(undefined),
 
-vi.mock('../services/api', () => mockApiModule);
-vi.mock('@/services/api', () => mockApiModule);
-vi.mock('services/api', () => mockApiModule);
+            // Organizations
+            getOrganizations: vi.fn().mockResolvedValue([]),
+            getOrganization: vi.fn().mockResolvedValue(null),
 
-// Additional mock for backwards compatibility (keeping original pattern below)
-vi.mock('../services/api', () => ({
-    Api: {
-        // Auth
-        login: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
-        register: vi.fn().mockResolvedValue({ id: 'user-1' }),
-        getMe: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
-        logout: vi.fn().mockResolvedValue(undefined),
+            // SuperAdmin
+            getSuperAdminDashboard: vi.fn().mockResolvedValue({ counts: {}, ai: {}, live: {}, activities: [] }),
+            getSystemHealth: vi.fn().mockResolvedValue({ status: 'healthy', uptime: 99.9 }),
+            getAuditLogs: vi.fn().mockResolvedValue([]),
+            getFeatureFlags: vi.fn().mockResolvedValue([]),
+            getUsageByOrganization: vi.fn().mockResolvedValue([]),
 
-        // Organizations
-        getOrganizations: vi.fn().mockResolvedValue([]),
-        getOrganization: vi.fn().mockResolvedValue(null),
+            // Tasks
+            getTasks: vi.fn().mockResolvedValue([]),
+            getTask: vi.fn().mockResolvedValue(null),
+            createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+            updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+            deleteTask: vi.fn().mockResolvedValue(undefined),
 
-        // SuperAdmin
-        getSuperAdminDashboard: vi.fn().mockResolvedValue({ counts: {}, ai: {}, live: {}, activities: [] }),
-        getSystemHealth: vi.fn().mockResolvedValue({ status: 'healthy', uptime: 99.9 }),
-        getAuditLogs: vi.fn().mockResolvedValue([]),
-        getFeatureFlags: vi.fn().mockResolvedValue([]),
-        getUsageByOrganization: vi.fn().mockResolvedValue([]),
+            // Projects
+            getProjects: vi.fn().mockResolvedValue([]),
+            getProject: vi.fn().mockResolvedValue(null),
+            createProject: vi.fn().mockResolvedValue({ id: 'project-1' }),
 
-        // Tasks
-        getTasks: vi.fn().mockResolvedValue([]),
-        getTask: vi.fn().mockResolvedValue(null),
-        createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
-        updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
-        deleteTask: vi.fn().mockResolvedValue(undefined),
+            // Initiatives
+            getInitiatives: vi.fn().mockResolvedValue([]),
+            getInitiative: vi.fn().mockResolvedValue(null),
 
-        // Projects
-        getProjects: vi.fn().mockResolvedValue([]),
-        getProject: vi.fn().mockResolvedValue(null),
-        createProject: vi.fn().mockResolvedValue({ id: 'project-1' }),
+            // AI
+            chat: vi.fn().mockResolvedValue({ message: 'Response' }),
+            streamChat: vi.fn().mockResolvedValue(new ReadableStream()),
 
-        // Initiatives
-        getInitiatives: vi.fn().mockResolvedValue([]),
-        getInitiative: vi.fn().mockResolvedValue(null),
+            // Generic catch-all
+            get: vi.fn().mockResolvedValue({}),
+            post: vi.fn().mockResolvedValue({}),
+            put: vi.fn().mockResolvedValue({}),
+            delete: vi.fn().mockResolvedValue({}),
+        }
+    };
+});
 
-        // AI
-        chat: vi.fn().mockResolvedValue({ message: 'Response' }),
-        streamChat: vi.fn().mockResolvedValue(new ReadableStream()),
-
-        // Generic catch-all
-        get: vi.fn().mockResolvedValue({}),
-        post: vi.fn().mockResolvedValue({}),
-        put: vi.fn().mockResolvedValue({}),
-        delete: vi.fn().mockResolvedValue({}),
+// Mock the other aliases too
+vi.mock('@/services/api', async (importOriginal) => {
+    if (process.env.TEST_TYPE === 'integration') {
+        return await importOriginal();
     }
-}));
+    const api = await import('../src/services/api');
+    return api;
+});
+
+vi.mock('services/api', async (importOriginal) => {
+    if (process.env.TEST_TYPE === 'integration') {
+        return await importOriginal();
+    }
+    const api = await import('../src/services/api');
+    return api;
+});
 
 // Global Setup
 beforeAll(async () => {

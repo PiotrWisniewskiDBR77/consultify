@@ -128,22 +128,31 @@ export const AIContextBuilder = {
         options: ContextOptions = {},
     ): Promise<AIContext> => {
         const focusMode = options.focusMode || 'all';
+        console.log(`[AIContextBuilder] buildContext started for user: ${userId}, org: ${organizationId}, project: ${projectId}`);
 
         const PMOHealthService = await getPMOHealthService();
         const AISettingsService = await getAISettingsService();
+        console.log('[AIContextBuilder] Services loaded');
 
         // Build all context layers
+        console.log('[AIContextBuilder] Building platform context...');
         const platform = await AIContextBuilder._buildPlatformContext(userId, organizationId);
+        console.log('[AIContextBuilder] Building organization context...');
         const organization = await AIContextBuilder._buildOrganizationContext(organizationId);
+        console.log('[AIContextBuilder] Building project context...');
         const project = projectId ? await AIContextBuilder._buildProjectContext(projectId) : null;
+        console.log('[AIContextBuilder] Building execution context...');
         const execution = await AIContextBuilder._buildExecutionContext(userId, projectId);
+        console.log('[AIContextBuilder] Building knowledge context...');
         const knowledge = await AIContextBuilder._buildKnowledgeContext(projectId, focusMode);
+        console.log('[AIContextBuilder] Building external context...');
         const external = await AIContextBuilder._buildExternalContext(organizationId, focusMode);
 
         // Fetch PMOHealthSnapshot
         const pmo = { healthSnapshot: null };
         if (projectId && PMOHealthService && ['all', 'pmo-docs', 'project-data'].includes(focusMode)) {
             try {
+                console.log('[AIContextBuilder] Fetching PMO health snapshot...');
                 pmo.healthSnapshot = await PMOHealthService.getHealthSnapshot(projectId);
             } catch (err: any) {
                 logger.warn('[AIContextBuilder] Failed to get PMO health snapshot:', (err as Error).message);
@@ -151,6 +160,7 @@ export const AIContextBuilder = {
         }
 
         // Fetch pending approvals for HITL context
+        console.log('[AIContextBuilder] Fetching pending approvals...');
         const pendingApprovals = await AIContextBuilder._buildPendingApprovalsContext(
             userId,
             organizationId,
@@ -161,6 +171,7 @@ export const AIContextBuilder = {
         let aiSettings = null;
         if (AISettingsService) {
             try {
+                console.log('[AIContextBuilder] Fetching AI settings...');
                 aiSettings = await AISettingsService.getEffectiveSettings(userId, organizationId);
             } catch (err: any) {
                 logger.warn('[AIContextBuilder] Failed to get AI settings:', (err as Error).message);
@@ -179,8 +190,10 @@ export const AIContextBuilder = {
             aiSettings,
         };
 
+        console.log('[AIContextBuilder] Filtering context...');
         const filteredContext = AIContextBuilder._applyFocusModeFilter(fullContext, focusMode);
 
+        console.log('[AIContextBuilder] Context built successfully');
         return {
             ...filteredContext,
             focusMode,

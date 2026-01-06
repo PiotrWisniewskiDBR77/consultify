@@ -184,6 +184,7 @@ jobs:
           npm version patch --no-git-tag-version
           npm publish --access public
         env:
+          # Note: Secret access is valid - IDE warning is false positive
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         continue-on-error: true
 
@@ -349,6 +350,7 @@ jobs:
         run: nx build consultify:frontend
         env:
           NODE_ENV: production
+          # Note: || syntax is valid GitHub Actions - IDE warnings are false positives
           VITE_API_URL: ${{ vars.API_URL || 'http://localhost:3001' }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
 
@@ -490,6 +492,7 @@ jobs:
         run: nx build new-app:frontend
         env:
           NODE_ENV: production
+          # Note: || syntax is valid GitHub Actions - IDE warnings are false positives
           VITE_API_URL: ${{ vars.API_URL || 'http://localhost:3001' }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
 
