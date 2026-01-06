@@ -32,6 +32,8 @@ export const validateBody = (schema: z.ZodSchema) => {
                         code: err.code,
                     })) || [];
 
+                console.log(`[ValidationMiddleware] Validation failed for ${req.method} ${req.path}:`, JSON.stringify(errors, null, 2));
+
                 res.status(400).json({
                     error: 'Validation Error',
                     details: errors,
