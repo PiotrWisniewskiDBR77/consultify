@@ -1,0 +1,645 @@
+{"numTotalTestSuites":13,"numPassedTestSuites":5,"numFailedTestSuites":5,"numPendingTestSuites":3,"numTotalTests":21,"    <testsuite name="tests/integration/routes/invitations.test.js" timestamp="2026-01-06T10:18:00.661Z" hostname="mac.home" tests="22" failures="12" errors="0" skipped="2" time="0">
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/org &gt; should create an organization invitation" time="0.018152916">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[ValidationMiddleware] Validation failed for POST /org: [
+  {
+    &quot;field&quot;: &quot;role&quot;,
+    &quot;message&quot;: &quot;Invalid option: expected one of \&quot;OWNER\&quot;|\&quot;ADMIN\&quot;|\&quot;MEMBER\&quot;|\&quot;VIEWER\&quot;&quot;,
+    &quot;code&quot;: &quot;invalid_value&quot;
+  }
+]
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/org&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:10,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:661232,&quot;external&quot;:1831,&quot;rss&quot;:229376},&quot;userId&quot;:&quot;1df9e5ab-6e71-412e-90e7-862896912e20&quot;,&quot;organizationId&quot;:&quot;4b53c044-b014-452f-b4c5-4ba8b91cb1ec&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[ValidationMiddleware] Validation failed for POST /org: [
+  {
+    &quot;field&quot;: &quot;role&quot;,
+    &quot;message&quot;: &quot;Invalid option: expected one of \&quot;OWNER\&quot;|\&quot;ADMIN\&quot;|\&quot;MEMBER\&quot;|\&quot;VIEWER\&quot;&quot;,
+    &quot;code&quot;: &quot;invalid_value&quot;
+  }
+]
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/org&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:2,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:291936,&quot;external&quot;:1136,&quot;rss&quot;:245760},&quot;userId&quot;:&quot;1df9e5ab-6e71-412e-90e7-862896912e20&quot;,&quot;organizationId&quot;:&quot;4b53c044-b014-452f-b4c5-4ba8b91cb1ec&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="expected 400 to be 201 // Object.is equality" type="AssertionError">
+AssertionError: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ tests/integration/routes/invitations.test.js:120:36
+            </failure>
+            <failure message="expected 400 to be 201 // Object.is equality" type="AssertionError">
+AssertionError: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ tests/integration/routes/invitations.test.js:120:36
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/org &gt; should reject duplicate invitation for same email" time="0.00626725">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[ValidationMiddleware] Validation failed for POST /org: [
+  {
+    &quot;field&quot;: &quot;role&quot;,
+    &quot;message&quot;: &quot;Invalid option: expected one of \&quot;OWNER\&quot;|\&quot;ADMIN\&quot;|\&quot;MEMBER\&quot;|\&quot;VIEWER\&quot;&quot;,
+    &quot;code&quot;: &quot;invalid_value&quot;
+  }
+]
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/org&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:132320,&quot;external&quot;:9328,&quot;rss&quot;:32768},&quot;userId&quot;:&quot;1df9e5ab-6e71-412e-90e7-862896912e20&quot;,&quot;organizationId&quot;:&quot;4b53c044-b014-452f-b4c5-4ba8b91cb1ec&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[ValidationMiddleware] Validation failed for POST /org: [
+  {
+    &quot;field&quot;: &quot;role&quot;,
+    &quot;message&quot;: &quot;Invalid option: expected one of \&quot;OWNER\&quot;|\&quot;ADMIN\&quot;|\&quot;MEMBER\&quot;|\&quot;VIEWER\&quot;&quot;,
+    &quot;code&quot;: &quot;invalid_value&quot;
+  }
+]
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/org&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:-214544,&quot;external&quot;:1136,&quot;rss&quot;:98304},&quot;userId&quot;:&quot;1df9e5ab-6e71-412e-90e7-862896912e20&quot;,&quot;organizationId&quot;:&quot;4b53c044-b014-452f-b4c5-4ba8b91cb1ec&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;pending invitation already exists&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;pending invitation already exists&apos;
+
+Expected: &quot;pending invitation already exists&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:140:36
+            </failure>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;pending invitation already exists&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;pending invitation already exists&apos;
+
+Expected: &quot;pending invitation already exists&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:140:36
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/org &gt; should reject invalid email format" time="0.005141833">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[ValidationMiddleware] Validation failed for POST /org: [
+  {
+    &quot;field&quot;: &quot;email&quot;,
+    &quot;message&quot;: &quot;Invalid email address&quot;,
+    &quot;code&quot;: &quot;invalid_format&quot;
+  },
+  {
+    &quot;field&quot;: &quot;role&quot;,
+    &quot;message&quot;: &quot;Invalid option: expected one of \&quot;OWNER\&quot;|\&quot;ADMIN\&quot;|\&quot;MEMBER\&quot;|\&quot;VIEWER\&quot;&quot;,
+    &quot;code&quot;: &quot;invalid_value&quot;
+  }
+]
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/org&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:149432,&quot;external&quot;:1236,&quot;rss&quot;:49152},&quot;userId&quot;:&quot;1df9e5ab-6e71-412e-90e7-862896912e20&quot;,&quot;organizationId&quot;:&quot;4b53c044-b014-452f-b4c5-4ba8b91cb1ec&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[ValidationMiddleware] Validation failed for POST /org: [
+  {
+    &quot;field&quot;: &quot;email&quot;,
+    &quot;message&quot;: &quot;Invalid email address&quot;,
+    &quot;code&quot;: &quot;invalid_format&quot;
+  },
+  {
+    &quot;field&quot;: &quot;role&quot;,
+    &quot;message&quot;: &quot;Invalid option: expected one of \&quot;OWNER\&quot;|\&quot;ADMIN\&quot;|\&quot;MEMBER\&quot;|\&quot;VIEWER\&quot;&quot;,
+    &quot;code&quot;: &quot;invalid_value&quot;
+  }
+]
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/org&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:-264144,&quot;external&quot;:9428,&quot;rss&quot;:32768},&quot;userId&quot;:&quot;1df9e5ab-6e71-412e-90e7-862896912e20&quot;,&quot;organizationId&quot;:&quot;4b53c044-b014-452f-b4c5-4ba8b91cb1ec&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;Invalid email&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;Invalid email&apos;
+
+Expected: &quot;Invalid email&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:153:36
+            </failure>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;Invalid email&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;Invalid email&apos;
+
+Expected: &quot;Invalid email&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:153:36
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/org &gt; should require authentication" time="0.001563625">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: NO
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/org&quot;,&quot;statusCode&quot;:401,&quot;responseTime&quot;:0,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:388896,&quot;external&quot;:546,&quot;rss&quot;:16384},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/org &gt; should list organization invitations" time="0.009011209">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mGET /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mGET /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+            </system-out>
+            <failure message="expected false to be true // Object.is equality" type="AssertionError">
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/integration/routes/invitations.test.js:180:45
+            </failure>
+            <failure message="expected false to be true // Object.is equality" type="AssertionError">
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/integration/routes/invitations.test.js:180:45
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/org &gt; should filter by status" time="0.01057575">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mGET /api/invitations/org?status=pending[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mGET /api/invitations/org?status=pending[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+            </system-out>
+            <failure message="expected false to be true // Object.is equality" type="AssertionError">
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/integration/routes/invitations.test.js:190:45
+            </failure>
+            <failure message="expected false to be true // Object.is equality" type="AssertionError">
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/integration/routes/invitations.test.js:190:45
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/validate/:token &gt; should validate a valid token" time="0.007443667">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mGET /api/invitations/validate/undefined[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/invitations/validate/undefined[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/invitations/validate/undefined&quot;,&quot;statusCode&quot;:404,&quot;responseTime&quot;:2,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:1712000,&quot;external&quot;:556,&quot;rss&quot;:212992},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mGET /api/invitations/validate/undefined[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/invitations/validate/undefined[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/invitations/validate/undefined&quot;,&quot;statusCode&quot;:404,&quot;responseTime&quot;:2,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:1767248,&quot;external&quot;:556,&quot;rss&quot;:212992},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="expected 404 to be 200 // Object.is equality" type="AssertionError">
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/integration/routes/invitations.test.js:223:36
+            </failure>
+            <failure message="expected 404 to be 200 // Object.is equality" type="AssertionError">
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/integration/routes/invitations.test.js:223:36
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/validate/:token &gt; should reject invalid token" time="0.006196416">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mGET /api/invitations/validate/invalidtoken123[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/invitations/validate/invalidtoken123[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/invitations/validate/invalidtoken123&quot;,&quot;statusCode&quot;:404,&quot;responseTime&quot;:2,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:1704640,&quot;external&quot;:568,&quot;rss&quot;:376832},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mGET /api/invitations/validate/invalidtoken123[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/invitations/validate/invalidtoken123[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/invitations/validate/invalidtoken123&quot;,&quot;statusCode&quot;:404,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:1695440,&quot;external&quot;:568,&quot;rss&quot;:196608},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="expected &apos;Invitation is already undefined&apos; to contain &apos;Invalid invitation token&apos;" type="AssertionError">
+AssertionError: expected &apos;Invitation is already undefined&apos; to contain &apos;Invalid invitation token&apos;
+
+Expected: &quot;Invalid invitation token&quot;
+Received: &quot;Invitation is already undefined&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:234:36
+            </failure>
+            <failure message="expected &apos;Invitation is already undefined&apos; to contain &apos;Invalid invitation token&apos;" type="AssertionError">
+AssertionError: expected &apos;Invitation is already undefined&apos; to contain &apos;Invalid invitation token&apos;
+
+Expected: &quot;Invalid invitation token&quot;
+Received: &quot;Invitation is already undefined&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:234:36
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/accept &gt; should reject acceptance with wrong email" time="0.003355375">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/accept[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/accept[39m
+[ValidationMiddleware] Validation failed for POST /accept: [
+  {
+    &quot;field&quot;: &quot;token&quot;,
+    &quot;message&quot;: &quot;Invalid input: expected string, received undefined&quot;,
+    &quot;code&quot;: &quot;invalid_type&quot;
+  }
+]
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/accept&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:-74120,&quot;external&quot;:0,&quot;rss&quot;:0},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/accept[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/accept[39m
+[ValidationMiddleware] Validation failed for POST /accept: [
+  {
+    &quot;field&quot;: &quot;token&quot;,
+    &quot;message&quot;: &quot;Invalid input: expected string, received undefined&quot;,
+    &quot;code&quot;: &quot;invalid_type&quot;
+  }
+]
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/accept&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:0,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:51680,&quot;external&quot;:0,&quot;rss&quot;:0},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;does not match&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;does not match&apos;
+
+Expected: &quot;does not match&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:256:36
+            </failure>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;does not match&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;does not match&apos;
+
+Expected: &quot;does not match&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:256:36
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/accept &gt; should reject acceptance with short password" time="0.0026775">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/accept[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/accept[39m
+[ValidationMiddleware] Validation failed for POST /accept: [
+  {
+    &quot;field&quot;: &quot;token&quot;,
+    &quot;message&quot;: &quot;Invalid input: expected string, received undefined&quot;,
+    &quot;code&quot;: &quot;invalid_type&quot;
+  },
+  {
+    &quot;field&quot;: &quot;password&quot;,
+    &quot;message&quot;: &quot;Too small: expected string to have &gt;=8 characters&quot;,
+    &quot;code&quot;: &quot;too_small&quot;
+  }
+]
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/accept&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:0,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:503296,&quot;external&quot;:0,&quot;rss&quot;:16384},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/accept[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/accept[39m
+[ValidationMiddleware] Validation failed for POST /accept: [
+  {
+    &quot;field&quot;: &quot;token&quot;,
+    &quot;message&quot;: &quot;Invalid input: expected string, received undefined&quot;,
+    &quot;code&quot;: &quot;invalid_type&quot;
+  },
+  {
+    &quot;field&quot;: &quot;password&quot;,
+    &quot;message&quot;: &quot;Too small: expected string to have &gt;=8 characters&quot;,
+    &quot;code&quot;: &quot;too_small&quot;
+  }
+]
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/accept&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:0,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:52664,&quot;external&quot;:0,&quot;rss&quot;:0},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;at least 8 characters&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;at least 8 characters&apos;
+
+Expected: &quot;at least 8 characters&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:271:36
+            </failure>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;at least 8 characters&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;at least 8 characters&apos;
+
+Expected: &quot;at least 8 characters&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:271:36
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/accept &gt; should accept valid invitation" time="0.003076125">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/accept[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/accept[39m
+[ValidationMiddleware] Validation failed for POST /accept: [
+  {
+    &quot;field&quot;: &quot;token&quot;,
+    &quot;message&quot;: &quot;Invalid input: expected string, received undefined&quot;,
+    &quot;code&quot;: &quot;invalid_type&quot;
+  }
+]
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/accept&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:0,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:55728,&quot;external&quot;:0,&quot;rss&quot;:0},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/accept[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/accept[39m
+[ValidationMiddleware] Validation failed for POST /accept: [
+  {
+    &quot;field&quot;: &quot;token&quot;,
+    &quot;message&quot;: &quot;Invalid input: expected string, received undefined&quot;,
+    &quot;code&quot;: &quot;invalid_type&quot;
+  }
+]
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/accept&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:0,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:-52848,&quot;external&quot;:0,&quot;rss&quot;:16384},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="expected 400 to be 200 // Object.is equality" type="AssertionError">
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/integration/routes/invitations.test.js:285:36
+            </failure>
+            <failure message="expected 400 to be 200 // Object.is equality" type="AssertionError">
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ tests/integration/routes/invitations.test.js:285:36
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/accept &gt; should reject reusing the same token" time="0.002598917">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/accept[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/accept[39m
+[ValidationMiddleware] Validation failed for POST /accept: [
+  {
+    &quot;field&quot;: &quot;token&quot;,
+    &quot;message&quot;: &quot;Invalid input: expected string, received undefined&quot;,
+    &quot;code&quot;: &quot;invalid_type&quot;
+  }
+]
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/accept&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:0,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:51336,&quot;external&quot;:0,&quot;rss&quot;:0},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/accept[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/accept[39m
+[ValidationMiddleware] Validation failed for POST /accept: [
+  {
+    &quot;field&quot;: &quot;token&quot;,
+    &quot;message&quot;: &quot;Invalid input: expected string, received undefined&quot;,
+    &quot;code&quot;: &quot;invalid_type&quot;
+  }
+]
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/accept&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:56808,&quot;external&quot;:0,&quot;rss&quot;:16384},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;accepted&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;accepted&apos;
+
+Expected: &quot;accepted&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:303:36
+            </failure>
+            <failure message="expected &apos;Validation Error&apos; to contain &apos;accepted&apos;" type="AssertionError">
+AssertionError: expected &apos;Validation Error&apos; to contain &apos;accepted&apos;
+
+Expected: &quot;accepted&quot;
+Received: &quot;Validation Error&quot;
+
+ ❯ tests/integration/routes/invitations.test.js:303:36
+            </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/:id/resend &gt; should resend an invitation" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/:id/revoke &gt; should revoke an invitation" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/:id/revoke &gt; should not revoke an already revoked invitation" time="0">
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; GET /api/invitations/:id/audit &gt; should return audit trail for invitation" time="0">
+            <system-out>
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mGET /api/invitations/undefined/audit[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/invitations/undefined/audit[39m
+[AuthMiddleware] Verifying token for path: /undefined/audit
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/project &gt; should create a project invitation" time="0">
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; POST /api/invitations/project &gt; should require project ID" time="0">
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; Enterprise+ Security - DEMO Org Blocking &gt; should block invitations from DEMO organizations" time="0">
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; Enterprise+ Security - Resend Limits &gt; should track resend count" time="0">
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="Invitation Routes &gt; Enterprise+ Security - Race Condition Protection &gt; should return 409 on double acceptance attempt" time="0">
+        </testcase>
+        <testcase classname="tests/integration/routes/invitations.test.js" name="POST /api/invitations/:id/resend" time="0.021634375">
+            <system-out>
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[DatabaseInitializer] Starting database initialization...[39m
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[DatabaseInitializer] Database type: sqlite[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[DatabaseInitializer] RESET_DB=true. Dropping all SQLite tables...[39m
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[DatabaseInitializer] Dropped 68 tables.[39m
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33m[DatabaseInitializer] SQLite schema incomplete. Missing tables: organizations, users, sessions, projects, tasks, teams, invitations, notifications, settings, revoked_tokens, refresh_tokens, superadmin_ai_settings, organization_ai_settings, user_ai_settings, ai_policies, initiatives, maturity_assessments, subscription_plans, organization_billing, usage_records, usage_summaries, invoices, plan_features, spending_alerts, stripe_events, payment_attempts, dunning_states, subscription_state_history, checkout_sessions, proration_records, billing_usage_events, billing_credits, billing_email_queue, billing_notification_preferences, billing_disputes, billing_refunds, token_ledger, payment_methods, organization_limits, ai_project_memory, ai_organization_memory, usage_counters, ai_partial_responses, ai_audit_logs, ai_system_prompts, ai_knowledge_embeddings, ai_feature_control, ai_conversations, ai_cost_tracking[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[DatabaseInitializer] Manually triggering SQLite schema initialization...[39m
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[DatabaseInitializer] Attempting to load TEST_SCHEMA from: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/utils/testSchema.js[39m
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[DatabaseInitializer] Using TEST_SCHEMA for initialization[39m
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[DatabaseInitializer] Database schema verified successfully[39m
+
+2026-01-06 11:18:00:180 [35mhttp[39m: [35mPOST /api/invitations/org[39m
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/invitations/org[39m
+[AuthMiddleware] Verifying token for path: /org
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:18:00:180 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[ValidationMiddleware] Validation failed for POST /org: [
+  {
+    &quot;field&quot;: &quot;role&quot;,
+    &quot;message&quot;: &quot;Invalid option: expected one of \&quot;OWNER\&quot;|\&quot;ADMIN\&quot;|\&quot;MEMBER\&quot;|\&quot;VIEWER\&quot;&quot;,
+    &quot;code&quot;: &quot;invalid_value&quot;
+  }
+]
+
+2026-01-06 11:18:00:180 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/invitations/org&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:48104,&quot;external&quot;:1128,&quot;rss&quot;:0},&quot;userId&quot;:&quot;1df9e5ab-6e71-412e-90e7-862896912e20&quot;,&quot;organizationId&quot;:&quot;4b53c044-b014-452f-b4c5-4ba8b91cb1ec&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+            <failure message="Cannot read properties of undefined (reading &apos;id&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;id&apos;)
+ ❯ tests/integration/routes/invitations.test.js:325:54
+            </failure>
+        </testcase>
+    </testsuite>
+</testsuites>
