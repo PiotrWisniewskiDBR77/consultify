@@ -14251,3 +14251,547 @@ Expected ',', got ':'.
 [22m[39m[DB Config] Loading config. SQLITE_PATH env: ./test-integration-57.db
 [DB Config] Resolved sqlitePath: ./test-integration-57.db
 
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m[AuthRoutes] login handler is type: function
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m[AuthRoutes] login handler is type: function
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Gamification Routes] GamificationService not available[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Gamification Routes] GamificationService not available[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Knowledge] KnowledgeService not available[39m
+2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Knowledge] StorageService not available[39m
+2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Knowledge] NotificationOutboxService not available[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Knowledge] KnowledgeService not available[39m
+2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Knowledge] StorageService not available[39m
+2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Knowledge] NotificationOutboxService not available[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Knowledge] Project quota middleware not available[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:42:742 [33mwarn[39m: [33m[Knowledge] Project quota middleware not available[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:43:743 [33mwarn[39m: [33m[Megatrend] Service not available[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:43:743 [33mwarn[39m: [33m[Megatrend] Service not available[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m[LazyServiceLoader] Loading: ./trialService.legacy.js -> /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/trialService.ts
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m[LazyServiceLoader] Loading: ./trialService.legacy.js -> /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/trialService.ts
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:47:747 [32minfo[39m: [32m[Redis] Initializing client...[39m
+2026-01-06 14:07:47:747 [32minfo[39m: [32m[Redis] Using Mock Client[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:47:747 [32minfo[39m: [32m[Redis] Initializing client...[39m
+2026-01-06 14:07:47:747 [32minfo[39m: [32m[Redis] Using Mock Client[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:47:747 [32minfo[39m: [32m[Sentry] Disabled (no SENTRY_DSN or not in production/staging)[39m
+[ApiGateway] Initializing gateway routes...
+[ApiGateway] Mounting /api/auth
+[ApiGateway] Mounting /api/billing
+[ApiGateway] Mounting /api/ai
+[ApiGateway] Mounting /api/admin-data
+[ApiGateway] Mounting /api/users
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js
+[22m[39m2026-01-06 14:07:47:747 [32minfo[39m: [32m[Sentry] Disabled (no SENTRY_DSN or not in production/staging)[39m
+[ApiGateway] Initializing gateway routes...
+[ApiGateway] Mounting /api/auth
+[ApiGateway] Mounting /api/billing
+[ApiGateway] Mounting /api/ai
+[ApiGateway] Mounting /api/admin-data
+[ApiGateway] Mounting /api/users
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:47:747 [32minfo[39m: [32m[DatabaseInitializer] Starting database initialization...[39m
+[Database] createDatabase() called. MOCK_DB: false
+[Database] Loading SQLite legacy module...
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:47:747 [32minfo[39m: [32m[DatabaseInitializer] Starting database initialization...[39m
+[Database] createDatabase() called. MOCK_DB: false
+[Database] Loading SQLite legacy module...
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m[Legacy DB] database.sqlite.js module LOADED. SQLITE_PATH: ./test-integration-57.db
+[SQLite] Connecting. PID: [33m25818[39m CWD: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify Path: ./test-integration-57.db
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m[Legacy DB] database.sqlite.js module LOADED. SQLITE_PATH: ./test-integration-57.db
+[SQLite] Connecting. PID: [33m25818[39m CWD: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify Path: ./test-integration-57.db
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:47:747 [32minfo[39m: [32m[DatabaseInitializer] Database type: sqlite[39m
+2026-01-06 14:07:47:747 [32minfo[39m: [32m[DatabaseInitializer] RESET_DB=true. Dropping all SQLite tables...[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:47:747 [32minfo[39m: [32m[DatabaseInitializer] Database type: sqlite[39m
+2026-01-06 14:07:47:747 [32minfo[39m: [32m[DatabaseInitializer] RESET_DB=true. Dropping all SQLite tables...[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39mConnected to the SQLite database.
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39mConnected to the SQLite database.
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:48:748 [32minfo[39m: [32m[DatabaseInitializer] Dropped 69 tables.[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:48:748 [32minfo[39m: [32m[DatabaseInitializer] Dropped 69 tables.[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:48:748 [33mwarn[39m: [33m[DatabaseInitializer] SQLite schema incomplete. Missing tables: organizations, users, sessions, projects, tasks, teams, invitations, notifications, settings, revoked_tokens, refresh_tokens, superadmin_ai_settings, organization_ai_settings, user_ai_settings, ai_policies, initiatives, maturity_assessments, subscription_plans, organization_billing, usage_records, usage_summaries, invoices, plan_features, spending_alerts, stripe_events, payment_attempts, dunning_states, subscription_state_history, checkout_sessions, proration_records, billing_usage_events, billing_credits, billing_email_queue, billing_notification_preferences, billing_disputes, billing_refunds, token_ledger, payment_methods, organization_seats, organization_limits, ai_project_memory, ai_organization_memory, usage_counters, ai_partial_responses, ai_audit_logs, ai_system_prompts, ai_knowledge_embeddings, ai_feature_control, ai_conversations, ai_cost_tracking[39m
+2026-01-06 14:07:48:748 [32minfo[39m: [32m[DatabaseInitializer] Manually triggering SQLite schema initialization...[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:48:748 [33mwarn[39m: [33m[DatabaseInitializer] SQLite schema incomplete. Missing tables: organizations, users, sessions, projects, tasks, teams, invitations, notifications, settings, revoked_tokens, refresh_tokens, superadmin_ai_settings, organization_ai_settings, user_ai_settings, ai_policies, initiatives, maturity_assessments, subscription_plans, organization_billing, usage_records, usage_summaries, invoices, plan_features, spending_alerts, stripe_events, payment_attempts, dunning_states, subscription_state_history, checkout_sessions, proration_records, billing_usage_events, billing_credits, billing_email_queue, billing_notification_preferences, billing_disputes, billing_refunds, token_ledger, payment_methods, organization_seats, organization_limits, ai_project_memory, ai_organization_memory, usage_counters, ai_partial_responses, ai_audit_logs, ai_system_prompts, ai_knowledge_embeddings, ai_feature_control, ai_conversations, ai_cost_tracking[39m
+2026-01-06 14:07:48:748 [32minfo[39m: [32m[DatabaseInitializer] Manually triggering SQLite schema initialization...[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:48:748 [32minfo[39m: [32m[DatabaseInitializer] Attempting to load TEST_SCHEMA from: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/utils/testSchema.js[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:48:748 [32minfo[39m: [32m[DatabaseInitializer] Attempting to load TEST_SCHEMA from: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/utils/testSchema.js[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:48:748 [32minfo[39m: [32m[DatabaseInitializer] Using TEST_SCHEMA for initialization[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:48:748 [32minfo[39m: [32m[DatabaseInitializer] Using TEST_SCHEMA for initialization[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[DatabaseInitializer] Database schema verified successfully[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[DatabaseInitializer] Database schema verified successfully[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [35mhttp[39m: [35mPOST /api/auth/login[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [35mhttp[39m: [35mPOST /api/auth/login[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/auth/login[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Login Request Body:[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Login Request Headers:[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/auth/login[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Login Request Body:[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Login Request Headers:[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m[AuthController] Login request received for email: capacity-1767704867666@test.com
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Login request received for email: capacity-1767704867666@test.com[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Resetting rate limit...[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m[AuthController] Login request received for email: capacity-1767704867666@test.com
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Login request received for email: capacity-1767704867666@test.com[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Resetting rate limit...[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Rate limit reset done.[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Querying user from DB: capacity-1767704867666@test.com[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Rate limit reset done.[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Querying user from DB: capacity-1767704867666@test.com[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] DB Query Success. Found user: YES[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] DB Query Success. Found user: YES[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Verifying password...[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Password valid: true[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Verifying password...[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Auth] Password valid: true[39m
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m[AuthController] Sending response: {"user":{"id":"capacity-user-1767704867666","email":"capacity-1767704867666@test.com","firstName":"CapacityUser","lastName":null,"role":"ADMIN","status":"active","organizationId":"capacity-org-1767704867666","companyName":"Capacity Test Org","mfaEnabled":false,"isAuthenticated":true,"accessLevel":"full"},"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNhcGFjaXR5LXVzZXItMTc2NzcwNDg2NzY2NiIsImVtYWlsIjoiY2FwYWNpdHktMTc2NzcwNDg2NzY2NkB0ZXN0LmNvbSIsInJvbGUiOiJBRE1JTiIsIm9yZ2FuaXphdGlvbklkIjoiY2FwYWNpdHktb3JnLTE3Njc3MDQ4Njc2NjYiLCJqdGkiOiI1NDFmZDQxMi1mNjA0LTQzZWUtOWY3OC0zMTgxYzE0YmJlZGIiLCJpYXQiOjE3Njc3MDQ4NjksImV4cCI6MTc5OTI0MDg2OX0.Fogf_1f383jgNPJ_hK5zQVSwiVSmq0IRLk9ydBaE7CM"}
+[AuthController] Sending response with res.send
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes
+[22m[39m[AuthController] Sending response: {"user":{"id":"capacity-user-1767704867666","email":"capacity-1767704867666@test.com","firstName":"CapacityUser","lastName":null,"role":"ADMIN","status":"active","organizationId":"capacity-org-1767704867666","companyName":"Capacity Test Org","mfaEnabled":false,"isAuthenticated":true,"accessLevel":"full"},"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNhcGFjaXR5LXVzZXItMTc2NzcwNDg2NzY2NiIsImVtYWlsIjoiY2FwYWNpdHktMTc2NzcwNDg2NzY2NkB0ZXN0LmNvbSIsInJvbGUiOiJBRE1JTiIsIm9yZ2FuaXphdGlvbklkIjoiY2FwYWNpdHktb3JnLTE3Njc3MDQ4Njc2NjYiLCJqdGkiOiI1NDFmZDQxMi1mNjA0LTQzZWUtOWY3OC0zMTgxYzE0YmJlZGIiLCJpYXQiOjE3Njc3MDQ4NjksImV4cCI6MTc5OTI0MDg2OX0.Fogf_1f383jgNPJ_hK5zQVSwiVSmq0IRLk9ydBaE7CM"}
+[AuthController] Sending response with res.send
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes[2m > [22m[2mGET /api/capacity/user/:userId[2m > [22m[2mshould calculate user capacity
+[22m[39m2026-01-06 14:07:49:749 [35mhttp[39m: [35mGET /api/capacity/user/capacity-user-1767704867666?projectId=capacity-proj-1767704867666[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/capacity/user/capacity-user-1767704867666[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33m[workstreams] Route not implemented (stubbed)[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/capacity/user/capacity-user-1767704867666?projectId=capacity-proj-1767704867666","statusCode":501,"responseTime":4,"dbQueryCount":0,"dbQueryTime":0,"memoryDelta":{"heapUsed":145120,"external":0,"rss":49152},"userId":null,"organizationId":null,"isSlow":false,"isError":true}
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes[2m > [22m[2mGET /api/capacity/user/:userId[2m > [22m[2mshould calculate user capacity
+[22m[39m2026-01-06 14:07:49:749 [35mhttp[39m: [35mGET /api/capacity/user/capacity-user-1767704867666?projectId=capacity-proj-1767704867666[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/capacity/user/capacity-user-1767704867666[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33m[workstreams] Route not implemented (stubbed)[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/capacity/user/capacity-user-1767704867666?projectId=capacity-proj-1767704867666","statusCode":501,"responseTime":4,"dbQueryCount":0,"dbQueryTime":0,"memoryDelta":{"heapUsed":145120,"external":0,"rss":49152},"userId":null,"organizationId":null,"isSlow":false,"isError":true}
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes[2m > [22m[2mGET /api/capacity/project/:projectId/overloads[2m > [22m[2mshould detect overloads
+[22m[39m2026-01-06 14:07:49:749 [35mhttp[39m: [35mGET /api/capacity/project/capacity-proj-1767704867666/overloads[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/capacity/project/capacity-proj-1767704867666/overloads[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33m[workstreams] Route not implemented (stubbed)[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/capacity/project/capacity-proj-1767704867666/overloads","statusCode":501,"responseTime":3,"dbQueryCount":0,"dbQueryTime":0,"memoryDelta":{"heapUsed":800960,"external":0,"rss":294912},"userId":null,"organizationId":null,"isSlow":false,"isError":true}
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes[2m > [22m[2mGET /api/capacity/project/:projectId/overloads[2m > [22m[2mshould detect overloads
+[22m[39m2026-01-06 14:07:49:749 [35mhttp[39m: [35mGET /api/capacity/project/capacity-proj-1767704867666/overloads[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/capacity/project/capacity-proj-1767704867666/overloads[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33m[workstreams] Route not implemented (stubbed)[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/capacity/project/capacity-proj-1767704867666/overloads","statusCode":501,"responseTime":3,"dbQueryCount":0,"dbQueryTime":0,"memoryDelta":{"heapUsed":800960,"external":0,"rss":294912},"userId":null,"organizationId":null,"isSlow":false,"isError":true}
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes[2m > [22m[2mGET /api/capacity/project/:projectId/summary[2m > [22m[2mshould return capacity summary
+[22m[39m2026-01-06 14:07:49:749 [35mhttp[39m: [35mGET /api/capacity/project/capacity-proj-1767704867666/summary[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/capacity/project/capacity-proj-1767704867666/summary[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33m[workstreams] Route not implemented (stubbed)[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/capacity/project/capacity-proj-1767704867666/summary","statusCode":501,"responseTime":1,"dbQueryCount":0,"dbQueryTime":0,"memoryDelta":{"heapUsed":56352,"external":0,"rss":0},"userId":null,"organizationId":null,"isSlow":false,"isError":true}
+
+[90mstdout[2m | tests/integration/routes/capacity.test.js[2m > [22m[2mIntegration Test: Capacity Routes[2m > [22m[2mGET /api/capacity/project/:projectId/summary[2m > [22m[2mshould return capacity summary
+[22m[39m2026-01-06 14:07:49:749 [35mhttp[39m: [35mGET /api/capacity/project/capacity-proj-1767704867666/summary[39m
+2026-01-06 14:07:49:749 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/capacity/project/capacity-proj-1767704867666/summary[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33m[workstreams] Route not implemented (stubbed)[39m
+2026-01-06 14:07:49:749 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/capacity/project/capacity-proj-1767704867666/summary","statusCode":501,"responseTime":1,"dbQueryCount":0,"dbQueryTime":0,"memoryDelta":{"heapUsed":56352,"external":0,"rss":0},"userId":null,"organizationId":null,"isSlow":false,"isError":true}
+
+ [32m✓[39m tests/integration/routes/capacity.test.js[2m > [22mIntegration Test: Capacity Routes[2m > [22mGET /api/capacity/user/:userId[2m > [22mshould calculate user capacity[32m 12[2mms[22m[39m
+ [32m✓[39m tests/integration/routes/capacity.test.js[2m > [22mIntegration Test: Capacity Routes[2m > [22mGET /api/capacity/project/:projectId/overloads[2m > [22mshould detect overloads[32m 8[2mms[22m[39m
+ [32m✓[39m tests/integration/routes/capacity.test.js[2m > [22mIntegration Test: Capacity Routes[2m > [22mGET /api/capacity/project/:projectId/summary[2m > [22mshould return capacity summary[32m 8[2mms[22m[39m
+ [32m✓[39m tests/integration/routes/capacity.test.js [2m([22m[2m3 tests[22m[2m)[22m[33m 2071[2mms[22m[39m
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m[DB Config] Loading config. SQLITE_PATH env: ./test-integration-58.db
+[DB Config] Resolved sqlitePath: ./test-integration-58.db
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m[DB Config] Loading config. SQLITE_PATH env: ./test-integration-58.db
+[DB Config] Resolved sqlitePath: ./test-integration-58.db
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m[AuthRoutes] login handler is type: function
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m[AuthRoutes] login handler is type: function
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Gamification Routes] GamificationService not available[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Gamification Routes] GamificationService not available[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Knowledge] KnowledgeService not available[39m
+2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Knowledge] StorageService not available[39m
+2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Knowledge] NotificationOutboxService not available[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Knowledge] KnowledgeService not available[39m
+2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Knowledge] StorageService not available[39m
+2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Knowledge] NotificationOutboxService not available[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Knowledge] Project quota middleware not available[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Knowledge] Project quota middleware not available[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Megatrend] Service not available[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:55:755 [33mwarn[39m: [33m[Megatrend] Service not available[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m[LazyServiceLoader] Loading: ./trialService.legacy.js -> /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/trialService.ts
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m[LazyServiceLoader] Loading: ./trialService.legacy.js -> /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/trialService.ts
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:56:756 [32minfo[39m: [32m[Redis] Initializing client...[39m
+2026-01-06 14:07:56:756 [32minfo[39m: [32m[Redis] Using Mock Client[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:56:756 [32minfo[39m: [32m[Redis] Initializing client...[39m
+2026-01-06 14:07:56:756 [32minfo[39m: [32m[Redis] Using Mock Client[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:56:756 [32minfo[39m: [32m[Sentry] Disabled (no SENTRY_DSN or not in production/staging)[39m
+[ApiGateway] Initializing gateway routes...
+[ApiGateway] Mounting /api/auth
+[ApiGateway] Mounting /api/billing
+[ApiGateway] Mounting /api/ai
+[ApiGateway] Mounting /api/admin-data
+[ApiGateway] Mounting /api/users
+
+[90mstdout[2m | tests/integration/routes/execution.test.js
+[22m[39m2026-01-06 14:07:56:756 [32minfo[39m: [32m[Sentry] Disabled (no SENTRY_DSN or not in production/staging)[39m
+[ApiGateway] Initializing gateway routes...
+[ApiGateway] Mounting /api/auth
+[ApiGateway] Mounting /api/billing
+[ApiGateway] Mounting /api/ai
+[ApiGateway] Mounting /api/admin-data
+[ApiGateway] Mounting /api/users
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:56:756 [32minfo[39m: [32m[DatabaseInitializer] Starting database initialization...[39m
+[Database] createDatabase() called. MOCK_DB: false
+[Database] Loading SQLite legacy module...
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:56:756 [32minfo[39m: [32m[DatabaseInitializer] Starting database initialization...[39m
+[Database] createDatabase() called. MOCK_DB: false
+[Database] Loading SQLite legacy module...
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m[Legacy DB] database.sqlite.js module LOADED. SQLITE_PATH: ./test-integration-58.db
+[SQLite] Connecting. PID: [33m26766[39m CWD: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify Path: ./test-integration-58.db
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m[Legacy DB] database.sqlite.js module LOADED. SQLITE_PATH: ./test-integration-58.db
+[SQLite] Connecting. PID: [33m26766[39m CWD: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify Path: ./test-integration-58.db
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Database type: sqlite[39m
+2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] RESET_DB=true. Dropping all SQLite tables...[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Database type: sqlite[39m
+2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] RESET_DB=true. Dropping all SQLite tables...[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39mConnected to the SQLite database.
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39mConnected to the SQLite database.
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Dropped 69 tables.[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Dropped 69 tables.[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [33mwarn[39m: [33m[DatabaseInitializer] SQLite schema incomplete. Missing tables: organizations, users, sessions, projects, tasks, teams, invitations, notifications, settings, revoked_tokens, refresh_tokens, superadmin_ai_settings, organization_ai_settings, user_ai_settings, ai_policies, initiatives, maturity_assessments, subscription_plans, organization_billing, usage_records, usage_summaries, invoices, plan_features, spending_alerts, stripe_events, payment_attempts, dunning_states, subscription_state_history, checkout_sessions, proration_records, billing_usage_events, billing_credits, billing_email_queue, billing_notification_preferences, billing_disputes, billing_refunds, token_ledger, payment_methods, organization_seats, organization_limits, ai_project_memory, ai_organization_memory, usage_counters, ai_partial_responses, ai_audit_logs, ai_system_prompts, ai_knowledge_embeddings, ai_feature_control, ai_conversations, ai_cost_tracking[39m
+2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Manually triggering SQLite schema initialization...[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [33mwarn[39m: [33m[DatabaseInitializer] SQLite schema incomplete. Missing tables: organizations, users, sessions, projects, tasks, teams, invitations, notifications, settings, revoked_tokens, refresh_tokens, superadmin_ai_settings, organization_ai_settings, user_ai_settings, ai_policies, initiatives, maturity_assessments, subscription_plans, organization_billing, usage_records, usage_summaries, invoices, plan_features, spending_alerts, stripe_events, payment_attempts, dunning_states, subscription_state_history, checkout_sessions, proration_records, billing_usage_events, billing_credits, billing_email_queue, billing_notification_preferences, billing_disputes, billing_refunds, token_ledger, payment_methods, organization_seats, organization_limits, ai_project_memory, ai_organization_memory, usage_counters, ai_partial_responses, ai_audit_logs, ai_system_prompts, ai_knowledge_embeddings, ai_feature_control, ai_conversations, ai_cost_tracking[39m
+2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Manually triggering SQLite schema initialization...[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Attempting to load TEST_SCHEMA from: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/utils/testSchema.js[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Attempting to load TEST_SCHEMA from: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/utils/testSchema.js[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Using TEST_SCHEMA for initialization[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:57:757 [32minfo[39m: [32m[DatabaseInitializer] Using TEST_SCHEMA for initialization[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[DatabaseInitializer] Database schema verified successfully[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[DatabaseInitializer] Database schema verified successfully[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [35mhttp[39m: [35mPOST /api/auth/login[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [35mhttp[39m: [35mPOST /api/auth/login[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/auth/login[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Login Request Body:[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Login Request Headers:[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/auth/login[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Login Request Body:[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Login Request Headers:[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m[AuthController] Login request received for email: execution-1767704876958@test.com
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Login request received for email: execution-1767704876958@test.com[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Resetting rate limit...[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m[AuthController] Login request received for email: execution-1767704876958@test.com
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Login request received for email: execution-1767704876958@test.com[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Resetting rate limit...[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Rate limit reset done.[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Querying user from DB: execution-1767704876958@test.com[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Rate limit reset done.[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Querying user from DB: execution-1767704876958@test.com[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] DB Query Success. Found user: YES[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] DB Query Success. Found user: YES[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Verifying password...[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Password valid: true[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Verifying password...[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Auth] Password valid: true[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m[AuthController] Sending response: {"user":{"id":"execution-user-1767704876958","email":"execution-1767704876958@test.com","firstName":"ExecutionUser","lastName":null,"role":"ADMIN","status":"active","organizationId":"execution-org-1767704876958","companyName":"Execution Test Org","mfaEnabled":false,"isAuthenticated":true,"accessLevel":"full"},"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImV4ZWN1dGlvbi11c2VyLTE3Njc3MDQ4NzY5NTgiLCJlbWFpbCI6ImV4ZWN1dGlvbi0xNzY3NzA0ODc2OTU4QHRlc3QuY29tIiwicm9sZSI6IkFETUlOIiwib3JnYW5pemF0aW9uSWQiOiJleGVjdXRpb24tb3JnLTE3Njc3MDQ4NzY5NTgiLCJqdGkiOiIyOTY2ZmExOC01NTEwLTQyNGUtYjAwOS02ODVhNTk3MGZjM2IiLCJpYXQiOjE3Njc3MDQ4NzksImV4cCI6MTc5OTI0MDg3OX0.UYCLQ192sn5oMT1GbT6GjRDHo8D03_JywjRY4XH-QqA"}
+[AuthController] Sending response with res.send
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes
+[22m[39m[AuthController] Sending response: {"user":{"id":"execution-user-1767704876958","email":"execution-1767704876958@test.com","firstName":"ExecutionUser","lastName":null,"role":"ADMIN","status":"active","organizationId":"execution-org-1767704876958","companyName":"Execution Test Org","mfaEnabled":false,"isAuthenticated":true,"accessLevel":"full"},"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImV4ZWN1dGlvbi11c2VyLTE3Njc3MDQ4NzY5NTgiLCJlbWFpbCI6ImV4ZWN1dGlvbi0xNzY3NzA0ODc2OTU4QHRlc3QuY29tIiwicm9sZSI6IkFETUlOIiwib3JnYW5pemF0aW9uSWQiOiJleGVjdXRpb24tb3JnLTE3Njc3MDQ4NzY5NTgiLCJqdGkiOiIyOTY2ZmExOC01NTEwLTQyNGUtYjAwOS02ODVhNTk3MGZjM2IiLCJpYXQiOjE3Njc3MDQ4NzksImV4cCI6MTc5OTI0MDg3OX0.UYCLQ192sn5oMT1GbT6GjRDHo8D03_JywjRY4XH-QqA"}
+[AuthController] Sending response with res.send
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/summary[2m > [22m[2mshould return execution summary
+[22m[39m2026-01-06 14:07:59:759 [35mhttp[39m: [35mGET /api/execution/execution-proj-1767704876958/summary[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/execution/execution-proj-1767704876958/summary[39m
+[AuthMiddleware] Verifying token for path: /execution-proj-1767704876958/summary
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/summary[2m > [22m[2mshould return execution summary
+[22m[39m2026-01-06 14:07:59:759 [35mhttp[39m: [35mGET /api/execution/execution-proj-1767704876958/summary[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/execution/execution-proj-1767704876958/summary[39m
+[AuthMiddleware] Verifying token for path: /execution-proj-1767704876958/summary
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/summary[2m > [22m[2mshould return execution summary
+[22m[39m[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/summary[2m > [22m[2mshould return execution summary
+[22m[39m[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/summary[2m > [22m[2mshould return execution summary
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/summary[2m > [22m[2mshould return execution summary
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/blockers[2m > [22m[2mshould return blockers
+[22m[39m2026-01-06 14:07:59:759 [35mhttp[39m: [35mGET /api/execution/execution-proj-1767704876958/blockers[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/execution/execution-proj-1767704876958/blockers[39m
+[AuthMiddleware] Verifying token for path: /execution-proj-1767704876958/blockers
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/blockers[2m > [22m[2mshould return blockers
+[22m[39m2026-01-06 14:07:59:759 [35mhttp[39m: [35mGET /api/execution/execution-proj-1767704876958/blockers[39m
+2026-01-06 14:07:59:759 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/execution/execution-proj-1767704876958/blockers[39m
+[AuthMiddleware] Verifying token for path: /execution-proj-1767704876958/blockers
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/blockers[2m > [22m[2mshould return blockers
+[22m[39m[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/blockers[2m > [22m[2mshould return blockers
+[22m[39m[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/blockers[2m > [22m[2mshould return blockers
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mGET /api/execution/:projectId/blockers[2m > [22m[2mshould return blockers
+[22m[39m2026-01-06 14:07:59:759 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+ [32m✓[39m tests/integration/routes/execution.test.js[2m > [22mIntegration Test: Execution Routes[2m > [22mGET /api/execution/:projectId/summary[2m > [22mshould return execution summary[32m 85[2mms[22m[39m
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mPOST /api/execution/:projectId/gate-check[2m > [22m[2mshould perform gate check
+[22m[39m2026-01-06 14:08:00:80 [35mhttp[39m: [35mPOST /api/execution/execution-proj-1767704876958/gate-check[39m
+2026-01-06 14:08:00:80 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/execution/execution-proj-1767704876958/gate-check[39m
+[AuthMiddleware] Verifying token for path: /execution-proj-1767704876958/gate-check
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mPOST /api/execution/:projectId/gate-check[2m > [22m[2mshould perform gate check
+[22m[39m2026-01-06 14:08:00:80 [35mhttp[39m: [35mPOST /api/execution/execution-proj-1767704876958/gate-check[39m
+2026-01-06 14:08:00:80 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/execution/execution-proj-1767704876958/gate-check[39m
+[AuthMiddleware] Verifying token for path: /execution-proj-1767704876958/gate-check
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mPOST /api/execution/:projectId/gate-check[2m > [22m[2mshould perform gate check
+[22m[39m[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mPOST /api/execution/:projectId/gate-check[2m > [22m[2mshould perform gate check
+[22m[39m[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mPOST /api/execution/:projectId/gate-check[2m > [22m[2mshould perform gate check
+[22m[39m2026-01-06 14:08:00:80 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[90mstdout[2m | tests/integration/routes/execution.test.js[2m > [22m[2mIntegration Test: Execution Routes[2m > [22m[2mPOST /api/execution/:projectId/gate-check[2m > [22m[2mshould perform gate check
+[22m[39m2026-01-06 14:08:00:80 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+ [32m✓[39m tests/integration/routes/execution.test.js[2m > [22mIntegration Test: Execution Routes[2m > [22mGET /api/execution/:projectId/blockers[2m > [22mshould return blockers[32m 20[2mms[22m[39m
+ [32m✓[39m tests/integration/routes/execution.test.js[2m > [22mIntegration Test: Execution Routes[2m > [22mPOST /api/execution/:projectId/gate-check[2m > [22mshould perform gate check[32m 13[2mms[22m[39m
+ [32m✓[39m tests/integration/routes/execution.test.js [2m([22m[2m3 tests[22m[2m)[22m[33m 3038[2mms[22m[39m
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m[DB Config] Loading config. SQLITE_PATH env: ./test-integration-59.db
+[DB Config] Resolved sqlitePath: ./test-integration-59.db
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m[DB Config] Loading config. SQLITE_PATH env: ./test-integration-59.db
+[DB Config] Resolved sqlitePath: ./test-integration-59.db
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m[AuthRoutes] login handler is type: function
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m[AuthRoutes] login handler is type: function
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m2026-01-06 14:08:05:85 [33mwarn[39m: [33m[Gamification Routes] GamificationService not available[39m
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m2026-01-06 14:08:05:85 [33mwarn[39m: [33m[Gamification Routes] GamificationService not available[39m
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Knowledge] KnowledgeService not available[39m
+2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Knowledge] StorageService not available[39m
+2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Knowledge] NotificationOutboxService not available[39m
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Knowledge] KnowledgeService not available[39m
+2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Knowledge] StorageService not available[39m
+2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Knowledge] NotificationOutboxService not available[39m
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Knowledge] Project quota middleware not available[39m
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Knowledge] Project quota middleware not available[39m
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Megatrend] Service not available[39m
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m2026-01-06 14:08:06:86 [33mwarn[39m: [33m[Megatrend] Service not available[39m
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m[LazyServiceLoader] Loading: ./trialService.legacy.js -> /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/trialService.ts
+
+[90mstdout[2m | tests/integration/routes/teams.test.js
+[22m[39m[LazyServiceLoader] Loading: ./trialService.legacy.js -> /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/trialService.ts
+
