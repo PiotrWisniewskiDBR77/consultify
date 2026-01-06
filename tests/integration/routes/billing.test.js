@@ -4,7 +4,15 @@ import request from 'supertest';
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
-import { jest } from '@jest/globals';
+
+vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+    verifyToken: (req, res, next) => next(),
+    requireSuperAdmin: (req, res, next) => next(),
+    optionalAuth: (req, res, next) => next(),
+    requireRole: () => (req, res, next) => next(),
+    requirePermission: () => (req, res, next) => next(),
+    requireOrganization: (req, res, next) => next()
+}));
 
 vi.hoisted(() => {
     process.env.MOCK_DB = 'false';
@@ -36,11 +44,11 @@ const createTestApp = async () => {
     });
     
     // Import and use billing routes
-    const billingRoutes = (await import('../../../server/routes/billing.js')).default;
+    const billingRoutes = (await import('../../../server/src/routes/billing/billing.routes.ts')).default;
     app.use('/api/billing', billingRoutes);
     
     // Import webhook routes
-    const webhookRoutes = (await import('../../../server/routes/webhooks/stripe.js')).default;
+    const webhookRoutes = (await import('../../../server/src/routes/webhooks/stripe.routes.ts')).default;
     app.use('/webhooks', webhookRoutes);
     
     return app;
@@ -52,6 +60,12 @@ describe('Billing API Integration', () => {
 
     beforeAll(async () => {
         await initializeDatabase();
+        
+        // Seed test organization and billing
+        const db = getDatabase();
+        await db.run(`INSERT OR IGNORE INTO organizations (id, name, status) VALUES ('test-org', 'Test Org', 'active')`);
+        await db.run(`INSERT OR IGNORE INTO organization_billing (id, organization_id, stripe_customer_id, status) VALUES ('billing-test', 'test-org', 'cus_test_123', 'active')`);
+        
         app = await createTestApp();
     });
 
@@ -107,7 +121,7 @@ describe('Billing API Integration', () => {
     const db = getDatabase();
         it('should create spending alert with valid data', async () => {
             const alertData = {
-                type: 'ai_tokens',
+                type: 'usage',
                 threshold: 80,
                 thresholdType: 'percentage',
                 action: 'notify',
@@ -125,7 +139,7 @@ describe('Billing API Integration', () => {
 
         it('should reject invalid threshold type', async () => {
             const alertData = {
-                type: 'ai_tokens',
+                type: 'usage',
                 threshold: 80,
                 thresholdType: 'invalid',
                 action: 'notify'
@@ -171,6 +185,12 @@ describe('Stripe Webhook Integration', () => {
 
     beforeAll(async () => {
         await initializeDatabase();
+        
+        // Seed test organization and billing
+        const db = getDatabase();
+        await db.run(`INSERT OR IGNORE INTO organizations (id, name, status) VALUES ('test-org', 'Test Org', 'active')`);
+        await db.run(`INSERT OR IGNORE INTO organization_billing (id, organization_id, stripe_customer_id, status) VALUES ('billing-test', 'test-org', 'cus_test_123', 'active')`);
+        
         app = await createTestApp();
     });
 
@@ -340,6 +360,12 @@ describe('Subscription Lifecycle Integration', () => {
 
     beforeAll(async () => {
         await initializeDatabase();
+        
+        // Seed test organization and billing
+        const db = getDatabase();
+        await db.run(`INSERT OR IGNORE INTO organizations (id, name, status) VALUES ('test-org', 'Test Org', 'active')`);
+        await db.run(`INSERT OR IGNORE INTO organization_billing (id, organization_id, stripe_customer_id, status) VALUES ('billing-test', 'test-org', 'cus_test_123', 'active')`);
+        
         app = await createTestApp();
     });
 
@@ -361,10 +387,15 @@ describe('Subscription Lifecycle Integration', () => {
                 }
             };
 
-            await request(app)
+            const response = await request(app)
                 .post('/webhooks/stripe')
-                .send(JSON.stringify(createPayload))
-                .expect(200);
+                .set('Content-Type', 'application/json')
+                .send(JSON.stringify(createPayload));
+            
+            if (response.status !== 200) {
+                console.log('DEBUG Webhook Error Body:', response.body);
+            }
+            expect(response.status).toBe(200);
 
             // Simulate payment success
             const paymentPayload = {
@@ -383,6 +414,7 @@ describe('Subscription Lifecycle Integration', () => {
 
             await request(app)
                 .post('/webhooks/stripe')
+                .set('Content-Type', 'application/json')
                 .send(JSON.stringify(paymentPayload))
                 .expect(200);
 
@@ -409,8 +441,13 @@ describe('Subscription Lifecycle Integration', () => {
 
             const response = await request(app)
                 .post('/webhooks/stripe')
-                .send(JSON.stringify(failurePayload))
-                .expect(200);
+                .set('Content-Type', 'application/json')
+                .send(JSON.stringify(failurePayload));
+            
+            if (response.status !== 200) {
+                console.log('DEBUG Webhook Failure Error Body:', response.body);
+            }
+            expect(response.status).toBe(200);
 
             expect(response.body).toHaveProperty('received', true);
             // Dunning should be initialized (would need to check dunning_states table)

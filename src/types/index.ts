@@ -14,6 +14,7 @@ export {
     UserRole,
     ProjectRole,
     TaskStatus,
+    InitiativeStatus,
     UserRole as LegacyUserRole,
     ProjectRole as LegacyProjectRole,
     AccountType as LegacyAccountType,

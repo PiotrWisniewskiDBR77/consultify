@@ -32,13 +32,13 @@ export const DecisionStatusEnum = z.enum(['pending', 'approved', 'rejected', 'de
 // ==========================================
 
 export const CreateDecisionSchema = z.object({
-    projectId: z.string().uuid(),
+    projectId: z.string().optional(),
     title: z.string().min(1).max(255),
     description: z.string().max(5000).optional(),
     pmoDomain: z.nativeEnum(PMODomain),
-    decisionOwnerId: z.string().uuid().optional().nullable(),
+    decisionOwnerId: z.string().optional().nullable(),
     relatedObjectType: z.enum(['task', 'initiative', 'gate', 'risk']).optional(),
-    relatedObjectId: z.string().uuid().optional().nullable(),
+    relatedObjectId: z.string().optional().nullable(),
     dueDate: z.string().datetime().optional().nullable(),
     priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
 });
@@ -51,7 +51,7 @@ export const DecideSchema = z.object({
 
 export const EscalateDecisionSchema = z.object({
     reason: z.string().min(1).max(500),
-    escalateToUserId: z.string().uuid().optional(),
+    escalateToUserId: z.string().optional(),
 });
 
 // ==========================================
@@ -59,9 +59,9 @@ export const EscalateDecisionSchema = z.object({
 // ==========================================
 
 export const GetDecisionsQuerySchema = z.object({
-    projectId: z.string().uuid().optional(),
+    projectId: z.string().optional(),
     status: DecisionStatusEnum.optional(),
-    relatedObjectId: z.string().uuid().optional(),
+    relatedObjectId: z.string().optional(),
     pmoDomain: z.nativeEnum(PMODomain).optional(),
 });
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { InitiativeCard } from '@/components/InitiativeCard';
-import { Initiative, InitiativeStatus } from '@/types';
+import { InitiativeCard } from '../../src/components/InitiativeCard';
+import { Initiative, InitiativeStatus } from '../../src/types';
 
 describe('Component Test: InitiativeCard', () => {
     const mockInitiative: Initiative = {

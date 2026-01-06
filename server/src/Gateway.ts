@@ -141,7 +141,7 @@ import settingsRoutes from './routes/settings.routes.js';
 import settlementRoutes from './routes/billing/settlements.routes.js';
 import ssoRoutes from './routes/integrations/sso.routes.js';
 import stabilizationRoutes from './routes/stabilization.routes.js';
-import stageGatesRoutes from './routes/pmo/stage-gates.routes.js';
+import stageGatesRoutes from './routes/stageGates.routes.js';
 import statusRoutes from './routes/status.routes.js';
 import statusReportsRoutes from './routes/status-reports.routes.js';
 import studioRoutes from './routes/studio.routes.js';
@@ -333,7 +333,6 @@ export class ApiGateway {
             app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
             app.use('/api/trial', trialRoutes);
             app.use('/api/rbac', rbacRoutes);
-            app.use('/api', rbacRoutes);
             app.use('/api/branding', brandingRoutes);
             app.use('/api/workspace-defaults', workspaceDefaultsRoutes);
             app.use('/api/my-work', myWorkRoutes);
@@ -423,6 +422,9 @@ export class ApiGateway {
             app.use('/api/raid', raidRoutes);
             app.use('/api/budget', budgetRoutes);
             app.use('/api/content', contentRoutes);
+
+            // Catch-all RBAC or 404 for /api
+            app.use('/api', rbacRoutes);
         } catch (error: unknown) {
             logger.error('[ApiGateway] Error loading routes:', error);
             // Don't block server startup - allow degraded mode

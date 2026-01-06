@@ -1492,8 +1492,8 @@ router.get(
 
 // ==================== PROACTIVE SUGGESTIONS ====================
 
-const ProactiveSuggestionsService = (await import('../services/ai/proactiveSuggestionsService.js')).default as any;
-const ResponseQualityService = (await import('../services/ai/responseQualityService.js')).default as any;
+const getProactiveSuggestionsService = async () => (await import('../services/ai/proactiveSuggestionsService.js')).default as any;
+const getResponseQualityService = async () => (await import('../services/ai/responseQualityService.js')).default as any;
 
 router.get(
     '/suggestions',
@@ -1502,6 +1502,7 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { projectId, screenContext } = req.query as any;
+            const ProactiveSuggestionsService = await getProactiveSuggestionsService();
 
             const suggestions = await ProactiveSuggestionsService.generateSuggestions({
                 userId: req.userId!,
@@ -1526,6 +1527,7 @@ router.post(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { suggestionId, action, feedback } = req.body;
+            const ProactiveSuggestionsService = await getProactiveSuggestionsService();
 
             await ProactiveSuggestionsService.recordSuggestionAction(suggestionId, req.userId!, action, feedback);
 
@@ -1544,6 +1546,7 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { days } = req.query as any;
+            const ProactiveSuggestionsService = await getProactiveSuggestionsService();
 
             const metrics = await ProactiveSuggestionsService.getSuggestionMetrics(req.organizationId!, days);
 
@@ -1564,6 +1567,7 @@ router.post(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { query, response, context, sources } = req.body;
+            const ResponseQualityService = await getResponseQualityService();
 
             const metrics = await ResponseQualityService.calculateQuality({
                 query,
@@ -1590,6 +1594,7 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { days } = req.query as any;
+            const ResponseQualityService = await getResponseQualityService();
 
             const metrics = await ResponseQualityService.getAggregateMetrics(req.organizationId!, days);
 
@@ -1608,6 +1613,7 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { days } = req.query as any;
+            const ResponseQualityService = await getResponseQualityService();
 
             const trends = await ResponseQualityService.getQualityTrends(req.organizationId!, days);
 

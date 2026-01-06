@@ -51,6 +51,7 @@ const _withTimeout = <T>(promise: Promise<T>, timeoutMs = 1000): Promise<T> => {
 };
 
 // LOGIN
+console.log('[AuthRoutes] login handler is type:', typeof login);
 router.post('/login', validateBody(LoginRequestSchema), asyncHandler(login));
 
 // REFRESH TOKEN - Get new access token using refresh token

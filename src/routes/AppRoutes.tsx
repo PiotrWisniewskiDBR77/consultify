@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
@@ -58,6 +58,7 @@ const SettingsView = React.lazy(() => import('@/views/SettingsView').then((m) =>
 const AdminView = React.lazy(() => import('@/views/admin/AdminView').then((m) => ({ default: m.AdminView })));
 
 export const AppRoutes: React.FC = () => {
+    const navigate = useNavigate();
     const {
         currentView,
         currentUser,
@@ -86,16 +87,16 @@ export const AppRoutes: React.FC = () => {
 
         if (currentUser?.isAuthenticated) {
             setCurrentView(AppView.AI_CHAT);
-            window.history.pushState({}, '', '/chat');
+            navigate('/chat');
             return;
         }
 
         if (mode === SessionMode.FREE || mode === SessionMode.DEMO) {
-            window.history.pushState({}, '', '/demo');
+            navigate('/demo');
             setAuthInitialStep(AuthStep.REGISTER);
             setCurrentView(AppView.AUTH);
         } else {
-            window.history.pushState({}, '', '/trial/start');
+            navigate('/trial/start');
             setAuthInitialStep(AuthStep.CODE_ENTRY);
             setCurrentView(AppView.AUTH);
         }
@@ -105,14 +106,14 @@ export const AppRoutes: React.FC = () => {
         setSessionMode(SessionMode.FREE);
         setAuthInitialStep(AuthStep.LOGIN);
         setCurrentView(AppView.AUTH);
-        window.history.pushState({}, '', '/login');
+        navigate('/login');
     };
 
     const handleRegisterRequest = () => {
         setSessionMode(SessionMode.FREE);
         setAuthInitialStep(AuthStep.REGISTER);
         setCurrentView(AppView.AUTH);
-        window.history.pushState({}, '', '/register');
+        navigate('/register');
     };
 
     const handleAuthSuccess = (user: User | { status?: string; message?: string }) => {
@@ -152,7 +153,7 @@ export const AppRoutes: React.FC = () => {
         }
 
         setCurrentView(AppView.AI_CHAT);
-        window.history.pushState({}, '', '/chat');
+        navigate('/chat');
     };
 
     // --- RENDER ---

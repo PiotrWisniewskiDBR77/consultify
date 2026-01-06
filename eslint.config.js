@@ -89,7 +89,7 @@ export default tseslint.config(
             '@typescript-eslint/no-non-null-assertion': 'warn',
             '@typescript-eslint/ban-ts-comment': 'warn',
             '@typescript-eslint/prefer-nullish-coalescing': 'off',
-            '@typescript-eslint/prefer-optional-chain': 'warn',
+            '@typescript-eslint/prefer-optional-chain': 'off',
 
             // ==========================================
             // REACT

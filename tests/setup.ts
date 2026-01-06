@@ -35,7 +35,7 @@ vi.mock('react-i18next', () => {
                     return () => defaultValue || key;
                 }
                 // Handle undefined properties gracefully
-                if (prop === Symbol.toPrimitive) {
+                if (typeof prop === 'symbol' && prop === Symbol.toPrimitive) {
                     return () => defaultValue || key;
                 }
                 // Return undefined for unknown properties (but don't throw)
@@ -50,11 +50,14 @@ vi.mock('react-i18next', () => {
                     (typeof prop === 'string' && /^[a-zA-Z0-9_-]+$/.test(prop));
             },
             getOwnPropertyDescriptor(target, prop) {
-                return {
-                    enumerable: true,
-                    configurable: true,
-                    value: this.get(target, prop, target)
-                };
+                if (this.get) {
+                    return {
+                        enumerable: true,
+                        configurable: true,
+                        value: this.get(target, prop, target)
+                    };
+                }
+                return undefined;
             }
         });
     };
@@ -163,7 +166,7 @@ const mockDb: any = {
 
 // Improved callback handling using process.nextTick for async simulation
 // Set implementations after hoisting to avoid issues with 'this' context
-mockDb.run.mockImplementation(function (sql: string, params?: any, cb?: any) {
+mockDb.run.mockImplementation(function (this: any, sql: string, params?: any, cb?: any) {
     const callback = typeof params === 'function' ? params : cb;
     if (typeof callback === 'function') {
         process.nextTick(() => {
@@ -177,7 +180,7 @@ mockDb.run.mockImplementation(function (sql: string, params?: any, cb?: any) {
     return this;
 });
 
-mockDb.get.mockImplementation(function (sql: string, params?: any, cb?: any) {
+mockDb.get.mockImplementation(function (this: any, sql: string, params?: any, cb?: any) {
     const callback = typeof params === 'function' ? params : cb;
     if (typeof callback === 'function') {
         process.nextTick(() => {
@@ -191,7 +194,7 @@ mockDb.get.mockImplementation(function (sql: string, params?: any, cb?: any) {
     return this;
 });
 
-mockDb.all.mockImplementation(function (sql: string, params?: any, cb?: any) {
+mockDb.all.mockImplementation(function (this: any, sql: string, params?: any, cb?: any) {
     const callback = typeof params === 'function' ? params : cb;
     if (typeof callback === 'function') {
         process.nextTick(() => {
@@ -205,7 +208,7 @@ mockDb.all.mockImplementation(function (sql: string, params?: any, cb?: any) {
     return this;
 });
 
-mockDb.exec.mockImplementation(function (sql: string, cb?: any) {
+mockDb.exec.mockImplementation(function (this: any, sql: string, cb?: any) {
     if (typeof cb === 'function') {
         process.nextTick(() => {
             try {
@@ -218,7 +221,7 @@ mockDb.exec.mockImplementation(function (sql: string, cb?: any) {
     return this;
 });
 
-mockDb.serialize.mockImplementation(function (cb?: any) {
+mockDb.serialize.mockImplementation(function (this: any, cb?: any) {
     if (typeof cb === 'function') {
         process.nextTick(() => {
             try {
@@ -283,14 +286,14 @@ if (typeof process !== 'undefined' && process.env) {
 
 
 // Mock legacy/broken route modules globally to prevent import crashes in Gateway.ts
-const mockRouter = () => (req: any, res: any, next: any) => next();
+const mockRouter = (req: any, res: any, next: any) => next();
 vi.mock('../server/src/routes/aiPlaybooks.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/content.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/premiumReports.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/studio.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/managementReports.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/voice.routes.js', () => ({ default: mockRouter }));
-vi.mock('../server/src/routes/ai.routes.js', () => ({ default: mockRouter }));
+// vi.mock('../server/src/routes/ai.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/documents.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/services/backupService.js', () => ({ default: { backupDatabase: vi.fn(), restoreDatabase: vi.fn() } }));
 
@@ -385,9 +388,9 @@ vi.mock('../server/src/middleware/planLimits.middleware.js', async (importOrigin
 
 // Mock Input Sanitization to avoid "Cannot set property query" errors
 vi.mock('../server/src/middleware/inputSanitization.middleware.js', () => ({
-    inputSanitizationMiddleware: (req, res, next) => next(),
-    queryParamSanitizationMiddleware: (req, res, next) => next(),
-    sqlParamValidationMiddleware: (req, res, next) => next(),
+    inputSanitizationMiddleware: (req: any, res: any, next: any) => next(),
+    queryParamSanitizationMiddleware: (req: any, res: any, next: any) => next(),
+    sqlParamValidationMiddleware: (req: any, res: any, next: any) => next(),
 }));
 
 // Mock Permission Service to avoid DB calls
@@ -428,75 +431,12 @@ vi.mock('../server/src/middleware/inputSanitization.middleware.js', () => ({
 //     optionalAuth: (req, res, next) => next()
 // }));
 
-// Global mock for Api service to prevent actual API calls in component tests
-vi.mock('../services/api', async (importOriginal) => {
-    if (process.env.TEST_TYPE === 'integration') {
-        return await importOriginal();
-    }
-    return {
-        Api: {
-            // Auth
-            login: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
-            register: vi.fn().mockResolvedValue({ id: 'user-1' }),
-            getMe: vi.fn().mockResolvedValue({ id: 'user-1', email: 'test@test.com' }),
-            logout: vi.fn().mockResolvedValue(undefined),
-
-            // Organizations
-            getOrganizations: vi.fn().mockResolvedValue([]),
-            getOrganization: vi.fn().mockResolvedValue(null),
-
-            // SuperAdmin
-            getSuperAdminDashboard: vi.fn().mockResolvedValue({ counts: {}, ai: {}, live: {}, activities: [] }),
-            getSystemHealth: vi.fn().mockResolvedValue({ status: 'healthy', uptime: 99.9 }),
-            getAuditLogs: vi.fn().mockResolvedValue([]),
-            getFeatureFlags: vi.fn().mockResolvedValue([]),
-            getUsageByOrganization: vi.fn().mockResolvedValue([]),
-
-            // Tasks
-            getTasks: vi.fn().mockResolvedValue([]),
-            getTask: vi.fn().mockResolvedValue(null),
-            createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
-            updateTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
-            deleteTask: vi.fn().mockResolvedValue(undefined),
-
-            // Projects
-            getProjects: vi.fn().mockResolvedValue([]),
-            getProject: vi.fn().mockResolvedValue(null),
-            createProject: vi.fn().mockResolvedValue({ id: 'project-1' }),
-
-            // Initiatives
-            getInitiatives: vi.fn().mockResolvedValue([]),
-            getInitiative: vi.fn().mockResolvedValue(null),
-
-            // AI
-            chat: vi.fn().mockResolvedValue({ message: 'Response' }),
-            streamChat: vi.fn().mockResolvedValue(new ReadableStream()),
-
-            // Generic catch-all
-            get: vi.fn().mockResolvedValue({}),
-            post: vi.fn().mockResolvedValue({}),
-            put: vi.fn().mockResolvedValue({}),
-            delete: vi.fn().mockResolvedValue({}),
-        }
-    };
-});
+// Global mock for Api service disabled
+/*
+*/
 
 // Mock the other aliases too
-vi.mock('@/services/api', async (importOriginal) => {
-    if (process.env.TEST_TYPE === 'integration') {
-        return await importOriginal();
-    }
-    const api = await import('../src/services/api');
-    return api;
-});
 
-vi.mock('services/api', async (importOriginal) => {
-    if (process.env.TEST_TYPE === 'integration') {
-        return await importOriginal();
-    }
-    const api = await import('../src/services/api');
-    return api;
-});
 
 // Global Setup
 beforeAll(async () => {
@@ -597,22 +537,6 @@ vi.mock('@google/generative-ai', () => {
 
 
 // Mock RapidLeanReportService globally
-vi.mock('../server/services/rapidLeanReportService', () => {
-    const mock = {
-        generateReport: vi.fn().mockResolvedValue({
-            fileUrl: '/uploads/reports/test-report.pdf',
-            id: 'test-report-id'
-        }),
-        getReport: vi.fn().mockResolvedValue({
-            id: 'test-report-id',
-            file_url: '/uploads/reports/test-report.pdf'
-        })
-    };
-    return {
-        default: mock,
-        ...mock
-    };
-});
 
 // REMOVED dependency injection via require() as it fails in ESM environment.
 // The global vi.mock('@google/generative-ai') above should suffice for most cases.

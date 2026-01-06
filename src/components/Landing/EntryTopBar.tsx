@@ -9,6 +9,7 @@ interface EntryTopBarProps {
     onTrialClick: () => void;
     onDemoClick: () => void;
     onLoginClick: () => void;
+    onRegisterClick: () => void;
     isLoggedIn: boolean;
     hasWorkspace: boolean;
 }
@@ -17,6 +18,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     onTrialClick,
     onDemoClick,
     onLoginClick,
+    onRegisterClick,
     isLoggedIn,
     hasWorkspace,
 }) => {
@@ -126,7 +128,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
 
                     {/* Sign up Button */}
                     <button
-                        onClick={onTrialClick}
+                        onClick={onRegisterClick}
                         className="px-5 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/25 dark:shadow-purple-900/25 cursor-pointer"
                     >
                         Sign up
@@ -188,11 +190,10 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                                         <button
                                             key={lang.code}
                                             onClick={() => handleLangChange(lang.code)}
-                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${
-                                                i18n.language.startsWith(lang.code)
-                                                    ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-bold'
-                                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
-                                            }`}
+                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${i18n.language.startsWith(lang.code)
+                                                ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-bold'
+                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                                                }`}
                                         >
                                             {lang.label}
                                             {i18n.language.startsWith(lang.code) && (
@@ -260,7 +261,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                                     </button>
                                     <button
                                         onClick={() => {
-                                            onTrialClick();
+                                            onRegisterClick();
                                             setIsMobileMenuOpen(false);
                                         }}
                                         className="w-full px-4 py-3 text-base font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all text-center"
@@ -291,11 +292,10 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                                                     <button
                                                         key={lang.code}
                                                         onClick={() => handleLangChange(lang.code)}
-                                                        className={`text-xs px-2 py-1.5 rounded-lg border transition-colors font-medium uppercase ${
-                                                            i18n.language.startsWith(lang.code)
-                                                                ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300'
-                                                                : 'border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/5 dark:text-slate-400'
-                                                        }`}
+                                                        className={`text-xs px-2 py-1.5 rounded-lg border transition-colors font-medium uppercase ${i18n.language.startsWith(lang.code)
+                                                            ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-500/30 dark:text-purple-300'
+                                                            : 'border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/5 dark:text-slate-400'
+                                                            }`}
                                                     >
                                                         {lang.code}
                                                     </button>

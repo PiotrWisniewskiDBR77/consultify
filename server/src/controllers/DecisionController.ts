@@ -39,14 +39,20 @@ export class DecisionController {
      */
     static getDecisions = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId, status, relatedObjectId } = req.query;
+        const orgId = req.user?.organizationId;
 
         let sql = `SELECT d.*, u.first_name, u.last_name 
                    FROM decisions d
                    LEFT JOIN users u ON d.decision_owner_id = u.id
                    WHERE 1=1`;
+        
         type SQLParam = string | number | boolean | null | undefined;
         const params: SQLParam[] = [];
 
+        if (orgId) {
+            sql += ` AND d.organization_id = ?`;
+            params.push(orgId);
+        }
         if (projectId) {
             sql += ` AND d.project_id = ?`;
             params.push(projectId);
@@ -62,7 +68,8 @@ export class DecisionController {
 
         sql += ` ORDER BY d.created_at DESC`;
 
-        const decisions = await queryHelpers.queryAll(sql, params);
+        const rows = await queryHelpers.queryAll(sql, params);
+        const decisions = rows.map(row => queryHelpers.transformRow(row));
         res.json(decisions);
     });
 
@@ -130,7 +137,7 @@ export class DecisionController {
             return;
         }
 
-        res.json(decision);
+        res.json(queryHelpers.transformRow(decision));
     });
 
     /**
@@ -139,6 +146,7 @@ export class DecisionController {
     static createDecision = asyncHandler(
         async (req: AuthenticatedRequest<CreateDecisionRequest>, res: Response): Promise<void> => {
             const userId = req.user?.id;
+            const orgId = req.user?.organizationId;
             if (!userId) {
                 res.status(401).json({ error: 'Unauthorized' });
                 return;
@@ -177,13 +185,14 @@ export class DecisionController {
             ]);
 
             const sql = `INSERT INTO decisions (
-            id, project_id, title, description, pmo_domain,
+            id, organization_id, project_id, title, description, pmo_domain,
             decision_owner_id, related_object_type, related_object_id,
             due_date, priority, status, audit_trail
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
             await queryHelpers.queryRun(sql, [
                 id,
+                orgId,
                 projectId,
                 title,
                 description || null,

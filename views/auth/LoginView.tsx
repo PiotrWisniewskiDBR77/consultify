@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Api } from '../../services/api';
+import { Api } from '../../src/services/api';
 
 export const LoginView = () => {
     const [email, setEmail] = useState('');
@@ -29,7 +29,8 @@ export const LoginView = () => {
                 window.location.reload();
             }
         } catch (err: unknown) {
-            toast.error(err.response?.data?.error || err.message || 'Login failed');
+            const error = err as any;
+            toast.error(error.response?.data?.error || error.message || 'Login failed');
         }
     };
 

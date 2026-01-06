@@ -20,6 +20,7 @@ import {
     Factory,
     Globe,
     Home,
+    Layers,
     LayoutDashboard,
     Lightbulb,
     Link,
@@ -70,13 +71,13 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
         // Ecosystem affiliate dashboard (Phase G)
         ...(journeyState === 'ECOSYSTEM_NODE'
             ? [
-                  {
-                      id: 'AFFILIATE_DASHBOARD',
-                      label: t('sidebar.affiliateDashboard', 'Ecosystem Impact'),
-                      icon: React.createElement(TrendingUp, { size: 20 }),
-                      viewId: AppView.AFFILIATE_DASHBOARD,
-                  },
-              ]
+                {
+                    id: 'AFFILIATE_DASHBOARD',
+                    label: t('sidebar.affiliateDashboard', 'Ecosystem Impact'),
+                    icon: React.createElement(TrendingUp, { size: 20 }),
+                    viewId: AppView.AFFILIATE_DASHBOARD,
+                },
+            ]
             : []),
         {
             id: 'MODULE_2',

@@ -40,7 +40,7 @@ describe.skip('NotificationService', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        NotificationService = (await import('../../../server/src/services/notificationService.js')).default;
+        NotificationService = (await import('../../../server/src/services/NotificationService.js')).default;
     });
 
     describe('NOTIFICATION_TYPES', () => {

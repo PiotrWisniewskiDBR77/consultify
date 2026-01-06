@@ -14,7 +14,7 @@ describe('Legal API Routes', () => {
     let testToken: string;
     let testUserId: string;
     let testOrgId: string;
-     
+    let adminToken: string;
     let adminUserId: string;
 
     beforeAll(async () => {

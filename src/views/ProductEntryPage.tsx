@@ -134,6 +134,7 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
                 onTrialClick={handleTrialRedirect}
                 onDemoClick={handleDemoRedirect}
                 onLoginClick={onLoginClick}
+                onRegisterClick={onRegisterClick}
                 isLoggedIn={!!currentUser}
                 hasWorkspace={!!currentUser?.hasWorkspace}
             />

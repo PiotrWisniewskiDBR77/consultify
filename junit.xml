@@ -1,96 +1,307 @@
-{"numTotalTestSuites":5,"numPassedTestSuites":1,"numFailedTestSuites":4,"numPendingTestSuites":0,"numTotalTests":3,"numPassed    <testsuite name="tests/integration/apiFullFlow.test.js" timestamp="2026-01-06T07:52:40.438Z" hostname="MacBook-Pro-Piotr.local" tests="3" failures="2" errors="0" skipped="0" time="0.74688525">
-        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Project Lifecycle &gt; should create, read, update, and delete a project" time="0.022257">
+{"numTotalTestSuites":10,"numPassedTestSuites":6,"numFailedTestSuites":4,"numPendingTestSuites":0,"numTotalTests":9,"numPassed    <testsuite name="tests/integration/routes/ai.test.js" timestamp="2026-01-06T10:03:09.160Z" hostname="mac.home" tests="9" failures="2" errors="0" skipped="0" time="0.281365208">
+        <testcase classname="tests/integration/routes/ai.test.js" name="AI Routes Integration Tests &gt; GET /api/ai/context &gt; should build AI context for user without project" time="0.037723583">
             <system-out>
-2026-01-06 08:52:39:5239 [35mhttp[39m: [35mPOST /api/projects[39m
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/projects[39m
+[Test] GET /api/ai/context
 
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 45[39m
+2026-01-06 11:03:08:38 [35mhttp[39m: [35mGET /api/ai/context?screen=dashboard[39m
+2026-01-06 11:03:08:38 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/context[39m
+[AuthMiddleware] Verifying token for path: /context
 
-[ProjectsRoute] POST / hit
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
 
-2026-01-06 08:52:39:5239 [35mhttp[39m: [35mGET /api/projects/f938dc28-980d-4ff0-8ffe-b74a611f79cf[39m
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/projects/f938dc28-980d-4ff0-8ffe-b74a611f79cf[39m
+2026-01-06 11:03:08:38 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
 
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 45[39m
+[AIContextBuilder] buildContext started for user: 19ee2ec3-11c8-43a9-959b-56ea3404f42c, org: 04765d1d-d435-45f3-ae0e-e3d45b5faf54, project: null
 
-2026-01-06 08:52:39:5239 [35mhttp[39m: [35mPUT /api/projects/f938dc28-980d-4ff0-8ffe-b74a611f79cf[39m
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[Index] Pre-Gateway: PUT /api/projects/f938dc28-980d-4ff0-8ffe-b74a611f79cf[39m
+[AIContextBuilder] Services loaded
+[AIContextBuilder] Building platform context...
 
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 45[39m
+[AIContextBuilder] Building organization context...
 
-2026-01-06 08:52:39:5239 [35mhttp[39m: [35mDELETE /api/projects/f938dc28-980d-4ff0-8ffe-b74a611f79cf[39m
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[Index] Pre-Gateway: DELETE /api/projects/f938dc28-980d-4ff0-8ffe-b74a611f79cf[39m
+2026-01-06 11:03:08:38 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such column: is_closed&quot;,&quot;sql&quot;:&quot;SELECT id FROM projects WHERE organization_id = ? AND is_closed = 0&quot;,&quot;params&quot;:[&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;]}
 
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 45[39m
+[AIContextBuilder] Building project context...
+[AIContextBuilder] Building execution context...
+
+[AIContextBuilder] Building knowledge context...
+
+[AIContextBuilder] Building external context...
+
+[AIContextBuilder] Fetching pending approvals...
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such table: ai_actions&quot;,&quot;sql&quot;:&quot;SELECT * FROM ai_actions WHERE status = &apos;PENDING&apos; AND user_id = ? AND organization_id = ? ORDER BY c&quot;,&quot;params&quot;:[&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;]}
+
+[AIContextBuilder] Fetching AI settings...
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[AIContextBuilder] Failed to get AI settings:[39m
+[AIContextBuilder] Filtering context...
+[AIContextBuilder] Context built successfully
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/ai.test.js" name="AI Routes Integration Tests &gt; GET /api/ai/context &gt; should return 403 without authentication" time="0.002271917">
+            <system-out>
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mGET /api/ai/context[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/context[39m
+[AuthMiddleware] Verifying token for path: /context
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: NO
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/ai/context&quot;,&quot;statusCode&quot;:403,&quot;responseTime&quot;:0,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:-307136,&quot;external&quot;:538,&quot;rss&quot;:16384},&quot;userId&quot;:null,&quot;organizationId&quot;:null,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/ai.test.js" name="AI Routes Integration Tests &gt; GET /api/ai/context/:projectId &gt; should build AI context for specific project" time="0.012256625">
+            <system-out>
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mGET /api/ai/context/b7e7ea98-55a7-4384-9497-ed123db7ff01?screen=project-details[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/context/b7e7ea98-55a7-4384-9497-ed123db7ff01[39m
+[AuthMiddleware] Verifying token for path: /context/b7e7ea98-55a7-4384-9497-ed123db7ff01
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+[AIContextBuilder] buildContext started for user: 19ee2ec3-11c8-43a9-959b-56ea3404f42c, org: 04765d1d-d435-45f3-ae0e-e3d45b5faf54, project: b7e7ea98-55a7-4384-9497-ed123db7ff01
+
+[AIContextBuilder] Services loaded
+[AIContextBuilder] Building platform context...
+
+[AIContextBuilder] Building organization context...
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such column: is_closed&quot;,&quot;sql&quot;:&quot;SELECT id FROM projects WHERE organization_id = ? AND is_closed = 0&quot;,&quot;params&quot;:[&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;]}
+
+[AIContextBuilder] Building project context...
+
+[AIContextBuilder] Building execution context...
+
+[AIContextBuilder] Building knowledge context...
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[AIContextBuilder] Failed to load strategic directions:[39m
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[AIContextBuilder] Failed to load approved ideas:[39m
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such column: outcome&quot;,&quot;sql&quot;:&quot;SELECT id, title, outcome FROM decisions \n                WHERE project_id = ? AND status != &apos;PENDIN&quot;,&quot;params&quot;:[&quot;b7e7ea98-55a7-4384-9497-ed123db7ff01&quot;]}
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such column: phase_history&quot;,&quot;sql&quot;:&quot;SELECT phase_history FROM projects WHERE id = ?&quot;,&quot;params&quot;:[&quot;b7e7ea98-55a7-4384-9497-ed123db7ff01&quot;]}
+
+[AIContextBuilder] Building external context...
+
+[AIContextBuilder] Fetching PMO health snapshot...
+
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[PMOHealthService] Snapshot generated in 2ms for project b7e7ea98-55a7-4384-9497-ed123db7ff01[39m
+
+[AIContextBuilder] Fetching pending approvals...
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such table: ai_actions&quot;,&quot;sql&quot;:&quot;SELECT * FROM ai_actions WHERE status = &apos;PENDING&apos; AND user_id = ? AND project_id = ? AND organizatio&quot;,&quot;params&quot;:[&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;b7e7ea98-55a7-4384-9497-ed123db7ff01&quot;,&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;]}
+
+[AIContextBuilder] Fetching AI settings...
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[AIContextBuilder] Failed to get AI settings:[39m
+[AIContextBuilder] Filtering context...
+[AIContextBuilder] Context built successfully
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/ai.test.js" name="AI Routes Integration Tests &gt; GET /api/ai/context/:projectId &gt; should return 200 with null project for non-existent project" time="0.006895625">
+            <system-out>
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mGET /api/ai/context/e6a09bab-cf85-4974-82eb-70b66fb74c36[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/context/e6a09bab-cf85-4974-82eb-70b66fb74c36[39m
+[AuthMiddleware] Verifying token for path: /context/e6a09bab-cf85-4974-82eb-70b66fb74c36
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+[AIContextBuilder] buildContext started for user: 19ee2ec3-11c8-43a9-959b-56ea3404f42c, org: 04765d1d-d435-45f3-ae0e-e3d45b5faf54, project: e6a09bab-cf85-4974-82eb-70b66fb74c36
+
+[AIContextBuilder] Services loaded
+[AIContextBuilder] Building platform context...
+
+[AIContextBuilder] Building organization context...
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such column: is_closed&quot;,&quot;sql&quot;:&quot;SELECT id FROM projects WHERE organization_id = ? AND is_closed = 0&quot;,&quot;params&quot;:[&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;]}
+
+[AIContextBuilder] Building project context...
+
+[AIContextBuilder] Building execution context...
+
+[AIContextBuilder] Building knowledge context...
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such column: outcome&quot;,&quot;sql&quot;:&quot;SELECT id, title, outcome FROM decisions \n                WHERE project_id = ? AND status != &apos;PENDIN&quot;,&quot;params&quot;:[&quot;e6a09bab-cf85-4974-82eb-70b66fb74c36&quot;]}
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such column: phase_history&quot;,&quot;sql&quot;:&quot;SELECT phase_history FROM projects WHERE id = ?&quot;,&quot;params&quot;:[&quot;e6a09bab-cf85-4974-82eb-70b66fb74c36&quot;]}
+
+[AIContextBuilder] Building external context...
+
+[AIContextBuilder] Fetching PMO health snapshot...
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[AIContextBuilder] Failed to get PMO health snapshot:[39m
+[AIContextBuilder] Fetching pending approvals...
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Query error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such table: ai_actions&quot;,&quot;sql&quot;:&quot;SELECT * FROM ai_actions WHERE status = &apos;PENDING&apos; AND user_id = ? AND project_id = ? AND organizatio&quot;,&quot;params&quot;:[&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;e6a09bab-cf85-4974-82eb-70b66fb74c36&quot;,&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;]}
+
+[AIContextBuilder] Fetching AI settings...
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[AIContextBuilder] Failed to get AI settings:[39m
+[AIContextBuilder] Filtering context...
+[AIContextBuilder] Context built successfully
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/ai.test.js" name="AI Routes Integration Tests &gt; POST /api/ai/chat/stream &gt; should handle streaming chat with AI" time="0.011329375">
+            <system-out>
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mPOST /api/ai/chat/stream[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/ai/chat/stream[39m
+[AuthMiddleware] Verifying token for path: /chat/stream
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/ai.test.js" name="AI Routes Integration Tests &gt; POST /api/ai/chat &gt; should handle non-streaming chat" time="0.075333541">
+            <system-out>
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mPOST /api/ai/chat[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/ai/chat[39m
+[AuthMiddleware] Verifying token for path: /chat
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+[LazyServiceLoader] Loading: ../../../ai/agents/index.js -&gt; /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/ai/agents/index.js
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Statement error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: table ai_audit_logs has no column named context_snapshot&quot;,&quot;sql&quot;:&quot;INSERT INTO ai_audit_logs \n            (id, user_id, organization_id, project_id, action_type, actio&quot;,&quot;params&quot;:[&quot;e5a8ef06-9840-4d49-aa97-f947a67904d2&quot;,&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;,&quot;b7e7ea98-55a7-4384-9497-ed123db7ff01&quot;,&quot;SUGGESTION&quot;,&quot;AI provided suggestion&quot;,&quot;{}&quot;,&quot;[]&quot;,&quot;ADVISOR&quot;,&quot;ADVISORY&quot;,&quot;MEDIUM&quot;,null,null,null,&quot;ADVISOR&quot;,null,null,0,null,null,null,null]}
+
+2026-01-06 11:03:09:39 [31merror[39m: [31mChat Error: Failed to log AI interaction: SQLITE_ERROR: table ai_audit_logs has no column named context_snapshot[39m {&quot;stack&quot;:&quot;Error: Failed to log AI interaction: SQLITE_ERROR: table ai_audit_logs has no column named context_snapshot\n    at Object.logInteraction (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAuditLogger.ts:143:19)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai.routes.ts:366:13&quot;}
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/ai/chat&quot;,&quot;statusCode&quot;:500,&quot;responseTime&quot;:65,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:5328752,&quot;external&quot;:27429,&quot;rss&quot;:1146880},&quot;userId&quot;:&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;organizationId&quot;:&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mPOST /api/ai/chat[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/ai/chat[39m
+[AuthMiddleware] Verifying token for path: /chat
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+[LazyServiceLoader] Loading: ../../../ai/agents/index.js -&gt; /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/ai/agents/index.js
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33m[DB:Promise] Statement error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: table ai_audit_logs has no column named context_snapshot&quot;,&quot;sql&quot;:&quot;INSERT INTO ai_audit_logs \n            (id, user_id, organization_id, project_id, action_type, actio&quot;,&quot;params&quot;:[&quot;646da826-3845-4b94-bed2-48b95db4fe04&quot;,&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;,&quot;b7e7ea98-55a7-4384-9497-ed123db7ff01&quot;,&quot;SUGGESTION&quot;,&quot;AI provided suggestion&quot;,&quot;{}&quot;,&quot;[]&quot;,&quot;ADVISOR&quot;,&quot;ADVISORY&quot;,&quot;MEDIUM&quot;,null,null,null,&quot;ADVISOR&quot;,null,null,0,null,null,null,null]}
+
+2026-01-06 11:03:09:39 [31merror[39m: [31mChat Error: Failed to log AI interaction: SQLITE_ERROR: table ai_audit_logs has no column named context_snapshot[39m {&quot;stack&quot;:&quot;Error: Failed to log AI interaction: SQLITE_ERROR: table ai_audit_logs has no column named context_snapshot\n    at Object.logInteraction (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAuditLogger.ts:143:19)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai.routes.ts:366:13&quot;}
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/ai/chat&quot;,&quot;statusCode&quot;:500,&quot;responseTime&quot;:4,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:3934296,&quot;external&quot;:11948,&quot;rss&quot;:606208},&quot;userId&quot;:&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;organizationId&quot;:&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
 
             </system-out>
             <system-err>
-[ProjectController] createProject called. Org: org-flow-1, User: user-flow-1
-[ProjectController] Executing INSERT for project f938dc28-980d-4ff0-8ffe-b74a611f79cf
+[LazyServiceLoader] Error loading /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/ai/agents/index.js: Error: Cannot find module &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/ai/agents/index.js&apos; imported from &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/lazyServiceLoader.ts&apos;
+    at reviveInvokeError [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:548:17[90m)[39m
+    at Object.invoke [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:570:17[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at VitestModuleRunner.getModuleInformation [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:1205:73[90m)[39m
+    at request [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:1227:88[90m)[39m
+    at createLazyService [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/src/utils/lazyServiceLoader.ts:58:24[90m)[39m {
+  code: [32m&apos;ERR_MODULE_NOT_FOUND&apos;[39m,
+  runnerError: Error: RunnerError
+      at reviveInvokeError [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:552:18[90m)[39m
+      at Object.invoke [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:570:17[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+      at VitestModuleRunner.getModuleInformation [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:1205:73[90m)[39m
+      at request [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:1227:88[90m)[39m
+      at createLazyService [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/src/utils/lazyServiceLoader.ts:58:24[90m)[39m
+}
+[LazyServiceLoader] Failed to load: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/ai/agents/index.js
+[LazyServiceLoader] Returning stub proxy for: ../../../ai/agents/index.js
 
-[ProjectController] Immediate verify count for org org-flow-1: 1
+[LazyServiceLoader] Error loading /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/ai/agents/index.js: Error: Cannot find module &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/ai/agents/index.js&apos; imported from &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/lazyServiceLoader.ts&apos;
+    at reviveInvokeError [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:548:17[90m)[39m
+    at Object.invoke [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:570:17[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at VitestModuleRunner.getModuleInformation [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:1205:73[90m)[39m
+    at request [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:1227:88[90m)[39m
+    at createLazyService [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/src/utils/lazyServiceLoader.ts:58:24[90m)[39m {
+  code: [32m&apos;ERR_MODULE_NOT_FOUND&apos;[39m,
+  runnerError: Error: RunnerError
+      at reviveInvokeError [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:552:18[90m)[39m
+      at Object.invoke [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:570:17[90m)[39m
+  [90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+      at VitestModuleRunner.getModuleInformation [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:1205:73[90m)[39m
+      at request [90m(file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4mvite[24m/dist/node/module-runner.js:1227:88[90m)[39m
+      at createLazyService [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/src/utils/lazyServiceLoader.ts:58:24[90m)[39m
+}
+[LazyServiceLoader] Failed to load: /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/ai/agents/index.js
+[LazyServiceLoader] Returning stub proxy for: ../../../ai/agents/index.js
 
             </system-err>
-        </testcase>
-        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Task Lifecycle &gt; should create and manage tasks" time="0.008059292">
-            <system-out>
-2026-01-06 08:52:39:5239 [35mhttp[39m: [35mPOST /api/tasks[39m
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/tasks[39m
+            <failure message="expected 500 to be 200 // Object.is equality" type="AssertionError">
+AssertionError: expected 500 to be 200 // Object.is equality
 
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 45[39m
+- Expected
++ Received
 
-2026-01-06 08:52:39:5239 [33mwarn[39m: [33m[DB:Promise] Statement error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: table tasks has no column named organization_id&quot;,&quot;sql&quot;:&quot;\n            INSERT INTO tasks (\n                id, project_id, organization_id, title, description&quot;,&quot;params&quot;:[&quot;f54fa3ad-4925-4b4e-bffe-5cb691af5f77&quot;,&quot;f938dc28-980d-4ff0-8ffe-b74a611f79cf&quot;,&quot;org-flow-1&quot;,&quot;API Flow Test Task&quot;,&quot;Test task description&quot;,&quot;todo&quot;,&quot;medium&quot;,null,&quot;user-flow-1&quot;,null,null,&quot;[]&quot;,&quot;execution&quot;,null,null,&quot;&quot;,&quot;{}&quot;,&quot;[]&quot;,&quot;[]&quot;,null,null,null,&quot;[]&quot;,0,&quot;&quot;,&quot;2026-01-06T07:52:39.903Z&quot;,&quot;2026-01-06T07:52:39.903Z&quot;]}
+- 200
++ 500
 
-2026-01-06 08:52:39:5239 [31merror[39m: [31m[TaskController] Task creation failed:[39m
-
-2026-01-06 08:52:39:5239 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/tasks&quot;,&quot;statusCode&quot;:500,&quot;responseTime&quot;:3,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:1461872,&quot;external&quot;:9663,&quot;rss&quot;:294912},&quot;userId&quot;:&quot;user-flow-1&quot;,&quot;organizationId&quot;:&quot;org-flow-1&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
-
-2026-01-06 08:52:39:5239 [35mhttp[39m: [35mPOST /api/tasks[39m
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/tasks[39m
-
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 45[39m
-
-2026-01-06 08:52:39:5239 [33mwarn[39m: [33m[DB:Promise] Statement error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: table tasks has no column named organization_id&quot;,&quot;sql&quot;:&quot;\n            INSERT INTO tasks (\n                id, project_id, organization_id, title, description&quot;,&quot;params&quot;:[&quot;785c1eb4-1302-4d84-90d7-ab9759baf9d7&quot;,&quot;f938dc28-980d-4ff0-8ffe-b74a611f79cf&quot;,&quot;org-flow-1&quot;,&quot;API Flow Test Task&quot;,&quot;Test task description&quot;,&quot;todo&quot;,&quot;medium&quot;,null,&quot;user-flow-1&quot;,null,null,&quot;[]&quot;,&quot;execution&quot;,null,null,&quot;&quot;,&quot;{}&quot;,&quot;[]&quot;,&quot;[]&quot;,null,null,null,&quot;[]&quot;,0,&quot;&quot;,&quot;2026-01-06T07:52:39.908Z&quot;,&quot;2026-01-06T07:52:39.908Z&quot;]}
-
-2026-01-06 08:52:39:5239 [31merror[39m: [31m[TaskController] Task creation failed:[39m
-
-2026-01-06 08:52:39:5239 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/tasks&quot;,&quot;statusCode&quot;:500,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:-40792,&quot;external&quot;:1471,&quot;rss&quot;:65536},&quot;userId&quot;:&quot;user-flow-1&quot;,&quot;organizationId&quot;:&quot;org-flow-1&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
-
-            </system-out>
-            <failure message="expected [ 200, 201 ] to include 500" type="AssertionError">
-AssertionError: expected [ 200, 201 ] to include 500
- ❯ tests/integration/apiFullFlow.test.js:193:32
+ ❯ tests/integration/routes/ai.test.js:177:37
             </failure>
-            <failure message="expected [ 200, 201 ] to include 500" type="AssertionError">
-AssertionError: expected [ 200, 201 ] to include 500
- ❯ tests/integration/apiFullFlow.test.js:193:32
+            <failure message="expected 500 to be 200 // Object.is equality" type="AssertionError">
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/integration/routes/ai.test.js:177:37
             </failure>
         </testcase>
-        <testcase classname="tests/integration/apiFullFlow.test.js" name="Integration Test: Full API Flow &gt; Session Management &gt; should save and retrieve session data" time="0.0074055">
+        <testcase classname="tests/integration/routes/ai.test.js" name="AI Routes Integration Tests &gt; GET /api/ai/policy &gt; should return AI policy configuration" time="0.009134083">
             <system-out>
-2026-01-06 08:52:39:5239 [35mhttp[39m: [35mPOST /api/sessions[39m
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/sessions[39m
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mGET /api/ai/policy[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/policy[39m
+[AuthMiddleware] Verifying token for path: /policy
 
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 45[39m
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
 
-2026-01-06 08:52:39:5239 [33mwarn[39m: [33m[DB:Promise] Statement error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such table: active_sessions&quot;,&quot;sql&quot;:&quot;INSERT INTO active_sessions (id, user_id, device, ip_address, last_active, created_at)\n         VALU&quot;,&quot;params&quot;:[&quot;91693515-97a9-4e55-ad2f-5cc6c2d7c715&quot;,&quot;user-flow-1&quot;,&quot;Unknown Device&quot;,&quot;::ffff:127.0.0.1&quot;]}
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
 
-2026-01-06 08:52:39:5239 [31merror[39m: [31m[AlertWatchdog] Detected Server Error:[39m
-2026-01-06 08:52:39:5239 [31merror[39m: [31m[ErrorHandler] SQLITE_ERROR: no such table: active_sessions[39m {&quot;stack&quot;:&quot;Error: SQLITE_ERROR: no such table: active_sessions\n    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user/sessions.routes.ts:86:19\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)&quot;,&quot;path&quot;:&quot;/api/sessions&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;userId&quot;:&quot;user-flow-1&quot;}
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
 
-2026-01-06 08:52:39:5239 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/sessions&quot;,&quot;statusCode&quot;:500,&quot;responseTime&quot;:2,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:445248,&quot;external&quot;:9866,&quot;rss&quot;:475136},&quot;userId&quot;:&quot;user-flow-1&quot;,&quot;organizationId&quot;:&quot;org-flow-1&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+2026-01-06 11:03:09:39 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/ai/policy&quot;,&quot;statusCode&quot;:500,&quot;responseTime&quot;:3,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:1636032,&quot;external&quot;:1012,&quot;rss&quot;:442368},&quot;userId&quot;:&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;organizationId&quot;:&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
 
-2026-01-06 08:52:39:5239 [35mhttp[39m: [35mPOST /api/sessions[39m
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/sessions[39m
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mGET /api/ai/policy[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/policy[39m
+[AuthMiddleware] Verifying token for path: /policy
 
-2026-01-06 08:52:39:5239 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 45[39m
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
 
-2026-01-06 08:52:39:5239 [33mwarn[39m: [33m[DB:Promise] Statement error[39m {&quot;error&quot;:&quot;SQLITE_ERROR: no such table: active_sessions&quot;,&quot;sql&quot;:&quot;INSERT INTO active_sessions (id, user_id, device, ip_address, last_active, created_at)\n         VALU&quot;,&quot;params&quot;:[&quot;6ebd7077-e53e-4975-b2e0-b61911a0f607&quot;,&quot;user-flow-1&quot;,&quot;Unknown Device&quot;,&quot;::ffff:127.0.0.1&quot;]}
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
 
-2026-01-06 08:52:39:5239 [31merror[39m: [31m[AlertWatchdog] Detected Server Error:[39m
-2026-01-06 08:52:39:5239 [31merror[39m: [31m[ErrorHandler] SQLITE_ERROR: no such table: active_sessions[39m {&quot;stack&quot;:&quot;Error: SQLITE_ERROR: no such table: active_sessions\n    at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user/sessions.routes.ts:86:19\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)&quot;,&quot;path&quot;:&quot;/api/sessions&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;userId&quot;:&quot;user-flow-1&quot;}
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
 
-2026-01-06 08:52:39:5239 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api/sessions&quot;,&quot;statusCode&quot;:500,&quot;responseTime&quot;:2,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:122840,&quot;external&quot;:1674,&quot;rss&quot;:475136},&quot;userId&quot;:&quot;user-flow-1&quot;,&quot;organizationId&quot;:&quot;org-flow-1&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+2026-01-06 11:03:09:39 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/ai/policy&quot;,&quot;statusCode&quot;:500,&quot;responseTime&quot;:2,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:1638752,&quot;external&quot;:1012,&quot;rss&quot;:393216},&quot;userId&quot;:&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;organizationId&quot;:&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
 
             </system-out>
             <failure message="expected 500 to be 200 // Object.is equality" type="AssertionError">
@@ -102,7 +313,7 @@ AssertionError: expected 500 to be 200 // Object.is equality
 - 200
 + 500
 
- ❯ tests/integration/apiFullFlow.test.js:231:36
+ ❯ tests/integration/routes/ai.test.js:191:37
             </failure>
             <failure message="expected 500 to be 200 // Object.is equality" type="AssertionError">
 AssertionError: expected 500 to be 200 // Object.is equality
@@ -113,8 +324,39 @@ AssertionError: expected 500 to be 200 // Object.is equality
 - 200
 + 500
 
- ❯ tests/integration/apiFullFlow.test.js:231:36
+ ❯ tests/integration/routes/ai.test.js:191:37
             </failure>
+        </testcase>
+        <testcase classname="tests/integration/routes/ai.test.js" name="AI Routes Integration Tests &gt; Memory Management &gt; GET /api/ai/memory/project/:projectId &gt; should retrieve project memory" time="0.0040385">
+            <system-out>
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mGET /api/ai/memory/project/b7e7ea98-55a7-4384-9497-ed123db7ff01[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/memory/project/b7e7ea98-55a7-4384-9497-ed123db7ff01[39m
+[AuthMiddleware] Verifying token for path: /memory/project/b7e7ea98-55a7-4384-9497-ed123db7ff01
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+[DB Config] Loading config. SQLITE_PATH env: :memory:
+[DB Config] Resolved sqlitePath: :memory:
+
+            </system-out>
+        </testcase>
+        <testcase classname="tests/integration/routes/ai.test.js" name="AI Routes Integration Tests &gt; Error Handling &gt; should handle invalid project IDs gracefully" time="0.002245">
+            <system-out>
+2026-01-06 11:03:09:39 [35mhttp[39m: [35mGET /api/ai/context/not-a-uuid[39m
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/context/not-a-uuid[39m
+[AuthMiddleware] Verifying token for path: /context/not-a-uuid
+
+[AuthMiddleware] Deps loaded
+[AuthMiddleware] Token extracted: YES
+
+2026-01-06 11:03:09:39 [32minfo[39m: [32m[AuthMiddleware] Verifying token: eyJhbGciOi... with secret length: 52[39m
+
+2026-01-06 11:03:09:39 [33mwarn[39m: [33mPerformance metric[39m {&quot;method&quot;:&quot;GET&quot;,&quot;path&quot;:&quot;/api/ai/context/not-a-uuid&quot;,&quot;statusCode&quot;:400,&quot;responseTime&quot;:1,&quot;dbQueryCount&quot;:0,&quot;dbQueryTime&quot;:0,&quot;memoryDelta&quot;:{&quot;heapUsed&quot;:307992,&quot;external&quot;:822,&quot;rss&quot;:32768},&quot;userId&quot;:&quot;19ee2ec3-11c8-43a9-959b-56ea3404f42c&quot;,&quot;organizationId&quot;:&quot;04765d1d-d435-45f3-ae0e-e3d45b5faf54&quot;,&quot;isSlow&quot;:false,&quot;isError&quot;:true}
+
+            </system-out>
         </testcase>
     </testsuite>
 </testsuites>

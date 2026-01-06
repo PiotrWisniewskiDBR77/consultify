@@ -32,26 +32,43 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
     if (absolutePath.endsWith('.js')) {
         const tsPath = absolutePath.slice(0, -3) + '.ts';
         if (fs.existsSync(tsPath)) {
-            // Check if we are trying to load the same file that is currently executing
-            // This prevents infinite recursion/hangs in wrappers
-            if (tsPath === fileURLToPath(import.meta.url)) {
-                console.warn(`[LazyServiceLoader] Circular load detected for: ${tsPath}. Returning stub.`);
-                return createStubProxy(servicePath);
+            absolutePath = tsPath;
+        } else if (absolutePath.endsWith('.legacy.js')) {
+            const nonLegacyTsPath = absolutePath.slice(0, -10) + '.ts';
+            if (fs.existsSync(nonLegacyTsPath)) {
+                absolutePath = nonLegacyTsPath;
             }
+        }
+    } else if (!absolutePath.endsWith('.ts')) {
+        const tsPath = absolutePath + '.ts';
+        if (fs.existsSync(tsPath)) {
             absolutePath = tsPath;
         }
     }
 
-    // Additional check to prevent a wrapper from loading itself if it has the same name
-    // (e.g. server/src/services/trialService.ts loading ./trialService.js)
-    // We can't easily know the caller here, but we can check if the file being loaded
-    // is one of the known wrapper files if we had a list.
+    // Check if we are trying to load the same file that is currently executing
+    // This prevents infinite recursion/hangs in wrappers
+    if (absolutePath === fileURLToPath(import.meta.url)) {
+        console.warn(`[LazyServiceLoader] Circular load detected for: ${absolutePath}. Returning stub.`);
+        return createStubProxy(servicePath);
+    }
 
     console.log(`[LazyServiceLoader] Loading: ${servicePath} -> ${absolutePath}`);
     try {
         const module = await import(absolutePath);
         return (module.default || module) as T;
     } catch (error) {
+        // One last try: if it's mfaService.js, try MFAService.ts
+        if (absolutePath.endsWith('mfaService.ts')) {
+            const capitalPath = absolutePath.replace('mfaService.ts', 'MFAService.ts');
+            if (fs.existsSync(capitalPath) && capitalPath !== fileURLToPath(import.meta.url)) {
+                try {
+                    const module = await import(capitalPath);
+                    return (module.default || module) as T;
+                } catch (e) { /* ignore */ }
+            }
+        }
+
         console.error(`[LazyServiceLoader] Error loading ${absolutePath}:`, error);
         return createStubProxy(servicePath, absolutePath);
     }

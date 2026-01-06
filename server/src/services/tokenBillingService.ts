@@ -225,6 +225,17 @@ export class TokenBillingServiceClass {
         );
     }
 
+    async getTransactions(userId: string, options: { limit?: number; offset?: number } = {}): Promise<any[]> {
+        const { limit = 50, offset = 0 } = options;
+        return this.dbAll(
+            `SELECT * FROM token_transactions 
+             WHERE user_id = ? 
+             ORDER BY created_at DESC 
+             LIMIT ? OFFSET ?`,
+            [userId, limit, offset],
+        );
+    }
+
     async ensureBalance(userId: string): Promise<{ userId: string }> {
         await this.dbRun(`INSERT OR IGNORE INTO user_token_balance (user_id) VALUES (?)`, [userId]);
         return { userId };

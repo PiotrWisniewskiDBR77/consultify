@@ -2,6 +2,7 @@
 vi.hoisted(() => {
     process.env.NODE_ENV = 'test';
     process.env.TEST_TYPE = 'integration';
+    console.log('[Test Hoisted] TEST_TYPE set to:', process.env.TEST_TYPE);
     process.env.MOCK_DB = 'false';
     process.env.SQLITE_PATH = './test-api-full-flow.db';
     process.env.JWT_SECRET = 'test-secret-key-for-testing-only-min-32-chars';

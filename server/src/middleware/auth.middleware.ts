@@ -225,24 +225,30 @@ const checkTokenRevocation = async (
  * Verify JWT token and attach user to request
  */
 export const verifyToken = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    console.log(`[AuthMiddleware] Verifying token for path: ${req.path}`);
     const { jwt: jwtLib, config } = await getDeps();
+    console.log('[AuthMiddleware] Deps loaded');
 
     const token = extractToken(req);
+    console.log('[AuthMiddleware] Token extracted:', token ? 'YES' : 'NO');
 
     if (!token) {
         // Test mode bypass
         if (process.env.NODE_ENV === 'test' && process.env.ENABLE_TEST_AUTH_BYPASS === 'true') {
-            req.user = {
-                id: 'test-user-id',
-                name: 'Test User',
-                email: 'test@example.com',
-                role: 'guest',
-                organizationId: 'test-org-id',
-                isSuperAdmin: false,
-                isDemo: false,
-            };
-            req.userId = 'test-user-id';
-            req.organizationId = 'test-org-id';
+            // Only set default test user if not already set by another middleware
+            if (!req.user) {
+                req.user = {
+                    id: 'test-user-id',
+                    name: 'Test User',
+                    email: 'test@example.com',
+                    role: 'guest',
+                    organizationId: 'test-org-id',
+                    isSuperAdmin: false,
+                    isDemo: false,
+                };
+                req.userId = 'test-user-id';
+                req.organizationId = 'test-org-id';
+            }
             return next();
         }
 

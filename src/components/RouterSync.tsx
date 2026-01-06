@@ -84,6 +84,18 @@ export const RouterSync: React.FC = () => {
                 setAuthInitialStep(AuthStep.LOGIN);
                 setCurrentView(AppView.AUTH);
             }
+        } else if (path === '/register') {
+            // Registration route - show auth view with register step
+            if (currentUser?.isAuthenticated) {
+                console.log('[RouterSync] User authenticated, redirecting to chat');
+                navigate('/chat', { replace: true });
+                return;
+            }
+            if (currentView !== AppView.AUTH) {
+                console.log('[RouterSync] Navigating to REGISTER');
+                setAuthInitialStep(AuthStep.REGISTER);
+                setCurrentView(AppView.AUTH);
+            }
         } else if (path === '/studio') {
             // Consultify Studio - Visual AI Workspace
             if (!currentUser?.isAuthenticated) {

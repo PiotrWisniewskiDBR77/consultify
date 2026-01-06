@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { Api } from '../../services/api';
+import { Api } from '../../src/services/api';
 
 export const RegisterView = () => {
     const [email, setEmail] = useState('');
@@ -14,7 +14,8 @@ export const RegisterView = () => {
             await Api.register({ email, password, companyName });
             window.location.href = '/login';
         } catch (err: unknown) {
-            toast.error(err.message || 'Registration failed');
+            const error = err as any;
+            toast.error(error.message || 'Registration failed');
         }
     };
 

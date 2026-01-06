@@ -40,7 +40,16 @@ export const validateBody = (schema: z.ZodSchema) => {
             }
 
             // Replace body with parsed (sanitized/coerced) data
-            req.body = result.data;
+            try {
+                req.body = result.data;
+            } catch (e) {
+                // Fallback for read-only body property
+                Object.defineProperty(req, 'body', {
+                    value: result.data,
+                    writable: true,
+                    configurable: true,
+                });
+            }
             next();
         } catch (error: any) {
             logger.error('Validation Middleware Error:', error);
@@ -73,7 +82,16 @@ export const validateQuery = (schema: z.ZodSchema) => {
                 return;
             }
 
-            req.query = result.data as unknown as typeof req.query;
+            try {
+                req.query = result.data as unknown as typeof req.query;
+            } catch (e) {
+                // Fallback for cases where req.query has only a getter (e.g. some test environments)
+                Object.defineProperty(req, 'query', {
+                    value: result.data,
+                    writable: true,
+                    configurable: true,
+                });
+            }
             next();
         } catch (error: any) {
             logger.error('Validation Middleware Error:', error);
@@ -106,7 +124,16 @@ export const validateParams = (schema: z.ZodSchema) => {
                 return;
             }
 
-            req.params = result.data as unknown as typeof req.params;
+            try {
+                req.params = result.data as unknown as typeof req.params;
+            } catch (e) {
+                // Fallback for cases where req.params has only a getter
+                Object.defineProperty(req, 'params', {
+                    value: result.data,
+                    writable: true,
+                    configurable: true,
+                });
+            }
             next();
         } catch (error: any) {
             logger.error('Validation Middleware Error:', error);

@@ -50,16 +50,35 @@ router.post(
             const sig = req.headers['stripe-signature'] as string;
             try {
                 const stripe = ((await import('stripe')) as any).default(process.env.STRIPE_SECRET_KEY || '');
-                event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+                const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body));
+                event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
             } catch (err: any) {
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error';
                 logger.error('Webhook signature verification failed:', errorMessage);
                 return res.status(400).send(`Webhook Error: ${errorMessage}`);
-                return;
             }
         } else {
             // For development without signature verification
-            event = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as Stripe.Event;
+            if (Buffer.isBuffer(req.body)) {
+                try {
+                    event = JSON.parse(req.body.toString()) as Stripe.Event;
+                } catch (err) {
+                    logger.error('[Stripe Webhook] Error parsing Buffer body:', err);
+                    return res.status(400).send('Invalid JSON in Buffer');
+                }
+            } else if (typeof req.body === 'string') {
+                try {
+                    event = JSON.parse(req.body) as Stripe.Event;
+                } catch (err) {
+                    logger.error('[Stripe Webhook] Error parsing string body:', err);
+                    return res.status(400).send('Invalid JSON string');
+                }
+            } else if (typeof req.body === 'object' && req.body !== null) {
+                event = req.body as Stripe.Event;
+            } else {
+                logger.error('[Stripe Webhook] Unknown body type:', typeof req.body);
+                return res.status(400).send('Unknown body type');
+            }
         }
 
         logger.info('Stripe webhook received:', event.type);

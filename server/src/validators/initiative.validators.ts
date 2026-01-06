@@ -20,7 +20,7 @@ export const ConfidenceLevelEnum = z.enum(['low', 'medium', 'high', 'very_high']
 // ==========================================
 
 export const CreateInitiativeSchema = z.object({
-    projectId: z.string().uuid(),
+    projectId: z.string().optional(),
     title: z.string().min(1).max(255),
     axis: InitiativeAxisEnum.optional(),
     area: z.string().max(255).optional(),
@@ -36,8 +36,8 @@ export const CreateInitiativeSchema = z.object({
     valueTiming: z.string().max(255).optional(),
     plannedStartDate: z.string().datetime().optional().nullable(),
     plannedEndDate: z.string().datetime().optional().nullable(),
-    ownerBusinessId: z.string().uuid().optional().nullable(),
-    ownerExecutionId: z.string().uuid().optional().nullable(),
+    ownerBusinessId: z.string().optional().nullable(),
+    ownerExecutionId: z.string().optional().nullable(),
     problemStatement: z.string().max(5000).optional(),
     deliverables: z.array(z.string()).optional(),
     successCriteria: z.array(z.string()).optional(),
@@ -54,7 +54,7 @@ export const UpdateInitiativeStatusSchema = z.object({
 });
 
 export const TransferToRoadmapSchema = z.object({
-    targetProjectId: z.string().uuid().optional(),
+    targetProjectId: z.string().optional(),
 });
 
 export const QuickUpdateInitiativeSchema = z.object({
@@ -64,13 +64,13 @@ export const QuickUpdateInitiativeSchema = z.object({
 });
 
 export const BulkStatusUpdateSchema = z.object({
-    initiativeIds: z.array(z.string().uuid()),
+    initiativeIds: z.array(z.string()),
     status: InitiativeStatusEnum,
     reason: z.string().max(500).optional(),
 });
 
 export const ReorderInitiativesSchema = z.object({
-    initiativeIds: z.array(z.string().uuid()),
+    initiativeIds: z.array(z.string()),
 });
 
 export const CreateKPISchema = z.object({

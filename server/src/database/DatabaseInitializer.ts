@@ -30,17 +30,64 @@ const CRITICAL_TABLES = [
     'notifications',
     'settings',
     'revoked_tokens',
+    'refresh_tokens',
     'superadmin_ai_settings',
     'organization_ai_settings',
     'user_ai_settings',
+    'ai_policies',
+    'initiatives',
+    'maturity_assessments',
+    'subscription_plans',
+    'organization_billing',
+    'usage_records',
+    'usage_summaries',
+    'invoices',
+    'plan_features',
+    'spending_alerts',
+    'stripe_events',
+    'payment_attempts',
+    'dunning_states',
+    'subscription_state_history',
+    'checkout_sessions',
+    'proration_records',
+    'billing_usage_events',
+    'billing_credits',
+    'billing_email_queue',
+    'billing_notification_preferences',
+    'billing_disputes',
+    'billing_refunds',
+    'token_ledger',
+    'payment_methods',
+    'organization_limits',
+    'ai_project_memory',
+    'ai_organization_memory',
+    'usage_counters',
+    'ai_partial_responses',
+    'ai_audit_logs',
+    'ai_system_prompts',
+    'ai_knowledge_embeddings',
+    'ai_feature_control',
+    'ai_conversations',
+    'ai_cost_tracking',
 ];
 
 /**
- * Verify that critical tables exist
+ * Critical columns that must exist in specific tables
  */
-async function verifySchema(): Promise<{ valid: boolean; missing: string[]; errors: string[] }> {
+const REQUIRED_COLUMNS: Record<string, string[]> = {
+    projects: ['current_phase', 'organization_id', 'owner_id', 'status', 'name'],
+    users: ['organization_id', 'role', 'status', 'email'],
+    organizations: ['plan', 'status', 'name'],
+    tasks: ['project_id', 'organization_id', 'status', 'priority'],
+};
+
+/**
+ * Verify that critical tables and columns exist
+ */
+async function verifySchema(): Promise<{ valid: boolean; missing: string[]; errors: string[]; missingColumns: Record<string, string[]> }> {
     const missing: string[] = [];
     const errors: string[] = [];
+    const missingColumns: Record<string, string[]> = {};
 
     try {
         const db = await getDatabaseAsync();
@@ -57,6 +104,18 @@ async function verifySchema(): Promise<{ valid: boolean; missing: string[]; erro
                     const count = parseInt(result.rows[0]?.count || '0', 10);
                     if (count === 0) {
                         missing.push(table);
+                    } else if (REQUIRED_COLUMNS[table]) {
+                        // Check columns for Postgres
+                        for (const column of REQUIRED_COLUMNS[table]) {
+                            const colResult = await db.query<{ count: string }>(
+                                `SELECT COUNT(*)::text as count FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2`,
+                                [table, column],
+                            );
+                            if (parseInt(colResult.rows[0]?.count || '0', 10) === 0) {
+                                if (!missingColumns[table]) missingColumns[table] = [];
+                                missingColumns[table].push(column);
+                            }
+                        }
                     }
                 } catch (err: any) {
                     const error = err instanceof Error ? err : new Error(String(err));
@@ -77,6 +136,22 @@ async function verifySchema(): Promise<{ valid: boolean; missing: string[]; erro
                             : parseInt(String(result.rows[0]?.count || '0'), 10);
                     if (count === 0) {
                         missing.push(table);
+                    } else if (REQUIRED_COLUMNS[table]) {
+                        // Check columns for SQLite
+                        const columnsInfo = await new Promise<any[]>((resolve, reject) => {
+                            db.all(`PRAGMA table_info(${table})`, (err: Error | null, rows: any[]) => {
+                                if (err) reject(err);
+                                else resolve(rows);
+                            });
+                        });
+                        
+                        const existingColumns = columnsInfo.map(c => c.name);
+                        for (const column of REQUIRED_COLUMNS[table]) {
+                            if (!existingColumns.includes(column)) {
+                                if (!missingColumns[table]) missingColumns[table] = [];
+                                missingColumns[table].push(column);
+                            }
+                        }
                     }
                 } catch (err: any) {
                     const error = err instanceof Error ? err : new Error(String(err));
@@ -86,9 +161,10 @@ async function verifySchema(): Promise<{ valid: boolean; missing: string[]; erro
         }
 
         return {
-            valid: missing.length === 0 && errors.length === 0,
+            valid: missing.length === 0 && errors.length === 0 && Object.keys(missingColumns).length === 0,
             missing,
             errors,
+            missingColumns,
         };
     } catch (err: any) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -96,6 +172,7 @@ async function verifySchema(): Promise<{ valid: boolean; missing: string[]; erro
             valid: false,
             missing: [],
             errors: [`Schema verification failed: ${error.message}`],
+            missingColumns: {},
         };
     }
 }
@@ -113,6 +190,26 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         const dbType = databaseConfig.type;
 
         logger.info(`[DatabaseInitializer] Database type: ${dbType}`);
+
+        if (dbType === 'sqlite' && process.env.RESET_DB === 'true') {
+            logger.info('[DatabaseInitializer] RESET_DB=true. Dropping all SQLite tables...');
+            const tables = await new Promise<any[]>((resolve, reject) => {
+                db.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'", (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+            });
+
+            for (const table of tables) {
+                await new Promise<void>((resolve, reject) => {
+                    db.run(`DROP TABLE IF EXISTS ${table.name}`, (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+            }
+            logger.info(`[DatabaseInitializer] Dropped ${tables.length} tables.`);
+        }
 
         // For PostgreSQL, initDb() is called automatically when pool is created
         // But we'll verify it completed successfully
@@ -151,39 +248,74 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         } else {
             // SQLite: Check if schema exists, if not, initialize
             const verification = await verifySchema();
-            if (!verification.valid && verification.missing.length > 0) {
-                logger.warn(
-                    `[DatabaseInitializer] SQLite schema incomplete. Missing tables: ${verification.missing.join(', ')}`,
-                );
+            
+            if (!verification.valid && (verification.missing.length > 0 || Object.keys(verification.missingColumns).length > 0)) {
+                if (verification.missing.length > 0) {
+                    logger.warn(
+                        `[DatabaseInitializer] SQLite schema incomplete. Missing tables: ${verification.missing.join(', ')}`,
+                    );
 
-                // Manually trigger schema initialization
-                logger.info('[DatabaseInitializer] Manually triggering SQLite schema initialization...');
-                
-                // Use TEST_SCHEMA if available
-                try {
-                    const { TEST_SCHEMA } = await import('../../../tests/utils/testSchema.js');
-                    logger.info('[DatabaseInitializer] Using TEST_SCHEMA for initialization');
-                    for (const sql of TEST_SCHEMA) {
-                        await new Promise<void>((resolve, reject) => {
-                            db.run(sql, (err: Error | null) => {
-                                if (err) {
-                                    logger.error(`[DatabaseInitializer] Error executing schema SQL: ${err.message}`);
-                                    // Some errors like "table already exists" might be okay if using IF NOT EXISTS
-                                    if (err.message.includes('already exists')) resolve();
-                                    else reject(err);
-                                } else {
-                                    resolve();
-                                }
+                    // Manually trigger schema initialization
+                    logger.info('[DatabaseInitializer] Manually triggering SQLite schema initialization...');
+                    
+                    // Use TEST_SCHEMA if available
+                    try {
+                        const path = await import('path');
+                        const { pathToFileURL } = await import('url');
+                        const schemaPath = path.resolve(process.cwd(), 'tests/utils/testSchema.js');
+                        logger.info(`[DatabaseInitializer] Attempting to load TEST_SCHEMA from: ${schemaPath}`);
+                        const { TEST_SCHEMA } = await import(pathToFileURL(schemaPath).href);
+                        logger.info('[DatabaseInitializer] Using TEST_SCHEMA for initialization');
+                        for (const sql of TEST_SCHEMA) {
+                            await new Promise<void>((resolve, reject) => {
+                                db.run(sql, (err: Error | null) => {
+                                    if (err) {
+                                        // Some errors like "table already exists" might be okay if using IF NOT EXISTS
+                                        if (err.message.includes('already exists')) resolve();
+                                        else {
+                                            logger.error(`[DatabaseInitializer] Error executing schema SQL: ${err.message}`);
+                                            reject(err);
+                                        }
+                                    } else {
+                                        resolve();
+                                    }
+                                });
                             });
-                        });
+                        }
+                    } catch (schemaErr: any) {
+                        logger.warn(`[DatabaseInitializer] TEST_SCHEMA import failed: ${schemaErr.message}`);
+                        logger.warn('[DatabaseInitializer] Falling back to legacy init');
+                        const sqliteModule = await getLegacySqlite();
+                        if (sqliteModule && sqliteModule.initDb) {
+                            sqliteModule.initDb(db);
+                            // Wait a bit for callbacks to fire
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
                     }
-                } catch (schemaErr) {
-                    logger.warn('[DatabaseInitializer] TEST_SCHEMA not found, falling back to legacy init');
-                    const sqliteModule = await getLegacySqlite();
-                    if (sqliteModule && sqliteModule.initDb) {
-                        sqliteModule.initDb(db);
-                        // Wait a bit for callbacks to fire
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+
+                // Fix missing columns for existing tables
+                if (Object.keys(verification.missingColumns).length > 0) {
+                    logger.warn(`[DatabaseInitializer] SQLite schema has missing columns: ${JSON.stringify(verification.missingColumns)}`);
+                    for (const table in verification.missingColumns) {
+                        for (const column of verification.missingColumns[table]) {
+                            logger.info(`[DatabaseInitializer] Attempting to add column ${column} to table ${table}`);
+                            try {
+                                await new Promise<void>((resolve, reject) => {
+                                    // Use TEXT as a safe default for most columns we are missing
+                                    db.run(`ALTER TABLE ${table} ADD COLUMN ${column} TEXT`, (err: Error | null) => {
+                                        if (err && !err.message.includes('duplicate column name')) {
+                                            logger.error(`[DatabaseInitializer] Failed to add column ${column}: ${err.message}`);
+                                            reject(err);
+                                        } else {
+                                            resolve();
+                                        }
+                                    });
+                                });
+                            } catch (e) {
+                                // Continue with other columns even if one fails
+                            }
+                        }
                     }
                 }
             }
@@ -192,7 +324,10 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
             // (Moved outside the 'missing tables' block to ensure seeds run on existing DBs too)
             if (process.env.E2E_MODE === 'true') {
                 try {
-                    const { TEST_SCHEMA } = await import('../../../tests/utils/testSchema.js');
+                    const path = await import('path');
+                    const { pathToFileURL } = await import('url');
+                    const schemaPath = path.resolve(process.cwd(), 'tests/utils/testSchema.js');
+                    const { TEST_SCHEMA } = await import(pathToFileURL(schemaPath).href);
                     logger.info('[DatabaseInitializer] E2E_MODE: Ensuring seed data from TEST_SCHEMA');
                     for (const sql of TEST_SCHEMA) {
                         if (sql.trim().toUpperCase().startsWith('INSERT')) {
