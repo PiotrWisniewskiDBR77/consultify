@@ -58,6 +58,7 @@ const CRITICAL_TABLES = [
     'billing_refunds',
     'token_ledger',
     'payment_methods',
+    'organization_seats',
     'organization_limits',
     'ai_project_memory',
     'ai_organization_memory',
@@ -84,7 +85,12 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
 /**
  * Verify that critical tables and columns exist
  */
-async function verifySchema(): Promise<{ valid: boolean; missing: string[]; errors: string[]; missingColumns: Record<string, string[]> }> {
+async function verifySchema(): Promise<{
+    valid: boolean;
+    missing: string[];
+    errors: string[];
+    missingColumns: Record<string, string[]>;
+}> {
     const missing: string[] = [];
     const errors: string[] = [];
     const missingColumns: Record<string, string[]> = {};
@@ -144,8 +150,8 @@ async function verifySchema(): Promise<{ valid: boolean; missing: string[]; erro
                                 else resolve(rows);
                             });
                         });
-                        
-                        const existingColumns = columnsInfo.map(c => c.name);
+
+                        const existingColumns = columnsInfo.map((c) => c.name);
                         for (const column of REQUIRED_COLUMNS[table]) {
                             if (!existingColumns.includes(column)) {
                                 if (!missingColumns[table]) missingColumns[table] = [];
@@ -193,11 +199,23 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
 
         if (dbType === 'sqlite' && process.env.RESET_DB === 'true') {
             logger.info('[DatabaseInitializer] RESET_DB=true. Dropping all SQLite tables...');
-            const tables = await new Promise<any[]>((resolve, reject) => {
-                db.all("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'", (err, rows) => {
+
+            // Disable foreign keys during drop to avoid constraint errors
+            await new Promise<void>((resolve, reject) => {
+                db.run('PRAGMA foreign_keys = OFF', (err) => {
                     if (err) reject(err);
-                    else resolve(rows || []);
+                    else resolve();
                 });
+            });
+
+            const tables = await new Promise<any[]>((resolve, reject) => {
+                db.all(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+                    (err, rows) => {
+                        if (err) reject(err);
+                        else resolve(rows || []);
+                    },
+                );
             });
 
             for (const table of tables) {
@@ -208,6 +226,15 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                     });
                 });
             }
+
+            // Re-enable foreign keys
+            await new Promise<void>((resolve, reject) => {
+                db.run('PRAGMA foreign_keys = ON', (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
+
             logger.info(`[DatabaseInitializer] Dropped ${tables.length} tables.`);
         }
 
@@ -248,8 +275,11 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         } else {
             // SQLite: Check if schema exists, if not, initialize
             const verification = await verifySchema();
-            
-            if (!verification.valid && (verification.missing.length > 0 || Object.keys(verification.missingColumns).length > 0)) {
+
+            if (
+                !verification.valid &&
+                (verification.missing.length > 0 || Object.keys(verification.missingColumns).length > 0)
+            ) {
                 if (verification.missing.length > 0) {
                     logger.warn(
                         `[DatabaseInitializer] SQLite schema incomplete. Missing tables: ${verification.missing.join(', ')}`,
@@ -257,7 +287,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
 
                     // Manually trigger schema initialization
                     logger.info('[DatabaseInitializer] Manually triggering SQLite schema initialization...');
-                    
+
                     // Use TEST_SCHEMA if available
                     try {
                         const path = await import('path');
@@ -273,7 +303,9 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                                         // Some errors like "table already exists" might be okay if using IF NOT EXISTS
                                         if (err.message.includes('already exists')) resolve();
                                         else {
-                                            logger.error(`[DatabaseInitializer] Error executing schema SQL: ${err.message}`);
+                                            logger.error(
+                                                `[DatabaseInitializer] Error executing schema SQL: ${err.message}`,
+                                            );
                                             reject(err);
                                         }
                                     } else {
@@ -289,14 +321,16 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                         if (sqliteModule && sqliteModule.initDb) {
                             sqliteModule.initDb(db);
                             // Wait a bit for callbacks to fire
-                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            await new Promise((resolve) => setTimeout(resolve, 1000));
                         }
                     }
                 }
 
                 // Fix missing columns for existing tables
                 if (Object.keys(verification.missingColumns).length > 0) {
-                    logger.warn(`[DatabaseInitializer] SQLite schema has missing columns: ${JSON.stringify(verification.missingColumns)}`);
+                    logger.warn(
+                        `[DatabaseInitializer] SQLite schema has missing columns: ${JSON.stringify(verification.missingColumns)}`,
+                    );
                     for (const table in verification.missingColumns) {
                         for (const column of verification.missingColumns[table]) {
                             logger.info(`[DatabaseInitializer] Attempting to add column ${column} to table ${table}`);
@@ -305,7 +339,9 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                                     // Use TEXT as a safe default for most columns we are missing
                                     db.run(`ALTER TABLE ${table} ADD COLUMN ${column} TEXT`, (err: Error | null) => {
                                         if (err && !err.message.includes('duplicate column name')) {
-                                            logger.error(`[DatabaseInitializer] Failed to add column ${column}: ${err.message}`);
+                                            logger.error(
+                                                `[DatabaseInitializer] Failed to add column ${column}: ${err.message}`,
+                                            );
                                             reject(err);
                                         } else {
                                             resolve();
@@ -342,10 +378,14 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                                         resolve(); // Continue anyway
                                     });
                                 });
-                            } catch (e) { /* ignore */ }
+                            } catch (e) {
+                                /* ignore */
+                            }
                         }
                     }
-                } catch (e) { /* ignore */ }
+                } catch (e) {
+                    /* ignore */
+                }
             }
 
             // Verify again

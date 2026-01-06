@@ -13,7 +13,7 @@ import { z } from 'zod';
 
 export const OrganizationPlanEnum = z.enum(['free', 'starter', 'professional', 'enterprise']);
 export const OrganizationStatusEnum = z.enum(['active', 'suspended', 'cancelled', 'trial']);
-export const MemberRoleEnum = z.enum(['OWNER', 'ADMIN', 'MEMBER', 'VIEWER']);
+export const MemberRoleEnum = z.enum(['OWNER', 'ADMIN', 'USER', 'MEMBER', 'VIEWER']);
 
 // ==========================================
 // REQUEST SCHEMAS
@@ -55,5 +55,3 @@ export type UpdateOrganizationRequest = z.infer<typeof UpdateOrganizationSchema>
 export type AddMemberRequest = z.infer<typeof AddMemberSchema>;
 export type UpdateMemberRoleRequest = z.infer<typeof UpdateMemberRoleSchema>;
 export type InviteMemberRequest = z.infer<typeof InviteMemberSchema>;
-
-

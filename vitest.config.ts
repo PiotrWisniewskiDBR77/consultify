@@ -8,23 +8,28 @@ export default defineConfig({
     resolve: {
         alias: [
             { find: '@', replacement: path.resolve(__dirname, './src') },
+            // Universal server/src alias to catch everything
+            {
+                find: /^.*\/server\/src\/(.*)\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/$1.ts'),
+            },
             // Bridge legacy server/services paths to server/src/services
             {
                 find: /.*\/server\/services\/(.*)\.js$/,
-                replacement: path.resolve(__dirname, 'server/src/services/$1.ts')
+                replacement: path.resolve(__dirname, 'server/src/services/$1.ts'),
             },
             {
                 find: /.*\/server\/services\/(.*)$/,
-                replacement: path.resolve(__dirname, 'server/src/services/$1')
+                replacement: path.resolve(__dirname, 'server/src/services/$1'),
             },
             // Handle absolute-looking /server/ paths used in some tests
             {
                 find: /^\/server\/src\/(.*)\.js$/,
-                replacement: path.resolve(__dirname, 'server/src/$1.ts')
+                replacement: path.resolve(__dirname, 'server/src/$1.ts'),
             },
             {
                 find: /^\/server\/(.*)\.js$/,
-                replacement: path.resolve(__dirname, 'server/src/$1.ts')
+                replacement: path.resolve(__dirname, 'server/src/$1.ts'),
             },
             {
                 find: '@aws-sdk/client-s3',
@@ -33,36 +38,80 @@ export default defineConfig({
 
             // 1. KEEP Legacy JS files as JS (exclude from TS mapping)
             // Database module - redirect to TypeScript version
-            { find: /.*\/server\/database\.js$/, replacement: path.resolve(__dirname, 'server/src/database/Database.ts') },
-            { find: /.*\/server\/src\/database\/Database\.js$/, replacement: path.resolve(__dirname, 'server/src/database/Database.ts') },
-            // Server index module - redirect to TypeScript version  
+            {
+                find: /.*\/server\/database\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/database/Database.ts'),
+            },
+            {
+                find: /.*\/server\/src\/database\/Database\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/database/Database.ts'),
+            },
+            // Server index module - redirect to TypeScript version
             { find: /.*\/server\/index\.js$/, replacement: path.resolve(__dirname, 'server/src/index.ts') },
             { find: /.*\/server\/src\/index\.js$/, replacement: path.resolve(__dirname, 'server/src/index.ts') },
 
             // Config modules - redirect to TypeScript
-            { find: /.*\/server\/src\/config\/index\.js$/, replacement: path.resolve(__dirname, 'server/src/config/index.ts') },
-            { find: /.*\/server\/src\/config\/DatabaseConfig\.js$/, replacement: path.resolve(__dirname, 'server/src/config/DatabaseConfig.ts') },
+            {
+                find: /.*\/server\/src\/config\/index\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/config/index.ts'),
+            },
+            {
+                find: /.*\/server\/src\/config\/DatabaseConfig\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/config/DatabaseConfig.ts'),
+            },
 
             // Fix relative database imports (e.g., from workqueueService.ts)
             { find: /^\.\.\/database\.js$/, replacement: path.resolve(__dirname, 'server/src/database/Database.ts') },
-            { find: /^\.\.\/\.\.\/database\.js$/, replacement: path.resolve(__dirname, 'server/src/database/Database.ts') },
-
+            {
+                find: /^\.\.\/\.\.\/database\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/database/Database.ts'),
+            },
 
             // Legacy service paths (server/services/) -> new location (server/src/services/)
-            { find: /.*\/server\/services\/ragService\.js$/, replacement: path.resolve(__dirname, 'server/src/services/ragService.ts') },
-            { find: /.*\/server\/services\/circuitBreakerService\.js$/, replacement: path.resolve(__dirname, 'server/src/services/circuitBreakerService.ts') },
-            { find: /.*\/server\/services\/ai\/circuitBreaker\.js$/, replacement: path.resolve(__dirname, 'server/src/services/ai/circuitBreaker.ts') },
-            { find: /.*\/server\/services\/ai\/ragMetricsService\.js$/, replacement: path.resolve(__dirname, 'server/src/services/ai/ragMetricsService.ts') },
-            { find: /.*\/server\/services\/ai\/citationVerifier\.js$/, replacement: path.resolve(__dirname, 'server/src/services/ai/citationVerifier.ts') },
-            { find: /.*\/server\/services\/ai\/rerankerService\.js$/, replacement: path.resolve(__dirname, 'server/src/services/ai/rerankerService.ts') },
-            { find: /.*\/server\/routes\/superadmin\.js$/, replacement: path.resolve(__dirname, 'server/src/routes/superadmin.routes.ts') },
+            {
+                find: /.*\/server\/services\/ragService\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/services/ragService.ts'),
+            },
+            {
+                find: /.*\/server\/services\/circuitBreakerService\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/services/circuitBreakerService.ts'),
+            },
+            {
+                find: /.*\/server\/services\/ai\/circuitBreaker\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/services/ai/circuitBreaker.ts'),
+            },
+            {
+                find: /.*\/server\/services\/ai\/ragMetricsService\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/services/ai/ragMetricsService.ts'),
+            },
+            {
+                find: /.*\/server\/services\/ai\/citationVerifier\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/services/ai/citationVerifier.ts'),
+            },
+            {
+                find: /.*\/server\/services\/ai\/rerankerService\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/services/ai/rerankerService.ts'),
+            },
+            {
+                find: /.*\/server\/routes\/superadmin\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/routes/superadmin.routes.ts'),
+            },
 
             // Legacy middleware paths (server/middleware/) -> new location (server/src/middleware/)
-            { find: /.*\/server\/middleware\/([^/]+)$/, replacement: path.resolve(__dirname, 'server/src/middleware/$1.ts') },
-            { find: /.*\/server\/middleware\/([^/]+)\.js$/, replacement: path.resolve(__dirname, 'server/src/middleware/$1.ts') },
+            {
+                find: /.*\/server\/middleware\/([^/]+)$/,
+                replacement: path.resolve(__dirname, 'server/src/middleware/$1.ts'),
+            },
+            {
+                find: /.*\/server\/middleware\/([^/]+)\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/middleware/$1.ts'),
+            },
 
             // Legacy routes paths (server/routes/) -> new location (server/src/routes/)
-            { find: /.*\/server\/routes\/ai\.js$/, replacement: path.resolve(__dirname, 'server/src/routes/ai.routes.ts') },
+            {
+                find: /.*\/server\/routes\/ai\.js$/,
+                replacement: path.resolve(__dirname, 'server/src/routes/ai.routes.ts'),
+            },
             {
                 find: /.*\/database\.postgres\.js$/,
                 replacement: path.resolve(__dirname, 'server/database.postgres.js'),
@@ -183,7 +232,7 @@ export default defineConfig({
             // 3. Legacy JS Tests needing rewrite to TS (Flaky)
             'tests/unit/backend/utils/typeGuards.test.ts',
             'tests/unit/backend/utils/security.utils.test.ts',
-            // 'tests/unit/backend/statusReportService.test.js', // Potentially flaky 
+            // 'tests/unit/backend/statusReportService.test.js', // Potentially flaky
 
             // Note: Most other tests should now run. Failures will be visible.
         ],

@@ -16,50 +16,70 @@ vi.mock('react-i18next', () => {
         }
 
         // Create a proxy that handles all property access
-        return new Proxy({}, {
-            get(target, prop: string) {
-                // Handle language properties (.en, .pl, etc.) - return the key or a safe value
-                if (['en', 'pl', 'de', 'fr', 'es', 'it', 'ja', 'zh'].includes(prop)) {
-                    return defaultValue || key;
-                }
-                // Handle common nested properties that might be accessed
-                if (['scenarios', 'deepDive', 'recommended', 'title', 'subtitle', 'name', 'description', 'gains', 'sacrifices', 'narrative'].includes(prop)) {
-                    return createTranslationObject(`${key}.${prop}`);
-                }
-                // Handle array access (e.g., t.scenarios[id])
-                if (typeof prop === 'string' && /^[a-zA-Z0-9_-]+$/.test(prop)) {
-                    return createTranslationObject(`${key}.${prop}`);
-                }
-                // Handle toString/valueOf for string conversion
-                if (prop === 'toString' || prop === 'valueOf') {
-                    return () => defaultValue || key;
-                }
-                // Handle undefined properties gracefully
-                if (typeof prop === 'symbol' && prop === Symbol.toPrimitive) {
-                    return () => defaultValue || key;
-                }
-                // Return undefined for unknown properties (but don't throw)
-                return undefined;
+        return new Proxy(
+            {},
+            {
+                get(target, prop: string) {
+                    // Handle language properties (.en, .pl, etc.) - return the key or a safe value
+                    if (['en', 'pl', 'de', 'fr', 'es', 'it', 'ja', 'zh'].includes(prop)) {
+                        return defaultValue || key;
+                    }
+                    // Handle common nested properties that might be accessed
+                    if (
+                        [
+                            'scenarios',
+                            'deepDive',
+                            'recommended',
+                            'title',
+                            'subtitle',
+                            'name',
+                            'description',
+                            'gains',
+                            'sacrifices',
+                            'narrative',
+                        ].includes(prop)
+                    ) {
+                        return createTranslationObject(`${key}.${prop}`);
+                    }
+                    // Handle array access (e.g., t.scenarios[id])
+                    if (typeof prop === 'string' && /^[a-zA-Z0-9_-]+$/.test(prop)) {
+                        return createTranslationObject(`${key}.${prop}`);
+                    }
+                    // Handle toString/valueOf for string conversion
+                    if (prop === 'toString' || prop === 'valueOf') {
+                        return () => defaultValue || key;
+                    }
+                    // Handle undefined properties gracefully
+                    if (typeof prop === 'symbol' && prop === Symbol.toPrimitive) {
+                        return () => defaultValue || key;
+                    }
+                    // Return undefined for unknown properties (but don't throw)
+                    return undefined;
+                },
+                // Make it work with Object.keys and similar
+                ownKeys() {
+                    return ['en', 'pl', 'scenarios', 'deepDive', 'recommended'];
+                },
+                has(target, prop) {
+                    return (
+                        ['en', 'pl', 'scenarios', 'deepDive', 'recommended', 'toString', 'valueOf'].includes(
+                            prop as string,
+                        ) ||
+                        (typeof prop === 'string' && /^[a-zA-Z0-9_-]+$/.test(prop))
+                    );
+                },
+                getOwnPropertyDescriptor(target, prop) {
+                    if (this.get) {
+                        return {
+                            enumerable: true,
+                            configurable: true,
+                            value: this.get(target, prop, target),
+                        };
+                    }
+                    return undefined;
+                },
             },
-            // Make it work with Object.keys and similar
-            ownKeys() {
-                return ['en', 'pl', 'scenarios', 'deepDive', 'recommended'];
-            },
-            has(target, prop) {
-                return ['en', 'pl', 'scenarios', 'deepDive', 'recommended', 'toString', 'valueOf'].includes(prop as string) ||
-                    (typeof prop === 'string' && /^[a-zA-Z0-9_-]+$/.test(prop));
-            },
-            getOwnPropertyDescriptor(target, prop) {
-                if (this.get) {
-                    return {
-                        enumerable: true,
-                        configurable: true,
-                        value: this.get(target, prop, target)
-                    };
-                }
-                return undefined;
-            }
-        });
+        );
     };
 
     return {
@@ -77,9 +97,12 @@ vi.mock('react-i18next', () => {
                 if (options && typeof options === 'object' && !options.returnObjects) {
                     // Simple interpolation - replace {key} with value
                     let result = options.defaultValue || key;
-                    Object.keys(options).forEach(optKey => {
+                    Object.keys(options).forEach((optKey) => {
                         if (optKey !== 'defaultValue' && optKey !== 'returnObjects') {
-                            result = String(result).replace(new RegExp(`\\{${optKey}\\}`, 'g'), String(options[optKey]));
+                            result = String(result).replace(
+                                new RegExp(`\\{${optKey}\\}`, 'g'),
+                                String(options[optKey]),
+                            );
                         }
                     });
                     return result;
@@ -94,7 +117,7 @@ vi.mock('react-i18next', () => {
                 hasResourceBundle: vi.fn(() => false),
                 addResourceBundle: vi.fn(),
             },
-            ready: true
+            ready: true,
         }),
         Trans: ({ children, i18nKey }: any) => children || i18nKey,
         I18nextProvider: ({ children }: any) => children,
@@ -144,7 +167,7 @@ const mockDb: any = {
             if (typeof cb === 'function') {
                 process.nextTick(() => cb(null));
             }
-        })
+        }),
     }),
     // Transaction support
     beginTransaction: vi.fn((cb?: any) => {
@@ -161,7 +184,7 @@ const mockDb: any = {
         if (typeof cb === 'function') {
             process.nextTick(() => cb(null));
         }
-    })
+    }),
 };
 
 // Improved callback handling using process.nextTick for async simulation
@@ -252,7 +275,7 @@ if (typeof process !== 'undefined' && process.env) {
     process.env.DB_TYPE = process.env.DB_TYPE || 'sqlite';
     process.env.MOCK_REDIS = process.env.MOCK_REDIS || 'true';
     process.env.MOCK_DB = process.env.MOCK_DB || 'true';
-    // Use :memory: only as a fallback for unit tests. 
+    // Use :memory: only as a fallback for unit tests.
     // Integration tests should specify their own persistent path via SQLITE_PATH environment variable.
     if (!process.env.SQLITE_PATH) {
         process.env.SQLITE_PATH = ':memory:';
@@ -281,9 +304,7 @@ if (typeof process !== 'undefined' && process.env) {
 
 // Removed global jsonwebtoken mock to allow real JWT usage in integration tests
 
-
 // Mock Sentry to prevent native binding issues
-
 
 // Mock legacy/broken route modules globally to prevent import crashes in Gateway.ts
 const mockRouter = (req: any, res: any, next: any) => next();
@@ -295,7 +316,9 @@ vi.mock('../server/src/routes/managementReports.routes.js', () => ({ default: mo
 vi.mock('../server/src/routes/voice.routes.js', () => ({ default: mockRouter }));
 // vi.mock('../server/src/routes/ai.routes.js', () => ({ default: mockRouter }));
 vi.mock('../server/src/routes/documents.routes.js', () => ({ default: mockRouter }));
-vi.mock('../server/services/backupService.js', () => ({ default: { backupDatabase: vi.fn(), restoreDatabase: vi.fn() } }));
+vi.mock('../server/services/backupService.js', () => ({
+    default: { backupDatabase: vi.fn(), restoreDatabase: vi.fn() },
+}));
 
 // Global Service Mocks (Prevent heavy initialization/external connections)
 vi.mock('../server/services/smsService.js', () => ({
@@ -303,14 +326,14 @@ vi.mock('../server/services/smsService.js', () => ({
         sendSMS: vi.fn().mockResolvedValue({ success: true, messageSid: 'MOCK_SMS_SID' }),
         sendOTP: vi.fn().mockResolvedValue({ success: true }),
         verifyOTP: vi.fn().mockResolvedValue({ success: true }),
-    }
+    },
 }));
 
 vi.mock('../server/services/emailService.js', () => ({
     default: {
         send: vi.fn().mockResolvedValue(true),
         sendEmail: vi.fn().mockResolvedValue(true),
-    }
+    },
 }));
 
 vi.mock('../server/services/notificationService.js', () => ({
@@ -318,7 +341,7 @@ vi.mock('../server/services/notificationService.js', () => ({
         sendNotification: vi.fn().mockResolvedValue(true),
         createNotification: vi.fn().mockResolvedValue(true),
         create: vi.fn().mockResolvedValue({ id: 'mock-notif-id' }), // Fix for AlertWatchdog
-    }
+    },
 }));
 
 vi.mock('../server/src/services/ActivityService.js', () => ({
@@ -327,7 +350,7 @@ vi.mock('../server/src/services/ActivityService.js', () => ({
         getRecent: vi.fn().mockResolvedValue([]),
         getByOrganization: vi.fn().mockResolvedValue([]),
         getStats: vi.fn().mockResolvedValue({ total: 0 }),
-    }
+    },
 }));
 // Mock the TS resolve path as well
 vi.mock('../server/src/services/ActivityService', () => ({
@@ -336,7 +359,7 @@ vi.mock('../server/src/services/ActivityService', () => ({
         getRecent: vi.fn().mockResolvedValue([]),
         getByOrganization: vi.fn().mockResolvedValue([]),
         getStats: vi.fn().mockResolvedValue({ total: 0 }),
-    }
+    },
 }));
 
 vi.mock('../server/src/services/MFAService.js', () => ({
@@ -349,7 +372,7 @@ vi.mock('../server/src/services/MFAService.js', () => ({
         isDeviceTrusted: vi.fn().mockResolvedValue(false),
         verifyTOTP: vi.fn().mockResolvedValue({ success: true }),
         trustDevice: vi.fn().mockResolvedValue(true),
-    }
+    },
 }));
 
 // vi.mock('../server/src/services/RefreshTokenService.js', () => ({
@@ -366,7 +389,7 @@ vi.mock('../server/src/services/EmailVerificationService.js', () => ({
     default: {
         sendVerificationEmail: vi.fn().mockResolvedValue(true),
         verifyEmail: vi.fn().mockResolvedValue(true),
-    }
+    },
 }));
 
 // Mock Plan Limits Middleware to avoid DB calls/hangs
@@ -407,36 +430,69 @@ vi.mock('../server/src/middleware/inputSanitization.middleware.js', () => ({
 //     },
 // }));
 
-// Mock Auth Middleware to bypass complex checks and DB calls
-// Mock Auth Middleware to bypass complex checks and DB calls
-// vi.mock('../server/src/middleware/auth.middleware.js', () => ({
-//     verifyToken: (req, res, next) => {
-//         // console.log('[MockAuth] Bypassing verifyToken');
-//         req.user = {
-//             id: 'user-flow-1',
-//             email: 'flow@test.com',
-//             role: 'ADMIN',
-//             organizationId: 'org-flow-1',
-//             isSuperAdmin: true, // simplified
-//             isDemo: false
-//         };
-//         req.userId = 'user-flow-1';
-//         req.organizationId = 'org-flow-1';
-//         next();
-//     },
-//     requireRole: () => (req, res, next) => next(),
-//     requireSuperAdmin: (req, res, next) => next(),
-//     requireOrganization: (req, res, next) => next(),
-//     requirePermission: () => (req, res, next) => next(),
-//     optionalAuth: (req, res, next) => next()
-// }));
+// --------------------------------------------------------
+// Global Auth Middleware Mock
+// --------------------------------------------------------
+// Mock only for unit tests (MOCK_DB=true).
+// Integration tests (MOCK_DB=false) should use the real middleware.
+vi.mock('../server/src/middleware/auth.middleware.js', async (importOriginal) => {
+    const actual = await importOriginal<any>();
+
+    const mockAuth = (req: any, res: any, next: any) => {
+        // If an Authorization header is present, ALWAYS use real middleware
+        if (req.headers.authorization || req.headers.Authorization) {
+            return actual.verifyToken(req, res, next);
+        }
+
+        // If NO token, AND we are in an integration test, use real middleware (which will return 401)
+        if (process.env.MOCK_DB === 'false') {
+            return actual.verifyToken(req, res, next);
+        }
+
+        // Unit test bypass logic (no token + MOCK_DB=true)
+        const orgId = process.env.TEST_ORG_ID || 'test-org-id';
+        const uId = process.env.TEST_USER_ID || 'test-user-id';
+
+        req.user = {
+            id: uId,
+            email: 'test@example.com',
+            name: 'Test User',
+            role: 'owner',
+            organizationId: orgId,
+            isSuperAdmin: true,
+            isDemo: false,
+        };
+        req.userId = uId;
+        req.organizationId = orgId;
+        return next();
+    };
+
+    return {
+        ...actual,
+        default: mockAuth,
+        verifyToken: mockAuth,
+        // Keep real implementations for other methods if they exist
+        requireRole:
+            actual.requireRole ||
+            ((...args: any[]) =>
+                (req: any, res: any, next: any) =>
+                    next()),
+        requireSuperAdmin: actual.requireSuperAdmin || ((req: any, res: any, next: any) => next()),
+        requireOrganization: actual.requireOrganization || ((req: any, res: any, next: any) => next()),
+        requirePermission:
+            actual.requirePermission ||
+            ((...args: any[]) =>
+                (req: any, res: any, next: any) =>
+                    next()),
+        optionalAuth: actual.optionalAuth || ((req: any, res: any, next: any) => next()),
+    };
+});
 
 // Global mock for Api service disabled
 /*
-*/
+ */
 
 // Mock the other aliases too
-
 
 // Global Setup
 beforeAll(async () => {
@@ -469,17 +525,16 @@ afterEach(() => {
 
 // REMOVED: Schema Initialization. Integration tests must use TestDatabaseFactory.create()
 
-
 if (typeof window !== 'undefined') {
     global.ResizeObserver = class ResizeObserver {
-        observe() { }
-        unobserve() { }
-        disconnect() { }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
     };
 
     Object.defineProperty(window, 'matchMedia', {
         writable: true,
-        value: vi.fn().mockImplementation(query => ({
+        value: vi.fn().mockImplementation((query) => ({
             matches: false,
             media: query,
             onchange: null,
@@ -499,8 +554,13 @@ global.TextDecoder = TextDecoder as unknown as any;
 
 // PDF-Parse / Canvas Polyfills
 global.DOMMatrix = class DOMMatrix {
-    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
-    constructor() { }
+    a = 1;
+    b = 0;
+    c = 0;
+    d = 1;
+    e = 0;
+    f = 0;
+    constructor() {}
 } as any;
 
 // Mock Google Generative AI SDK - prevent real API calls in tests
@@ -508,8 +568,8 @@ vi.mock('@google/generative-ai', () => {
     const generateContentMock = vi.fn().mockResolvedValue({
         response: {
             text: () => 'Mock AI Response for testing',
-            candidates: [{ content: { parts: [{ text: 'Mock AI Response' }] } }]
-        }
+            candidates: [{ content: { parts: [{ text: 'Mock AI Response' }] } }],
+        },
     });
 
     return {
@@ -523,18 +583,17 @@ vi.mock('@google/generative-ai', () => {
                         yield { text: () => ' AI' };
                         yield { text: () => ' Response' };
                     }),
-                    countTokens: vi.fn().mockResolvedValue({ totalTokens: 100 })
-                })
+                    countTokens: vi.fn().mockResolvedValue({ totalTokens: 100 }),
+                }),
             };
         }),
         HarmCategory: { HARM_CATEGORY_HARASSMENT: 'HARM_CATEGORY_HARASSMENT' },
-        HarmBlockThreshold: { BLOCK_MEDIUM_AND_ABOVE: 'BLOCK_MEDIUM_AND_ABOVE' }
+        HarmBlockThreshold: { BLOCK_MEDIUM_AND_ABOVE: 'BLOCK_MEDIUM_AND_ABOVE' },
     };
 });
 
 // Mock removed to allow real middleware usage with DI
 // Real middleware handles NODE_ENV=test automatically
-
 
 // Mock RapidLeanReportService globally
 
@@ -578,7 +637,7 @@ vi.mock('multer', () => {
         any: vi.fn().mockReturnValue((req: any, res: any, next: any) => {
             req.files = [];
             next();
-        })
+        }),
     }) as any;
 
     mock.diskStorage = vi.fn().mockReturnValue({});
@@ -587,7 +646,7 @@ vi.mock('multer', () => {
     return {
         default: mock,
         diskStorage: mock.diskStorage,
-        memoryStorage: mock.memoryStorage
+        memoryStorage: mock.memoryStorage,
     };
 });
 
@@ -599,37 +658,37 @@ vi.mock('openai', () => {
                 completions: {
                     create: vi.fn().mockResolvedValue({
                         choices: [{ message: { content: 'Mock OpenAI Response' } }],
-                        usage: { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 }
-                    })
-                }
+                        usage: { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 },
+                    }),
+                },
             },
             audio: {
                 speech: {
                     create: vi.fn().mockResolvedValue({
-                        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8))
-                    })
+                        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
+                    }),
                 },
                 transcriptions: {
                     create: vi.fn().mockResolvedValue({
                         text: 'Mock Transcription',
                         language: 'en',
                         words: [],
-                        segments: []
-                    })
-                }
+                        segments: [],
+                    }),
+                },
             },
             embeddings: {
                 create: vi.fn().mockResolvedValue({
                     data: [{ embedding: Array(1536).fill(0.1) }],
-                    usage: { prompt_tokens: 10, total_tokens: 10 }
-                })
-            }
+                    usage: { prompt_tokens: 10, total_tokens: 10 },
+                }),
+            },
         };
     });
 
     return {
         default: MockOpenAI,
-        OpenAI: MockOpenAI
+        OpenAI: MockOpenAI,
     };
 });
 
@@ -638,8 +697,8 @@ vi.mock('html2canvas', () => ({
     default: vi.fn().mockResolvedValue({
         toDataURL: vi.fn().mockReturnValue('data:image/png;base64,mockImageData'),
         width: 800,
-        height: 600
-    })
+        height: 600,
+    }),
 }));
 
 // Mock canvas for PDF rendering
@@ -669,11 +728,11 @@ if (typeof window !== 'undefined') {
             stroke: vi.fn(),
             fill: vi.fn(),
             arc: vi.fn(),
-            rect: vi.fn()
+            rect: vi.fn(),
         }),
         toDataURL: vi.fn().mockReturnValue('data:image/png;base64,mockCanvasData'),
         width: 800,
-        height: 600
+        height: 600,
     };
     HTMLCanvasElement.prototype.getContext = mockCanvas.getContext;
     HTMLCanvasElement.prototype.toDataURL = mockCanvas.toDataURL;

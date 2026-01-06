@@ -32,10 +32,16 @@ export const validateBody = (schema: z.ZodSchema) => {
                         code: err.code,
                     })) || [];
 
-                console.log(`[ValidationMiddleware] Validation failed for ${req.method} ${req.path}:`, JSON.stringify(errors, null, 2));
+                console.log(
+                    `[ValidationMiddleware] Validation failed for ${req.method} ${req.path}:`,
+                    JSON.stringify(errors, null, 2),
+                );
+
+                const firstError = errors[0];
+                const errorMessage = firstError ? firstError.message : 'Validation Error';
 
                 res.status(400).json({
-                    error: 'Validation Error',
+                    error: errorMessage,
                     details: errors,
                 });
                 return;
@@ -77,8 +83,11 @@ export const validateQuery = (schema: z.ZodSchema) => {
                         code: err.code,
                     })) || [];
 
+                const firstError = errors[0];
+                const errorMessage = firstError ? firstError.message : 'Validation Error';
+
                 res.status(400).json({
-                    error: 'Validation Error',
+                    error: errorMessage,
                     details: errors,
                 });
                 return;
@@ -119,8 +128,11 @@ export const validateParams = (schema: z.ZodSchema) => {
                         code: err.code,
                     })) || [];
 
+                const firstError = errors[0];
+                const errorMessage = firstError ? firstError.message : 'Validation Error';
+
                 res.status(400).json({
-                    error: 'Validation Error',
+                    error: errorMessage,
                     details: errors,
                 });
                 return;

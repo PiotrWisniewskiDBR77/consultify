@@ -1,20 +1,31 @@
 /**
  * Database Helper for Tests
  * Provides utilities for managing test database state
+ *
+ * CTO NOTE: Using Transactional Rollbacks for isolation and performance
  */
 
-const db = require('../../server/database.js');
+import { getDatabaseAsync } from '../../server/src/database/Database.js';
+
+// Get database handle
+let db;
+async function getDb() {
+    if (!db) {
+        db = await getDatabaseAsync();
+    }
+    return db;
+}
 
 /**
  * Wait for database initialization
  */
-async function initTestDb() {
-    await db.initPromise;
+export async function initTestDb() {
+    const db = await getDb();
     // Clear mock flag if set
     delete process.env.MOCK_DB;
 
     // IMPORTANT: Enable foreign key constraints for proper testing
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
         db.run('PRAGMA foreign_keys = ON', (err) => {
             if (err) {
                 console.warn('Could not enable foreign keys:', err.message);
@@ -25,10 +36,50 @@ async function initTestDb() {
 }
 
 /**
+ * Start a database transaction
+ */
+export async function beginTransaction() {
+    const db = await getDb();
+    return new Promise((resolve, reject) => {
+        db.run('BEGIN TRANSACTION', (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}
+
+/**
+ * Rollback a database transaction
+ */
+export async function rollbackTransaction() {
+    const db = await getDb();
+    return new Promise((resolve, reject) => {
+        db.run('ROLLBACK', (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}
+
+/**
+ * Commit a database transaction
+ */
+export async function commitTransaction() {
+    const db = await getDb();
+    return new Promise((resolve, reject) => {
+        db.run('COMMIT', (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}
+
+/**
  * Clean up test data from specific tables
  * @param {string[]} tables - Array of table names to clean
  */
-async function cleanTables(tables) {
+export async function cleanTables(tables) {
+    const db = await getDb();
     return new Promise((resolve, reject) => {
         db.serialize(() => {
             // Disable foreign keys temporarily for faster cleanup
@@ -43,7 +94,7 @@ async function cleanTables(tables) {
                     return;
                 }
 
-                tables.forEach(table => {
+                tables.forEach((table) => {
                     db.run(`DELETE FROM ${table}`, (err) => {
                         if (err && !err.message.includes('no such table')) {
                             console.warn(`Warning: Could not clean table ${table}:`, err.message);
@@ -62,7 +113,7 @@ async function cleanTables(tables) {
 /**
  * Clean all test-related tables
  */
-async function cleanAllTestTables() {
+export async function cleanAllTestTables() {
     const testTables = [
         'activity_logs',
         'ai_feedback',
@@ -75,6 +126,9 @@ async function cleanAllTestTables() {
         'organizations',
         'sessions',
         'settings',
+        'invitations',
+        'refresh_tokens',
+        'revoked_tokens',
     ];
 
     return cleanTables(testTables);
@@ -82,11 +136,9 @@ async function cleanAllTestTables() {
 
 /**
  * Create test organization
- * @param {string} orgId - Organization ID
- * @param {string} name - Organization name
- * @returns {Promise<void>}
  */
-async function createTestOrg(orgId, name = 'Test Org') {
+export async function createTestOrg(orgId, name = 'Test Org') {
+    const db = await getDb();
     return new Promise((resolve, reject) => {
         db.run(
             'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
@@ -94,28 +146,19 @@ async function createTestOrg(orgId, name = 'Test Org') {
             (err) => {
                 if (err) reject(err);
                 else resolve();
-            }
+            },
         );
     });
 }
 
 /**
  * Create test user
- * @param {object} userData - User data
- * @returns {Promise<void>}
  */
-async function createTestUser(userData) {
-    const {
-        id,
-        organizationId,
-        email,
-        password,
-        firstName = 'Test',
-        lastName = 'User',
-        role = 'USER',
-    } = userData;
+export async function createTestUser(userData) {
+    const db = await getDb();
+    const { id, organizationId, email, password, firstName = 'Test', lastName = 'User', role = 'USER' } = userData;
 
-    const bcrypt = require('bcryptjs');
+    const bcrypt = await import('bcryptjs').then((m) => m.default || m);
     const hash = password ? bcrypt.hashSync(password, 8) : null;
 
     return new Promise((resolve, reject) => {
@@ -125,7 +168,7 @@ async function createTestUser(userData) {
             (err) => {
                 if (err) reject(err);
                 else resolve();
-            }
+            },
         );
     });
 }
@@ -133,7 +176,8 @@ async function createTestUser(userData) {
 /**
  * Helper to run database operations in sequence
  */
-function dbRun(sql, params = []) {
+export async function dbRun(sql, params = []) {
+    const db = await getDb();
     return new Promise((resolve, reject) => {
         db.run(sql, params, function (err) {
             if (err) reject(err);
@@ -145,7 +189,8 @@ function dbRun(sql, params = []) {
 /**
  * Helper to query database
  */
-function dbAll(sql, params = []) {
+export async function dbAll(sql, params = []) {
+    const db = await getDb();
     return new Promise((resolve, reject) => {
         db.all(sql, params, (err, rows) => {
             if (err) reject(err);
@@ -157,7 +202,8 @@ function dbAll(sql, params = []) {
 /**
  * Helper to get single row
  */
-function dbGet(sql, params = []) {
+export async function dbGet(sql, params = []) {
+    const db = await getDb();
     return new Promise((resolve, reject) => {
         db.get(sql, params, (err, row) => {
             if (err) reject(err);
@@ -165,14 +211,3 @@ function dbGet(sql, params = []) {
         });
     });
 }
-
-module.exports = {
-    initTestDb,
-    cleanTables,
-    cleanAllTestTables,
-    createTestOrg,
-    createTestUser,
-    dbRun,
-    dbAll,
-    dbGet,
-};

@@ -22,7 +22,7 @@ import { fileURLToPath } from 'url';
 import { initSentry } from './config/index.js';
 import { startHealthCheck } from './cron/HealthCheckJob.js';
 import Scheduler from './cron/Scheduler.js';
-import { getDatabase, getDatabaseAsync } from './database/Database.js';
+import { getDatabase, getDatabaseAsync, initializeConnectionPool, shutdownConnectionPool } from './database/index.js';
 // TypeScript routes (migrated)
 import { apiGateway } from './Gateway.js';
 import { get as dbGet } from './utils/DbPromise.js';
@@ -46,6 +46,7 @@ app.set('trust proxy', 1);
 
 // Health Check Routes
 import { HealthCheckController } from './controllers/HealthCheckController.js';
+import dbHealthRoutes from './routes/health.routes.js';
 import healthRoutes from './routes/healthRoutes.js';
 
 // Health Check (Ping) - synchronous
@@ -53,6 +54,7 @@ app.get('/ping', HealthCheckController.ping);
 
 // Mount Health Check Routes
 app.use('/api/health', healthRoutes);
+app.use('/api/health', dbHealthRoutes);
 
 // Initialize Sentry (must be before other middleware)
 const sentryHandlers = initSentry(app);
@@ -78,11 +80,26 @@ if (!isTest || process.env.E2E_MODE === 'true') {
             if (!initResult.success) {
                 logger.error(`[Server] Database initialization failed: ${initResult.message}`);
                 if (isProduction) {
-                    logger.error('[Server] CRITICAL: Database schema incomplete. Application may not function correctly.');
+                    logger.error(
+                        '[Server] CRITICAL: Database schema incomplete. Application may not function correctly.',
+                    );
                     // In production, we might want to exit, but for now we'll continue with warnings
                 }
             } else {
                 logger.info(`[Server] Database initialized successfully: ${initResult.message}`);
+            }
+
+            // Initialize connection pool
+            if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
+                try {
+                    await initializeConnectionPool();
+                    logger.info('[Server] ✅ Connection pool initialized');
+                } catch (poolError) {
+                    logger.error('[Server] Connection pool initialization failed:', poolError);
+                    logger.warn('[Server] Continuing with singleton database connection');
+                }
+            } else {
+                logger.info('[Server] Connection pooling disabled (DISABLE_CONNECTION_POOL=true)');
             }
 
             // Schedule periodic schema verification (every 5 minutes)
@@ -241,42 +258,42 @@ app.use(
     helmet({
         contentSecurityPolicy: isProduction
             ? {
-                directives: {
-                    defaultSrc: ["'self'"],
-                    scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
-                    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-                    imgSrc: [
-                        "'self'",
-                        'data:',
-                        'blob:',
-                        'https://www.transparenttextures.com',
-                        'https://*.stripe.com',
-                        'https://www.gravatar.com',
-                        'https://*.googleusercontent.com',
-                    ],
-                    connectSrc: [
-                        "'self'",
-                        'wss:',
-                        'https://api.openai.com',
-                        'https://generativelanguage.googleapis.com',
-                        'https://api.anthropic.com',
-                        'https://api.mistral.ai',
-                        'https://api.stripe.com',
-                        'https://*.sentry.io',
-                    ],
-                    fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-                    objectSrc: ["'none'"],
-                    mediaSrc: ["'self'", 'blob:'],
-                    frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
-                    workerSrc: ["'self'", 'blob:'],
-                    childSrc: ["'self'", 'blob:'],
-                    formAction: ["'self'"],
-                    frameAncestors: ["'none'"],
-                    baseUri: ["'self'"],
-                    upgradeInsecureRequests: isProduction ? [] : null,
-                },
-                reportOnly: false,
-            }
+                  directives: {
+                      defaultSrc: ["'self'"],
+                      scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+                      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+                      imgSrc: [
+                          "'self'",
+                          'data:',
+                          'blob:',
+                          'https://www.transparenttextures.com',
+                          'https://*.stripe.com',
+                          'https://www.gravatar.com',
+                          'https://*.googleusercontent.com',
+                      ],
+                      connectSrc: [
+                          "'self'",
+                          'wss:',
+                          'https://api.openai.com',
+                          'https://generativelanguage.googleapis.com',
+                          'https://api.anthropic.com',
+                          'https://api.mistral.ai',
+                          'https://api.stripe.com',
+                          'https://*.sentry.io',
+                      ],
+                      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+                      objectSrc: ["'none'"],
+                      mediaSrc: ["'self'", 'blob:'],
+                      frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
+                      workerSrc: ["'self'", 'blob:'],
+                      childSrc: ["'self'", 'blob:'],
+                      formAction: ["'self'"],
+                      frameAncestors: ["'none'"],
+                      baseUri: ["'self'"],
+                      upgradeInsecureRequests: isProduction ? [] : null,
+                  },
+                  reportOnly: false,
+              }
             : false,
         hsts: {
             maxAge: 31536000,
@@ -694,6 +711,17 @@ if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
                 resolve();
             });
         });
+    });
+
+    shutdownManager.registerCleanup('Connection Pool', async () => {
+        try {
+            logger.info('[Shutdown] Closing connection pool...');
+            await shutdownConnectionPool();
+            logger.info('[Shutdown] Connection pool closed');
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error('[Shutdown] Error closing connection pool:', err.message);
+        }
     });
 
     shutdownManager.registerCleanup('Database', async () => {

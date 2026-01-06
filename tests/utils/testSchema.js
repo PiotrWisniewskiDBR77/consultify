@@ -18,6 +18,8 @@ export const TEST_SCHEMA = [
         onboarding_status TEXT DEFAULT 'NOT_STARTED',
         onboarding_plan_snapshot TEXT,
         onboarding_plan_version INTEGER DEFAULT 0,
+        onboarding_accepted_at DATETIME,
+        onboarding_accept_idempotency_key TEXT,
         token_balance INTEGER DEFAULT 0,
         created_by_user_id TEXT,
         is_active INTEGER DEFAULT 1,
@@ -27,6 +29,8 @@ export const TEST_SCHEMA = [
         trial_started_at DATETIME,
         trial_expires_at DATETIME,
         trial_extension_count INTEGER DEFAULT 0,
+        trial_warning_sent_at DATETIME,
+        trial_tokens_used INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         valid_until DATETIME
     )`,
@@ -52,6 +56,7 @@ export const TEST_SCHEMA = [
         mfa_primary_method TEXT,
         mfa_verified_at DATETIME,
         mfa_backup_codes TEXT,
+        mfa_recovery_email TEXT,
         phone_number TEXT,
         phone TEXT,
         linkedin_id TEXT,
@@ -604,9 +609,29 @@ export const TEST_SCHEMA = [
         stripe_monthly_price_id TEXT,
         stripe_yearly_price_id TEXT,
         tokens_included INTEGER DEFAULT 0,
+        seats_included INTEGER DEFAULT 0,
+        seat_price_monthly REAL DEFAULT 0,
+        billing_model TEXT DEFAULT 'subscription',
+        allow_seat_pooling INTEGER DEFAULT 0,
+        max_seats INTEGER DEFAULT 0,
         features TEXT DEFAULT '[]',
         is_active INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS organization_seats (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        base_seats_included INTEGER DEFAULT 0,
+        additional_seats_purchased INTEGER DEFAULT 0,
+        total_seats_available INTEGER DEFAULT 0,
+        seats_used INTEGER DEFAULT 0,
+        billing_model TEXT DEFAULT 'subscription',
+        seat_price_monthly REAL DEFAULT 0,
+        auto_add_seats_on_invite INTEGER DEFAULT 0,
+        seat_pool_enabled INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
     `CREATE TABLE IF NOT EXISTS organization_billing (
         id TEXT PRIMARY KEY,
@@ -1137,4 +1162,3 @@ export const TEST_SCHEMA = [
         UNIQUE(organization_id, month)
     )`,
 ];
-

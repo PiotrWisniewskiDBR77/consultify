@@ -5,7 +5,6 @@
 
 import { Request, Response } from 'express';
 
-
 import type { IDatabase } from '../database/IDatabase.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
@@ -46,14 +45,14 @@ const getDeps = async (): Promise<Dependencies> => {
     if (!depsPromise) {
         depsPromise = (async () => {
             const [dbModule, bcryptModule, activityModule, redisModule] = await Promise.all([
-                import('../database/index.js'),
+                import('../database/Database.js'),
                 import('bcryptjs'),
                 import('../services/ActivityService.js').then((m) => m.default || m),
                 import('../utils/RedisRateLimitStore.js'),
             ]);
 
             deps = {
-                db: dbModule.default || dbModule,
+                db: dbModule.default || dbModule.getDatabase(),
                 bcrypt: bcryptModule.default || bcryptModule,
                 ActivityService: (activityModule as any).default || activityModule,
                 MFAService: mfaService,
@@ -297,10 +296,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             entityName: 'User Login',
         });
 
-        console.log('[AuthController] Sending response:', JSON.stringify({
-            user: safeUser,
-            token: tokenPair.accessToken,
-        }));
+        console.log(
+            '[AuthController] Sending response:',
+            JSON.stringify({
+                user: safeUser,
+                token: tokenPair.accessToken,
+            }),
+        );
 
         console.log('[AuthController] Sending response with res.send');
 

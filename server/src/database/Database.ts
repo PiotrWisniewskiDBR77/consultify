@@ -7,10 +7,11 @@
  */
 
 import { createRequire } from 'module';
+
 import { databaseConfig } from '../config/DatabaseConfig.js';
+import logger from '../utils/Logger.js';
 import type { IDatabase } from './IDatabase.js';
 import PostgresDatabase from './PostgresDatabase.js';
-import logger from '../utils/Logger.js';
 
 const require = createRequire(import.meta.url);
 const GLOBAL_DB_KEY = '__CONSULTIFY_GLOBAL_DB_INSTANCE__';
@@ -23,11 +24,13 @@ let dbInstance: IDatabase | null = null;
  * Ensures we have a single global instance across all module loads
  */
 function getFromGlobal(): IDatabase | null {
-    return (process as any)[GLOBAL_DB_KEY] || 
-           (globalThis as any)[GLOBAL_DB_KEY] || 
-           (process as any)[SQLITE_GLOBAL_KEY] || 
-           (globalThis as any)[SQLITE_GLOBAL_KEY] || 
-           null;
+    return (
+        (process as any)[GLOBAL_DB_KEY] ||
+        (globalThis as any)[GLOBAL_DB_KEY] ||
+        (process as any)[SQLITE_GLOBAL_KEY] ||
+        (globalThis as any)[SQLITE_GLOBAL_KEY] ||
+        null
+    );
 }
 
 function setToGlobal(db: IDatabase) {
@@ -66,7 +69,10 @@ export async function createDatabase(): Promise<IDatabase> {
 
     console.log('[Database] createDatabase() called. MOCK_DB:', process.env.MOCK_DB);
 
-    if (process.env.MOCK_DB === 'true' || (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.SQLITE_PATH)) {
+    if (
+        process.env.MOCK_DB === 'true' ||
+        (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.SQLITE_PATH)
+    ) {
         console.log('[Database] Using MOCK database.');
         const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
         setToGlobal(mockDb);
@@ -197,6 +203,7 @@ export const dbProxy = new Proxy({} as IDatabase, {
                     const lastArgIndex = args.length - 1;
                     const lastArg = args[lastArgIndex];
 
+                    // If a callback is provided, use the original function
                     if (typeof lastArg === 'function') {
                         const originalCallback = lastArg;
                         const wrappedArgs = [...args];
@@ -210,7 +217,28 @@ export const dbProxy = new Proxy({} as IDatabase, {
                         return fn.apply(currentDb, wrappedArgs);
                     }
 
-                    // Handle Promise-based methods
+                    // If NO callback is provided, and it's a common method, wrap in a Promise
+                    if (['get', 'all', 'run', 'exec'].includes(prop as string)) {
+                        return new Promise((resolve, reject) => {
+                            const callback = function (this: any, err: any, result: any) {
+                                if (err) {
+                                    if (err.message && err.message.includes('Database is closed') && retryCount < 1) {
+                                        resetConnectionLocally();
+                                        // This is tricky inside a callback, but we try
+                                        return resolve(callWithRetry(retryCount + 1));
+                                    }
+                                    return reject(err);
+                                }
+                                if (prop === 'run') {
+                                    return resolve({ lastID: this.lastID, changes: this.changes });
+                                }
+                                return resolve(result);
+                            };
+                            fn.apply(currentDb, [...args, callback]);
+                        });
+                    }
+
+                    // Handle already Promise-based methods or other methods
                     try {
                         const result = fn.apply(currentDb, args);
                         if (result instanceof Promise) {
@@ -272,7 +300,6 @@ export function getDatabase(): IDatabase {
 }
 
 export default dbProxy;
-
 
 declare global {
     var __TEST_DB_MOCK__: any;
