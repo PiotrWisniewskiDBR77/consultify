@@ -83,7 +83,7 @@ export const AIRecommendationsPanel: React.FC<AIRecommendationsPanelProps> = ({ 
             const result = await (Api as any).generateDigitizationRecommendations(analysis.id);
             setRecommendations(result.recommendations || []);
             toast.success('Rekomendacje wygenerowane');
-        } catch (err: unknown) {
+        } catch (err: any) {
             // Fallback: generate locally based on analysis data
             const localRecs = generateLocalRecommendations(analysis);
             setRecommendations(localRecs);
@@ -434,3 +434,7 @@ function generateLocalRecommendations(analysis: DigitizationAnalysis): Recommend
 }
 
 export default AIRecommendationsPanel;
+
+
+
+

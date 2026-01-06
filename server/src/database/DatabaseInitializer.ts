@@ -186,18 +186,43 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                         await new Promise(resolve => setTimeout(resolve, 1000));
                     }
                 }
+            }
 
-                // Verify again
-                const recheck = await verifySchema();
-                if (!recheck.valid && recheck.missing.length > 0) {
-                    logger.error(
-                        `[DatabaseInitializer] SQLite schema still incomplete after initialization. Missing: ${recheck.missing.join(', ')}`,
-                    );
-                    return {
-                        success: false,
-                        message: `SQLite schema incomplete. Missing tables: ${recheck.missing.join(', ')}`,
-                    };
-                }
+            // ALWAYS attempt to run SEED statements from TEST_SCHEMA if in E2E_MODE
+            // (Moved outside the 'missing tables' block to ensure seeds run on existing DBs too)
+            if (process.env.E2E_MODE === 'true') {
+                try {
+                    const { TEST_SCHEMA } = await import('../../../tests/utils/testSchema.js');
+                    logger.info('[DatabaseInitializer] E2E_MODE: Ensuring seed data from TEST_SCHEMA');
+                    for (const sql of TEST_SCHEMA) {
+                        if (sql.trim().toUpperCase().startsWith('INSERT')) {
+                            try {
+                                await new Promise<void>((resolve) => {
+                                    db.run(sql, (err: Error | null) => {
+                                        if (err) {
+                                            if (!err.message.includes('UNIQUE constraint failed')) {
+                                                logger.error(`[DatabaseInitializer] Seed Error: ${err.message}`);
+                                            }
+                                        }
+                                        resolve(); // Continue anyway
+                                    });
+                                });
+                            } catch (e) { /* ignore */ }
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+            }
+
+            // Verify again
+            const recheck = await verifySchema();
+            if (!recheck.valid && recheck.missing.length > 0) {
+                logger.error(
+                    `[DatabaseInitializer] SQLite schema still incomplete after initialization. Missing: ${recheck.missing.join(', ')}`,
+                );
+                return {
+                    success: false,
+                    message: `SQLite schema incomplete. Missing tables: ${recheck.missing.join(', ')}`,
+                };
             }
         }
 

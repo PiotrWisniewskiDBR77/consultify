@@ -167,6 +167,8 @@ export class ProjectController {
         async (req: AuthenticatedRequest<CreateProjectRequest>, res: Response): Promise<void> => {
             const orgId = req.user?.organizationId;
             const userId = req.user?.id;
+            console.error(`[ProjectController] createProject called. Org: ${orgId}, User: ${userId}`);
+            
             if (!orgId || !userId) {
                 res.status(401).json({ error: 'Unauthorized' });
                 return;
@@ -184,8 +186,14 @@ export class ProjectController {
 
             const sql = `INSERT INTO projects (id, organization_id, name, description, goal, status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
+            console.error(`[ProjectController] Executing INSERT for project ${id}`);
             await queryHelpers.queryRun(sql, [id, orgId, name, description || null, goal || null, 'active', owner]);
-            res.json({ id, name, description, goal, status: 'active', ownerId: owner });
+            
+            // Verify immediately
+            const count = await queryHelpers.queryOne<{c: number}>('SELECT COUNT(*) as c FROM projects WHERE organization_id = ?', [orgId]);
+            console.error(`[ProjectController] Immediate verify count for org ${orgId}: ${count?.c}`);
+            
+            res.status(201).json({ id, name, description, goal, status: 'active', ownerId: owner });
         },
     );
 

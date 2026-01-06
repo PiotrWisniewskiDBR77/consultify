@@ -106,7 +106,7 @@ export const SessionManagementPanel: React.FC = () => {
             await Api.post(`/security-policies/sessions/${sessionId}/terminate`, { reason: 'admin_action' });
             toast.success('Session terminated');
             setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to terminate session');
         } finally {
             setTerminatingIds((prev) => {
@@ -122,7 +122,7 @@ export const SessionManagementPanel: React.FC = () => {
             await Api.post(`/security-policies/${orgId}/sessions/terminate-all`, { userId, reason: 'admin_action' });
             toast.success('All user sessions terminated');
             setSessions((prev) => prev.filter((s) => s.user_id !== userId));
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to terminate sessions');
         }
     };
@@ -347,3 +347,7 @@ export const SessionManagementPanel: React.FC = () => {
 };
 
 export default SessionManagementPanel;
+
+
+
+

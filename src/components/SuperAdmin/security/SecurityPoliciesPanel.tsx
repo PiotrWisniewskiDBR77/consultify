@@ -154,7 +154,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             await Api.put(endpoint, policy);
             toast.success('Security policy saved successfully');
             setHasChanges(false);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to save policy');
         } finally {
             setSaving(false);
@@ -172,7 +172,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             await Api.post(`/security-policies/${selectedOrgId}/preset`, { preset: presetId });
             toast.success(`Applied ${presetId} compliance preset`);
             fetchPolicy(selectedOrgId);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to apply preset');
         } finally {
             setSaving(false);
@@ -516,3 +516,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
 };
 
 export default SecurityPoliciesPanel;
+
+
+
+

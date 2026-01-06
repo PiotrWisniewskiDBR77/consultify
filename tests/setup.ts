@@ -367,9 +367,21 @@ vi.mock('../server/src/services/EmailVerificationService.js', () => ({
 }));
 
 // Mock Plan Limits Middleware to avoid DB calls/hangs
-vi.mock('../server/src/middleware/planLimits.middleware.js', () => ({
-    checkPlanLimit: () => (req, res, next) => next(),
-}));
+// We use a factory that checks TEST_TYPE at runtime to allow real middleware in integration tests
+vi.mock('../server/src/middleware/planLimits.middleware.js', async (importOriginal) => {
+    const actual = await importOriginal<any>();
+    return {
+        ...actual,
+        checkPlanLimit: (limitKey: string) => {
+            return (req: any, res: any, next: any) => {
+                if (process.env.TEST_TYPE === 'integration') {
+                    return actual.checkPlanLimit(limitKey)(req, res, next);
+                }
+                return next();
+            };
+        },
+    };
+});
 
 // Mock Input Sanitization to avoid "Cannot set property query" errors
 vi.mock('../server/src/middleware/inputSanitization.middleware.js', () => ({

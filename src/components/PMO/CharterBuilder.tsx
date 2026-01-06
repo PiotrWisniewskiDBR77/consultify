@@ -138,7 +138,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
             await Api.put(`/initiatives/${initiativeId}`, cleanedData);
             toast.success('Charter saved');
             onSave?.(cleanedData);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.response?.data?.error || 'Failed to save');
         } finally {
             setIsSaving(false);
@@ -649,3 +649,7 @@ export const CharterBuilder: React.FC<CharterBuilderProps> = ({
 };
 
 export default CharterBuilder;
+
+
+
+

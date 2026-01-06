@@ -214,7 +214,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 
             toast.success(`Exported as ${format.toUpperCase()}`);
             onExportComplete?.(format, true);
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('[ExportControls] Error:', error);
             toast.error(error.message || 'Export failed');
             onExportComplete?.(format, false);
@@ -387,3 +387,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
 };
 
 export default ExportControls;
+
+
+
+

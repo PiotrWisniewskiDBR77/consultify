@@ -156,7 +156,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
             setDiscount(null);
             await fetchData();
             onPlanChanged?.();
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Failed to change plan:', error);
             toast.error(error.message || t('billing.subscription.changeError', 'Failed to update subscription'));
         } finally {
@@ -500,3 +500,7 @@ export const SubscriptionManager: React.FC<SubscriptionManagerProps> = ({ onPlan
 };
 
 export default SubscriptionManager;
+
+
+
+

@@ -121,7 +121,7 @@ export const SubscriptionsPanel: React.FC = () => {
             setShowCreateModal(false);
             setCreateForm({ organizationId: '', planId: '', billingCycle: 'monthly', trialDays: 0 });
             fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to create subscription');
         } finally {
             setSaving(false);
@@ -133,7 +133,7 @@ export const SubscriptionsPanel: React.FC = () => {
             await Api.post(`/billing/subscriptions/${subscriptionId}/cancel`, { immediately });
             toast.success(immediately ? 'Subscription canceled' : 'Subscription will be canceled at period end');
             fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to cancel subscription');
         }
     };
@@ -143,7 +143,7 @@ export const SubscriptionsPanel: React.FC = () => {
             await Api.put(`/billing/subscriptions/${subscriptionId}`, { planId: newPlanId });
             toast.success('Plan changed successfully');
             fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to change plan');
         }
     };
@@ -495,3 +495,7 @@ export const SubscriptionsPanel: React.FC = () => {
 };
 
 export default SubscriptionsPanel;
+
+
+
+

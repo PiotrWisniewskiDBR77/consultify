@@ -122,7 +122,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
 
             // Auto-download
             window.open(result.downloadUrl, '_blank');
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Nie udało się wygenerować dokumentu');
         } finally {
             setIsGenerating(false);
@@ -352,3 +352,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
 };
 
 export default BusinessCaseGenerator;
+
+
+
+

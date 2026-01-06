@@ -272,7 +272,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
             const current = await Api.getCurrentBilling();
             setBillingData(current);
             alert('Plan updated successfully!');
-        } catch (err: unknown) {
+        } catch (err: any) {
             alert(err.message || 'Failed to update plan');
         } finally {
             setSubscribing(false);
@@ -291,7 +291,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
             const current = await Api.getCurrentBilling();
             setBillingData(current);
             alert('Subscription canceled.');
-        } catch (err: unknown) {
+        } catch (err: any) {
             alert(err.message || 'Failed to cancel subscription');
         }
     };
@@ -441,3 +441,7 @@ export const BillingCore: React.FC<BillingCoreProps> = ({
 };
 
 export default BillingCore;
+
+
+
+

@@ -114,7 +114,7 @@ export const DataExportPanel: React.FC = () => {
             toast.success('Export request created');
             setShowCreateModal(false);
             fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to create export request');
         } finally {
             setCreating(false);
@@ -126,7 +126,7 @@ export const DataExportPanel: React.FC = () => {
             await Api.delete(`/data-export/requests/${requestId}`);
             toast.success('Export request canceled');
             fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to cancel request');
         }
     };
@@ -406,3 +406,7 @@ export const DataExportPanel: React.FC = () => {
 };
 
 export default DataExportPanel;
+
+
+
+

@@ -127,7 +127,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
             if (countryFilter) params.append('country', countryFilter);
             const res = await Api.get(`/billing/tax/rates?${params.toString()}`);
             setTaxRates(res.rates || []);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to load tax rates');
         } finally {
             setLoading(false);
@@ -144,7 +144,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                 countryCode: vatCountry,
             });
             setValidation(res.validation);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setValidation({ is_valid: false, error: err.message });
         } finally {
             setValidating(false);
@@ -163,7 +163,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
                 taxIdNumber: calcTaxId || undefined,
             });
             setCalcResult(res.tax);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to calculate tax');
         } finally {
             setCalculating(false);
@@ -175,7 +175,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
         try {
             await Api.delete(`/billing/admin/tax/rates/${rateId}`);
             fetchTaxRates();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to delete tax rate');
         }
     };
@@ -190,7 +190,7 @@ export const TaxSettingsPanel: React.FC<TaxSettingsPanelProps> = ({ isAdmin = fa
             setShowEditModal(false);
             setEditingRate(null);
             fetchTaxRates();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to save tax rate');
         }
     };
@@ -793,3 +793,7 @@ const EditTaxRateModal: React.FC<EditTaxRateModalProps> = ({ rate, onSave, onClo
 };
 
 export default TaxSettingsPanel;
+
+
+
+

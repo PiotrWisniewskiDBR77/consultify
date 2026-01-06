@@ -221,7 +221,9 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                         </span>
                         <Clock size={16} className="text-amber-500" />
                     </div>
-                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{statusCounts.pending || 0}</p>
+                    <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                        {statusCounts.pending || 0}
+                    </p>
                 </div>
 
                 <div
@@ -231,7 +233,9 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                             ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
                             : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 hover:border-blue-300',
                     )}
-                    onClick={() => setFilter(filter === 'in_progress' ? 'all' : 'in_progress')}
+                    onClick={() =>
+                        setFilter(filter === 'in_progress' ? 'all' : 'in_progress')
+                    }
                 >
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-slate-500 dark:text-slate-400">
@@ -279,14 +283,19 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                         </span>
                         <X size={16} className="text-rose-500" />
                     </div>
-                    <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{statusCounts.rejected || 0}</p>
+                    <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+                        {statusCounts.rejected || 0}
+                    </p>
                 </div>
             </div>
 
             {/* Filters and Search */}
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 relative">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search
+                        size={16}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
                     <input
                         type="text"
                         value={searchQuery}
@@ -302,13 +311,23 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                 <div className="flex gap-2">
                     <select
                         value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value as DataRequestType | 'all')}
+                        onChange={(e) =>
+                            setTypeFilter(e.target.value as DataRequestType | 'all')
+                        }
                         className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                     >
-                        <option value="all">{t('admin.compliance.dataRequests.allTypes', 'All Types')}</option>
-                        <option value="export">{t('admin.compliance.dataRequests.export', 'Export')}</option>
-                        <option value="delete">{t('admin.compliance.dataRequests.delete', 'Delete')}</option>
-                        <option value="access">{t('admin.compliance.dataRequests.access', 'Access')}</option>
+                        <option value="all">
+                            {t('admin.compliance.dataRequests.allTypes', 'All Types')}
+                        </option>
+                        <option value="export">
+                            {t('admin.compliance.dataRequests.export', 'Export')}
+                        </option>
+                        <option value="delete">
+                            {t('admin.compliance.dataRequests.delete', 'Delete')}
+                        </option>
+                        <option value="access">
+                            {t('admin.compliance.dataRequests.access', 'Access')}
+                        </option>
                         <option value="rectification">
                             {t('admin.compliance.dataRequests.rectification', 'Rectification')}
                         </option>
@@ -329,14 +348,20 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                 <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700">
                     <h4 className="font-medium text-navy-900 dark:text-white mb-4 flex items-center gap-2">
                         <Settings size={18} />
-                        {t('admin.compliance.dataRequests.autoCompletion', 'Auto-completion Settings')}
+                        {t(
+                            'admin.compliance.dataRequests.autoCompletion',
+                            'Auto-completion Settings',
+                        )}
                     </h4>
 
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="font-medium text-navy-900 dark:text-white">
-                                    {t('admin.compliance.dataRequests.enableAuto', 'Enable Auto-completion')}
+                                    {t(
+                                        'admin.compliance.dataRequests.enableAuto',
+                                        'Enable Auto-completion',
+                                    )}
                                 </p>
                                 <p className="text-sm text-slate-500">
                                     {t(
@@ -354,7 +379,9 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                                 }
                                 className={cn(
                                     'relative w-12 h-6 rounded-full transition-colors',
-                                    autoSettings.enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-navy-600',
+                                    autoSettings.enabled
+                                        ? 'bg-emerald-500'
+                                        : 'bg-slate-300 dark:bg-navy-600',
                                 )}
                             >
                                 <span
@@ -408,7 +435,10 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
 
                                 <div className="flex items-center gap-4">
                                     <label className="text-sm text-slate-600 dark:text-slate-400">
-                                        {t('admin.compliance.dataRequests.exportDelay', 'Export delay (days):')}
+                                        {t(
+                                            'admin.compliance.dataRequests.exportDelay',
+                                            'Export delay (days):',
+                                        )}
                                     </label>
                                     <input
                                         type="number"
@@ -451,27 +481,38 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                             const typeInfo = getTypeInfo(request.type);
                             const TypeIcon = typeInfo.icon;
                             const isExpanded = expandedRequest === request.id;
-                            const daysRemaining = request.deadline ? getDaysRemaining(request.deadline) : null;
+                            const daysRemaining = request.deadline
+                                ? getDaysRemaining(request.deadline)
+                                : null;
 
                             return (
                                 <div key={request.id}>
                                     <div
                                         className="p-4 hover:bg-slate-50 dark:hover:bg-navy-900 cursor-pointer"
-                                        onClick={() => setExpandedRequest(isExpanded ? null : request.id)}
+                                        onClick={() =>
+                                            setExpandedRequest(isExpanded ? null : request.id)
+                                        }
                                     >
                                         <div className="flex items-center gap-4">
                                             {/* Expand Icon */}
                                             <span className="text-slate-400">
-                                                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                {isExpanded ? (
+                                                    <ChevronDown size={16} />
+                                                ) : (
+                                                    <ChevronRight size={16} />
+                                                )}
                                             </span>
 
                                             {/* Type Icon */}
                                             <div
                                                 className={cn(
                                                     'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                                                    request.type === 'export' && 'bg-blue-100 dark:bg-blue-900/30',
-                                                    request.type === 'delete' && 'bg-rose-100 dark:bg-rose-900/30',
-                                                    request.type === 'access' && 'bg-violet-100 dark:bg-violet-900/30',
+                                                    request.type === 'export' &&
+                                                        'bg-blue-100 dark:bg-blue-900/30',
+                                                    request.type === 'delete' &&
+                                                        'bg-rose-100 dark:bg-rose-900/30',
+                                                    request.type === 'access' &&
+                                                        'bg-violet-100 dark:bg-violet-900/30',
                                                     request.type === 'rectification' &&
                                                         'bg-amber-100 dark:bg-amber-900/30',
                                                 )}
@@ -481,7 +522,11 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
 
                                             {/* User Info */}
                                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                <Avatar name={request.userName} src={request.userAvatar} size="sm" />
+                                                <Avatar
+                                                    name={request.userName}
+                                                    src={request.userAvatar}
+                                                    size="sm"
+                                                />
                                                 <div className="min-w-0">
                                                     <p className="font-medium text-navy-900 dark:text-white truncate">
                                                         {request.userName}
@@ -510,11 +555,13 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                                                         daysRemaining <= 3
                                                             ? 'text-rose-600'
                                                             : daysRemaining <= 7
-                                                              ? 'text-amber-600'
-                                                              : 'text-slate-500',
+                                                                ? 'text-amber-600'
+                                                                : 'text-slate-500',
                                                     )}
                                                 >
-                                                    {daysRemaining > 0 ? `${daysRemaining}d left` : 'Overdue'}
+                                                    {daysRemaining > 0
+                                                        ? `${daysRemaining}d left`
+                                                        : 'Overdue'}
                                                 </span>
                                             )}
 
@@ -566,14 +613,18 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                                                     <div>
                                                         <p className="text-slate-500">Created</p>
                                                         <p className="text-navy-900 dark:text-white">
-                                                            {new Date(request.createdAt).toLocaleDateString()}
+                                                            {new Date(
+                                                                request.createdAt,
+                                                            ).toLocaleDateString()}
                                                         </p>
                                                     </div>
                                                     {request.deadline && (
                                                         <div>
                                                             <p className="text-slate-500">Deadline</p>
                                                             <p className="text-navy-900 dark:text-white">
-                                                                {new Date(request.deadline).toLocaleDateString()}
+                                                                {new Date(
+                                                                    request.deadline,
+                                                                ).toLocaleDateString()}
                                                             </p>
                                                         </div>
                                                     )}
@@ -581,7 +632,9 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                                                         <div>
                                                             <p className="text-slate-500">Completed</p>
                                                             <p className="text-navy-900 dark:text-white">
-                                                                {new Date(request.completedAt).toLocaleDateString()}
+                                                                {new Date(
+                                                                    request.completedAt,
+                                                                ).toLocaleDateString()}
                                                             </p>
                                                         </div>
                                                     )}
@@ -598,27 +651,33 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                                                 )}
 
                                                 {/* Data Included */}
-                                                {request.dataIncluded && request.dataIncluded.length > 0 && (
-                                                    <div>
-                                                        <p className="text-sm text-slate-500 mb-2">Data Included</p>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {request.dataIncluded.map((item) => (
-                                                                <span
-                                                                    key={item}
-                                                                    className="px-2 py-1 text-xs bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded"
-                                                                >
-                                                                    {item}
-                                                                </span>
-                                                            ))}
+                                                {request.dataIncluded &&
+                                                    request.dataIncluded.length > 0 && (
+                                                        <div>
+                                                            <p className="text-sm text-slate-500 mb-2">
+                                                                Data Included
+                                                            </p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {request.dataIncluded.map((item) => (
+                                                                    <span
+                                                                        key={item}
+                                                                        className="px-2 py-1 text-xs bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded"
+                                                                    >
+                                                                        {item}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
 
                                                 {/* Actions */}
                                                 {request.status === 'pending' && (
                                                     <div className="flex gap-2 pt-2">
                                                         {onApprove && (
-                                                            <Button size="sm" onClick={() => onApprove(request.id)}>
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => onApprove(request.id)}
+                                                            >
                                                                 <Check size={14} />
                                                                 Approve
                                                             </Button>
@@ -639,7 +698,10 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
                                                 )}
                                                 {request.status === 'in_progress' && onComplete && (
                                                     <div className="flex gap-2 pt-2">
-                                                        <Button size="sm" onClick={() => onComplete(request.id)}>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => onComplete(request.id)}
+                                                        >
                                                             <Check size={14} />
                                                             Mark Complete
                                                         </Button>
@@ -659,3 +721,5 @@ export const DataRequestManager: React.FC<DataRequestManagerProps> = ({
 };
 
 export default DataRequestManager;
+
+

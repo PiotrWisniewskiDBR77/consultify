@@ -627,9 +627,16 @@ export const TEST_SCHEMA = [
         email TEXT,
         first_name TEXT,
         last_name TEXT,
+        phone TEXT,
         organization_id TEXT,
         organization_name TEXT,
-        status TEXT,
+        request_type TEXT,
+        metadata TEXT,
+        status TEXT DEFAULT 'pending',
+        requested_at DATETIME,
+        reviewed_by TEXT,
+        reviewed_at DATETIME,
+        rejection_reason TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS access_codes(
@@ -814,6 +821,8 @@ export const TEST_SCHEMA = [
         user_agent TEXT
     )`,
     `INSERT OR IGNORE INTO superadmin_ai_settings(id) VALUES('global')`,
+    `INSERT OR IGNORE INTO organizations(id, name, plan, status) VALUES('org-dbr77-system', 'DBR77 System', 'enterprise', 'active')`,
+    `REPLACE INTO users(id, organization_id, email, password, first_name, last_name, role, status) VALUES('admin-001', 'org-dbr77-system', 'admin@dbr77.com', '$2b$08$fwxcIJu6Rb9YIHYuWhkd5uKPsjSr/26rEfb20ldkMlS08WpfswmYa', 'Super', 'Admin', 'SUPERADMIN', 'active')`,
     `CREATE TABLE IF NOT EXISTS llm_providers(
         id TEXT PRIMARY KEY,
         name TEXT,

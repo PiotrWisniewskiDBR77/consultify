@@ -8,15 +8,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock database before importing the module
-vi.mock('../../server/database', () => ({
-    default: {
+vi.mock('../../server/src/database/index.js', () => ({
+    getDatabase: () => ({
         all: vi.fn(),
         get: vi.fn(),
         run: vi.fn()
-    }
+    })
 }));
 
-const AIPlaybookRoutingEngine = require('../../server/ai/aiPlaybookRoutingEngine');
+import AIPlaybookRoutingEngine from '../../server/src/ai/aiPlaybookRoutingEngine';
 
 describe('AIPlaybookRoutingEngine', () => {
     beforeEach(() => {

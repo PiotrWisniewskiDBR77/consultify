@@ -120,7 +120,7 @@ export const BackupConfigPanel: React.FC = () => {
             });
             toast.success('Backup configuration saved');
             setHasChanges(false);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to save configuration');
         } finally {
             setSaving(false);
@@ -133,7 +133,7 @@ export const BackupConfigPanel: React.FC = () => {
             await Api.post('/data-export/backup-config/trigger', { organizationId: selectedOrgId });
             toast.success('Backup triggered');
             fetchConfig();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to trigger backup');
         } finally {
             setTriggering(false);
@@ -458,3 +458,7 @@ export const BackupConfigPanel: React.FC = () => {
 };
 
 export default BackupConfigPanel;
+
+
+
+

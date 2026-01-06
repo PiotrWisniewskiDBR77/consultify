@@ -35,16 +35,9 @@ export default defineConfig({
         },
     ],
     webServer: {
-        command: 'npm run dev',
+        command: 'E2E_MODE=true npm run dev',
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
         timeout: 120000,
-        env: {
-            NODE_ENV: 'test',
-            E2E_MODE: 'true',
-            PORT: '3005',
-            MOCK_DB: 'false',
-            SQLITE_PATH: './e2e-test.db',
-        },
     },
 });

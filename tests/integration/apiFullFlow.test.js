@@ -1,24 +1,28 @@
-// @vitest-environment node
-import { describe, it, expect, beforeAll, vi } from 'vitest';
-import request from 'supertest';
-import { TestDatabaseFactory } from '../utils/TestDatabaseFactory.js';
-import bcrypt from 'bcryptjs';
+// Set env vars for integration test BEFORE any imports
+vi.hoisted(() => {
+    process.env.NODE_ENV = 'test';
+    process.env.TEST_TYPE = 'integration';
+    process.env.MOCK_DB = 'false';
+    process.env.SQLITE_PATH = './test-api-full-flow.db';
+    process.env.JWT_SECRET = 'test-secret-key-for-testing-only-min-32-chars';
+});
 
-// Explicitly mock Sentry here to survive resetModules
-vi.mock('@sentry/node', () => ({
-    init: vi.fn(),
-    Handlers: { requestHandler: () => (req, res, next) => next(), errorHandler: () => (error, req, res, next) => next() },
-    captureException: vi.fn(),
-}));
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import request from 'supertest';
+import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
+
+// ... (Sentry mock) ...
 
 // Vertical Slice Mock for Gateway to avoid loading 150+ route files
 vi.mock('../../server/src/Gateway.ts', async () => {
     // Dynamically import only valid routes needed for the test flow
     // Using simple mocks/requires due to hoisting limits or async imports
     const authRoutes = await import('../../server/src/routes/auth.routes.js');
-    const projectRoutes = await import('../../server/src/routes/projects.routes.js');
-    const taskRoutes = await import('../../server/src/routes/tasks.routes.js');
-    const sessionsRoutes = await import('../../server/src/routes/sessions.routes.js');
+    const projectRoutes = await import('../../server/src/routes/pmo/projects.routes.js');
+    const taskRoutes = await import('../../server/src/routes/pmo/tasks.routes.js');
+    const sessionsRoutes = await import('../../server/src/routes/user/sessions.routes.js');
 
     const initializeRoutes = (app) => {
         console.log('[MockGateway] Initializing vertical slice routes (Auth, Projects, Tasks, Sessions)...');
@@ -26,15 +30,6 @@ vi.mock('../../server/src/Gateway.ts', async () => {
         app.use('/api/projects', projectRoutes.default);
         app.use('/api/tasks', taskRoutes.default);
         app.use('/api/sessions', sessionsRoutes.default);
-
-        // Log registered routes for debugging
-        if (app._router && app._router.stack) {
-            console.log('[MockGateway] Registered routes:',
-                app._router.stack
-                    .filter(r => r.route || r.name === 'router')
-                    .map(r => r.route ? r.route.path : `Router(${r.regexp})`)
-            );
-        }
     };
 
     return {
@@ -49,117 +44,52 @@ vi.mock('../../server/src/Gateway.ts', async () => {
     };
 });
 
+// Import app and database after setting env vars
+import app from '../../server/src/index.js';
+import { getDatabaseAsync } from '../../server/src/database/Database.js';
+import * as DbPromise from '../../server/src/utils/DbPromise.js';
+import { TEST_SCHEMA } from '../utils/testSchema.js';
+
 /**
  * Level 2: Integration Tests - Full API Flow
  * Tests complete API workflows end-to-end
  */
 describe('Integration Test: Full API Flow', () => {
-    let app;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let db;
     let authToken;
     let userId = 'user-flow-1';
     let orgId = 'org-flow-1';
     let testProjectId;
+    let db;
 
     beforeAll(async () => {
-        const testDb = await TestDatabaseFactory.create();
-
-        // Patch missing methods required by middleware (e.g. performanceMetrics)
-        testDb.query = async () => ({ rows: [], rowCount: 0 });
-
-        global.__TEST_DB_MOCK__ = testDb;
-        vi.resetModules();
-
-        // Use dynamic imports to pick up the mock DB and Sentry
-        const dbModule = await import('../../server/database.js');
-        db = dbModule.default;
-
-        const appModule = await import('../../server/src/index.ts');
-        app = appModule.default || appModule;
-
-
-        // Schema Patch: Ensure tables exist since DatabaseInitializer script is missing
-        await new Promise((resolve) => {
-            testDb.serialize(() => {
-                testDb.run(`CREATE TABLE IF NOT EXISTS projects (
-                    id TEXT PRIMARY KEY,
-                    organization_id TEXT,
-                    name TEXT,
-                    description TEXT,
-                    goal TEXT,
-                    status TEXT,
-                    owner_id TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )`);
-                testDb.run(`CREATE TABLE IF NOT EXISTS tasks (
-                    id TEXT PRIMARY KEY,
-                    project_id TEXT,
-                    organization_id TEXT,
-                    title TEXT,
-                    description TEXT,
-                    status TEXT,
-                    priority TEXT,
-                    assignee_id TEXT,
-                    reporter_id TEXT,
-                    due_date DATETIME,
-                    estimated_hours REAL,
-                    task_type TEXT,
-                    tags TEXT,
-                    initiative_id TEXT,
-                    kpi_id TEXT,
-                    raid_item_id TEXT,
-                    roadmap_initiative_id TEXT,
-                    why TEXT,
-                    checklist TEXT,
-                    expected_outcome TEXT,
-                    decision_impact TEXT,
-                    evidence_required TEXT,
-                    strategic_contribution TEXT,
-                    progress INTEGER,
-                    blocked_reason TEXT,
-                    start_date DATETIME,
-                    assignees TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )`);
-                testDb.run(`CREATE TABLE IF NOT EXISTS pmo_audit_trail (
-                    id TEXT PRIMARY KEY,
-                    project_id TEXT,
-                    pmo_domain_id TEXT,
-                    object_type TEXT,
-                    object_id TEXT,
-                    action TEXT,
-                    actor_id TEXT,
-                    details TEXT,
-                    metadata TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )`);
-                testDb.run(`CREATE TABLE IF NOT EXISTS active_sessions (
-                    id TEXT PRIMARY KEY,
-                    user_id TEXT,
-                    device TEXT,
-                    ip_address TEXT,
-                    last_active DATETIME,
-                    created_at DATETIME
-                )`, resolve);
-            });
-        });
+        db = await getDatabaseAsync();
+        
+        // Initialize schema
+        console.log('[Test] Initializing schema...');
+        for (const sql of TEST_SCHEMA) {
+            try {
+                await DbPromise.run(db, sql);
+            } catch (err) {
+                if (!err.message.includes('already exists')) {
+                    throw err;
+                }
+            }
+        }
+        
+        // Setup usage of a fresh DB or clean tables
+        await DbPromise.run(db, 'DELETE FROM projects');
+        await DbPromise.run(db, 'DELETE FROM users');
+        await DbPromise.run(db, 'DELETE FROM organizations');
 
         // Seed user
         const email = 'flow@test.com';
         const password = 'password123';
         const hash = bcrypt.hashSync(password, 8);
 
-        await new Promise((resolve) => {
-            testDb.serialize(() => {
-                testDb.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                    [orgId, 'Flow Org', 'free', 'active']);
-                testDb.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                    [userId, orgId, email, hash, 'FlowUser', 'ADMIN'], resolve);
-            });
-        });
+        await DbPromise.run(db, 'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
+            [orgId, 'Flow Org', 'free', 'active']);
+        await DbPromise.run(db, 'INSERT INTO users (id, organization_id, email, password, first_name, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [userId, orgId, email, hash, 'FlowUser', 'ADMIN', 'active']);
 
         // Login to get token
         const res = await request(app)
@@ -170,7 +100,21 @@ describe('Integration Test: Full API Flow', () => {
             console.error('Login failed in apiFullFlow setup:', res.status, res.body);
         }
         authToken = res.body.token;
-    }, 120000);
+    }, 60000);
+
+    afterAll(async () => {
+        if (db && db.close) {
+            await new Promise((resolve) => db.close(resolve));
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+        if (fs.existsSync('./test-api-full-flow.db')) {
+            try {
+                fs.unlinkSync('./test-api-full-flow.db');
+            } catch (e) {
+                console.warn('[Test] Failed to delete test DB file:', e.message);
+            }
+        }
+    });
 
     describe('Project Lifecycle', () => {
         it('should create, read, update, and delete a project', async () => {

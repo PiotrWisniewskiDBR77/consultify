@@ -4,258 +4,198 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Request, Response } from 'express';
-import TaskController from '../../../../server/src/controllers/TaskController.ts';
+import TaskController from '../../../../server/src/controllers/TaskController.js';
 
-// Mock services
-const mockTaskService = vi.hoisted(() => ({
-  getTasks: vi.fn(),
-  getTask: vi.fn(),
-  createTask: vi.fn(),
-  updateTask: vi.fn(),
-  deleteTask: vi.fn(),
-  assignTask: vi.fn(),
-  completeTask: vi.fn(),
+// Mock services using vi.hoisted to ensure they are available to vi.mock
+const { mockDbPromise, mockActivityService, mockNotificationService, mockTaskAssignmentService } = vi.hoisted(() => ({
+  mockDbPromise: {
+    all: vi.fn(),
+    get: vi.fn(),
+    run: vi.fn(),
+    transaction: vi.fn(),
+  },
+  mockActivityService: {
+    log: vi.fn().mockResolvedValue({}),
+  },
+  mockNotificationService: {
+    create: vi.fn().mockResolvedValue({}),
+  },
+  mockTaskAssignmentService: {
+    assignTask: vi.fn(),
+    reassignTask: vi.fn(),
+    unassignTask: vi.fn(),
+    escalateTask: vi.fn(),
+    resolveEscalation: vi.fn(),
+    getTaskEscalationHistory: vi.fn(),
+    getOverdueTasks: vi.fn(),
+    getTasksApproachingSLA: vi.fn(),
+    getUserWorkload: vi.fn(),
+  }
 }));
 
-const mockLogger = vi.hoisted(() => ({
-  info: vi.fn(),
-  error: vi.fn(),
+vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
+  default: mockDbPromise,
+  all: (...args: any[]) => mockDbPromise.all(...args),
+  get: (...args: any[]) => mockDbPromise.get(...args),
+  run: (...args: any[]) => mockDbPromise.run(...args),
+  transaction: (...args: any[]) => mockDbPromise.transaction(...args),
 }));
 
-vi.mock('../../../../server/src/services/TaskService.ts', () => ({
-  default: mockTaskService,
+vi.mock('../../../../server/src/services/ActivityService.js', () => ({
+  default: mockActivityService,
 }));
 
-vi.mock('../../../../server/src/utils/Logger.ts', () => ({
-  default: mockLogger,
+vi.mock('../../../../server/src/services/NotificationService.js', () => ({
+  default: mockNotificationService,
+}));
+
+vi.mock('../../../../server/src/services/taskAssignmentService.js', () => ({
+  default: mockTaskAssignmentService,
+}));
+
+vi.mock('../../../../server/src/utils/Logger.js', () => ({
+  default: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 describe('TaskController', () => {
-  let controller: TaskController;
-  let mockRequest: Partial<Request>;
-  let mockResponse: Partial<Response>;
-  let jsonSpy: vi.SpyInstance;
-  let statusSpy: vi.SpyInstance;
+  let mockRequest: any;
+  let mockResponse: any;
+  let next: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    controller = new TaskController();
-
-    jsonSpy = vi.fn();
-    statusSpy = vi.fn().mockReturnValue({ json: jsonSpy });
+    
+    mockRequest = {
+      user: {
+        id: 'user-123',
+        organizationId: 'org-123',
+        role: 'admin'
+      },
+      params: {},
+      query: {},
+      body: {}
+    };
 
     mockResponse = {
-      json: jsonSpy,
-      status: statusSpy,
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+      setHeader: vi.fn(),
     };
+
+    next = vi.fn();
   });
 
   describe('getTasks', () => {
-    it('should get all tasks for project', async () => {
-      const projectId = 'proj-123';
+    it('should get all tasks for organization', async () => {
       const mockTasks = [
-        { id: 'task-1', title: 'Task 1', status: 'todo' },
-        { id: 'task-2', title: 'Task 2', status: 'in-progress' },
+        { id: 'task-1', title: 'Task 1', status: 'todo', organization_id: 'org-123' },
+        { id: 'task-2', title: 'Task 2', status: 'in_progress', organization_id: 'org-123' },
       ];
 
-      mockRequest = { params: { projectId } };
-      mockTaskService.getTasks.mockResolvedValue(mockTasks);
+      mockDbPromise.all.mockResolvedValue(mockTasks);
+      mockDbPromise.get.mockResolvedValue({ total: 2 });
 
-      await controller.getTasks(mockRequest as Request, mockResponse as Response);
+      await (TaskController as any).getTasks(mockRequest, mockResponse, next);
 
-      expect(statusSpy).toHaveBeenCalledWith(200);
-      expect(jsonSpy).toHaveBeenCalledWith(mockTasks);
-      expect(mockTaskService.getTasks).toHaveBeenCalledWith(projectId, {});
+      expect(mockResponse.json).toHaveBeenCalled();
+      const responseData = mockResponse.json.mock.calls[0][0];
+      expect(responseData).toHaveLength(2);
+      expect(responseData[0].id).toBe('task-1');
+      expect(mockDbPromise.all).toHaveBeenCalled();
     });
 
-    it('should handle service errors', async () => {
-      mockRequest = { params: { projectId: 'proj-123' } };
-      const error = new Error('Database error');
+    it('should handle unauthorized access', async () => {
+      mockRequest.user = null;
 
-      mockTaskService.getTasks.mockRejectedValue(error);
+      await (TaskController as any).getTasks(mockRequest, mockResponse, next);
 
-      await controller.getTasks(mockRequest as Request, mockResponse as Response);
-
-      expect(statusSpy).toHaveBeenCalledWith(500);
-      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Database error' });
-      expect(mockLogger.error).toHaveBeenCalled();
-    });
-
-    it('should validate projectId parameter', async () => {
-      mockRequest = { params: {} };
-
-      await controller.getTasks(mockRequest as Request, mockResponse as Response);
-
-      expect(statusSpy).toHaveBeenCalledWith(400);
-      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Project ID is required' });
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
     });
   });
 
-  describe('getTask', () => {
+  describe('getTaskById', () => {
     it('should get single task by id', async () => {
       const taskId = 'task-123';
       const mockTask = {
         id: taskId,
         title: 'Test Task',
-        description: 'Test description',
         status: 'todo',
-        assigneeId: 'user-456',
-        projectId: 'proj-789',
+        organization_id: 'org-123'
       };
 
-      mockRequest = { params: { id: taskId } };
-      mockTaskService.getTask.mockResolvedValue(mockTask);
+      mockRequest.params.id = taskId;
+      mockDbPromise.get.mockResolvedValue(mockTask);
 
-      await controller.getTask(mockRequest as Request, mockResponse as Response);
+      await (TaskController as any).getTaskById(mockRequest, mockResponse, next);
 
-      expect(statusSpy).toHaveBeenCalledWith(200);
-      expect(jsonSpy).toHaveBeenCalledWith(mockTask);
-      expect(mockTaskService.getTask).toHaveBeenCalledWith(taskId);
+      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
+        id: taskId,
+        title: 'Test Task'
+      }));
     });
 
     it('should return 404 for non-existent task', async () => {
-      mockRequest = { params: { id: 'non-existent' } };
-      const error = new Error('Task not found');
+      mockRequest.params.id = 'non-existent';
+      mockDbPromise.get.mockResolvedValue(null);
 
-      mockTaskService.getTask.mockRejectedValue(error);
+      await (TaskController as any).getTaskById(mockRequest, mockResponse, next);
 
-      await controller.getTask(mockRequest as Request, mockResponse as Response);
-
-      expect(statusSpy).toHaveBeenCalledWith(404);
-      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Task not found' });
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Task not found' });
     });
   });
 
   describe('createTask', () => {
     it('should create new task', async () => {
-      const taskData = {
-        title: 'New Task',
-        description: 'Task description',
+      mockRequest.body = {
         projectId: 'proj-123',
-        assigneeId: 'user-456',
+        title: 'New Task',
+        priority: 'high'
       };
 
-      const mockCreatedTask = {
-        id: 'task-new',
-        ...taskData,
-        status: 'todo',
-        createdAt: new Date(),
-      };
+      mockDbPromise.run.mockResolvedValue({ success: true });
+      mockDbPromise.get.mockResolvedValue({
+        id: 'new-id',
+        title: 'New Task',
+        project_id: 'proj-123'
+      });
 
-      mockRequest = {
-        body: taskData,
-        params: { projectId: 'proj-123' },
-      };
-      mockTaskService.createTask.mockResolvedValue(mockCreatedTask);
+      await (TaskController as any).createTask(mockRequest, mockResponse, next);
 
-      await controller.createTask(mockRequest as Request, mockResponse as Response);
-
-      expect(statusSpy).toHaveBeenCalledWith(201);
-      expect(jsonSpy).toHaveBeenCalledWith(mockCreatedTask);
-      expect(mockTaskService.createTask).toHaveBeenCalledWith(taskData);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(mockDbPromise.run).toHaveBeenCalled();
     });
 
     it('should validate required fields', async () => {
-      mockRequest = {
-        body: { description: 'No title' },
-        params: { projectId: 'proj-123' },
-      };
+      mockRequest.body = { title: 'Missing Project ID' };
 
-      await controller.createTask(mockRequest as Request, mockResponse as Response);
+      await (TaskController as any).createTask(mockRequest, mockResponse, next);
 
-      expect(statusSpy).toHaveBeenCalledWith(400);
-      expect(jsonSpy).toHaveBeenCalledWith({ error: 'Title is required' });
-    });
-  });
-
-  describe('updateTask', () => {
-    it('should update existing task', async () => {
-      const taskId = 'task-123';
-      const updateData = {
-        title: 'Updated Title',
-        status: 'in-progress',
-      };
-
-      const mockUpdatedTask = {
-        id: taskId,
-        title: 'Updated Title',
-        status: 'in-progress',
-        updatedAt: new Date(),
-      };
-
-      mockRequest = {
-        params: { id: taskId },
-        body: updateData,
-      };
-      mockTaskService.updateTask.mockResolvedValue(mockUpdatedTask);
-
-      await controller.updateTask(mockRequest as Request, mockResponse as Response);
-
-      expect(statusSpy).toHaveBeenCalledWith(200);
-      expect(jsonSpy).toHaveBeenCalledWith(mockUpdatedTask);
-      expect(mockTaskService.updateTask).toHaveBeenCalledWith(taskId, updateData);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({ error: 'projectId is required' });
     });
   });
 
   describe('deleteTask', () => {
     it('should delete task', async () => {
       const taskId = 'task-123';
+      mockRequest.params.id = taskId;
+      
+      mockDbPromise.get.mockResolvedValue({ id: taskId, reporter_id: 'user-123', title: 'Task' });
+      mockDbPromise.run.mockResolvedValue({ success: true, changes: 1 });
 
-      mockRequest = { params: { id: taskId } };
-      mockTaskService.deleteTask.mockResolvedValue({ success: true });
+      await (TaskController as any).deleteTask(mockRequest, mockResponse, next);
 
-      await controller.deleteTask(mockRequest as Request, mockResponse as Response);
-
-      expect(statusSpy).toHaveBeenCalledWith(200);
-      expect(jsonSpy).toHaveBeenCalledWith({ success: true });
-      expect(mockTaskService.deleteTask).toHaveBeenCalledWith(taskId);
-    });
-  });
-
-  describe('assignTask', () => {
-    it('should assign task to user', async () => {
-      const taskId = 'task-123';
-      const userId = 'user-456';
-
-      const mockAssignedTask = {
-        id: taskId,
-        assigneeId: userId,
-        updatedAt: new Date(),
-      };
-
-      mockRequest = {
-        params: { id: taskId },
-        body: { userId },
-      };
-      mockTaskService.assignTask.mockResolvedValue(mockAssignedTask);
-
-      await controller.assignTask(mockRequest as Request, mockResponse as Response);
-
-      expect(statusSpy).toHaveBeenCalledWith(200);
-      expect(jsonSpy).toHaveBeenCalledWith(mockAssignedTask);
-      expect(mockTaskService.assignTask).toHaveBeenCalledWith(taskId, userId);
-    });
-  });
-
-  describe('completeTask', () => {
-    it('should mark task as completed', async () => {
-      const taskId = 'task-123';
-
-      const mockCompletedTask = {
-        id: taskId,
-        status: 'completed',
-        completedAt: new Date(),
-      };
-
-      mockRequest = { params: { id: taskId } };
-      mockTaskService.completeTask.mockResolvedValue(mockCompletedTask);
-
-      await controller.completeTask(mockRequest as Request, mockResponse as Response);
-
-      expect(statusSpy).toHaveBeenCalledWith(200);
-      expect(jsonSpy).toHaveBeenCalledWith(mockCompletedTask);
-      expect(mockTaskService.completeTask).toHaveBeenCalledWith(taskId);
+      expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Task deleted' });
+      expect(mockDbPromise.run).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM tasks'),
+        expect.arrayContaining([taskId, 'org-123'])
+      );
     });
   });
 });

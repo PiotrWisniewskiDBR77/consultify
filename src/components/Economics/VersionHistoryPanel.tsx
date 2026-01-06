@@ -90,7 +90,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({ analys
             setVersionName('');
             setNotes('');
             loadVersions();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Nie udało się utworzyć wersji');
         } finally {
             setIsCreating(false);
@@ -111,7 +111,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({ analys
             toast.success(`Przywrócono do wersji ${version.version_number}`);
             loadVersions();
             onRestore?.(version);
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Nie udało się przywrócić wersji');
         }
     };
@@ -140,7 +140,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({ analys
                 selectedForCompare[1],
             );
             setComparisonResult(result);
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Nie udało się porównać wersji');
         } finally {
             setIsComparing(false);
@@ -521,3 +521,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({ analys
 };
 
 export default VersionHistoryPanel;
+
+
+
+

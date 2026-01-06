@@ -141,9 +141,20 @@ export interface AIPipelineResponse {
     success: boolean;
     content: string;
     artifacts?: AIArtifact[];
+    thinkingSteps?: ThinkingStep[];
     usage?: TokenUsage;
     metadata?: ResponseMetadata;
     error?: AIError;
+}
+
+export interface ThinkingStep {
+    id: string;
+    label: string;
+    content: string;
+    status: 'pending' | 'in_progress' | 'done';
+    timestamp: Date;
+    durationMs?: number;
+    category?: 'analysis' | 'research' | 'synthesis' | 'validation';
 }
 
 export interface AIArtifact {

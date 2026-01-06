@@ -184,7 +184,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({ initiati
             toast.success('Budget created');
             setShowCreateBudgetModal(false);
             fetchBudget();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to create budget');
         }
     };
@@ -213,7 +213,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({ initiati
                 transactionDate: new Date().toISOString().split('T')[0],
             });
             fetchBudget();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to add expense');
         }
     };
@@ -717,3 +717,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({ initiati
 };
 
 export default BudgetTrackingView;
+
+
+
+

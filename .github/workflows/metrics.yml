@@ -1,0 +1,94 @@
+# Test Metrics Reporting Workflow
+# Collects and reports test metrics
+
+name: Test Metrics
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '20.11.0'
+
+jobs:
+  collect-metrics:
+    name: Collect Test Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          path: test-results
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Download Coverage Reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: coverage
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Collect Metrics
+        run: |
+          node --loader ts-node/esm scripts/test-metrics-collector.ts
+        continue-on-error: true
+
+      - name: Generate Metrics Report
+        run: |
+          node --loader ts-node/esm -e "
+            import TestMetricsCollector from './scripts/test-metrics-collector.ts';
+            const collector = new TestMetricsCollector();
+            const report = collector.generateReport();
+            require('fs').writeFileSync('test-metrics-report.md', report);
+          "
+        continue-on-error: true
+
+      - name: Upload Metrics
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-metrics
+          path: |
+            tests/metrics/**
+            test-metrics-report.md
+          retention-days: 90
+
+      - name: Metrics Summary
+        if: always()
+        run: |
+          if [ -f test-metrics-report.md ]; then
+            echo "## Test Metrics Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat test-metrics-report.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Test Metrics" >> $GITHUB_STEP_SUMMARY
+            echo "Metrics collection completed. See artifacts for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+
+
+
+
+
+
+

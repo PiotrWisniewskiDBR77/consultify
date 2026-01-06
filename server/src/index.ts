@@ -36,6 +36,20 @@ const __dirname = path.dirname(__filename);
 
 // Initialize app
 const app: Express = express();
+
+// EARLY DEBUG LOGGING
+app.use((req, res, next) => {
+    if (req.url.includes('/auth/login')) {
+        console.log(`[EARLY DEBUG] ${req.method} ${req.url}`);
+        let data = '';
+        req.on('data', chunk => { data += chunk; });
+        req.on('end', () => {
+            console.log(`[EARLY DEBUG] Raw Body: ${data}`);
+        });
+    }
+    next();
+});
+
 const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
@@ -453,7 +467,11 @@ app.use('/api/auth/register', authLimiter);
 
 // Initialize API Gateway Routes
 app.use((req, res, next) => {
-    logger.info('[Index] Pre-Gateway:', req.path);
+    logger.info(`[Index] Pre-Gateway: ${req.method} ${req.path}`);
+    if (req.path === '/auth/login' || req.path === '/api/auth/login' || req.originalUrl.includes('/auth/login')) {
+        logger.info('[Index] Login Request Body:', JSON.stringify(req.body));
+        logger.info('[Index] Login Request Headers:', JSON.stringify(req.headers));
+    }
     next();
 });
 apiGateway.initializeRoutes(app);

@@ -2,19 +2,15 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Authentication Flow', () => {
     test('should login successfully with valid credentials', async ({ page }) => {
-        await page.goto('/');
+        await page.goto('/login');
         
         // Wait for page to load
         await page.waitForLoadState('networkidle');
 
-        // Click "Log In" - try multiple selectors
-        const loginButton = page.getByRole('button', { name: /log in/i }).first();
-        await loginButton.click();
-
         // Fill login form
         await page.waitForSelector('input[type="email"]');
         await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="password"]', 'Admin123!');
 
         // Submit
         await page.click('button[type="submit"]');
@@ -24,12 +20,8 @@ test.describe('Authentication Flow', () => {
     });
 
     test('should show error with invalid credentials', async ({ page }) => {
-        await page.goto('/');
+        await page.goto('/login');
         await page.waitForLoadState('networkidle');
-
-        // Click "Log In"
-        const loginButton = page.getByRole('button', { name: /log in/i }).first();
-        await loginButton.click();
 
         // Fill login form with bad data
         await page.waitForSelector('input[type="email"]');
@@ -45,15 +37,12 @@ test.describe('Authentication Flow', () => {
 
     test('should logout successfully', async ({ page }) => {
         // Login first
-        await page.goto('/');
+        await page.goto('/login');
         await page.waitForLoadState('networkidle');
-        
-        const loginButton = page.getByRole('button', { name: /log in/i }).first();
-        await loginButton.click();
         
         await page.waitForSelector('input[type="email"]');
         await page.fill('input[type="email"]', 'admin@dbr77.com');
-        await page.fill('input[type="password"]', '123456');
+        await page.fill('input[type="password"]', 'Admin123!');
         await page.click('button[type="submit"]');
         await expect(page.getByRole('heading', { name: /system overview|dashboard/i })).toBeVisible({ timeout: 20000 });
 

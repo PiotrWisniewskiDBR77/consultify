@@ -268,3 +268,4 @@ Raporty są generowane automatycznie i dostępne w katalogu `metrics/`:
 **Ostatnia aktualizacja:** 2026-01-05
 
 
+

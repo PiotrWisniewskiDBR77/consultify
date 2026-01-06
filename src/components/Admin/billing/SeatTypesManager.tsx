@@ -216,12 +216,7 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                 <div>
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                         {t('admin.billing.seatTypes.title', 'Seat Types')}
-                        <Tooltip
-                            content={t(
-                                'admin.billing.seatTypes.tooltip',
-                                'Configure different access levels and their pricing',
-                            )}
-                        >
+                        <Tooltip content={t('admin.billing.seatTypes.tooltip', 'Configure different access levels and their pricing')}>
                             <HelpCircle size={16} className="text-slate-400" />
                         </Tooltip>
                     </h3>
@@ -233,7 +228,11 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setShowComparison(!showComparison)}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowComparison(!showComparison)}
+                    >
                         {showComparison
                             ? t('admin.billing.seatTypes.hideComparison', 'Hide Comparison')
                             : t('admin.billing.seatTypes.showComparison', 'Compare Features')}
@@ -282,8 +281,12 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                             </div>
 
                             {/* Info */}
-                            <h4 className="font-semibold text-navy-900 dark:text-white mb-1">{seatType.name}</h4>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{seatType.description}</p>
+                            <h4 className="font-semibold text-navy-900 dark:text-white mb-1">
+                                {seatType.name}
+                            </h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                                {seatType.description}
+                            </p>
 
                             {/* Pricing */}
                             <div className="mb-4">
@@ -349,7 +352,10 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                                     {seatTypes.map((type) => {
                                         const colors = getColorClasses(type.color);
                                         return (
-                                            <th key={type.id} className="px-4 py-3 text-center min-w-[100px]">
+                                            <th
+                                                key={type.id}
+                                                className="px-4 py-3 text-center min-w-[100px]"
+                                            >
                                                 <span
                                                     className={cn(
                                                         'inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-full',
@@ -369,7 +375,10 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                                     <React.Fragment key={category}>
                                         {/* Category Header */}
                                         <tr className="bg-slate-50/50 dark:bg-navy-900/50">
-                                            <td colSpan={seatTypes.length + 1} className="px-4 py-2">
+                                            <td
+                                                colSpan={seatTypes.length + 1}
+                                                className="px-4 py-2"
+                                            >
                                                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                                     {category}
                                                 </span>
@@ -392,7 +401,10 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
                                                         className="px-4 py-3 text-center"
                                                     >
                                                         {hasFeature(type, feature.id) ? (
-                                                            <Check size={16} className="mx-auto text-emerald-500" />
+                                                            <Check
+                                                                size={16}
+                                                                className="mx-auto text-emerald-500"
+                                                            />
                                                         ) : (
                                                             <X
                                                                 size={16}
@@ -449,3 +461,5 @@ export const SeatTypesManager: React.FC<SeatTypesManagerProps> = ({
 };
 
 export default SeatTypesManager;
+
+

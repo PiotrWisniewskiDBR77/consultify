@@ -8,7 +8,7 @@
 import { NextFunction, Response } from 'express';
 
 import { getDatabase } from '../database/Database.js';
-import { get as dbGet } from '../utils/DbPromise.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
@@ -96,7 +96,7 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
             }
 
             // 1. Get Organization Plan
-            const org = await dbGet<OrganizationRow>('SELECT plan, status FROM organizations WHERE id = ?', [orgId]);
+            const org = await queryHelpers.queryOne<OrganizationRow>('SELECT plan, status FROM organizations WHERE id = ?', [orgId]);
 
             if (!org) {
                 res.status(404).json({ error: 'Organization not found' });
@@ -119,13 +119,13 @@ export const checkPlanLimit = (limitKey: keyof PlanLimits) => {
             let currentCount = 0;
 
             if (limitKey === 'max_projects') {
-                const result = await dbGet<CountRow>(
+                const result = await queryHelpers.queryOne<CountRow>(
                     'SELECT COUNT(*) as count FROM projects WHERE organization_id = ? AND status != "archived"',
                     [orgId],
                 );
                 currentCount = result?.count || 0;
             } else if (limitKey === 'max_members') {
-                const result = await dbGet<CountRow>('SELECT COUNT(*) as count FROM users WHERE organization_id = ?', [
+                const result = await queryHelpers.queryOne<CountRow>('SELECT COUNT(*) as count FROM users WHERE organization_id = ?', [
                     orgId,
                 ]);
                 currentCount = result?.count || 0;

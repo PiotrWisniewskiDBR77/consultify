@@ -62,7 +62,8 @@ let deps: Dependencies;
 const getDeps = async (): Promise<Dependencies> => {
     if (!deps) {
         const defaultJwt = await import('jsonwebtoken').then((m) => m.default || m);
-        const defaultConfig = await import('../config/Config.js').then((m) => m.default || m);
+        const configModule = await import('../config/Config.js');
+        const defaultConfig = configModule.config || configModule.default || configModule;
         const defaultPermissionService = await import('../services/permissionService.js').then(
             (m) => m.default || m,
         );
@@ -250,6 +251,12 @@ export const verifyToken = asyncHandler(async (req: AuthRequest, res: Response, 
     }
 
     try {
+        const { jwt: jwtLib, config } = await getDeps();
+        
+        if (!config.JWT_SECRET) {
+            logger.error('[AuthMiddleware] CRITICAL: config.JWT_SECRET is missing!');
+        }
+
         const decoded = await new Promise<JWTPayload>((resolve, reject) => {
             jwtLib.verify(token, config.JWT_SECRET, (err: any, decoded: any) => {
                 if (err) return reject(err);

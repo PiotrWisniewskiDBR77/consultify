@@ -142,7 +142,7 @@ export const LoginAttemptsPanel: React.FC = () => {
             await Api.post('/security-policies/unlock-account', { email });
             toast.success(`Account ${email} unlocked`);
             setLockouts((prev) => prev.filter((l) => l.user_email !== email));
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to unlock account');
         } finally {
             setUnlockingIds((prev) => {
@@ -408,3 +408,7 @@ export const LoginAttemptsPanel: React.FC = () => {
 };
 
 export default LoginAttemptsPanel;
+
+
+
+

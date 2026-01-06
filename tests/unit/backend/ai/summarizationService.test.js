@@ -23,7 +23,7 @@ describe('SummarizationService', () => {
             call: vi.fn()
         };
 
-        const mod = await import('../../../../server/services/ai/summarizationService.js');
+        const mod = await import('../../../../server/src/services/ai/summarizationService.js');
         SummarizationService = mod.SummarizationService;
 
         // INJECT MOCK LLM

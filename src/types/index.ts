@@ -12,6 +12,8 @@ export {
     SessionMode,
     AuthStep,
     UserRole,
+    ProjectRole,
+    TaskStatus,
     UserRole as LegacyUserRole,
     ProjectRole as LegacyProjectRole,
     AccountType as LegacyAccountType,

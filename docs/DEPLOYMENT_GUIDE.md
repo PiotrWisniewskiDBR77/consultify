@@ -392,3 +392,4 @@ kubectl get hpa -n production
 
 
 
+

@@ -7,7 +7,7 @@ const mockDbInstance = {
     run: vi.fn()
 };
 
-vi.mock('../../../../server/services/ai/logger.js', () => ({
+vi.mock('../../../../server/ai/logger.js', () => ({
     aiLogger: {
         info: vi.fn(),
         error: vi.fn(),
@@ -29,8 +29,8 @@ describe('PersistentSessionStore', () => {
         vi.clearAllMocks();
 
         // Dynamic import to ensure fresh module if needed, though class is stateless mostly
-        const mod = await import('../../../../server/services/ai/persistentSessionStore.js');
-        PersistentSessionStore = mod.PersistentSessionStore;
+        const mod = await import('../../../../server/ai/persistentSessionStore.js');
+        PersistentSessionStore = mod.PersistentSessionStore || mod.default;
 
         // INJECT MOCK DB
         store = new PersistentSessionStore(mockDbInstance);

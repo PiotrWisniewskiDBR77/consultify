@@ -84,7 +84,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
         try {
             const res = await Api.get('/billing/templates');
             setTemplates(res.templates || []);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to load templates');
         } finally {
             setLoading(false);
@@ -95,7 +95,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
         try {
             const res = await Api.get(`/billing/templates/${templateId}/preview`);
             setPreviewHtml(res.preview?.html || '');
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError('Failed to generate preview');
         }
     };
@@ -111,7 +111,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
             }
             setEditMode(false);
             fetchTemplates();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to save template');
         } finally {
             setSaving(false);
@@ -124,7 +124,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
             await Api.delete(`/billing/templates/${templateId}`);
             fetchTemplates();
             if (selectedTemplate?.id === templateId) setSelectedTemplate(null);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to delete template');
         }
     };
@@ -133,7 +133,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
         try {
             await Api.post(`/billing/templates/${templateId}/clone`, { name: 'Copy of Template' });
             fetchTemplates();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to clone template');
         }
     };
@@ -529,3 +529,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
 };
 
 export default InvoiceTemplateEditor;
+
+
+
+

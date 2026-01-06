@@ -7,32 +7,69 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import { setupStandardTest } from '../../../helpers/unifiedMockSetup.js';
-// Correct import path to the subdirectory
+
+// Use vi.hoisted to ensure the mock is available before vi.mock is called
+const mocks = vi.hoisted(() => {
+  return {
+    db: {
+      get: vi.fn(),
+      all: vi.fn(),
+      run: vi.fn(),
+      close: vi.fn()
+    },
+    logger: {
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn()
+    }
+  };
+});
+
+// Mock the database module
+vi.mock('../../../../server/src/database/Database.js', () => ({
+  getDatabase: () => mocks.db,
+  default: mocks.db
+}));
+
+// Mock logger
+vi.mock('../../../../server/src/utils/Logger.js', () => ({
+  default: mocks.logger
+}));
+
+// Mock auth middleware
+vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
+  verifyToken: vi.fn((req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', organizationId: 'test-org', role: 'SUPERADMIN' };
+    req.organizationId = 'test-org';
+    next();
+  }),
+  requireSuperAdmin: vi.fn((req: any, res: any, next: any) => {
+    if (req.user?.role !== 'SUPERADMIN') {
+      return res.status(403).json({ error: 'Superadmin access required' });
+    }
+    next();
+  })
+}));
+
+// Mock rate limiting to avoid delays
+vi.mock('../../../../server/src/middleware/rateLimiting.middleware.js', () => ({
+  defaultRateLimiter: (req: any, res: any, next: any) => next(),
+  authRateLimiter: (req: any, res: any, next: any) => next()
+}));
+
+// Import service after mocks are defined
 import billingRoutes from '../../../../server/src/routes/billing/billing.routes.js';
+import * as authMiddleware from '../../../../server/src/middleware/auth.middleware.js';
 
 describe('Billing Routes', () => {
   let app: express.Application;
-  let mocks: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks = setupStandardTest();
 
     app = express();
     app.use(express.json());
-
-    // Mock auth middleware
-    app.use((req: any, res: any, next: any) => {
-      req.user = {
-        id: 'test-user',
-        organizationId: 'test-org',
-        role: 'SUPERADMIN'
-      };
-      req.organizationId = 'test-org';
-      next();
-    });
-
     app.use('/api/billing', billingRoutes);
   });
 
@@ -57,16 +94,12 @@ describe('Billing Routes', () => {
     });
 
     it('should require superadmin access for stats', async () => {
-      // Create a separate app instance for this test to change the middleware
-      const restrictedApp = express();
-      restrictedApp.use(express.json());
-      restrictedApp.use((req: any, res: any, next: any) => {
-        req.user = { id: 'test-user', role: 'USER', organizationId: 'test-org' };
-        next();
+      // Temporarily override the mock for this test
+      vi.mocked(authMiddleware.requireSuperAdmin).mockImplementationOnce((req: any, res: any, next: any) => {
+          return res.status(403).json({ error: 'Forbidden' });
       });
-      restrictedApp.use('/api/billing', billingRoutes);
 
-      const response = await request(restrictedApp)
+      const response = await request(app)
         .get('/api/billing/stats')
         .expect(403);
 
@@ -120,7 +153,7 @@ describe('Billing Routes', () => {
   describe('POST /api/billing/subscriptions', () => {
     it('should create new subscription', async () => {
       mocks.db.get.mockResolvedValue(null); // No existing subscription
-      mocks.db.run.mockResolvedValue({ lastID: 1 });
+      mocks.db.run.mockResolvedValue({ lastID: 1, changes: 1 });
 
       const subscriptionData = {
         organizationId: 'org-123',

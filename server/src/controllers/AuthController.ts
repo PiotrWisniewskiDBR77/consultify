@@ -85,19 +85,22 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const dependencies = await getDeps();
 
     const body = req.body as LoginRequest;
-    logger.info('[Auth] Login request received for:', body.email || 'no email');
+    logger.info(`[Auth] Login request received for email: ${body.email}`);
     const { email, password, mfaToken, deviceFingerprint, trustDevice } = body;
 
     // Best-effort rate limit clear (pre-validation)
     try {
+        logger.info('[Auth] Resetting rate limit...');
         const authRedisStore = new dependencies.RedisStore({ windowMs: 15 * 60 * 1000 });
         const rateLimitKey = `auth:${email.toLowerCase().trim()}`;
         await withTimeout(authRedisStore.resetKey(rateLimitKey), 500);
+        logger.info('[Auth] Rate limit reset done.');
     } catch (err: any) {
-        // Ignore rate limit errors
+        logger.info(`[Auth] Rate limit reset failed (ignoring): ${err.message}`);
     }
 
     try {
+        logger.info(`[Auth] Querying user from DB: ${email}`);
         // Get user
         const user = await new Promise<{
             id: string;
@@ -110,18 +113,26 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             password: string;
         } | null>((resolve, reject) => {
             dependencies.db.get('SELECT * FROM users WHERE email = ?', [email], (err: Error | null, row: unknown) => {
-                if (err) reject(err);
-                else resolve(row as any);
+                if (err) {
+                    logger.error(`[Auth] DB Query Error: ${err.message}`);
+                    reject(err);
+                } else {
+                    logger.info(`[Auth] DB Query Success. Found user: ${row ? 'YES' : 'NO'}`);
+                    resolve(row as any);
+                }
             });
         });
 
         if (!user) {
+            logger.info('[Auth] User not found.');
             res.status(401).json({ error: 'Invalid email or password' });
             return;
         }
 
+        logger.info('[Auth] Verifying password...');
         // Verify password
         const passwordIsValid = dependencies.bcrypt.compareSync(password, user.password);
+        logger.info(`[Auth] Password valid: ${passwordIsValid}`);
         if (!passwordIsValid) {
             res.status(401).json({ error: 'Invalid email or password' });
             return;

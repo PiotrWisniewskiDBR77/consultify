@@ -133,7 +133,7 @@ export const IPAccessRulesPanel: React.FC = () => {
             setShowAddForm(false);
             setAddForm({ ipAddress: '', ruleType: 'block', description: '', expiresAt: '' });
             fetchRules();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to add IP rule');
         } finally {
             setSaving(false);
@@ -146,7 +146,7 @@ export const IPAccessRulesPanel: React.FC = () => {
             await Api.delete(`/security-policies/${selectedOrgId}/ip-rules/${ruleId}`);
             toast.success('IP rule deleted');
             setRules((prev) => prev.filter((r) => r.id !== ruleId));
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to delete rule');
         } finally {
             setDeletingIds((prev) => {
@@ -164,7 +164,7 @@ export const IPAccessRulesPanel: React.FC = () => {
             });
             setRules((prev) => prev.map((r) => (r.id === rule.id ? { ...r, is_active: r.is_active ? 0 : 1 } : r)));
             toast.success(`Rule ${rule.is_active ? 'disabled' : 'enabled'}`);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to update rule');
         }
     };
@@ -475,3 +475,7 @@ export const IPAccessRulesPanel: React.FC = () => {
 };
 
 export default IPAccessRulesPanel;
+
+
+
+

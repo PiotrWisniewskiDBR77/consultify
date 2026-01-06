@@ -30,7 +30,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { InfoButton } from '../../components/shared/InfoButton';
-import Api from '../../services/api';
+import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { SpendingAlert } from '../../types';
 
@@ -314,13 +314,12 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                             <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
                                 {usageData && (
                                     <div
-                                        className={`h-2 rounded-full ${
-                                            usagePercent > 80
+                                        className={`h-2 rounded-full ${usagePercent > 80
                                                 ? 'bg-red-500'
                                                 : usagePercent > 60
-                                                  ? 'bg-amber-500'
-                                                  : 'bg-green-500'
-                                        }`}
+                                                    ? 'bg-amber-500'
+                                                    : 'bg-green-500'
+                                            }`}
                                         style={{ width: `${Math.min(usagePercent, 100)}%` }}
                                     />
                                 )}
@@ -352,20 +351,18 @@ export const SpendingAlertsView: React.FC<SpendingAlertsViewProps> = ({ classNam
                         return (
                             <div
                                 key={alert.id}
-                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${
-                                    alert.isActive
+                                className={`p-4 bg-white dark:bg-navy-800 rounded-xl border ${alert.isActive
                                         ? 'border-slate-200 dark:border-navy-700'
                                         : 'border-slate-200 dark:border-navy-700 opacity-60'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div
-                                            className={`p-3 rounded-lg ${
-                                                alert.isActive
+                                            className={`p-3 rounded-lg ${alert.isActive
                                                     ? 'bg-violet-100 dark:bg-violet-900/30'
                                                     : 'bg-slate-100 dark:bg-navy-700'
-                                            }`}
+                                                }`}
                                         >
                                             <Icon
                                                 className={alert.isActive ? 'text-violet-600' : 'text-slate-400'}

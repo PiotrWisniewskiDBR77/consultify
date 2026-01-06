@@ -43,7 +43,16 @@ router.get('/', ProjectController.getProjects);
  * POST /api/projects
  * Create a new project
  */
-router.post('/', checkPlanLimit('max_projects'), validateBody(CreateProjectSchema), ProjectController.createProject);
+router.post(
+    '/',
+    (req, res, next) => {
+        console.log('[ProjectsRoute] POST / hit');
+        next();
+    },
+    checkPlanLimit('max_projects'),
+    validateBody(CreateProjectSchema),
+    ProjectController.createProject,
+);
 
 /**
  * GET /api/projects/:id

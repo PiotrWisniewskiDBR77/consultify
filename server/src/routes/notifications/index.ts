@@ -18,3 +18,4 @@ router.use('/', notificationsRoutes);
 
 export default router;
 
+

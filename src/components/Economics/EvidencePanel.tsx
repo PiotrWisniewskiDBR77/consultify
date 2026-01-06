@@ -133,7 +133,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             resetForm();
             loadEvidence();
             onEvidenceChange?.();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Nie udało się dodać dowodu');
         } finally {
             setIsSubmitting(false);
@@ -458,3 +458,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 };
 
 export default EvidencePanel;
+
+
+
+

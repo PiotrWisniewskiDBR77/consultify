@@ -138,7 +138,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
             if (onNavigateToAnalysis) {
                 onNavigateToAnalysis(newAnalysis.id);
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Nie udało się utworzyć analizy');
         } finally {
             setIsCreating(false);
@@ -362,3 +362,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
 };
 
 export default InitiativeFinancialIntegration;
+
+
+
+

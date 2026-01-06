@@ -228,3 +228,4 @@ backlog/
 *Ten dokument jest zarządzany zgodnie z zasadami Meta-PMO Framework i jest audytowalny pod kątem compliance z ISO 21500, PMBOK 7 i PRINCE2.*
 
 
+

@@ -10,7 +10,17 @@
  * Design: Form with live preview
  */
 
-import { AlertCircle, Check, Eye, HelpCircle, Info, Save, Settings, Shield, User } from 'lucide-react';
+import {
+    AlertCircle,
+    Check,
+    Eye,
+    HelpCircle,
+    Info,
+    Save,
+    Settings,
+    Shield,
+    User,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,7 +29,12 @@ import { Button } from '../../ui/primitives/Button';
 import { Tooltip } from '../../ui/primitives/Tooltip';
 
 // Name format options
-export type NameFormat = 'first_last' | 'last_first' | 'first_mi_last' | 'username' | 'custom';
+export type NameFormat =
+    | 'first_last'
+    | 'last_first'
+    | 'first_mi_last'
+    | 'username'
+    | 'custom';
 
 // Enforcement level
 export type EnforcementLevel = 'none' | 'suggest' | 'require';
@@ -73,12 +88,10 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
             case 'username':
                 return exampleNames.username;
             case 'custom':
-                return (
-                    guidelines.customFormat
-                        ?.replace('{first}', exampleNames.firstName)
-                        .replace('{last}', exampleNames.lastName)
-                        .replace('{mi}', exampleNames.middleInitial) || 'Custom Format'
-                );
+                return guidelines.customFormat
+                    ?.replace('{first}', exampleNames.firstName)
+                    .replace('{last}', exampleNames.lastName)
+                    .replace('{mi}', exampleNames.middleInitial) || 'Custom Format';
             default:
                 return `${exampleNames.firstName} ${exampleNames.lastName}`;
         }
@@ -99,12 +112,7 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                 <div>
                     <h3 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
                         {t('admin.organization.displayName.title', 'Display Name Guidelines')}
-                        <Tooltip
-                            content={t(
-                                'admin.organization.displayName.tooltip',
-                                'Configure how names are displayed across the workspace',
-                            )}
-                        >
+                        <Tooltip content={t('admin.organization.displayName.tooltip', 'Configure how names are displayed across the workspace')}>
                             <HelpCircle size={16} className="text-slate-400" />
                         </Tooltip>
                     </h3>
@@ -131,7 +139,9 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                     <div className="w-10 h-10 rounded-full bg-violet-500 flex items-center justify-center text-white font-medium">
                         {preview.charAt(0)}
                     </div>
-                    <span className="text-lg font-medium text-navy-900 dark:text-white">{preview}</span>
+                    <span className="text-lg font-medium text-navy-900 dark:text-white">
+                        {preview}
+                    </span>
                 </div>
             </div>
 
@@ -159,7 +169,9 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                                     : 'border-slate-200 dark:border-navy-700 hover:border-violet-300',
                             )}
                         >
-                            <p className="font-medium text-navy-900 dark:text-white">{option.label}</p>
+                            <p className="font-medium text-navy-900 dark:text-white">
+                                {option.label}
+                            </p>
                             <p className="text-xs text-slate-500">{option.example}</p>
                         </button>
                     ))}
@@ -204,7 +216,9 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                             min="1"
                             max="50"
                             value={guidelines.minLength}
-                            onChange={(e) => updateGuideline('minLength', parseInt(e.target.value) || 2)}
+                            onChange={(e) =>
+                                updateGuideline('minLength', parseInt(e.target.value) || 2)
+                            }
                             className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                         />
                     </div>
@@ -217,7 +231,9 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                             min="1"
                             max="100"
                             value={guidelines.maxLength}
-                            onChange={(e) => updateGuideline('maxLength', parseInt(e.target.value) || 50)}
+                            onChange={(e) =>
+                                updateGuideline('maxLength', parseInt(e.target.value) || 50)
+                            }
                             className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white"
                         />
                     </div>
@@ -256,7 +272,9 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                             <input
                                 type="text"
                                 value={guidelines.allowedSpecialChars || '.-_'}
-                                onChange={(e) => updateGuideline('allowedSpecialChars', e.target.value)}
+                                onChange={(e) =>
+                                    updateGuideline('allowedSpecialChars', e.target.value)
+                                }
                                 className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg font-mono text-navy-900 dark:text-white"
                             />
                         </div>
@@ -266,7 +284,9 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                         <input
                             type="checkbox"
                             checked={guidelines.requireCapitalization}
-                            onChange={(e) => updateGuideline('requireCapitalization', e.target.checked)}
+                            onChange={(e) =>
+                                updateGuideline('requireCapitalization', e.target.checked)
+                            }
                             className="rounded border-slate-300"
                         />
                         <span className="text-sm text-navy-900 dark:text-white">
@@ -282,10 +302,7 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                             className="rounded border-slate-300"
                         />
                         <span className="text-sm text-navy-900 dark:text-white">
-                            {t(
-                                'admin.organization.displayName.blockProfanity',
-                                'Block profanity and inappropriate words',
-                            )}
+                            {t('admin.organization.displayName.blockProfanity', 'Block profanity and inappropriate words')}
                         </span>
                     </label>
                 </div>
@@ -338,11 +355,15 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
                                 type="radio"
                                 name="enforcement"
                                 checked={guidelines.enforcementLevel === option.value}
-                                onChange={() => updateGuideline('enforcementLevel', option.value as EnforcementLevel)}
+                                onChange={() =>
+                                    updateGuideline('enforcementLevel', option.value as EnforcementLevel)
+                                }
                                 className="mt-1"
                             />
                             <div>
-                                <p className="font-medium text-navy-900 dark:text-white">{option.label}</p>
+                                <p className="font-medium text-navy-900 dark:text-white">
+                                    {option.label}
+                                </p>
                                 <p className="text-sm text-slate-500">{option.description}</p>
                             </div>
                         </label>
@@ -354,3 +375,5 @@ export const DisplayNameGuidelinesConfig: React.FC<DisplayNameGuidelinesProps> =
 };
 
 export default DisplayNameGuidelinesConfig;
+
+

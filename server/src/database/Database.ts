@@ -14,13 +14,28 @@ import logger from '../utils/Logger.js';
 
 const require = createRequire(import.meta.url);
 const GLOBAL_DB_KEY = '__CONSULTIFY_GLOBAL_DB_INSTANCE__';
+const SQLITE_GLOBAL_KEY = '__CONSULTIFY_SQLITE_INSTANCE__';
 
-// Local references to the global singleton
-let dbInstance: IDatabase | null = (process as any)[GLOBAL_DB_KEY] || (globalThis as any)[GLOBAL_DB_KEY] || null;
-let dbInstancePromise: Promise<IDatabase> | null = null;
+// local cache
+let dbInstance: IDatabase | null = null;
 
-if (dbInstance) {
-    console.log('[Database] Initialized from global.');
+/**
+ * Ensures we have a single global instance across all module loads
+ */
+function getFromGlobal(): IDatabase | null {
+    return (process as any)[GLOBAL_DB_KEY] || 
+           (globalThis as any)[GLOBAL_DB_KEY] || 
+           (process as any)[SQLITE_GLOBAL_KEY] || 
+           (globalThis as any)[SQLITE_GLOBAL_KEY] || 
+           null;
+}
+
+function setToGlobal(db: IDatabase) {
+    (process as any)[GLOBAL_DB_KEY] = db;
+    (globalThis as any)[GLOBAL_DB_KEY] = db;
+    (process as any)[SQLITE_GLOBAL_KEY] = db;
+    (globalThis as any)[SQLITE_GLOBAL_KEY] = db;
+    dbInstance = db;
 }
 
 /**
@@ -40,12 +55,77 @@ function shimQuery(db: any) {
 }
 
 /**
- * Ensures we have a single global instance across all module loads
+ * Create database instance based on configuration
  */
-function syncWithGlobal() {
-    const globalHandle = (process as any)[GLOBAL_DB_KEY] || (globalThis as any)[GLOBAL_DB_KEY];
-    if (globalHandle && (!dbInstance || (dbInstance as any).__CLOSED__)) {
-        dbInstance = globalHandle;
+export async function createDatabase(): Promise<IDatabase> {
+    const existing = getFromGlobal();
+    if (existing && !(existing as any).__CLOSED__) {
+        dbInstance = existing;
+        return existing;
+    }
+
+    console.log('[Database] createDatabase() called. MOCK_DB:', process.env.MOCK_DB);
+
+    if (process.env.MOCK_DB === 'true' || (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.SQLITE_PATH)) {
+        console.log('[Database] Using MOCK database.');
+        const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
+        setToGlobal(mockDb);
+        return mockDb;
+    }
+
+    if (databaseConfig.type === 'postgres') {
+        const db = PostgresDatabase as unknown as IDatabase;
+        setToGlobal(db);
+        return db;
+    }
+
+    // Default to SQLite
+    console.log('[Database] Loading SQLite legacy module...');
+    const sqliteModule = await import('../../legacy_archive/database.sqlite.js').then((m) => m.default || m);
+    const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
+    shimQuery(db);
+    setToGlobal(db);
+    return db;
+}
+
+/**
+ * Get database singleton instance (async)
+ */
+export async function getDatabaseAsync(): Promise<IDatabase> {
+    const existing = getFromGlobal();
+    if (existing && !(existing as any).__CLOSED__) {
+        return existing;
+    }
+    return createDatabase();
+}
+
+/**
+ * Get internal database singleton instance (synchronous)
+ */
+export function getDatabaseInstance(): IDatabase {
+    const existing = getFromGlobal();
+    if (existing && !(existing as any).__CLOSED__) {
+        return existing;
+    }
+
+    console.log('[Database] getDatabaseInstance() (SYNC) needs initialization.');
+
+    if (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false' && !process.env.SQLITE_PATH) {
+        const mockDb = createMockDatabase();
+        setToGlobal(mockDb);
+        return mockDb;
+    }
+
+    // SQLite Sync Fallback
+    try {
+        const sqliteModule = require('../../legacy_archive/database.sqlite.js');
+        const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
+        shimQuery(db);
+        setToGlobal(db);
+        return db;
+    } catch (e) {
+        console.error('[Database] Sync initialization failed:', e);
+        throw new Error('Database not initialized. Call getDatabaseAsync() first.');
     }
 }
 
@@ -91,144 +171,13 @@ function createMockDatabase(): MockDatabase {
 }
 
 /**
- * Create database instance based on configuration
- */
-export async function createDatabase(): Promise<IDatabase> {
-    syncWithGlobal();
-    if (dbInstance && !(dbInstance as any).__CLOSED__ && !(dbInstance as any).isMock) {
-        return dbInstance;
-    }
-
-    console.log('[Database] createDatabase() called. MOCK_DB:', process.env.MOCK_DB);
-
-    // BRUTAL TEST ISOLATION
-    if (process.env.NODE_ENV === 'test' && process.env.MOCK_DB === 'false' && process.env.SQLITE_PATH) {
-        console.log('[Database] FORCING SQLITE_PATH FOR TEST:', process.env.SQLITE_PATH);
-        const sqliteModule = await import('../../legacy_archive/database.sqlite.js').then((m) => m.default || m);
-        const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
-        shimQuery(db);
-        dbInstance = db;
-        (process as any)[GLOBAL_DB_KEY] = db;
-        (globalThis as any)[GLOBAL_DB_KEY] = db;
-        return db;
-    }
-
-    if (process.env.MOCK_DB === 'true' || (process.env.NODE_ENV === 'test' && process.env.MOCK_DB !== 'false')) {
-        console.log('[Database] Using MOCK database.');
-        const mockDb = (global as any).__TEST_DB_MOCK__ || createMockDatabase();
-        dbInstance = mockDb;
-        (process as any)[GLOBAL_DB_KEY] = mockDb;
-        (globalThis as any)[GLOBAL_DB_KEY] = mockDb;
-        return mockDb;
-    }
-
-    const { type } = databaseConfig;
-    if (type === 'postgres') {
-        const db = PostgresDatabase as unknown as IDatabase;
-        dbInstance = db;
-        (process as any)[GLOBAL_DB_KEY] = db;
-        (globalThis as any)[GLOBAL_DB_KEY] = db;
-        return db;
-    }
-
-    // Default to SQLite
-    const sqliteModule = await import('../../legacy_archive/database.sqlite.js').then((m) => m.default || m);
-    const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
-    shimQuery(db);
-    dbInstance = db;
-    (process as any)[GLOBAL_DB_KEY] = db;
-    (globalThis as any)[GLOBAL_DB_KEY] = db;
-    return db;
-}
-
-/**
- * Get database singleton instance (async)
- */
-export async function getDatabaseAsync(): Promise<IDatabase> {
-    syncWithGlobal();
-    if (dbInstance && !(dbInstance as any).__CLOSED__) {
-        return dbInstance;
-    }
-
-    if (dbInstancePromise) {
-        const resolved = await dbInstancePromise;
-        dbInstance = resolved;
-        (process as any)[GLOBAL_DB_KEY] = resolved;
-        (globalThis as any)[GLOBAL_DB_KEY] = resolved;
-        return resolved;
-    }
-
-    dbInstancePromise = createDatabase();
-    const resolved = await dbInstancePromise;
-    dbInstance = resolved;
-    (process as any)[GLOBAL_DB_KEY] = resolved;
-    (globalThis as any)[GLOBAL_DB_KEY] = resolved;
-    return resolved;
-}
-
-/**
- * Get internal database singleton instance (synchronous)
- */
-export function getDatabaseInstance(): IDatabase {
-    // FORCE SYNC with global on every access
-    const globalHandle = (process as any)[GLOBAL_DB_KEY] || (globalThis as any)[GLOBAL_DB_KEY];
-    if (globalHandle && !(globalHandle as any).__CLOSED__) {
-        if (dbInstance !== globalHandle) {
-            dbInstance = globalHandle;
-        }
-        return globalHandle;
-    }
-
-    if (dbInstance && !(dbInstance as any).__CLOSED__) {
-        return dbInstance;
-    }
-
-    console.log('[Database] getDatabaseInstance() (SYNC) needs initialization.');
-
-    // BRUTAL SYNC FALLBACK FOR TESTS
-    if (process.env.NODE_ENV === 'test' && process.env.SQLITE_PATH && process.env.MOCK_DB === 'false') {
-        console.log('[Database] Sync fallback to legacy. PATH:', process.env.SQLITE_PATH);
-        const sqliteModule = require('../../legacy_archive/database.sqlite.js');
-        const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
-        shimQuery(db);
-        dbInstance = db;
-        (process as any)[GLOBAL_DB_KEY] = db;
-        (globalThis as any)[GLOBAL_DB_KEY] = db;
-        return db;
-    }
-
-
-    if (databaseConfig.type === 'sqlite') {
-        const sqliteModule = require('../../legacy_archive/database.sqlite.js');
-        const db = (sqliteModule.getDatabaseInstance ? sqliteModule.getDatabaseInstance() : sqliteModule) as IDatabase;
-        shimQuery(db);
-        dbInstance = db;
-        (process as any)[GLOBAL_DB_KEY] = db;
-        (globalThis as any)[GLOBAL_DB_KEY] = db;
-        dbInstancePromise = Promise.resolve(db);
-        return db;
-    }
-
-    // Fallback for tests if not initialized
-    if (process.env.NODE_ENV === 'test') {
-        const mockDb = createMockDatabase();
-        dbInstance = mockDb;
-        (process as any)[GLOBAL_DB_KEY] = mockDb;
-        (globalThis as any)[GLOBAL_DB_KEY] = mockDb;
-        return mockDb;
-    }
-
-    throw new Error('Database not initialized. Call getDatabaseAsync() first.');
-}
-
-/**
  * Global Database Instance Proxy
  */
 export const dbProxy = new Proxy({} as IDatabase, {
     get(_, prop) {
         if (prop === '__CLOSED__') {
-            syncWithGlobal();
-            return dbInstance ? (dbInstance as any).__CLOSED__ : false;
+            const current = getFromGlobal();
+            return current ? (current as any).__CLOSED__ : false;
         }
 
         const instance = getDatabaseInstance();
@@ -293,22 +242,15 @@ function resetConnectionLocally() {
     dbInstance = null;
     (process as any)[GLOBAL_DB_KEY] = null;
     (globalThis as any)[GLOBAL_DB_KEY] = null;
-    dbInstancePromise = null;
-
-    // Also clear legacy module internal key
-    const SQLITE_GLOBAL_KEY = '__CONSULTIFY_SQLITE_INSTANCE__';
     (process as any)[SQLITE_GLOBAL_KEY] = null;
     (globalThis as any)[SQLITE_GLOBAL_KEY] = null;
-    (global as any)[SQLITE_GLOBAL_KEY] = null;
 }
 
 /**
  * Force close connection and reset singleton
  */
 export async function resetConnection(): Promise<void> {
-    syncWithGlobal();
-    const db = dbInstance;
-
+    const db = getFromGlobal();
     resetConnectionLocally();
 
     if (db) {
@@ -330,6 +272,7 @@ export function getDatabase(): IDatabase {
 }
 
 export default dbProxy;
+
 
 declare global {
     var __TEST_DB_MOCK__: any;

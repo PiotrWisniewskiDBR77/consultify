@@ -42,10 +42,24 @@ export class MockEnhancedContextBuilder {
     }
 
     async build(params?: any) {
+        let narrative = 'Mock enhanced context';
+        if (params?.projectId === 'proj-1') {
+            narrative += ' Project Goal: World Domination';
+        }
+
+        const research = params?.knowledgeGaps?.length > 0
+            ? { content: 'Quantum market is growing fast.' }
+            : undefined;
+
+        if (params?.knowledgeGaps?.length > 0 && this.config.intelligentResearch?.research) {
+            await this.config.intelligentResearch.research(params.knowledgeGaps);
+        }
+
         return {
-            context: 'Mock enhanced context',
-            tokens: 100,
+            narrative,
+            metadata: { tokenEstimate: 100 },
             sources: [],
+            research,
             ...params
         };
     }
@@ -57,16 +71,13 @@ export class MockEnhancedContextBuilder {
     async triggerProactiveResearch(gaps: any[]) {
         return {
             researched: true,
-            findings: []
+            findings: [{ content: 'Quantum market is growing fast.' }]
         };
     }
 
-    formatSessionContext(session: any) {
-        return {
-            formatted: true,
-            compressed: false,
-            session
-        };
+    async formatSessionContext(session: any) {
+        if (!session?.history) return [];
+        return session.history.map((m: any) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`);
     }
 }
 

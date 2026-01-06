@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { extractThinkingSteps, enhanceResponse } from '../../../../server/services/ai/aiPipeline.js';
+import { extractThinkingSteps, enhanceResponse } from '../../../../server/src/services/ai/AIPipeline.js';
 
 describe('aiPipeline - Thinking Steps', () => {
   describe('extractThinkingSteps', () => {

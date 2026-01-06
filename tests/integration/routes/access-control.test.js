@@ -218,13 +218,13 @@ describe('Integration Test: Access Control Routes', () => {
     describe('Permission Enforcement', () => {
     const db = getDatabase();
         it('should enforce ADMIN role for admin routes', async () => {
-            // Regular user should not access admin routes
+            // Regular user should not access superadmin routes
             const res = await request(app)
-                .get('/api/organizations')
+                .get('/api/superadmin/organizations')
                 .set('Authorization', `Bearer ${userToken}`);
 
-            // May return 403 or 200 with filtered data, but should not allow admin actions
-            expect([200, 403]).toContain(res.status);
+            // Should return 403 for regular user
+            expect(res.status).toBe(403);
         });
 
         it('should enforce SUPERADMIN role for superadmin routes', async () => {

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { extractArtifacts, enhanceResponse } from '../../../../server/services/ai/aiPipeline.js';
+import { extractArtifacts, enhanceResponse } from '../../../../server/src/services/ai/AIPipeline.js';
 
 describe('aiPipeline - Artifacts', () => {
   describe('extractArtifacts', () => {

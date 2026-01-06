@@ -111,7 +111,7 @@ export const AddRemoveSeats: React.FC<AddRemoveSeatsProps> = ({
         try {
             await onConfirm(quantity);
             onClose();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'An error occurred');
         } finally {
             setIsProcessing(false);
@@ -140,7 +140,9 @@ export const AddRemoveSeats: React.FC<AddRemoveSeatsProps> = ({
                         <span className="text-sm text-slate-500 dark:text-slate-400">
                             {t('admin.billing.seats.currentPlan', 'Current Plan')}
                         </span>
-                        <span className="font-medium text-navy-900 dark:text-white">{plan.name}</span>
+                        <span className="font-medium text-navy-900 dark:text-white">
+                            {plan.name}
+                        </span>
                     </div>
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-slate-500 dark:text-slate-400">
@@ -241,7 +243,9 @@ export const AddRemoveSeats: React.FC<AddRemoveSeatsProps> = ({
                             <span className="text-sm text-slate-500 dark:text-slate-400">
                                 {t('admin.billing.seats.availableSeats', 'Available seats')}
                             </span>
-                            <span className="font-medium text-navy-900 dark:text-white">{availableAfter}</span>
+                            <span className="font-medium text-navy-900 dark:text-white">
+                                {availableAfter}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -400,18 +404,26 @@ export const AddRemoveSeats: React.FC<AddRemoveSeatsProps> = ({
                     <Button
                         onClick={handleConfirm}
                         disabled={isProcessing || (mode === 'remove' && quantity > maxRemovable)}
-                        icon={isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                        className={mode === 'add' ? 'bg-emerald-600 hover:bg-emerald-700' : undefined}
+                        icon={
+                            isProcessing ? (
+                                <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                                <Check size={16} />
+                            )
+                        }
+                        className={
+                            mode === 'add' ? 'bg-emerald-600 hover:bg-emerald-700' : undefined
+                        }
                     >
                         {isProcessing
                             ? t('common.processing', 'Processing...')
                             : mode === 'add'
-                              ? t('admin.billing.seats.confirmAdd', 'Add {{count}} Seats', {
-                                    count: quantity,
-                                })
-                              : t('admin.billing.seats.confirmRemove', 'Remove {{count}} Seats', {
-                                    count: quantity,
-                                })}
+                                ? t('admin.billing.seats.confirmAdd', 'Add {{count}} Seats', {
+                                      count: quantity,
+                                  })
+                                : t('admin.billing.seats.confirmRemove', 'Remove {{count}} Seats', {
+                                      count: quantity,
+                                  })}
                     </Button>
                 </div>
             </div>
@@ -420,3 +432,5 @@ export const AddRemoveSeats: React.FC<AddRemoveSeatsProps> = ({
 };
 
 export default AddRemoveSeats;
+
+
