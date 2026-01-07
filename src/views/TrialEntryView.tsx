@@ -50,7 +50,7 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
                 setError(result.error || 'Błąd podczas aktywacji dostępu.');
                 setIsChecking(false);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('Access code validation failed:', err);
             setError('System weryfikacji jest chwilowo niedostępny. Spróbuj później.');
             setIsChecking(false);

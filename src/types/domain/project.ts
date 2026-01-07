@@ -3,6 +3,8 @@
  * Enterprise SaaS Architecture - Core Project Types
  */
 
+import { InitiativeStatus } from '../core';
+
 // ==========================================
 // PROJECT CORE TYPES
 // ==========================================
@@ -37,6 +39,22 @@ export interface Project {
     health?: ProjectHealth;
     settings?: ProjectSettings;
     metadata?: ProjectMetadata;
+    initiatives?: any[];
+    assessments?: any[];
+    documents?: any[];
+    // Aggregated counts for UI
+    memberCount?: number;
+    initiativeCount?: number;
+    assessmentCount?: number;
+    documentCount?: number;
+    owner?: any;
+    tasks?: any[];
+    team?: any[];
+    created_at?: string; // Alias for createdAt
+    goal?: string;
+    workstreams?: any[];
+    owner_first_name?: string;
+    owner_last_name?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -81,9 +99,12 @@ export interface ProjectMetadata {
 // TASK TYPES
 // ==========================================
 
-export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done' | 'blocked' | 'cancelled';
+// TaskStatus - string union for flexibility (supports both lowercase API and uppercase enum values)
+export type TaskStatus =
+    | 'backlog' | 'todo' | 'in_progress' | 'review' | 'done' | 'blocked' | 'cancelled'
+    | 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE';
 
-export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'critical' | 'urgent' | 'Low' | 'Medium' | 'High' | 'Critical';
 
 export type TaskType = 'task' | 'bug' | 'story' | 'epic' | 'subtask' | 'pilot';
 
@@ -99,10 +120,14 @@ export interface Task {
     status: TaskStatus;
     priority: TaskPriority;
     assigneeId?: string;
+    assignee?: any; // Full assignee object
     assigneeName?: string;
     assigneeAvatar?: string;
     reporterId?: string;
     reporterName?: string;
+    signedOff?: boolean;
+    signedOffBy?: string;
+    signedOffAt?: string;
     dueDate?: string;
     startDate?: string;
     completedAt?: string;
@@ -121,6 +146,24 @@ export interface Task {
     completedSubtaskCount?: number;
     commentCount?: number;
     pmoCategory?: string;
+    taskType?: string;
+    stepPhase?: string;
+    decisionImpact?: any;
+    weight?: number;
+    // Extended PMO fields
+    aiInsight?: any;
+    expectedOutcome?: string;
+    strategicContribution?: string | string[];
+    weightReason?: string;
+    blockingIssues?: string[] | string;
+    evidenceRequired?: boolean | string[];
+    riskRating?: string;
+    deliverables?: any[];
+    stakeholders?: any[];
+    why?: string;
+    progress?: number;
+    changeLog?: any[];
+    acceptanceCriteria?: string[] | boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -199,15 +242,8 @@ export interface CommentReaction {
 // INITIATIVE TYPES
 // ==========================================
 
-export type InitiativeStatus =
-    | 'draft'
-    | 'planning'
-    | 'approved'
-    | 'active'
-    | 'on_hold'
-    | 'completed'
-    | 'cancelled'
-    | 'archived';
+// InitiativeStatus is imported from core.ts - do not redefine here
+// Use: import { InitiativeStatus } from '../core';
 
 export type InitiativeCategory =
     | 'digital_transformation'
@@ -226,6 +262,7 @@ export interface Initiative {
     id: string;
     projectId: string;
     title: string;
+    name?: string; // Alias for title
     description?: string;
     status: InitiativeStatus;
     priority: TaskPriority;
@@ -255,6 +292,26 @@ export interface Initiative {
     completedTaskCount?: number;
     gateStatus?: 'passed' | 'pending' | 'failed';
     currentPhase?: string;
+    effortProfile?: any;
+    plannedEndDate?: string;
+    strategicRole?: string;
+    aiConfidence?: number;
+    strategicIntent?: string;
+    ownerExecution?: string;
+    // Extended fields for UI components
+    blockedReason?: string;
+    tasks?: any[];
+    slaDeadline?: string;
+    currentStage?: string;
+    axis?: string | { x: string; y: string };
+    summary?: string;
+    businessValue?: number | string;
+    placementReason?: string;
+    problemStatement?: string;
+    relatedGap?: string;
+    costCapex?: number;
+    costOpex?: number;
+    expectedRoi?: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -274,6 +331,10 @@ export interface InitiativeKPI {
     direction: 'increase' | 'decrease' | 'maintain';
     trend?: 'up' | 'down' | 'stable';
     measurements?: KPIMeasurement[];
+    isOnTarget?: boolean;
+    isPrimary?: boolean;
+    targetValue?: number;
+    latestValue?: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -322,12 +383,17 @@ export interface ProjectMember {
     projectId: string;
     userId: string;
     userName: string;
+    firstName?: string;
+    lastName?: string;
     email: string;
     avatarUrl?: string;
     role: ProjectRole;
+    projectRole?: string; // Alias
     permissions?: string[];
     joinedAt: string;
     lastActive?: string;
+    allocationPercent?: number;
+    workstreamId?: string;
 }
 
 // ==========================================

@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import type { ChannelSettings, NotificationCategory, NotificationPreferences } from '../types/myWork';
+import type { ChannelSettings, NotificationCategory, MyWorkNotificationPreferences as NotificationPreferences } from '../types/myWork';
 
 interface UseNotificationPreferencesOptions {
     autoLoad?: boolean;
@@ -103,7 +103,7 @@ export function useNotificationPreferences(
             const updatedCategory = { ...currentCategory, [channel]: enabled };
 
             // Optimistic update
-            setPreferences((prev) =>
+            setPreferences((prev: any) =>
                 prev
                     ? {
                           ...prev,
@@ -138,7 +138,7 @@ export function useNotificationPreferences(
             };
 
             // Optimistic update
-            setPreferences((prev) =>
+            setPreferences((prev: any) =>
                 prev
                     ? {
                           ...prev,
@@ -162,7 +162,7 @@ export function useNotificationPreferences(
             const updatedSettings = { ...currentSettings, ...settings };
 
             // Optimistic update
-            setPreferences((prev) =>
+            setPreferences((prev: any) =>
                 prev
                     ? {
                           ...prev,

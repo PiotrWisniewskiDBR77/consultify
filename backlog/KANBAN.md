@@ -1,6 +1,6 @@
 # 🎯 Consultify Backlog Kanban Board
 
-**Data ostatniej aktualizacji:** <!-- DATA_AKTUALIZACJI -->
+**Data ostatniej aktualizacji:** 2026-01-06
 **Zarządzający:** Piotr Wiśniewski (PM)
 **Metodologia:** Meta-PMO Framework (ISO 21500 + PMBOK 7 + PRINCE2)
 
@@ -10,7 +10,7 @@
 
 | Metryka | Wartość | Status |
 |---------|---------|--------|
-| **Razem zadań** | <!-- LICZBA_ZADAN --> | 🔄 |
+| **Razem zadań** | 1 | 🔄 |
 | **W trakcie** | <!-- W_TRAKCIE --> | 🚧 |
 | **Zrobione (ostatnie 30 dni)** | <!-- ZROBIONE_30 --> | ✅ |
 | **Średni czas realizacji** | <!-- SREDNI_CZAS --> | 📈 |
@@ -43,6 +43,37 @@
 *Zadania zidentyfikowane ale nieprzypisane do cyklu*
 
 <!-- BACKLOG_TASKS_START -->
+
+#### 🔧 [TECH-DEBT-20260106-001] Bezpieczne odseparowanie JS od TS - Stopniowa migracja do kwarantanny
+
+**Opis:** Po migracji z JavaScript do TypeScript pozostały masywne duplikaty plików (~884 pliki `.js` obok `.ts`). Zadanie obejmuje stopniowe przenoszenie nieużywanych plików `.js` do kwarantanny z fazą testowania przed finalnym usunięciem.
+
+**Kontekst biznesowy:**
+- Wpływ na biznes: Redukcja technical debt, poprawa maintainability, lepsze statystyki GitHub
+- Pilność: P1 - Wysoki priorytet (znaczący wpływ na efektywność)
+- Zakres oddziaływania: Cały backend (`server/src/`)
+
+**Kryteria akceptacji:**
+- [ ] 0 duplikatów JS/TS w głównym kodzie (oprócz kwarantanny/archiwum)
+- [ ] 100% testów przechodzi po każdej fazie migracji
+- [ ] GitHub pokazuje TypeScript >80% (obecnie <50%)
+- [ ] Zero regresji produkcyjnych podczas procesu
+- [ ] Dokumentacja procesu zaktualizowana
+
+**Szacunkowa złożoność:** XL (2+ tygodnie - stopniowe podejście)
+**Priorytet:** P1
+**Przypisany do:** TBD
+**Termin:** TBD (zależne od stabilności systemu testów)
+**Zależności:** 
+- System testów musi być stabilny (obecnie w budowie - **BLOCKER**)
+- CI/CD pipeline działający
+
+**Dokumentacja dodatkowa:**
+- [Rejestr zadania](../../backlog/registers/technical-debt/TECH-DEBT-20260106-001.md)
+- Analiza duplikatów wykonana 2026-01-06
+
+---
+
 <!-- BACKLOG_TASKS_END -->
 
 ---

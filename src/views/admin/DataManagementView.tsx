@@ -156,7 +156,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                 const data = await res.json();
                 toast.error(data.error || 'Export failed');
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Export failed');
         }
         setExporting(null);
@@ -183,7 +183,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                 const data = await res.json();
                 toast.error(data.error || 'Export failed');
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Export failed');
         }
         setExportingAll(false);
@@ -210,7 +210,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({ classNam
                 const data = await res.json();
                 toast.error(data.error || 'Failed to save settings');
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to save settings');
         }
     };

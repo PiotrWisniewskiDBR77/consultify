@@ -163,11 +163,11 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
     };
 
     const getRequiredItems = () => {
-        return template.checklist.filter((item) => item.required);
+        return template.checklist.filter((item: any) => item.required);
     };
 
     const getCompletedItems = () => {
-        return template.checklist.filter((item) => {
+        return template.checklist.filter((item: any) => {
             const answer = answers[item.id];
             if (item.type === 'photo') {
                 return photos.length > 0;
@@ -179,7 +179,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
     const isTemplateComplete = () => {
         const required = getRequiredItems();
         const completed = getCompletedItems();
-        return required.every((req) => completed.some((comp) => comp.id === req.id));
+        return required.every((req: any) => completed.some((comp: any) => comp.id === req.id));
     };
 
     const completionPercentage = (getCompletedItems().length / template.checklist.length) * 100;
@@ -274,7 +274,7 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
 
             {/* Observation Checklist */}
             <div className="px-4 py-4 space-y-4">
-                {template.checklist.map((item) => {
+                {template.checklist.map((item: any) => {
                     const answer = answers[item.id];
                     const isPhotoItem = item.type === 'photo';
                     const isCompleted = isPhotoItem
@@ -284,13 +284,12 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                     return (
                         <div
                             key={item.id}
-                            className={`bg-white dark:bg-gray-800 rounded-lg p-4 border-2 ${
-                                item.required && !isCompleted
+                            className={`bg-white dark:bg-gray-800 rounded-lg p-4 border-2 ${item.required && !isCompleted
                                     ? 'border-yellow-300 bg-yellow-50 dark:bg-yellow-900/10'
                                     : isCompleted
-                                      ? 'border-green-300 bg-green-50 dark:bg-green-900/10'
-                                      : 'border-gray-200 dark:border-gray-700'
-                            }`}
+                                        ? 'border-green-300 bg-green-50 dark:bg-green-900/10'
+                                        : 'border-gray-200 dark:border-gray-700'
+                                }`}
                         >
                             <div className="flex items-start justify-between mb-2">
                                 <label className="font-medium text-sm flex-1">
@@ -307,25 +306,23 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => handleAnswer(item.id, true)}
-                                        className={`flex-1 min-h-[48px] py-3 px-4 rounded-xl font-semibold text-base transition-all active:scale-95 ${
-                                            answer === true
+                                        className={`flex-1 min-h-[48px] py-3 px-4 rounded-xl font-semibold text-base transition-all active:scale-95 ${answer === true
                                                 ? 'bg-green-500 text-white shadow-lg shadow-green-500/25'
                                                 : forceDarkMode
-                                                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-                                        }`}
+                                                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                                            }`}
                                     >
                                         ✓ Yes
                                     </button>
                                     <button
                                         onClick={() => handleAnswer(item.id, false)}
-                                        className={`flex-1 min-h-[48px] py-3 px-4 rounded-xl font-semibold text-base transition-all active:scale-95 ${
-                                            answer === false
+                                        className={`flex-1 min-h-[48px] py-3 px-4 rounded-xl font-semibold text-base transition-all active:scale-95 ${answer === false
                                                 ? 'bg-red-500 text-white shadow-lg shadow-red-500/25'
                                                 : forceDarkMode
-                                                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-                                        }`}
+                                                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                                            }`}
                                     >
                                         ✗ No
                                     </button>
@@ -338,13 +335,12 @@ export const RapidLeanObservationForm: React.FC<RapidLeanObservationFormProps> =
                                         <button
                                             key={value}
                                             onClick={() => handleAnswer(item.id, value)}
-                                            className={`min-h-[48px] py-3 px-2 rounded-xl text-base font-semibold transition-all active:scale-95 ${
-                                                answer === value
+                                            className={`min-h-[48px] py-3 px-2 rounded-xl text-base font-semibold transition-all active:scale-95 ${answer === value
                                                     ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
                                                     : forceDarkMode
-                                                      ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                                                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-                                            }`}
+                                                        ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                                                }`}
                                         >
                                             {value}
                                         </button>

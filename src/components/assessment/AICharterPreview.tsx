@@ -389,7 +389,7 @@ export const AICharterPreview: React.FC<AICharterPreviewProps> = ({
 
                                     {section.id === 'kill' && (
                                         <div className="space-y-2">
-                                            {(charter.killCriteria || []).map((criteria, i) => (
+                                            {(charter.killCriteria || []).map((criteria: any, i: number) => (
                                                 <div
                                                     key={i}
                                                     className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg border border-amber-200 dark:border-amber-500/20"

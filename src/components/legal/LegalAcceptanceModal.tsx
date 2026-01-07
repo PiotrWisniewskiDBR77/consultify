@@ -146,7 +146,7 @@ export const LegalAcceptanceModal: React.FC<LegalAcceptanceModalProps> = ({ onAc
             }
 
             onAccepted();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to accept documents');
         } finally {
             setAccepting(false);

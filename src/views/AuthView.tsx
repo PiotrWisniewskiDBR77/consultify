@@ -150,7 +150,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             }
 
             onAuthSuccess(user);
-        } catch (err: unknown) {
+        } catch (err: any) {
             if (err.status === 'pending') {
                 setIsPending(true);
                 return;
@@ -165,7 +165,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
             // Use the new demo login endpoint
             const user = await Api.demoLogin();
             onAuthSuccess(user);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError('Failed to start demo: ' + err.message);
         } finally {
             setIsDemoLoading(false);
@@ -178,7 +178,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
         try {
             const user = await Api.demoLogin();
             onAuthSuccess(user);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError('Failed to start demo: ' + err.message);
             setShowDemoRedirect(false);
         } finally {
@@ -222,7 +222,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
                 console.log('Login successful, token stored:', !!token);
                 onAuthSuccess(user);
                 return; // Success - exit function
-            } catch (err: unknown) {
+            } catch (err: any) {
                 lastError = err;
                 console.error('Login error:', err);
 

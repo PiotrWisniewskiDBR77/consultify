@@ -205,7 +205,7 @@ export const FreeAssessmentView: React.FC = () => {
         addUserMessage(text);
 
         if (currentStep === AssessmentStep.CORE_PROCESSES) {
-            setProfileData((prev) => ({ ...prev, coreProcesses: values }));
+            setProfileData((prev: any) => ({ ...prev, coreProcesses: values }));
             setCurrentStep(AssessmentStep.IT_LANDSCAPE);
             addAiMessage('Got it. Now, tell me about your IT Landscape. Which ERP do you use?', [
                 { id: 'sap', label: 'SAP', value: 'SAP' },
@@ -230,7 +230,7 @@ export const FreeAssessmentView: React.FC = () => {
                 break;
 
             case AssessmentStep.INDUSTRY:
-                setProfileData((prev) => ({ ...prev, industry: value }));
+                setProfileData((prev: any) => ({ ...prev, industry: value }));
                 setCurrentStep(AssessmentStep.SIZE);
                 addAiMessage(t.size, [
                     { id: 's', label: '< 50', value: '< 50' },
@@ -240,7 +240,7 @@ export const FreeAssessmentView: React.FC = () => {
                 break;
 
             case AssessmentStep.SIZE:
-                setProfileData((prev) => ({ ...prev, size: value }));
+                setProfileData((prev: any) => ({ ...prev, size: value }));
                 setCurrentStep(AssessmentStep.COUNTRY);
                 addAiMessage(t.country, [
                     { id: 'pl', label: 'Poland', value: 'Poland' },
@@ -251,7 +251,7 @@ export const FreeAssessmentView: React.FC = () => {
                 break;
 
             case AssessmentStep.COUNTRY:
-                setProfileData((prev) => ({ ...prev, country: value }));
+                setProfileData((prev: any) => ({ ...prev, country: value }));
                 // Move to Business Model
                 setCurrentStep(AssessmentStep.BUSINESS_MODEL);
                 addAiMessage('What is your primary Business Model?', [
@@ -262,7 +262,7 @@ export const FreeAssessmentView: React.FC = () => {
                 break;
 
             case AssessmentStep.BUSINESS_MODEL:
-                setProfileData((prev) => ({ ...prev, businessModel: { type: [value], description: '' } }));
+                setProfileData((prev: any) => ({ ...prev, businessModel: { type: [value], description: '' } }));
                 setCurrentStep(AssessmentStep.CORE_PROCESSES);
                 addAiMessage(
                     'Select your Core Processes (Multiple):',
@@ -278,7 +278,7 @@ export const FreeAssessmentView: React.FC = () => {
                 break;
 
             case AssessmentStep.IT_LANDSCAPE:
-                setProfileData((prev) => ({ ...prev, itLandscape: { ...prev.itLandscape, erp: value } }));
+                setProfileData((prev: any) => ({ ...prev, itLandscape: { ...prev.itLandscape, erp: value } }));
                 setSessionData({ ...sessionData, step1Completed: true }); // Mark Step 1 Done
 
                 // Trigger Summary Step

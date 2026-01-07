@@ -207,7 +207,7 @@ export const AppRoutes: React.FC = () => {
                         path={ROUTES.MY_WORK}
                         element={
                             <AnimationWrapper variant="slideUp">
-                                <MyWorkView currentUser={currentUser} onNavigate={(view) => setCurrentView(view as AppView)} />
+                                <MyWorkView currentUser={currentUser as any} onNavigate={(view) => setCurrentView(view as AppView)} />
                             </AnimationWrapper>
                         }
                     />
@@ -273,7 +273,7 @@ export const AppRoutes: React.FC = () => {
                                 <RouteErrorBoundary>
                                     <AnimationWrapper variant="fade">
                                         <SettingsView
-                                            currentUser={currentUser}
+                                            currentUser={currentUser as any}
                                             onUpdateUser={(updates) => setCurrentUser(currentUser ? { ...currentUser, ...updates } : null)}
                                             theme={theme as 'light' | 'dark' | 'system'}
                                             toggleTheme={toggleTheme}
@@ -292,7 +292,7 @@ export const AppRoutes: React.FC = () => {
                                 <RouteErrorBoundary>
                                     <AnimationWrapper variant="fade">
                                         <AdminView
-                                            currentUser={currentUser}
+                                            currentUser={currentUser as any}
                                             onNavigate={(view) => setCurrentView(view as AppView)}
                                         />
                                     </AnimationWrapper>

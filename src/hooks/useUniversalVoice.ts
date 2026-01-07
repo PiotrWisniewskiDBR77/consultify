@@ -329,7 +329,7 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
                         if (continuousModeRef.current && text.trim()) {
                             await onSendMessage?.(text.trim());
                         }
-                    } catch (error: unknown) {
+                    } catch (error: any) {
                         console.error('[Voice] Transcription error:', error);
                         setState((prev) => ({
                             ...prev,
@@ -352,7 +352,7 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
                 duration++;
                 setState((prev) => ({ ...prev, recordingDuration: duration }));
             }, 1000);
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('[Voice] Failed to start recording:', error);
             setState((prev) => ({
                 ...prev,
@@ -528,7 +528,7 @@ export function useUniversalVoice(options: UseUniversalVoiceOptions = {}): UseUn
                         audio.play();
                     });
                 }
-            } catch (error: unknown) {
+            } catch (error: any) {
                 console.error('[Voice] TTS error:', error);
                 setState((prev) => ({
                     ...prev,

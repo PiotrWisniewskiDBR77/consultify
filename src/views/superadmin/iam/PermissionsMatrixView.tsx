@@ -59,9 +59,9 @@ const PermissionsMatrixView: React.FC = () => {
                 Api.getPermissionsStats(),
             ]);
             setPermissions(permsData);
-            setMatrix(matrixData);
-            setStats(statsData);
-        } catch (err: unknown) {
+            setMatrix(matrixData as any);
+            setStats(statsData as any);
+        } catch (err: any) {
             setError(err.message || 'Failed to load permissions');
         } finally {
             setLoading(false);
@@ -90,7 +90,7 @@ const PermissionsMatrixView: React.FC = () => {
             });
 
             toast.success(`Permission ${!currentValue ? 'granted' : 'revoked'} for ${role}`);
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to toggle permission');
         } finally {
             setToggling(null);
@@ -105,7 +105,7 @@ const PermissionsMatrixView: React.FC = () => {
             setShowCopyModal(false);
             setCopyFormData({ sourceRole: '', targetRole: '' });
             toast.success(`Permissions copied from ${copyFormData.sourceRole} to ${copyFormData.targetRole}`);
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to copy permissions');
         } finally {
             setSaving(false);
@@ -119,7 +119,7 @@ const PermissionsMatrixView: React.FC = () => {
             await loadData();
             setShowCreateModal(false);
             setFormData({ key: '', description: '', category: 'general' });
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to create permission');
         } finally {
             setSaving(false);
@@ -137,7 +137,7 @@ const PermissionsMatrixView: React.FC = () => {
             await loadData();
             setEditingPermission(null);
             setFormData({ key: '', description: '', category: 'general' });
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to update permission');
         } finally {
             setSaving(false);
@@ -149,7 +149,7 @@ const PermissionsMatrixView: React.FC = () => {
         try {
             await Api.deleteAdminPermission(key);
             await loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to delete permission');
         }
     };

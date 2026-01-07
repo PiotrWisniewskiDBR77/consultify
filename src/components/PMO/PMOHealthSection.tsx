@@ -56,7 +56,7 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({ projectId, o
                 } else {
                     throw new Error('Failed to fetch PMO health');
                 }
-            } catch (err: unknown) {
+            } catch (err: any) {
                 console.error('[PMOHealth] Error:', err);
                 setError(err.message);
             } finally {

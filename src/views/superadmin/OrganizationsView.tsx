@@ -150,7 +150,7 @@ export const OrganizationsView: React.FC = () => {
             await Api.approveAccessRequest(id);
             toast.success('Access request approved');
             fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to approve request');
         } finally {
             setProcessingId(null);
@@ -166,7 +166,7 @@ export const OrganizationsView: React.FC = () => {
             await Api.rejectAccessRequest(id, reason);
             toast.success('Access request rejected');
             fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to reject request');
         } finally {
             setProcessingId(null);
@@ -182,7 +182,7 @@ export const OrganizationsView: React.FC = () => {
             setShowCodeModal(false);
             setNewCodeData({ code: '', role: 'USER', maxUses: 100, expiresAt: '' });
             fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to generate code');
         }
     };
@@ -262,11 +262,10 @@ export const OrganizationsView: React.FC = () => {
             <div className="flex gap-2 mb-6">
                 <button
                     onClick={() => setActiveTab('organizations')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                        activeTab === 'organizations'
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'organizations'
                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                             : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                    }`}
+                        }`}
                 >
                     <Building2 size={16} />
                     All Organizations
@@ -274,11 +273,10 @@ export const OrganizationsView: React.FC = () => {
                 </button>
                 <button
                     onClick={() => setActiveTab('pending')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                        activeTab === 'pending'
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'pending'
                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                             : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                    }`}
+                        }`}
                 >
                     <Clock size={16} />
                     Pending Requests
@@ -290,11 +288,10 @@ export const OrganizationsView: React.FC = () => {
                 </button>
                 <button
                     onClick={() => setActiveTab('codes')}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                        activeTab === 'codes'
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'codes'
                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                             : 'bg-navy-800 text-slate-400 hover:text-white hover:bg-navy-700'
-                    }`}
+                        }`}
                 >
                     <Key size={16} />
                     Access Codes
@@ -433,7 +430,7 @@ export const OrganizationsView: React.FC = () => {
                                                     )}
                                                 </td>
                                                 <td className="p-4 text-slate-500 text-xs">
-                                                    {new Date(org.created_at).toLocaleDateString()}
+                                                    {org.created_at ? new Date(org.created_at).toLocaleDateString() : '-'}
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     {isEditing ? (
@@ -533,13 +530,12 @@ export const OrganizationsView: React.FC = () => {
                                         </td>
                                         <td className="p-4">
                                             <span
-                                                className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                                                    req.status === 'approved'
+                                                className={`px-2 py-1 rounded text-xs font-bold uppercase ${req.status === 'approved'
                                                         ? 'bg-emerald-500/20 text-emerald-400'
                                                         : req.status === 'rejected'
-                                                          ? 'bg-red-500/20 text-red-400'
-                                                          : 'bg-yellow-500/20 text-yellow-400'
-                                                }`}
+                                                            ? 'bg-red-500/20 text-red-400'
+                                                            : 'bg-yellow-500/20 text-yellow-400'
+                                                    }`}
                                             >
                                                 {req.status}
                                             </span>

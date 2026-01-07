@@ -86,7 +86,7 @@ export const FullRolloutView: React.FC = () => {
                     onNextStep={() => {
                         onNavigate(AppView.FULL_STEP6_REPORTS);
                     }}
-                    language={language}
+                    language={language as any}
                 />
             </div>
         </SplitLayout>

@@ -164,7 +164,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
             } else {
                 toast.error(data.error || 'Failed to create API key');
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to create API key');
         }
         setCreating(false);
@@ -189,7 +189,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
             } else {
                 toast.error(data.error || 'Failed to revoke API key');
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to revoke API key');
         }
     };

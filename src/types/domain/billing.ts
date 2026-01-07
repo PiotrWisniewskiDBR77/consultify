@@ -198,14 +198,17 @@ export interface Invoice {
     tax: number;
     total: number;
     amountPaid: number;
+    amount_paid?: number; // Alias for amountPaid
     amountDue: number;
     dueDate?: string;
     paidAt?: string;
+    created_at?: string; // Alias for createdAt
     stripeInvoiceId?: string;
     items: InvoiceItem[];
     discounts?: InvoiceDiscount[];
     billingAddress?: BillingAddress;
     pdfUrl?: string;
+    downloadUrl?: string; // Alias for pdfUrl
     hostedInvoiceUrl?: string;
     metadata?: Record<string, unknown>;
     createdAt: string;

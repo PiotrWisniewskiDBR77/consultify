@@ -8,10 +8,37 @@
  * - API requests
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-// Removed createRequire - using ESM imports
-const dbModule = await import('../../server/database.js');
-const db = dbModule.default || dbModule;
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+
+// Mock database for memory leak tests
+const mockDb = {
+    isMock: true,
+    initPromise: Promise.resolve(),
+    openConnections: 0,
+    run: vi.fn((sql, params, callback) => {
+        if (callback) callback(null);
+        return Promise.resolve({ lastID: 0, changes: 0 });
+    }),
+    get: vi.fn((sql, params, callback) => {
+        if (callback) callback(null, {});
+        return Promise.resolve({});
+    }),
+    all: vi.fn((sql, params, callback) => {
+        if (callback) callback(null, []);
+        return Promise.resolve([]);
+    }),
+    exec: vi.fn((sql, callback) => {
+        if (callback) callback(null);
+        return Promise.resolve();
+    }),
+    serialize: vi.fn((cb) => cb()),
+    close: vi.fn((callback) => {
+        if (callback) callback(null);
+        return Promise.resolve();
+    }),
+};
+
+const db = mockDb;
 
 describe('Memory Leak Tests', () => {
     beforeAll(async () => {

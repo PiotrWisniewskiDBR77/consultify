@@ -105,9 +105,9 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({ onGoalSelected, init
 
             // Trigger appropriate tour
             if (goal.tourId === 'first_value') {
-                startTour(FIRST_VALUE_TOUR);
+                startTour(FIRST_VALUE_TOUR as any);
             } else if (goal.tourId === 'team_expansion') {
-                startTour(TEAM_TOUR);
+                startTour(TEAM_TOUR as any);
             }
 
             onGoalSelected(goal);

@@ -151,7 +151,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
 
             setCreditNotes(notesRes.creditNotes || []);
             if (statsRes) setStats(statsRes.stats);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to load credit notes');
         } finally {
             setLoading(false);
@@ -180,7 +180,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
             setShowApplyModal(false);
             setSelectedNote(null);
             fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to apply credit note');
         }
     };
@@ -190,7 +190,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
         try {
             await Api.post(`/billing/credit-notes/${creditNoteId}/refund`, {});
             void fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to refund credit note';
             setError(errorMessage);
         }
@@ -201,7 +201,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({ organization
         try {
             await Api.post(`/billing/credit-notes/${creditNoteId}/void`, {});
             void fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to void credit note';
             setError(errorMessage);
         }
@@ -654,7 +654,7 @@ const CreateCreditNoteModal: React.FC<CreateCreditNoteModalProps> = ({ onClose, 
                 })),
             });
             onCreated();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to create credit note');
         } finally {
             setLoading(false);

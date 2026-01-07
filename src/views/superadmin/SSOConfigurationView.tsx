@@ -140,7 +140,7 @@ export const SSOConfigurationView: React.FC = () => {
             setMessage({ type: 'success', text: 'Google SSO configuration saved successfully!' });
             setGoogleForm({ organizationId: '', clientId: '', clientSecret: '', allowedDomains: '' });
             fetchSSOConfigs();
-        } catch (error: unknown) {
+        } catch (error: any) {
             setMessage({ type: 'error', text: error.response?.data?.error || 'Failed to save configuration' });
         } finally {
             setSaving(false);

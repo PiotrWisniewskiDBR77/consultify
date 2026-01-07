@@ -4,6 +4,9 @@ import { ChatHistorySidebar } from './ChatHistorySidebar';
 
 interface ChatSlidingPanelProps {
     trigger?: React.ReactNode;
+    onNewChat?: () => void;
+    onSelectConversation?: (id: string) => void;
+    activeConversationId?: string | null;
 }
 
 export const ChatSlidingPanel: React.FC<ChatSlidingPanelProps> = ({ trigger }) => {

@@ -147,7 +147,7 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({ projectI
             const response = await axios.get(`/api/rapidlean/${assessmentId}`);
             setAssessment(response.data.assessment);
             setCurrentView('results');
-        } catch (error: unknown) {
+        } catch (error: any) {
             setError('Failed to load assessment');
         } finally {
             setLoading(false);
@@ -198,7 +198,7 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({ projectI
             setAssessment(response.data.assessment);
             setReport(response.data.report);
             setCurrentView('results');
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Error generating assessment:', error);
             setError(error.response?.data?.error || 'Failed to generate assessment');
         } finally {
@@ -219,7 +219,7 @@ export const RapidLeanWorkspace: React.FC<RapidLeanWorkspaceProps> = ({ projectI
 
             setReport(response.data);
             setCurrentView('report');
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Error generating report:', error);
             setError(error.response?.data?.error || 'Failed to generate report');
         } finally {

@@ -62,8 +62,7 @@ export enum AppView {
     ECONOMICS = 'ECONOMICS', // Module: Economics & Value Realization (Digitization Maturity)
     FULL_STEP5_EXECUTION = 'FULL_STEP5_EXECUTION', // Keeping for backward compat
     IMPLEMENTATION = 'IMPLEMENTATION', // Module 4: Wdrożenie
-    // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
-    FULL_PILOT_EXECUTION = 'IMPLEMENTATION', // @deprecated - use IMPLEMENTATION
+    FULL_PILOT_EXECUTION = 'FULL_PILOT_EXECUTION', // @deprecated - alias for IMPLEMENTATION
     FULL_ROLLOUT = 'FULL_ROLLOUT', // Module 5
     FULL_STEP6_REPORTS = 'FULL_STEP6_REPORTS',
     DRD_AUDIT_REPORT = 'DRD_AUDIT_REPORT', // DRD Audit Report Builder
@@ -109,7 +108,7 @@ export enum AppView {
     SETTINGS_LOGIN_HISTORY = 'SETTINGS_LOGIN_HISTORY',
     SETTINGS_DATA_CONTROLS = 'SETTINGS_DATA_CONTROLS',
 
-    SETTINGS_API_KEYS = 'ADMIN_API_KEYS', // Mapping to existing key
+    SETTINGS_API_KEYS = 'SETTINGS_API_KEYS', // Unique value for settings context
     SETTINGS_WEBHOOKS = 'SETTINGS_WEBHOOKS',
     SETTINGS_CALENDAR_SYNC = 'SETTINGS_CALENDAR_SYNC',
     SETTINGS_APPEARANCE = 'SETTINGS_APPEARANCE',
@@ -324,6 +323,15 @@ export enum ProjectRole {
     TEAM_MEMBER = 'TEAM_MEMBER', // Standard project member
     CONSULTANT = 'CONSULTANT', // External advisor (free seat)
     STAKEHOLDER = 'STAKEHOLDER', // Observer, read-only
+    OBSERVER = 'OBSERVER', // Read-only observer
+    TASK_ASSIGNEE = 'TASK_ASSIGNEE', // Task assignee
+    SPONSOR = 'SPONSOR',
+    DECISION_OWNER = 'DECISION_OWNER',
+    PMO_LEAD = 'PMO_LEAD',
+    WORKSTREAM_OWNER = 'WORKSTREAM_OWNER',
+    INITIATIVE_OWNER = 'INITIATIVE_OWNER',
+    SME = 'SME', // Subject Matter Expert
+    REVIEWER = 'REVIEWER',
 }
 
 // ============================================
@@ -3771,21 +3779,21 @@ export interface LLMProvider {
     id: string;
     name: string;
     provider:
-        | 'openai'
-        | 'anthropic'
-        | 'google'
-        | 'mistral'
-        | 'groq'
-        | 'together'
-        | 'nvidia'
-        | 'deepseek'
-        | 'qwen'
-        | 'ernie'
-        | 'z_ai'
-        | 'ollama'
-        | 'tavily'
-        | 'google_search'
-        | 'cohere';
+    | 'openai'
+    | 'anthropic'
+    | 'google'
+    | 'mistral'
+    | 'groq'
+    | 'together'
+    | 'nvidia'
+    | 'deepseek'
+    | 'qwen'
+    | 'ernie'
+    | 'z_ai'
+    | 'ollama'
+    | 'tavily'
+    | 'google_search'
+    | 'cohere';
     api_key: string;
     endpoint?: string;
     model_id: string;
@@ -4211,7 +4219,7 @@ export interface OutOfOfficePeriod {
 
 export interface WorkingHours {
     timezone: string;
-    days: {
+    days?: {
         monday?: DaySchedule;
         tuesday?: DaySchedule;
         wednesday?: DaySchedule;
@@ -4219,6 +4227,13 @@ export interface WorkingHours {
         friday?: DaySchedule;
         saturday?: DaySchedule;
         sunday?: DaySchedule;
+    };
+    schedule?: {
+        [key: string]: {
+            start: string;
+            end: string;
+            isWorkDay: boolean;
+        };
     };
 }
 
@@ -4768,6 +4783,16 @@ export interface Project {
     assessments?: Assessment[];
     documents?: ProjectDocument[];
     workstreams?: Workstream[];
+}
+
+export interface ProjectDocument {
+    id: string;
+    projectId: string;
+    name: string;
+    url?: string;
+    type?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // ==========================================
@@ -5967,14 +5992,14 @@ export interface TaskPMOExtension {
  */
 export interface RACIEntry {
     objectType:
-        | 'PROJECT'
-        | 'INITIATIVE'
-        | 'TASK'
-        | 'DECISION'
-        | 'CHANGE_REQUEST'
-        | 'ASSESSMENT'
-        | 'ROADMAP'
-        | 'STAGE_GATE';
+    | 'PROJECT'
+    | 'INITIATIVE'
+    | 'TASK'
+    | 'DECISION'
+    | 'CHANGE_REQUEST'
+    | 'ASSESSMENT'
+    | 'ROADMAP'
+    | 'STAGE_GATE';
     objectId?: string;
     userId: string;
     projectRole: PMOProjectRole;

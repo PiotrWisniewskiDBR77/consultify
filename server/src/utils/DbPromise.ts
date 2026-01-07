@@ -144,6 +144,7 @@ export function all<T = unknown>(
 
                 if (err) {
                     dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100), params });
+                    console.error(`[DB:Promise] Error: ${err.message}`, { sql, params });
                     if (fallback) {
                         resolve([]);
                     } else {
@@ -217,6 +218,7 @@ export function get<T = unknown>(
 
                 if (err) {
                     dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100), params });
+                    console.error(`[DB:Promise] Error: ${err.message}`, { sql, params });
                     if (fallback) {
                         resolve(null);
                     } else {

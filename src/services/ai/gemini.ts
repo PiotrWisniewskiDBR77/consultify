@@ -27,7 +27,7 @@ export const sendMessageToAI = async (
         modelId: config?.modelId || '',
         visibleModelIds: config?.visibleModelIds,
         privateModels: config?.privateModels,
-    };
+    } as any;
 
     try {
         return await UnifiedAI.sendMessage(effectiveConfig, history, message, systemInstruction, roleName);
@@ -56,7 +56,7 @@ export const sendMessageToAIStream = async (
         modelId: config?.modelId || '',
         visibleModelIds: config?.visibleModelIds,
         privateModels: config?.privateModels,
-    };
+    } as any;
 
     try {
         await UnifiedAI.sendMessageStream(

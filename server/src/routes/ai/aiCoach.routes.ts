@@ -1,12 +1,14 @@
-/**
- * AiCoach Routes
- * API endpoints for aiCoach
- *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
- */
+import { Router } from 'express';
+import { verifyToken } from '../../middleware/auth.middleware.js';
+import { AICoachController } from '../../controllers/ai/AICoachController.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
-import { createLazyRoute } from '../../utils/lazyRouteLoader.js';
+const router = Router();
 
-const router = createLazyRoute('./aiCoach.js');
+router.use(verifyToken);
+
+router.get('/report/:orgId', asyncHandler(AICoachController.getAdvisoryReport));
+router.get('/signals/:orgId', asyncHandler(AICoachController.getSignals));
+router.get('/pmo-analysis', asyncHandler(AICoachController.getPMOAnalysis));
 
 export default router;

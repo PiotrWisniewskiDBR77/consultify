@@ -273,7 +273,7 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
 
                         onTranscript?.(text, true);
                         accumulatedTranscriptRef.current = text;
-                    } catch (error: unknown) {
+                    } catch (error: any) {
                         console.error('[STT] Transcription error:', error);
                         setState((prev) => ({
                             ...prev,
@@ -296,7 +296,7 @@ export function useSpeechToText(options: UseSTTOptions = {}): UseSTTReturn {
                 duration++;
                 setState((prev) => ({ ...prev, recordingDuration: duration }));
             }, 1000);
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('[STT] Failed to start recording:', error);
             setState((prev) => ({
                 ...prev,

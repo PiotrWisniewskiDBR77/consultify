@@ -1,12 +1,17 @@
-/**
- * AiExplain Routes
- * API endpoints for aiExplain
- *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
- */
+import { Router } from 'express';
+import { verifyToken } from '../../middleware/auth.middleware.js';
+import { AIExplainabilityController } from '../../controllers/ai/AIExplainabilityController.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
-import { createLazyRoute } from '../../utils/lazyRouteLoader.js';
+const router = Router();
 
-const router = createLazyRoute('./aiExplain.js');
+router.use(verifyToken);
+
+router.get('/evidences', asyncHandler(AIExplainabilityController.listEvidences));
+router.get('/validation/:validationId', asyncHandler(AIExplainabilityController.getValidationResult));
+router.get('/export/:entityType/:entityId', asyncHandler(AIExplainabilityController.exportEvidencePack));
+router.get('/:entityType/:entityId', asyncHandler(AIExplainabilityController.getExplanation));
+router.get('/:entityType/:entityId/evidence', asyncHandler(AIExplainabilityController.getEvidence));
+router.post('/:entityType/:entityId/validate', asyncHandler(AIExplainabilityController.validateExplanation));
 
 export default router;

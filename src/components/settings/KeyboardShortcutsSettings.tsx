@@ -234,7 +234,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
 
     const saveCustomShortcut = (shortcutId: string) => {
         if (newKeyBinding) {
-            setShortcuts((prev) => ({
+            setShortcuts((prev: any) => ({
                 ...prev,
                 preset: 'custom',
                 customShortcuts: {
@@ -248,12 +248,12 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
     };
 
     const toggleShortcut = (shortcutId: string) => {
-        setShortcuts((prev) => {
+        setShortcuts((prev: any) => {
             const isDisabled = prev.disabledShortcuts?.includes(shortcutId);
             return {
                 ...prev,
                 disabledShortcuts: isDisabled
-                    ? prev.disabledShortcuts?.filter((id) => id !== shortcutId) || []
+                    ? prev.disabledShortcuts?.filter((id: string) => id !== shortcutId) || []
                     : [...(prev.disabledShortcuts || []), shortcutId],
             };
         });
@@ -357,7 +357,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                         </div>
                     </div>
                     <button
-                        onClick={() => setShortcuts((prev) => ({ ...prev, enabled: !prev.enabled }))}
+                        onClick={() => setShortcuts((prev: any) => ({ ...prev, enabled: !prev.enabled }))}
                         className={toggleClass(shortcuts.enabled)}
                     >
                         <span className={toggleKnobClass(shortcuts.enabled)} />
@@ -376,7 +376,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                                 </p>
                             </div>
                             <button
-                                onClick={() => setShortcuts((prev) => ({ ...prev, showHints: !prev.showHints }))}
+                                onClick={() => setShortcuts((prev: any) => ({ ...prev, showHints: !prev.showHints }))}
                                 className={toggleClass(shortcuts.showHints)}
                             >
                                 <span className={toggleKnobClass(shortcuts.showHints)} />
@@ -399,7 +399,7 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
                             {PRESET_OPTIONS.map((preset) => (
                                 <button
                                     key={preset.value}
-                                    onClick={() => setShortcuts((prev) => ({ ...prev, preset: preset.value }))}
+                                    onClick={() => setShortcuts((prev: any) => ({ ...prev, preset: preset.value }))}
                                     className={`p-3 rounded-lg border-2 text-left transition-all ${
                                         shortcuts.preset === preset.value
                                             ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'

@@ -116,7 +116,7 @@ export const AIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
     // Update assessment context
     const updateAssessmentContext = useCallback((update: Partial<AssessmentContext>) => {
-        setAssessmentContext((prev) => ({ ...prev, ...update }));
+        setAssessmentContext((prev: any) => ({ ...prev, ...update }));
     }, []);
 
     // Clear assessment context
@@ -252,7 +252,7 @@ Zapytaj mnie o:
         }
     }, []);
 
-    const toggleChat = () => setIsChatOpen((prev) => !prev);
+    const toggleChat = () => setIsChatOpen((prev: any) => !prev);
 
     const openChat = (initialMessage?: string) => {
         setIsChatOpen(true);

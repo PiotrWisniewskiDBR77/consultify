@@ -136,7 +136,7 @@ export const SubscriptionAnalytics: React.FC = () => {
             setLTV(ltvRes.ltv);
             setCohorts(cohortsRes.cohorts);
             setExpansion(expansionRes.expansion);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to load analytics data');
         } finally {
             setLoading(false);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
-import { Button } from '../Button';
+import { Button } from '../ui/Button';
 
 interface CapabilityResult {
     capability: string;
@@ -69,7 +69,7 @@ export const AIMissionControl: React.FC = () => {
             });
             const data = await response.json();
             setResults((prev) => ({ ...prev, [capId]: data }));
-        } catch (err: unknown) {
+        } catch (err: any) {
             setResults((prev) => ({
                 ...prev,
                 [capId]: {

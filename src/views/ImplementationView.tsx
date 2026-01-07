@@ -146,9 +146,9 @@ export const ImplementationView: React.FC = () => {
         const newTask: Task = {
             id: '',
             projectId: selectedInitiative?.id || 'default',
-            organizationId: currentUser!.organizationId!,
             title: '',
-            status: TaskStatus.TODO,
+            type: 'task',
+            status: 'todo',
             priority: 'medium',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -164,7 +164,17 @@ export const ImplementationView: React.FC = () => {
             if (task.id) {
                 await Api.updateTask(task.id, task);
             } else {
-                await Api.createTask(task);
+                await Api.createTask({
+                    projectId: task.projectId,
+                    title: task.title,
+                    description: task.description,
+                    status: task.status,
+                    priority: task.priority,
+                    assigneeId: task.assigneeId,
+                    dueDate: task.dueDate,
+                    taskType: task.taskType,
+                    initiativeId: task.initiativeId,
+                });
             }
             toast.success('Task saved');
             fetchTasks();
@@ -211,11 +221,10 @@ export const ImplementationView: React.FC = () => {
                         >
                             <div className="flex justify-between items-start mb-2">
                                 <span
-                                    className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
-                                        task.priority === 'urgent' || task.priority === 'high'
-                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
-                                    }`}
+                                    className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${task.priority === 'urgent' || task.priority === 'high'
+                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                        }`}
                                 >
                                     {task.priority}
                                 </span>
@@ -396,7 +405,7 @@ export const ImplementationView: React.FC = () => {
                             <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                                 {Math.round(
                                     initiatives.reduce((sum, i) => sum + (i.progress || 0), 0) /
-                                        Math.max(initiatives.length, 1),
+                                    Math.max(initiatives.length, 1),
                                 )}
                                 %
                             </p>
@@ -411,11 +420,10 @@ export const ImplementationView: React.FC = () => {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                                activeTab === tab.id
-                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
+                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                                }`}
                         >
                             {tab.icon}
                             {tab.label}
@@ -436,15 +444,15 @@ export const ImplementationView: React.FC = () => {
             </div>
 
             {/* Task Modal */}
-            {editingTask && (
+            {editingTask && currentUser && (
                 <TaskDetailModal
                     task={editingTask}
                     isOpen={isTaskModalOpen}
                     onClose={() => setIsTaskModalOpen(false)}
                     onSave={handleSaveTask}
-                    currentUser={currentUser!}
+                    currentUser={currentUser}
                     users={users}
-                    language={language}
+                    language={language as 'EN' | 'PL' | 'DE' | 'AR'}
                 />
             )}
         </div>

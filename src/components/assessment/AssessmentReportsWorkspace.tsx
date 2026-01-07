@@ -61,7 +61,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
             setLoading(true);
             const data = await Api.getAssessmentReports(currentProjectId);
             setReports(data);
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Failed to load reports:', error);
             toast.error('Failed to load reports');
         } finally {
@@ -100,7 +100,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
             const newReport = await Api.generateAssessmentReport(currentProjectId);
             toast.success('Report generated successfully');
             await loadReports();
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Failed to generate report:', error);
             toast.error('Failed to generate report');
         } finally {
@@ -112,7 +112,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
         try {
             const report = await Api.getAssessmentReport(reportId);
             setSelectedReport(report);
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Failed to load report details:', error);
             toast.error('Failed to load report');
         }
@@ -163,7 +163,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                         <button
                             onClick={async () => {
                                 try {
-                                    const { pdfUrl } = await Api.exportReportPDF(selectedReport.id);
+                                    const { pdfUrl } = await Api.exportReportPDF(selectedReport.id) as any;
                                     window.open(pdfUrl, '_blank');
                                     toast.success('PDF exported successfully');
                                 } catch (error) {
@@ -178,7 +178,7 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                         <button
                             onClick={async () => {
                                 try {
-                                    const { excelUrl } = await Api.exportReportExcel(selectedReport.id);
+                                    const { excelUrl } = await Api.exportReportExcel(selectedReport.id) as any;
                                     window.open(excelUrl, '_blank');
                                     toast.success('Excel exported successfully');
                                 } catch (error) {
@@ -366,11 +366,10 @@ export const AssessmentReportsWorkspace: React.FC<AssessmentReportsWorkspaceProp
                     </select>
                     <button
                         onClick={() => setShowArchived(!showArchived)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            showArchived
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showArchived
                                 ? 'bg-purple-600 text-white'
                                 : 'bg-slate-100 dark:bg-navy-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10'
-                        }`}
+                            }`}
                     >
                         {showArchived
                             ? t('common.hideArchived', 'Hide Archived')

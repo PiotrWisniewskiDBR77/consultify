@@ -197,7 +197,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             await fetchIntegrations();
             setIsModalOpen(false);
             setConfigInput('');
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error(err);
             toast.error(err.message || 'Failed to connect integration');
         } finally {
@@ -211,7 +211,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             await Api.deleteIntegration(id);
             toast.success('Integration disconnected');
             fetchIntegrations();
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error(err);
             toast.error(err.message || 'Failed to disconnect integration');
         }
@@ -231,7 +231,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             setIsWebhookModalOpen(false);
             setWebhookForm({ name: '', targetUrl: '', eventTypes: [] });
             fetchWebhooks();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.response?.data?.error || 'Failed to create webhook');
         } finally {
             setConnecting(false);
@@ -244,7 +244,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             await Api.delete(`/webhooks/${id}`);
             toast.success('Webhook deleted');
             fetchWebhooks();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.response?.data?.error || 'Failed to delete webhook');
         }
     };
@@ -258,7 +258,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
             } else {
                 toast.error(`Test failed: ${result.error}`);
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error('Failed to test webhook');
         } finally {
             setTestingWebhook(false);

@@ -1,11 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-import { AIMessageHistory, AIProviderConfig } from '../../types';
+import { AIMessageHistory, LLMProviderConfig } from '../../types';
 import { Api } from '../api';
 
 export const UnifiedAI = {
     sendMessage: async (
-        config: AIProviderConfig | undefined,
+        config: LLMProviderConfig | undefined,
         history: AIMessageHistory[],
         message: string,
         systemInstruction?: string,
@@ -20,7 +20,7 @@ export const UnifiedAI = {
     },
 
     sendMessageStream: async (
-        config: AIProviderConfig | undefined,
+        config: LLMProviderConfig | undefined,
         history: AIMessageHistory[],
         message: string,
         onChunk: (text: string) => void,

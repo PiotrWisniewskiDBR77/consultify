@@ -37,7 +37,8 @@ router.get(
             });
             return res.json(notifications);
         } catch (err: any) {
-            return res.status(500).json({ error: err.message });
+            console.error('[NotificationsRoute] Error:', err);
+            return res.status(500).json({ error: err.message, stack: err.stack });
         }
     }),
 );

@@ -186,7 +186,7 @@ export const WhitelabelStudioView: React.FC = () => {
             await Api.patch(`/branding/${selectedOrg}`, branding);
             setMessage({ type: 'success', text: 'Branding saved successfully!' });
             await fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Failed to save branding:', error);
             setMessage({ type: 'error', text: error.response?.data?.error || 'Failed to save branding' });
         } finally {
@@ -210,7 +210,7 @@ export const WhitelabelStudioView: React.FC = () => {
                 setBranding({ ...DEFAULT_BRANDING, organizationId: orgId });
             }
             await fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Failed to delete branding:', error);
             setMessage({ type: 'error', text: error.response?.data?.error || 'Failed to delete branding' });
         }
@@ -225,7 +225,7 @@ export const WhitelabelStudioView: React.FC = () => {
             await Api.post(`/branding/${targetOrgId}/clone`, { sourceOrgId });
             setMessage({ type: 'success', text: 'Branding cloned successfully!' });
             await fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Failed to clone branding:', error);
             setMessage({ type: 'error', text: error.response?.data?.error || 'Failed to clone branding' });
         }
@@ -239,7 +239,7 @@ export const WhitelabelStudioView: React.FC = () => {
             formData.append('file', file);
             formData.append('type', type);
 
-            const result = await Api.upload(`/superadmin/branding/${selectedOrg}/logo`, formData);
+            const result = await Api.upload(file);
 
             // Update branding with new URL
             const urlField =

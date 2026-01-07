@@ -67,3 +67,27 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 );
 
 Select.displayName = 'Select';
+
+// Compatibility exports for Radix UI-style API
+// These are simplified aliases for our Select component
+export const SelectTrigger: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+    <button className={`appearance-none bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 text-navy-900 dark:text-white py-2.5 pl-4 pr-10 text-sm rounded-xl ${className || ''}`}>
+        {children}
+    </button>
+);
+
+export const SelectValue: React.FC<{ placeholder?: string }> = ({ placeholder }) => (
+    <span className="text-slate-400">{placeholder}</span>
+);
+
+export const SelectContent: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
+    <div className={`absolute z-50 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-lg ${className || ''}`}>
+        {children}
+    </div>
+);
+
+export const SelectItem: React.FC<{ value: string; children: React.ReactNode }> = ({ value, children }) => (
+    <div data-value={value} className="px-4 py-2 hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer">
+        {children}
+    </div>
+);

@@ -306,7 +306,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                                             <div>
                                                 <span className="font-medium text-green-600">Process:</span>
                                                 <ul className="list-disc list-inside text-green-600/80">
-                                                    {previewTemplate.targetState.process.map((p, i) => (
+                                                    {previewTemplate.targetState.process.map((p, i: number) => (
                                                         <li key={i}>{p}</li>
                                                     ))}
                                                 </ul>
@@ -316,7 +316,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                                             <div>
                                                 <span className="font-medium text-green-600">Behavior:</span>
                                                 <ul className="list-disc list-inside text-green-600/80">
-                                                    {previewTemplate.targetState.behavior.map((b, i) => (
+                                                    {previewTemplate.targetState.behavior.map((b, i: number) => (
                                                         <li key={i}>{b}</li>
                                                     ))}
                                                 </ul>
@@ -326,7 +326,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                                             <div>
                                                 <span className="font-medium text-green-600">Capability:</span>
                                                 <ul className="list-disc list-inside text-green-600/80">
-                                                    {previewTemplate.targetState.capability.map((c, i) => (
+                                                    {previewTemplate.targetState.capability.map((c, i: number) => (
                                                         <li key={i}>{c}</li>
                                                     ))}
                                                 </ul>
@@ -343,7 +343,7 @@ export const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                                         Suggested Tasks ({previewTemplate.suggestedTasks.length})
                                     </h4>
                                     <div className="space-y-1">
-                                        {previewTemplate.suggestedTasks.slice(0, 5).map((task, i) => (
+                                        {previewTemplate.suggestedTasks.slice(0, 5).map((task, i: number) => (
                                             <div
                                                 key={i}
                                                 className="text-xs text-blue-600 dark:text-blue-300 flex items-center gap-2"

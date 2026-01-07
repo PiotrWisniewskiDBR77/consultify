@@ -11,8 +11,7 @@
 
 import { Response, Router } from 'express';
 
-import SuperAdminControllerRaw from '../controllers/SuperAdminController.js';
-const SuperAdminController = SuperAdminControllerRaw as any;
+import SuperAdminController from '../controllers/SuperAdminController.js';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -345,6 +344,28 @@ router.get(
 // ==========================================
 
 router.get('/system-health', SuperAdminController.getSystemHealth);
+
+// ==========================================
+// ADMIN IAM MODULE
+// ==========================================
+
+console.log('[SuperAdminRoutes] SuperAdminController keys:', Object.keys(SuperAdminController || {}));
+
+router.get('/admin/sessions', SuperAdminController.getAdminSessions);
+router.post('/admin/sessions', SuperAdminController.createAdminSession);
+router.delete('/admin/sessions/:id', SuperAdminController.revokeAdminSession);
+router.get('/admin/sessions/stats', SuperAdminController.getAdminSessionStats);
+
+router.get('/admin/audit-logs', SuperAdminController.getAdminAuditLogs);
+router.get('/admin/audit-logs/stats', SuperAdminController.getAdminAuditStats);
+
+router.get('/admin/permissions', SuperAdminController.getAdminPermissions);
+router.get('/admin/permissions/matrix', SuperAdminController.getPermissionsMatrix);
+router.post('/admin/permissions', SuperAdminController.createAdminPermission);
+
+router.get('/admin/approval-workflows', SuperAdminController.getApprovalWorkflows);
+router.post('/admin/approval-workflows', SuperAdminController.createApprovalWorkflow);
+router.get('/admin/approval-requests', SuperAdminController.getApprovalRequests);
 
 // ==========================================
 // ENTERPRISE CUSTOMERS MODULE - Organizations

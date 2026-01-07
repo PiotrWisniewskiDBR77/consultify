@@ -46,7 +46,7 @@ export const useTokenBalance = () => {
                 isZeroBalance: balance < ZERO_BALANCE_THRESHOLD,
                 lastUpdated: new Date(),
             });
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('[useTokenBalance] Failed to fetch balance:', error);
             setState((prev) => ({
                 ...prev,

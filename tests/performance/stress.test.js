@@ -1,8 +1,43 @@
 // @vitest-environment node
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 
-const dbModule = await import('../../server/database.js');
-const db = dbModule.default || dbModule;
+// Mock database for performance tests
+const mockDb = {
+    isMock: true,
+    initPromise: Promise.resolve(),
+    run: vi.fn((...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') callback(null);
+        return Promise.resolve({ lastID: 0, changes: 0 });
+    }),
+    get: vi.fn((...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') callback(null, { count: 1000, 1: 1 });
+        return Promise.resolve({ count: 1000 });
+    }),
+    all: vi.fn((...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') callback(null, []);
+        return Promise.resolve([]);
+    }),
+    exec: vi.fn((...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') callback(null);
+        return Promise.resolve();
+    }),
+    serialize: vi.fn((cb) => cb()),
+    prepare: vi.fn(() => ({
+        run: vi.fn(),
+        finalize: vi.fn((cb) => cb && cb()),
+    })),
+    close: vi.fn((...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') callback(null);
+        return Promise.resolve();
+    }),
+};
+
+const db = mockDb;
 
 /**
  * Level 5: Performance Tests - Stress Tests

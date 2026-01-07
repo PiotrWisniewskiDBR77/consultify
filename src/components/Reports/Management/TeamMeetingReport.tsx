@@ -127,7 +127,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
                 title="Completed This Period"
                 icon={<CheckCircle2 size={16} className="text-emerald-500" />}
                 variant="completed"
-                items={content.completedWork.map((item) => ({
+                items={content.completedWork.map((item: any) => ({
                     id: item.id,
                     title: item.title,
                     assignee: item.completedByName,
@@ -143,7 +143,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
                 title="Work In Progress"
                 icon={<Clock size={16} className="text-blue-500" />}
                 variant="default"
-                items={content.workInProgress.map((item) => ({
+                items={content.workInProgress.map((item: any) => ({
                     id: item.id,
                     title: item.title,
                     status: item.status,
@@ -162,7 +162,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
                     title="Blockers & Issues"
                     icon={<AlertTriangle size={16} className="text-red-500" />}
                     variant="blocked"
-                    items={content.blockers.map((item) => ({
+                    items={content.blockers.map((item: any) => ({
                         id: item.id,
                         title: item.title,
                         assignee: item.ownerName,
@@ -181,7 +181,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
                     title="Pending Decisions"
                     icon={<HelpCircle size={16} className="text-amber-500" />}
                     variant="pending"
-                    items={content.pendingDecisions.map((item) => ({
+                    items={content.pendingDecisions.map((item: any) => ({
                         id: item.id,
                         title: item.title,
                         assignee: item.ownerName,
@@ -198,7 +198,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
                 title="Plan for Next Period"
                 icon={<CalendarDays size={16} className="text-violet-500" />}
                 variant="default"
-                items={content.nextPeriodPlan.map((item) => ({
+                items={content.nextPeriodPlan.map((item: any) => ({
                     id: item.id,
                     title: item.title,
                     assignee: item.assigneeName,

@@ -25,8 +25,8 @@ export class ErrorBoundary extends Component<Props, State> {
         console.error('[ErrorBoundary] Error stack:', error.stack);
 
         // Try to send error to backend if available
-        if (typeof window !== 'undefined' && window.fetch) {
-            fetch('/api/errors', {
+        if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+            window.fetch('/api/errors', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

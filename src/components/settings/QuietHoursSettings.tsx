@@ -16,7 +16,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import { QuietHoursSettings as QuietHoursType, User } from '../../types';
+import { QuietHoursSettingsType as QuietHoursType, User } from '../../types';
 
 interface QuietHoursSettingsProps {
     currentUser: User;
@@ -82,10 +82,10 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
     };
 
     const toggleDay = (day: number) => {
-        setQuietHours((prev) => ({
+        setQuietHours((prev: any) => ({
             ...prev,
             daysOfWeek: prev.daysOfWeek.includes(day)
-                ? prev.daysOfWeek.filter((d) => d !== day)
+                ? prev.daysOfWeek.filter((d: any) => d !== day)
                 : [...prev.daysOfWeek, day].sort(),
         }));
     };
@@ -212,7 +212,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                         </div>
                     </div>
                     <button
-                        onClick={() => setQuietHours((prev) => ({ ...prev, enabled: !prev.enabled }))}
+                        onClick={() => setQuietHours((prev: any) => ({ ...prev, enabled: !prev.enabled }))}
                         className={toggleClass(quietHours.enabled)}
                     >
                         <span className={toggleKnobClass(quietHours.enabled)} />
@@ -235,7 +235,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                                 <input
                                     type="time"
                                     value={quietHours.startTime}
-                                    onChange={(e) => setQuietHours((prev) => ({ ...prev, startTime: e.target.value }))}
+                                    onChange={(e) => setQuietHours((prev: any) => ({ ...prev, startTime: e.target.value }))}
                                     className={inputClass + ' mt-1.5'}
                                 />
                             </div>
@@ -244,7 +244,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                                 <input
                                     type="time"
                                     value={quietHours.endTime}
-                                    onChange={(e) => setQuietHours((prev) => ({ ...prev, endTime: e.target.value }))}
+                                    onChange={(e) => setQuietHours((prev: any) => ({ ...prev, endTime: e.target.value }))}
                                     className={inputClass + ' mt-1.5'}
                                 />
                             </div>
@@ -291,7 +291,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                         <div className="space-y-1">
                             <ToggleSwitch
                                 enabled={quietHours.allowUrgent}
-                                onChange={(val) => setQuietHours((prev) => ({ ...prev, allowUrgent: val }))}
+                                onChange={(val) => setQuietHours((prev: any) => ({ ...prev, allowUrgent: val }))}
                                 label={t('settings.quietHours.allowUrgent', 'Allow urgent notifications')}
                                 description={t(
                                     'settings.quietHours.allowUrgentDesc',
@@ -300,7 +300,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                             />
                             <ToggleSwitch
                                 enabled={quietHours.allowMentions}
-                                onChange={(val) => setQuietHours((prev) => ({ ...prev, allowMentions: val }))}
+                                onChange={(val) => setQuietHours((prev: any) => ({ ...prev, allowMentions: val }))}
                                 label={t('settings.quietHours.allowMentions', 'Allow @mentions')}
                                 description={t(
                                     'settings.quietHours.allowMentionsDesc',
@@ -309,7 +309,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                             />
                             <ToggleSwitch
                                 enabled={quietHours.allowDirectMessages}
-                                onChange={(val) => setQuietHours((prev) => ({ ...prev, allowDirectMessages: val }))}
+                                onChange={(val) => setQuietHours((prev: any) => ({ ...prev, allowDirectMessages: val }))}
                                 label={t('settings.quietHours.allowDMs', 'Allow direct messages')}
                                 description={t(
                                     'settings.quietHours.allowDMsDesc',
@@ -340,7 +340,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                             </div>
                             <button
                                 onClick={() =>
-                                    setQuietHours((prev) => ({ ...prev, autoReplyEnabled: !prev.autoReplyEnabled }))
+                                    setQuietHours((prev: any) => ({ ...prev, autoReplyEnabled: !prev.autoReplyEnabled }))
                                 }
                                 className={toggleClass(quietHours.autoReplyEnabled)}
                             >
@@ -356,7 +356,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                                 <textarea
                                     value={quietHours.autoReplyMessage}
                                     onChange={(e) =>
-                                        setQuietHours((prev) => ({ ...prev, autoReplyMessage: e.target.value }))
+                                        setQuietHours((prev: any) => ({ ...prev, autoReplyMessage: e.target.value }))
                                     }
                                     placeholder={t(
                                         'settings.quietHours.autoReplyPlaceholder',
@@ -376,7 +376,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                         <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() =>
-                                    setQuietHours((prev) => ({
+                                    setQuietHours((prev: any) => ({
                                         ...prev,
                                         startTime: '22:00',
                                         endTime: '08:00',
@@ -389,7 +389,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                             </button>
                             <button
                                 onClick={() =>
-                                    setQuietHours((prev) => ({
+                                    setQuietHours((prev: any) => ({
                                         ...prev,
                                         startTime: '00:00',
                                         endTime: '23:59',
@@ -402,7 +402,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({ currentU
                             </button>
                             <button
                                 onClick={() =>
-                                    setQuietHours((prev) => ({
+                                    setQuietHours((prev: any) => ({
                                         ...prev,
                                         startTime: '18:00',
                                         endTime: '09:00',

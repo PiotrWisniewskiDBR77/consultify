@@ -260,7 +260,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                     </h3>
                     {data.topPlaybooks && data.topPlaybooks.length > 0 ? (
                         <div className="space-y-3">
-                            {data.topPlaybooks.slice(0, 5).map((playbook, index) => (
+                            {data.topPlaybooks.slice(0, 5).map((playbook, index: number) => (
                                 <div
                                     key={playbook.id}
                                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/30 transition-colors"
@@ -291,7 +291,7 @@ export const ContentAnalyticsDashboard: React.FC<ContentAnalyticsDashboardProps>
                     </h3>
                     {data.topEmails && data.topEmails.length > 0 ? (
                         <div className="space-y-3">
-                            {data.topEmails.slice(0, 5).map((email, index) => (
+                            {data.topEmails.slice(0, 5).map((email, index: number) => (
                                 <div
                                     key={email.id}
                                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-700/30 transition-colors"

@@ -113,7 +113,7 @@ export const InvoicesPanel: React.FC = () => {
             await Api.post(`/billing/invoices/${invoiceId}/send`, {});
             toast.success('Invoice sent');
             void fetchInvoices();
-        } catch (error: unknown) {
+        } catch (error: any) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to send invoice';
             toast.error(errorMessage);
         }
@@ -124,7 +124,7 @@ export const InvoicesPanel: React.FC = () => {
             await Api.put(`/billing/invoices/${invoiceId}`, { status: 'paid' });
             toast.success('Invoice marked as paid');
             fetchInvoices();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to update invoice');
         }
     };

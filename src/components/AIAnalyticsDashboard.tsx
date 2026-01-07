@@ -123,7 +123,7 @@ export const AIAnalyticsDashboard: React.FC = () => {
             const params = new URLSearchParams({ from: dateRange.from, to: dateRange.to });
             const response = await Api.get(`/analytics/ai/dashboard?${params.toString()}`);
             setData(response);
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('Failed to load AI analytics:', err);
             setError(err instanceof Error ? err.message : 'Failed to load analytics');
         } finally {

@@ -16,7 +16,7 @@ import crypto from 'crypto';
  * @param {string} signalType - The signal type
  * @returns {string} A stable proposal ID
  */
-const generateProposalId = (prefix, entityId, signalType) => {
+const generateProposalId = (prefix: any, entityId: any, signalType: any) => {
     const content = `${prefix}-${entityId || 'global'}-${signalType}`;
     const hash = crypto.createHash('sha256').update(content).digest('hex').substring(0, 8);
     return `ap-${prefix}-${hash}`;
@@ -36,7 +36,7 @@ const ActionProposalMapper = {
      * @param {Object} simulation - The associated simulation.
      * @returns {Array<Object>} List of generated action proposals.
      */
-    mapSignalToProposals: (signal, recommendation, simulation) => {
+    mapSignalToProposals: (signal: any, recommendation: any, simulation: any) => {
         const proposals = [];
 
         switch (signal.type) {

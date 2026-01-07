@@ -146,7 +146,15 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
     const isHighChange = (initiative.effortProfile?.change || 0) >= 4;
 
     // Helper for AI Confidence
-    const getConfidenceIndicator = (confidence?: string) => {
+    const getConfidenceIndicator = (confidence?: string | number) => {
+        // Handle numeric confidence (0-100 scale)
+        if (typeof confidence === 'number') {
+            if (confidence >= 70) return { color: 'bg-green-500', label: 'High Confidence' };
+            if (confidence >= 40) return { color: 'bg-yellow-500', label: 'Review Needed' };
+            if (confidence > 0) return { color: 'bg-red-500', label: 'Not Decision Ready' };
+            return { color: 'bg-slate-300', label: 'Not Analyzed' };
+        }
+        // Handle string confidence
         switch (confidence) {
             case 'High':
                 return { color: 'bg-green-500', label: 'High Confidence' };
@@ -180,10 +188,10 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
                     </div>
                 )}
 
-                {initiative.aiConfidence && (
+                {initiative.aiConfidence !== undefined && (
                     <div className="flex items-center gap-1.5" title={`AI Analysis: ${aiStatus.label}`}>
                         <div className={`w-2 h-2 rounded-full ${aiStatus.color} shadow-sm animate-pulse`}></div>
-                        {initiative.aiConfidence === 'Low' && (
+                        {(typeof initiative.aiConfidence === 'number' ? initiative.aiConfidence < 40 : initiative.aiConfidence === 'Low') && (
                             <span className="text-[9px] font-bold text-red-500 uppercase tracking-wider border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">
                                 Not Ready
                             </span>
@@ -223,7 +231,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
 
                         {initiative.axis && (
                             <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-navy-900 text-slate-400 border-white/10">
-                                Axis {initiative.axis}
+                                Axis {typeof initiative.axis === 'object' ? `${initiative.axis.x}, ${initiative.axis.y}` : initiative.axis}
                             </span>
                         )}
                     </div>

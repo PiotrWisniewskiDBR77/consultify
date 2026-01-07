@@ -75,7 +75,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({ 
             await Api.post(`/settings/webhooks/deliveries/${deliveryId}/retry`, {});
             toast.success('Retry initiated');
             void fetchDeliveries();
-        } catch (error: unknown) {
+        } catch (error: any) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to retry delivery';
             toast.error(errorMessage);
         } finally {

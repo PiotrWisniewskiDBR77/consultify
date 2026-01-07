@@ -11,10 +11,11 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
+import { requireSuperAdmin, verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import KnowledgeService from '../services/KnowledgeService.js';
 
 // ==========================================
 // TYPES
@@ -73,17 +74,9 @@ const router = Router();
 // Apply rate limiting
 router.use(authRateLimiter);
 
-// Dynamic imports for services that may not be migrated yet
-let KnowledgeService: any = null;
+// Services
 let StorageService: any = null;
 let NotificationOutboxService: any = null;
-
-try {
-    //     const knowledgeModule = (await import('../services/knowledgeService.js')) as any;
-    KnowledgeService = knowledgeModule.default || knowledgeModule;
-} catch {
-    logger.warn('[Knowledge] KnowledgeService not available');
-}
 
 try {
     //     const storageModule = (await import('../services/storageService.js')) as any;
@@ -146,6 +139,7 @@ try {
  */
 router.get(
     '/candidates',
+    verifyToken,
     requireSuperAdmin,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!KnowledgeService?.getCandidates) {

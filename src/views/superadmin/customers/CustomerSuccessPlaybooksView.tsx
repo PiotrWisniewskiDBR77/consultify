@@ -101,7 +101,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
             ]);
             setPlaybooks(playbooksData || []);
             setActions(actionsData || []);
-            setStats(statsData);
+            setStats(statsData as any);
         } catch (error) {
             console.error('Failed to fetch playbook data:', error);
         } finally {

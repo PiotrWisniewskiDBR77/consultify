@@ -39,7 +39,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
     const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set([RELEASE_NOTES[0]?.version]));
 
     // Filter releases
-    const filteredReleases = filter === 'all' ? RELEASE_NOTES : RELEASE_NOTES.filter((r) => r.type === filter);
+    const filteredReleases = filter === 'all' ? RELEASE_NOTES : RELEASE_NOTES.filter((r: any) => r.type === filter);
 
     // Toggle expansion
     const toggleVersion = (version: string) => {
@@ -119,11 +119,10 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                         <button
                             key={type}
                             onClick={() => setFilter(type)}
-                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                                filter === type
-                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
+                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${filter === type
+                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium'
+                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                }`}
                         >
                             {t[type][lang]}
                         </button>
@@ -137,9 +136,9 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
 
                     {/* Releases */}
                     <div className="space-y-6">
-                        {filteredReleases.map((release, index) => {
+                        {filteredReleases.map((release: any, index: number) => {
                             const isExpanded = expandedVersions.has(release.version);
-                            const badge = typeBadge[release.type];
+                            const badge = (typeBadge as any)[release.type];
 
                             return (
                                 <motion.div
@@ -212,7 +211,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                             {t.features[lang]}
                                                         </h4>
                                                         <div className="space-y-3">
-                                                            {release.features.map((feature, i) => (
+                                                            {release.features.map((feature: any, i: number) => (
                                                                 <div key={i} className="flex items-start gap-3">
                                                                     {feature.icon && (
                                                                         <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
@@ -245,7 +244,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                             {t.improvements[lang]}
                                                         </h4>
                                                         <ul className="space-y-2">
-                                                            {release.improvements.map((item, i) => (
+                                                            {release.improvements.map((item: any, i: number) => (
                                                                 <li
                                                                     key={i}
                                                                     className="flex items-start gap-2 text-slate-600 dark:text-slate-300"
@@ -269,7 +268,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                             {t.fixes[lang]}
                                                         </h4>
                                                         <ul className="space-y-2">
-                                                            {release.fixes.map((item, i) => (
+                                                            {release.fixes.map((item: any, i: number) => (
                                                                 <li
                                                                     key={i}
                                                                     className="flex items-start gap-2 text-slate-600 dark:text-slate-300"
@@ -290,7 +289,7 @@ export const ChangelogView: React.FC<ChangelogViewProps> = ({ onBack }) => {
                                                             {t.breaking[lang]}
                                                         </h4>
                                                         <ul className="space-y-2">
-                                                            {release.breaking.map((item, i) => (
+                                                            {release.breaking.map((item: any, i: number) => (
                                                                 <li
                                                                     key={i}
                                                                     className="flex items-start gap-2 text-red-700 dark:text-red-300"

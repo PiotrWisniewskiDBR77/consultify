@@ -27,12 +27,12 @@ export const AchievementsList: React.FC = () => {
     }, []);
 
     // Group by category
-    const categories = Array.from(new Set(ACHIEVEMENTS.map((a) => a.category)));
+    const categories = Array.from(new Set(ACHIEVEMENTS.map((a: any) => a.category)));
 
     return (
         <div className="space-y-8">
             {categories.map((category) => {
-                const categoryAchievements = ACHIEVEMENTS.filter((a) => a.category === category);
+                const categoryAchievements = ACHIEVEMENTS.filter((a: any) => a.category === category);
 
                 return (
                     <div key={category}>
@@ -40,7 +40,7 @@ export const AchievementsList: React.FC = () => {
                             {category}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {categoryAchievements.map((achievement) => {
+                            {categoryAchievements.map((achievement: any) => {
                                 const isUnlocked = unlockedIds.includes(achievement.id);
                                 const Icon = achievement.icon;
 
@@ -49,10 +49,9 @@ export const AchievementsList: React.FC = () => {
                                         key={achievement.id}
                                         className={`
                                             relative p-4 rounded-xl border transition-all
-                                            ${
-                                                isUnlocked
-                                                    ? 'bg-white dark:bg-navy-800 border-green-200 dark:border-green-900/30 shadow-sm'
-                                                    : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-slate-800 opacity-60 grayscale'
+                                            ${isUnlocked
+                                                ? 'bg-white dark:bg-navy-800 border-green-200 dark:border-green-900/30 shadow-sm'
+                                                : 'bg-slate-50 dark:bg-navy-950 border-slate-200 dark:border-slate-800 opacity-60 grayscale'
                                             }
                                         `}
                                     >

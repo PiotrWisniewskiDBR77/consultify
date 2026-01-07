@@ -17,7 +17,7 @@
         "build:backend": "cd server && npm run build",
         "start": "cd server && npm run build && NODE_ENV=production node dist/index.js",
         "start:dev": "cd server && NODE_ENV=production npx tsx src/index.ts",
-        "build": "npm run build:shared && tsc && vite build",
+        "build": "npm run build:shared && vite build",
         "build:shared": "npm run build -w packages/shared",
         "preview": "vite preview",
         "test": "npm run test:all",

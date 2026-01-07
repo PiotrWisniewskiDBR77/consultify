@@ -68,7 +68,7 @@ const SystemHealthView: React.FC = () => {
         setError(null);
         try {
             const data = await Api.getSystemHealth();
-            setHealth(data);
+            setHealth(data as any);
         } catch (err) {
             console.error('Failed to fetch system health:', err);
             setError('Failed to fetch system health');

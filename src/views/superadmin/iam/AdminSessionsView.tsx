@@ -64,8 +64,15 @@ const AdminSessionsView: React.FC = () => {
             setLoading(true);
             setError(null);
             const [sessionsData, statsData] = await Promise.all([Api.getAdminSessions(), Api.getAdminSessionStats()]);
-            setSessions(sessionsData);
-            setStats(statsData);
+            setSessions(sessionsData as AdminSession[]);
+            // Map API response to expected interface
+            const mappedStats = statsData as any;
+            setStats({
+                totalSessions: mappedStats.total || 0,
+                activeSessions: mappedStats.active || 0,
+                mfaVerifiedSessions: mappedStats.mfaVerified || 0,
+                uniqueAdmins: mappedStats.uniqueAdmins || 0,
+            });
         } catch (err: any) {
             setError(err.message || 'Failed to load sessions');
         } finally {
@@ -95,7 +102,7 @@ const AdminSessionsView: React.FC = () => {
 
         try {
             setActionLoading('all');
-            await Api.revokeAllAdminSessions(undefined, true);
+            await Api.revokeAllAdminSessions(undefined, 'bulk_revoke');
             await loadData();
         } catch (err: any) {
             setError(err.message || 'Failed to revoke all sessions');

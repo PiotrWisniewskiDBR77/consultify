@@ -14,6 +14,7 @@ import aiAnalyticsRoutes from './routes/ai/ai-analytics.routes.js';
 import aiBudgetsRoutes from './routes/ai/ai-budgets.routes.js';
 import aiDevelopmentRoutes from './routes/ai/ai-development.routes.js';
 import aiDraftsRoutes from './routes/ai/ai-drafts.routes.js';
+import aiExperimentsRoutes from './routes/ai/ai-experiments.routes.js';
 import aiFeedbackRoutes from './routes/ai/ai-feedback.routes.js';
 import aiInfrastructureRoutes from './routes/ai/ai-infrastructure.routes.js';
 import aiMemoryRoutes from './routes/ai/ai-memory.routes.js';
@@ -44,7 +45,7 @@ import auditLogRoutes from './routes/auditLog.routes.js';
 // Route Imports
 import authRoutes from './routes/auth.routes.js';
 import backupRoutes from './routes/backup.routes.js';
-import baselinesRoutes from './routes/baselines.routes.js';
+import baselinesRoutes from './routes/baselines.routes.ts';
 import billingRoutes from './routes/billing/billing.routes.js';
 import brandingRoutes from './routes/organization/branding.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
@@ -62,8 +63,8 @@ import dailyBriefRoutes from './routes/daily-brief.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import decisionsRoutes from './routes/pmo/decisions.routes.js';
 import demoRoutes from './routes/demo.routes.js';
-import documentRoutes from './routes/documents.routes.js';
-import economicsRoutes from './routes/economics.routes.js';
+import documentRoutes from './routes/documents.routes.ts';
+import economicsRoutes from './routes/economics.routes.ts';
 import executionRoutes from './routes/pmo/execution.routes.js';
 import externalAssessmentsRoutes from './routes/external-assessments.routes.js';
 import featureFlagsRoutes from './routes/featureFlags.routes.js';
@@ -74,7 +75,7 @@ import gdprRoutes from './routes/gdpr.routes.js';
 import genericReportsRoutes from './routes/generic-reports.routes.js';
 import governanceRoutes from './routes/pmo/governance.routes.js';
 import governanceAdminRoutes from './routes/governanceAdmin.routes.js';
-import helpRoutes from './routes/help.routes.js';
+import helpRoutes from './routes/help.routes.ts';
 import helpAnalyticsRoutes from './routes/helpAnalytics.routes.js';
 import helpChatRoutes from './routes/helpChat.routes.js';
 import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
@@ -85,7 +86,7 @@ import intelligenceRoutes from './routes/intelligence.routes.js';
 import invitationRoutes from './routes/organization/invitations.routes.js';
 import journeyAnalyticsRoutes from './routes/journeyAnalytics.routes.js';
 import knowledgeRoutes from './routes/knowledge.routes.js';
-import legalRoutes from './routes/legal.routes.js';
+import legalRoutes from './routes/legal.routes.ts';
 import llmRoutes from './routes/llm.routes.js';
 import locationsRoutes from './routes/locations.routes.js';
 import loginHistoryRoutes from './routes/user/loginHistory.routes.js';
@@ -115,8 +116,8 @@ import permissionRequestsRoutes from './routes/permissionRequests.routes.js';
 import pinnedPromptsRoutes from './routes/pinned-prompts.routes.js';
 import pmoRoutes from './routes/pmo/pmo.routes.js';
 import pmoAnalysisRoutes from './routes/pmo/pmo-analysis.routes.js';
-import pmoContextRoutes from './routes/pmo/pmo-context.routes.js';
-import pmoDomainsRoutes from './routes/pmo/pmoDomains.routes.js';
+import pmoContextRoutes from './routes/pmo/pmo-context.routes.ts';
+import pmoDomainsRoutes from './routes/pmo/pmoDomains.routes.ts';
 import pmoRolesRoutes from './routes/pmo/pmoRoles.routes.js';
 import preferencesRoutes from './routes/user/preferences.routes.js';
 import premiumReportsRoutes from './routes/premiumReports.routes.js';
@@ -130,7 +131,7 @@ import rapidleanRoutes from './routes/rapidlean.routes.js';
 import rbacRoutes from './routes/organization/rbac.routes.js';
 import referralRoutes from './routes/referrals.routes.js';
 import reportCommentsRoutes from './routes/report-comments.routes.js';
-import reportsRoutes from './routes/reports.routes.js';
+import reportsRoutes from './routes/reports.routes.ts';
 import roadmapRoutes from './routes/pmo/roadmap.routes.js';
 import scenariosRoutes from './routes/scenarios.routes.js';
 import scimRoutes from './routes/integrations/scim.routes.js';
@@ -198,8 +199,28 @@ export class ApiGateway {
             app.use('/api/auth', authRoutes);
             console.log('[ApiGateway] Mounting /api/billing');
             app.use('/api/billing', billingRoutes);
+            app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
             console.log('[ApiGateway] Mounting /api/ai');
             app.use('/api/ai', aiRoutes);
+            app.use('/api/ai/prompts', aiPromptsRoutes);
+            app.use('/api/ai/experiments', aiExperimentsRoutes);
+            app.use('/api/ai/analytics', aiAnalyticsRoutesV2);
+            app.use('/api/ai/async', aiAsyncRoutes);
+            app.use('/api/ai/coach', aiCoachRoutes);
+            app.use('/api/ai/playbooks', aiPlaybooksRoutes);
+            app.use('/api/ai/explain', aiExplainRoutes);
+            app.use('/api/ai/training', aiTrainingRoutes);
+            app.use('/api/ai/ab-testing', aiAbTestingRoutes);
+            app.use('/api/ai/nudges', aiNudgesRoutes);
+            app.use('/api/ai/learning', aiLearningRoutes);
+            app.use('/api/ai/memory', aiMemoryRoutes);
+            app.use('/api/ai/security', aiSecurityRoutes);
+            app.use('/api/ai/settings', aiSettingsRoutes);
+            app.use('/api/ai/budgets', aiBudgetsRoutes);
+            app.use('/api/ai/infrastructure', aiInfrastructureRoutes);
+            app.use('/api/ai/development', aiDevelopmentRoutes);
+            app.use('/api/ai/operations', aiOperationsRoutes);
+            app.use('/api/ai/actions', aiActionsRoutes);
 
             // Register routes
             console.log('[ApiGateway] Mounting /api/admin-data');
@@ -230,35 +251,27 @@ export class ApiGateway {
             app.use('/api/initiatives', initiativesRoutes);
             app.use('/api/admin-alerts', adminAlertsRoutes);
             app.use('/api/admin/backups', adminBackupRoutes);
-            app.use('/api/ai', aiRoutes);
 
-            // AI-related routes
+            // AI-related legacy/duplicate routes (cleaned up)
             app.use('/api/conversations', conversationsRoutes);
             app.use('/api/chat-projects', chatProjectsRoutes);
             app.use('/api/daily-brief', dailyBriefRoutes);
             app.use('/api/pinned-prompts', pinnedPromptsRoutes);
-            app.use('/api/ai-memory', aiMemoryRoutes);
-            app.use('/api/ai-drafts', aiDraftsRoutes);
             app.use('/api/task-advisor', taskAdvisorRoutes);
+            app.use('/api/prompt-assistant', promptAssistantRoutes);
             app.use('/api/ai-analytics', aiAnalyticsRoutes);
             app.use('/api/ai-feedback', aiFeedbackRoutes);
+            app.use('/api/ai-training', aiTrainingRoutes); // Keep for tests that hit /api/ai-training directly
+            app.use('/api/ai-memory', aiMemoryRoutes);
+            app.use('/api/ai-drafts', aiDraftsRoutes);
             app.use('/api/ai-prompts', aiPromptsRoutes);
-            app.use('/api/prompt-assistant', promptAssistantRoutes);
-            app.use('/api/ai-ab-testing', aiAbTestingRoutes);
             app.use('/api/ai-security', aiSecurityRoutes);
-            app.use('/api/ai/nudges', aiNudgesRoutes);
             app.use('/api/ai-settings', aiSettingsRoutes);
-            app.use('/api/ai/actions', aiActionsRoutes);
-            app.use('/api/ai/learning', aiLearningRoutes);
             app.use('/api/ai-budgets', aiBudgetsRoutes);
             app.use('/api/ai-infrastructure', aiInfrastructureRoutes);
             app.use('/api/ai-development', aiDevelopmentRoutes);
             app.use('/api/ai-operations', aiOperationsRoutes);
             app.use('/api/ai-async', aiAsyncRoutes);
-            app.use('/api/ai/coach', aiCoachRoutes);
-            app.use('/api/ai/playbooks', aiPlaybooksRoutes);
-            app.use('/api/ai/explain', aiExplainRoutes);
-            app.use('/api/ai-training', aiTrainingRoutes);
 
             // Integration routes
             app.use('/api/voice', voiceRoutes);
@@ -382,6 +395,7 @@ export class ApiGateway {
             app.use('/api/management-reports/analytics', managementReportsAnalyticsRoutes);
 
             // Analytics routes
+            console.log('[Gateway] economicsRoutes type:', typeof economicsRoutes, 'stack:', economicsRoutes?.stack?.length);
             app.use('/api/economics', economicsRoutes);
             app.use('/api/locations', locationsRoutes);
             app.use('/api/notification-settings', notificationSettingsRoutes);
@@ -389,10 +403,6 @@ export class ApiGateway {
             app.use('/api/performance-metrics', performanceMetricsRoutes);
             app.use('/api/performance', performanceRoutes);
             // Chaos engineering endpoints (development only) - disabled
-            // if (process.env.NODE_ENV !== 'production') {
-            //     app.use('/api/chaos', chaosRoutes);
-            // }
-            app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
 
             // Other routes
             app.use('/api/legal', legalRoutes);

@@ -180,6 +180,7 @@ class RefreshTokenService {
                 email: user.email,
                 role: user.role,
                 organizationId: user.organization_id,
+                isSuperAdmin: user.role === 'SUPERADMIN',
                 jti,
             },
             config.JWT_SECRET,

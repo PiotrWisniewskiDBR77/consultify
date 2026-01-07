@@ -17,8 +17,8 @@ import { ROUTES } from './routeConfig';
 // ============================================================================
 
 // Layouts
-const MainLayout = React.lazy(() => import('@/layouts/MainLayout'));
-const AuthLayout = React.lazy(() => import('@/layouts/AuthLayout'));
+const MainLayout = React.lazy(() => import('@/layouts/MainLayout').then(m => ({ default: m.MainLayout })));
+const AuthLayout = React.lazy(() => import('@/layouts/AuthLayout').then(m => ({ default: m.AuthLayout })));
 
 // System Health
 const SystemHealthDashboard = React.lazy(() => import('@/views/SystemHealthDashboard'));
@@ -131,7 +131,9 @@ export const router = createBrowserRouter([
         path: ROUTES.AUTH,
         element: (
             <SuspenseWrapper>
-                <AuthLayout />
+                <AuthLayout>
+                    <Outlet />
+                </AuthLayout>
             </SuspenseWrapper>
         ),
     },
@@ -158,7 +160,7 @@ export const router = createBrowserRouter([
                 path: ROUTES.MY_WORK,
                 element: (
                     <AnimatedSuspenseWrapper variant="slideUp">
-                        <MyWorkView currentUser={null} onNavigate={() => { }} />
+                        <MyWorkView currentUser={undefined as any} onNavigate={() => { }} />
                     </AnimatedSuspenseWrapper>
                 ),
             },
@@ -390,7 +392,7 @@ export const router = createBrowserRouter([
                 path: ROUTES.ADMIN.ROOT,
                 element: (
                     <AnimatedSuspenseWrapper variant="fade">
-                        <AdminView currentUser={null} onNavigate={() => { }} />
+                        <AdminView currentUser={undefined as any} onNavigate={() => { }} />
                     </AnimatedSuspenseWrapper>
                 ),
                 children: [
@@ -410,7 +412,7 @@ export const router = createBrowserRouter([
                 path: ROUTES.SETTINGS.ROOT,
                 element: (
                     <AnimatedSuspenseWrapper variant="fade">
-                        <SettingsView currentUser={null} onUpdateUser={() => { }} theme="dark" toggleTheme={() => { }} />
+                        <SettingsView currentUser={undefined as any} onUpdateUser={() => { }} theme="dark" toggleTheme={() => { }} />
                     </AnimatedSuspenseWrapper>
                 ),
                 children: [
@@ -430,7 +432,7 @@ export const router = createBrowserRouter([
                 path: ROUTES.SUPERADMIN.ROOT,
                 element: (
                     <AnimatedSuspenseWrapper variant="fade">
-                        <SuperAdminView currentUser={null} onNavigate={() => { }} />
+                        <SuperAdminView currentUser={undefined as any} onNavigate={() => { }} />
                     </AnimatedSuspenseWrapper>
                 ),
             },

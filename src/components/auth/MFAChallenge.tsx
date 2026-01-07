@@ -119,7 +119,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({ onVerify, onCancel, trustDe
             }
 
             onVerify(true);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || t('mfa.challenge.error', 'An error occurred'));
         } finally {
             setLoading(false);
@@ -161,7 +161,7 @@ const MFAChallenge: React.FC<MFAChallengeProps> = ({ onVerify, onCancel, trustDe
 
             setRemainingCodes(data.remainingCodes);
             onVerify(true);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || t('mfa.challenge.error', 'An error occurred'));
         } finally {
             setLoading(false);

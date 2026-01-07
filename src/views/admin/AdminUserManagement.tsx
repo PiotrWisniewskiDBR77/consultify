@@ -24,6 +24,7 @@ import { User, UserRole } from '../../types';
 
 interface ExtendedUser extends User {
     isOwner?: boolean;
+    licensePlanId?: string;
 }
 
 interface AdminUserManagementProps {
@@ -196,7 +197,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
             setShowAddUserModal(false);
             setEditingUser(null);
             loadUsers();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Error saving user');
         }
     };

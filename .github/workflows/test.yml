@@ -34,22 +34,45 @@ jobs:
 
     - name: Run unit tests
       run: npm run test:unit
+      env:
+        NODE_ENV: test
+        MOCK_DB: 'true'
+        DB_TYPE: 'sqlite'
+        CI: 'true'
 
     - name: Run integration tests
       run: npm run test:integration
+      env:
+        NODE_ENV: test
+        MOCK_DB: 'true'
+        DB_TYPE: 'sqlite'
+        CI: 'true'
 
     - name: Run component tests
       run: npm run test:component
+      env:
+        NODE_ENV: test
+        CI: 'true'
 
     - name: Generate coverage report
       run: npm run test:coverage
+      env:
+        NODE_ENV: test
+        MOCK_DB: 'true'
+        DB_TYPE: 'sqlite'
+        CI: 'true'
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
-        files: ./coverage/coverage-final.json
+        files: |
+          ./coverage/coverage-final.json
+          ./coverage/lcov.info
         flags: unittests
         name: codecov-umbrella
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+        verbose: true
 
   coverage:
     runs-on: ubuntu-latest

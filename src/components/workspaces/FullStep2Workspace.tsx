@@ -6,7 +6,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { AxisId, FullInitiative, FullSession, InitiativeStatus, StrategicGoal } from '../../types';
 import { InitiativeCard } from '../InitiativeCard';
 import { InitiativeDetailModal } from '../InitiativeDetailModal';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
+import { Select } from '../ui/select';
 
 interface FullStep2WorkspaceProps {
     fullSession: FullSession;
@@ -159,41 +159,37 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
                     <div className="w-40">
                         <Select
                             value={filterAxis}
-                            onValueChange={(value: string) => setFilterAxis(value as AxisId | 'ALL')}
-                        >
-                            <SelectTrigger className="w-full bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md text-xs h-8">
-                                <SelectValue placeholder="All Axes" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10">
-                                <SelectItem value="ALL">All Axes</SelectItem>
-                                <SelectItem value="processes">Processes</SelectItem>
-                                <SelectItem value="digitalProducts">Product</SelectItem>
-                                <SelectItem value="businessModels">Business Model</SelectItem>
-                                <SelectItem value="dataManagement">Data</SelectItem>
-                                <SelectItem value="culture">Culture</SelectItem>
-                                <SelectItem value="cybersecurity">Security</SelectItem>
-                                <SelectItem value="aiMaturity">AI</SelectItem>
-                            </SelectContent>
-                        </Select>
+                            onChange={(value: string) => setFilterAxis(value as AxisId | 'ALL')}
+                            options={[
+                                { value: 'ALL', label: 'All Axes' },
+                                { value: 'processes', label: 'Processes' },
+                                { value: 'digitalProducts', label: 'Product' },
+                                { value: 'businessModels', label: 'Business Model' },
+                                { value: 'dataManagement', label: 'Data' },
+                                { value: 'culture', label: 'Culture' },
+                                { value: 'cybersecurity', label: 'Security' },
+                                { value: 'aiMaturity', label: 'AI' },
+                            ]}
+                            size="sm"
+                            fullWidth
+                        />
                     </div>
 
                     <div className="w-40">
                         <Select
                             value={filterPriority}
-                            onValueChange={(value: string) =>
+                            onChange={(value: string) =>
                                 setFilterPriority(value as 'ALL' | 'High' | 'Medium' | 'Low')
                             }
-                        >
-                            <SelectTrigger className="w-full bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-md text-xs h-8">
-                                <SelectValue placeholder="All Priorities" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10">
-                                <SelectItem value="ALL">All Priorities</SelectItem>
-                                <SelectItem value="High">High Priority</SelectItem>
-                                <SelectItem value="Medium">Medium Priority</SelectItem>
-                                <SelectItem value="Low">Low Priority</SelectItem>
-                            </SelectContent>
-                        </Select>
+                            options={[
+                                { value: 'ALL', label: 'All Priorities' },
+                                { value: 'High', label: 'High Priority' },
+                                { value: 'Medium', label: 'Medium Priority' },
+                                { value: 'Low', label: 'Low Priority' },
+                            ]}
+                            size="sm"
+                            fullWidth
+                        />
                     </div>
 
                     <div className="flex-1"></div>
@@ -238,7 +234,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
                             {groupedInitiatives[groupKey].map((init) => (
                                 <InitiativeCard
                                     key={init.id}
-                                    initiative={init}
+                                    initiative={{ ...init, title: (init as any).title || init.name || '' } as any}
                                     onClick={() => handleEditClick(init)}
                                     onEnrich={onEnrichInitiative}
                                 />

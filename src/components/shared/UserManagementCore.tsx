@@ -516,7 +516,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
             setShowUserModal(false);
             setEditingUser(null);
             loadUsers();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Error saving user');
         }
     };
@@ -562,7 +562,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
             await Api.inviteUser(email, role, orgId);
             toast.success('Invitation sent successfully');
             setShowInviteModal(false);
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to send invitation');
         }
     };
@@ -573,7 +573,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
             const { token } = await Api.impersonateUser(userId);
             localStorage.setItem('token', token);
             window.location.href = '/';
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to impersonate user');
         }
     };

@@ -100,7 +100,7 @@ const highlightText = (text: string, query: string): React.ReactNode => {
 
     const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
 
-    return parts.map((part, idx) =>
+    return parts.map((part, idx: number) =>
         part.toLowerCase() === query.toLowerCase() ? (
             <mark
                 key={idx}
@@ -198,11 +198,10 @@ const VideoCard: React.FC<{
 
     return (
         <div
-            className={`rounded-lg p-4 transition-colors relative ${
-                watched
+            className={`rounded-lg p-4 transition-colors relative ${watched
                     ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/30'
                     : 'bg-slate-50 dark:bg-navy-900 hover:bg-slate-100 dark:hover:bg-navy-800'
-            }`}
+                }`}
         >
             {watched && (
                 <div className="absolute -top-2 -right-2">
@@ -228,11 +227,10 @@ const VideoCard: React.FC<{
                 </span>
                 <button
                     onClick={handleWatch}
-                    className={`flex items-center gap-1 text-xs transition-colors ${
-                        watched
+                    className={`flex items-center gap-1 text-xs transition-colors ${watched
                             ? 'text-green-600 dark:text-green-400 hover:text-green-700'
                             : 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300'
-                    }`}
+                        }`}
                 >
                     {watched ? <Eye size={12} /> : <PlayCircle size={12} />}
                     {watched ? t('help.sidePanel.video.watchAgain') : t('help.sidePanel.video.watch')}
@@ -265,11 +263,11 @@ export const HelpSidePanel: React.FC = () => {
     // Filter FAQs by search
     const filteredFAQs = searchQuery
         ? faqs.filter((faq) => {
-              const question = lang === 'pl' ? faq.questionPl : faq.question;
-              const answer = lang === 'pl' ? faq.answerPl : faq.answer;
-              const q = searchQuery.toLowerCase();
-              return question.toLowerCase().includes(q) || answer.toLowerCase().includes(q);
-          })
+            const question = lang === 'pl' ? faq.questionPl : faq.question;
+            const answer = lang === 'pl' ? faq.answerPl : faq.answer;
+            const q = searchQuery.toLowerCase();
+            return (question || '').toLowerCase().includes(q) || (answer || '').toLowerCase().includes(q);
+        })
         : faqs;
 
     // Get audience badge
@@ -308,7 +306,7 @@ export const HelpSidePanel: React.FC = () => {
                             {moduleHelp && (
                                 <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
                                     <DynamicIcon
-                                        name={moduleHelp.icon}
+                                        name={moduleHelp.icon || 'HelpCircle'}
                                         size={18}
                                         className="text-purple-600 dark:text-purple-400"
                                     />
@@ -363,11 +361,10 @@ export const HelpSidePanel: React.FC = () => {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${
-                                activeTab === tab.id
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors ${activeTab === tab.id
                                     ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-500 bg-white dark:bg-navy-950'
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                            }`}
+                                }`}
                         >
                             {tab.icon}
                             <span className="hidden sm:inline">{t(tab.labelKey)}</span>
@@ -406,7 +403,7 @@ export const HelpSidePanel: React.FC = () => {
                                 <span className="text-xs text-slate-500 dark:text-slate-400">
                                     {t('help.sidePanel.audience.for')}
                                 </span>
-                                {moduleHelp.targetAudience.map((audience) => {
+                                {(moduleHelp.targetAudience || []).map((audience: any) => {
                                     const badge = getAudienceBadge([audience]);
                                     return (
                                         <span
@@ -427,7 +424,7 @@ export const HelpSidePanel: React.FC = () => {
                                 </h4>
                                 <ul className="space-y-2">
                                     {getTranslatedArray(t, `${moduleHelp.translationKey}.keyFeatures`).map(
-                                        (feature, idx) => (
+                                        (feature, idx: number) => (
                                             <li
                                                 key={idx}
                                                 className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
@@ -450,7 +447,7 @@ export const HelpSidePanel: React.FC = () => {
                                     {t('help.sidePanel.content.workflow')}
                                 </h4>
                                 <ol className="space-y-2">
-                                    {getTranslatedArray(t, `${moduleHelp.translationKey}.workflow`).map((step, idx) => (
+                                    {getTranslatedArray(t, `${moduleHelp.translationKey}.workflow`).map((step, idx: number) => (
                                         <li
                                             key={idx}
                                             className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
@@ -471,7 +468,7 @@ export const HelpSidePanel: React.FC = () => {
                                     {t('help.sidePanel.content.tips')}
                                 </h4>
                                 <ul className="space-y-2">
-                                    {getTranslatedArray(t, `${moduleHelp.translationKey}.tips`).map((tip, idx) => (
+                                    {getTranslatedArray(t, `${moduleHelp.translationKey}.tips`).map((tip, idx: number) => (
                                         <li
                                             key={idx}
                                             className="text-sm text-amber-800 dark:text-amber-200/80 flex items-start gap-2"
@@ -500,7 +497,7 @@ export const HelpSidePanel: React.FC = () => {
                                                     className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-xs"
                                                 >
                                                     <DynamicIcon
-                                                        name={relModule.icon}
+                                                        name={relModule.icon || 'Link'}
                                                         size={14}
                                                         className="text-slate-500"
                                                     />
@@ -553,7 +550,7 @@ export const HelpSidePanel: React.FC = () => {
                                             {t('help.sidePanel.content.features') || 'Features'}
                                         </h4>
                                         <ul className="space-y-2">
-                                            {cardHelp.features.map((feature, idx) => (
+                                            {cardHelp.features.map((feature: any, idx: number) => (
                                                 <li
                                                     key={idx}
                                                     className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
@@ -575,7 +572,7 @@ export const HelpSidePanel: React.FC = () => {
                                             {t('help.sidePanel.tabs.howto')}
                                         </h4>
                                         <ol className="space-y-2">
-                                            {cardHelp.howToUse.map((step, idx) => (
+                                            {cardHelp.howToUse.map((step: any, idx: number) => (
                                                 <li
                                                     key={idx}
                                                     className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
@@ -596,7 +593,7 @@ export const HelpSidePanel: React.FC = () => {
                                             {t('help.sidePanel.content.tips')}
                                         </h4>
                                         <ul className="space-y-2">
-                                            {cardHelp.tips.map((tip, idx) => (
+                                            {cardHelp.tips.map((tip: any, idx: number) => (
                                                 <li
                                                     key={idx}
                                                     className="text-sm text-amber-800 dark:text-amber-200/80 flex items-start gap-2"
@@ -615,7 +612,7 @@ export const HelpSidePanel: React.FC = () => {
                                                 {t('help.sidePanel.content.relatedDocs')}
                                             </h4>
                                             <div className="space-y-2">
-                                                {cardHelp.relatedDocs.map((doc, idx) => (
+                                                {cardHelp.relatedDocs.map((doc: any, idx: number) => (
                                                     <a
                                                         key={idx}
                                                         href={doc.url}
@@ -662,8 +659,8 @@ export const HelpSidePanel: React.FC = () => {
                                     {filteredFAQs.map((faq) => (
                                         <FAQItem
                                             key={faq.id}
-                                            question={lang === 'pl' ? faq.questionPl : faq.question}
-                                            answer={lang === 'pl' ? faq.answerPl : faq.answer}
+                                            question={(lang === 'pl' ? faq.questionPl : faq.question) || ''}
+                                            answer={(lang === 'pl' ? faq.answerPl : faq.answer) || ''}
                                             searchQuery={searchQuery}
                                         />
                                     ))}
@@ -693,21 +690,21 @@ export const HelpSidePanel: React.FC = () => {
                                                 {t('help.sidePanel.video.progress')}
                                             </span>
                                             <span className="text-xs text-slate-500">
-                                                {videos.filter((v) => isVideoWatched(v.id)).length} / {videos.length}
+                                                {videos.filter((v: any) => isVideoWatched(v.id)).length} / {videos.length}
                                             </span>
                                         </div>
                                         <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
                                             <div
                                                 className="bg-green-500 h-2 rounded-full transition-all duration-300"
                                                 style={{
-                                                    width: `${(videos.filter((v) => isVideoWatched(v.id)).length / videos.length) * 100}%`,
+                                                    width: `${(videos.filter((v: any) => isVideoWatched(v.id)).length / videos.length) * 100}%`,
                                                 }}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-3">
-                                        {videos.map((video) => (
+                                        {videos.map((video: any) => (
                                             <VideoCard
                                                 key={video.id}
                                                 id={video.id}

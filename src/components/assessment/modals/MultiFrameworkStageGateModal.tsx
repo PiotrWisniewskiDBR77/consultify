@@ -218,7 +218,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
                     message: `This approval requires a ${requirements.requiredRoleLabel}`,
                 });
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message);
         }
 
@@ -320,7 +320,7 @@ export const MultiFrameworkStageGateModal: React.FC<MultiFrameworkStageGateModal
 
             onSuccess?.();
             onClose();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message);
         } finally {
             setIsLoading(false);

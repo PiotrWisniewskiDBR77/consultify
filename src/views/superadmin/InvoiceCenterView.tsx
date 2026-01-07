@@ -92,8 +92,17 @@ export const InvoiceCenterView: React.FC = () => {
                 Api.getSuperAdminInvoices(dateFilter),
                 Api.getSuperAdminInvoiceStats(),
             ]);
-            setInvoices(invoicesResult.invoices || []);
-            setStats(statsResult);
+            setInvoices((invoicesResult as any)?.invoices || []);
+            // Map API response to expected interface
+            const mappedStats = statsResult as any;
+            setStats({
+                totalRevenue: mappedStats.totalRevenue || mappedStats.total || 0,
+                paidInvoices: mappedStats.paidInvoices || mappedStats.paid || 0,
+                pendingInvoices: mappedStats.pendingInvoices || mappedStats.pending || 0,
+                overdueInvoices: mappedStats.overdueInvoices || mappedStats.overdue || 0,
+                overdueAmount: mappedStats.overdueAmount || 0,
+                monthlyGrowth: mappedStats.monthlyGrowth || 0,
+            });
         } catch (error) {
             console.error('Failed to fetch invoices:', error);
             // Set empty defaults on error
@@ -346,9 +355,8 @@ export const InvoiceCenterView: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span
-                                        className={`text-sm ${
-                                            invoice.status === 'overdue' ? 'text-red-600 font-medium' : 'text-slate-500'
-                                        }`}
+                                        className={`text-sm ${invoice.status === 'overdue' ? 'text-red-600 font-medium' : 'text-slate-500'
+                                            }`}
                                     >
                                         {new Date(invoice.dueDate).toLocaleDateString()}
                                     </span>
@@ -622,11 +630,10 @@ export const InvoiceCenterView: React.FC = () => {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as TabType)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            activeTab === tab.id
-                                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
+                            ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            }`}
                     >
                         {tab.icon}
                         {tab.label}

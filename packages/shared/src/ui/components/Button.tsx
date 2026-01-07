@@ -17,7 +17,7 @@ import React, { forwardRef } from 'react';
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
+export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref' | 'disabled'> {
     /** Visual style variant */
     variant?: ButtonVariant;
     /** Button size */
@@ -30,6 +30,8 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
     iconRight?: React.ReactNode;
     /** Loading state - shows spinner and disables button */
     loading?: boolean;
+    /** Disabled state */
+    disabled?: boolean;
     /** Additional CSS classes */
     className?: string;
     /** Button content */
@@ -128,7 +130,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     .replace(/\s+/g, ' ')}
                 whileTap={!isDisabled ? { scale: 0.97 } : undefined}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                {...props}
+                {...(props as any)}
             >
                 {loading ? (
                     <Loader2 size={iconSize} className="animate-spin" />

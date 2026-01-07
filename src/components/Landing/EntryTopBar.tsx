@@ -9,7 +9,7 @@ interface EntryTopBarProps {
     onTrialClick: () => void;
     onDemoClick: () => void;
     onLoginClick: () => void;
-    onRegisterClick: () => void;
+    onRegisterClick?: () => void;
     isLoggedIn: boolean;
     hasWorkspace: boolean;
 }
@@ -261,7 +261,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                                     </button>
                                     <button
                                         onClick={() => {
-                                            onRegisterClick();
+                                            onRegisterClick?.();
                                             setIsMobileMenuOpen(false);
                                         }}
                                         className="w-full px-4 py-3 text-base font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all text-center"

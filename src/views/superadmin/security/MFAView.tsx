@@ -41,7 +41,7 @@ export const MFAView: React.FC = () => {
         if (!selectedUserId) return;
         setLoading(true);
         try {
-            const methods = await Api.getMFAMethods(selectedUserId);
+            const methods = await Api.getMFAMethods();
             setMfaMethods(methods);
         } catch (err) {
             toast.error('Failed to fetch MFA methods');

@@ -77,7 +77,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
             toast.success(t('settings.ai.modelSelection.saved', 'Model preferences saved'));
 
             setTimeout(() => setSaveStatus('idle'), 2000);
-        } catch (error: unknown) {
+        } catch (error: any) {
             setSaveStatus('error');
             toast.error(error.message || t('settings.ai.modelSelection.error', 'Failed to save model preferences'));
         } finally {

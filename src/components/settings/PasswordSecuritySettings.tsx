@@ -250,7 +250,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
             setConfirmPassword('');
             toast.success(t('settings.security.passwordChanged', 'Password changed successfully!'));
             fetchSessions();
-        } catch (error: unknown) {
+        } catch (error: any) {
             setPasswordError(error.message || t('settings.security.passwordChangeFailed', 'Failed to change password'));
             toast.error(error.message || 'Failed to change password');
         } finally {

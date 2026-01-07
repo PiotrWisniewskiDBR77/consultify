@@ -41,11 +41,10 @@ const CommentItem: React.FC<{
 
     return (
         <div
-            className={`group p-3 rounded-lg transition-colors ${
-                comment.isResolved
+            className={`group p-3 rounded-lg transition-colors ${comment.isResolved
                     ? 'bg-emerald-50 dark:bg-emerald-900/10 opacity-75'
                     : 'bg-slate-50 dark:bg-navy-800/50 hover:bg-slate-100 dark:hover:bg-navy-800'
-            }`}
+                }`}
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1">
@@ -144,15 +143,15 @@ const CommentItem: React.FC<{
             {/* Replies */}
             {comment.replies && comment.replies.length > 0 && (
                 <div className="mt-3 ml-11 space-y-2 border-l-2 border-slate-200 dark:border-navy-700 pl-3">
-                    {comment.replies.map((reply) => (
+                    {comment.replies.map((reply: any) => (
                         <CommentItem
                             key={reply.id}
                             comment={reply}
                             currentUserId={currentUserId}
                             isLocked={isLocked}
-                            onReply={() => {}}
-                            onResolve={() => {}}
-                            onDelete={() => {}}
+                            onReply={() => { }}
+                            onResolve={() => { }}
+                            onDelete={() => { }}
                         />
                     ))}
                 </div>

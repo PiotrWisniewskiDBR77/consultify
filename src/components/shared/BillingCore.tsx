@@ -186,8 +186,8 @@ export const InvoiceTable: React.FC<{
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                     {invoices.slice(0, limit).map((inv) => (
                         <tr key={inv.id} className="text-slate-700 dark:text-slate-300">
-                            <td className="px-4 py-3">{new Date(inv.created_at).toLocaleDateString()}</td>
-                            <td className="px-4 py-3 font-mono">${(inv.amount_paid / 100).toFixed(2)}</td>
+                            <td className="px-4 py-3">{new Date(inv.createdAt || inv.created_at || '').toLocaleDateString()}</td>
+                            <td className="px-4 py-3 font-mono">${((inv.amountPaid || inv.amount_paid || 0) / 100).toFixed(2)}</td>
                             <td className="px-4 py-3">
                                 <span
                                     className={`px-2 py-0.5 rounded text-xs font-medium ${

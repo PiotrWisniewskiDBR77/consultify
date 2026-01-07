@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '../../../services/api';
-import { useAppStore } from '../../../store/useAppStore';
-import { AppView } from '../../../types';
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '../../types';
 
 interface Invite {
     id: string;
@@ -39,7 +39,7 @@ export const ConsultantInviteView = () => {
         try {
             const data = await Api.getConsultantInvites();
             setInvites(data);
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Failed to load invites:', error);
             toast.error(error instanceof Error ? error.message : t('consultant.invites.noInvites'));
         } finally {
@@ -65,7 +65,7 @@ export const ConsultantInviteView = () => {
             setTargetEmail('');
             setTargetCompany('');
             loadInvites();
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error(error);
             toast.error(error instanceof Error ? error.message : 'Failed to create invite');
         } finally {

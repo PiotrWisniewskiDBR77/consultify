@@ -61,6 +61,7 @@ import { Input } from '../ui/primitives/Input';
 // Admin section identifier
 export type AdminSection =
     // Overview
+    | 'overview'
     | 'dashboard'
     | 'metrics'
     | 'analytics'

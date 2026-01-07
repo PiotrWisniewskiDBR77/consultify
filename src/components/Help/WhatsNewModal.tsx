@@ -70,11 +70,11 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
 
     // Navigate features
     const nextFeature = () => {
-        setCurrentFeatureIndex((i) => Math.min(i + 1, release.features.length - 1));
+        setCurrentFeatureIndex((i: number) => Math.min(i + 1, release.features.length - 1));
     };
 
     const prevFeature = () => {
-        setCurrentFeatureIndex((i) => Math.max(i - 1, 0));
+        setCurrentFeatureIndex((i: number) => Math.max(i - 1, 0));
     };
 
     // Type badge color
@@ -156,7 +156,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                             <h2 className="text-2xl font-bold mb-2">{release.title[lang]}</h2>
                             <div className="flex items-center gap-3">
                                 <span
-                                    className={`px-2 py-0.5 ${typeBadgeColor[release.type]} rounded text-xs font-medium uppercase`}
+                                    className={`px-2 py-0.5 ${(typeBadgeColor as any)[release.type]} rounded text-xs font-medium uppercase`}
                                 >
                                     {release.type}
                                 </span>
@@ -228,15 +228,14 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
 
                                         {/* Dots */}
                                         <div className="flex items-center gap-2">
-                                            {release.features.map((_, i) => (
+                                            {release.features.map((_: any, i: number) => (
                                                 <button
                                                     key={i}
                                                     onClick={() => setCurrentFeatureIndex(i)}
-                                                    className={`w-2 h-2 rounded-full transition-colors ${
-                                                        i === currentFeatureIndex
-                                                            ? 'bg-purple-500'
-                                                            : 'bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
-                                                    }`}
+                                                    className={`w-2 h-2 rounded-full transition-colors ${i === currentFeatureIndex
+                                                        ? 'bg-purple-500'
+                                                        : 'bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
+                                                        }`}
                                                 />
                                             ))}
                                         </div>
@@ -262,7 +261,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                                     {tTrans.improvements}
                                 </h4>
                                 <ul className="space-y-1">
-                                    {release.improvements.slice(0, 3).map((item, i) => (
+                                    {release.improvements.slice(0, 3).map((item: any, i: number) => (
                                         <li
                                             key={i}
                                             className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
@@ -281,7 +280,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ forceShow = false,
                                     {tTrans.fixes}
                                 </h4>
                                 <ul className="space-y-1">
-                                    {release.fixes.slice(0, 3).map((item, i) => (
+                                    {release.fixes.slice(0, 3).map((item: any, i: number) => (
                                         <li
                                             key={i}
                                             className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"

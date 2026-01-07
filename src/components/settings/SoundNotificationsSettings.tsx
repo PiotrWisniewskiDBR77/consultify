@@ -89,7 +89,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
             toast.success(t('settings.notifications.sounds.saved', 'Sound preferences saved'));
 
             setTimeout(() => setSaveStatus('idle'), 2000);
-        } catch (error: unknown) {
+        } catch (error: any) {
             setSaveStatus('error');
             toast.error(error.message || t('settings.notifications.sounds.error', 'Failed to save sound preferences'));
         } finally {

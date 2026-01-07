@@ -201,7 +201,7 @@ export const GeneratedInitiativeCard: React.FC<GeneratedInitiativeCardProps> = (
                     <h4 className="text-sm font-medium text-navy-900 dark:text-white mb-2">Objectives</h4>
                     {initiative.objectives && initiative.objectives.length > 0 ? (
                         <ul className="space-y-1.5">
-                            {initiative.objectives.map((obj, idx) => (
+                            {initiative.objectives.map((obj, idx: number) => (
                                 <li
                                     key={idx}
                                     className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"

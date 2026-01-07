@@ -241,7 +241,7 @@ export function buildSearchIndex(): SearchIndex {
     });
 
     // Index cards
-    Object.entries(CARD_DOCS).forEach(([cardId, card]) => {
+    Object.entries(CARD_DOCS).forEach(([cardId, card]: [string, CardDocumentation]) => {
         const searchableText = [card.title, card.description, ...card.features, ...card.howToUse, ...card.tips].join(
             ' ',
         );
@@ -260,7 +260,7 @@ export function buildSearchIndex(): SearchIndex {
     });
 
     // Index FAQs
-    FAQ_CONTENT.forEach((faq) => {
+    FAQ_CONTENT.forEach((faq: any) => {
         index.faqs.push({
             id: faq.id,
             type: 'faq',
@@ -283,12 +283,12 @@ export function buildSearchIndex(): SearchIndex {
             type: 'video',
             moduleId: video.moduleId,
             searchableText: `${video.title} ${video.description}`,
-            searchableTextPl: `${video.titlePl} ${video.descriptionPl}`,
+            searchableTextPl: `${video.titlePl || ''} ${video.descriptionPl || ''}`,
             title: video.title,
             titlePl: video.titlePl,
-            excerpt: video.description.slice(0, 150) + '...',
-            excerptPl: video.descriptionPl.slice(0, 150) + '...',
-            url: video.url,
+            excerpt: (video.description || '').slice(0, 150) + '...',
+            excerptPl: (video.descriptionPl || '').slice(0, 150) + '...',
+            url: (video as any).url || '',
             tags: video.tags || [],
             weight: 8,
         });

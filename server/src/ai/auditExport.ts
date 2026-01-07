@@ -16,7 +16,7 @@ const AuditExportService = {
      * @param {boolean} [options.includeArchived] - Include archived records
      * @returns {Promise<{data: Array|string, format: string}>}
      */
-    exportDecisions: async (options) => {
+    exportDecisions: async (options: any) => {
         const { organizationId, format = 'json', includeArchived = false } = options;
 
         let sql = `SELECT 
@@ -49,7 +49,7 @@ const AuditExportService = {
         });
 
         // Redact PII
-        const redactedRows = rows.map(row => ({
+        const redactedRows = (rows as any).map((row: any) => ({
             ...row,
             user_email: PIIRedactor.redact(row.user_email),
             first_name: PIIRedactor.redact(row.first_name),
@@ -71,7 +71,7 @@ const AuditExportService = {
      * @param {boolean} [options.includeArchived] - Include archived records
      * @returns {Promise<{data: Array|string, format: string}>}
      */
-    exportExecutions: async (options) => {
+    exportExecutions: async (options: any) => {
         const { organizationId, format = 'json', includeArchived = false } = options;
 
         let sql = `SELECT 
@@ -101,7 +101,7 @@ const AuditExportService = {
         });
 
         // Redact PII (safe-guard for error messages or other fields)
-        const redactedRows = rows.map(row => PIIRedactor.redact(row));
+        const redactedRows = (rows as any).map((row: any) => PIIRedactor.redact(row));
 
         if (format === 'csv') {
             return { data: AuditExportService._toCSV(redactedRows), format: 'csv' };
@@ -114,7 +114,7 @@ const AuditExportService = {
      * Convert rows to CSV string.
      * @private
      */
-    _toCSV: (rows) => {
+    _toCSV: (rows: any) => {
         if (!rows || rows.length === 0) {
             return '';
         }

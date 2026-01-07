@@ -1,4 +1,4 @@
-import { BookOpen, CreditCard, LayoutDashboard, Link, Users } from 'lucide-react';
+import { BookOpen, ChevronRight, CreditCard, LayoutDashboard, Link, Users } from 'lucide-react';
 import React from 'react';
 
 import { AppView } from '../types';

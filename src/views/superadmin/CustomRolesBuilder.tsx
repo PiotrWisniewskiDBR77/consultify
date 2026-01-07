@@ -197,7 +197,7 @@ const CustomRolesBuilder: React.FC = () => {
             await api.delete(`/rbac/roles/${roleId}`);
             if (selectedRole?.id === roleId) setSelectedRole(null);
             fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             alert(error.response?.data?.error || 'Failed to delete role');
         }
     };
@@ -207,7 +207,7 @@ const CustomRolesBuilder: React.FC = () => {
         try {
             await api.post('/rbac/roles/from-template', { templateName });
             fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             alert(error.response?.data?.error || 'Failed to create role from template');
         }
     };

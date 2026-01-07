@@ -1,12 +1,14 @@
-/**
- * AiMemory Routes
- * API endpoints for ai-memory
- *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
- */
+import { Router } from 'express';
+import { verifyToken } from '../../middleware/auth.middleware.js';
+import { AIMemoryController } from '../../controllers/ai/AIMemoryController.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
-import { createLazyRoute } from '../../utils/lazyRouteLoader.js';
+const router = Router();
 
-const router = createLazyRoute('./ai-memory.js');
+router.use(verifyToken);
+
+router.get('/', asyncHandler(AIMemoryController.listMemories));
+router.get('/context', asyncHandler(AIMemoryController.getContext));
+router.put('/:key', asyncHandler(AIMemoryController.updateMemory));
 
 export default router;

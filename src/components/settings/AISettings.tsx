@@ -142,13 +142,13 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 // 1. Load Preferences
                 const prefRes = await Api.get('/settings/preferences');
                 if (prefRes.data?.ai) {
-                    setPreferences((prev) => ({ ...prev, ...prefRes.data.ai }));
+                    setPreferences((prev: any) => ({ ...prev, ...prefRes.data.ai }));
                 }
 
                 // 2. Load Organization Providers
                 const providers = await Api.getLLMProviders(true); // adminContext=true to get is_enabled_for_org
                 // Filter only those active globally AND enabled for org
-                const availableFn = providers.filter((p) => p.is_active && p.is_enabled_for_org !== false);
+                const availableFn = providers.filter((p: any) => p.is_active && p.is_enabled_for_org !== false);
                 setOrgProviders(availableFn);
 
                 // 3. Load User selection (from user.aiConfig.visibleModelIds)
@@ -1321,7 +1321,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                             ].map((role) => (
                                 <button
                                     key={role.id}
-                                    onClick={() => setPreferences((p) => ({ ...p, userRole: role.id }))}
+                                    onClick={() => setPreferences((p: any) => ({ ...p, userRole: role.id }))}
                                     className={`text-left p-4 rounded-lg border transition-all ${
                                         preferences.userRole === role.id
                                             ? 'bg-blue-500/10 border-blue-500/50'
@@ -1486,7 +1486,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     <Toggle
                                         enabled={preferences.enablePiiRedaction || false}
                                         onChange={() =>
-                                            setPreferences((p) => ({ ...p, enablePiiRedaction: !p.enablePiiRedaction }))
+                                            setPreferences((p: any) => ({ ...p, enablePiiRedaction: !p.enablePiiRedaction }))
                                         }
                                     />
                                 </div>
@@ -1511,7 +1511,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     <Toggle
                                         enabled={preferences.enableWebSearch || false}
                                         onChange={() =>
-                                            setPreferences((p) => ({ ...p, enableWebSearch: !p.enableWebSearch }))
+                                            setPreferences((p: any) => ({ ...p, enableWebSearch: !p.enableWebSearch }))
                                         }
                                     />
                                 </div>
@@ -1552,7 +1552,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                                     <button
                                         key={policy.id}
                                         onClick={() =>
-                                            setPreferences((p) => ({ ...p, dataRetentionPolicy: policy.id as any }))
+                                            setPreferences((p: any) => ({ ...p, dataRetentionPolicy: policy.id as any }))
                                         }
                                         className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all gap-3 ${
                                             preferences.dataRetentionPolicy === policy.id

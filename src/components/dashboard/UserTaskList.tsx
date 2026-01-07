@@ -33,11 +33,10 @@ export const UserTaskList: React.FC<UserTaskListProps> = ({ session, onNavigate 
     const initialTask: Task = {
         id: '',
         projectId: '', // User personal task? or Organization?
-        organizationId: currentUser?.organizationId || '',
         title: '',
         description: '',
-
-        status: TaskStatus.TODO,
+        type: 'task',
+        status: 'todo',
         priority: 'medium',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

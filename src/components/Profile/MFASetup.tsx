@@ -161,7 +161,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             setQrCode(res.qrCode || res.data?.qrCode);
             setSecret(res.manualEntry || res.data?.manualEntry);
             setStep('setup-app');
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(
                 err.response?.data?.error || err.message || t('security.mfa.setupError', 'Failed to start MFA setup'),
             );
@@ -193,7 +193,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 setStep('verify');
                 toast.success(t('security.mfa.smsSent', 'Verification code sent to your phone'));
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(
                 err.response?.data?.error ||
                     err.message ||
@@ -230,7 +230,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 setStep('backup');
                 toast.success(t('security.mfa.smsEnabled', 'SMS MFA enabled successfully!'));
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(
                 err.response?.data?.error || err.message || t('security.mfa.invalidCode', 'Invalid verification code'),
             );
@@ -254,7 +254,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 setStep('backup');
                 toast.success(t('security.mfa.enabled', '2FA enabled successfully!'));
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(
                 err.response?.data?.error || err.message || t('security.mfa.invalidCode', 'Invalid verification code'),
             );
@@ -278,7 +278,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 setVerificationCode('');
                 toast.success(t('security.mfa.codesRegenerated', 'Backup codes regenerated'));
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.response?.data?.error || t('security.mfa.regenerateError', 'Failed to regenerate codes'));
         } finally {
             setLoading(false);
@@ -301,7 +301,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 toast.success(t('security.mfa.disabled', '2FA has been disabled'));
                 onUpdate();
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.response?.data?.error || t('security.mfa.invalidCode', 'Invalid code'));
         } finally {
             setLoading(false);

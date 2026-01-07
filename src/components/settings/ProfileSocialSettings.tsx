@@ -30,8 +30,8 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({ cu
     const [twitter, setTwitter] = useState(currentUser.socialLinks?.twitter || '');
     const [github, setGithub] = useState(currentUser.socialLinks?.github || '');
     const [website, setWebsite] = useState(currentUser.socialLinks?.website || '');
-    const [profileVisibility, setProfileVisibility] = useState<'public' | 'team' | 'private'>(
-        currentUser.profileVisibility || 'team',
+    const [profileVisibility, setProfileVisibility] = useState<'public' | 'team' | 'private' | 'internal'>(
+        (currentUser.profileVisibility as 'public' | 'team' | 'private' | 'internal') || 'team',
     );
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -40,7 +40,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({ cu
         setTwitter(currentUser.socialLinks?.twitter || '');
         setGithub(currentUser.socialLinks?.github || '');
         setWebsite(currentUser.socialLinks?.website || '');
-        setProfileVisibility(currentUser.profileVisibility || 'team');
+        setProfileVisibility((currentUser.profileVisibility as any) || 'team');
     }, [currentUser]);
 
     const normalizeUrl = (url: string, prefix: string) => {

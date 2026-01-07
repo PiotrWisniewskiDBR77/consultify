@@ -22,7 +22,7 @@ const RecommendationEngine = {
     /**
      * Override dependencies for testing
      */
-    setDependencies(deps) {
+    setDependencies(deps: any) {
         if (deps.aiPipeline) this.deps.aiPipeline = deps.aiPipeline;
         if (deps.db) this.deps.db = deps.db;
     },
@@ -39,7 +39,7 @@ const RecommendationEngine = {
      * Generates recommendations based on detected signals or context.
      * @param {Array|Object} signalsOrContext - Array of signals OR context object
      */
-    generateRecommendations: async (signalsOrContext) => {
+    generateRecommendations: async (signalsOrContext: any) => {
         // Strict validation based on test expectations:
         if (!Array.isArray(signalsOrContext)) {
             // Check for valid context object
@@ -101,7 +101,7 @@ const RecommendationEngine = {
         return RecommendationEngine.prioritizeRecommendations(recommendations);
     },
 
-    _mapSignalToRecommendations: (signal) => {
+    _mapSignalToRecommendations: (signal: any) => {
         switch (signal.type) {
             case 'USER_AT_RISK':
                 return [
@@ -184,43 +184,43 @@ const RecommendationEngine = {
         }
     },
 
-    prioritizeRecommendations: (recommendations) => {
+    prioritizeRecommendations: (recommendations: any) => {
         if (!Array.isArray(recommendations)) return [];
         const impactScore = { high: 3, medium: 2, low: 1 };
         const effortScore = { low: 3, medium: 2, high: 1 };
 
         return [...recommendations].sort((a, b) => {
-            const impA = impactScore[a.impact] || 0;
-            const impB = impactScore[b.impact] || 0;
+            const impA = (impactScore as any)[a.impact] || 0;
+            const impB = (impactScore as any)[b.impact] || 0;
             if (impA !== impB) return impB - impA;
 
-            const effA = effortScore[a.effort] || 0;
-            const effB = effortScore[b.effort] || 0;
+            const effA = (effortScore as any)[a.effort] || 0;
+            const effB = (effortScore as any)[b.effort] || 0;
             return effB - effA;
         });
     },
 
-    filterRecommendations: (recommendations, criteria) => {
+    filterRecommendations: (recommendations: any, criteria: any) => {
         if (!Array.isArray(recommendations)) return [];
         return recommendations.filter(rec => {
             if (criteria.type && rec.type !== criteria.type) return false;
             if (criteria.impact && rec.impact !== criteria.impact) return false;
             if (criteria.tags && Array.isArray(criteria.tags)) {
-                if (!rec.tags || !criteria.tags.some(tag => rec.tags.includes(tag))) return false;
+                if (!rec.tags || !criteria.tags.some((tag: any) => rec.tags.includes(tag))) return false;
             }
             if (criteria.minConfidence && rec.confidence < criteria.minConfidence) return false;
             return true;
         });
     },
 
-    validateRecommendation: (rec) => {
+    validateRecommendation: (rec: any) => {
         if (!rec || typeof rec !== 'object') throw new Error('Invalid recommendation');
         if (!rec.type && !rec.title) throw new Error('Missing fields');
         // Relaxed validation slightly as title is clearer than type in some contexts
         if (!rec.title) throw new Error('Missing fields');
     },
 
-    storeRecommendations: async (recommendations, userId) => {
+    storeRecommendations: async (recommendations: any, userId: any) => {
         if (!Array.isArray(recommendations)) throw new Error('Invalid recommendations');
 
         if (RecommendationEngine.deps.db && RecommendationEngine.deps.db.run) {
@@ -229,7 +229,7 @@ const RecommendationEngine = {
                 let completed = 0;
                 if (recommendations.length === 0) return resolve(true);
 
-                const runNext = (index) => {
+                const runNext = (index: any) => {
                     if (index >= recommendations.length) return resolve(true);
 
                     // Handle both mock styles (implied by test mocks receiving callback)
@@ -248,7 +248,7 @@ const RecommendationEngine = {
         return true;
     },
 
-    getRecommendationHistory: async (id, filter) => {
+    getRecommendationHistory: async (id: any, filter: any) => {
         if (RecommendationEngine.deps.db && RecommendationEngine.deps.db.all) {
             return new Promise((resolve, reject) => {
                 RecommendationEngine.deps.db.all('SELECT * FROM recommendations WHERE id = ?', [id], (err, rows) => {
@@ -262,7 +262,7 @@ const RecommendationEngine = {
         return _recommendationsStore;
     },
 
-    trackRecommendationUsage: async (interaction) => {
+    trackRecommendationUsage: async (interaction: any) => {
         if (RecommendationEngine.deps.db && RecommendationEngine.deps.db.run) {
             await new Promise((resolve, reject) => {
                 RecommendationEngine.deps.db.run('UPDATE recommendations ...', [], (err) => {
@@ -274,12 +274,12 @@ const RecommendationEngine = {
         return true;
     },
 
-    calculateRecommendationROI: (implemented) => {
+    calculateRecommendationROI: (implemented: any) => {
         const benefits = { low: 2, medium: 3, high: 3 };
         const costs = { low: 1, medium: 2, high: 3 };
 
-        const b = benefits[implemented.impact] || 0;
-        const c = costs[implemented.effort] || 1;
+        const b = (benefits as any)[implemented.impact] || 0;
+        const c = (costs as any)[implemented.effort] || 1;
         return b / c;
     }
 };

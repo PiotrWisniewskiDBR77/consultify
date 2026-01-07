@@ -79,7 +79,7 @@ export const DNDModeSettings: React.FC<DNDModeSettingsProps> = ({ currentUser, o
             toast.success(t('settings.notifications.dnd.saved', 'DND mode updated'));
 
             setTimeout(() => setSaveStatus('idle'), 2000);
-        } catch (error: unknown) {
+        } catch (error: any) {
             setSaveStatus('error');
             toast.error(error.message || t('settings.notifications.dnd.error', 'Failed to update DND mode'));
         } finally {

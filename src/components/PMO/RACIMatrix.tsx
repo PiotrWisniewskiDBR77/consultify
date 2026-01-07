@@ -20,7 +20,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '../../services/api';
-import { PMOProjectRole, RACIMatrix as RACIMatrixType, RACIType } from '../../types';
+import { ProjectRole, RACIMatrix as RACIMatrixType, RACIType } from '../../types';
 
 interface RACIMatrixProps {
     projectId: string;
@@ -74,7 +74,7 @@ export const RACIMatrix: React.FC<RACIMatrixProps> = ({ projectId }) => {
             const response = await api.get(`/projects/${projectId}/raci-matrix`);
             setMatrix(response.data);
             setError(null);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to load RACI matrix');
         } finally {
             setLoading(false);

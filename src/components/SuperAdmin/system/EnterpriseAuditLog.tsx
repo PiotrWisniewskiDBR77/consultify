@@ -176,7 +176,7 @@ export const EnterpriseAuditLog: React.FC = () => {
 
             // Fetch stats
             const statsData = await Api.getAuditLogStats(queryFilters);
-            setStats(statsData);
+            setStats(statsData as any);
         } catch (error) {
             console.error('Failed to fetch audit logs:', error);
             toast.error('Failed to load audit logs');

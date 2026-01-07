@@ -79,7 +79,7 @@ export const NotificationDigestSettings: React.FC<NotificationDigestSettingsProp
             toast.success(t('settings.notifications.digest.saved', 'Digest preferences saved'));
 
             setTimeout(() => setSaveStatus('idle'), 2000);
-        } catch (error: unknown) {
+        } catch (error: any) {
             setSaveStatus('error');
             toast.error(error.message || t('settings.notifications.digest.error', 'Failed to save digest preferences'));
         } finally {

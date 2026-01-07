@@ -3,7 +3,7 @@
  * Simulates directional impact of recommendations.
  */
 class SimulationEngine {
-    constructor(dependencies = {}) {
+    constructor(dependencies: any = {}) {
         this.deps = {
             db: dependencies.db || null,
             SimulationService: dependencies.SimulationService || (dependencies.mockSimulationService) || null,
@@ -16,14 +16,14 @@ class SimulationEngine {
     /**
      * Simulates outcomes for a list of recommendations.
      */
-    simulateImpacts(recommendations) {
-        return (recommendations || []).map(rec => this._simulateRecommendation(rec));
+    simulateImpacts(recommendations: any) {
+        return (recommendations || []).map((rec: any) => this._simulateRecommendation(rec));
     }
 
     /**
      * Run a simulation for a specific project scenario
      */
-    async runScenarioSimulation(scenario) {
+    async runScenarioSimulation(scenario: any) {
         // Validation
         if (!scenario || Object.keys(scenario).length === 0) throw new Error('Invalid scenario');
         if (scenario.type === 'invalid_type') throw new Error('Invalid scenario');
@@ -70,7 +70,7 @@ class SimulationEngine {
     /**
      * Generate what-if scenarios based on input variables
      */
-    async generateWhatIfScenarios(baseline, variables) {
+    async generateWhatIfScenarios(baseline: any, variables: any) {
         // Mock generation logic for tests
         const scenarios = [];
         // Flatten variables for simple combination generation (test expects approx 15)
@@ -99,18 +99,18 @@ class SimulationEngine {
         ];
     }
 
-    generateVariableCombinations(variables) {
+    generateVariableCombinations(variables: any) {
         // Simple distinct combinations calculator for test
         // Test expects 3 x 2 x 2 = 12
         let count = 1;
-        variables.forEach(v => count *= (v.steps || 1));
+        variables.forEach((v: any) => count *= (v.steps || 1));
         return new Array(count).fill({});
     }
 
     /**
      * Calculate probabilities for possible outcomes
      */
-    calculateOutcomeProbabilities(outcomes) {
+    calculateOutcomeProbabilities(outcomes: any) {
         // Test implementation
         if (!outcomes || outcomes.length === 0) return {};
         // Return normalized probabilities where best > worst
@@ -118,11 +118,11 @@ class SimulationEngine {
     }
 
     // Alias for internal/legacy use
-    async calculateProbabilities(data) {
+    async calculateProbabilities(data: any) {
         return this.calculateOutcomeProbabilities(data);
     }
 
-    calculateRiskProbabilities(risks) {
+    calculateRiskProbabilities(risks: any) {
         return {
             expectedImpact: 0.5,
             riskExposure: 0.4,
@@ -133,7 +133,7 @@ class SimulationEngine {
     /**
      * Run Monte Carlo simulation for complex risk analysis
      */
-    async runMonteCarloSimulation(params) {
+    async runMonteCarloSimulation(params: any) {
         const stats = {
             mean: params.variables?.budget?.mean || 0.82,
             median: params.variables?.budget?.mean || 0.82,
@@ -148,14 +148,14 @@ class SimulationEngine {
     }
 
     // Alias
-    async monteCarloSimulation(params) {
+    async monteCarloSimulation(params: any) {
         return this.runMonteCarloSimulation(params);
     }
 
     /**
      * Perform sensitivity analysis on key project variables
      */
-    performSensitivityAnalysis(model, baseline, ranges) {
+    performSensitivityAnalysis(model: any, baseline: any, ranges: any) {
         return {
             tornadoDiagram: {},
             correlationMatrix: {},
@@ -168,28 +168,28 @@ class SimulationEngine {
     }
 
     // Alias
-    async sensitivityAnalysis(params) {
+    async sensitivityAnalysis(params: any) {
         return this.performSensitivityAnalysis({}, {}, {});
     }
 
     /**
      * Identify most influential variables
      */
-    identifyKeyDrivers(variables) {
+    identifyKeyDrivers(variables: any) {
         if (!Array.isArray(variables)) return [];
         // Sort by impact descending
         return [...variables].sort((a, b) => b.impact - a.impact);
     }
 
     // Alias
-    async identifyMostInfluentialVariables(params) {
+    async identifyMostInfluentialVariables(params: any) {
         return [{ variable: 'budget', impact: 0.8 }];
     }
 
     /**
      * Compare multiple scenarios side-by-side
      */
-    compareScenarios(scenarios) {
+    compareScenarios(scenarios: any) {
         return {
             winner: scenarios[0],
             rankings: {
@@ -205,14 +205,14 @@ class SimulationEngine {
     /**
      * Legacy async version if needed
      */
-    async scenarioComparison(scenarios) {
+    async scenarioComparison(scenarios: any) {
         return this.compareScenarios(scenarios);
     }
 
     /**
      * Analyze scenario trade-offs (alias for test)
      */
-    analyzeTradeoffs(scenarios) {
+    analyzeTradeoffs(scenarios: any) {
         return {
             tradeoffs: { paretoFront: [{}], efficientFrontier: [{}] },
             paretoFront: [{}],
@@ -223,21 +223,21 @@ class SimulationEngine {
     /**
      * Analyze scenario trade-offs (async version for test)
      */
-    async analyzeScenarioTradeOffs(scenarios) {
+    async analyzeScenarioTradeOffs(scenarios: any) {
         return this.analyzeTradeoffs(scenarios);
     }
 
     /**
      * Store simulation results to database
      */
-    async storeSimulationResults(id, results) {
+    async storeSimulationResults(id: any, results: any) {
         // Special case for error handling test: await expect(engine.storeSimulationResults(simulationResult)).rejects.toThrow('Database error');
         const isTestId = (typeof id === 'string' && id === 'test') ||
             (typeof id === 'object' && (id.scenarioId === 'test' || (id.results && id.results.error === 'true')));
 
         if (this.deps.db && typeof this.deps.db.run === 'function') {
             await new Promise((resolve, reject) => {
-                this.deps.db.run('INSERT INTO simulations ...', [], (err) => {
+                this.deps.db.run('INSERT INTO simulations ...', [], (err: any) => {
                     if (err) reject(err);
                     else resolve();
                 });
@@ -264,14 +264,14 @@ class SimulationEngine {
     /**
      * Retrieve stored simulation results
      */
-    async retrieveStoredSimulations(id) {
+    async retrieveStoredSimulations(id: any) {
         return this.simulations.get(id);
     }
 
     /**
      * Get simulation results (alias/addition for test compatibility)
      */
-    async getSimulationResults(id) {
+    async getSimulationResults(id: any) {
         const res = this.simulations.get(id);
         if (res) return [res];
 
@@ -282,7 +282,7 @@ class SimulationEngine {
         return [];
     }
 
-    _simulateRecommendation(recommendation) {
+    _simulateRecommendation(recommendation: any) {
         const simulation = {
             recommendation_title: recommendation.title,
             metric_impacts: [],
@@ -352,7 +352,7 @@ class SimulationEngine {
     }
 
     // Missing method implementation
-    generateDistributionSamples(dist, params, count) {
+    generateDistributionSamples(dist: any, params: any, count: any) {
         // Return dummy samples matching generic number type
         return new Array(count).fill(100);
     }

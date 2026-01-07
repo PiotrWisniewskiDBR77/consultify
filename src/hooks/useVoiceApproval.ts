@@ -391,7 +391,7 @@ export function useVoiceApproval(options: UseVoiceApprovalOptions = {}): UseVoic
                         error: response.data?.error,
                     };
                 }
-            } catch (error: unknown) {
+            } catch (error: any) {
                 return {
                     success: false,
                     commandType: COMMAND_TYPES.APPROVE,
@@ -444,7 +444,7 @@ export function useVoiceApproval(options: UseVoiceApprovalOptions = {}): UseVoic
                         error: response.data?.error,
                     };
                 }
-            } catch (error: unknown) {
+            } catch (error: any) {
                 return {
                     success: false,
                     commandType: COMMAND_TYPES.REJECT,

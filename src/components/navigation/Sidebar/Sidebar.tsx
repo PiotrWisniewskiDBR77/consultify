@@ -211,7 +211,7 @@ export const Sidebar: React.FC = () => {
             isTouchDevice={isTouchDevice}
             isChatSlidingPanelOpen={isChatSlidingPanelOpen}
             isFloatingActive={activeFloating?.id === item.id}
-            currentUserRole={currentUser?.role}
+            currentUserRole={currentUser?.role as any}
             onMouseEnter={handleItemMouseEnter}
             onMouseLeave={handleMouseLeave}
             onClick={handleItemClick}

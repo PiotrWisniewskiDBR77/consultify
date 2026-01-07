@@ -105,7 +105,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
 
             // Refresh sessions as old ones were invalidated
             fetchSessions();
-        } catch (error: unknown) {
+        } catch (error: any) {
             setPasswordError(error.message || t('settings.security.passwordChangeFailed', 'Failed to change password'));
             toast.error(error.message || 'Failed to change password');
         } finally {

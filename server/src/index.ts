@@ -57,7 +57,7 @@ app.get('/ping', HealthCheckController.ping);
 // Mount Health Check Routes
 app.use('/api/health', healthRoutes);
 app.use('/api/health', dbHealthRoutes);
-app.use('/api/metrics', dbMetricsRoutes);
+// app.use('/api/metrics', dbMetricsRoutes); // DISABLED: Conflicts with Gateway metrics routes
 app.use('/api/system', systemHealthRoutes);
 
 // Initialize Sentry (must be before other middleware)

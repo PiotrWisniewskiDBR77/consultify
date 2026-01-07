@@ -111,7 +111,7 @@ export const PortfolioView: React.FC = () => {
                 const params = new URLSearchParams();
                 if (filters.projectId) params.append('projectId', filters.projectId);
                 if (filters.status?.length) filters.status.forEach((s) => params.append('status', s));
-                if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
+                if (filters.priority?.length) filters.priority.forEach((p: any) => params.append('priority', p));
                 if (filters.owner) params.append('owner', filters.owner);
                 if (filters.quarter) params.append('quarter', filters.quarter);
                 if (filters.search) params.append('search', filters.search);
@@ -160,9 +160,9 @@ export const PortfolioView: React.FC = () => {
     const handleStatusChange = useCallback(async (initiativeId: string, newStatus: InitiativeStatus) => {
         try {
             await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
-            setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i)));
+            setInitiatives((prev: any) => prev.map((i: any) => (i.id === initiativeId ? { ...i, status: newStatus } : i)));
             toast.success('Status updated');
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.response?.data?.error || 'Failed to update status');
         }
     }, []);
@@ -170,14 +170,14 @@ export const PortfolioView: React.FC = () => {
     const handleQuickUpdate = useCallback(async (initiativeId: string, updates: Partial<PortfolioInitiative>) => {
         try {
             await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
-            setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, ...updates } : i)));
-        } catch (error: unknown) {
+            setInitiatives((prev: any) => prev.map((i: any) => (i.id === initiativeId ? { ...i, ...updates } : i)));
+        } catch (error: any) {
             toast.error('Failed to update');
         }
     }, []);
 
     const handleFilterChange = useCallback((key: keyof PortfolioFilters, value: any) => {
-        setFilters((prev) => ({ ...prev, [key]: value }));
+        setFilters((prev: any) => ({ ...prev, [key]: value }));
     }, []);
 
     const clearFilters = useCallback(() => {
@@ -288,7 +288,7 @@ export const PortfolioView: React.FC = () => {
                         className="px-3 py-1.5 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                     >
                         <option value="">All Projects</option>
-                        {projects.map((p) => (
+                        {projects.map((p: any) => (
                             <option key={p.id} value={p.id}>
                                 {p.name}
                             </option>
@@ -317,7 +317,7 @@ export const PortfolioView: React.FC = () => {
                     className="px-3 py-1.5 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                 >
                     <option value="">All Priorities</option>
-                    {PRIORITY_OPTIONS.map((p) => (
+                    {PRIORITY_OPTIONS.map((p: any) => (
                         <option key={p.value} value={p.value}>
                             {p.label}
                         </option>
@@ -509,7 +509,7 @@ export const PortfolioView: React.FC = () => {
                 isOpen={isSidePanelOpen}
                 onClose={handleCloseSidePanel}
                 onUpdate={(updated) => {
-                    setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+                    setInitiatives((prev: any) => prev.map((i: any) => (i.id === updated.id ? updated : i)));
                 }}
             />
         </div>

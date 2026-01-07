@@ -203,7 +203,7 @@ export const SecuritySettings: React.FC = () => {
 
             toast.success('Security settings updated');
             fetchSettings();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to save settings');
         } finally {
             setSaving(false);
@@ -225,7 +225,7 @@ export const SecuritySettings: React.FC = () => {
 
             toast.success('Session terminated');
             fetchSessions();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message);
         }
     };
@@ -245,7 +245,7 @@ export const SecuritySettings: React.FC = () => {
 
             toast.success('All sessions terminated');
             fetchSessions();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message);
         }
     };

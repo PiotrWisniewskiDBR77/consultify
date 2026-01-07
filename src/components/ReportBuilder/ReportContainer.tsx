@@ -168,7 +168,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
         if (!confirm('Are you sure you want to delete this block?')) return;
 
         // Optimistic
-        const newOrder = report.blockOrder.filter((id) => id !== blockId);
+        const newOrder = report.blockOrder.filter((id: string) => id !== blockId);
         const { [blockId]: deleted, ...remainingBlocks } = report.blocks;
 
         setReport({ ...report, blockOrder: newOrder, blocks: remainingBlocks });
@@ -256,7 +256,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
             <div className="w-64 border-r border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-navy-900 hidden md:block overflow-y-auto">
                 <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-4">Report Outline</h3>
                 <div className="space-y-2">
-                    {report.blockOrder.map((id, index) => {
+                    {report.blockOrder.map((id, index: number) => {
                         const block = report.blocks[id];
                         if (!block) return null;
                         return (
@@ -300,7 +300,7 @@ export const ReportContainer: React.FC<ReportContainerProps> = ({ projectId, org
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                         <SortableContext items={report.blockOrder} strategy={verticalListSortingStrategy}>
                             <div className="space-y-6">
-                                {report.blockOrder.map((id) => {
+                                {report.blockOrder.map((id: string) => {
                                     const block = report.blocks[id];
                                     if (!block) return null;
                                     return (

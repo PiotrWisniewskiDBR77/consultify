@@ -60,7 +60,7 @@ export const GateStatus: React.FC<GateStatusProps> = ({ projectId, compact = fal
 
             const data = await res.json();
             setEvaluation(data);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message);
         } finally {
             setIsLoading(false);

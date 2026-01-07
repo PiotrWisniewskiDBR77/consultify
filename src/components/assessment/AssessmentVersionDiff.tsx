@@ -112,7 +112,7 @@ export const AssessmentVersionDiff: React.FC<AssessmentVersionDiffProps> = ({
                 const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
                 setV1Data(data1);
                 setV2Data(data2);
-            } catch (err: unknown) {
+            } catch (err: any) {
                 console.error('[AssessmentVersionDiff] Error:', err);
                 setError(err.message);
             } finally {

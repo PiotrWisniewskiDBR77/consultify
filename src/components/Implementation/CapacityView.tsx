@@ -161,7 +161,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
                     },
                 ]);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('[CapacityView] Error:', err);
             setError(err.message || 'Failed to load capacity data');
 

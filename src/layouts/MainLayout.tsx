@@ -24,7 +24,7 @@ import { AppView } from '../types';
 
 interface MainLayoutProps {
     children: React.ReactNode;
-    breadcrumbs: string[];
+    breadcrumbs?: string[];
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs }) => {
@@ -90,10 +90,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs })
                             </button>
                             <div className="flex items-center text-sm font-medium text-slate-400">
                                 <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">
-                                    {breadcrumbs[0]}
+                                    {breadcrumbs?.[0] || ''}
                                 </span>
                                 <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
-                                <span className="text-navy-900 dark:text-white">{breadcrumbs[1]}</span>
+                                <span className="text-navy-900 dark:text-white">{breadcrumbs?.[1] || ''}</span>
                             </div>
                         </div>
 

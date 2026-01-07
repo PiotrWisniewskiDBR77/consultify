@@ -117,7 +117,7 @@ export function PromptManagementUI() {
             } else {
                 throw new Error(response.data.error || 'Failed to fetch prompts');
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to fetch prompts');
             setPrompts([]);
         } finally {
@@ -175,7 +175,7 @@ export function PromptManagementUI() {
             } else {
                 throw new Error(response.data.error || 'Failed to save prompt');
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to save prompt');
         } finally {
             setIsSaving(false);
@@ -195,7 +195,7 @@ export function PromptManagementUI() {
             } else {
                 throw new Error(response.data.error || 'Failed to delete');
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to delete prompt');
         }
     };
@@ -231,7 +231,7 @@ export function PromptManagementUI() {
             } else {
                 setPreviewResult(`Error: ${response.data.error}`);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setPreviewResult(`Error: ${err.message}`);
         } finally {
             setPreviewLoading(false);

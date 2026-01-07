@@ -10,9 +10,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '../../../services/api';
-import { useAppStore } from '../../../store/useAppStore';
-import { AppView } from '../../../types';
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView } from '../../types';
 
 interface LinkedOrg {
     id: string;

@@ -91,7 +91,7 @@ const Bubble: React.FC<BubbleProps> = ({ initiative, x, y, size, onClick }) => {
             />
 
             {/* Axis indicator */}
-            <circle r={6} className={axisColor} transform={`translate(0, ${-radius + 10})`} />
+            <circle r={6} className={axisColor.bg} transform={`translate(0, ${-radius + 10})`} />
 
             {/* Initiative abbreviation */}
             <text
@@ -184,11 +184,10 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({ initia
             <div className="shrink-0 flex items-center gap-3 mb-4">
                 <button
                     onClick={() => setSelectedQuadrant(null)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                        !selectedQuadrant
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${!selectedQuadrant
                             ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
-                    }`}
+                        }`}
                 >
                     All ({initiatives.length})
                 </button>
@@ -197,11 +196,10 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({ initia
                     <button
                         key={key}
                         onClick={() => setSelectedQuadrant(selectedQuadrant === key ? null : key)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                            selectedQuadrant === key
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${selectedQuadrant === key
                                 ? `${MATRIX_QUADRANT_COLORS[key as keyof typeof MATRIX_QUADRANT_COLORS].bg} ${MATRIX_QUADRANT_COLORS[key as keyof typeof MATRIX_QUADRANT_COLORS].label}`
                                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
-                        }`}
+                            }`}
                     >
                         <q.icon size={14} />
                         {q.label} ({quadrantCounts[key]})

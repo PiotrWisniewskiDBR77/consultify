@@ -135,7 +135,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 setViewMode('preview');
                 toast.success('Report generated successfully!');
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Report generation failed:', error);
             toast.error(error.message || 'Failed to generate report');
         } finally {

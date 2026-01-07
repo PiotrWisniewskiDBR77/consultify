@@ -136,7 +136,7 @@ export const OrgSetupWizard: React.FC = () => {
                 toast.success('Organizacja utworzona. Pamięć systemu aktywna.');
                 setCurrentView(AppView.ONBOARDING_WIZARD); // Move to Phase E
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Nie udało się utworzyć organizacji');
         } finally {
             updateState({ isSubmitting: false });

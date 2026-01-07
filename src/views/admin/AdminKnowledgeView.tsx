@@ -154,7 +154,7 @@ export const AdminKnowledgeView: React.FC = () => {
             setApproveIdeaCategory('');
             setApproveIdeaTags('');
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to approve idea';
             toast.error(errorMessage);
         }
@@ -175,7 +175,7 @@ export const AdminKnowledgeView: React.FC = () => {
             setLinkProjectId('');
             setLinkProjectNotes('');
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to link idea';
             toast.error(errorMessage);
         }
@@ -202,7 +202,7 @@ export const AdminKnowledgeView: React.FC = () => {
                 progress_percentage: 0,
             });
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to add strategy');
         }
     };
@@ -213,7 +213,7 @@ export const AdminKnowledgeView: React.FC = () => {
             toast.success('Strategy updated');
             setEditingStrategy(null);
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to update strategy');
         }
     };
@@ -230,7 +230,7 @@ export const AdminKnowledgeView: React.FC = () => {
             setLinkingStrategy(null);
             setLinkItemId('');
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to link');
         }
     };
@@ -244,7 +244,7 @@ export const AdminKnowledgeView: React.FC = () => {
             }
             toast.success('Unlinked successfully');
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to unlink');
         }
     };
@@ -280,7 +280,7 @@ export const AdminKnowledgeView: React.FC = () => {
             setUploadCategory('');
             setUploadTags('');
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Upload failed');
         } finally {
             setUploading(false);
@@ -302,7 +302,7 @@ export const AdminKnowledgeView: React.FC = () => {
             setEditDocCategory('');
             setEditDocTags('');
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Update failed');
         }
     };

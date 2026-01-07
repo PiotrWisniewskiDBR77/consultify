@@ -33,7 +33,7 @@ export const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = (
             await (Api as any).resendVerificationEmail();
             setSent(true);
             toast.success(t('auth.verificationSent', 'Verification email sent! Check your inbox.'));
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || t('auth.verificationSendFailed', 'Failed to send verification email'));
         } finally {
             setIsSending(false);

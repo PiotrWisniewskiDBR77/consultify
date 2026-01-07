@@ -53,7 +53,7 @@ export const DiagramRenderer: React.FC<DiagramRendererProps> = ({ content, class
                 const { svg: renderedSvg } = await mermaid.render(id, content);
                 setSvg(renderedSvg);
                 setError(null);
-            } catch (err: unknown) {
+            } catch (err: any) {
                 console.error('Mermaid rendering error:', err);
                 setError(err.message || 'Failed to render diagram');
                 setSvg('');

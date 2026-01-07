@@ -49,7 +49,7 @@ export const AffiliateDashboardView: React.FC = () => {
 
             if (referralsRes.success) setReferrals(referralsRes.referrals);
             // statsRes might be restricted if not admin, but we'll try to show what's available
-            if (statsRes.success) setStats(statsRes.stats);
+            if (statsRes.success) setStats(statsRes.stats as any);
         } catch (error) {
             console.error('Failed to fetch affiliate data:', error);
         } finally {
@@ -65,7 +65,7 @@ export const AffiliateDashboardView: React.FC = () => {
                 toast.success('Nowy kod polecający został wygenerowany');
                 fetchData();
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Błąd generowania kodu');
         } finally {
             setIsGenerating(false);

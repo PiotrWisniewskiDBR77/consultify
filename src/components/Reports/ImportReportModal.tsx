@@ -123,7 +123,7 @@ export const ImportReportModal: React.FC<ImportReportModalProps> = ({ projectId,
             setEditingScores(initialScores);
 
             setStep('mapping');
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('[ImportReportModal] Import error:', err);
             setError(err.message || 'Failed to import report');
         } finally {

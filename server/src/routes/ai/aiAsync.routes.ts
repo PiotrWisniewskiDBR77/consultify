@@ -1,12 +1,23 @@
 /**
- * AiAsync Routes
- * API endpoints for aiAsync
- *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * AI Async Routes
  */
+import { Router } from 'express';
+import AIAsyncController from '../../controllers/ai/AIAsyncController.js';
+import { verifyToken } from '../../middleware/auth.middleware.js';
 
-import { createLazyRoute } from '../../utils/lazyRouteLoader.js';
+const router = Router();
 
-const router = createLazyRoute('./aiAsync.js');
+// All routes require authentication
+router.use(verifyToken);
+
+/**
+ * POST /api/ai-async/jobs
+ */
+router.post('/jobs', AIAsyncController.submitJob);
+
+/**
+ * GET /api/ai-async/jobs/:id
+ */
+router.get('/jobs/:id', AIAsyncController.getJobStatus);
 
 export default router;

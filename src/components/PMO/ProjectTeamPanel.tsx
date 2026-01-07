@@ -20,7 +20,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '../../services/api';
-import { PMOProjectRole, ProjectMember } from '../../types';
+import { ProjectRole, ProjectMember } from '../../types';
 
 interface ProjectTeamPanelProps {
     projectId: string;
@@ -28,18 +28,22 @@ interface ProjectTeamPanelProps {
     onMemberChange?: () => void;
 }
 
-const ROLE_LABELS: Record<PMOProjectRole, { label: string; color: string; icon: React.ElementType }> = {
-    [PMOProjectRole.SPONSOR]: { label: 'Sponsor', color: 'bg-purple-100 text-purple-800', icon: Shield },
-    [PMOProjectRole.DECISION_OWNER]: { label: 'Decision Owner', color: 'bg-indigo-100 text-indigo-800', icon: Shield },
-    [PMOProjectRole.PMO_LEAD]: { label: 'PMO Lead', color: 'bg-blue-100 text-blue-800', icon: Briefcase },
-    [PMOProjectRole.WORKSTREAM_OWNER]: { label: 'Workstream Owner', color: 'bg-cyan-100 text-cyan-800', icon: Users },
-    [PMOProjectRole.INITIATIVE_OWNER]: { label: 'Initiative Owner', color: 'bg-teal-100 text-teal-800', icon: Users },
-    [PMOProjectRole.TASK_ASSIGNEE]: { label: 'Task Assignee', color: 'bg-green-100 text-green-800', icon: Users },
-    [PMOProjectRole.SME]: { label: 'Subject Matter Expert', color: 'bg-yellow-100 text-yellow-800', icon: Users },
-    [PMOProjectRole.REVIEWER]: { label: 'Reviewer', color: 'bg-orange-100 text-orange-800', icon: Users },
-    [PMOProjectRole.OBSERVER]: { label: 'Observer', color: 'bg-gray-100 text-gray-800', icon: Users },
-    [PMOProjectRole.CONSULTANT]: { label: 'Consultant', color: 'bg-pink-100 text-pink-800', icon: Users },
-    [PMOProjectRole.STAKEHOLDER]: { label: 'Stakeholder', color: 'bg-slate-100 text-slate-800', icon: Users },
+const ROLE_LABELS: Record<ProjectRole, { label: string; color: string; icon: React.ElementType }> = {
+    [ProjectRole.SPONSOR]: { label: 'Sponsor', color: 'bg-purple-100 text-purple-800', icon: Shield },
+    [ProjectRole.DECISION_OWNER]: { label: 'Decision Owner', color: 'bg-indigo-100 text-indigo-800', icon: Shield },
+    [ProjectRole.PMO_LEAD]: { label: 'PMO Lead', color: 'bg-blue-100 text-blue-800', icon: Briefcase },
+    [ProjectRole.WORKSTREAM_OWNER]: { label: 'Workstream Owner', color: 'bg-cyan-100 text-cyan-800', icon: Users },
+    [ProjectRole.INITIATIVE_OWNER]: { label: 'Initiative Owner', color: 'bg-teal-100 text-teal-800', icon: Users },
+    [ProjectRole.TASK_ASSIGNEE]: { label: 'Task Assignee', color: 'bg-green-100 text-green-800', icon: Users },
+    [ProjectRole.SME]: { label: 'Subject Matter Expert', color: 'bg-yellow-100 text-yellow-800', icon: Users },
+    [ProjectRole.REVIEWER]: { label: 'Reviewer', color: 'bg-orange-100 text-orange-800', icon: Users },
+    [ProjectRole.OBSERVER]: { label: 'Observer', color: 'bg-gray-100 text-gray-800', icon: Users },
+    [ProjectRole.CONSULTANT]: { label: 'Consultant', color: 'bg-pink-100 text-pink-800', icon: Users },
+    [ProjectRole.STAKEHOLDER]: { label: 'Stakeholder', color: 'bg-slate-100 text-slate-800', icon: Users },
+    [ProjectRole.PROJECT_EXECUTIVE]: { label: 'Project Executive', color: 'bg-violet-100 text-violet-800', icon: Shield },
+    [ProjectRole.PROJECT_MANAGER]: { label: 'Project Manager', color: 'bg-blue-100 text-blue-800', icon: Briefcase },
+    [ProjectRole.TEAM_LEAD]: { label: 'Team Lead', color: 'bg-emerald-100 text-emerald-800', icon: Users },
+    [ProjectRole.TEAM_MEMBER]: { label: 'Team Member', color: 'bg-green-100 text-green-800', icon: Users },
 };
 
 export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
@@ -52,7 +56,7 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [selectedRole, setSelectedRole] = useState<PMOProjectRole | null>(null);
+    const [selectedRole, setSelectedRole] = useState<ProjectRole | null>(null);
 
     useEffect(() => {
         loadMembers();
@@ -64,7 +68,7 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
             const response = await api.get(`/projects/${projectId}/members`);
             setMembers(response.data.members || []);
             setError(null);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to load team members');
         } finally {
             setLoading(false);
@@ -80,19 +84,19 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
             await api.delete(`/projects/${projectId}/members/${userId}`);
             await loadMembers();
             onMemberChange?.();
-        } catch (err: unknown) {
+        } catch (err: any) {
             alert(err.message || 'Failed to remove member');
         }
     };
 
-    const handleRoleChange = async (userId: string, newRole: PMOProjectRole) => {
+    const handleRoleChange = async (userId: string, newRole: ProjectRole) => {
         try {
             await api.patch(`/projects/${projectId}/members/${userId}`, {
                 projectRole: newRole,
             });
             await loadMembers();
             onMemberChange?.();
-        } catch (err: unknown) {
+        } catch (err: any) {
             alert(err.message || 'Failed to update role');
         }
     };
@@ -100,27 +104,27 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
     // Group members by role
     const groupedMembers = members.reduce(
         (acc, member) => {
-            const role = member.projectRole;
+            const role = (member.projectRole || ProjectRole.TEAM_MEMBER) as ProjectRole;
             if (!acc[role]) acc[role] = [];
             acc[role].push(member);
             return acc;
         },
-        {} as Record<PMOProjectRole, ProjectMember[]>,
+        {} as Record<ProjectRole, ProjectMember[]>,
     );
 
     // Order roles by hierarchy
-    const roleOrder: PMOProjectRole[] = [
-        PMOProjectRole.SPONSOR,
-        PMOProjectRole.DECISION_OWNER,
-        PMOProjectRole.PMO_LEAD,
-        PMOProjectRole.WORKSTREAM_OWNER,
-        PMOProjectRole.INITIATIVE_OWNER,
-        PMOProjectRole.TASK_ASSIGNEE,
-        PMOProjectRole.SME,
-        PMOProjectRole.REVIEWER,
-        PMOProjectRole.CONSULTANT,
-        PMOProjectRole.OBSERVER,
-        PMOProjectRole.STAKEHOLDER,
+    const roleOrder: ProjectRole[] = [
+        ProjectRole.SPONSOR,
+        ProjectRole.DECISION_OWNER,
+        ProjectRole.PMO_LEAD,
+        ProjectRole.WORKSTREAM_OWNER,
+        ProjectRole.INITIATIVE_OWNER,
+        ProjectRole.TASK_ASSIGNEE,
+        ProjectRole.SME,
+        ProjectRole.REVIEWER,
+        ProjectRole.CONSULTANT,
+        ProjectRole.OBSERVER,
+        ProjectRole.STAKEHOLDER,
     ];
 
     if (loading) {
@@ -241,7 +245,7 @@ interface MemberRowProps {
     member: ProjectMember;
     canManage: boolean;
     onRemove: () => void;
-    onRoleChange: (newRole: PMOProjectRole) => void;
+    onRoleChange: (newRole: ProjectRole) => void;
 }
 
 const MemberRow: React.FC<MemberRowProps> = ({ member, canManage, onRemove, onRoleChange }) => {
@@ -294,7 +298,7 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, canManage, onRemove, onRo
 
                         {showRoleDropdown && (
                             <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
-                                {Object.values(PMOProjectRole).map((role) => (
+                                {Object.values(ProjectRole).map((role) => (
                                     <button
                                         key={role}
                                         onClick={() => {
@@ -336,7 +340,7 @@ interface AddMemberModalProps {
 const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onAdded }) => {
     const { t } = useTranslation();
     const [userId, setUserId] = useState('');
-    const [role, setRole] = useState<PMOProjectRole>(PMOProjectRole.TASK_ASSIGNEE);
+    const [role, setRole] = useState<ProjectRole>(ProjectRole.TASK_ASSIGNEE);
     const [allocation, setAllocation] = useState(100);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -372,7 +376,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onA
                 allocationPercent: allocation,
             });
             onAdded();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.response?.data?.error || err.message || 'Failed to add member');
         } finally {
             setLoading(false);
@@ -418,10 +422,10 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onA
                         </label>
                         <select
                             value={role}
-                            onChange={(e) => setRole(e.target.value as PMOProjectRole)}
+                            onChange={(e) => setRole(e.target.value as ProjectRole)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         >
-                            {Object.values(PMOProjectRole).map((r) => (
+                            {Object.values(ProjectRole).map((r) => (
                                 <option key={r} value={r}>
                                     {ROLE_LABELS[r].label}
                                 </option>

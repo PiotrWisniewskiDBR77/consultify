@@ -98,7 +98,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({ onClose, onSuccess }
 
             toast.success(t('billing.addCard.success', 'Card added successfully'));
             onSuccess();
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('Failed to add card:', err);
             setError(err.message || t('billing.addCard.error', 'Failed to add card'));
         } finally {

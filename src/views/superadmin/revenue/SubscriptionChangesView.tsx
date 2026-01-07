@@ -57,8 +57,8 @@ export const SubscriptionChangesView: React.FC = () => {
             ]);
 
             setChanges(changesRes || []);
-            setStats(statsRes);
-        } catch (err: unknown) {
+            setStats(statsRes as any);
+        } catch (err: any) {
             setError(err.message || 'Failed to load subscription changes');
         } finally {
             setLoading(false);
@@ -69,7 +69,7 @@ export const SubscriptionChangesView: React.FC = () => {
         try {
             await Api.approveSubscriptionChange(id);
             fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to approve change');
         }
     };
@@ -78,7 +78,7 @@ export const SubscriptionChangesView: React.FC = () => {
         try {
             await Api.rejectSubscriptionChange(id, reason);
             fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to reject change');
         }
     };

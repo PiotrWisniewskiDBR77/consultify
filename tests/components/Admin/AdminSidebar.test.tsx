@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../../test-utils';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { AdminSidebar, AdminSection } from '@/components/admin/AdminSidebar';
+import { AdminSidebar, AdminSection } from '../../../src/components/admin/AdminSidebar';
 
 /**
  * AdminSidebar Component Tests

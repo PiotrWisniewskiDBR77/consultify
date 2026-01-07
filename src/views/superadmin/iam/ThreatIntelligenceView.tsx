@@ -120,7 +120,7 @@ const ThreatIntelligenceView: React.FC = () => {
             const [threatsData, statsData] = await Promise.all([Api.getThreats(params), Api.getThreatStats()]);
 
             setThreats(threatsData);
-            setStats(statsData);
+            setStats(statsData as any);
         } catch (err: any) {
             setError(err.message || 'Failed to load threats');
             toast.error(err.message || 'Failed to load threats');

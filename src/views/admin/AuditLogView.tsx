@@ -82,15 +82,9 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
 
             // Use Api.getAuditLogs instead of direct fetch
             const data = await Api.getAuditLogs(
-                {
-                    organizationId: currentOrganization?.id,
-                },
-                {
-                    limit: 50,
-                    offset: 0,
-                },
+                currentOrganization?.id || '',
             );
-            setLogs(data.events || data || []);
+            setLogs((data as any).events || (data as any).logs || data || []);
         } catch (error) {
             console.error('Failed to load audit logs:', error);
             toast.error('Failed to load audit logs');

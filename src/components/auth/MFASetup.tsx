@@ -40,7 +40,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
             if (!response.ok) throw new Error(data.error);
             setSetupData(data);
             setStep('scan');
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to initialize MFA setup');
         } finally {
             setLoading(false);
@@ -70,7 +70,7 @@ const MFASetup: React.FC<MFASetupProps> = ({ onComplete, onCancel }) => {
             if (!response.ok) throw new Error(data.error);
             setBackupCodes(data.backupCodes);
             setStep('backup');
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Verification failed');
         } finally {
             setLoading(false);

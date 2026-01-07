@@ -16,7 +16,7 @@ export const OnboardingWizard = () => {
     const [acceptKey] = useState(() => `accept-${uuidv4()}`);
 
     // Check if user is a consultant (read-only mode)
-    const isConsultant = currentUser?.role === 'CONSULTANT';
+    const isConsultant = (currentUser?.role as string) === 'CONSULTANT';
 
     // Step 1: Context
     const [context, setContext] = useState({
@@ -56,7 +56,7 @@ export const OnboardingWizard = () => {
             }
 
             setStep(3);
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error(error);
             if (error.message?.includes('Rate limit')) {
                 toast.error('Too many requests. Please wait before regenerating.');
@@ -83,7 +83,7 @@ export const OnboardingWizard = () => {
 
             // Redirect to AI Chat welcome screen
             setCurrentView(AppView.AI_CHAT);
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error(error);
             if (error.message?.includes('already accepted')) {
                 toast.error('This plan has already been accepted.');

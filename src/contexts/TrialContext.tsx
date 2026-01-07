@@ -83,11 +83,11 @@ export const TrialProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             } else {
                 // API returned non-200 - set safe defaults
                 console.warn('[TrialContext] Policy snapshot returned:', response.status);
-                setState((prev) => ({ ...prev, loading: false }));
+                setState((prev: any) => ({ ...prev, loading: false }));
             }
         } catch (err) {
             console.error('Failed to fetch trial status', err);
-            setState((prev) => ({ ...prev, loading: false }));
+            setState((prev: any) => ({ ...prev, loading: false }));
         }
     };
 

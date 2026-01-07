@@ -143,7 +143,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                 priority: 'NORMAL',
             });
             fetchRequests();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || t('settings.permissions.submitError', 'Failed to submit request'));
         } finally {
             setSubmitting(false);

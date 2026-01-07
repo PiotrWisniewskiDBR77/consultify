@@ -117,7 +117,7 @@ export const EconomicsView: React.FC = () => {
             if (result.downloadUrl) {
                 window.open(result.downloadUrl, '_blank');
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Nie udało się wyeksportować');
         }
     };

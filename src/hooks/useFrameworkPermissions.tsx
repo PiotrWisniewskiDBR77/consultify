@@ -114,7 +114,7 @@ export function useFrameworkPermissions(
                 // Fallback to role-based defaults if endpoint not available
                 setPermissions(getDefaultPermissionsForUser(currentUser, framework));
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.warn('[useFrameworkPermissions] Error:', err.message);
             // Use role-based defaults on error
             setPermissions(getDefaultPermissionsForUser(currentUser, framework));

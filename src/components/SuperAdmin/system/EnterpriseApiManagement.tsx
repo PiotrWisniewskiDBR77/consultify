@@ -177,7 +177,7 @@ export const EnterpriseApiManagement: React.FC = () => {
     const handleViewUsage = async (key: ApiKey) => {
         try {
             const usage = await Api.getApiKeyUsage(key.id);
-            setSelectedKeyUsage({ key, usage });
+            setSelectedKeyUsage({ key, usage: usage as any });
         } catch (error) {
             console.error('Failed to fetch usage:', error);
             toast.error('Failed to load usage data');

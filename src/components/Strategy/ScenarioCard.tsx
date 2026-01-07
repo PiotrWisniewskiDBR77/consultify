@@ -24,7 +24,7 @@ const VisualScale = ({ value, colorClass }: { value: number; colorClass: string 
 );
 
 export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, isRecommended, isSelected, onClick }) => {
-    const Icon = scenario.icon;
+    const iconEmoji = scenario.icon;
     const { t: translate } = useTranslation();
     const t = translate('transformationScenarios', { returnObjects: true }) as any;
 
@@ -38,10 +38,9 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, isRecommen
             className={`
                 relative p-5 rounded-2xl border-2 transition-all duration-300 cursor-pointer group min-w-[280px] w-[280px] snap-center
                 flex flex-col justify-between h-[380px]
-                ${
-                    isSelected
-                        ? 'border-purple-600 bg-white dark:bg-navy-800 shadow-xl shadow-purple-900/20 scale-105 z-10'
-                        : 'border-slate-200 dark:border-white/5 bg-white/50 dark:bg-navy-900/50 hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-navy-800 hover:shadow-lg opacity-80 hover:opacity-100 scale-100'
+                ${isSelected
+                    ? 'border-purple-600 bg-white dark:bg-navy-800 shadow-xl shadow-purple-900/20 scale-105 z-10'
+                    : 'border-slate-200 dark:border-white/5 bg-white/50 dark:bg-navy-900/50 hover:border-slate-300 dark:hover:border-white/20 hover:bg-white dark:hover:bg-navy-800 hover:shadow-lg opacity-80 hover:opacity-100 scale-100'
                 }
             `}
         >
@@ -57,14 +56,13 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, isRecommen
                     <div
                         className={`
                         w-16 h-16 rounded-2xl flex items-center justify-center transition-colors duration-300
-                        ${
-                            isSelected
+                        ${isSelected
                                 ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300'
                                 : 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-600 dark:group-hover:bg-purple-900/20 dark:group-hover:text-purple-300'
-                        }
+                            }
                     `}
                     >
-                        <Icon size={32} />
+                        <span className="text-3xl">{iconEmoji}</span>
                     </div>
                 </div>
 
@@ -80,7 +78,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, isRecommen
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-1.5 mb-2">
-                    {scenario.tags.slice(0, 3).map((tag) => (
+                    {(scenario.tags || []).slice(0, 3).map((tag: any) => (
                         <span
                             key={tag}
                             className="px-2 py-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 text-[9px] font-bold uppercase tracking-wider rounded-md"
@@ -94,15 +92,15 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, isRecommen
             <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 -mx-5 -mb-5 px-5 py-3 rounded-b-2xl">
                 <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-400 font-bold text-[10px] uppercase">Tempo</span>
-                    <VisualScale value={scenario.tempo} colorClass={isSelected ? 'bg-purple-500' : 'bg-slate-400'} />
+                    <VisualScale value={parseInt(scenario.tempo || '3', 10)} colorClass={isSelected ? 'bg-purple-500' : 'bg-slate-400'} />
                 </div>
                 <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-400 font-bold text-[10px] uppercase">Ambition</span>
-                    <VisualScale value={scenario.ambition} colorClass={isSelected ? 'bg-purple-500' : 'bg-slate-400'} />
+                    <VisualScale value={parseInt(scenario.ambition || '3', 10)} colorClass={isSelected ? 'bg-purple-500' : 'bg-slate-400'} />
                 </div>
                 <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-400 font-bold text-[10px] uppercase">Risk</span>
-                    <VisualScale value={scenario.risk} colorClass={isSelected ? 'bg-purple-500' : 'bg-slate-400'} />
+                    <VisualScale value={parseInt(scenario.risk || '3', 10)} colorClass={isSelected ? 'bg-purple-500' : 'bg-slate-400'} />
                 </div>
             </div>
 

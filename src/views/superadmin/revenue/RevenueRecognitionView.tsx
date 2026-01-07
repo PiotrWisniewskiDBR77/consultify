@@ -66,8 +66,8 @@ export const RevenueRecognitionView: React.FC = () => {
                 Api.getRevenueRecognitionStats(),
             ]);
             setRecognitions(recognitionsRes || []);
-            setStats(statsRes);
-        } catch (err: unknown) {
+            setStats(statsRes as any);
+        } catch (err: any) {
             setError(err.message || 'Failed to load revenue recognition data');
         } finally {
             setLoading(false);
@@ -79,7 +79,7 @@ export const RevenueRecognitionView: React.FC = () => {
             const response = await Api.getRecognitionSchedule(recognition.id);
             setSchedule(response.schedule || []);
             setSelectedRecognition(recognition);
-        } catch (err: unknown) {
+        } catch (err: any) {
             // If no schedule, parse from JSON
             try {
                 setSchedule(JSON.parse(recognition.recognition_schedule_json || '[]'));
@@ -98,7 +98,7 @@ export const RevenueRecognitionView: React.FC = () => {
                 const response = await Api.getRecognitionSchedule(id);
                 setSchedule(response.schedule || []);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to recognize revenue');
         }
     };
@@ -117,7 +117,7 @@ export const RevenueRecognitionView: React.FC = () => {
                 recognition_method: 'straight_line',
                 periods: 12,
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to create revenue recognition');
         }
     };

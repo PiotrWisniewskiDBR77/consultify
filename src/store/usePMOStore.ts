@@ -118,7 +118,7 @@ export const usePMOStore = create<PMOStoreState>((set, get) => ({
                 lastFetched: new Date().toISOString(),
                 error: null,
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('Failed to fetch PMO context:', err);
             set({
                 isLoading: false,

@@ -81,7 +81,7 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({ projectId, onC
 
     const currentDimension = RAPID_LEAN_QUESTIONNAIRE[currentDimensionIndex];
     const currentQuestion = currentDimension.questions[currentQuestionIndex];
-    const totalQuestions = RAPID_LEAN_QUESTIONNAIRE.reduce((sum, dim) => sum + dim.questions.length, 0);
+    const totalQuestions = RAPID_LEAN_QUESTIONNAIRE.reduce((sum: number, dim: any) => sum + dim.questions.length, 0);
     const answeredQuestions = Object.keys(responses).length;
     const progress = (answeredQuestions / totalQuestions) * 100;
 
@@ -422,15 +422,14 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({ projectId, onC
 
                     {/* Rating Buttons */}
                     <div className="space-y-3">
-                        {LEAN_SCALE.map((scale) => (
+                        {LEAN_SCALE.map((scale: any) => (
                             <button
                                 key={scale.value}
                                 onClick={() => handleAnswer(scale.value)}
-                                className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${
-                                    responses[currentQuestion.id] === scale.value
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
-                                }`}
+                                className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${responses[currentQuestion.id] === scale.value
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                                    }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">

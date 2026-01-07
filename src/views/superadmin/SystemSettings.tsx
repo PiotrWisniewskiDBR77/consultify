@@ -89,7 +89,7 @@ export const SystemSettings: React.FC = () => {
         try {
             const data = await Api.adminGetStorageStats();
             setStorageStats(data);
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to load storage stats');
         }
     };
@@ -110,7 +110,7 @@ export const SystemSettings: React.FC = () => {
             if (data.length > 0 && !selectedTable) {
                 setSelectedTable(data[0]);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to load tables');
         }
     };
@@ -119,7 +119,7 @@ export const SystemSettings: React.FC = () => {
         try {
             const data = await Api.adminGetTableRows(tableName);
             setTableRows(data);
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to load rows');
         }
     };
@@ -157,7 +157,7 @@ export const SystemSettings: React.FC = () => {
             setShowAddAdmin(false);
             setNewAdmin({ email: '', password: '', firstName: '', lastName: '' });
             fetchAdmins();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to create admin');
         }
     };

@@ -21,7 +21,7 @@ export const AdminMarginConfig = () => {
             } else {
                 setMargins([]); // Graceful fallback
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('Failed to load margins:', err);
             setError('Could not load margin configurations. Please check backend connection.');
         } finally {
@@ -58,7 +58,7 @@ export const AdminMarginConfig = () => {
                 isActive: margin.is_active ? 1 : 0,
             });
             toast.success(`Updated ${margin.display_name}`);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message);
             toast.error('Failed to save settings');
         } finally {

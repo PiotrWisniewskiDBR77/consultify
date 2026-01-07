@@ -96,7 +96,7 @@ export const CreditNotesPanel: React.FC = () => {
             setShowCreateModal(false);
             setCreateForm({ organizationId: '', amount: '', reason: '' });
             fetchCreditNotes();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to create credit note');
         } finally {
             setSaving(false);

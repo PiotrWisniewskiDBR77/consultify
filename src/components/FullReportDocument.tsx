@@ -54,7 +54,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                         <p className="font-medium text-lg text-navy-900 dark:text-white mb-6">
                             {report.transformationDescription}
                         </p>
-                        {report.executiveSummary.split('\n\n').map((para, i) => (
+                        {report.executiveSummary.split('\n\n').map((para, i: number) => (
                             <p key={i} className="mb-4">
                                 {para}
                             </p>
@@ -66,7 +66,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                         <div className="mb-12">
                             <SectionHeader title="Digital Maturity Assessment (DRD)" />
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {report.drdLevels.map((level, i) => (
+                                {report.drdLevels.map((level, i: number) => (
                                     <div
                                         key={i}
                                         className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800 rounded-lg"
@@ -104,7 +104,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                                    {report.keyInitiatives.map((init, i) => (
+                                    {report.keyInitiatives.map((init, i: number) => (
                                         <tr key={i}>
                                             <td className="py-3 font-medium text-navy-900 dark:text-white">
                                                 {init.name}
@@ -166,7 +166,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                             <SectionHeader title="AI Consultant Recommendations" />
                             <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-6">
                                 <ul className="space-y-4">
-                                    {report.aiRecommendations.map((rec, i) => (
+                                    {report.aiRecommendations.map((rec, i: number) => (
                                         <li key={i} className="flex gap-4">
                                             <div className="w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                                                 AI
@@ -187,7 +187,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                             <div>
                                 <SectionHeader title="Roadmap Highlights" />
                                 <ul className="space-y-3">
-                                    {report.roadmapHighlights.map((item, i) => (
+                                    {report.roadmapHighlights.map((item: any, i: number) => (
                                         <li
                                             key={i}
                                             className="flex items-center gap-3 text-slate-700 dark:text-slate-300"
@@ -203,7 +203,7 @@ export const FullReportDocument: React.FC<FullReportDocumentProps> = ({ report }
                             <div>
                                 <SectionHeader title="Lessons Learned" />
                                 <ul className="space-y-3">
-                                    {report.lessonsLearned.map((item, i) => (
+                                    {report.lessonsLearned.map((item: any, i: number) => (
                                         <li
                                             key={i}
                                             className="flex items-center gap-3 text-slate-700 dark:text-slate-300"

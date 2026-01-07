@@ -68,7 +68,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
             setLoading(true);
             const response = await Api.getPricingPlansAdvanced();
             setPlans(response || []);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to load pricing plans');
         } finally {
             setLoading(false);
@@ -85,7 +85,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
             }
             fetchPlans();
             closeModal();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to save pricing plan');
         }
     };
@@ -95,7 +95,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
         try {
             await Api.deletePricingPlanAdvanced(id);
             fetchPlans();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to delete pricing plan');
         }
     };
@@ -109,7 +109,7 @@ export const PricingPlansAdvancedView: React.FC = () => {
             const response = await Api.comparePricingPlans(selectedPlans);
             setComparisonData(response);
             setShowCompare(true);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to compare plans');
         }
     };

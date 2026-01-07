@@ -104,7 +104,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
     const fetchHealth = useCallback(async () => {
         try {
             const data = await Api.getSystemHealth();
-            setHealth(data);
+            setHealth(data as any);
 
             // Generate services from health data
             const serviceList: ServiceHealth[] = [
@@ -138,7 +138,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             // System metrics
             if (data.system) {
                 setMetrics({
-                    cpu: { usage: (data.system.loadAvg?.[0] || 0) * 10, cores: data.system.cpus || 4 },
+                    cpu: { usage: (data.system.loadAvg?.[0] || 0) * 10, cores: (data.system.cpus as any)?.length || 4 },
                     memory: {
                         used: data.system.memory.used,
                         total: data.system.memory.total,

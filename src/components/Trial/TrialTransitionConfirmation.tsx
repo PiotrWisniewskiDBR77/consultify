@@ -69,7 +69,7 @@ export const TrialTransitionConfirmation: React.FC<TrialTransitionConfirmationPr
             } else {
                 setCurrentView(AppView.ORG_SETUP_WIZARD);
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Błąd podczas przejścia');
         } finally {
             setState((prev) => ({ ...prev, isSubmitting: false }));

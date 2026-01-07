@@ -1,0 +1,168 @@
+---
+description: Critical guidelines for AI agents to prevent code quality issues
+globs: **/*.{ts,tsx}
+alwaysApply: true
+---
+
+# AI Agent Guidelines for Consultify
+
+## 🚫 FORBIDDEN ACTIONS
+
+### Never Create Placeholder Components
+```typescript
+// ❌ WRONG - Never do this:
+const SecurityModuleView: React.FC = () => (
+    <div className="p-6">
+        <div className="text-white">Security Module - Coming Soon</div>
+    </div>
+);
+
+// ✅ RIGHT - Import existing modules:
+import { SecurityModuleView } from './security/SecurityModuleView';
+```
+
+### Never Create Duplicate Files
+- NEVER create files like `Component 2.tsx`, `service 2.ts`, `utils 2.ts`
+- If you encounter import errors, find and fix the existing file
+- Check if the module already exists before creating new files
+
+### Never Use Unknown Catch Parameter
+```typescript
+// ❌ WRONG:
+} catch (err: unknown) {
+    toast.error(err.message); // Error: err is unknown
+}
+
+// ❌ WRONG:
+} catch (err) {
+    toast.error(err.message); // Error: err is unknown
+}
+
+// ✅ RIGHT:
+} catch (err: any) {
+    toast.error(err?.message || 'An error occurred');
+}
+```
+
+## ✅ REQUIRED CHECKS
+
+### Before Importing
+1. Search for existing file: `grep -r "export.*ComponentName" src/`
+2. Check if module exists: `ls src/views/superadmin/security/`
+3. Verify correct import path
+
+### Before Creating New Files
+1. Check if similar file exists
+2. Verify no duplicate with different case/suffix
+3. Update existing file instead of creating new one
+
+### Before Modifying Types
+1. Check if property already exists (possibly with different case)
+2. Add compatibility aliases instead of breaking changes
+3. Support both camelCase and snake_case for API compatibility
+
+## 📋 PROJECT STRUCTURE
+
+### SuperAdmin Modules Location
+- `src/views/superadmin/security/` - Security modules
+- `src/views/superadmin/support/` - Support modules
+- `src/views/superadmin/analytics/` - Analytics modules
+- `src/views/superadmin/revenue/` - Revenue modules
+- `src/views/superadmin/iam/` - IAM modules
+
+### API Stubs Location
+- Add new API stubs in `src/services/api.ts` in the STUBS section at the end
+- Always add optional parameters for filters: `(filters?: any)`
+- Return sensible defaults (empty arrays, success: true)
+
+## 🔍 DEBUGGING CHECKLIST
+
+When fixing import errors:
+1. ✅ Check if module exists in correct location
+2. ✅ Check if export name matches import
+3. ✅ Check for circular dependencies
+4. ✅ Check if types are exported from index.ts
+5. ❌ Do NOT create placeholder/stub component
+
+When fixing API errors:
+1. ✅ Check if method exists in api.ts
+2. ✅ Add stub if method doesn't exist
+3. ✅ Match parameter count with usage
+4. ❌ Do NOT modify existing working implementations
+
+## 📚 DOCUMENTATION AS SOURCE OF TRUTH
+
+### Core Principle
+**Documentation is the single source of truth.** Before making ANY architectural decision, implementing new features, or modifying existing code structure, you MUST consult the relevant documentation.
+
+### Key Documentation Files
+
+| Document | Purpose | When to Consult |
+|----------|---------|-----------------|
+| `docs/ARCHITECTURE.md` | System architecture overview | Before any structural changes |
+| `docs/AI_MODULAR_PLATFORM_VARIANT_A.md` | AI platform design | When working with AI modules |
+| `docs/api/SUPERADMIN_API` | SuperAdmin API endpoints | When adding/modifying API calls |
+| `docs/00_foundation/PMO_STANDARDS_COMPLIANCE.md` | PMO standards (ISO 21500, PMBOK 7, PRINCE2) | When working with PMO objects |
+| `ROUTING.md` | Application routing structure | When modifying routes |
+| `docs/TESTING.md` | Testing strategy and patterns | When writing tests |
+
+### PMO Standards Compliance
+All PMO objects (Decision, Task, Initiative, StageGate) must map to three standards:
+- **ISO 21500:2021** - Foundation (methodology-neutral)
+- **PMI PMBOK 7th Edition** - 8 Performance Domains
+- **PRINCE2** - 7 Themes for governance
+
+### Required Verification Steps
+
+1. **Before implementing new feature:**
+   - Read relevant architecture docs
+   - Check if similar feature already exists
+   - Verify naming conventions from docs
+
+2. **Before modifying existing code:**
+   - Find and read related documentation
+   - Understand original design intent
+   - Preserve documented patterns
+
+3. **When in doubt:**
+   - ASK the user rather than guess
+   - Reference specific docs in your response
+   - Never assume - verify with documentation
+
+### ⚠️ CRITICAL: What NOT To Do
+
+```typescript
+// ❌ WRONG - Making assumptions without checking docs:
+// "I'll create a new security module here..."
+
+// ✅ RIGHT - Verify with documentation first:
+// "According to docs/ARCHITECTURE.md, security modules 
+// should be in src/views/superadmin/security/"
+```
+
+### Documentation Priority Order
+
+1. **Project-specific docs** (`docs/`) - highest priority
+2. **Inline code comments** - for implementation details  
+3. **Type definitions** (`src/types/`) - for data structures
+4. **README files** - for module-specific guidance
+
+## 🧪 FOR TEST AGENTS
+
+**See `.cursor/rules/test-agents.mdc` for detailed testing guidelines.**
+
+Key points:
+- Components are in SUBDIRECTORIES (layout/, ui/, dashboard/), not flat
+- ALWAYS use `find src -name "ComponentName*"` before fixing imports
+- NEVER guess paths - search first
+- Check barrel exports in `src/components/index.ts`
+
+### Component Location Quick Reference
+
+| Component | Location |
+|-----------|----------|
+| ChatPanel, DemoBanner, HelpPanel | `src/components/layout/` |
+| Button, Card, HelpButton, TaskCard | `src/components/ui/` |
+| DashboardOverview, UserTaskList | `src/components/dashboard/` |
+| TokenUsageAnalytics | `src/components/analytics/` |
+| SuperAdmin panels | `src/components/SuperAdmin/{billing,security,data}/` |

@@ -152,7 +152,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return {
             moduleId: mapping.moduleId,
             cardId: mapping.cardId,
-            moduleHelp,
+            moduleHelp: moduleHelp ?? undefined,
             cardHelp,
             faqs,
             videos,

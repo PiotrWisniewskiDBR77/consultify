@@ -135,3 +135,12 @@ export const apiDelete = async <T = unknown>(endpoint: string, defaultError = 'R
     });
     return handleResponse<T>(res, defaultError);
 };
+
+// HTTP Client for convenience
+export const httpClient = {
+    get: apiGet,
+    post: apiPost,
+    put: apiPut,
+    patch: apiPatch,
+    delete: apiDelete,
+};

@@ -91,11 +91,11 @@ export const AISLADashboard: React.FC = () => {
         try {
             // Fetch latency metrics
             const latencyRes = (await Api.getAIHealthMetrics?.()) || mockLatencyData();
-            setLatency(latencyRes.latency);
+            setLatency(latencyRes.latency as any);
 
             // Fetch availability metrics
             const availRes = (await Api.getAIAvailability?.()) || mockAvailabilityData();
-            setAvailability(availRes.availability);
+            setAvailability(availRes.availability as any);
 
             // Fetch SLA breaches
             const breachRes = (await Api.getAISLABreaches?.()) || mockBreachData();

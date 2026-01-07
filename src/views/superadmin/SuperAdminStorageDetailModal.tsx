@@ -25,7 +25,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({ orgI
         try {
             const data = await Api.adminGetOrgFiles(orgId);
             setFiles(data);
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to load files');
         } finally {
             setLoading(false);
@@ -40,7 +40,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({ orgI
             toast.success('File deleted');
             loadFiles();
             onUpdate(); // Trigger parent refresh to update totals
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to delete file');
         }
     };

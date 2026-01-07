@@ -28,7 +28,7 @@ export const SecurityEventsView: React.FC = () => {
         setLoading(true);
         try {
             const eventList = await Api.getSecurityEvents(filters);
-            setEvents(eventList);
+            setEvents((eventList as any).events || eventList || []);
         } catch (err) {
             toast.error('Failed to fetch security events');
         } finally {

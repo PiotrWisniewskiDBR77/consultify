@@ -95,7 +95,7 @@ const CustomerLifecycleView: React.FC = () => {
             ]);
             setStages(stagesData || []);
             setTransitions(transitionsData || []);
-            setStats(statsData);
+            setStats(statsData as any);
         } catch (error) {
             console.error('Failed to fetch lifecycle data:', error);
         } finally {

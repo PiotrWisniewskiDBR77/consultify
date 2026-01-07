@@ -1,0 +1,182 @@
+# Test Agents Guidelines for Consultify
+
+## 🎯 CORE PRINCIPLE
+
+**BEFORE fixing any import error or test failure, ALWAYS verify the actual file location first.**
+
+Do NOT assume paths. Do NOT guess. SEARCH first.
+
+---
+
+## 📂 COMPONENT LOCATIONS
+
+Components are organized in subdirectories, NOT flat in `src/components/`:
+
+```
+src/components/
+├── layout/          # ChatPanel, DemoBanner, HelpPanel, GlobalAccessBanners
+├── ui/              # HelpButton, Button, Card, Input, TaskCard
+├── dashboard/       # DashboardOverview, UserTaskList, NotificationCenter
+├── Admin/           # Admin-specific components
+├── SuperAdmin/      # SuperAdmin panels (billing/, security/, data/, integrations/)
+├── AIChat/          # AI chat components
+├── analytics/       # TokenUsageAnalytics, etc.
+└── ...
+```
+
+### Finding Components
+
+**ALWAYS run this before fixing imports:**
+
+```bash
+find src -name "ComponentName*" -type f 2>/dev/null
+```
+
+Example:
+```bash
+# Wrong assumption: src/components/ChatPanel.tsx
+# Reality:
+find src -name "ChatPanel*" -type f
+# Output: src/components/layout/ChatPanel.tsx
+```
+
+---
+
+## 🔧 FIXING IMPORT ERRORS
+
+### Step 1: Find the real location
+```bash
+find src -name "ComponentName*" -type f 2>/dev/null
+```
+
+### Step 2: Check if barrel export exists
+```bash
+grep -r "export.*ComponentName" src/components/index.ts 2>/dev/null
+```
+
+### Step 3: Fix the import path
+
+**If component is in subdirectory:**
+```typescript
+// Wrong:
+import { ChatPanel } from '../../src/components/ChatPanel';
+
+// Correct:
+import { ChatPanel } from '../../src/components/layout/ChatPanel';
+```
+
+**If barrel export exists:**
+```typescript
+import { ChatPanel } from '../../src/components';
+```
+
+---
+
+## 🧪 TEST FILE STRUCTURE
+
+Tests should mirror source structure:
+
+```
+tests/
+├── components/
+│   ├── layout/           # Tests for layout components
+│   ├── dashboard/        # Tests for dashboard components
+│   └── Admin/            # Tests for admin components
+├── integration/
+│   └── routes/           # API route tests
+└── test-utils.ts         # Shared test utilities
+```
+
+### Import paths in tests:
+
+```typescript
+// From tests/components/layout/ChatPanel.test.tsx:
+import { ChatPanel } from '../../../src/components/layout/ChatPanel';
+
+// From tests/components/SomeTest.test.tsx:
+import { render } from '../test-utils';  // NOT ../../../test-utils
+```
+
+---
+
+## ❌ COMMON MISTAKES TO AVOID
+
+### 1. Do NOT create duplicate files
+```bash
+# WRONG - Creating "Component 2.tsx"
+# If you see this, DELETE the duplicate:
+find . -name "* 2.tsx" -type f -delete
+find . -name "* 2.ts" -type f -delete
+```
+
+### 2. Do NOT guess component locations
+```bash
+# WRONG:
+sed -i '' 's/ChatPanel/layout\/ChatPanel/g' file.tsx
+
+# RIGHT - First verify:
+find src -name "ChatPanel*" -type f
+# Then fix based on actual location
+```
+
+### 3. Do NOT ignore sed errors
+If `sed` fails with "bad flag in substitute command", your regex is wrong. Use simpler patterns or different delimiters.
+
+---
+
+## 🔍 DEBUGGING API TEST FAILURES
+
+### When endpoint returns 404:
+
+1. **Check if route is registered:**
+```bash
+grep -n "routeName" server/src/Gateway.ts
+```
+
+2. **Check route file exists:**
+```bash
+ls -la server/src/routes/user/routeName.routes.ts
+```
+
+3. **Check route path matches test:**
+```bash
+grep -n "app.use.*routeName" server/src/Gateway.ts
+```
+
+4. **Check if server is running:**
+```bash
+curl -s http://localhost:3001/api/health
+```
+
+---
+
+## 📋 PRE-FLIGHT CHECKLIST
+
+Before running tests, verify:
+
+- [ ] Dev server is running (`curl http://localhost:3000`)
+- [ ] Backend is running (`curl http://localhost:3001/api/health`)
+- [ ] No duplicate files exist (`find . -name "* 2.*" -type f`)
+- [ ] TypeScript compiles without blocking errors
+
+---
+
+## 🤝 COORDINATION WITH OTHER AGENTS
+
+If you notice:
+- Type errors in `src/types/` → Another agent may be fixing types
+- Missing exports → Check if `src/types/index.ts` was recently modified
+- API stubs missing → Check `src/services/api.ts` for recent additions
+
+**When in doubt:** Read the file first, don't assume its contents.
+
+---
+
+## 📚 DOCUMENTATION
+
+Always check these docs before major changes:
+
+- `docs/ARCHITECTURE.md` - System structure
+- `docs/TESTING.md` - Testing patterns
+- `ROUTING.md` - Route definitions
+- `.cursor/rules/ai-agent-guidelines.mdc` - General AI rules

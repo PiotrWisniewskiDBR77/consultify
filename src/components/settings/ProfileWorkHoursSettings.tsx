@@ -37,20 +37,20 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
     const [workDays, setWorkDays] = useState<number[]>(
         currentUser.workingHours?.days
             ? Object.entries(currentUser.workingHours.days)
-                  .filter(([_, day]) => day?.enabled)
-                  .map(([day]) => {
-                      const dayMap: Record<string, number> = {
-                          monday: 1,
-                          tuesday: 2,
-                          wednesday: 3,
-                          thursday: 4,
-                          friday: 5,
-                          saturday: 6,
-                          sunday: 7,
-                      };
-                      return dayMap[day] || 0;
-                  })
-                  .filter((d) => d > 0)
+                .filter(([_, day]) => (day as any)?.enabled)
+                .map(([day]) => {
+                    const dayMap: Record<string, number> = {
+                        monday: 1,
+                        tuesday: 2,
+                        wednesday: 3,
+                        thursday: 4,
+                        friday: 5,
+                        saturday: 6,
+                        sunday: 7,
+                    };
+                    return dayMap[day] || 0;
+                })
+                .filter((d) => d > 0)
             : [1, 2, 3, 4, 5],
     );
     const [vacationStart, setVacationStart] = useState(
@@ -116,13 +116,13 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
             const outOfOfficeDates =
                 vacationStart && vacationEnd
                     ? [
-                          {
-                              id: 'current',
-                              startDate: vacationStart,
-                              endDate: vacationEnd,
-                              isAllDay: true,
-                          },
-                      ]
+                        {
+                            id: 'current',
+                            startDate: vacationStart,
+                            endDate: vacationEnd,
+                            isAllDay: true,
+                        },
+                    ]
                     : undefined;
 
             await Api.updateUser(currentUser.id, {
@@ -206,10 +206,9 @@ export const ProfileWorkHoursSettings: React.FC<ProfileWorkHoursSettingsProps> =
                                 onClick={() => toggleWorkDay(day.value)}
                                 className={`
                                     px-4 py-2 rounded-lg border-2 transition-all text-sm font-medium
-                                    ${
-                                        isSelected
-                                            ? 'border-purple-500 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
-                                            : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-purple-300'
+                                    ${isSelected
+                                        ? 'border-purple-500 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300'
+                                        : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-purple-300'
                                     }
                                 `}
                             >

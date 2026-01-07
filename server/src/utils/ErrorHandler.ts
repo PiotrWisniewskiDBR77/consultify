@@ -73,13 +73,25 @@ export function createError(
  * Express error handler middleware
  */
 export function errorHandlerMiddleware(
-    err: Error & { statusCode?: number; status?: string; code?: string; details?: Record<string, unknown> },
+    err: Error & { statusCode?: number; status?: number | string; code?: string; details?: Record<string, unknown> },
     req: Request,
     res: Response,
     _next: NextFunction,
 ): void {
-    err.statusCode = err.statusCode || 500;
-    err.status = err.status || 'error';
+    // Standardize status code
+    let statusCode = 500;
+    if (err.statusCode) {
+        statusCode = Number(err.statusCode);
+    } else if (err.status) {
+        statusCode = Number(err.status);
+    }
+
+    if (isNaN(statusCode) || statusCode < 100 || statusCode > 599) {
+        statusCode = 500;
+    }
+
+    err.statusCode = statusCode;
+    const status = statusCode >= 500 ? 'error' : 'fail';
 
     // Log the error
     if (err.statusCode >= 500) {
@@ -99,7 +111,7 @@ export function errorHandlerMiddleware(
     // Development response
     if (process.env.NODE_ENV === 'development') {
         res.status(err.statusCode).json({
-            status: err.status,
+            status: status,
             error: err,
             message: err.message,
             stack: err.stack,
@@ -112,7 +124,7 @@ export function errorHandlerMiddleware(
     if ((err as AppError).isOperational || (err.statusCode && err.statusCode < 500)) {
         // Known operational error (AppError) or Client Error
         res.status(err.statusCode || 400).json({
-            status: err.status,
+            status: status,
             error: {
                 code: err.code || 'ERROR',
                 message: err.message,

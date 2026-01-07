@@ -61,7 +61,7 @@ export const SupportTicketsView: React.FC = () => {
                 category: '',
             });
             fetchTickets();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to create ticket');
         }
     };

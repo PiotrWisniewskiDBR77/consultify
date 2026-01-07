@@ -1,30 +1,35 @@
 import { AlertCircle, Calendar, User } from 'lucide-react';
 import React from 'react';
 
-import { Task, TaskStatus } from '../types';
+import { Task } from '../types';
 
 interface TaskCardProps {
     task: Task;
     onClick: () => void;
 }
 
-const getStatusColor = (status: TaskStatus) => {
-    switch (status) {
-        case TaskStatus.TODO:
+const getStatusColor = (status: string) => {
+    const normalizedStatus = status?.toLowerCase?.() || status;
+    switch (normalizedStatus) {
+        case 'todo':
+        case 'backlog':
             return 'border-slate-500 text-slate-500';
-        case TaskStatus.IN_PROGRESS:
+        case 'in_progress':
+        case 'review':
             return 'border-blue-500 text-blue-500';
-        case TaskStatus.BLOCKED:
+        case 'blocked':
             return 'border-red-500 text-red-500';
-        case TaskStatus.DONE:
+        case 'done':
             return 'border-green-500 text-green-500';
+        case 'cancelled':
+            return 'border-slate-400 text-slate-400';
         default:
             return 'border-slate-500';
     }
 };
 
-const getStatusLabel = (status: TaskStatus) => {
-    return status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+const getStatusLabel = (status: string) => {
+    return String(status || '').replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
@@ -91,7 +96,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
                 {task.dueDate && (
                     <div
-                        className={`flex items-center gap-1 ${new Date(task.dueDate) < new Date() && task.status !== TaskStatus.DONE ? 'text-red-500 dark:text-red-400' : ''}`}
+                        className={`flex items-center gap-1 ${new Date(task.dueDate) < new Date() && task.status !== 'done' ? 'text-red-500 dark:text-red-400' : ''}`}
                     >
                         <Calendar size={12} />
                         <span>
@@ -105,7 +110,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
                 <div className="mt-3 flex items-center gap-2">
                     <div className="flex-1 h-1 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
                         <div
-                            className={`h-full ${task.status === TaskStatus.BLOCKED ? 'bg-red-500' : 'bg-blue-500'}`}
+                            className={`h-full ${task.status === 'blocked' ? 'bg-red-500' : 'bg-blue-500'}`}
                             style={{ width: `${task.progress || (completedChecks / (totalChecks || 1)) * 100}%` }}
                         ></div>
                     </div>

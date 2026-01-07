@@ -7,7 +7,7 @@ import { Button } from '../ui';
 interface ChatExportModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onExport: (format: 'pdf' | 'json' | 'txt') => void;
+    onExport?: (format: 'pdf' | 'json' | 'txt') => void;
     title?: string;
 }
 
@@ -18,6 +18,7 @@ export const ChatExportModal: React.FC<ChatExportModalProps> = ({ isOpen, onClos
     if (!isOpen) return null;
 
     const handleExport = async (format: 'pdf' | 'json' | 'txt') => {
+        if (!onExport) return;
         setIsExporting(true);
         try {
             await onExport(format);

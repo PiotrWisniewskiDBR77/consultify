@@ -95,7 +95,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || t('settings.password.error', 'Failed to change password'));
         } finally {
             setLoading(false);

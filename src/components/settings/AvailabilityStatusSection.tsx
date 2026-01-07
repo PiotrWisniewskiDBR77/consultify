@@ -44,7 +44,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
     const [statusMessage, setStatusMessage] = useState('');
     const [workingHours, setWorkingHours] = useState<WorkingHours>({
         timezone: currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        days: {},
+        days: {} as WorkingHours['days'],
     });
     const [doNotDisturbHours, setDoNotDisturbHours] = useState<DoNotDisturbHours>({
         enabled: false,
@@ -177,25 +177,25 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
     };
 
     const updateWorkingHoursDay = (
-        day: keyof WorkingHours['days'],
-        updates: Partial<WorkingHours['days'][typeof day]>,
+        day: string,
+        updates: any,
     ) => {
-        setWorkingHours((prev) => ({
+        setWorkingHours((prev: any) => ({
             ...prev,
             days: {
-                ...prev.days,
+                ...(prev.days || {}),
                 [day]: {
-                    ...prev.days[day],
+                    ...(prev.days?.[day] || {}),
                     ...updates,
-                } as WorkingHours['days'][typeof day],
+                },
             },
         }));
     };
 
     const toggleDNDDay = (day: DoNotDisturbHours['days'][number]) => {
-        setDoNotDisturbHours((prev) => ({
+        setDoNotDisturbHours((prev: any) => ({
             ...prev,
-            days: prev.days.includes(day) ? prev.days.filter((d) => d !== day) : [...prev.days, day],
+            days: prev.days.includes(day) ? prev.days.filter((d: any) => d !== day) : [...prev.days, day],
         }));
     };
 
@@ -272,7 +272,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                 </p>
                 <div className="space-y-3">
                     {daysOfWeek.map(({ key, label }) => {
-                        const dayHours = workingHours.days[key] || {
+                        const dayHours = (workingHours.days as any)?.[key] || {
                             enabled: false,
                             startTime: '09:00',
                             endTime: '17:00',
@@ -333,10 +333,9 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                             </p>
                         </div>
                         <button
-                            onClick={() => setDoNotDisturbHours((prev) => ({ ...prev, enabled: !prev.enabled }))}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                doNotDisturbHours.enabled ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
+                            onClick={() => setDoNotDisturbHours((prev: any) => ({ ...prev, enabled: !prev.enabled }))}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${doNotDisturbHours.enabled ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
                         >
                             <span
                                 className={`${doNotDisturbHours.enabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
@@ -355,7 +354,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                                         type="time"
                                         value={doNotDisturbHours.startTime}
                                         onChange={(e) =>
-                                            setDoNotDisturbHours((prev) => ({ ...prev, startTime: e.target.value }))
+                                            setDoNotDisturbHours((prev: any) => ({ ...prev, startTime: e.target.value }))
                                         }
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg"
                                     />
@@ -368,7 +367,7 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                                         type="time"
                                         value={doNotDisturbHours.endTime}
                                         onChange={(e) =>
-                                            setDoNotDisturbHours((prev) => ({ ...prev, endTime: e.target.value }))
+                                            setDoNotDisturbHours((prev: any) => ({ ...prev, endTime: e.target.value }))
                                         }
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg"
                                     />
@@ -383,11 +382,10 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
                                         <button
                                             key={key}
                                             onClick={() => toggleDNDDay(key)}
-                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                                                doNotDisturbHours.days.includes(key)
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${doNotDisturbHours.days.includes(key)
                                                     ? 'bg-indigo-600 text-white'
                                                     : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                                            }`}
+                                                }`}
                                         >
                                             {label}
                                         </button>
@@ -537,11 +535,10 @@ const OOOPeriodCard: React.FC<OOOPeriodCardProps> = ({
 
     return (
         <div
-            className={`p-4 border rounded-lg transition-colors ${
-                isPast
+            className={`p-4 border rounded-lg transition-colors ${isPast
                     ? 'border-slate-200 dark:border-white/10 opacity-60'
                     : 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/5'
-            }`}
+                }`}
         >
             <div className="flex items-start justify-between">
                 <div className="flex-1">

@@ -439,7 +439,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                         type="number"
                         value={constraints.maxBudget || ''}
                         onChange={(e) =>
-                            setConstraints((prev) => ({
+                            setConstraints((prev: any) => ({
                                 ...prev,
                                 maxBudget: e.target.value ? parseInt(e.target.value) : undefined,
                             }))
@@ -457,7 +457,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                     </label>
                     <select
                         value={constraints.maxTimeline || ''}
-                        onChange={(e) => setConstraints((prev) => ({ ...prev, maxTimeline: e.target.value }))}
+                        onChange={(e) => setConstraints((prev: any) => ({ ...prev, maxTimeline: e.target.value }))}
                         className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                     >
                         <option value="3 months">3 months</option>
@@ -476,7 +476,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                     </label>
                     <select
                         value={constraints.teamSize || ''}
-                        onChange={(e) => setConstraints((prev) => ({ ...prev, teamSize: e.target.value }))}
+                        onChange={(e) => setConstraints((prev: any) => ({ ...prev, teamSize: e.target.value }))}
                         className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
                     >
                         <option value="1-5">1-5 people</option>
@@ -495,7 +495,7 @@ export const InitiativeGeneratorWizard: React.FC<InitiativeGeneratorWizardProps>
                     <select
                         value={constraints.riskAppetite || ''}
                         onChange={(e) =>
-                            setConstraints((prev) => ({
+                            setConstraints((prev: any) => ({
                                 ...prev,
                                 riskAppetite: e.target.value as 'conservative' | 'moderate' | 'aggressive',
                             }))

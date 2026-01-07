@@ -27,17 +27,19 @@ const STATUS_OPTIONS = [
     { value: 'dnd', label: 'Do Not Disturb', icon: Moon, color: 'text-red-500' },
 ] as const;
 
+type AvailabilityStatus = 'available' | 'away' | 'busy' | 'dnd' | 'offline';
+
 export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({ currentUser, onUpdateUser }) => {
     const { t } = useTranslation();
-    const [status, setStatus] = useState<'online' | 'away' | 'busy' | 'dnd'>(
-        currentUser.availabilityStatus || 'online',
+    const [status, setStatus] = useState<AvailabilityStatus>(
+        (currentUser.availabilityStatus as AvailabilityStatus) || 'available',
     );
     const [statusMessage, setStatusMessage] = useState(currentUser.statusMessage || '');
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
     useEffect(() => {
-        setStatus(currentUser.availabilityStatus || 'online');
+        setStatus((currentUser.availabilityStatus as AvailabilityStatus) || 'available');
         setStatusMessage(currentUser.statusMessage || '');
     }, [currentUser]);
 
@@ -94,7 +96,7 @@ export const ProfileStatusSettings: React.FC<ProfileStatusSettingsProps> = ({ cu
                         return (
                             <button
                                 key={option.value}
-                                onClick={() => setStatus(option.value)}
+                                onClick={() => setStatus(option.value as AvailabilityStatus)}
                                 className={`
                                     flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
                                     ${

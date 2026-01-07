@@ -24,7 +24,8 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
     const { t: translate } = useTranslation();
     const t = translate('transformationScenarios', { returnObjects: true }) as { [key: string]: any };
 
-    const recommendedId = recommendScenario(challenges.declaredChallenges, companyProfile);
+    const recommendedScenario = recommendScenario(challenges.declaredChallenges, companyProfile);
+    const recommendedId = recommendedScenario?.id;
 
     // State for viewing details (Modal)
     const [viewedScenarioId, setViewedScenarioId] = useState<string | null>(null);

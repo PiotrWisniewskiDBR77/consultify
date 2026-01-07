@@ -108,7 +108,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             setNewMemberEmail('');
             setIsAddMemberOpen(false);
             loadOrgDetails(selectedOrg.id);
-        } catch (error: unknown) {
+        } catch (error: any) {
             // If error suggests invalid ID, user knows they need ID
             toast.error(error.message || 'Failed to add member');
         }
@@ -119,7 +119,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             await Api.activateBilling(selectedOrg.id);
             toast.success('Billing activated! Tokens added.');
             loadOrgDetails(selectedOrg.id);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to activate billing');
         }
     };
@@ -140,7 +140,7 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             setIsCreateOrgModalOpen(false);
             setNewOrgName('');
             await fetchOrganizations();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to create organization');
         } finally {
             setCreatingOrg(false);

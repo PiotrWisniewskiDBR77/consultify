@@ -34,7 +34,7 @@ import { cn } from '../../lib/utils';
 import { User } from '../../types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Progress } from '../ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
+import { Select } from '../ui/select';
 import { Skeleton } from '../ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
@@ -174,17 +174,15 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                         {t('settings.aiUsage.subtitle', 'Monitor your AI usage and token consumption')}
                     </p>
                 </div>
-                <Select value={period} onValueChange={(v) => setPeriod(v as typeof period)}>
-                    <SelectTrigger className="w-36">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="7d">{t('settings.aiUsage.last7Days', 'Last 7 days')}</SelectItem>
-                        <SelectItem value="30d">{t('settings.aiUsage.last30Days', 'Last 30 days')}</SelectItem>
-                        <SelectItem value="90d">{t('settings.aiUsage.last90Days', 'Last 90 days')}</SelectItem>
-                    </SelectContent>
-                </Select>
+                <Select
+                    value={period}
+                    onChange={(v) => setPeriod(v as typeof period)}
+                    options={[
+                        { value: '7d', label: t('settings.aiUsage.last7Days', 'Last 7 days') },
+                        { value: '30d', label: t('settings.aiUsage.last30Days', 'Last 30 days') },
+                        { value: '90d', label: t('settings.aiUsage.last90Days', 'Last 90 days') },
+                    ]}
+                />
             </div>
 
             {/* Stats Cards */}
@@ -285,8 +283,8 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                             isOverLimit
                                 ? '[&>div]:bg-red-500'
                                 : isNearLimit
-                                  ? '[&>div]:bg-amber-500'
-                                  : '[&>div]:bg-violet-500',
+                                    ? '[&>div]:bg-amber-500'
+                                    : '[&>div]:bg-violet-500',
                         )}
                     />
                     {isNearLimit && !isOverLimit && (

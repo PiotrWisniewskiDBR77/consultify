@@ -1,0 +1,486 @@
+import React from 'react';
+import { screen, waitFor } from '@testing-library/react';
+import { renderWithProviders } from '../test-utils';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { SystemHealth } from '../../src/components/SystemHealth';
+
+// Mock API
+vi.mock('../../src/services/api', () => ({
+    Api: {
+        checkSystemHealth: vi.fn(),
+    },
+}));
+
+const { Api } = await import('../../../services/api');
+
+/**
+ * SystemHealth Component Tests
+ * Tests system monitoring and health status display
+ * CRITICAL FOR ENTERPRISE SYSTEM RELIABILITY MONITORING
+ */
+describe('SystemHealth Component', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.restoreAllTimers();
+        vi.clearAllTimers();
+    });
+
+    describe('Initial State', () => {
+        it('should not render anything during initial loading', () => {
+            renderWithProviders(<SystemHealth />);
+
+            expect(screen.queryByText(/system/i)).not.toBeInTheDocument();
+        });
+    });
+
+    describe('Online State', () => {
+        it('should display online status with latency', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 45 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Online')).toBeInTheDocument();
+            });
+
+            expect(screen.getByText('45ms latency')).toBeInTheDocument();
+            expect(screen.getByTitle('System Online - DB Latency: 45ms')).toBeInTheDocument();
+        });
+
+        it('should show green pulsing indicator when online', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 30 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                const indicator = screen.getByTestId('health-indicator');
+                expect(indicator).toHaveClass('bg-green-500', 'animate-pulse');
+            });
+        });
+
+        it('should handle zero latency', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 0 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('0ms latency')).toBeInTheDocument();
+            });
+        });
+
+        it('should handle high latency values', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 1500 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('1500ms latency')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Offline State', () => {
+        it('should display offline status when API fails', async () => {
+            (Api.checkSystemHealth as any).mockRejectedValue(new Error('Connection failed'));
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Offline')).toBeInTheDocument();
+            });
+
+            expect(screen.getByTitle('Connection failed')).toBeInTheDocument();
+        });
+
+        it('should show red indicator when offline', async () => {
+            (Api.checkSystemHealth as any).mockRejectedValue(new Error('Network error'));
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                const indicator = screen.getByTestId('health-indicator');
+                expect(indicator).toHaveClass('bg-red-500');
+                expect(indicator).not.toHaveClass('animate-pulse');
+            });
+        });
+
+        it('should handle generic error messages', async () => {
+            (Api.checkSystemHealth as any).mockRejectedValue('String error');
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Offline')).toBeInTheDocument();
+                expect(screen.getByTitle('System unreachable')).toBeInTheDocument();
+            });
+        });
+
+        it('should handle null/undefined errors', async () => {
+            (Api.checkSystemHealth as any).mockRejectedValue(null);
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByTitle('System unreachable')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Periodic Health Checks', () => {
+        it('should poll health status every 30 seconds', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 50 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Online')).toBeInTheDocument();
+            });
+
+            expect(Api.checkSystemHealth).toHaveBeenCalledTimes(1);
+
+            // Advance time by 30 seconds
+            vi.advanceTimersByTime(30000);
+
+            await waitFor(() => {
+                expect(Api.checkSystemHealth).toHaveBeenCalledTimes(2);
+            });
+
+            // Advance another 30 seconds
+            vi.advanceTimersByTime(30000);
+
+            await waitFor(() => {
+                expect(Api.checkSystemHealth).toHaveBeenCalledTimes(3);
+            });
+        });
+
+        it('should handle health check failures during polling', async () => {
+            (Api.checkSystemHealth as any)
+                .mockResolvedValueOnce({ latency: 40 })
+                .mockRejectedValueOnce(new Error('Temporary failure'))
+                .mockResolvedValueOnce({ latency: 35 });
+
+            renderWithProviders(<SystemHealth />);
+
+            // Initial success
+            await waitFor(() => {
+                expect(screen.getByText('System Online')).toBeInTheDocument();
+                expect(screen.getByText('40ms latency')).toBeInTheDocument();
+            });
+
+            // Failure after 30 seconds
+            vi.advanceTimersByTime(30000);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Offline')).toBeInTheDocument();
+            });
+
+            // Recovery after another 30 seconds
+            vi.advanceTimersByTime(30000);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Online')).toBeInTheDocument();
+                expect(screen.getByText('35ms latency')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Performance Metrics', () => {
+        it('should display latency in appropriate ranges', async () => {
+            const testCases = [
+                { latency: 10, expected: '10ms latency' },
+                { latency: 100, expected: '100ms latency' },
+                { latency: 500, expected: '500ms latency' },
+                { latency: 2000, expected: '2000ms latency' },
+            ];
+
+            for (const { latency, expected } of testCases) {
+                (Api.checkSystemHealth as any).mockResolvedValue({ latency });
+
+                const { rerender } = renderWithProviders(<SystemHealth />);
+
+                await waitFor(() => {
+                    expect(screen.getByText(expected)).toBeInTheDocument();
+                });
+
+                // Clean up for next test
+                rerender(<></>);
+                vi.clearAllMocks();
+            }
+        });
+
+        it('should update latency display in real-time', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 25 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('25ms latency')).toBeInTheDocument();
+            });
+
+            // Update mock to return different latency
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 75 });
+
+            vi.advanceTimersByTime(30000);
+
+            await waitFor(() => {
+                expect(screen.getByText('75ms latency')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Styling and UX', () => {
+        it('should apply correct CSS classes for online state', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 50 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                const container = screen.getByText('System Online').closest('div');
+                expect(container).toHaveClass(
+                    'flex',
+                    'items-center',
+                    'gap-2',
+                    'px-3',
+                    'py-1.5',
+                    'rounded-full',
+                    'bg-slate-50',
+                    'border',
+                    'border-slate-200/80',
+                    'shadow-sm'
+                );
+            });
+        });
+
+        it('should apply correct CSS classes for offline state', async () => {
+            (Api.checkSystemHealth as any).mockRejectedValue(new Error('Offline'));
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                const container = screen.getByText('System Offline').closest('div');
+                expect(container).toHaveClass(
+                    'flex',
+                    'items-center',
+                    'gap-2',
+                    'px-3',
+                    'py-1.5',
+                    'rounded-full',
+                    'bg-slate-50',
+                    'border',
+                    'border-slate-200/80',
+                    'shadow-sm'
+                );
+            });
+        });
+
+        it('should be responsive and compact', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 30 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                const container = screen.getByText('System Online').closest('div');
+                expect(container).toHaveClass('flex', 'items-center');
+                // Check for small text sizes
+                expect(screen.getByText('30ms latency')).toHaveClass('text-[9px]');
+            });
+        });
+    });
+
+    describe('Accessibility', () => {
+        it('should have proper title attribute for tooltips', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 60 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                const container = screen.getByText('System Online').closest('div');
+                expect(container).toHaveAttribute('title', 'System Online - DB Latency: 60ms');
+            });
+        });
+
+        it('should have accessible status text', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 45 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Online')).toBeInTheDocument();
+                expect(screen.getByText('45ms latency')).toBeInTheDocument();
+            });
+        });
+
+        it('should indicate status through visual indicators', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 40 });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                const indicator = screen.getByTestId('health-indicator');
+                expect(indicator).toHaveAttribute('aria-label', 'System status: online');
+                expect(indicator).toHaveClass('bg-green-500');
+            });
+        });
+
+        it('should announce status changes to screen readers', async () => {
+            (Api.checkSystemHealth as any)
+                .mockResolvedValueOnce({ latency: 50 })
+                .mockRejectedValueOnce(new Error('Connection lost'));
+
+            renderWithProviders(<SystemHealth />);
+
+            // Initial online state
+            await waitFor(() => {
+                expect(screen.getByText('System Online')).toBeInTheDocument();
+            });
+
+            // Status change to offline
+            vi.advanceTimersByTime(30000);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Offline')).toBeInTheDocument();
+                // Should have aria-live region for status announcements
+                const statusRegion = screen.getByRole('status');
+                expect(statusRegion).toHaveTextContent(/system.*offline/i);
+            });
+        });
+    });
+
+    describe('Error Handling', () => {
+        it('should handle API errors gracefully', async () => {
+            (Api.checkSystemHealth as any).mockRejectedValue(new Error('API Error'));
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Offline')).toBeInTheDocument();
+                expect(screen.getByTitle('API Error')).toBeInTheDocument();
+            });
+        });
+
+        it('should handle network timeouts', async () => {
+            (Api.checkSystemHealth as any).mockImplementation(
+                () => new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+            );
+
+            renderWithProviders(<SystemHealth />);
+
+            // Should not hang, should eventually show offline
+            vi.advanceTimersByTime(35000); // More than 30s polling interval
+
+            await waitFor(() => {
+                expect(screen.getByText('System Offline')).toBeInTheDocument();
+            });
+        });
+
+        it('should handle malformed API responses', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ invalidField: 'value' });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Offline')).toBeInTheDocument();
+            });
+        });
+
+        it('should recover from temporary failures', async () => {
+            (Api.checkSystemHealth as any)
+                .mockRejectedValueOnce(new Error('Temporary failure'))
+                .mockResolvedValueOnce({ latency: 55 });
+
+            renderWithProviders(<SystemHealth />);
+
+            // Initial failure
+            await waitFor(() => {
+                expect(screen.getByText('System Offline')).toBeInTheDocument();
+            });
+
+            // Recovery after next poll
+            vi.advanceTimersByTime(30000);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Online')).toBeInTheDocument();
+                expect(screen.getByText('55ms latency')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Component Lifecycle', () => {
+        it('should clean up polling interval on unmount', () => {
+            const clearIntervalSpy = vi.spyOn(global, 'clearInterval');
+
+            const { unmount } = renderWithProviders(<SystemHealth />);
+
+            unmount();
+
+            expect(clearIntervalSpy).toHaveBeenCalled();
+        });
+
+        it('should not poll when component is unmounted', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({ latency: 40 });
+
+            const { unmount } = renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Online')).toBeInTheDocument();
+            });
+
+            unmount();
+
+            // Advance timers - should not call API again
+            vi.advanceTimersByTime(30000);
+
+            // Should still have only been called once (initial)
+            expect(Api.checkSystemHealth).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('Integration with System', () => {
+        it('should integrate with system monitoring dashboard', async () => {
+            (Api.checkSystemHealth as any).mockResolvedValue({
+                latency: 35,
+                uptime: 99.9,
+                activeConnections: 150,
+                errorRate: 0.01
+            });
+
+            renderWithProviders(<SystemHealth />);
+
+            await waitFor(() => {
+                expect(screen.getByText('System Online')).toBeInTheDocument();
+                expect(screen.getByText('35ms latency')).toBeInTheDocument();
+            });
+
+            // Additional metrics could be shown in expanded view
+            // This tests that the component can handle extended health data
+        });
+
+        it('should work with different system configurations', async () => {
+            // Test with different latency thresholds
+            const configs = [
+                { latency: 20, expectedStatus: 'excellent' },
+                { latency: 100, expectedStatus: 'good' },
+                { latency: 300, expectedStatus: 'fair' },
+                { latency: 1000, expectedStatus: 'poor' },
+            ];
+
+            for (const { latency, expectedStatus } of configs) {
+                (Api.checkSystemHealth as any).mockResolvedValue({ latency });
+
+                const { rerender } = renderWithProviders(<SystemHealth />);
+
+                await waitFor(() => {
+                    const container = screen.getByText('System Online').closest('div');
+                    expect(container).toHaveAttribute('data-performance', expectedStatus);
+                });
+
+                rerender(<></>);
+                vi.clearAllMocks();
+            }
+        });
+    });
+});

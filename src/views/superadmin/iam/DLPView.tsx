@@ -133,8 +133,8 @@ const DLPView: React.FC = () => {
 
             setPolicies(policiesData);
             setViolations(violationsData);
-            setStats(statsData);
-        } catch (err: unknown) {
+            setStats(statsData as any);
+        } catch (err: any) {
             setError(err.message || 'Failed to load DLP data');
             toast.error(err.message || 'Failed to load DLP data');
         } finally {
@@ -191,7 +191,7 @@ const DLPView: React.FC = () => {
                 enforcementAction: 'warn',
                 rules: [],
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to create DLP policy');
         } finally {
             setSaving(false);
@@ -203,7 +203,7 @@ const DLPView: React.FC = () => {
             await Api.toggleDLPPolicy(policyId, !isActive);
             toast.success(`Policy ${!isActive ? 'activated' : 'deactivated'} successfully`);
             setPolicies((prev) => prev.map((p) => (p.id === policyId ? { ...p, isActive: !isActive } : p)));
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to toggle policy');
         }
     };
@@ -215,7 +215,7 @@ const DLPView: React.FC = () => {
             toast.success('Policy deleted successfully');
             setPolicies((prev) => prev.filter((p) => p.id !== policyId));
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to delete policy');
         }
     };
@@ -226,7 +226,7 @@ const DLPView: React.FC = () => {
             toast.success('Violation resolved successfully');
             setViolations((prev) => prev.filter((v) => v.id !== violationId));
             loadData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to resolve violation');
         }
     };

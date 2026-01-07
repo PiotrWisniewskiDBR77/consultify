@@ -99,7 +99,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     const renderTeams = () => (
         <RolloutTeamsTab
             data={fullSession.rollout || {}}
-            onUpdate={(updatedData: Record<string, unknown>) => {
+            onUpdate={(updatedData: any) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
@@ -121,7 +121,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
         <RolloutPlanTab
             data={fullSession.rollout || {}}
             initiatives={fullSession.initiatives}
-            onUpdate={(updatedData: Record<string, unknown>) => {
+            onUpdate={(updatedData: any) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
@@ -147,7 +147,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
         <RolloutRisksTab
             data={fullSession.rollout || {}}
             initiatives={fullSession.initiatives}
-            onUpdate={(updatedData: Record<string, unknown>) => {
+            onUpdate={(updatedData: any) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
@@ -161,7 +161,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     const renderChange = () => (
         <RolloutChangeTab
             data={fullSession.rollout || {}}
-            onUpdate={(updatedData: Record<string, unknown>) => {
+            onUpdate={(updatedData: any) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,
@@ -185,7 +185,7 @@ export const FullRolloutWorkspace: React.FC<FullRolloutWorkspaceProps> = ({
     const renderClosure = () => (
         <RolloutClosureTab
             data={fullSession.rollout || {}}
-            onUpdate={(updatedData: Record<string, unknown>) => {
+            onUpdate={(updatedData: any) => {
                 if (onUpdateSession) {
                     onUpdateSession({
                         ...fullSession,

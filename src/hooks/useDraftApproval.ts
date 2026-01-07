@@ -91,7 +91,7 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
             } else {
                 throw new Error(response.data.error || 'Failed to fetch drafts');
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to fetch drafts');
             console.error('[useDraftApproval] fetchDrafts error:', err);
         } finally {
@@ -130,7 +130,7 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
                 return true;
             }
             return false;
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('[useDraftApproval] approveDraft error:', err);
             setError(err.message || 'Failed to approve draft');
             return false;
@@ -150,7 +150,7 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
                 return true;
             }
             return false;
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('[useDraftApproval] rejectDraft error:', err);
             setError(err.message || 'Failed to reject draft');
             return false;
@@ -188,7 +188,7 @@ export function useDraftApproval(options: UseDraftApprovalOptions = {}): UseDraf
                 return newDraft;
             }
             return null;
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('[useDraftApproval] createDraft error:', err);
             setError(err.message || 'Failed to create draft');
             return null;

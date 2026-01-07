@@ -198,7 +198,7 @@ interface KanbanColumnProps {
 const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, label, initiatives, onInitiativeClick }) => {
     const { setNodeRef, isOver } = useDroppable({ id });
     const statusColors = getStatusColors(id);
-    const columnColors = KANBAN_COLUMN_COLORS[id] || KANBAN_COLUMN_COLORS.DRAFT;
+    const columnColors = (KANBAN_COLUMN_COLORS as any)[id] || KANBAN_COLUMN_COLORS.DRAFT;
 
     return (
         <div
@@ -325,7 +325,7 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
             </div>
 
             <DragOverlay>
-                {activeInitiative && <InitiativeCard initiative={activeInitiative} onClick={() => {}} isDragging />}
+                {activeInitiative && <InitiativeCard initiative={activeInitiative} onClick={() => { }} isDragging />}
             </DragOverlay>
         </DndContext>
     );

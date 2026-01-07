@@ -71,7 +71,7 @@ export const IPWhitelistView: React.FC = () => {
     const handleRemoveIP = async (ipId: string) => {
         if (!confirm('Remove this IP from whitelist?')) return;
         try {
-            await Api.removeIPWhitelist(ipId);
+            await Api.removeIPWhitelist(selectedOrgId, ipId);
             toast.success('IP removed from whitelist');
             fetchWhitelist();
         } catch (err) {

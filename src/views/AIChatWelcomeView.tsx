@@ -508,7 +508,7 @@ For example: REMEMBER: preferred_language: Polish`;
         }));
 
         // Report to backend for analytics
-        Api.reportMessageFeedback?.(messageId, feedback.rating).catch((err) => {
+        Api.reportMessageFeedback?.(messageId, feedback.rating).catch((err: any) => {
             console.error('[Feedback] Failed to report:', err);
         });
 
@@ -527,15 +527,14 @@ For example: REMEMBER: preferred_language: Polish`;
                 <span class="text-2xl">⚠️</span>
                 <div>
                     <div class="font-bold">Zgłoszono problem</div>
-                    <div class="text-sm opacity-90">${
-                        reason === 'harmful'
-                            ? 'Szkodliwa treść'
-                            : reason === 'incorrect'
-                              ? 'Błędne informacje'
-                              : reason === 'unhelpful'
-                                ? 'Nieprzydatne'
-                                : 'Inny problem'
-                    }</div>
+                    <div class="text-sm opacity-90">${reason === 'harmful'
+                ? 'Szkodliwa treść'
+                : reason === 'incorrect'
+                    ? 'Błędne informacje'
+                    : reason === 'unhelpful'
+                        ? 'Nieprzydatne'
+                        : 'Inny problem'
+            }</div>
                 </div>
             </div>
         `;
@@ -548,7 +547,7 @@ For example: REMEMBER: preferred_language: Polish`;
         }, 4000);
 
         // Report to backend
-        Api.reportMessage?.(messageId, reason).catch((err) => {
+        Api.reportMessage?.(messageId, reason).catch((err: any) => {
             console.error('[Report] Failed to send report:', err);
         });
     }, []);
@@ -577,7 +576,7 @@ For example: REMEMBER: preferred_language: Polish`;
                 {/* Claude-style Sliding Panel */}
                 <ChatSlidingPanel
                     onNewChat={handleNewChat}
-                    onSelectConversation={(id) => setActiveConversation(id)}
+                    onSelectConversation={(id: string) => setActiveConversation(id)}
                     activeConversationId={activeConversationId}
                 />
 
@@ -624,11 +623,10 @@ For example: REMEMBER: preferred_language: Polish`;
                                 return (
                                     <div key={msg.id} className={`mb-6 ${msg.role === 'user' ? 'text-right' : ''}`}>
                                         <div
-                                            className={`inline-block max-w-[85%] ${
-                                                msg.role === 'user'
+                                            className={`inline-block max-w-[85%] ${msg.role === 'user'
                                                     ? 'bg-primary-600 text-white rounded-2xl rounded-br-md px-4 py-3'
                                                     : 'text-navy-900 dark:text-slate-200'
-                                            }`}
+                                                }`}
                                         >
                                             <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
                                                 {displayContent}
@@ -681,7 +679,7 @@ For example: REMEMBER: preferred_language: Polish`;
                                                         role: 'ai',
                                                         content: displayContent,
                                                         timestamp: msg.timestamp,
-                                                        feedback: messageFeedback[msg.id],
+                                                        feedback: messageFeedback[msg.id] as any,
                                                     }}
                                                     onFeedback={handleFeedback}
                                                     onReport={handleReport}
@@ -743,8 +741,8 @@ For example: REMEMBER: preferred_language: Polish`;
                                     {voiceState.isListening
                                         ? 'Słucham...'
                                         : voiceState.isSpeaking
-                                          ? 'Mówię...'
-                                          : 'Tryb głosowy aktywny'}
+                                            ? 'Mówię...'
+                                            : 'Tryb głosowy aktywny'}
                                 </span>
                                 {voiceState.interimTranscript && (
                                     <span className="text-slate-500 italic truncate max-w-xs">
@@ -777,11 +775,10 @@ For example: REMEMBER: preferred_language: Polish`;
                                 <div className="flex justify-center mt-2">
                                     <button
                                         onClick={handleContinuousVoiceToggle}
-                                        className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                                            continuousVoiceMode
+                                        className={`text-xs px-3 py-1 rounded-full transition-colors ${continuousVoiceMode
                                                 ? 'bg-primary-500 text-white'
                                                 : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                                        }`}
+                                            }`}
                                     >
                                         {continuousVoiceMode ? '🎙️ Tryb rozmowy włączony' : '🎙️ Włącz rozmowę głosową'}
                                     </button>
@@ -803,7 +800,7 @@ For example: REMEMBER: preferred_language: Polish`;
             {/* Claude-style Sliding Panel */}
             <ChatSlidingPanel
                 onNewChat={handleNewChat}
-                onSelectConversation={(id) => setActiveConversation(id)}
+                onSelectConversation={(id: string) => setActiveConversation(id)}
                 activeConversationId={activeConversationId}
             />
 
@@ -861,11 +858,10 @@ For example: REMEMBER: preferred_language: Polish`;
                             <div className="flex justify-center mt-3">
                                 <button
                                     onClick={handleContinuousVoiceToggle}
-                                    className={`text-xs px-4 py-2 rounded-full transition-colors flex items-center gap-2 ${
-                                        continuousVoiceMode
+                                    className={`text-xs px-4 py-2 rounded-full transition-colors flex items-center gap-2 ${continuousVoiceMode
                                             ? 'bg-primary-500 text-white'
                                             : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                                    }`}
+                                        }`}
                                 >
                                     <span
                                         className={`w-2 h-2 rounded-full ${continuousVoiceMode ? 'bg-white animate-pulse' : 'bg-slate-400'}`}

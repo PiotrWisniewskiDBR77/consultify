@@ -6,6 +6,29 @@ import aiQueue from '../queues/aiQueue.js';
 import { ACTION_ERROR_CODES } from './actionErrors.js';
 
 /**
+ * AsyncJob interface for type safety
+ */
+interface AsyncJob {
+    id: string;
+    type: string;
+    organization_id: string;
+    correlation_id: string;
+    entity_id: string;
+    status: string;
+    priority: string;
+    max_attempts: number;
+    attempt_count?: number;
+    created_by?: string;
+    created_at: string;
+    started_at?: string;
+    completed_at?: string;
+    last_error?: string;
+    last_error_code?: string;
+    result?: any;
+    code?: string;
+}
+
+/**
  * Async Job Service
  * Step 11: Manages async job lifecycle for Action Executions and Playbook Steps.
  * Step 11.1: Enterprise hardening with deduplication, locking, retry classification.
@@ -57,7 +80,7 @@ const NON_RETRYABLE_ERRORS = [
  * @param {string} errorCode - The error code
  * @returns {boolean} True if retryable
  */
-const isRetryable = (errorCode) => {
+const isRetryable = (errorCode: any) => {
     return !NON_RETRYABLE_ERRORS.includes(errorCode);
 };
 
@@ -71,16 +94,16 @@ const AsyncJobService = {
      * Step 11.1 - Find existing active job for deduplication.
      * @param {string} type - Job type
      * @param {string} entityId - Entity ID (decision or runId)
-     * @returns {Promise<Object|null>} Existing active job or null
+     * @returns {Promise<AsyncJob|null>} Existing active job or null
      */
-    findActiveJob: async (type, entityId) => {
+    findActiveJob: async (type: any, entityId: any): Promise<AsyncJob | null> => {
         return new Promise((resolve, reject) => {
             db.get(
                 `SELECT * FROM async_jobs 
                  WHERE type = ? AND entity_id = ? AND status IN (?, ?)
                  ORDER BY created_at DESC LIMIT 1`,
                 [type, entityId, JOB_STATUSES.QUEUED, JOB_STATUSES.RUNNING],
-                (err, row) => {
+                (err: any, row: any) => {
                     if (err) reject(err);
                     else resolve(row || null);
                 }
@@ -93,7 +116,7 @@ const AsyncJobService = {
      * @param {string} jobId - Job ID
      * @returns {Promise<boolean>} True if successfully claimed
      */
-    claimJob: async (jobId) => {
+    claimJob: async (jobId: any) => {
         return new Promise((resolve, reject) => {
             db.run(
                 `UPDATE async_jobs 
@@ -118,7 +141,7 @@ const AsyncJobService = {
      * @param {string} [params.createdBy] - User ID who created the job
      * @returns {Promise<Object>} Created or existing job record
      */
-    enqueueActionExecution: async ({ decisionId, organizationId, correlationId, priority = 'normal', createdBy }) => {
+    enqueueActionExecution: async ({ decisionId, organizationId, correlationId, priority = 'normal', createdBy }: any) => {
         // Step 11.1 - Deduplication: Check for existing active job
         const existingJob = await AsyncJobService.findActiveJob(JOB_TYPES.EXECUTE_DECISION, decisionId);
         if (existingJob) {
@@ -156,7 +179,7 @@ const AsyncJobService = {
         });
 
         // Enqueue to BullMQ (execution mechanism)
-        const bullPriority = JOB_PRIORITIES[priority] || JOB_PRIORITIES.normal;
+        const bullPriority = (JOB_PRIORITIES as any)[priority] || JOB_PRIORITIES.normal;
         await aiQueue.add(JOB_TYPES.EXECUTE_DECISION, {
             jobId,
             taskType: JOB_TYPES.EXECUTE_DECISION,
@@ -189,7 +212,7 @@ const AsyncJobService = {
     /**
      * Enqueue a playbook step advance job with deduplication.
      */
-    enqueuePlaybookAdvance: async ({ runId, stepId, organizationId, correlationId, priority = 'normal', createdBy }) => {
+    enqueuePlaybookAdvance: async ({ runId, stepId, organizationId, correlationId, priority = 'normal', createdBy }: any) => {
         const entityId = stepId || runId;
 
         // Step 11.1 - Deduplication
@@ -227,7 +250,7 @@ const AsyncJobService = {
             );
         });
 
-        const bullPriority = JOB_PRIORITIES[priority] || JOB_PRIORITIES.normal;
+        const bullPriority = (JOB_PRIORITIES as any)[priority] || JOB_PRIORITIES.normal;
         await aiQueue.add(JOB_TYPES.ADVANCE_PLAYBOOK_STEP, {
             jobId,
             taskType: JOB_TYPES.ADVANCE_PLAYBOOK_STEP,
@@ -260,7 +283,7 @@ const AsyncJobService = {
     /**
      * Get job by ID with RBAC org isolation.
      */
-    getJob: async (jobId, organizationId) => {
+    getJob: async (jobId: any, organizationId: any): Promise<AsyncJob | null> => {
         return new Promise((resolve, reject) => {
             const query = organizationId === 'SUPERADMIN_BYPASS'
                 ? `SELECT * FROM async_jobs WHERE id = ?`
@@ -270,7 +293,7 @@ const AsyncJobService = {
                 ? [jobId]
                 : [jobId, organizationId];
 
-            db.get(query, params, (err, row) => {
+            db.get(query, params, (err: any, row: any) => {
                 if (err) reject(err);
                 else resolve(row || null);
             });
@@ -280,7 +303,7 @@ const AsyncJobService = {
     /**
      * List jobs for an organization with optional dead-letter filter.
      */
-    listJobs: async (organizationId, options = {}) => {
+    listJobs: async (organizationId: any, options: any = {}) => {
         const { status, type, deadLetterOnly, limit = 50, offset = 0 } = options;
 
         let query = `SELECT * FROM async_jobs WHERE organization_id = ?`;
@@ -313,7 +336,7 @@ const AsyncJobService = {
     /**
      * Get dead-letter job statistics for dashboard.
      */
-    getDeadLetterStats: async (organizationId) => {
+    getDeadLetterStats: async (organizationId: any) => {
         return new Promise((resolve, reject) => {
             db.get(
                 `SELECT 
@@ -334,7 +357,7 @@ const AsyncJobService = {
     /**
      * Update job status (internal use by worker).
      */
-    updateJobStatus: async (jobId, status, metadata = {}) => {
+    updateJobStatus: async (jobId: any, status: any, metadata: any = {}) => {
         const updates = ['status = ?'];
         const params = [status];
 
@@ -380,26 +403,26 @@ const AsyncJobService = {
     /**
      * Retry a failed or dead-letter job.
      */
-    retryJob: async (jobId, organizationId) => {
+    retryJob: async (jobId: any, organizationId: any) => {
         const job = await AsyncJobService.getJob(jobId, organizationId);
 
         if (!job) {
             const error = new Error('Job not found');
-            error.code = 'JOB_NOT_FOUND';
+            (error as any).code = 'JOB_NOT_FOUND';
             throw error;
         }
 
         // Only allow retry on FAILED or DEAD_LETTER
         if (job.status !== JOB_STATUSES.FAILED && job.status !== JOB_STATUSES.DEAD_LETTER) {
             const error = new Error(`Cannot retry job in ${job.status} state. Only FAILED or DEAD_LETTER jobs can be retried.`);
-            error.code = 'JOB_INVALID_STATE';
+            (error as any).code = 'JOB_INVALID_STATE';
             throw error;
         }
 
         // Step 11.1 - Check if last error was non-retryable
         if (job.last_error_code && !isRetryable(job.last_error_code)) {
             const error = new Error(`Cannot retry job with non-retryable error: ${job.last_error_code}`);
-            error.code = 'JOB_NON_RETRYABLE';
+            (error as any).code = 'JOB_NON_RETRYABLE';
             throw error;
         }
 
@@ -416,7 +439,7 @@ const AsyncJobService = {
         });
 
         // Re-enqueue to BullMQ
-        const bullPriority = JOB_PRIORITIES[job.priority] || JOB_PRIORITIES.normal;
+        const bullPriority = (JOB_PRIORITIES as any)[job.priority] || JOB_PRIORITIES.normal;
         const payload = job.type === JOB_TYPES.EXECUTE_DECISION
             ? { decisionId: job.entity_id, organizationId: job.organization_id, correlationId: job.correlation_id }
             : { runId: job.entity_id, organizationId: job.organization_id, correlationId: job.correlation_id };
@@ -449,19 +472,19 @@ const AsyncJobService = {
     /**
      * Cancel a queued job.
      */
-    cancelJob: async (jobId, organizationId) => {
+    cancelJob: async (jobId: any, organizationId: any) => {
         const job = await AsyncJobService.getJob(jobId, organizationId);
 
         if (!job) {
             const error = new Error('Job not found');
-            error.code = 'JOB_NOT_FOUND';
+            (error as any).code = 'JOB_NOT_FOUND';
             throw error;
         }
 
         // Only allow cancel on QUEUED
         if (job.status !== JOB_STATUSES.QUEUED) {
             const error = new Error(`Cannot cancel job in ${job.status} state. Only QUEUED jobs can be cancelled.`);
-            error.code = 'JOB_INVALID_STATE';
+            (error as any).code = 'JOB_INVALID_STATE';
             throw error;
         }
 
@@ -504,7 +527,7 @@ const AsyncJobService = {
     /**
      * Mark a job as dead-letter (max retries exhausted or non-retryable).
      */
-    markDeadLetter: async (jobId, errorCode, errorMessage) => {
+    markDeadLetter: async (jobId: any, errorCode: any, errorMessage: any) => {
         await AsyncJobService.updateJobStatus(jobId, JOB_STATUSES.DEAD_LETTER, {
             lastErrorCode: errorCode,
             lastErrorMessage: errorMessage
@@ -535,7 +558,7 @@ const AsyncJobService = {
     /**
      * Increment attempt count for a job.
      */
-    incrementAttempts: async (jobId) => {
+    incrementAttempts: async (jobId: any) => {
         await new Promise((resolve, reject) => {
             db.run(`UPDATE async_jobs SET attempts = attempts + 1 WHERE id = ?`, [jobId], (err) => {
                 if (err) reject(err);

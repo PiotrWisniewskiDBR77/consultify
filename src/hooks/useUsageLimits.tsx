@@ -105,7 +105,7 @@ export const useUsageLimits = () => {
                 error: null,
                 warnings,
             });
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('[useUsageLimits] Failed to fetch limits:', error);
             setState((prev) => ({
                 ...prev,

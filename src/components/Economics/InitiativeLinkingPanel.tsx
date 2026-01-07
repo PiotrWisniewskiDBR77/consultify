@@ -144,7 +144,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
             setLinkedInitiative(initiative);
             setShowSelector(false);
             toast.success(`Powiązano z inicjatywą: ${initiative.name}`);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Nie udało się powiązać inicjatywy');
         } finally {
             setIsLinking(false);
@@ -159,7 +159,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
             await onUnlink();
             setLinkedInitiative(null);
             toast.success('Usunięto powiązanie z inicjatywą');
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Nie udało się usunąć powiązania');
         } finally {
             setIsLinking(false);

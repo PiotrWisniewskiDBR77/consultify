@@ -55,7 +55,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
             case 'overview':
                 return MODULE_HELP_CONTENT[moduleId];
             case 'card':
-                return CARD_DOCS[contentId];
+                return (CARD_DOCS as any)[contentId];
             case 'faq':
                 return FAQ_CONTENT.find((f) => f.id === contentId);
             case 'video':
@@ -218,7 +218,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
                                             className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
                                         >
                                             <DynamicIcon
-                                                name={related.icon}
+                                                name={related.icon || 'FileText'}
                                                 size={16}
                                                 className="text-slate-600 dark:text-slate-300"
                                             />

@@ -114,7 +114,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
                 overdue: overdue.length,
                 avgCompletionTime: Math.round(avgTime),
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('[ReviewerDashboard] Error:', err);
             setError(err.message);
         } finally {

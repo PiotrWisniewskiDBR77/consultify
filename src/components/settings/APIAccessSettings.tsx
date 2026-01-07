@@ -162,7 +162,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
             setNewKey(data.key);
             setKeys((prev) => [...prev, data.keyInfo]);
             toast.success(t('settings.api.keyCreated', 'API key created'));
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Failed to create API key:', error);
             toast.error(error.message || t('settings.api.createError', 'Failed to create API key'));
         }

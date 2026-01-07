@@ -135,7 +135,7 @@ export const WebhooksPanel: React.FC = () => {
             setEditingWebhook(null);
             resetForm();
             fetchData();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to save webhook');
         } finally {
             setSaving(false);
@@ -148,7 +148,7 @@ export const WebhooksPanel: React.FC = () => {
             await Api.delete(`/settings/webhooks/${webhookId}`);
             toast.success('Webhook deleted');
             setWebhooks((prev) => prev.filter((w) => w.id !== webhookId));
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to delete webhook');
         } finally {
             setDeletingIds((prev) => {
@@ -164,7 +164,7 @@ export const WebhooksPanel: React.FC = () => {
         try {
             await Api.post(`/settings/webhooks/${webhookId}/test`, {});
             toast.success('Test webhook sent');
-        } catch (error: unknown) {
+        } catch (error: any) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to send test webhook';
             toast.error(errorMessage);
         } finally {
@@ -183,7 +183,7 @@ export const WebhooksPanel: React.FC = () => {
                 prev.map((w) => (w.id === webhook.id ? { ...w, is_active: w.is_active ? 0 : 1 } : w)),
             );
             toast.success(`Webhook ${webhook.is_active ? 'disabled' : 'enabled'}`);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to toggle webhook');
         }
     };

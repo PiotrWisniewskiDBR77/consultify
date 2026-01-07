@@ -71,7 +71,7 @@ export const ActionProposalView: React.FC = () => {
             // Refresh data
             loadData();
             setSelectedProposal(null);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.dismiss(loadingToast);
             toast.error(error.message || 'Failed to process decision');
             console.error(error);

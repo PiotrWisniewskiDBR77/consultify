@@ -15,7 +15,7 @@ export const AdminTokenPackages = () => {
         try {
             const data = await Api.getTokenPackages();
             setPackages(data);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message);
             toast.error('Failed to load packages');
         } finally {
@@ -41,7 +41,7 @@ export const AdminTokenPackages = () => {
             toast.success('Package saved successfully');
             setEditingPkg(null);
             loadPackages();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message);
             toast.error('Failed to save package');
         }

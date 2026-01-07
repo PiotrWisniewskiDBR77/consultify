@@ -68,8 +68,8 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ initialMod
 
         // Get related cards
         const cards = Object.entries(CARD_DOCS)
-            .filter(([_, card]) => card.moduleId === selectedModule)
-            .map(([id, card]) => ({
+            .filter(([_, card]: [string, any]) => card.moduleId === selectedModule)
+            .map(([id, card]: [string, any]) => ({
                 id,
                 type: 'card' as ContentType,
                 title: card.title,
@@ -77,7 +77,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ initialMod
             }));
 
         // Get related FAQs
-        const faqs = FAQ_CONTENT.filter((faq) => faq.moduleId === selectedModule).map((faq) => ({
+        const faqs = FAQ_CONTENT.filter((faq: any) => faq.moduleId === selectedModule).map((faq: any) => ({
             id: faq.id,
             type: 'faq' as ContentType,
             title: lang === 'pl' ? faq.questionPl : faq.question,
@@ -135,7 +135,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ initialMod
         });
 
         // Search cards
-        Object.entries(CARD_DOCS).forEach(([id, card]) => {
+        Object.entries(CARD_DOCS).forEach(([id, card]: [string, any]) => {
             if (
                 card.title.toLowerCase().includes(searchLower) ||
                 card.description.toLowerCase().includes(searchLower)
@@ -152,7 +152,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ initialMod
 
         // Search FAQs
         const matchingFaqs = searchFAQs(searchQuery, lang);
-        matchingFaqs.slice(0, 10).forEach((faq) => {
+        matchingFaqs.slice(0, 10).forEach((faq: any) => {
             results.push({
                 type: 'faq',
                 id: faq.id,
@@ -290,9 +290,9 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ initialMod
                                             }`}
                                         >
                                             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                            <DynamicIcon name={module.icon} size={18} />
+                                            <DynamicIcon name={module.icon || 'HelpCircle'} size={18} />
                                             <span className="font-medium truncate">
-                                                {lang === 'pl' ? module.name?.pl : module.name?.en}
+                                                {typeof module.name === 'object' ? (lang === 'pl' ? module.name?.pl : module.name?.en) : module.name}
                                             </span>
                                         </button>
 
@@ -341,7 +341,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ initialMod
                                     <p className="text-slate-500 dark:text-slate-400">{text.noResults[lang]}</p>
                                 ) : (
                                     <div className="space-y-3">
-                                        {searchResults.map((result, i) => (
+                                        {searchResults.map((result, i: number) => (
                                             <button
                                                 key={`${result.type}-${result.id}-${i}`}
                                                 onClick={() =>
@@ -405,13 +405,13 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ initialMod
                                                     >
                                                         <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                                                             <DynamicIcon
-                                                                name={module.icon}
+                                                                name={module.icon || 'HelpCircle'}
                                                                 size={24}
                                                                 className="text-purple-600 dark:text-purple-400"
                                                             />
                                                         </div>
                                                         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                            {lang === 'pl' ? module.name?.pl : module.name?.en}
+                                                            {typeof module.name === 'object' ? (lang === 'pl' ? module.name?.pl : module.name?.en) : module.name}
                                                         </span>
                                                     </button>
                                                 ))}

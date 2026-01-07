@@ -264,7 +264,7 @@ const WorkstationPage: React.FC<{
                         <h4 className="font-bold text-amber-900 dark:text-amber-300">Wymagane nowe kompetencje</h4>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {workstation.automationPotential.newSkillsRequired.map((skill, idx) => (
+                        {workstation.automationPotential.newSkillsRequired.map((skill, idx: number) => (
                             <span key={idx} className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm">
                                 {skill}
                             </span>
@@ -354,7 +354,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
                                     (a.automationPotential.estimatedSavings || 0),
                             )
                             .slice(0, 5)
-                            .map((ws, idx) => (
+                            .map((ws, idx: number) => (
                                 <div
                                     key={ws.id}
                                     className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-navy-900/50 rounded-lg"
@@ -387,7 +387,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
                     <div className="grid grid-cols-4 gap-3">
                         {Object.entries(DBR77_ROLE_EVOLUTION).map(([key, config]) => {
                             const count = data.workstations.filter(
-                                (ws) => ws.automationPotential.roleEvolution === key,
+                                (ws: any) => ws.automationPotential.roleEvolution === key,
                             ).length;
                             return (
                                 <div
@@ -406,7 +406,7 @@ export const DBR77ReportTemplate: React.FC<DBR77ReportTemplateProps> = ({
             <PageBreak />
 
             {/* Individual Workstation Pages */}
-            {data.workstations.map((ws, idx) => (
+            {data.workstations.map((ws, idx: number) => (
                 <React.Fragment key={ws.id}>
                     <WorkstationPage workstation={ws} index={idx} total={data.workstations.length} />
                     {idx < data.workstations.length - 1 && <PageBreak />}

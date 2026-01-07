@@ -119,7 +119,7 @@ const SecurityIncidentsView: React.FC = () => {
             ]);
 
             setIncidents(incidentsData);
-            setStats(statsData);
+            setStats(statsData as any);
         } catch (err: any) {
             setError(err.message || 'Failed to load security incidents');
             toast.error(err.message || 'Failed to load security incidents');

@@ -159,7 +159,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({ initia
             setCurrentReport(response.report);
             toast.success('Report generated successfully');
             fetchReportHistory();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to generate report');
         } finally {
             setIsGenerating(false);
@@ -217,7 +217,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({ initia
             toast.success(`Report distributed to ${emails.length} recipients`);
             setShowDistributeModal(false);
             setRecipientEmails('');
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to distribute report');
         }
     };
@@ -229,7 +229,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({ initia
             await Api.post(`/status-reports/${currentReport.id}/approve`, {});
             setCurrentReport({ ...currentReport, status: 'APPROVED' });
             toast.success('Report approved');
-        } catch (error: unknown) {
+        } catch (error: any) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to approve report';
             toast.error(errorMessage);
         }
@@ -242,7 +242,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({ initia
             await Api.post(`/status-reports/${currentReport.id}/publish`, {});
             setCurrentReport({ ...currentReport, status: 'PUBLISHED' });
             toast.success('Report published');
-        } catch (error: unknown) {
+        } catch (error: any) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to publish report';
             toast.error(errorMessage);
         }

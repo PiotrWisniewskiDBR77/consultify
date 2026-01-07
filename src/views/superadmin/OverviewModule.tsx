@@ -57,7 +57,7 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
                     liveUsers: dashboardData?.live?.total_active_connections || 0,
                     pendingRequests: dashboardData?.activity?.total || 0,
                 }));
-                setActivities(dashboardData?.activities || []);
+                setActivities((dashboardData as any)?.activities || []);
             } catch (err) {
                 console.warn('Could not fetch dashboard stats', err);
             }

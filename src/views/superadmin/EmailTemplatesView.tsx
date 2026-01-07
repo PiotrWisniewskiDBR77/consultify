@@ -70,7 +70,7 @@ export const EmailTemplatesView: React.FC<EmailTemplatesViewProps> = ({ onBack }
 
             const data = await res.json();
             setTemplates(data.templates || []);
-        } catch (err: unknown) {
+        } catch (err: any) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to load templates';
             setError(errorMessage);
         } finally {

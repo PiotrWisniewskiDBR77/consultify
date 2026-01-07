@@ -32,6 +32,7 @@ export interface Conversation {
     chatProjectId?: string | null; // Chat organization folder (like Claude projects)
     organizationId?: string;
     starred: boolean;
+    isPinned?: boolean; // Alias for starred
     archived: boolean;
     tags: string[];
     pmoContext?: {

@@ -73,7 +73,7 @@ export const TokenUsageAnalytics: React.FC<TokenUsageAnalyticsProps> = ({
             // Fetch usage analytics from API
             const data = await Api.getTokenUsageAnalytics(currentUser.organizationId || '', timeRange);
             setUsageData(data);
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('[TokenUsageAnalytics] Failed to fetch usage:', err);
             // Use mock data if API fails
             setUsageData(generateMockData());

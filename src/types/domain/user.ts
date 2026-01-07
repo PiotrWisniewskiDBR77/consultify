@@ -3,13 +3,17 @@
  * Enterprise SaaS Architecture - User & Organization Types
  */
 
+import type { WorkingHours } from '../core';
+
 // ==========================================
 // USER TYPES
 // ==========================================
 
 export type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending';
 
-export type UserRole = 'user' | 'admin' | 'owner' | 'super_admin';
+export type UserRole =
+    | 'user' | 'admin' | 'owner' | 'super_admin'
+    | 'USER' | 'ADMIN' | 'OWNER' | 'SUPERADMIN' | 'GUEST' | 'VIEWER' | 'PROJECT_MANAGER' | 'TEAM_MEMBER';
 
 export type AccessLevel = 'free' | 'full' | 'trial';
 
@@ -42,6 +46,48 @@ export interface User {
     onboarding?: UserOnboarding;
     metadata?: UserMetadata;
     lastLoginAt?: string;
+    lastLogin?: string; // Alias
+    // Extended fields
+    aiConfig?: any;
+    timezone?: string;
+    mfaEnabled?: boolean;
+    preferredLanguage?: string;
+    socialLinks?: any;
+    jobTitle?: string;
+    skills?: string[];
+    workingHours?: any;
+    statusMessage?: string;
+    outOfOfficeDates?: any;
+    outOfOfficeUntil?: string;
+    outOfOfficeMessage?: string;
+    pronouns?: string;
+    isOutOfOffice?: boolean;
+    birthday?: string;
+    journeyState?: any;
+    licensePlanId?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    linkedinId?: string;
+    department?: string;
+    profileVisibility?: 'public' | 'team' | 'internal' | 'private';
+    location?: string;
+    units?: 'metric' | 'imperial';
+    // UI preferences
+    uiDensity?: 'compact' | 'comfortable' | 'spacious';
+    startPage?: string;
+    fontScale?: number;
+    // Extended profile properties
+    linkedAccounts?: any;
+    tokenLimit?: number;
+    certifications?: any[];
+    education?: any[];
+    workExperience?: any[];
+    availabilityStatus?: 'available' | 'busy' | 'away' | 'dnd' | 'offline';
+    industry?: string;
+    country?: string;
+    hasWorkspace?: boolean;
+    impersonatorId?: string;
+    isDemo?: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -109,16 +155,7 @@ export interface UserProfile {
     workingHours?: WorkingHours;
 }
 
-export interface WorkingHours {
-    timezone: string;
-    schedule: {
-        [key: string]: {
-            start: string;
-            end: string;
-            isWorkDay: boolean;
-        };
-    };
-}
+// WorkingHours is re-exported from the import at the top
 
 /**
  * User security settings
@@ -230,7 +267,11 @@ export interface Organization {
     billing?: OrganizationBillingInfo;
     features?: OrganizationFeatures;
     memberCount?: number;
+    user_count?: number; // Alias for memberCount
     projectCount?: number;
+    discount_percent?: number;
+    discountPercent?: number; // Alias
+    created_at?: string; // Legacy alias
     createdAt: string;
     updatedAt: string;
 }

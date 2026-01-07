@@ -68,7 +68,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
                     <label className="block text-xs font-medium text-slate-400 mb-1">Created At</label>
                     <input
                         disabled
-                        value={new Date(org.created_at).toLocaleDateString()}
+                        value={new Date(org.created_at || org.createdAt || '').toLocaleDateString()}
                         className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-slate-500"
                     />
                 </div>

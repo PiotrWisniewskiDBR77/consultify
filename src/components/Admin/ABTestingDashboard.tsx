@@ -135,7 +135,7 @@ export function ABTestingDashboard() {
             } else {
                 throw new Error(response.data.error || 'Failed to fetch experiments');
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to fetch experiments');
             setExperiments([]);
         } finally {
@@ -182,7 +182,7 @@ export function ABTestingDashboard() {
             } else {
                 throw new Error(response.data.error);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to create experiment');
         } finally {
             setCreating(false);
@@ -199,7 +199,7 @@ export function ABTestingDashboard() {
             } else {
                 throw new Error(response.data.error);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || `Failed to ${action} experiment`);
         }
     };
@@ -218,7 +218,7 @@ export function ABTestingDashboard() {
             } else {
                 throw new Error(response.data.error);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to declare winner');
         }
     };

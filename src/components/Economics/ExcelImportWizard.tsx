@@ -108,7 +108,7 @@ export const ExcelImportWizard: React.FC<ExcelImportWizardProps> = ({ onClose, o
             } else {
                 setError(result.message || 'Import nie powiódł się');
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Wystąpił błąd podczas importu');
         } finally {
             setIsImporting(false);

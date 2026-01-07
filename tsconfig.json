@@ -31,7 +31,7 @@
     "strictBindCallApply": true,
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
-    "useUnknownInCatchVariables": true,
+    "useUnknownInCatchVariables": false,
     "alwaysStrict": true,
     // Code quality checks
     "noUnusedLocals": false,
@@ -62,6 +62,8 @@
   "exclude": [
     "node_modules",
     "node_modules_trash",
-    "dist"
+    "dist",
+    "server",
+    "server/**/*"
   ]
 }

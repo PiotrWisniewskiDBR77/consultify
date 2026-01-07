@@ -266,7 +266,7 @@ export const RoadmapKanban: React.FC<Props> = ({ initiatives, onUpdateInitiative
                                     items={containers[quarter] || []}
                                     strategy={verticalListSortingStrategy}
                                 >
-                                    {containers[quarter]?.map((id) => {
+                                    {containers[quarter]?.map((id: string) => {
                                         const init = initiatives.find((i) => i.id === id);
                                         return init ? (
                                             <SortableItem

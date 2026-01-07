@@ -47,7 +47,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
             if (!res.ok) throw new Error('Failed to fetch documents');
             const data = await res.json();
             setDocuments(data);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message);
         } finally {
             setLoading(false);
@@ -89,7 +89,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
             setFormEffectiveFrom('');
             setFormContent('');
             fetchDocuments();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message);
         } finally {
             setPublishing(false);

@@ -219,14 +219,14 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
     const updateChecklistItem = (id: string, label: string) => {
         setNewReview((prev) => ({
             ...prev,
-            checklistItems: prev.checklistItems.map((item) => (item.id === id ? { ...item, label } : item)),
+            checklistItems: prev.checklistItems.map((item: any) => (item.id === id ? { ...item, label } : item)),
         }));
     };
 
     const removeChecklistItem = (id: string) => {
         setNewReview((prev) => ({
             ...prev,
-            checklistItems: prev.checklistItems.filter((item) => item.id !== id),
+            checklistItems: prev.checklistItems.filter((item: any) => item.id !== id),
         }));
     };
 
@@ -353,7 +353,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                             </button>
                         </div>
                         <div className="space-y-2">
-                            {newReview.checklistItems.map((item) => (
+                            {newReview.checklistItems.map((item: any) => (
                                 <div key={item.id} className="flex gap-2">
                                     <input
                                         type="text"
@@ -491,7 +491,7 @@ export const PlaybookTemplateReviews: React.FC<PlaybookTemplateReviewsProps> = (
                                                         Checklist
                                                     </div>
                                                     <div className="space-y-1">
-                                                        {review.checklistItems.map((item) => (
+                                                        {review.checklistItems.map((item: any) => (
                                                             <div
                                                                 key={item.id}
                                                                 className="flex items-center gap-2 text-sm"

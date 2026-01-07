@@ -106,7 +106,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
                 const data = await response.json();
                 throw new Error(data.error || 'Failed to save');
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || t('admin.security.saveError', 'Failed to save settings'));
         } finally {
             setSaving(false);

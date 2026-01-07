@@ -262,7 +262,7 @@ export function useTextToSpeech(options: UseTTSOptions = {}): UseTTSReturn {
                 onStart?.();
 
                 await audio.play();
-            } catch (error: unknown) {
+            } catch (error: any) {
                 if (error.name === 'AbortError') {
                     return; // Cancelled, don't report error
                 }

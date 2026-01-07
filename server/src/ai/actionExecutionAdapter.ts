@@ -12,6 +12,22 @@ const db = getDatabase(); // Assuming this is the new way to get the db instance
 import ActionProposalEngine from './actionProposalEngine.js';
 
 /**
+ * ActionExecution interface for type safety
+ */
+interface ActionExecution {
+    id: string;
+    decision_id: string;
+    proposal_id?: string;
+    action_type: string;
+    status: string;
+    result?: string;
+    error_code?: string;
+    error_message?: string;
+    created_at: string;
+    completed_at?: string;
+}
+
+/**
  * ActionExecutionAdapter
  * Executes approved decisions using classical services.
  * Step 9.3: Post-Approval Execution Layer.
@@ -27,13 +43,13 @@ const ActionExecutionAdapter = {
      * @param {boolean} [options.dry_run] - If true, simulate without side effects.
      * @returns {Promise<Object>} Execution results.
      */
-    executeDecision: async (decisionId, executedBy = 'SYSTEM', options = {}) => {
+    executeDecision: async (decisionId: any, executedBy: any = 'SYSTEM', options: any = {}) => {
         const { dry_run = false } = options;
         const startTime = Date.now();
 
         // 1. Fetch decision
         const decisions = await ActionDecisionService.getAuditLog('SUPERADMIN_BYPASS');
-        const decision = decisions.find(d => d.id === decisionId);
+        const decision = decisions.find((d: any) => d.id === decisionId);
 
         if (!decision) {
             auditLogger.warn('EXECUTION_DECISION_NOT_FOUND', {
@@ -69,10 +85,10 @@ const ActionExecutionAdapter = {
         }
 
         // 3. Idempotency check: Check if already executed successfully
-        const existingExecution = await new Promise((resolve, reject) => {
-            db.get(`SELECT * FROM action_executions WHERE decision_id = ? AND status = 'SUCCESS'`, [decisionId], (err, row) => {
+        const existingExecution = await new Promise<ActionExecution | null>((resolve, reject) => {
+            db.get(`SELECT * FROM action_executions WHERE decision_id = ? AND status = 'SUCCESS'`, [decisionId], (err: any, row: any) => {
                 if (err) reject(err);
-                else resolve(row);
+                else resolve(row || null);
             });
         });
 
@@ -275,7 +291,7 @@ const ActionExecutionAdapter = {
      * Internal: Generate dry-run plan from executor.
      * @private
      */
-    _dryRunExecutor: async (executor, actionType, payload, metadata) => {
+    _dryRunExecutor: async (executor: any, actionType: any, payload: any, metadata: any) => {
         // If executor has dryRun method, use it
         if (typeof executor.dryRun === 'function') {
             return executor.dryRun(payload, metadata);

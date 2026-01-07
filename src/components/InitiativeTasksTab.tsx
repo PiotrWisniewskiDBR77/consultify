@@ -44,12 +44,15 @@ export const InitiativeTasksTab: React.FC<Props> = ({ initiativeId, users, curre
         try {
             // Ensure initiativeId is set
             const taskPayload = {
-                ...newTask,
-                projectId: '', // Backend handles empty projectId if initiativeId is present
+                projectId: newTask.projectId || '', // Backend handles empty projectId if initiativeId is present
                 initiativeId,
                 title: newTask.title,
+                description: newTask.description,
                 status: newTask.status,
                 priority: newTask.priority,
+                assigneeId: newTask.assigneeId,
+                dueDate: newTask.dueDate,
+                taskType: newTask.taskType,
             };
 
             await Api.createTask(taskPayload);

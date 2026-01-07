@@ -47,7 +47,7 @@ export const AdminMetricsDashboardView: React.FC = () => {
                 seatManagement: teamData?.seatManagement,
             });
             setRecentEvents(eventsData.events || []);
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('Failed to fetch org metrics:', err);
             toast.error('Failed to load organization metrics');
         } finally {

@@ -55,8 +55,8 @@ const getNextAction = (phases: Record<string, PhaseProgress>): JourneyProgress['
         const phase = phases[phaseKey];
         if (!phase.isActivated) {
             // Find first incomplete milestone
-            const milestones = ACTIVATION_MILESTONES[phaseKey]?.milestones || [];
-            const incomplete = milestones.find((m) => !phase.completedMilestones.includes(m.id));
+            const milestones = (ACTIVATION_MILESTONES as any)[phaseKey]?.milestones || [];
+            const incomplete = milestones.find((m: any) => !phase.completedMilestones.includes(m.id));
 
             if (incomplete) {
                 return {
@@ -96,11 +96,11 @@ export const useJourneyProgress = () => {
             let totalMilestones = 0;
 
             PHASE_ORDER.forEach((phaseKey) => {
-                const phaseConfig = ACTIVATION_MILESTONES[phaseKey];
+                const phaseConfig = (ACTIVATION_MILESTONES as any)[phaseKey];
                 if (!phaseConfig) return;
 
                 const milestones = phaseConfig.milestones || [];
-                const completed = milestones.filter((m) => completedMilestoneIds.includes(m.id));
+                const completed = milestones.filter((m: any) => completedMilestoneIds.includes(m.id));
                 const isActivated = isPhaseActivated(phaseKey, completedMilestoneIds);
 
                 phases[phaseKey] = {
@@ -108,7 +108,7 @@ export const useJourneyProgress = () => {
                     phaseName: PHASE_NAMES[phaseKey],
                     isCompleted: isActivated,
                     isActivated,
-                    completedMilestones: completed.map((m) => m.id),
+                    completedMilestones: completed.map((m: any) => m.id),
                     totalMilestones: milestones.length,
                     progress: milestones.length > 0 ? Math.round((completed.length / milestones.length) * 100) : 0,
                 };

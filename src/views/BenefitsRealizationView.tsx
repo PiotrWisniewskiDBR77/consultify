@@ -164,7 +164,7 @@ export const BenefitsRealizationView: React.FC = () => {
                 alertThreshold: '',
             });
             fetchInitiatives();
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.response?.data?.error || 'Failed to create KPI');
         }
     };

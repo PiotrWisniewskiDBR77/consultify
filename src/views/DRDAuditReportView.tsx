@@ -168,11 +168,10 @@ const ReportChatPanel: React.FC<ReportChatPanelProps> = ({ onSendMessage, onClos
                             </div>
                         )}
                         <div
-                            className={`max-w-[80%] rounded-xl px-4 py-2 ${
-                                msg.role === 'user'
+                            className={`max-w-[80%] rounded-xl px-4 py-2 ${msg.role === 'user'
                                     ? 'bg-blue-600 text-white'
                                     : 'bg-slate-100 dark:bg-white/5 text-navy-900 dark:text-white'
-                            }`}
+                                }`}
                         >
                             <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                         </div>
@@ -431,7 +430,7 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
         if (!reportId) return;
 
         try {
-            const { pdfUrl } = await api.exportReportPDF(reportId);
+            const { pdfUrl } = await api.exportReportPDF(reportId) as any;
             const url = pdfUrl;
             const a = document.createElement('a');
             a.href = url;
@@ -636,11 +635,10 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({ reportId
 
                     <button
                         onClick={() => setChatOpen(!chatOpen)}
-                        className={`p-2 rounded-lg transition-colors ${
-                            chatOpen
+                        className={`p-2 rounded-lg transition-colors ${chatOpen
                                 ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600'
                                 : 'hover:bg-slate-100 dark:hover:bg-white/5'
-                        }`}
+                            }`}
                         title={t('reports.toggleChat', 'Toggle AI Chat')}
                     >
                         <MessageSquare className="w-5 h-5" />

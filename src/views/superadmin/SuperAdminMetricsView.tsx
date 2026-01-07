@@ -41,7 +41,7 @@ export const SuperAdminMetricsView: React.FC = () => {
             setAttribution(attrData);
             setPartners(partnerData.leaderboard);
             setHelpMetrics(helpData);
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('Failed to fetch metrics:', err);
             toast.error('Failed to load conversion intelligence data');
         } finally {

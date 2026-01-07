@@ -141,7 +141,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
 
             const data = await response.json();
             setAssessments(data.assessments || []);
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('[MyAssessmentsList] Error:', err);
             setError(err.message);
         } finally {

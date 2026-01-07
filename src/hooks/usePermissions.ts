@@ -73,7 +73,7 @@ export const usePermissions = (): Permissions => {
 
         // Role checks
         const isUser = !!currentUser;
-        const isManager = userRole === UserRole.MANAGER || userRole === UserRole.ADMIN || userRole === 'SUPERADMIN';
+        const isManager = userRole === UserRole.ADMIN || userRole === 'SUPERADMIN';
         const isAdmin = userRole === UserRole.ADMIN || userRole === 'SUPERADMIN';
         const isSuperAdmin = userRole === 'SUPERADMIN';
 

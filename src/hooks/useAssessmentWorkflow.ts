@@ -123,7 +123,7 @@ export const useAssessmentWorkflow = (assessmentId: string | null): UseAssessmen
                 }
 
                 return await response.json();
-            } catch (err: unknown) {
+            } catch (err: any) {
                 console.error(`[useAssessmentWorkflow] API error:`, err);
                 setError(err.message);
                 return null;

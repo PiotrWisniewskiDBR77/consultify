@@ -125,7 +125,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
                         {t.deepDive.impact}
                     </h4>
                     <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-white/5 divide-y divide-slate-100 dark:divide-white/5">
-                        {Object.entries(scenario.impact).map(([domain, impact]) => (
+                        {Object.entries(typeof scenario.impact === 'object' ? scenario.impact : {}).map(([domain, impact]) => (
                             <div key={domain} className="p-3 flex justify-between items-center text-sm">
                                 <span className="text-slate-500 capitalize">{domain}</span>
                                 <span className="font-medium text-navy-900 dark:text-white">{impact}</span>

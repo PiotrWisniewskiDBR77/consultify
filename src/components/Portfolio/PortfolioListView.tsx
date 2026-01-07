@@ -91,15 +91,15 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     }, [initiatives, sortConfig]);
 
     const handleSort = (field: SortField) => {
-        setSortConfig((prev) => ({
+        setSortConfig((prev: any) => ({
             field,
             direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
         }));
     };
 
     const toggleSelect = (id: string) => {
-        setSelectedIds((prev) => {
-            const next = new Set(prev);
+        setSelectedIds((prev: Set<string>) => {
+            const next = new Set<string>(prev);
             if (next.has(id)) {
                 next.delete(id);
             } else {

@@ -22,6 +22,7 @@ export interface LLMProviderConfig {
     name: string;
     model: string;
     model_id?: string; // For compatibility with LLMProvider
+    modelId?: string; // Alias for model_id
     displayName?: string;
     apiKey?: string;
     api_key?: string; // For compatibility with LLMProvider
@@ -207,6 +208,10 @@ export interface ResponseFeedback {
     comment?: string;
     timestamp: string | Date;
     metadata?: Record<string, unknown>;
+    wantedMode?: string;
+    lengthFeedback?: 'too_short' | 'too_long' | 'just_right';
+    detailFeedback?: 'too_basic' | 'too_detailed' | 'just_right';
+    customFeedback?: string;
 }
 
 /**

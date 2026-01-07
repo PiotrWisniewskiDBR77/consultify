@@ -153,7 +153,7 @@ export function ComplianceDashboard() {
             );
             setConsents(consentsRes.data.consents.length ? consentsRes.data.consents : getDefaultConsents());
             setIncidents(incidentsRes.data.incidents.length ? incidentsRes.data.incidents : getDefaultIncidents());
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to fetch compliance data');
         } finally {
             setLoading(false);

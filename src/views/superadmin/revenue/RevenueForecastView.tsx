@@ -51,8 +51,8 @@ export const RevenueForecastView: React.FC = () => {
                 Api.getRevenueForecastStats(),
             ]);
             setForecasts(forecastsRes || []);
-            setStats(statsRes);
-        } catch (err: unknown) {
+            setStats(statsRes as any);
+        } catch (err: any) {
             setError(err.message || 'Failed to load revenue forecasts');
         } finally {
             setLoading(false);
@@ -68,7 +68,7 @@ export const RevenueForecastView: React.FC = () => {
             });
             await fetchData();
             setShowGenerateModal(false);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to generate forecast');
         } finally {
             setGenerating(false);
@@ -80,7 +80,7 @@ export const RevenueForecastView: React.FC = () => {
         try {
             await Api.deleteRevenueForecast(id);
             fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to delete forecast');
         }
     };

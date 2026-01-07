@@ -92,13 +92,13 @@ const OAuthCallback: React.FC = () => {
                         } else {
                             throw new Error('Failed to fetch user data');
                         }
-                    } catch (err: unknown) {
+                    } catch (err: any) {
                         setStatus('error');
                         setMessage(err.message || 'Failed to authenticate');
                         setTimeout(() => navigate('/'), 3000);
                     }
                 }
-            } catch (err: unknown) {
+            } catch (err: any) {
                 setStatus('error');
                 setMessage(err.message || 'Authentication failed');
                 setTimeout(() => navigate('/'), 3000);

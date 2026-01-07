@@ -187,7 +187,7 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
     };
 
     const updateSocialLink = (key: keyof SocialLinks, value: string) => {
-        setSocialLinks((prev) => ({ ...prev, [key]: value }));
+        setSocialLinks((prev: any) => ({ ...prev, [key]: value }));
     };
 
     return (

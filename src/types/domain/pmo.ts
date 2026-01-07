@@ -227,6 +227,7 @@ export interface RAIDItem {
     linkedDecisions?: string[];
     linkedTasks?: string[];
     attachments?: string[];
+    mitigationPlan?: string;
     createdBy: string;
     createdAt: string;
     updatedAt: string;

@@ -1,4 +1,3 @@
-import { AccessControlSchemas } from '../../schemas/accessControl.schema';
 import { User } from '../../types';
 import { API_URL, getHeaders, handleResponse } from '../apiUtils';
 
@@ -12,8 +11,6 @@ export const AccessControlService = {
         organizationName: string;
         requestType?: string;
     }): Promise<{ success: boolean; requestId: string; message: string }> => {
-        // Validate payload using Zod schema
-        AccessControlSchemas.RequestAccessPayloadSchema.parse(data);
         const res = await fetch(`${API_URL}/access-control/requests`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -21,8 +18,6 @@ export const AccessControlService = {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to submit access request');
-        // Validate response
-        AccessControlSchemas.RequestAccessResponseSchema.parse(json);
         return json;
     },
 
@@ -38,96 +33,73 @@ export const AccessControlService = {
         const res = await fetch(`${API_URL}/access-control/codes/${code}/info`);
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to verify code');
-        // Validate response
-        AccessControlSchemas.VerifyAccessCodeResponseSchema.parse(json);
         return json;
     },
 
-    // Register with access code
-    registerWithCode: async (data: {
-        code: string;
-        email: string;
-        password: string;
-        firstName: string;
-        lastName: string;
-        phone?: string;
-    }): Promise<{ success: boolean; user: User; message: string }> => {
-        // Validate payload
-        AccessControlSchemas.RegisterWithCodePayloadSchema.parse(data);
-        const res = await fetch(`${API_URL}/access-control/codes/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Registration failed');
-        // Validate response (basic shape)
-        AccessControlSchemas.RegisterWithCodeResponseSchema.parse(json);
-        return json;
-    },
-
-    // --- ACCESS CONTROL (Super Admin) ---
-    getAccessRequests: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/superadmin/access-requests`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch access requests');
-        return res.json();
-    },
-
-    approveAccessRequest: async (id: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/approve`, {
+    // Accept access code (auth required after registration)
+    acceptAccessCode: async (code: string): Promise<{ success: boolean; organization: { id: string; name: string } }> => {
+        const res = await fetch(`${API_URL}/access-control/codes/${code}/accept`, {
             method: 'POST',
             headers: getHeaders(),
         });
-        if (!res.ok) throw new Error('Failed to approve request');
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to accept code');
+        return json;
     },
 
-    rejectAccessRequest: async (id: string, reason: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/reject`, {
+    // Get current user's organizations
+    getUserOrganizations: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/organizations/current`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch organizations');
+    },
+
+    // Admin: List access requests
+    getAccessRequests: async (): Promise<any[]> => {
+        const res = await fetch(`${API_URL}/access-control/admin/requests`, { headers: getHeaders() });
+        return handleResponse(res, 'Failed to fetch access requests');
+    },
+
+    // Admin: Approve access request
+    approveAccessRequest: async (
+        requestId: string,
+        approvalData: { role?: string; message?: string },
+    ): Promise<{ success: boolean }> => {
+        const res = await fetch(`${API_URL}/access-control/admin/requests/${requestId}/approve`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(approvalData),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to approve request');
+        return json;
+    },
+
+    // Admin: Reject access request
+    rejectAccessRequest: async (requestId: string, reason: string): Promise<{ success: boolean }> => {
+        const res = await fetch(`${API_URL}/access-control/admin/requests/${requestId}/reject`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ reason }),
         });
-        if (!res.ok) throw new Error('Failed to reject request');
-    },
-
-    getAccessCodes: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/superadmin/access-codes`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch access codes');
-        return res.json();
-    },
-
-    createAccessCode: async (data: {
-        code?: string;
-        role?: string;
-        maxUses?: number;
-        expiresAt?: string;
-    }): Promise<any> => {
-        // Validate payload (using AccessCodeSchema, allowing optional fields)
-        AccessControlSchemas.AccessCodeSchema.partial().parse(data);
-        const res = await fetch(`${API_URL}/superadmin/access-codes`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error('Failed to create access code');
         const json = await res.json();
-        // Validate response
-        AccessControlSchemas.AccessCodeSchema.parse(json);
+        if (!res.ok) throw new Error(json.error || 'Failed to reject request');
         return json;
     },
 
-    deactivateAccessCode: async (codeId: string): Promise<void> => {
-        const res = await fetch(`${API_URL}/superadmin/access-codes/${codeId}/deactivate`, {
+    // Admin: Generate access codes
+    generateAccessCode: async (codeData: {
+        type: string;
+        maxUses?: number;
+        expiresAt?: string;
+        targetEmail?: string;
+    }): Promise<{ code: string; id: string }> => {
+        const res = await fetch(`${API_URL}/access-control/admin/codes`, {
             method: 'POST',
             headers: getHeaders(),
+            body: JSON.stringify(codeData),
         });
-        if (!res.ok) throw new Error('Failed to deactivate access code');
-    },
-
-    // Usage Stats by Organization
-    getUsageByOrganization: async (): Promise<any[]> => {
-        const res = await fetch(`${API_URL}/superadmin/usage-by-org`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch usage stats');
-        return res.json();
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to generate code');
+        return json;
     },
 };

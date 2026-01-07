@@ -193,7 +193,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
             } else {
                 toast.error(response.error || 'Failed to change status');
             }
-        } catch (error: unknown) {
+        } catch (error: any) {
             const errorMessage = error.response?.data?.error || 'Failed to change status';
             toast.error(errorMessage);
         } finally {

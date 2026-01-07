@@ -57,7 +57,7 @@ export function useProactiveNudges(options: UseProactiveNudgesOptions = {}): Use
                 const validNudges = response.data.data.filter((n: Nudge) => n.expiresAt > Date.now());
                 setNudges(validNudges.slice(0, maxNudges));
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             // Silently fail - nudges are non-critical
             console.debug('[Nudges] Fetch failed:', err.message);
         } finally {
@@ -69,7 +69,7 @@ export function useProactiveNudges(options: UseProactiveNudgesOptions = {}): Use
         try {
             await api.post('/ai/nudges/dismiss', { nudgeId });
             setNudges((prev) => prev.filter((n) => n.nudgeId !== nudgeId));
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.debug('[Nudges] Dismiss failed:', err.message);
         }
     }, []);
@@ -78,7 +78,7 @@ export function useProactiveNudges(options: UseProactiveNudgesOptions = {}): Use
         try {
             await api.post('/ai/nudges/acted', { nudgeId, action });
             setNudges((prev) => prev.filter((n) => n.nudgeId !== nudgeId));
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.debug('[Nudges] Act failed:', err.message);
         }
     }, []);
@@ -100,7 +100,7 @@ export function useProactiveNudges(options: UseProactiveNudgesOptions = {}): Use
                         return newNudges.sort((a, b) => b.priority - a.priority).slice(0, maxNudges);
                     });
                 }
-            } catch (err: unknown) {
+            } catch (err: any) {
                 // Silently fail
                 console.debug('[Nudges] Track failed:', err.message);
             }

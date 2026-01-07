@@ -87,7 +87,7 @@ export const WorkstreamBoard: React.FC<WorkstreamBoardProps> = ({
             setWorkstreams(response.data.workstreams || []);
             setUnassignedCount(response.data.unassignedInitiatives || 0);
             setError(null);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to load workstreams');
         } finally {
             setLoading(false);
@@ -103,7 +103,7 @@ export const WorkstreamBoard: React.FC<WorkstreamBoardProps> = ({
             await api.delete(`/workstreams/${workstreamId}`);
             await loadWorkstreams();
             onWorkstreamChange?.();
-        } catch (err: unknown) {
+        } catch (err: any) {
             alert(err.message || 'Failed to delete workstream');
         }
     };
@@ -113,7 +113,7 @@ export const WorkstreamBoard: React.FC<WorkstreamBoardProps> = ({
             await api.patch(`/workstreams/${workstreamId}`, { status: newStatus });
             await loadWorkstreams();
             onWorkstreamChange?.();
-        } catch (err: unknown) {
+        } catch (err: any) {
             alert(err.message || 'Failed to update status');
         }
     };
@@ -522,7 +522,7 @@ const WorkstreamModal: React.FC<WorkstreamModalProps> = ({ projectId, workstream
             }
 
             onSaved();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.response?.data?.error || err.message || 'Failed to save workstream');
         } finally {
             setLoading(false);

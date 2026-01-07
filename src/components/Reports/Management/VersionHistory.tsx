@@ -170,7 +170,7 @@ const ComparisonView: React.FC<{
                 <p className="text-center text-slate-400 py-4">No changes detected between versions</p>
             ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {comparison.changes.map((change, index) => (
+                    {comparison.changes.map((change, index: number) => (
                         <div key={index} className="flex items-start gap-3 p-2 bg-white dark:bg-navy-900 rounded-lg">
                             <ChangeTypeBadge type={change.type} />
                             <div className="flex-1 min-w-0">

@@ -83,7 +83,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                         <h2 className="text-lg font-bold text-red-700 dark:text-red-400">⚠️ Attention Required</h2>
                     </div>
                     <ul className="space-y-2">
-                        {content.warnings.map((warning, idx) => (
+                        {content.warnings.map((warning, idx: number) => (
                             <li key={idx} className="flex items-start gap-2 text-red-800 dark:text-red-300">
                                 <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
                                 <span>{warning}</span>
@@ -155,7 +155,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                                {content.risksAndIssues.slice(0, 10).map((item) => (
+                                {content.risksAndIssues.slice(0, 10).map((item: any) => (
                                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                                         <td className="px-4 py-3">
                                             <span

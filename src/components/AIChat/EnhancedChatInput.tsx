@@ -385,7 +385,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 duration++;
                 setRecordingDuration(duration);
             }, 1000);
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('[Voice] Failed to start voice conversation:', error);
         }
     }, [isDictating, isVoiceConversation, onSend, onVoiceModeChange, onVoiceConversationStart, startVAD, stopVAD]);

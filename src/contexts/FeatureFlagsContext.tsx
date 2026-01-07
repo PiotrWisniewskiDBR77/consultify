@@ -67,8 +67,8 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['ui', 'ai']));
 
     const toggleCategory = (category: string) => {
-        setExpandedCategories((prev) => {
-            const next = new Set(prev);
+        setExpandedCategories((prev: Set<string>) => {
+            const next = new Set<string>(prev);
             if (next.has(category)) {
                 next.delete(category);
             } else {
@@ -245,7 +245,7 @@ export const FeatureFlagsProvider: React.FC<FeatureFlagsProviderProps> = ({
     const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
 
     const toggleDevTools = useCallback(() => {
-        setIsDevToolsOpen((prev) => !prev);
+        setIsDevToolsOpen((prev: any) => !prev);
     }, []);
 
     return (

@@ -29,7 +29,7 @@ const PolicyEngine = {
      * @param {string} params.organizationId - Organization ID
      * @returns {Promise<{matched: boolean, decision: string|null, reason: string|null, rule_id: string|null}>}
      */
-    evaluatePolicy: async ({ proposal, organizationId }) => {
+    evaluatePolicy: async ({ proposal, organizationId }: any) => {
         // 1. Check global policy engine status
         const isEnabled = await PolicyEngine.isGloballyEnabled();
         if (!isEnabled) {
@@ -91,7 +91,7 @@ const PolicyEngine = {
      * @param {string} userId - SUPERADMIN user ID
      * @returns {Promise<void>}
      */
-    setGlobalStatus: async (enabled, userId) => {
+    setGlobalStatus: async (enabled: any, userId: any) => {
         return new Promise((resolve, reject) => {
             db.run(
                 `UPDATE ai_policy_settings SET policy_engine_enabled = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 'singleton'`,
@@ -110,7 +110,7 @@ const PolicyEngine = {
      * @param {Object} proposal
      * @returns {Promise<Array>}
      */
-    getMatchingRules: async (organizationId, proposal) => {
+    getMatchingRules: async (organizationId: any, proposal: any) => {
         return new Promise((resolve, reject) => {
             db.all(
                 `SELECT * FROM ai_policy_rules 
@@ -143,11 +143,11 @@ const PolicyEngine = {
      * @param {string} organizationId
      * @returns {Promise<boolean>}
      */
-    evaluateConditions: async (conditions, proposal, organizationId) => {
+    evaluateConditions: async (conditions: any, proposal: any, organizationId: any) => {
         const handlers = PolicyEngine.CONDITION_HANDLERS;
 
         for (const [conditionKey, conditionValue] of Object.entries(conditions)) {
-            const handler = handlers[conditionKey];
+            const handler = (handlers as any)[conditionKey];
             if (!handler) {
                 console.warn(`[PolicyEngine] Unknown condition: ${conditionKey}`);
                 return false; // Unknown condition = no match for safety
@@ -167,15 +167,15 @@ const PolicyEngine = {
         /**
          * risk_level_lte: Matches if proposal risk <= configured level
          */
-        risk_level_lte: async (value, proposal) => {
+        risk_level_lte: async (value: any, proposal: any) => {
             const levels = { 'LOW': 1, 'MEDIUM': 2, 'HIGH': 3 };
-            return levels[proposal.risk_level] <= levels[value];
+            return (levels as any)[proposal.risk_level] <= (levels as any)[value];
         },
 
         /**
          * action_type_in: Matches if proposal action type is in the list
          */
-        action_type_in: async (value, proposal) => {
+        action_type_in: async (value: any, proposal: any) => {
             if (!Array.isArray(value)) return false;
             return value.includes(proposal.action_type);
         },
@@ -183,14 +183,14 @@ const PolicyEngine = {
         /**
          * scope_eq: Matches if proposal scope equals configured value
          */
-        scope_eq: async (value, proposal) => {
+        scope_eq: async (value: any, proposal: any) => {
             return proposal.scope === value;
         },
 
         /**
          * signal_in: Matches if proposal's origin signal is in the list
          */
-        signal_in: async (value, proposal) => {
+        signal_in: async (value: any, proposal: any) => {
             if (!Array.isArray(value)) return false;
             return value.includes(proposal.origin_signal);
         },
@@ -198,7 +198,7 @@ const PolicyEngine = {
         /**
          * max_actions_per_day: Checks if org hasn't exceeded daily auto-approved count
          */
-        max_actions_per_day: async (value, proposal, organizationId) => {
+        max_actions_per_day: async (value: any, proposal: any, organizationId: any) => {
             const todayCount = await PolicyEngine.getAutoApprovedCountToday(organizationId);
             return todayCount < value;
         },
@@ -208,7 +208,7 @@ const PolicyEngine = {
          * - 'business_hours': Mon-Fri 9:00-17:00
          * - 'anytime': Always matches
          */
-        time_window: async (value) => {
+        time_window: async (value: any) => {
             if (value === 'anytime') return true;
             if (value === 'business_hours') {
                 const now = new Date();
@@ -226,7 +226,7 @@ const PolicyEngine = {
      * @param {string} organizationId
      * @returns {Promise<number>}
      */
-    getAutoApprovedCountToday: async (organizationId) => {
+    getAutoApprovedCountToday: async (organizationId: any) => {
         return new Promise((resolve, reject) => {
             db.get(
                 `SELECT COUNT(*) as count FROM action_decisions 
@@ -247,7 +247,7 @@ const PolicyEngine = {
      * @param {string} organizationId
      * @returns {Promise<Array>}
      */
-    getRules: async (organizationId) => {
+    getRules: async (organizationId: any) => {
         return new Promise((resolve, reject) => {
             db.all(
                 `SELECT * FROM ai_policy_rules WHERE organization_id = ? ORDER BY created_at DESC`,
@@ -292,7 +292,7 @@ const PolicyEngine = {
      * @param {boolean} enabled
      * @returns {Promise<Object>}
      */
-    toggleRule: async (ruleId, enabled) => {
+    toggleRule: async (ruleId: any, enabled: any) => {
         return new Promise((resolve, reject) => {
             db.run(
                 `UPDATE ai_policy_rules SET enabled = ? WHERE id = ?`,
@@ -313,7 +313,7 @@ const PolicyEngine = {
      * @param {Object} data
      * @returns {Promise<Object>}
      */
-    createRule: async (data) => {
+    createRule: async (data: any) => {
         const uuidv4 = require('uuid').v4;
         const id = `pr-${uuidv4()}`;
 

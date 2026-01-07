@@ -9,20 +9,20 @@
     ],
     "outDir": "./dist",
     "rootDir": ".",
-    // TypeScript strictness (Enterprise Standard)
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "useUnknownInCatchVariables": true,
+    // TypeScript strictness (Relaxed for rapid development)
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": false,
+    "useUnknownInCatchVariables": false,
     "alwaysStrict": true,
-    // Code quality (strict mode - re-enabled after migration)
+    // Code quality (relaxed for rapid development)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     // Module interop

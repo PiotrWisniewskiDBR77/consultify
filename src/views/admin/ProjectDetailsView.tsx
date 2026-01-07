@@ -56,6 +56,9 @@ export const ProjectDetailsView: React.FC<ProjectDetailsViewProps> = ({ projectI
         try {
             setLoading(true);
             const data = await Api.getProjectDetails(projectId);
+            if (!data) {
+                throw new Error('Project not found');
+            }
             setProject(data as any);
             setEditForm({
                 name: data.name,

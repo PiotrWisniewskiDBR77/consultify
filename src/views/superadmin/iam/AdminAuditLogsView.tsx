@@ -89,9 +89,9 @@ const AdminAuditLogsView: React.FC = () => {
 
             const [logsData, statsData] = await Promise.all([Api.getAdminAuditLogs(params), Api.getAdminAuditStats()]);
 
-            setLogs(logsData);
-            setStats(statsData);
-        } catch (err: unknown) {
+            setLogs((logsData as any).logs || logsData);
+            setStats(statsData as any);
+        } catch (err: any) {
             setError(err.message || 'Failed to load audit logs');
         } finally {
             setLoading(false);
@@ -117,7 +117,7 @@ const AdminAuditLogsView: React.FC = () => {
             setShowResolveModal(null);
             setResolutionNotes('');
             toast.success('Audit log resolved successfully');
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to resolve audit log');
             toast.error(err.message || 'Failed to resolve audit log');
         } finally {
@@ -128,14 +128,14 @@ const AdminAuditLogsView: React.FC = () => {
     const handleExport = async () => {
         try {
             setExporting(true);
-            const blob = await Api.exportAdminAuditLogs({
+            const result = await Api.exportAdminAuditLogs({
                 ...filters,
                 riskScoreMin: filters.riskScoreMin ? parseInt(filters.riskScoreMin) : undefined,
                 format: 'csv',
-            });
+            } as any);
 
-            // Create download link
-            const url = URL.createObjectURL(blob as Blob);
+            // Create download link - handle either blob or url response
+            const url = result instanceof Blob ? URL.createObjectURL(result) : (result as any).url;
             const a = document.createElement('a');
             a.href = url;
             a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
@@ -145,7 +145,7 @@ const AdminAuditLogsView: React.FC = () => {
             URL.revokeObjectURL(url);
 
             toast.success('Export downloaded successfully');
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(err.message || 'Failed to export audit logs');
         } finally {
             setExporting(false);

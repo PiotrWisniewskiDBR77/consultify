@@ -28,6 +28,10 @@ export const ACTION_ERROR_CODES = {
     ALREADY_EXECUTED: 'ALREADY_EXECUTED',
     NOT_FOUND: 'NOT_FOUND',
     INTERNAL_ERROR: 'INTERNAL_ERROR',
+    EXECUTION_ERROR: 'EXECUTION_ERROR',
+    CONFLICT_409: 'CONFLICT_409',
+    TIMEOUT: 'TIMEOUT',
+    INTEGRATION_ERROR: 'INTEGRATION_ERROR',
 
     // Async Job Error Codes (from original, re-added)
     JOB_NOT_FOUND: 'JOB_NOT_FOUND',
@@ -42,7 +46,7 @@ export const ACTION_ERROR_CODES = {
  * @param {string} [defaultCode] - Fallback code if not determinable
  * @returns {string} Standardized error code
  */
-function classifyError(error, defaultCode = ACTION_ERROR_CODES.EXECUTION_ERROR) {
+function classifyError(error: any, defaultCode = ACTION_ERROR_CODES.EXECUTION_ERROR) {
     const message = (error?.message || String(error)).toLowerCase();
 
     if (message.includes('forbidden') || message.includes('rbac') || message.includes('unauthorized')) {

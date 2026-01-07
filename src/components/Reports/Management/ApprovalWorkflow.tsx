@@ -332,7 +332,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
                 <div className="px-4 pb-4 border-t border-slate-100 dark:border-white/5">
                     {/* Approval chain */}
                     <div className="mt-4">
-                        {approvalStatus.levels.map((level, index) => (
+                        {approvalStatus.levels.map((level, index: number) => (
                             <ApprovalStep
                                 key={level.id}
                                 approval={level}

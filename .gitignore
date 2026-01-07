@@ -135,3 +135,9 @@ test-results-*.txt
 
 # Coverage directories
 coverage-*/
+
+# Additional ignores
+*.bak
+coverage/.tmp
+.nx/
+junit.xml

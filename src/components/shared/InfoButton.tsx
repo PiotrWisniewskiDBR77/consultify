@@ -55,7 +55,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
     const panelRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
 
-    const docs = CARD_DOCS[cardId];
+    const docs = (CARD_DOCS as any)[cardId];
 
     // Close panel when clicking outside
     useEffect(() => {
@@ -197,7 +197,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                                         Features
                                     </h3>
                                     <ul className="space-y-2">
-                                        {docs.features.map((feature, index) => (
+                                        {docs.features.map((feature: any, index: number) => (
                                             <li
                                                 key={index}
                                                 className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
@@ -218,7 +218,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                                         How to Use
                                     </h3>
                                     <ol className="space-y-3">
-                                        {docs.howToUse.map((step, index) => (
+                                        {docs.howToUse.map((step: any, index: number) => (
                                             <li
                                                 key={index}
                                                 className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
@@ -241,7 +241,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                                         Tips
                                     </h3>
                                     <ul className="space-y-2">
-                                        {docs.tips.map((tip, index) => (
+                                        {docs.tips.map((tip: any, index: number) => (
                                             <li key={index} className="text-sm text-amber-700 dark:text-amber-300/80">
                                                 • {tip}
                                             </li>
@@ -258,7 +258,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                                         Related Documentation
                                     </h3>
                                     <div className="space-y-2">
-                                        {docs.relatedDocs.map((doc, index) => (
+                                        {docs.relatedDocs.map((doc: any, index: number) => (
                                             <a
                                                 key={index}
                                                 href={doc.url}

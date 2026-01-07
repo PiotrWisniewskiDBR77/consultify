@@ -91,7 +91,7 @@ export const ContactInformationSection: React.FC<ContactInformationSectionProps>
                 preferredContactMethod,
             });
             toast.success(t('settings.contact.saved', 'Contact information saved'));
-            onUpdateUser({ preferredContactMethod });
+            onUpdateUser({ preferredContactMethod } as any);
         } catch (error) {
             toast.error(t('settings.contact.error', 'Failed to save contact information'));
         } finally {

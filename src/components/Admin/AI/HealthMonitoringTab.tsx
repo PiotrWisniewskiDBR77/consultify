@@ -26,7 +26,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
-import { Button } from '../../Button';
+import { Button } from '../../ui/primitives/Button';
 
 interface CapabilityResult {
     capability: string;
@@ -147,7 +147,7 @@ export const HealthMonitoringTab: React.FC = () => {
             } else {
                 toast.error(`${capId} test failed${data.alertSent ? ' - Alert sent!' : ''}`);
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             setResults((prev) => ({
                 ...prev,
                 [capId]: {
@@ -203,7 +203,7 @@ export const HealthMonitoringTab: React.FC = () => {
             }
 
             fetchStatus();
-        } catch (err: unknown) {
+        } catch (err: any) {
             toast.error(`Failed to run tests: ${err.message}`);
         } finally {
             setRunningAllTests(false);

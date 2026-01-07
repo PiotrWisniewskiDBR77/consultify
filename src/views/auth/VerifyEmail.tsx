@@ -30,7 +30,7 @@ export const VerifyEmail = () => {
             setTimeout(() => {
                 navigate('/login');
             }, 3000);
-        } catch (error: unknown) {
+        } catch (error: any) {
             queueMicrotask(() => {
                 setStatus('error');
                 setMessage(error.response?.data?.error || t('auth.verifyEmail.failedMessage'));

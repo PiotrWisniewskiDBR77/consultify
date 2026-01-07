@@ -173,7 +173,7 @@ export const InitiativeManagementView: React.FC = () => {
             setShowReviewModal(false);
             setSelectedInitiative(null);
             setReviewComment('');
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.response?.data?.error || 'Action failed');
         }
     };
@@ -187,7 +187,7 @@ export const InitiativeManagementView: React.FC = () => {
             });
             toast.success('Initiative transferred to execution');
             handleStatusChange(initiative.id, InitiativeStatus.EXECUTING);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.response?.data?.error || 'Transfer failed');
         }
     };

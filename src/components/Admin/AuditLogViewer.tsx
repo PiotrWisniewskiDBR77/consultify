@@ -122,7 +122,7 @@ export function AuditLogViewer() {
 
             setLogs(response.logs || []);
             setTotalPages(response.pagination?.totalPages || 1);
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to fetch audit logs');
             setLogs([]);
         } finally {
@@ -166,15 +166,17 @@ export function AuditLogViewer() {
                 actionType: filters.action,
             };
 
-            const blob = await Api.exportAuditLogs(exportFilters);
-            const url = window.URL.createObjectURL(blob);
+            const result = await Api.exportAuditLogs(exportFilters);
+            const url = result instanceof Blob 
+                ? window.URL.createObjectURL(result) 
+                : (result as any).url;
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', `audit-log-${new Date().toISOString().slice(0, 10)}.csv`);
             document.body.appendChild(link);
             link.click();
             link.remove();
-            window.URL.revokeObjectURL(url);
+            if (result instanceof Blob) window.URL.revokeObjectURL(url);
             toast.success('Audit log exported successfully');
         } catch (err) {
             console.error('Export failed:', err);

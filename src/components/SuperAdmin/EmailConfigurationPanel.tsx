@@ -140,7 +140,7 @@ export const EmailConfigurationPanel: React.FC = () => {
             await Api.put(`/settings/email-config?organizationId=${selectedOrgId}`, config);
             toast.success('Email configuration saved');
             setHasChanges(false);
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to save configuration');
         } finally {
             setSaving(false);
@@ -157,7 +157,7 @@ export const EmailConfigurationPanel: React.FC = () => {
         try {
             await Api.post(`/settings/email-config/test?organizationId=${selectedOrgId}`, { email: testEmail });
             toast.success('Test email sent');
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Failed to send test email');
         } finally {
             setTesting(false);
@@ -180,7 +180,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                     : null,
             );
             toast.success('DNS verification completed');
-        } catch (error: unknown) {
+        } catch (error: any) {
             const errorMessage = error instanceof Error ? error.message : 'DNS verification failed';
             toast.error(errorMessage);
         } finally {

@@ -38,7 +38,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { Progress } from '../ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
+import { Select } from '../ui/select';
 import { Separator } from '../ui/separator';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '../ui/use-toast';
@@ -363,17 +363,14 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentU
                             <Label>{t('settings.export.format', 'Export Format')}</Label>
                             <Select
                                 value={exportFormat}
-                                onValueChange={(v) => setExportFormat(v as typeof exportFormat)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="json">JSON (Machine-readable)</SelectItem>
-                                    <SelectItem value="csv">CSV (Spreadsheet)</SelectItem>
-                                    <SelectItem value="pdf">PDF (Human-readable)</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                onChange={(v) => setExportFormat(v as typeof exportFormat)}
+                                options={[
+                                    { value: 'json', label: 'JSON (Machine-readable)' },
+                                    { value: 'csv', label: 'CSV (Spreadsheet)' },
+                                    { value: 'pdf', label: 'PDF (Human-readable)' },
+                                ]}
+                                fullWidth
+                            />
                         </div>
 
                         <Separator />

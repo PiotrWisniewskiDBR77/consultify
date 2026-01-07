@@ -175,7 +175,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                     {VISIBILITY_OPTIONS.map((option) => (
                         <button
                             key={option.value}
-                            onClick={() => setVisibility((prev) => ({ ...prev, profile: option.value }))}
+                            onClick={() => setVisibility((prev: any) => ({ ...prev, profile: option.value }))}
                             className={`p-4 rounded-lg border-2 text-left transition-all ${
                                 visibility.profile === option.value
                                     ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
@@ -220,7 +220,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                 <div className="space-y-1">
                     <ToggleSwitch
                         enabled={visibility.showEmail}
-                        onChange={(val) => setVisibility((prev) => ({ ...prev, showEmail: val }))}
+                        onChange={(val) => setVisibility((prev: any) => ({ ...prev, showEmail: val }))}
                         label={t('settings.profile.visibility.showEmail', 'Show email address')}
                         description={t(
                             'settings.profile.visibility.showEmailDesc',
@@ -229,7 +229,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                     />
                     <ToggleSwitch
                         enabled={visibility.showPhone}
-                        onChange={(val) => setVisibility((prev) => ({ ...prev, showPhone: val }))}
+                        onChange={(val) => setVisibility((prev: any) => ({ ...prev, showPhone: val }))}
                         label={t('settings.profile.visibility.showPhone', 'Show phone number')}
                         description={t(
                             'settings.profile.visibility.showPhoneDesc',
@@ -238,7 +238,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                     />
                     <ToggleSwitch
                         enabled={visibility.showInDirectory}
-                        onChange={(val) => setVisibility((prev) => ({ ...prev, showInDirectory: val }))}
+                        onChange={(val) => setVisibility((prev: any) => ({ ...prev, showInDirectory: val }))}
                         label={t('settings.profile.visibility.showInDirectory', 'Show in team directory')}
                         description={t(
                             'settings.profile.visibility.showInDirectoryDesc',
@@ -258,7 +258,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                 <div className="space-y-1">
                     <ToggleSwitch
                         enabled={visibility.showActivityStatus}
-                        onChange={(val) => setVisibility((prev) => ({ ...prev, showActivityStatus: val }))}
+                        onChange={(val) => setVisibility((prev: any) => ({ ...prev, showActivityStatus: val }))}
                         label={t('settings.profile.visibility.showActivity', 'Show online status')}
                         description={t(
                             'settings.profile.visibility.showActivityDesc',
@@ -267,7 +267,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                     />
                     <ToggleSwitch
                         enabled={visibility.showLastSeen}
-                        onChange={(val) => setVisibility((prev) => ({ ...prev, showLastSeen: val }))}
+                        onChange={(val) => setVisibility((prev: any) => ({ ...prev, showLastSeen: val }))}
                         label={t('settings.profile.visibility.showLastSeen', 'Show last seen')}
                         description={t(
                             'settings.profile.visibility.showLastSeenDesc',
@@ -295,7 +295,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                                 <button
                                     key={option.value}
                                     onClick={() =>
-                                        setVisibility((prev) => ({ ...prev, allowMentionsFrom: option.value }))
+                                        setVisibility((prev: any) => ({ ...prev, allowMentionsFrom: option.value }))
                                     }
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         visibility.allowMentionsFrom === option.value
@@ -319,7 +319,7 @@ export const ProfileVisibilitySettings: React.FC<ProfileVisibilitySettingsProps>
                                 <button
                                     key={option.value}
                                     onClick={() =>
-                                        setVisibility((prev) => ({ ...prev, allowDirectMessagesFrom: option.value }))
+                                        setVisibility((prev: any) => ({ ...prev, allowDirectMessagesFrom: option.value }))
                                     }
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         visibility.allowDirectMessagesFrom === option.value

@@ -148,7 +148,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
             setTimeout(() => {
                 onSave();
             }, 1000);
-        } catch (err: unknown) {
+        } catch (err: any) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to save template';
             setErrors([errorMessage]);
         } finally {
@@ -203,7 +203,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
             setSuccess(`Test emails sent! ${result.sent} delivered, ${result.failed} failed.`);
             setShowTestSend(false);
             setTestEmails('');
-        } catch (err: unknown) {
+        } catch (err: any) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to send test email';
             setErrors([errorMessage]);
         } finally {

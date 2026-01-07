@@ -31,12 +31,12 @@ import { useTranslation } from 'react-i18next';
 
 import { type AIAction, useReportSections } from '../../hooks/useReportSections';
 import { useAppStore } from '../../store/useAppStore';
-import { ChatPanel } from '../ChatPanel';
+import { ChatPanel } from '../layout/ChatPanel';
 import { ReportBuilder } from '../Reports/ReportBuilder';
 import { ReportHeader } from '../Reports/ReportHeader';
 import { StickyNavigation } from '../Reports/StickyNavigation';
 import { TableOfContents } from '../Reports/TableOfContents';
-import { SplitLayout } from '../SplitLayout';
+import { SplitLayout } from '../layout/SplitLayout';
 
 interface ReportBuilderWorkspaceProps {
     reportId: string;
@@ -565,10 +565,10 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({ 
                         <div className="flex-1 overflow-hidden">
                             <ChatPanel
                                 messages={activeChatMessages}
-                                onSendMessage={(text) => {
+                                onSendMessage={(text: any) => {
                                     addChatMessage({ role: 'user', content: text } as any);
                                 }}
-                                onOptionSelect={() => {}}
+                                onOptionSelect={() => { }}
                                 isTyping={isBotTyping}
                                 title={isPolish ? 'Czat AI' : 'AI Chat'}
                                 subtitle={isPolish ? 'Edytuj raport przez czat' : 'Edit report via chat'}

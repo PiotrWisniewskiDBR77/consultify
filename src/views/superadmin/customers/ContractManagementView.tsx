@@ -102,7 +102,7 @@ const ContractManagementView: React.FC = () => {
                 Api.getUpcomingRenewals(30),
             ]);
             setContracts(contractsData || []);
-            setStats(statsData);
+            setStats(statsData as any);
             setUpcomingRenewals(renewalsData || []);
         } catch (error) {
             console.error('Failed to fetch contract data:', error);

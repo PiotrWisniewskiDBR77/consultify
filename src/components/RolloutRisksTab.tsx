@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { FullInitiative, FullSession, RAIDItem } from '../types';
+import { FullInitiative, FullSession, RAIDItem, RAIDType, RAIDStatus, RiskSeverity } from '../types';
 
 interface RolloutRisksTabProps {
     data: FullSession['rollout'];
@@ -32,20 +32,24 @@ export const RolloutRisksTab: React.FC<RolloutRisksTabProps> = ({ data, initiati
     };
 
     const addItem = () => {
-        const newItem: RAIDItem = {
+        const newItem = {
             id: Date.now().toString(),
-            type: activeType,
+            projectId: '',
+            type: activeType as RAIDType,
             title: 'New ' + activeType,
             description: '',
-            severity: 'Medium',
-            status: 'Open',
+            severity: 'medium' as RiskSeverity,
+            status: 'open' as RAIDStatus,
             dueDate: new Date().toISOString(),
-        };
+            createdBy: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        } as any;
         onUpdate({ ...data, risks: [...items, newItem] });
     };
 
     const updateItem = (id: string, updates: Partial<RAIDItem>) => {
-        const newItems = items.map((i) => (i.id === id ? { ...i, ...updates } : i));
+        const newItems = items.map((i) => (i.id === id ? { ...i, ...updates } : i)) as any[];
         onUpdate({ ...data, risks: newItems });
     };
 

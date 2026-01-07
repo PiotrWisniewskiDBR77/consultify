@@ -250,7 +250,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({ 
 
             setFinancialData(data);
             toast.success('Dane finansowe zapisane');
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Nie udało się zapisać danych');
         } finally {
             setIsSaving(false);

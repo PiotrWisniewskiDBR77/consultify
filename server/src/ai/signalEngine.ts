@@ -9,7 +9,7 @@ const SignalEngine = {
      * @param {Object} context - The AI_CONTEXT snapshot.
      * @returns {Array<Object>} List of detected signals.
      */
-    detectSignals: (context) => {
+    detectSignals: (context: any) => {
         const signals = [];
 
         // 1. USER_AT_RISK
@@ -27,7 +27,7 @@ const SignalEngine = {
         return signals;
     },
 
-    _detectUsersAtRisk: (context) => {
+    _detectUsersAtRisk: (context: any) => {
         const signals = [];
         const { user_load } = context.data.task_distribution;
         const help_ratios = context.data.help_completion_ratios;
@@ -35,7 +35,7 @@ const SignalEngine = {
         Object.keys(user_load).forEach(userId => {
             const load = user_load[userId];
             const help = help_ratios[userId] || { ratio: 0, started: 0 };
-            const user = context.data.users.find(u => u.id === userId);
+            const user = context.data.users.find((u: any) => u.id === userId);
 
             // Logic: High load, zero completion, low help engagement
             if (load.total >= 5 && load.completed === 0 && help.ratio < 0.2) {
@@ -59,11 +59,11 @@ const SignalEngine = {
         return signals;
     },
 
-    _detectBlockedInitiatives: (context) => {
+    _detectBlockedInitiatives: (context: any) => {
         const signals = [];
         const initiatives = context.data.initiative_status;
 
-        initiatives.forEach(init => {
+        initiatives.forEach((init: any) => {
             if (init.is_blocked || init.stale_days > 7) {
                 const reason = init.is_blocked ? "explicitly blocked" : `stale for ${init.stale_days} days`;
                 signals.push({
@@ -85,7 +85,7 @@ const SignalEngine = {
         return signals;
     },
 
-    _detectLowHelpAdoption: (context) => {
+    _detectLowHelpAdoption: (context: any) => {
         const signals = [];
         const help_ratios = context.data.help_completion_ratios;
 
@@ -121,7 +121,7 @@ const SignalEngine = {
         return signals;
     },
 
-    _detectStrongTeamMembers: (context) => {
+    _detectStrongTeamMembers: (context: any) => {
         const signals = [];
         const { user_load } = context.data.task_distribution;
         const completions = Object.values(user_load).map(l => l.completed);
@@ -133,7 +133,7 @@ const SignalEngine = {
 
         Object.keys(user_load).forEach(userId => {
             const load = user_load[userId];
-            const user = context.data.users.find(u => u.id === userId);
+            const user = context.data.users.find((u: any) => u.id === userId);
 
             if (load.completed > avg + stdDev && load.completed > 2) {
                 signals.push({

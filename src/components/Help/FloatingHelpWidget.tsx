@@ -55,13 +55,13 @@ export const FloatingHelpWidget: React.FC<FloatingHelpWidgetProps> = ({ defaultO
     // Memoize translated and filtered help items
     const filteredHelp = useMemo(() => {
         return contextualHelpRaw
-            .map((item) => ({
+            .map((item: any) => ({
                 ...item,
                 translatedTitle: t(item.title),
                 translatedContent: t(item.content),
             }))
             .filter(
-                (item) =>
+                (item: any) =>
                     item.translatedTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     item.translatedContent.toLowerCase().includes(searchQuery.toLowerCase()),
             );
@@ -124,7 +124,7 @@ export const FloatingHelpWidget: React.FC<FloatingHelpWidgetProps> = ({ defaultO
             <div className="max-h-64 overflow-y-auto">
                 {filteredHelp.length > 0 ? (
                     <div className="py-2">
-                        {filteredHelp.map((item, index) => (
+                        {filteredHelp.map((item: any, index: number) => (
                             <button
                                 key={index}
                                 onClick={() => item.onClick?.()}

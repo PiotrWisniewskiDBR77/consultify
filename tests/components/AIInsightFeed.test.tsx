@@ -1,0 +1,122 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { AIInsightFeed } from '../../src/components/AIInsightFeed';
+import { Agent } from '../../src/services/ai/agent';
+import { useAppStore } from '../../src/store/useAppStore';
+
+vi.mock('../../../services/ai/agent', () => ({
+    Agent: {
+        analyzeSessionForInsights: vi.fn()
+    }
+}));
+
+vi.mock('../../../store/useAppStore', () => ({
+    useAppStore: vi.fn()
+}));
+
+const mockSession = {
+    id: 'session-1',
+    initiatives: [],
+    economics: { overallROI: 0 }
+} as any;
+
+describe('AIInsightFeed Component', () => {
+    const user = userEvent.setup();
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        (useAppStore as any).mockReturnValue({
+            currentUser: { companyName: 'Test Company' }
+        });
+        (Agent.analyzeSessionForInsights as any).mockResolvedValue([
+            { type: 'risk', text: 'Budget mismatch detected', impact: 'High' },
+            { type: 'opportunity', text: 'Fast track available', impact: 'Medium' }
+        ]);
+    });
+
+    it('renders AI Strategy Watch heading', async () => {
+        render(<AIInsightFeed session={mockSession} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/AI Strategy Watch/i)).toBeInTheDocument();
+        });
+    });
+
+    it('generates insights on mount', async () => {
+        render(<AIInsightFeed session={mockSession} />);
+
+        await waitFor(() => {
+            expect(Agent.analyzeSessionForInsights).toHaveBeenCalled();
+        });
+    });
+
+    it('displays generated insights', async () => {
+        render(<AIInsightFeed session={mockSession} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/Budget mismatch/i)).toBeInTheDocument();
+            expect(screen.getByText(/Fast track/i)).toBeInTheDocument();
+        });
+    });
+
+    it('shows refresh button', async () => {
+        render(<AIInsightFeed session={mockSession} />);
+
+        await waitFor(() => {
+            const refreshButton = screen.getByRole('button');
+            expect(refreshButton).toBeInTheDocument();
+        });
+    });
+
+    it('regenerates insights when refresh clicked', async () => {
+        render(<AIInsightFeed session={mockSession} />);
+
+        await waitFor(() => {
+            expect(Agent.analyzeSessionForInsights).toHaveBeenCalledTimes(1);
+        });
+
+        const refreshButton = screen.getByRole('button');
+        await user.click(refreshButton);
+
+        await waitFor(() => {
+            expect(Agent.analyzeSessionForInsights).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    it('shows loading state while generating', () => {
+        (Agent.analyzeSessionForInsights as any).mockImplementation(() => new Promise(() => {}));
+
+        render(<AIInsightFeed session={mockSession} />);
+
+        expect(screen.getByRole('status')).toBeInTheDocument();
+    });
+
+    it('displays empty state when no insights', async () => {
+        (Agent.analyzeSessionForInsights as any).mockResolvedValue([]);
+
+        render(<AIInsightFeed session={mockSession} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/No insights/i)).toBeInTheDocument();
+        });
+    });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

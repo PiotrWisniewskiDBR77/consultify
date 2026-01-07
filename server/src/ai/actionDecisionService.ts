@@ -35,7 +35,7 @@ const ActionDecisionService = {
      * Dependency injection for testing
      * @param {object} newDeps 
      */
-    setDependencies: (newDeps) => {
+    setDependencies: (newDeps: any) => {
         Object.assign(deps, newDeps);
     },
 
@@ -51,7 +51,7 @@ const ActionDecisionService = {
      * @param {Object} [data.modified_payload] - Optional modified payload
      * @returns {Promise<Object>} The recorded decision record
      */
-    recordDecision: async (data) => {
+    recordDecision: async (data: any) => {
         const { proposal_id, organization_id, decision, decided_by_user_id, reason, modified_payload } = data;
 
         if (!proposal_id || !decision || !decided_by_user_id || !organization_id) {
@@ -61,7 +61,7 @@ const ActionDecisionService = {
         const validDecisions = ['APPROVED', 'REJECTED', 'MODIFIED'];
         if (!validDecisions.includes(decision)) {
             const error = new Error(`Invalid decision: ${decision}. Must be one of ${validDecisions.join(', ')}`);
-            error.status = 400;
+            (error as any).status = 400;
             throw error;
         }
 
@@ -69,16 +69,16 @@ const ActionDecisionService = {
         const proposal = await deps.ActionProposalEngine.getProposalById(organization_id, proposal_id);
         if (!proposal) {
             const error = new Error(`Proposal ${proposal_id} not found for this organization.`);
-            error.status = 404;
+            (error as any).status = 404;
             throw error;
         }
 
         // 2. Check for Double Approval Conflict
         const existingDecisions = await ActionDecisionService.getDecisionsByProposal(proposal_id);
-        const hasActiveApproval = existingDecisions.some(d => d.decision === 'APPROVED' || d.decision === 'MODIFIED');
+        const hasActiveApproval = existingDecisions.some((d: any) => d.decision === 'APPROVED' || d.decision === 'MODIFIED');
         if (hasActiveApproval && (decision === 'APPROVED' || decision === 'MODIFIED')) {
             const error = new Error(`Proposal ${proposal_id} already has an active approval.`);
-            error.status = 409;
+            (error as any).status = 409;
             throw error;
         }
 
@@ -87,20 +87,20 @@ const ActionDecisionService = {
         if (decision === 'MODIFIED') {
             if (!modified_payload) {
                 const error = new Error('modified_payload is required for MODIFIED decision');
-                error.status = 400;
+                (error as any).status = 400;
                 throw error;
             }
 
-            const allowlist = ActionDecisionService.MODIFIED_ALLOWLIST[proposal.action_type] || [];
+            const allowlist = (ActionDecisionService.MODIFIED_ALLOWLIST as any)[proposal.action_type] || [];
             const filteredPayload = {};
             const keys = Object.keys(modified_payload);
 
             for (const key of keys) {
                 if (allowlist.includes(key)) {
-                    filteredPayload[key] = modified_payload[key];
+                    (filteredPayload as any)[key] = modified_payload[key];
                 } else {
                     const error = new Error(`Field '${key}' is not allowed to be modified for action type ${proposal.action_type}`);
-                    error.status = 400;
+                    (error as any).status = 400;
                     throw error;
                 }
             }
@@ -227,7 +227,7 @@ const ActionDecisionService = {
      * @param {string} proposalId - The proposal ID.
      * @returns {Promise<Array>} List of decision records.
      */
-    getDecisionsByProposal: async (proposalId) => {
+    getDecisionsByProposal: async (proposalId: any) => {
         return new Promise((resolve, reject) => {
             deps.db.all(
                 `SELECT * FROM action_decisions WHERE proposal_id = ? ORDER BY created_at ASC`,
@@ -250,7 +250,7 @@ const ActionDecisionService = {
      * @param {Object} [filters] - Optional filters (actionType, decision, limit)
      * @returns {Promise<Array>} List of decision records.
      */
-    getAuditLog: async (organizationId, filters = {}) => {
+    getAuditLog: async (organizationId: any, filters: any = {}) => {
         const { actionType, decision, limit = 50, offset = 0 } = filters;
 
         return new Promise((resolve, reject) => {
@@ -297,7 +297,7 @@ const ActionDecisionService = {
      * @param {string} organizationId - Organization ID
      * @returns {Promise<Object>} Policy evaluation result
      */
-    evaluatePolicyForProposal: async (proposal, organizationId) => {
+    evaluatePolicyForProposal: async (proposal: any, organizationId: any) => {
         return PolicyEngine.evaluatePolicy({ proposal, organizationId });
     },
 
@@ -309,7 +309,7 @@ const ActionDecisionService = {
      * @param {string} organizationId - Organization ID
      * @returns {Promise<Object|null>} The recorded decision if auto-approved, null otherwise
      */
-    autoDecideByPolicy: async (proposal, organizationId) => {
+    autoDecideByPolicy: async (proposal: any, organizationId: any) => {
         // Evaluate policy
         const policyResult = await PolicyEngine.evaluatePolicy({ proposal, organizationId });
 

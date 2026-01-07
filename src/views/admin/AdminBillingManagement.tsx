@@ -476,16 +476,16 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({ 
                                     <div>
                                         <p className="text-sm text-navy-900 dark:text-white">
                                             {invoice.currency === 'USD' ? '$' : ''}
-                                            {(invoice.amount_paid / 100).toFixed(2)}
+                                            {((invoice.amount_paid || invoice.amountPaid || 0) / 100).toFixed(2)}
                                         </p>
                                         <p className="text-xs text-slate-500 mt-0.5">
-                                            {new Date(invoice.created_at).toLocaleDateString()}
+                                            {new Date(invoice.created_at || invoice.createdAt || Date.now()).toLocaleDateString()}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span
                                             className={`admin-status ${
-                                                invoice.status === 'Paid' || invoice.status === 'paid'
+                                                invoice.status === 'paid'
                                                     ? 'admin-status-healthy'
                                                     : 'admin-status-warning'
                                             }`}

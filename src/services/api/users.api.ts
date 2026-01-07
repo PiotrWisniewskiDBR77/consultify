@@ -4,7 +4,7 @@
  */
 
 import { User } from '../../types';
-import { API_URL, fetchWithRetry, getAuthHeaders, getHeaders, handleResponse } from './baseClient';
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from './baseClient';
 
 export const UserApi = {
     // ==========================================

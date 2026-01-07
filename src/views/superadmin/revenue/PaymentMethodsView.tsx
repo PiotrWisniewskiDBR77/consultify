@@ -58,8 +58,8 @@ export const PaymentMethodsView: React.FC = () => {
             ]);
             setMethods(methodsRes || []);
             setFailures(failuresRes || []);
-            setStats(statsRes);
-        } catch (err: unknown) {
+            setStats(statsRes as any);
+        } catch (err: any) {
             setError(err.message || 'Failed to load payment data');
         } finally {
             setLoading(false);
@@ -70,7 +70,7 @@ export const PaymentMethodsView: React.FC = () => {
         try {
             await Api.retryPayment(id);
             fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to resolve payment failure');
         }
     };
@@ -80,7 +80,7 @@ export const PaymentMethodsView: React.FC = () => {
         try {
             await Api.deletePaymentMethodAdvanced(id);
             fetchData();
-        } catch (err: unknown) {
+        } catch (err: any) {
             setError(err.message || 'Failed to delete payment method');
         }
     };

@@ -1,0 +1,36 @@
+{
+    "axes": [
+        {
+            "id": "digital",
+            "name": "Digital Transformation",
+            "namePl": "Transformacja cyfrowa",
+            "description": "Digital capabilities and technology adoption"
+        },
+        {
+            "id": "operational",
+            "name": "Operational Excellence",
+            "namePl": "Doskonałość operacyjna",
+            "description": "Process efficiency and optimization"
+        },
+        {
+            "id": "customer",
+            "name": "Customer Experience",
+            "namePl": "Doświadczenie klienta",
+            "description": "Customer-centric improvements"
+        },
+        {
+            "id": "innovation",
+            "name": "Innovation & Growth",
+            "namePl": "Innowacje i wzrost",
+            "description": "New products, services, and markets"
+        }
+    ],
+    "maturityLevels": [
+        { "level": 1, "name": "Initial", "namePl": "Początkowy" },
+        { "level": 2, "name": "Developing", "namePl": "Rozwijający się" },
+        { "level": 3, "name": "Defined", "namePl": "Zdefiniowany" },
+        { "level": 4, "name": "Managed", "namePl": "Zarządzany" },
+        { "level": 5, "name": "Optimized", "namePl": "Optymalizowany" }
+    ]
+}
+

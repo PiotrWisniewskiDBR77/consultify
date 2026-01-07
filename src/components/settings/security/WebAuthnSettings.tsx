@@ -142,7 +142,7 @@ const WebAuthnSettings: React.FC = () => {
             if (verifyResponse.data.success) {
                 fetchCredentials();
             }
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('[WebAuthn] Registration error:', err);
             if (err.name === 'NotAllowedError') {
                 setError('Registration was cancelled or denied');

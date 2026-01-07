@@ -55,7 +55,7 @@ export const useStudioAI = (options: UseStudioAIOptions = {}) => {
                 }
 
                 throw new Error('Invalid response from AI');
-            } catch (error: unknown) {
+            } catch (error: any) {
                 console.error('[StudioAI] Generation error:', error);
                 toast.error('Failed to generate diagram');
                 throw error;
@@ -85,7 +85,7 @@ export const useStudioAI = (options: UseStudioAIOptions = {}) => {
                 }
 
                 throw new Error('Invalid response from AI');
-            } catch (error: unknown) {
+            } catch (error: any) {
                 console.error('[StudioAI] Modification error:', error);
                 toast.error('Failed to modify diagram');
                 throw error;
@@ -139,7 +139,7 @@ export const useStudioAI = (options: UseStudioAIOptions = {}) => {
                 }
 
                 return result;
-            } catch (error: unknown) {
+            } catch (error: any) {
                 console.error('[StudioAI] Chat error:', error);
 
                 // Add error message

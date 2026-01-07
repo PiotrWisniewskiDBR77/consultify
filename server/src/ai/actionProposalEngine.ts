@@ -20,7 +20,7 @@ const ActionProposalEngine = {
      * @param {Object} context - The AI_CONTEXT snapshot.
      * @returns {Array<Object>} List of final action proposals.
      */
-    generateProposals: (context) => {
+    generateProposals: (context: any) => {
         // 1. Detect Signals
         const signals = SignalEngine.detectSignals(context);
 
@@ -35,8 +35,8 @@ const ActionProposalEngine = {
         // 4. Map everything to Action Proposals
         signals.forEach(signal => {
             // Find associated recommendation and simulation for this signal
-            const relevantRec = recommendations.find(r => r.signal_type === signal.type && r.entity_id === signal.entity_id);
-            const relevantSim = simulations.find(s => s.recommendation_title === relevantRec?.title);
+            const relevantRec = recommendations.find((r: any) => r.signal_type === signal.type && r.entity_id === signal.entity_id);
+            const relevantSim = simulations.find((s: any) => s.recommendation_title === relevantRec?.title);
 
             const proposals = ActionProposalMapper.mapSignalToProposals(signal, relevantRec, relevantSim);
 
@@ -55,7 +55,7 @@ const ActionProposalEngine = {
      * @param {string} proposalId - The target proposal ID.
      * @returns {Promise<Object|null>} The proposal if found.
      */
-    getProposalById: async (orgId, proposalId) => {
+    getProposalById: async (orgId: any, proposalId: any) => {
         // In a real system, we'd build context first.
         // For simplicity, we use the AICoach to get all proposals and filter.
         const AICoach = require('./aiCoach');

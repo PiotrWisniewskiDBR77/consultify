@@ -101,9 +101,8 @@ const DroppableColumn: React.FC<{
     return (
         <div
             ref={setNodeRef}
-            className={`min-h-[400px] p-2 rounded-b-lg transition-colors ${
-                isOver ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-slate-50 dark:bg-navy-950/50'
-            }`}
+            className={`min-h-[400px] p-2 rounded-b-lg transition-colors ${isOver ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-slate-50 dark:bg-navy-950/50'
+                }`}
         >
             {children}
         </div>
@@ -126,7 +125,7 @@ const SortableInitiativeCard: React.FC<{
     };
 
     const slaStatus = getSLAStatus(initiative);
-    const completedTasks = initiative.tasks?.filter((t) => t.status === 'DONE').length || 0;
+    const completedTasks = initiative.tasks?.filter((t: any) => t.status === 'DONE').length || 0;
     const totalTasks = initiative.tasks?.length || 0;
     const taskProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -136,11 +135,10 @@ const SortableInitiativeCard: React.FC<{
             style={style}
             {...attributes}
             {...listeners}
-            className={`bg-white dark:bg-navy-900 rounded-lg border p-4 mb-3 cursor-pointer transition-all ${
-                isDragging
+            className={`bg-white dark:bg-navy-900 rounded-lg border p-4 mb-3 cursor-pointer transition-all ${isDragging
                     ? 'shadow-lg border-purple-400 dark:border-purple-500 rotate-2'
                     : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
-            }`}
+                }`}
             onClick={() => !isDragging && onInitiativeClick?.(initiative)}
         >
             {/* Header */}
@@ -186,13 +184,12 @@ const SortableInitiativeCard: React.FC<{
 
             {/* SLA indicator */}
             <div
-                className={`flex items-center gap-2 p-2 rounded-lg text-xs ${
-                    slaStatus === 'overdue'
+                className={`flex items-center gap-2 p-2 rounded-lg text-xs ${slaStatus === 'overdue'
                         ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
                         : slaStatus === 'warning'
-                          ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                          : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                }`}
+                            ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                            : 'bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                    }`}
             >
                 {slaStatus === 'overdue' ? (
                     <AlertTriangle size={12} />
@@ -217,22 +214,21 @@ const SortableInitiativeCard: React.FC<{
                         <User size={10} className="text-purple-600 dark:text-purple-400" />
                     </div>
                     <span>
-                        {initiative.ownerExecution
-                            ? `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
-                            : 'Unassigned'}
+                        {typeof initiative.ownerExecution === 'object' && initiative.ownerExecution
+                            ? `${(initiative.ownerExecution as any).firstName} ${(initiative.ownerExecution as any).lastName}`
+                            : initiative.ownerExecution || 'Unassigned'}
                     </span>
                 </div>
 
                 {/* Priority */}
                 {initiative.priority && (
                     <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded ${
-                            initiative.priority === 'Critical'
+                        className={`text-xs font-medium px-2 py-0.5 rounded ${initiative.priority === 'Critical'
                                 ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                                 : initiative.priority === 'High'
-                                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                        }`}
+                                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                            }`}
                     >
                         {initiative.priority}
                     </span>

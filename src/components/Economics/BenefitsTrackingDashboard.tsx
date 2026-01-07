@@ -175,7 +175,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
             setShowMeasurementModal(false);
             setEditingEntry(null);
             toast.success('Pomiar zapisany');
-        } catch (error: unknown) {
+        } catch (error: any) {
             toast.error(error.message || 'Nie udało się zapisać pomiaru');
         }
     };
