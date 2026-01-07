@@ -1,0 +1,160 @@
+# Coverage Reporting Workflow
+# Uploads coverage reports to Codecov and SonarCloud
+
+name: Coverage Reporting
+
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main, develop]
+
+env:
+    NODE_VERSION: '20.11.0'
+
+jobs:
+    coverage:
+        name: Generate and Upload Coverage
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # Full history for better coverage analysis
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Run tests with coverage
+              run: |
+                  npm run test:unit -- --coverage
+                  npm run test:component -- --coverage
+                  npm run test:integration -- --coverage
+              env:
+                  NODE_ENV: test
+                  MOCK_DB: 'true'
+                  MOCK_REDIS: 'true'
+                  DB_TYPE: 'sqlite'
+                  CI: 'true'
+
+            - name: Generate LCOV report
+              run: |
+                  # Ensure coverage directory exists
+                  mkdir -p coverage
+                  # Vitest generates coverage in coverage/ directory
+                  # Convert to LCOV format if needed
+                  if [ ! -f coverage/lcov.info ]; then
+                    echo "LCOV report not found, checking for other formats..."
+                    ls -la coverage/
+                  fi
+
+            - name: Upload to Codecov
+              uses: codecov/codecov-action@v4
+              with:
+                  files: |
+                      ./coverage/coverage-final.json
+                      ./coverage/coverage-summary.json
+                      ./coverage/lcov.info
+                  flags: frontend,backend,component,integration
+                  fail_ci_if_error: false
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  verbose: true
+
+            - name: Upload to SonarCloud
+              uses: sonarsource/sonarcloud-github-action@master
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+              if: ${{ secrets.SONAR_TOKEN != '' }}
+
+            - name: Coverage Summary
+              if: always()
+              run: |
+                  echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+
+                  if [ -f coverage/coverage-summary.json ]; then
+                    echo "### Coverage Summary" >> $GITHUB_STEP_SUMMARY
+                    echo '```json' >> $GITHUB_STEP_SUMMARY
+                    cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+                    echo '```' >> $GITHUB_STEP_SUMMARY
+                  fi
+
+                  if [ -f coverage/lcov.info ]; then
+                    echo "### LCOV Report" >> $GITHUB_STEP_SUMMARY
+                    echo "- LCOV report generated successfully" >> $GITHUB_STEP_SUMMARY
+                  fi
+
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### Coverage Targets" >> $GITHUB_STEP_SUMMARY
+                  echo "- Global: 85% (statements, functions, lines), 80% (branches)" >> $GITHUB_STEP_SUMMARY
+                  echo "- Critical Services: 80%" >> $GITHUB_STEP_SUMMARY
+                  echo "- Middleware: 85%" >> $GITHUB_STEP_SUMMARY
+
+            - name: Upload Coverage Artifacts
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: coverage-reports
+                  path: |
+                      coverage/**
+                  retention-days: 30
+
+            - name: Check Coverage Thresholds
+              run: |
+                  if [ -f coverage/coverage-summary.json ]; then
+                    # Extract coverage percentages
+                    STATEMENTS=$(node -p "require('./coverage/coverage-summary.json').total.statements.pct")
+                    BRANCHES=$(node -p "require('./coverage/coverage-summary.json').total.branches.pct")
+                    FUNCTIONS=$(node -p "require('./coverage/coverage-summary.json').total.functions.pct")
+                    LINES=$(node -p "require('./coverage/coverage-summary.json').total.lines.pct")
+                    
+                    echo "Current Coverage:"
+                    echo "  Statements: ${STATEMENTS}%"
+                    echo "  Branches: ${BRANCHES}%"
+                    echo "  Functions: ${FUNCTIONS}%"
+                    echo "  Lines: ${LINES}%"
+                    
+                    # Check thresholds (85% for statements/functions/lines, 80% for branches)
+                    THRESHOLD_STATEMENTS=85
+                    THRESHOLD_BRANCHES=80
+                    THRESHOLD_FUNCTIONS=85
+                    THRESHOLD_LINES=85
+                    
+                    FAILED=0
+                    
+                    if (( $(echo "$STATEMENTS < $THRESHOLD_STATEMENTS" | bc -l) )); then
+                      echo "::error::Statements coverage ${STATEMENTS}% is below threshold ${THRESHOLD_STATEMENTS}%"
+                      FAILED=1
+                    fi
+                    
+                    if (( $(echo "$BRANCHES < $THRESHOLD_BRANCHES" | bc -l) )); then
+                      echo "::warning::Branches coverage ${BRANCHES}% is below threshold ${THRESHOLD_BRANCHES}%"
+                    fi
+                    
+                    if (( $(echo "$FUNCTIONS < $THRESHOLD_FUNCTIONS" | bc -l) )); then
+                      echo "::error::Functions coverage ${FUNCTIONS}% is below threshold ${THRESHOLD_FUNCTIONS}%"
+                      FAILED=1
+                    fi
+                    
+                    if (( $(echo "$LINES < $THRESHOLD_LINES" | bc -l) )); then
+                      echo "::error::Lines coverage ${LINES}% is below threshold ${THRESHOLD_LINES}%"
+                      FAILED=1
+                    fi
+                    
+                    if [ $FAILED -eq 1 ]; then
+                      echo "::error::Coverage thresholds not met. Please add more tests."
+                      exit 1
+                    else
+                      echo "✅ All coverage thresholds met!"
+                    fi
+                  else
+                    echo "::warning::Coverage summary not found. Skipping threshold check."
+                  fi
+              continue-on-error: true

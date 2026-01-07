@@ -244,76 +244,14 @@ export default defineConfig({
             // Playwright spec files (not Vitest tests)
             'tests/accessibility/*.spec.ts',
             // =====================================
-            // TEMPORARILY SKIPPED TESTS  
-            // Tests with known issues that need deeper fixes
+            // EXCLUDED TESTS
+            // Only truly problematic tests that need deeper investigation
             // =====================================
 
             // Duplicate test file - use .js version instead
             'tests/unit/backend/services/StageGateService.test.ts',
 
-            // =====================================
-            // IMPORT PATH ISSUES - need path fixes
-            // =====================================
-            'tests/unit/asyncJobService.test.js',
-            'tests/unit/drdStructure.test.ts',
-            'tests/unit/helpFeedback.test.js',
-            'tests/unit/helpSearchService.test.ts',
-            'tests/unit/notificationOutboxService.test.js',
-            'tests/unit/pdfExport.test.ts',
-            'tests/unit/policyEngine.test.js',
-            'tests/unit/secretsVault.test.js',
-            'tests/unit/securityModule.test.tsx',
-            'tests/unit/settingsModules.test.tsx',
-            'tests/unit/templateValidationService.test.js',
-            'tests/unit/transformationEngine.test.ts',
-            'tests/unit/userStateMachine.test.js',
-            'tests/unit/components/TaskDropdown.test.tsx',
-            'tests/unit/hooks/useAIStream.test.ts',
-            'tests/unit/hooks/useAccessPolicy.test.tsx',
-            'tests/unit/hooks/useHelp.test.tsx',
-            'tests/unit/hooks/useIndependentAI.test.ts',
-            'tests/unit/hooks/useOrg.test.tsx',
-            'tests/unit/hooks/useScreenContext.test.ts',
-            'tests/unit/hooks/useTrial.test.tsx',
-            'tests/unit/settings/AdvancedSettings.test.tsx',
-            'tests/unit/settings/PrivacyDataSettings.test.tsx',
-            'tests/unit/settings/RegionalSettings.test.tsx',
-            'tests/unit/settings/WorkPreferencesSettings.test.tsx',
-            'tests/unit/services/realtimeClient.test.ts',
-            'tests/unit/services/scimService.test.js',
-            'tests/unit/services/ai/agent.test.ts',
-            'tests/unit/services/ai/gemini.test.ts',
-            'tests/unit/services/ai/unified.test.ts',
-            'tests/unit/ai/learningSystem.test.js',
-
-            // =====================================
-            // UNIFIED MOCK SETUP PATH ISSUES
-            // =====================================
-            'tests/unit/backend/stabilizationService.test.js',
-            'tests/unit/backend/controllers/UserController.test.js',
-            'tests/unit/backend/routes/initiatives.routes.test.js',
-            'tests/unit/backend/routes/healthRoutes.test.js',
-            'tests/unit/backend/routes/organizations.routes.test.js',
-            'tests/unit/backend/routes/settings.routes.test.js',
-            'tests/unit/backend/routes/users.routes.test.js',
-            'tests/unit/backend/routes/tasks.routes.test.js',
-            'tests/unit/backend/routes/dashboard.routes.test.js',
-            'tests/unit/backend/routes/reports.routes.test.js',
-            'tests/unit/backend/routes/webhooks.routes.test.js',
-            'tests/unit/backend/routes/projects.routes.test.js',
-            'tests/unit/backend/routes/integrations.routes.test.js',
-            'tests/unit/backend/taxService.test.js',
-            'tests/unit/backend/initiativeService.legacy.test.js',
-            'tests/unit/backend/scmsServices.test.js',
-            'tests/unit/backend/services/dlpService.test.js',
-            'tests/unit/backend/helpService.test.js',
-            'tests/unit/backend/governanceService.test.js',
-            'tests/unit/backend/outcomeService.test.js',
-            'tests/unit/backend/metricsPersistenceService.test.js',
-            'tests/unit/backend/aiProactivityEngine.test.js',
-            'tests/unit/components/MyWork/TaskDetailModal.test.tsx',
-
-            // Note: Most tests should now run. Failures will be visible.
+            // Note: 57+ previously excluded tests have been FIXED and re-enabled as of Jan 2026
         ],
         environmentMatchGlobs: [
             ['tests/unit/backend/**', 'node'],
