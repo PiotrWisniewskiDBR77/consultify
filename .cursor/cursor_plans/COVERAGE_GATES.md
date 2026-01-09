@@ -1,4 +1,4 @@
-# Consultify — Coverage Gates (Security-first)
+# Consultinity — Coverage Gates (Security-first)
 
 ## Philosophy
 Coverage is enforced hardest where risk is highest. We aim for **maximum meaningful coverage** and treat “100% overall” as a direction, not a vanity metric.

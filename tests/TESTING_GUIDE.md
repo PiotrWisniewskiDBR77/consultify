@@ -3,7 +3,7 @@
 
 ## Overview
 
-This guide provides comprehensive instructions for writing, running, and maintaining tests for the Consultify backend system. The testing strategy follows a 5-level approach to ensure 95%+ coverage across all layers.
+This guide provides comprehensive instructions for writing, running, and maintaining tests for the Consultinity backend system. The testing strategy follows a 5-level approach to ensure 95%+ coverage across all layers.
 
 ## Testing Strategy - 5 Levels
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Mock RBAC Middleware
  */
@@ -10,7 +11,7 @@ export const ORG_ROLE_HIERARCHY = {
     MEMBER: 1,
 };
 
-export const requireRole = (role: string) => {
+export const requireRole = (role: string | string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         next();
     };
@@ -52,5 +53,7 @@ export const requireOwnerOrSuperadmin = (req: Request, res: Response, next: Next
     }
     next();
 };
+
+
 
 

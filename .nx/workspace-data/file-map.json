@@ -2,25 +2,25 @@
   "version": "6.0",
   "nxVersion": "22.3.3",
   "pathMappings": {
-    "@consultify/shared": [
+    "@consultinity/shared": [
       "packages/shared/src/index.ts"
     ],
-    "@consultify/shared/*": [
+    "@consultinity/shared/*": [
       "packages/shared/src/*"
     ],
-    "@consultify/types": [
+    "@consultinity/types": [
       "packages/shared/src/types/index.ts"
     ],
-    "@consultify/types/*": [
+    "@consultinity/types/*": [
       "packages/shared/src/types/*"
     ],
-    "@consultify/utils": [
+    "@consultinity/utils": [
       "packages/shared/src/utils/index.ts"
     ],
-    "@consultify/utils/*": [
+    "@consultinity/utils/*": [
       "packages/shared/src/utils/*"
     ],
-    "@consultify/constants": [
+    "@consultinity/constants": [
       "packages/shared/src/constants/index.ts"
     ]
   },
@@ -9660,7 +9660,7 @@
         "hash": "16156404647541788043"
       },
       {
-        "file": "consultinity/60_enablement/videos/01-consultify-welcome.md",
+        "file": "consultinity/60_enablement/videos/01-consultinity-welcome.md",
         "hash": "13320644758629470662"
       },
       {
@@ -10992,7 +10992,7 @@
         "hash": "7419769507687126025"
       },
       {
-        "file": "docs/videos/01-consultify-welcome.md",
+        "file": "docs/videos/01-consultinity-welcome.md",
         "hash": "13588094475636717644"
       },
       {
@@ -30593,9 +30593,9 @@
       }
     ],
     "projectFileMap": {
-      "@consultify/app-frontend": [
+      "@consultinity/app-frontend": [
         {
-          "file": "apps/consultify/frontend/package.json",
+          "file": "apps/consultinity/frontend/package.json",
           "hash": "10785713022357235010",
           "deps": [
             "npm:typescript",
@@ -30603,17 +30603,17 @@
             "npm:@types/react-dom",
             "npm:@vitejs/plugin-react",
             "npm:vite",
-            "@consultify/shared",
+            "@consultinity/shared",
             "npm:react",
             "npm:react-dom"
           ]
         },
         {
-          "file": "apps/consultify/frontend/src/index.tsx",
+          "file": "apps/consultinity/frontend/src/index.tsx",
           "hash": "12707450863866331125"
         }
       ],
-      "@consultify/shared": [
+      "@consultinity/shared": [
         {
           "file": "packages/shared/package.json",
           "hash": "5458800569472245453",
@@ -30742,7 +30742,7 @@
           "hash": "15146804485701529856"
         }
       ],
-      "@consultify/new-app-frontend": [
+      "@consultinity/new-app-frontend": [
         {
           "file": "apps/new-app/frontend/package.json",
           "hash": "13807902631506265983",
@@ -30752,7 +30752,7 @@
             "npm:@types/react-dom",
             "npm:@vitejs/plugin-react",
             "npm:vite",
-            "@consultify/shared",
+            "@consultinity/shared",
             "npm:react",
             "npm:react-dom"
           ]
@@ -30772,33 +30772,33 @@
           "hash": "8644646037080722536"
         }
       ],
-      "consultify": [
+      "consultinity": [
         {
-          "file": "apps/consultify/README.md",
+          "file": "apps/consultinity/README.md",
           "hash": "7242560591963188853"
         },
         {
-          "file": "apps/consultify/project.json",
+          "file": "apps/consultinity/project.json",
           "hash": "14559927233347815876"
         }
       ],
-      "@consultify/app-backend": [
+      "@consultinity/app-backend": [
         {
-          "file": "apps/consultify/backend/package.json",
+          "file": "apps/consultinity/backend/package.json",
           "hash": "12125268079342146247",
           "deps": [
             "npm:typescript",
             "npm:@types/node",
             "npm:tsx",
-            "@consultify/shared"
+            "@consultinity/shared"
           ]
         },
         {
-          "file": "apps/consultify/backend/src/index.ts",
+          "file": "apps/consultinity/backend/src/index.ts",
           "hash": "17618616071008529119"
         }
       ],
-      "@consultify/new-app-backend": [
+      "@consultinity/new-app-backend": [
         {
           "file": "apps/new-app/backend/package.json",
           "hash": "5674457762874095468",
@@ -30806,7 +30806,7 @@
             "npm:typescript",
             "npm:@types/node",
             "npm:tsx",
-            "@consultify/shared"
+            "@consultinity/shared"
           ]
         },
         {

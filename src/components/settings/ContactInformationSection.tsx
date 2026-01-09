@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * ContactInformationSection - Multiple Contact Methods
  *

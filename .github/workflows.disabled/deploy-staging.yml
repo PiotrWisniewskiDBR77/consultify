@@ -90,7 +90,7 @@ jobs:
             - name: Deploy to Railway (Staging)
               uses: bervProject/railway-deploy@main
               with:
-                  service: consultify-staging
+                  service: consultinity-staging
               env:
                   # Note: Secret access is valid - IDE warning is false positive
                   RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
@@ -108,7 +108,7 @@ jobs:
               if: needs.deploy.result == 'success'
               run: |
                   echo "✅ Staging deployment successful!"
-                  echo "URL: https://staging.consultify.app"
+                  echo "URL: https://staging.consultinity.app"
                   # Add Slack/Discord webhook notification here if needed
 
             - name: Send notification on failure
@@ -129,7 +129,7 @@ jobs:
 
             - name: Health check
               run: |
-                  response=$(curl -s -o /dev/null -w "%{http_code}" https://staging.consultify.app/api/health)
+                  response=$(curl -s -o /dev/null -w "%{http_code}" https://staging.consultinity.app/api/health)
                   if [ "$response" != "200" ]; then
                     echo "Health check failed with status: $response"
                     exit 1
@@ -138,4 +138,4 @@ jobs:
 
             - name: Basic API check
               run: |
-                  curl -sf https://staging.consultify.app/api/health | jq .
+                  curl -sf https://staging.consultinity.app/api/health | jq .

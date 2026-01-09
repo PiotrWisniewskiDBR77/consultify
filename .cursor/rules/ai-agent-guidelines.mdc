@@ -4,7 +4,7 @@ globs: **/*.{ts,tsx}
 alwaysApply: true
 ---
 
-# AI Agent Guidelines for Consultify
+# AI Agent Guidelines for Consultinity
 
 ## 🚫 FORBIDDEN ACTIONS
 

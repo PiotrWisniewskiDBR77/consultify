@@ -110,7 +110,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
                 {
                     id: '1',
                     key: 'app_name',
-                    value: 'Consultify',
+                    value: 'Consultinity',
                     type: 'string',
                     category: 'general',
                     description: 'Application name displayed in the UI',

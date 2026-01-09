@@ -309,7 +309,7 @@ export class AlertingService {
                     color,
                     timestamp: alert.timestamp,
                     footer: {
-                        text: `Consultify AI | ${alert.environment}`,
+                        text: `Consultinity AI | ${alert.environment}`,
                     },
                 },
             ],

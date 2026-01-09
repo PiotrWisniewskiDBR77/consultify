@@ -1,11 +1,11 @@
 {
   "nodes": {
-    "@consultify/app-frontend": {
-      "name": "@consultify/app-frontend",
+    "@consultinity/app-frontend": {
+      "name": "@consultinity/app-frontend",
       "type": "app",
       "data": {
-        "root": "apps/consultify/frontend",
-        "name": "@consultify/app-frontend",
+        "root": "apps/consultinity/frontend",
+        "name": "@consultinity/app-frontend",
         "projectType": "application",
         "tags": [
           "npm:private"
@@ -20,9 +20,9 @@
               "lint"
             ]
           },
-          "description": "Consultify PMO Application - React Frontend",
+          "description": "Consultinity PMO Application - React Frontend",
           "js": {
-            "packageName": "@consultify/app-frontend",
+            "packageName": "@consultinity/app-frontend",
             "packageVersion": "0.0.1",
             "isInPackageManagerWorkspaces": true
           }
@@ -109,12 +109,12 @@
         "implicitDependencies": []
       }
     },
-    "@consultify/app-backend": {
-      "name": "@consultify/app-backend",
+    "@consultinity/app-backend": {
+      "name": "@consultinity/app-backend",
       "type": "app",
       "data": {
-        "root": "apps/consultify/backend",
-        "name": "@consultify/app-backend",
+        "root": "apps/consultinity/backend",
+        "name": "@consultinity/app-backend",
         "projectType": "application",
         "tags": [
           "npm:private"
@@ -129,9 +129,9 @@
               "lint"
             ]
           },
-          "description": "Consultify PMO Application - Backend API Server",
+          "description": "Consultinity PMO Application - Backend API Server",
           "js": {
-            "packageName": "@consultify/app-backend",
+            "packageName": "@consultinity/app-backend",
             "packageVersion": "0.0.1",
             "packageMain": "dist/index.js",
             "isInPackageManagerWorkspaces": true
@@ -219,12 +219,12 @@
         "implicitDependencies": []
       }
     },
-    "@consultify/new-app-frontend": {
-      "name": "@consultify/new-app-frontend",
+    "@consultinity/new-app-frontend": {
+      "name": "@consultinity/new-app-frontend",
       "type": "app",
       "data": {
         "root": "apps/new-app/frontend",
-        "name": "@consultify/new-app-frontend",
+        "name": "@consultinity/new-app-frontend",
         "projectType": "application",
         "tags": [
           "npm:private"
@@ -241,7 +241,7 @@
           },
           "description": "New Application Fork - React Frontend (Skeleton)",
           "js": {
-            "packageName": "@consultify/new-app-frontend",
+            "packageName": "@consultinity/new-app-frontend",
             "packageVersion": "0.0.1",
             "isInPackageManagerWorkspaces": true
           }
@@ -328,12 +328,12 @@
         "implicitDependencies": []
       }
     },
-    "@consultify/new-app-backend": {
-      "name": "@consultify/new-app-backend",
+    "@consultinity/new-app-backend": {
+      "name": "@consultinity/new-app-backend",
       "type": "app",
       "data": {
         "root": "apps/new-app/backend",
-        "name": "@consultify/new-app-backend",
+        "name": "@consultinity/new-app-backend",
         "projectType": "application",
         "tags": [
           "npm:private"
@@ -350,7 +350,7 @@
           },
           "description": "New Application Fork - Backend API Server (Skeleton)",
           "js": {
-            "packageName": "@consultify/new-app-backend",
+            "packageName": "@consultinity/new-app-backend",
             "packageVersion": "0.0.1",
             "packageMain": "dist/index.js",
             "isInPackageManagerWorkspaces": true
@@ -438,12 +438,12 @@
         "implicitDependencies": []
       }
     },
-    "@consultify/shared": {
-      "name": "@consultify/shared",
+    "@consultinity/shared": {
+      "name": "@consultinity/shared",
       "type": "lib",
       "data": {
         "root": "packages/shared",
-        "name": "@consultify/shared",
+        "name": "@consultinity/shared",
         "projectType": "library",
         "tags": [
           "npm:public",
@@ -453,7 +453,7 @@
         "metadata": {
           "targetGroups": {},
           "js": {
-            "packageName": "@consultify/shared",
+            "packageName": "@consultinity/shared",
             "packageVersion": "0.0.1",
             "packageMain": "dist/index.js",
             "isInPackageManagerWorkspaces": true
@@ -510,17 +510,17 @@
         "implicitDependencies": []
       }
     },
-    "consultify": {
-      "name": "consultify",
+    "consultinity": {
+      "name": "consultinity",
       "type": "app",
       "data": {
-        "root": "apps/consultify",
-        "name": "consultify",
+        "root": "apps/consultinity",
+        "name": "consultinity",
         "$schema": "../../node_modules/nx/schemas/project-schema.json",
         "projectType": "application",
         "tags": [
           "scope:app",
-          "type:consultify"
+          "type:consultinity"
         ],
         "targets": {
           "build": {
@@ -530,8 +530,8 @@
             ],
             "options": {
               "commands": [
-                "npm run build -w apps/consultify/backend",
-                "npm run build -w apps/consultify/frontend"
+                "npm run build -w apps/consultinity/backend",
+                "npm run build -w apps/consultinity/frontend"
               ],
               "parallel": true
             },
@@ -550,8 +550,8 @@
             ],
             "options": {
               "commands": [
-                "npm run dev -w apps/consultify/backend",
-                "npm run dev -w apps/consultify/frontend"
+                "npm run dev -w apps/consultinity/backend",
+                "npm run dev -w apps/consultinity/frontend"
               ],
               "parallel": true
             },
@@ -562,8 +562,8 @@
             "executor": "nx:run-commands",
             "options": {
               "commands": [
-                "npm run test -w apps/consultify/backend",
-                "npm run test -w apps/consultify/frontend"
+                "npm run test -w apps/consultinity/backend",
+                "npm run test -w apps/consultinity/frontend"
               ],
               "parallel": true
             },
@@ -14935,182 +14935,182 @@
     }
   },
   "dependencies": {
-    "@consultify/app-frontend": [
+    "@consultinity/app-frontend": [
       {
-        "source": "@consultify/app-frontend",
+        "source": "@consultinity/app-frontend",
         "target": "npm:typescript",
         "type": "static"
       },
       {
-        "source": "@consultify/app-frontend",
+        "source": "@consultinity/app-frontend",
         "target": "npm:@types/react",
         "type": "static"
       },
       {
-        "source": "@consultify/app-frontend",
+        "source": "@consultinity/app-frontend",
         "target": "npm:@types/react-dom",
         "type": "static"
       },
       {
-        "source": "@consultify/app-frontend",
+        "source": "@consultinity/app-frontend",
         "target": "npm:@vitejs/plugin-react",
         "type": "static"
       },
       {
-        "source": "@consultify/app-frontend",
+        "source": "@consultinity/app-frontend",
         "target": "npm:vite",
         "type": "static"
       },
       {
-        "source": "@consultify/app-frontend",
-        "target": "@consultify/shared",
+        "source": "@consultinity/app-frontend",
+        "target": "@consultinity/shared",
         "type": "static"
       },
       {
-        "source": "@consultify/app-frontend",
+        "source": "@consultinity/app-frontend",
         "target": "npm:react",
         "type": "static"
       },
       {
-        "source": "@consultify/app-frontend",
+        "source": "@consultinity/app-frontend",
         "target": "npm:react-dom",
         "type": "static"
       }
     ],
-    "@consultify/app-backend": [
+    "@consultinity/app-backend": [
       {
-        "source": "@consultify/app-backend",
+        "source": "@consultinity/app-backend",
         "target": "npm:typescript",
         "type": "static"
       },
       {
-        "source": "@consultify/app-backend",
+        "source": "@consultinity/app-backend",
         "target": "npm:@types/node",
         "type": "static"
       },
       {
-        "source": "@consultify/app-backend",
+        "source": "@consultinity/app-backend",
         "target": "npm:tsx",
         "type": "static"
       },
       {
-        "source": "@consultify/app-backend",
-        "target": "@consultify/shared",
+        "source": "@consultinity/app-backend",
+        "target": "@consultinity/shared",
         "type": "static"
       }
     ],
-    "@consultify/new-app-frontend": [
+    "@consultinity/new-app-frontend": [
       {
-        "source": "@consultify/new-app-frontend",
+        "source": "@consultinity/new-app-frontend",
         "target": "npm:typescript",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-frontend",
+        "source": "@consultinity/new-app-frontend",
         "target": "npm:@types/react",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-frontend",
+        "source": "@consultinity/new-app-frontend",
         "target": "npm:@types/react-dom",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-frontend",
+        "source": "@consultinity/new-app-frontend",
         "target": "npm:@vitejs/plugin-react",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-frontend",
+        "source": "@consultinity/new-app-frontend",
         "target": "npm:vite",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-frontend",
-        "target": "@consultify/shared",
+        "source": "@consultinity/new-app-frontend",
+        "target": "@consultinity/shared",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-frontend",
+        "source": "@consultinity/new-app-frontend",
         "target": "npm:react",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-frontend",
+        "source": "@consultinity/new-app-frontend",
         "target": "npm:react-dom",
         "type": "static"
       }
     ],
-    "@consultify/new-app-backend": [
+    "@consultinity/new-app-backend": [
       {
-        "source": "@consultify/new-app-backend",
+        "source": "@consultinity/new-app-backend",
         "target": "npm:typescript",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-backend",
+        "source": "@consultinity/new-app-backend",
         "target": "npm:@types/node",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-backend",
+        "source": "@consultinity/new-app-backend",
         "target": "npm:tsx",
         "type": "static"
       },
       {
-        "source": "@consultify/new-app-backend",
-        "target": "@consultify/shared",
+        "source": "@consultinity/new-app-backend",
+        "target": "@consultinity/shared",
         "type": "static"
       }
     ],
-    "@consultify/shared": [
+    "@consultinity/shared": [
       {
-        "source": "@consultify/shared",
+        "source": "@consultinity/shared",
         "target": "npm:react",
         "type": "static"
       },
       {
-        "source": "@consultify/shared",
+        "source": "@consultinity/shared",
         "target": "npm:typescript",
         "type": "static"
       },
       {
-        "source": "@consultify/shared",
+        "source": "@consultinity/shared",
         "target": "npm:@types/node",
         "type": "static"
       },
       {
-        "source": "@consultify/shared",
+        "source": "@consultinity/shared",
         "target": "npm:@types/react",
         "type": "static"
       },
       {
-        "source": "@consultify/shared",
+        "source": "@consultinity/shared",
         "target": "npm:@types/html2canvas@1.0.0",
         "type": "static"
       },
       {
-        "source": "@consultify/shared",
+        "source": "@consultinity/shared",
         "target": "npm:@types/jspdf@2.0.0",
         "type": "static"
       },
       {
-        "source": "@consultify/shared",
+        "source": "@consultinity/shared",
         "target": "npm:html2canvas",
         "type": "static"
       },
       {
-        "source": "@consultify/shared",
+        "source": "@consultinity/shared",
         "target": "npm:jspdf",
         "type": "static"
       },
       {
-        "source": "@consultify/shared",
+        "source": "@consultinity/shared",
         "target": "npm:lucide-react",
         "type": "static"
       }
     ],
-    "consultify": [],
+    "consultinity": [],
     "new-app": [],
     "npm:@ai-sdk/anthropic": [
       {

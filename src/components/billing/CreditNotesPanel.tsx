@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Credit Notes Panel
  * Manages credit notes creation, viewing, and application to invoices

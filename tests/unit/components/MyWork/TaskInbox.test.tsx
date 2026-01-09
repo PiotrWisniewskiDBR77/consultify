@@ -22,12 +22,7 @@ vi.mock('@/store/usePMOStore', () => ({
     PMOTaskLabel: {}
 }));
 
-vi.mock('react-hot-toast', () => ({
-    default: {
-        success: vi.fn(),
-        error: vi.fn()
-    }
-}));
+// Note: react-hot-toast is mocked globally in tests/setup.ts
 
 // Mock framer-motion to avoid animation issues
 vi.mock('framer-motion', () => ({

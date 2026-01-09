@@ -366,8 +366,8 @@ export const RELEASE_NOTES: ReleaseNote[] = [
         date: '2024-10-01',
         type: 'major',
         title: {
-            en: 'Consultify 2.0',
-            pl: 'Consultify 2.0',
+            en: 'Consultinity 2.0',
+            pl: 'Consultinity 2.0',
         },
         summary: {
             en: 'Complete platform redesign with new features and improved performance.',

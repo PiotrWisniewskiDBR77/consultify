@@ -1,7 +1,7 @@
 /**
  * Studio Templates Seed
  * 
- * Pre-built templates for Consultify Studio.
+ * Pre-built templates for Consultinity Studio.
  * Run with: node server/seed/studioTemplates.js
  */
 
@@ -336,6 +336,8 @@ seedTemplates, TEMPLATES
 };
 
 export default { seedTemplates, TEMPLATES };
+
+
 
 
 

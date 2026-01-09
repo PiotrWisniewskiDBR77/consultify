@@ -1,4 +1,4 @@
-# Architecture Map - Consultify
+# Architecture Map - Consultinity
 **Date**: 2026-01-03  
 **Phase**: 0 - Audit and Assessment  
 **Purpose**: System architecture documentation for fork planning
@@ -347,9 +347,9 @@ Client → API Gateway → Auth Middleware → JWT Validation
   /db-adapters    - Database layer
 ```
 
-### Consultify-Specific
+### Consultinity-Specific
 ```
-/consultify
+/consultinity
   /assessment     - DRD framework
   /consulting     - Consulting features
   /reports        - BCG-style reports

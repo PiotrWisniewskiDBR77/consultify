@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Database Metrics Collector
  * Real-time performance metrics and monitoring

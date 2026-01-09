@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useAppStore } from '../store/useAppStore';

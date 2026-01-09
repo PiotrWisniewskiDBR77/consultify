@@ -1,4 +1,4 @@
-# 🔄 Przewodnik Refaktoringu - Consultify
+# 🔄 Przewodnik Refaktoringu - Consultinity
 
 **Data:** 12 grudnia 2025  
 **Wykonano przez:** Cursor AI Assistant dla ANTYGRACITY
@@ -353,7 +353,7 @@ export const MyModal = ({ data, onSave, onClose, isOpen }) => {
 ## 📁 Struktura Plików Po Refaktoringu
 
 ```
-consultify/
+consultinity/
 ├── Cursor/                              # 🆕 Folder Cursor AI
 │   ├── components/
 │   │   └── ui/                          # Wspólne komponenty UI
@@ -386,5 +386,5 @@ consultify/
 
 ---
 
-*Dokumentacja wygenerowana automatycznie przez Cursor AI dla projektu ANTYGRACITY/Consultify*
+*Dokumentacja wygenerowana automatycznie przez Cursor AI dla projektu ANTYGRACITY/Consultinity*
 

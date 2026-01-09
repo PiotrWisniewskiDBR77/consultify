@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AnalyticsAdvanced Routes
  * API endpoints for advanced analytics

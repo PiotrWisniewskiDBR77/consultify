@@ -1,6 +1,6 @@
 import { Express, Router } from 'express';
 
-import { demoGuard } from './middleware/demoGuard.middleware.js';
+import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import _actionDecisionRoutes from './routes/actionDecisions.routes.js';
@@ -226,8 +226,12 @@ export class ApiGateway {
             console.log('[ApiGateway] Mounting /api/admin-data');
             app.use('/api/admin-data', adminDataRoutes);
 
-            // Demo Guard middleware
-            app.use(demoGuard);
+            // Demo Mode middleware - switches context and protects against writes
+            app.use(demoContextMiddleware);
+            app.use(demoWriteProtection({
+                // Allow demo mode toggle and status check
+                allowedRoutes: ['/api/demo/', '/api/auth/'],
+            }));
 
             console.log('[ApiGateway] Mounting /api/users');
             app.use('/api/users', userRoutes);

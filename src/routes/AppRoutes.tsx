@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
@@ -57,7 +57,125 @@ const SettingsView = React.lazy(() => import('@/views/SettingsView').then((m) =>
 // Admin
 const AdminView = React.lazy(() => import('@/views/admin/AdminView').then((m) => ({ default: m.AdminView })));
 
+// SuperAdmin
+const SuperAdminView = React.lazy(() =>
+    import('@/views/superadmin/SuperAdminView').then((m) => ({ default: m.SuperAdminView }))
+);
+
+// AI Chat (Full Screen Chat View)
+const AIChatWelcomeView = React.lazy(() => import('@/views/AIChatWelcomeView'));
+
+// Dashboard
+const UserDashboardView = React.lazy(() =>
+    import('@/views/UserDashboardView').then((m) => ({ default: m.UserDashboardView }))
+);
+
+// Project Intelligence
+const ProjectIntelligenceView = React.lazy(() =>
+    import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
+);
+
+// AI Actions
+const ActionProposalView = React.lazy(() =>
+    import('@/views/ActionProposalView').then((m) => ({ default: m.ActionProposalView }))
+);
+
+// Partner Portal - New DBR77 Consultinity Partner Portal
+const PartnerPortalViewNew = React.lazy(() =>
+    import('@/views/partner/PartnerPortalView').then((m) => ({ default: m.PartnerPortalViewNew }))
+);
+
+// Partner Portal - Legacy (to be removed)
+const PartnerPortalView = React.lazy(() =>
+    import('@/views/PartnerPortalView').then((m) => ({ default: m.PartnerPortalView }))
+);
+const PartnerPricingView = React.lazy(() =>
+    import('@/views/partner/PartnerPricingView').then((m) => ({ default: m.PartnerPricingView }))
+);
+const PartnerDashboardView = React.lazy(() =>
+    import('@/views/partner/PartnerDashboardView').then((m) => ({ default: m.PartnerDashboardView }))
+);
+const ClientAccessView = React.lazy(() =>
+    import('@/views/partner/ClientAccessView').then((m) => ({ default: m.ClientAccessView }))
+);
+const CommissionView = React.lazy(() =>
+    import('@/views/partner/CommissionView').then((m) => ({ default: m.CommissionView }))
+);
+const DirectoryView = React.lazy(() =>
+    import('@/views/partner/DirectoryView').then((m) => ({ default: m.DirectoryView }))
+);
+const ResourcesView = React.lazy(() =>
+    import('@/views/partner/ResourcesView').then((m) => ({ default: m.ResourcesView }))
+);
+const ProviderHomeView = React.lazy(() =>
+    import('@/views/partner/ProviderHomeView').then((m) => ({ default: m.ProviderHomeView }))
+);
+
+// Consultant
+const ConsultantPanelView = React.lazy(() =>
+    import('@/views/consultant/ConsultantPanelView').then((m) => ({ default: m.ConsultantPanelView }))
+);
+const ConsultantInviteView = React.lazy(() =>
+    import('@/views/consultant/ConsultantInviteView').then((m) => ({ default: m.ConsultantInviteView }))
+);
+
+// Wizards
+const OrgSetupWizard = React.lazy(() =>
+    import('@/views/OrgSetupWizard').then((m) => ({ default: m.OrgSetupWizard }))
+);
+const OnboardingWizard = React.lazy(() =>
+    import('@/views/OnboardingWizard').then((m) => ({ default: m.OnboardingWizard }))
+);
+const TrialEntryView = React.lazy(() =>
+    import('@/views/TrialEntryView').then((m) => ({ default: m.TrialEntryView }))
+);
+
+// Affiliate
+const AffiliateDashboardView = React.lazy(() =>
+    import('@/views/AffiliateDashboardView').then((m) => ({ default: m.AffiliateDashboardView }))
+);
+
+// Legal Pages
+const AboutView = React.lazy(() =>
+    import('@/views/legal/AboutView').then((m) => ({ default: m.AboutView }))
+);
+const ContactView = React.lazy(() =>
+    import('@/views/legal/ContactView').then((m) => ({ default: m.ContactView }))
+);
+const TermsOfServiceView = React.lazy(() =>
+    import('@/views/legal/TermsOfServiceView').then((m) => ({ default: m.TermsOfServiceView }))
+);
+const PrivacyPolicyView = React.lazy(() =>
+    import('@/views/legal/PrivacyPolicyView').then((m) => ({ default: m.PrivacyPolicyView }))
+);
+const CookiePolicyView = React.lazy(() =>
+    import('@/views/legal/CookiePolicyView').then((m) => ({ default: m.CookiePolicyView }))
+);
+const SecurityView = React.lazy(() =>
+    import('@/views/legal/SecurityView').then((m) => ({ default: m.SecurityView }))
+);
+
+// Status & Changelog
+const StatusPageView = React.lazy(() =>
+    import('@/views/StatusPageView').then((m) => ({ default: m.StatusPageView }))
+);
+const ChangelogView = React.lazy(() =>
+    import('@/views/ChangelogView').then((m) => ({ default: m.ChangelogView }))
+);
+
+// Knowledge Base & Pricing
+const KnowledgeBaseView = React.lazy(() =>
+    import('@/views/KnowledgeBaseView').then((m) => ({ default: m.KnowledgeBaseView }))
+);
+const AppPricingView = React.lazy(() =>
+    import('@/views/AppPricingView').then((m) => ({ default: m.AppPricingView }))
+);
+const ExecutiveView = React.lazy(() =>
+    import('@/views/ExecutiveView').then((m) => ({ default: m.ExecutiveView }))
+);
+
 export const AppRoutes: React.FC = () => {
+
     const navigate = useNavigate();
     const {
         currentView,
@@ -74,11 +192,18 @@ export const AppRoutes: React.FC = () => {
         setFullSessionData,
         theme,
         toggleTheme,
+        setNavigateFn,
+        isAuthInitializing,
     } = useAppStore();
 
     const breadcrumbs = useBreadcrumbs();
 
     const isSuperAdmin = currentUser?.role === 'SUPERADMIN';
+
+    // Set navigate function in store so setCurrentView can use React Router
+    React.useEffect(() => {
+        setNavigateFn(navigate);
+    }, [navigate, setNavigateFn]);
 
     // --- HANDLERS (Moved from App.tsx) ---
 
@@ -103,16 +228,17 @@ export const AppRoutes: React.FC = () => {
     };
 
     const handleLoginRequest = () => {
+        console.log('[AppRoutes] handleLoginRequest called!');
         setSessionMode(SessionMode.FREE);
         setAuthInitialStep(AuthStep.LOGIN);
-        setCurrentView(AppView.AUTH);
+        console.log('[AppRoutes] Navigating to /login...');
         navigate('/login');
+        console.log('[AppRoutes] navigate called');
     };
 
     const handleRegisterRequest = () => {
         setSessionMode(SessionMode.FREE);
         setAuthInitialStep(AuthStep.REGISTER);
-        setCurrentView(AppView.AUTH);
         navigate('/register');
     };
 
@@ -152,70 +278,233 @@ export const AppRoutes: React.FC = () => {
             });
         }
 
-        setCurrentView(AppView.AI_CHAT);
-        navigate('/chat');
+        // Navigate based on user role - SUPERADMIN goes to SuperAdmin panel
+        if (validUser.role === 'SUPERADMIN') {
+            console.log('[AppRoutes] SUPERADMIN user detected, redirecting to /superadmin');
+            navigate('/superadmin');
+        } else {
+            // Regular users go to chat
+            navigate('/chat');
+        }
     };
 
     // --- RENDER ---
-
-
-    if (currentView === AppView.WELCOME) {
-        return (
-            <AuthLayout>
-                <ProductEntryPage
-                    onStartSession={handleStartSession}
-                    onLoginClick={handleLoginRequest}
-                    onRegisterClick={handleRegisterRequest}
-                />
-            </AuthLayout>
-        );
-    }
-
-    if (currentView === AppView.AUTH) {
-        return (
-            <AuthLayout>
-                <AuthView
-                    initialStep={authInitialStep}
-                    targetMode={sessionMode || SessionMode.FREE}
-                    onAuthSuccess={handleAuthSuccess}
-                    onBack={() => setCurrentView(AppView.WELCOME)}
-                />
-            </AuthLayout>
-        );
-    }
+    // All routing now goes through React Router - removed blocking if/else conditions
 
     return (
-        <MainLayout breadcrumbs={breadcrumbs || ['Dashboard', 'Home']}>
-            <Suspense
-                fallback={
-                    <div className="flex items-center justify-center h-full">
-                        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-                    </div>
-                }
-            >
-                <Routes>
-                    {/* New React Router routes - gradually add more here */}
-                    <Route
-                        path={ROUTES.STUDIO}
-                        element={
+        <Suspense
+            fallback={
+                <div className="flex items-center justify-center h-screen">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                </div>
+            }
+        >
+            <Routes>
+                {/* ============================================ */}
+                {/* PUBLIC ROUTES - No MainLayout wrapper        */}
+                {/* ============================================ */}
+
+                {/* Welcome / Landing Page */}
+                <Route
+                    path={ROUTES.WELCOME}
+                    element={
+                        currentUser?.isAuthenticated ? (
+                            <Navigate to={ROUTES.AI_CHAT} replace />
+                        ) : (
+                            <AuthLayout>
+                                <ProductEntryPage
+                                    onStartSession={handleStartSession}
+                                    onLoginClick={handleLoginRequest}
+                                    onRegisterClick={handleRegisterRequest}
+                                />
+                            </AuthLayout>
+                        )
+                    }
+                />
+
+                {/* Login - stable key prevents remount during auth initialization */}
+                <Route
+                    path="/login"
+                    element={
+                        !isAuthInitializing && currentUser?.isAuthenticated ? (
+                            <Navigate to={ROUTES.AI_CHAT} replace />
+                        ) : (
+                            <AuthLayout>
+                                <AuthView
+                                    key="login-form-stable"
+                                    initialStep={AuthStep.LOGIN}
+                                    targetMode={sessionMode || SessionMode.FREE}
+                                    onAuthSuccess={handleAuthSuccess}
+                                    onBack={() => navigate('/')}
+                                />
+                            </AuthLayout>
+                        )
+                    }
+                />
+
+                {/* Register - stable key prevents remount during auth initialization */}
+                <Route
+                    path="/register"
+                    element={
+                        !isAuthInitializing && currentUser?.isAuthenticated ? (
+                            <Navigate to={ROUTES.AI_CHAT} replace />
+                        ) : (
+                            <AuthLayout>
+                                <AuthView
+                                    key="register-form-stable"
+                                    initialStep={AuthStep.REGISTER}
+                                    targetMode={sessionMode || SessionMode.FREE}
+                                    onAuthSuccess={handleAuthSuccess}
+                                    onBack={() => navigate('/')}
+                                />
+                            </AuthLayout>
+                        )
+                    }
+                />
+
+                {/* Demo - stable key prevents remount during auth initialization */}
+                <Route
+                    path="/demo"
+                    element={
+                        !isAuthInitializing && currentUser?.isAuthenticated ? (
+                            <Navigate to={ROUTES.AI_CHAT} replace />
+                        ) : (
+                            <AuthLayout>
+                                <AuthView
+                                    key="demo-form-stable"
+                                    initialStep={AuthStep.REGISTER}
+                                    targetMode={SessionMode.DEMO}
+                                    onAuthSuccess={handleAuthSuccess}
+                                    onBack={() => navigate('/')}
+                                />
+                            </AuthLayout>
+                        )
+                    }
+                />
+
+                {/* Trial Start - stable key prevents remount during auth initialization */}
+                <Route
+                    path="/trial/start"
+                    element={
+                        !isAuthInitializing && currentUser?.isAuthenticated ? (
+                            <Navigate to={ROUTES.AI_CHAT} replace />
+                        ) : (
+                            <AuthLayout>
+                                <AuthView
+                                    key="trial-form-stable"
+                                    initialStep={AuthStep.CODE_ENTRY}
+                                    targetMode={SessionMode.FULL}
+                                    onAuthSuccess={handleAuthSuccess}
+                                    onBack={() => navigate('/')}
+                                />
+                            </AuthLayout>
+                        )
+                    }
+                />
+
+                {/* Legacy /auth route */}
+                <Route
+                    path={ROUTES.AUTH}
+                    element={
+                        currentUser?.isAuthenticated ? (
+                            <Navigate to={ROUTES.AI_CHAT} replace />
+                        ) : (
+                            <AuthLayout>
+                                <AuthView
+                                    initialStep={authInitialStep}
+                                    targetMode={sessionMode || SessionMode.FREE}
+                                    onAuthSuccess={handleAuthSuccess}
+                                    onBack={() => navigate('/')}
+                                />
+                            </AuthLayout>
+                        )
+                    }
+                />
+
+                {/* ============================================ */}
+                {/* PROTECTED ROUTES - With MainLayout wrapper   */}
+                {/* ============================================ */}
+
+                {/* Studio */}
+                <Route
+                    path={ROUTES.STUDIO}
+                    element={
+                        <MainLayout breadcrumbs={breadcrumbs || ['Studio']}>
                             <AnimationWrapper variant="slideUp">
                                 <StudioView />
                             </AnimationWrapper>
-                        }
-                    />
-                    <Route
-                        path={ROUTES.MY_WORK}
-                        element={
+                        </MainLayout>
+                    }
+                />
+
+                {/* My Work */}
+                <Route
+                    path={ROUTES.MY_WORK}
+                    element={
+                        <MainLayout breadcrumbs={breadcrumbs || ['My Work']}>
                             <AnimationWrapper variant="slideUp">
                                 <MyWorkView currentUser={currentUser as any} onNavigate={(view) => setCurrentView(view as AppView)} />
                             </AnimationWrapper>
-                        }
-                    />
+                        </MainLayout>
+                    }
+                />
 
-                    {/* Context Builder with nested routes - Error Boundary */}
-                    <Route
-                        path={`${ROUTES.CONTEXT_BUILDER.ROOT}/*`}
-                        element={
+                {/* AI Chat - Full Screen Chat View */}
+                <Route
+                    path={ROUTES.AI_CHAT}
+                    element={
+                        <MainLayout breadcrumbs={breadcrumbs || ['AI Chat']}>
+                            <AnimationWrapper variant="fade">
+                                <AIChatWelcomeView />
+                            </AnimationWrapper>
+                        </MainLayout>
+                    }
+                />
+
+                {/* Dashboard - User Dashboard View */}
+                <Route
+                    path={ROUTES.DASHBOARD}
+                    element={
+                        <MainLayout breadcrumbs={breadcrumbs || ['Dashboard']}>
+                            <AnimationWrapper variant="fade">
+                                <UserDashboardView
+                                    currentUser={currentUser as any}
+                                    onNavigate={(view) => setCurrentView(view as AppView)}
+                                />
+                            </AnimationWrapper>
+                        </MainLayout>
+                    }
+                />
+
+                {/* Project Intelligence */}
+                <Route
+                    path={ROUTES.PROJECT_INTELLIGENCE}
+                    element={
+                        <MainLayout breadcrumbs={breadcrumbs || ['Project Intelligence']}>
+                            <AnimationWrapper variant="slideUp">
+                                <ProjectIntelligenceView />
+                            </AnimationWrapper>
+                        </MainLayout>
+                    }
+                />
+
+                {/* AI Actions */}
+                <Route
+                    path={ROUTES.AI_ACTIONS}
+                    element={
+                        <MainLayout breadcrumbs={breadcrumbs || ['AI Actions']}>
+                            <AnimationWrapper variant="slideUp">
+                                <ActionProposalView />
+                            </AnimationWrapper>
+                        </MainLayout>
+                    }
+                />
+
+                {/* Context Builder with nested routes */}
+                <Route
+                    path={`${ROUTES.CONTEXT_BUILDER.ROOT}/*`}
+                    element={
+                        <MainLayout breadcrumbs={breadcrumbs || ['Context Builder']}>
                             <RouteErrorBoundary>
                                 <AnimationWrapper variant="slideUp">
                                     <Routes>
@@ -228,13 +517,15 @@ export const AppRoutes: React.FC = () => {
                                     </Routes>
                                 </AnimationWrapper>
                             </RouteErrorBoundary>
-                        }
-                    />
+                        </MainLayout>
+                    }
+                />
 
-                    {/* Assessment with nested framework routes - Error Boundary */}
-                    <Route
-                        path={`${ROUTES.ASSESSMENT.ROOT}/*`}
-                        element={
+                {/* Assessment with nested framework routes */}
+                <Route
+                    path={`${ROUTES.ASSESSMENT.ROOT}/*`}
+                    element={
+                        <MainLayout breadcrumbs={breadcrumbs || ['Assessment']}>
                             <RouteErrorBoundary>
                                 <AnimationWrapper variant="fade">
                                     <Routes>
@@ -249,27 +540,29 @@ export const AppRoutes: React.FC = () => {
                                     </Routes>
                                 </AnimationWrapper>
                             </RouteErrorBoundary>
-                        }
-                    />
+                        </MainLayout>
+                    }
+                />
 
-                    {/* Transformation Modules */}
-                    <Route path={ROUTES.INITIATIVES} element={<AnimationWrapper variant="slideUp"><FullInitiativesView /></AnimationWrapper>} />
-                    <Route path={ROUTES.ROADMAP} element={<AnimationWrapper variant="slideUp"><FullRoadmapView /></AnimationWrapper>} />
-                    <Route path={ROUTES.PORTFOLIO} element={<AnimationWrapper variant="slideUp"><PortfolioView /></AnimationWrapper>} />
-                    <Route path={ROUTES.ROI} element={<AnimationWrapper variant="slideUp"><FullROIView /></AnimationWrapper>} />
-                    <Route path={ROUTES.ECONOMICS} element={<AnimationWrapper variant="slideUp"><EconomicsView /></AnimationWrapper>} />
-                    <Route path={ROUTES.EXECUTION} element={<AnimationWrapper variant="slideUp"><FullExecutionView /></AnimationWrapper>} />
-                    <Route path={ROUTES.IMPLEMENTATION} element={<AnimationWrapper variant="slideUp"><ImplementationView /></AnimationWrapper>} />
-                    <Route path={ROUTES.ROLLOUT} element={<AnimationWrapper variant="slideUp"><FullRolloutView /></AnimationWrapper>} />
-                    <Route path={ROUTES.REPORTS} element={<AnimationWrapper variant="slideUp"><FullReportsView /></AnimationWrapper>} />
-                    <Route path={ROUTES.KPI_OKR} element={<AnimationWrapper variant="slideUp"><KpiOkrView /></AnimationWrapper>} />
-                    <Route path={ROUTES.BENEFITS} element={<AnimationWrapper variant="slideUp"><BenefitsRealizationView /></AnimationWrapper>} />
+                {/* Transformation Modules - with MainLayout wrappers */}
+                <Route path={ROUTES.INITIATIVES} element={<MainLayout breadcrumbs={breadcrumbs || ['Initiatives']}><AnimationWrapper variant="slideUp"><FullInitiativesView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.ROADMAP} element={<MainLayout breadcrumbs={breadcrumbs || ['Roadmap']}><AnimationWrapper variant="slideUp"><FullRoadmapView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.PORTFOLIO} element={<MainLayout breadcrumbs={breadcrumbs || ['Portfolio']}><AnimationWrapper variant="slideUp"><PortfolioView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.ROI} element={<MainLayout breadcrumbs={breadcrumbs || ['ROI']}><AnimationWrapper variant="slideUp"><FullROIView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.ECONOMICS} element={<MainLayout breadcrumbs={breadcrumbs || ['Economics']}><AnimationWrapper variant="slideUp"><EconomicsView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.EXECUTION} element={<MainLayout breadcrumbs={breadcrumbs || ['Execution']}><AnimationWrapper variant="slideUp"><FullExecutionView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.IMPLEMENTATION} element={<MainLayout breadcrumbs={breadcrumbs || ['Implementation']}><AnimationWrapper variant="slideUp"><ImplementationView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.ROLLOUT} element={<MainLayout breadcrumbs={breadcrumbs || ['Rollout']}><AnimationWrapper variant="slideUp"><FullRolloutView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.REPORTS} element={<MainLayout breadcrumbs={breadcrumbs || ['Reports']}><AnimationWrapper variant="slideUp"><FullReportsView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.KPI_OKR} element={<MainLayout breadcrumbs={breadcrumbs || ['KPI & OKR']}><AnimationWrapper variant="slideUp"><KpiOkrView /></AnimationWrapper></MainLayout>} />
+                <Route path={ROUTES.BENEFITS} element={<MainLayout breadcrumbs={breadcrumbs || ['Benefits']}><AnimationWrapper variant="slideUp"><BenefitsRealizationView /></AnimationWrapper></MainLayout>} />
 
-                    {/* Settings with nested routes - Protected & Error Boundary */}
-                    <Route
-                        path={`${ROUTES.SETTINGS.ROOT}/*`}
-                        element={
-                            <ProtectedRoute requireAuth={true}>
+                {/* Settings with nested routes - Protected & Error Boundary */}
+                <Route
+                    path={`${ROUTES.SETTINGS.ROOT}/*`}
+                    element={
+                        <ProtectedRoute requireAuth={true}>
+                            <MainLayout breadcrumbs={breadcrumbs || ['Settings']}>
                                 <RouteErrorBoundary>
                                     <AnimationWrapper variant="fade">
                                         <SettingsView
@@ -280,15 +573,17 @@ export const AppRoutes: React.FC = () => {
                                         />
                                     </AnimationWrapper>
                                 </RouteErrorBoundary>
-                            </ProtectedRoute>
-                        }
-                    />
+                            </MainLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-                    {/* Admin with nested routes - Protected (ADMIN role) & Error Boundary */}
-                    <Route
-                        path={`${ROUTES.ADMIN.ROOT}/*`}
-                        element={
-                            <ProtectedRoute requiredRole="ADMIN">
+                {/* Admin with nested routes - Protected (ADMIN role) & Error Boundary */}
+                <Route
+                    path={`${ROUTES.ADMIN.ROOT}/*`}
+                    element={
+                        <ProtectedRoute requiredRole="ADMIN">
+                            <MainLayout breadcrumbs={breadcrumbs || ['Admin']}>
                                 <RouteErrorBoundary>
                                     <AnimationWrapper variant="fade">
                                         <AdminView
@@ -297,14 +592,144 @@ export const AppRoutes: React.FC = () => {
                                         />
                                     </AnimationWrapper>
                                 </RouteErrorBoundary>
-                            </ProtectedRoute>
-                        }
-                    />
+                            </MainLayout>
+                        </ProtectedRoute>
+                    }
+                />
 
-                    {/* 404 - Redirect to dashboard */}
-                    <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-                </Routes>
-            </Suspense>
-        </MainLayout>
+                {/* SuperAdmin with nested routes - Protected (SUPERADMIN role) & Error Boundary */}
+                {/* NOTE: SuperAdmin has its own dedicated layout - no MainLayout wrapper */}
+                <Route
+                    path={`${ROUTES.SUPERADMIN.ROOT}/*`}
+                    element={
+                        <ProtectedRoute requiredRole="SUPERADMIN">
+                            <RouteErrorBoundary>
+                                <AnimationWrapper variant="fade">
+                                    <SuperAdminView
+                                        currentUser={currentUser as any}
+                                        onNavigate={(view) => setCurrentView(view as AppView)}
+                                    />
+                                </AnimationWrapper>
+                            </RouteErrorBoundary>
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Partner Portal - New DBR77 Consultinity Partner Portal */}
+                <Route
+                    path={`${ROUTES.PARTNER.LANDING}/*`}
+                    element={
+                        <ProtectedRoute requireAuth={true}>
+                            <MainLayout breadcrumbs={['Partner Portal']}>
+                                <RouteErrorBoundary>
+                                    <AnimationWrapper variant="fade">
+                                        <PartnerPortalViewNew
+                                            currentUser={currentUser as any}
+                                            onNavigate={(view) => setCurrentView(view as AppView)}
+                                        />
+                                    </AnimationWrapper>
+                                </RouteErrorBoundary>
+                            </MainLayout>
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Consultant routes */}
+                <Route
+                    path={`${ROUTES.CONSULTANT.PANEL}/*`}
+                    element={
+                        <ProtectedRoute requireAuth={true}>
+                            <RouteErrorBoundary>
+                                <AnimationWrapper variant="slideUp">
+                                    <Routes>
+                                        <Route index element={<ConsultantPanelView />} />
+                                        <Route path="invites" element={<ConsultantInviteView />} />
+                                    </Routes>
+                                </AnimationWrapper>
+                            </RouteErrorBoundary>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path={ROUTES.CONSULTANT.INVITES}
+                    element={
+                        <AnimationWrapper variant="slideUp">
+                            <ConsultantInviteView />
+                        </AnimationWrapper>
+                    }
+                />
+
+                {/* Wizards */}
+                <Route
+                    path={ROUTES.ORG_SETUP}
+                    element={
+                        <ProtectedRoute requireAuth={true}>
+                            <AnimationWrapper variant="slideUp">
+                                <OrgSetupWizard />
+                            </AnimationWrapper>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path={ROUTES.ONBOARDING}
+                    element={
+                        <AnimationWrapper variant="slideUp">
+                            <OnboardingWizard />
+                        </AnimationWrapper>
+                    }
+                />
+                <Route
+                    path={ROUTES.TRIAL_ENTRY}
+                    element={
+                        <AnimationWrapper variant="slideUp">
+                            <TrialEntryView onStartTrial={() => {
+                                setCurrentView(AppView.AI_CHAT);
+                                navigate('/chat');
+                            }} />
+                        </AnimationWrapper>
+                    }
+                />
+
+                {/* Affiliate */}
+                <Route
+                    path={ROUTES.AFFILIATE}
+                    element={
+                        <ProtectedRoute requireAuth={true}>
+                            <AnimationWrapper variant="slideUp">
+                                <AffiliateDashboardView />
+                            </AnimationWrapper>
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Legal Pages - Public */}
+                <Route path={ROUTES.LEGAL.ABOUT} element={<AnimationWrapper variant="fade"><AboutView /></AnimationWrapper>} />
+                <Route path={ROUTES.LEGAL.CONTACT} element={<AnimationWrapper variant="fade"><ContactView /></AnimationWrapper>} />
+                <Route path={ROUTES.LEGAL.TERMS} element={<AnimationWrapper variant="fade"><TermsOfServiceView /></AnimationWrapper>} />
+                <Route path={ROUTES.LEGAL.PRIVACY} element={<AnimationWrapper variant="fade"><PrivacyPolicyView /></AnimationWrapper>} />
+                <Route path={ROUTES.LEGAL.COOKIES} element={<AnimationWrapper variant="fade"><CookiePolicyView /></AnimationWrapper>} />
+                <Route path={ROUTES.LEGAL.SECURITY} element={<AnimationWrapper variant="fade"><SecurityView /></AnimationWrapper>} />
+
+                {/* Status & Changelog - Public */}
+                <Route path={ROUTES.STATUS} element={<AnimationWrapper variant="fade"><StatusPageView /></AnimationWrapper>} />
+                <Route path={ROUTES.CHANGELOG} element={<AnimationWrapper variant="fade"><ChangelogView onBack={() => navigate(-1)} /></AnimationWrapper>} />
+
+                {/* Knowledge Base, Pricing & Executive */}
+                <Route path={ROUTES.KNOWLEDGE_BASE} element={<AnimationWrapper variant="slideUp"><KnowledgeBaseView onBack={() => navigate(-1)} /></AnimationWrapper>} />
+                <Route path={ROUTES.PRICING} element={<AnimationWrapper variant="slideUp"><AppPricingView /></AnimationWrapper>} />
+                <Route path={ROUTES.EXECUTIVE} element={<AnimationWrapper variant="slideUp"><ExecutiveView /></AnimationWrapper>} />
+
+                {/* 404 - Redirect based on auth status */}
+                <Route
+                    path="*"
+                    element={
+                        currentUser?.isAuthenticated
+                            ? <Navigate to={ROUTES.AI_CHAT} replace />
+                            : <Navigate to={ROUTES.WELCOME} replace />
+                    }
+                />
+            </Routes>
+        </Suspense>
     );
 };
+

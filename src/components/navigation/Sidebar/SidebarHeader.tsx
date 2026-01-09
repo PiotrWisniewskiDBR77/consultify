@@ -36,7 +36,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({ showFull, theme, o
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.2 }}
                     >
-                        <img src={logoSrc} alt="DBR77 Consultify" className="h-8 w-auto object-contain" />
+                        <img src={logoSrc} alt="DBR77 Consultinity" className="h-8 w-auto object-contain" />
                     </motion.div>
 
                     {/* Collapse Button */}

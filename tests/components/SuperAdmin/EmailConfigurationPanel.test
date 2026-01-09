@@ -41,7 +41,7 @@ describe('EmailConfigurationPanel', () => {
         smtp_password_encrypted: '****',
         smtp_use_tls: true,
         from_email: 'noreply@example.com',
-        from_name: 'Consultify',
+        from_name: 'Consultinity',
         reply_to_email: 'support@example.com',
         spf_verified: true,
         dkim_verified: true,
@@ -154,7 +154,7 @@ describe('EmailConfigurationPanel', () => {
         
         await waitFor(() => {
             expect(screen.getByDisplayValue('noreply@example.com')).toBeTruthy();
-            expect(screen.getByDisplayValue('Consultify')).toBeTruthy();
+            expect(screen.getByDisplayValue('Consultinity')).toBeTruthy();
             expect(screen.getByDisplayValue('support@example.com')).toBeTruthy();
         });
     });

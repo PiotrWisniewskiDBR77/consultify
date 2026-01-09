@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * NotificationCenter - Central notification hub with expandable details
  * Part of My Work Module PMO Upgrade

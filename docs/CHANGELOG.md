@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Consultify will be documented in this file.
+All notable changes to Consultinity will be documented in this file.
 
 ## [2.8.0] - 2025-01-XX
 

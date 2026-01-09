@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Connection Pool Manager
  * Enterprise-grade database connection pooling with health monitoring

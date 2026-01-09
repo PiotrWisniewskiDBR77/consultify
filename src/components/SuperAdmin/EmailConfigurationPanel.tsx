@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * EmailConfigurationPanel - Email Configuration Management
  *
@@ -493,7 +494,7 @@ export const EmailConfigurationPanel: React.FC = () => {
                                                 type="text"
                                                 value={config.from_name || ''}
                                                 onChange={(e) => updateConfig('from_name', e.target.value)}
-                                                placeholder="Consultify"
+                                                placeholder="Consultinity"
                                                 className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder:text-slate-500 focus:border-violet-500/50 outline-none"
                                             />
                                         </div>

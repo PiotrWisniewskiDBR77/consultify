@@ -3,11 +3,12 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { AuthSlice, createAuthSlice } from './slices/authSlice';
 import { ChatSlice, createChatSlice } from './slices/chatSlice';
+import { createDemoSlice, DemoSlice } from './slices/demoSlice';
 import { createProjectSlice, ProjectSlice } from './slices/projectSlice';
 import { createUISlice, UISlice } from './slices/uiSlice';
 
 // Combine all slice types into AppState
-export type AppState = AuthSlice & UISlice & ChatSlice & ProjectSlice;
+export type AppState = AuthSlice & UISlice & ChatSlice & ProjectSlice & DemoSlice;
 
 export const useAppStore = create<AppState>()(
     persist(
@@ -16,9 +17,10 @@ export const useAppStore = create<AppState>()(
             ...createUISlice(...a),
             ...createChatSlice(...a),
             ...createProjectSlice(...a),
+            ...createDemoSlice(...a),
         }),
         {
-            name: 'consultify-storage', // unique name for localStorage
+            name: 'consultinity-storage', // unique name for localStorage
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
                 // AuthSlice
@@ -44,6 +46,10 @@ export const useAppStore = create<AppState>()(
                 fullSessionData: state.fullSessionData,
                 currentProjectId: state.currentProjectId,
                 notifications: state.notifications,
+
+                // DemoSlice - persist demo mode state
+                isDemoMode: state.isDemoMode,
+                demoOrganization: state.demoOrganization,
             }),
         },
     ),

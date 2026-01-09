@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document tracks all database schema migrations applied to the Consultify platform. Each migration represents a specific change to the database structure, from initial setup through enterprise features.
+This document tracks all database schema migrations applied to the Consultinity platform. Each migration represents a specific change to the database structure, from initial setup through enterprise features.
 
 ## Migration Status
 
@@ -212,7 +212,7 @@ These migrations should NEVER be rolled back in production:
 
 ```bash
 # Check migration status
-sqlite3 server/consultify.db "SELECT * FROM schema_migrations WHERE status='failed';"
+sqlite3 server/consultinity.db "SELECT * FROM schema_migrations WHERE status='failed';"
 
 # Review error logs
 tail -f logs/migration.log
@@ -225,7 +225,7 @@ npm run db:restore
 
 ```bash
 # Check which migrations are applied
-sqlite3 server/consultify.db "SELECT version, filename FROM schema_migrations ORDER BY version;"
+sqlite3 server/consultinity.db "SELECT version, filename FROM schema_migrations ORDER BY version;"
 
 # Apply missing migration
 npm run db:migrate

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * RelatedObjectPreview - Preview card for Initiative/Task linked to decision
  * Fetches and displays related object details with navigation

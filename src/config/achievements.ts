@@ -45,3 +45,5 @@ export const ACHIEVEMENTS: Achievement[] = [
 export const getAchievements = () => ACHIEVEMENTS;
 export const getAchievementById = (id: string) => ACHIEVEMENTS.find(a => a.id === id);
 
+
+

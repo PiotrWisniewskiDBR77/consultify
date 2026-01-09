@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { RebalanceModal } from '../../src/components/RebalanceModal';
 import { Api } from '../../src/services/api';
 
-vi.mock('@/services/api', () => ({
+vi.mock('../../src/services/api', () => ({
     Api: {
         post: vi.fn()
     }

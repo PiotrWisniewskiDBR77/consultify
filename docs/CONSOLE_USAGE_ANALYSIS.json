@@ -15,7 +15,7 @@
   "critical": [
     {
       "file": "server/src/routes/ai.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai.routes.ts",
       "critical": true,
       "counts": {
         "log": 3,
@@ -28,7 +28,7 @@
     },
     {
       "file": "server/src/routes/billing.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/billing.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/billing.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -41,7 +41,7 @@
     },
     {
       "file": "server/src/routes/auth.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/auth.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/auth.routes.ts",
       "critical": true,
       "counts": {
         "log": 2,
@@ -54,7 +54,7 @@
     },
     {
       "file": "server/src/routes/ai-development.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-development.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-development.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -67,7 +67,7 @@
     },
     {
       "file": "server/src/routes/ai-settings.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-settings.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-settings.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -80,7 +80,7 @@
     },
     {
       "file": "server/src/routes/ai-budgets.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-budgets.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-budgets.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -93,7 +93,7 @@
     },
     {
       "file": "server/src/routes/ai-operations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-operations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-operations.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -106,7 +106,7 @@
     },
     {
       "file": "server/src/controllers/TaskController.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/controllers/TaskController.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/controllers/TaskController.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -119,7 +119,7 @@
     },
     {
       "file": "server/src/services/aiActionExecutor.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiActionExecutor.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiActionExecutor.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -132,7 +132,7 @@
     },
     {
       "file": "server/src/services/aiContextBuilder.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiContextBuilder.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiContextBuilder.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -145,7 +145,7 @@
     },
     {
       "file": "server/src/routes/ai-prompts.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-prompts.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-prompts.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -158,7 +158,7 @@
     },
     {
       "file": "server/src/routes/ai-nudges.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-nudges.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-nudges.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -171,7 +171,7 @@
     },
     {
       "file": "server/src/routes/aiMemory.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/aiMemory.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/aiMemory.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -184,7 +184,7 @@
     },
     {
       "file": "server/src/services/ai/logger.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/logger.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/logger.ts",
       "critical": true,
       "counts": {
         "log": 4,
@@ -197,7 +197,7 @@
     },
     {
       "file": "server/src/services/aiMemoryManager.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiMemoryManager.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiMemoryManager.ts",
       "critical": true,
       "counts": {
         "log": 4,
@@ -210,7 +210,7 @@
     },
     {
       "file": "server/src/services/aiOrchestrator.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiOrchestrator.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiOrchestrator.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -223,7 +223,7 @@
     },
     {
       "file": "server/src/services/ai/rerankerService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/rerankerService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/rerankerService.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -236,7 +236,7 @@
     },
     {
       "file": "server/src/services/ai/embeddingService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/embeddingService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/embeddingService.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -249,7 +249,7 @@
     },
     {
       "file": "server/src/services/billing/BillingCommandService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/billing/BillingCommandService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/billing/BillingCommandService.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -262,7 +262,7 @@
     },
     {
       "file": "server/src/services/billing/billingDependencyLoader.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/billing/billingDependencyLoader.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/billing/billingDependencyLoader.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -275,7 +275,7 @@
     },
     {
       "file": "server/src/controllers/AuthController.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/controllers/AuthController.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/controllers/AuthController.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -288,7 +288,7 @@
     },
     {
       "file": "server/src/middleware/auth.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/auth.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/auth.middleware.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -301,7 +301,7 @@
     },
     {
       "file": "server/src/routes/ai-drafts.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-drafts.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-drafts.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -314,7 +314,7 @@
     },
     {
       "file": "server/src/routes/ai-feedback.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-feedback.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-feedback.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -327,7 +327,7 @@
     },
     {
       "file": "server/src/services/ai/AIPipeline.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/AIPipeline.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/AIPipeline.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -340,7 +340,7 @@
     },
     {
       "file": "server/src/services/aiPolicyEngine.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiPolicyEngine.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiPolicyEngine.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -353,7 +353,7 @@
     },
     {
       "file": "server/src/controllers/InitiativeController.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/controllers/InitiativeController.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/controllers/InitiativeController.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -366,7 +366,7 @@
     },
     {
       "file": "server/src/routes/ai-analytics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-analytics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-analytics.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -379,7 +379,7 @@
     },
     {
       "file": "server/src/routes/aiPlaybooks.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/aiPlaybooks.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/aiPlaybooks.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -392,7 +392,7 @@
     },
     {
       "file": "server/src/services/ai/circuitBreaker.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/circuitBreaker.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/circuitBreaker.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -405,7 +405,7 @@
     },
     {
       "file": "server/src/services/ai/tools/index.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/tools/index.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/tools/index.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -418,7 +418,7 @@
     },
     {
       "file": "server/src/services/ai/tools/searchKnowledgeBase.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/tools/searchKnowledgeBase.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/tools/searchKnowledgeBase.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -433,7 +433,7 @@
   "others": [
     {
       "file": "server/src/cron/Scheduler.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/cron/Scheduler.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/cron/Scheduler.ts",
       "critical": false,
       "counts": {
         "log": 29,
@@ -446,7 +446,7 @@
     },
     {
       "file": "server/src/database/PostgresDatabase.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/PostgresDatabase.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/database/PostgresDatabase.ts",
       "critical": false,
       "counts": {
         "log": 16,
@@ -459,7 +459,7 @@
     },
     {
       "file": "server/src/index.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/index.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/index.ts",
       "critical": false,
       "counts": {
         "log": 12,
@@ -472,7 +472,7 @@
     },
     {
       "file": "server/src/routes/actionDecisions.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/actionDecisions.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/actionDecisions.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -485,7 +485,7 @@
     },
     {
       "file": "server/src/utils/RedisClient.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/RedisClient.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/RedisClient.ts",
       "critical": false,
       "counts": {
         "log": 9,
@@ -498,7 +498,7 @@
     },
     {
       "file": "server/src/routes/webhooks/stripe.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/webhooks/stripe.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/webhooks/stripe.routes.ts",
       "critical": false,
       "counts": {
         "log": 8,
@@ -511,7 +511,7 @@
     },
     {
       "file": "server/src/config/ConfigValidator.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/ConfigValidator.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/ConfigValidator.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -524,7 +524,7 @@
     },
     {
       "file": "server/src/routes/documents.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/documents.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/documents.routes.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -537,7 +537,7 @@
     },
     {
       "file": "server/src/config/DatabaseConfig.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/DatabaseConfig.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/DatabaseConfig.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -550,7 +550,7 @@
     },
     {
       "file": "server/src/database/Database.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/Database.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/database/Database.ts",
       "critical": false,
       "counts": {
         "log": 7,
@@ -563,7 +563,7 @@
     },
     {
       "file": "server/src/routes/budgets.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/budgets.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/budgets.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -576,7 +576,7 @@
     },
     {
       "file": "server/src/routes/agents.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/agents.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/agents.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -589,7 +589,7 @@
     },
     {
       "file": "server/src/routes/knowledge.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/knowledge.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/knowledge.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -602,7 +602,7 @@
     },
     {
       "file": "server/src/routes/tokenBilling.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/tokenBilling.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/tokenBilling.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -615,7 +615,7 @@
     },
     {
       "file": "server/src/services/systemIntegrity.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/systemIntegrity.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/systemIntegrity.ts",
       "critical": false,
       "counts": {
         "log": 8,
@@ -628,7 +628,7 @@
     },
     {
       "file": "server/src/utils/RedisStore.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/RedisStore.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/RedisStore.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -641,7 +641,7 @@
     },
     {
       "file": "server/src/middleware/permission.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/permission.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/permission.middleware.ts",
       "critical": false,
       "counts": {
         "log": 3,
@@ -654,7 +654,7 @@
     },
     {
       "file": "server/src/services/emailService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/emailService.ts",
       "critical": false,
       "counts": {
         "log": 6,
@@ -667,7 +667,7 @@
     },
     {
       "file": "server/src/services/pmoHealthService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoHealthService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pmoHealthService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -680,7 +680,7 @@
     },
     {
       "file": "server/src/middleware/superAdmin.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/superAdmin.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/superAdmin.middleware.ts",
       "critical": false,
       "counts": {
         "log": 5,
@@ -693,7 +693,7 @@
     },
     {
       "file": "server/src/routes/admin/backup.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/admin/backup.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/admin/backup.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -706,7 +706,7 @@
     },
     {
       "file": "server/src/routes/megatrend.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/megatrend.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/megatrend.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -719,7 +719,7 @@
     },
     {
       "file": "server/src/routes/systemHealth.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/systemHealth.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/systemHealth.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -732,7 +732,7 @@
     },
     {
       "file": "server/src/services/permissionService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/permissionService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/permissionService.ts",
       "critical": false,
       "counts": {
         "log": 4,
@@ -745,7 +745,7 @@
     },
     {
       "file": "server/src/config/SentryConfig.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/SentryConfig.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/SentryConfig.ts",
       "critical": false,
       "counts": {
         "log": 3,
@@ -758,7 +758,7 @@
     },
     {
       "file": "server/src/middleware/quota.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/quota.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/quota.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -771,7 +771,7 @@
     },
     {
       "file": "server/src/routes/analyticsAdvanced.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/analyticsAdvanced.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/analyticsAdvanced.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -784,7 +784,7 @@
     },
     {
       "file": "server/src/routes/llmHealth.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/llmHealth.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/llmHealth.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -797,7 +797,7 @@
     },
     {
       "file": "server/src/routes/trial.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/trial.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/trial.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -810,7 +810,7 @@
     },
     {
       "file": "server/src/services/externalAssessmentService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/externalAssessmentService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/externalAssessmentService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -823,7 +823,7 @@
     },
     {
       "file": "server/src/services/genericReportService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/genericReportService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/genericReportService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -836,7 +836,7 @@
     },
     {
       "file": "server/src/services/promoCodeService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/promoCodeService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/promoCodeService.ts",
       "critical": false,
       "counts": {
         "log": 2,
@@ -849,7 +849,7 @@
     },
     {
       "file": "server/src/services/slaService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/slaService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/slaService.ts",
       "critical": false,
       "counts": {
         "log": 2,
@@ -862,7 +862,7 @@
     },
     {
       "file": "server/src/services/taskAssignmentService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/taskAssignmentService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/taskAssignmentService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -875,7 +875,7 @@
     },
     {
       "file": "server/src/services/usageService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/usageService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/usageService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -888,7 +888,7 @@
     },
     {
       "file": "server/src/utils/auditLogger.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/auditLogger.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/auditLogger.ts",
       "critical": false,
       "counts": {
         "log": 2,
@@ -901,7 +901,7 @@
     },
     {
       "file": "server/src/utils/queryHelpers.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/queryHelpers.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/queryHelpers.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -914,7 +914,7 @@
     },
     {
       "file": "server/src/config/Config.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/Config.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/Config.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -927,7 +927,7 @@
     },
     {
       "file": "server/src/config/FeatureFlags.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/FeatureFlags.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/FeatureFlags.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -940,7 +940,7 @@
     },
     {
       "file": "server/src/config/QueueConfig.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/QueueConfig.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/QueueConfig.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -953,7 +953,7 @@
     },
     {
       "file": "server/src/middleware/alertWatchdog.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/alertWatchdog.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/alertWatchdog.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -966,7 +966,7 @@
     },
     {
       "file": "server/src/middleware/userStateGuard.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/userStateGuard.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/userStateGuard.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -979,7 +979,7 @@
     },
     {
       "file": "server/src/middleware/validation.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/validation.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/validation.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -992,7 +992,7 @@
     },
     {
       "file": "server/src/routes/accessCodes.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/accessCodes.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/accessCodes.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1005,7 +1005,7 @@
     },
     {
       "file": "server/src/routes/feedback.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/feedback.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/feedback.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1018,7 +1018,7 @@
     },
     {
       "file": "server/src/routes/loginHistory.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/loginHistory.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/loginHistory.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1031,7 +1031,7 @@
     },
     {
       "file": "server/src/routes/webhooks.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/webhooks.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/webhooks.routes.ts",
       "critical": false,
       "counts": {
         "log": 2,
@@ -1044,7 +1044,7 @@
     },
     {
       "file": "server/src/services/accessPolicyService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/accessPolicyService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/accessPolicyService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1057,7 +1057,7 @@
     },
     {
       "file": "server/src/services/alertService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/alertService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/alertService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1070,7 +1070,7 @@
     },
     {
       "file": "server/src/services/encryption/KeyManagementService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/encryption/KeyManagementService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/encryption/KeyManagementService.ts",
       "critical": false,
       "counts": {
         "log": 3,
@@ -1083,7 +1083,7 @@
     },
     {
       "file": "server/src/services/invitationService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/invitationService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/invitationService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1096,7 +1096,7 @@
     },
     {
       "file": "server/src/utils/DbPromise.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/DbPromise.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/DbPromise.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -1109,7 +1109,7 @@
     },
     {
       "file": "server/src/utils/cacheHelper.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/cacheHelper.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/cacheHelper.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1122,7 +1122,7 @@
     },
     {
       "file": "server/src/middleware/auditLog.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/auditLog.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/auditLog.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1135,7 +1135,7 @@
     },
     {
       "file": "server/src/middleware/demoGuard.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/demoGuard.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/demoGuard.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1148,7 +1148,7 @@
     },
     {
       "file": "server/src/middleware/inputSanitization.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/inputSanitization.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/inputSanitization.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1161,7 +1161,7 @@
     },
     {
       "file": "server/src/middleware/planLimits.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/planLimits.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/planLimits.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1174,7 +1174,7 @@
     },
     {
       "file": "server/src/middleware/projectQuota.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/projectQuota.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/projectQuota.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1187,7 +1187,7 @@
     },
     {
       "file": "server/src/routes/gamification.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/gamification.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/gamification.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1200,7 +1200,7 @@
     },
     {
       "file": "server/src/routes/performance.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/performance.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/performance.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1213,7 +1213,7 @@
     },
     {
       "file": "server/src/services/WebhookService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/WebhookService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/WebhookService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1226,7 +1226,7 @@
     },
     {
       "file": "server/src/services/governanceAuditService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/governanceAuditService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/governanceAuditService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -1239,7 +1239,7 @@
     },
     {
       "file": "server/src/services/metricsCollector.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsCollector.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/metricsCollector.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -1252,7 +1252,7 @@
     },
     {
       "file": "server/src/utils/AISchemaValidator.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/AISchemaValidator.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/AISchemaValidator.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1265,7 +1265,7 @@
     },
     {
       "file": "server/src/utils/RedisRateLimitStore.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/RedisRateLimitStore.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/RedisRateLimitStore.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1278,7 +1278,7 @@
     },
     {
       "file": "server/src/middleware/errorHandler.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/errorHandler.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/errorHandler.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1291,7 +1291,7 @@
     },
     {
       "file": "server/src/middleware/featureGate.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/featureGate.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/featureGate.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1304,7 +1304,7 @@
     },
     {
       "file": "server/src/middleware/orgContext.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/orgContext.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/orgContext.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1317,7 +1317,7 @@
     },
     {
       "file": "server/src/middleware/pmoValidation.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/pmoValidation.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/pmoValidation.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1330,7 +1330,7 @@
     },
     {
       "file": "server/src/middleware/trialEntryGuard.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/trialEntryGuard.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/trialEntryGuard.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1343,7 +1343,7 @@
     },
     {
       "file": "server/src/routes/api-keys.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/api-keys.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/api-keys.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1356,7 +1356,7 @@
     },
     {
       "file": "server/src/routes/assessment-hub.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment-hub.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment-hub.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1369,7 +1369,7 @@
     },
     {
       "file": "server/src/routes/assessment-level-attachments.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment-level-attachments.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment-level-attachments.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1382,7 +1382,7 @@
     },
     {
       "file": "server/src/routes/assessment-reports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment-reports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment-reports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1395,7 +1395,7 @@
     },
     {
       "file": "server/src/routes/assessment-workflow.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment-workflow.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment-workflow.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1408,7 +1408,7 @@
     },
     {
       "file": "server/src/routes/assessment.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1421,7 +1421,7 @@
     },
     {
       "file": "server/src/routes/assessments.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessments.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessments.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1434,7 +1434,7 @@
     },
     {
       "file": "server/src/routes/audit.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/audit.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/audit.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1447,7 +1447,7 @@
     },
     {
       "file": "server/src/routes/auditLog.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/auditLog.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/auditLog.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1460,7 +1460,7 @@
     },
     {
       "file": "server/src/routes/backup.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/backup.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/backup.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1473,7 +1473,7 @@
     },
     {
       "file": "server/src/routes/baselines.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/baselines.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/baselines.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1486,7 +1486,7 @@
     },
     {
       "file": "server/src/routes/benchmark.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/benchmark.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/benchmark.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1499,7 +1499,7 @@
     },
     {
       "file": "server/src/routes/branding.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/branding.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/branding.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1512,7 +1512,7 @@
     },
     {
       "file": "server/src/routes/budget.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/budget.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/budget.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1525,7 +1525,7 @@
     },
     {
       "file": "server/src/routes/calendarIntegrations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/calendarIntegrations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/calendarIntegrations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1538,7 +1538,7 @@
     },
     {
       "file": "server/src/routes/capacity.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/capacity.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/capacity.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1551,7 +1551,7 @@
     },
     {
       "file": "server/src/routes/chaos.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/chaos.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/chaos.routes.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -1564,7 +1564,7 @@
     },
     {
       "file": "server/src/routes/chat-projects.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/chat-projects.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/chat-projects.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1577,7 +1577,7 @@
     },
     {
       "file": "server/src/routes/connectors.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/connectors.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/connectors.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1590,7 +1590,7 @@
     },
     {
       "file": "server/src/routes/consultant-project-access.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/consultant-project-access.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/consultant-project-access.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1603,7 +1603,7 @@
     },
     {
       "file": "server/src/routes/consultants.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/consultants.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/consultants.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1616,7 +1616,7 @@
     },
     {
       "file": "server/src/routes/content.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/content.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/content.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1629,7 +1629,7 @@
     },
     {
       "file": "server/src/routes/context.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/context.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/context.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1642,7 +1642,7 @@
     },
     {
       "file": "server/src/routes/conversations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/conversations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/conversations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1655,7 +1655,7 @@
     },
     {
       "file": "server/src/routes/daily-brief.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/daily-brief.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/daily-brief.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1668,7 +1668,7 @@
     },
     {
       "file": "server/src/routes/dataExport.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/dataExport.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/dataExport.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1681,7 +1681,7 @@
     },
     {
       "file": "server/src/routes/dbr77.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/dbr77.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/dbr77.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1694,7 +1694,7 @@
     },
     {
       "file": "server/src/routes/demo.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/demo.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/demo.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1707,7 +1707,7 @@
     },
     {
       "file": "server/src/routes/economics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/economics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/economics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1720,7 +1720,7 @@
     },
     {
       "file": "server/src/routes/execution.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/execution.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/execution.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1733,7 +1733,7 @@
     },
     {
       "file": "server/src/routes/external-assessments.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/external-assessments.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/external-assessments.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1746,7 +1746,7 @@
     },
     {
       "file": "server/src/routes/featureFlags.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/featureFlags.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/featureFlags.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1759,7 +1759,7 @@
     },
     {
       "file": "server/src/routes/framework-rbac.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/framework-rbac.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/framework-rbac.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1772,7 +1772,7 @@
     },
     {
       "file": "server/src/routes/generic-reports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/generic-reports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/generic-reports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1785,7 +1785,7 @@
     },
     {
       "file": "server/src/routes/governance.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/governance.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/governance.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1798,7 +1798,7 @@
     },
     {
       "file": "server/src/routes/governanceAdmin.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/governanceAdmin.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/governanceAdmin.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1811,7 +1811,7 @@
     },
     {
       "file": "server/src/routes/help.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/help.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/help.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1824,7 +1824,7 @@
     },
     {
       "file": "server/src/routes/helpAnalytics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/helpAnalytics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/helpAnalytics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1837,7 +1837,7 @@
     },
     {
       "file": "server/src/routes/helpChat.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/helpChat.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/helpChat.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1850,7 +1850,7 @@
     },
     {
       "file": "server/src/routes/helpFeedback.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/helpFeedback.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/helpFeedback.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1863,7 +1863,7 @@
     },
     {
       "file": "server/src/routes/initiative-generator.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/initiative-generator.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/initiative-generator.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1876,7 +1876,7 @@
     },
     {
       "file": "server/src/routes/integrations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/integrations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/integrations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1889,7 +1889,7 @@
     },
     {
       "file": "server/src/routes/intelligence.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/intelligence.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/intelligence.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1902,7 +1902,7 @@
     },
     {
       "file": "server/src/routes/journeyAnalytics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/journeyAnalytics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/journeyAnalytics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1915,7 +1915,7 @@
     },
     {
       "file": "server/src/routes/legal.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/legal.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/legal.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1928,7 +1928,7 @@
     },
     {
       "file": "server/src/routes/locations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/locations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/locations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1941,7 +1941,7 @@
     },
     {
       "file": "server/src/routes/managementReports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/managementReports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/managementReports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1954,7 +1954,7 @@
     },
     {
       "file": "server/src/routes/managementReportsAnalytics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/managementReportsAnalytics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/managementReportsAnalytics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1967,7 +1967,7 @@
     },
     {
       "file": "server/src/routes/mcp.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/mcp.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/mcp.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1980,7 +1980,7 @@
     },
     {
       "file": "server/src/routes/media-ingestion.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/media-ingestion.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/media-ingestion.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -1993,7 +1993,7 @@
     },
     {
       "file": "server/src/routes/metrics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/metrics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/metrics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2006,7 +2006,7 @@
     },
     {
       "file": "server/src/routes/multi-framework-assessment.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/multi-framework-assessment.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/multi-framework-assessment.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2019,7 +2019,7 @@
     },
     {
       "file": "server/src/routes/multi-framework-workflow.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/multi-framework-workflow.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/multi-framework-workflow.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2032,7 +2032,7 @@
     },
     {
       "file": "server/src/routes/my-work.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/my-work.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/my-work.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2045,7 +2045,7 @@
     },
     {
       "file": "server/src/routes/myWork.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/myWork.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/myWork.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2058,7 +2058,7 @@
     },
     {
       "file": "server/src/routes/notification-rules.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/notification-rules.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/notification-rules.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2071,7 +2071,7 @@
     },
     {
       "file": "server/src/routes/notificationSettings.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/notificationSettings.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/notificationSettings.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2084,7 +2084,7 @@
     },
     {
       "file": "server/src/routes/oauthRoutes.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/oauthRoutes.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/oauthRoutes.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2097,7 +2097,7 @@
     },
     {
       "file": "server/src/routes/onboarding.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/onboarding.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/onboarding.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2110,7 +2110,7 @@
     },
     {
       "file": "server/src/routes/organization-data.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/organization-data.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/organization-data.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2123,7 +2123,7 @@
     },
     {
       "file": "server/src/routes/organization-limits.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/organization-limits.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/organization-limits.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2136,7 +2136,7 @@
     },
     {
       "file": "server/src/routes/organization-profiles.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/organization-profiles.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/organization-profiles.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2149,7 +2149,7 @@
     },
     {
       "file": "server/src/routes/partners.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/partners.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/partners.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2162,7 +2162,7 @@
     },
     {
       "file": "server/src/routes/pdf-import.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pdf-import.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pdf-import.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2175,7 +2175,7 @@
     },
     {
       "file": "server/src/routes/performance-metrics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/performance-metrics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/performance-metrics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2188,7 +2188,7 @@
     },
     {
       "file": "server/src/routes/permissionRequests.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/permissionRequests.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/permissionRequests.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2201,7 +2201,7 @@
     },
     {
       "file": "server/src/routes/pinned-prompts.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pinned-prompts.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pinned-prompts.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2214,7 +2214,7 @@
     },
     {
       "file": "server/src/routes/pmo-analysis.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pmo-analysis.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pmo-analysis.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2227,7 +2227,7 @@
     },
     {
       "file": "server/src/routes/pmo-context.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pmo-context.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pmo-context.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2240,7 +2240,7 @@
     },
     {
       "file": "server/src/routes/pmoDomains.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pmoDomains.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pmoDomains.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2253,7 +2253,7 @@
     },
     {
       "file": "server/src/routes/pmoRoles.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pmoRoles.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pmoRoles.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2266,7 +2266,7 @@
     },
     {
       "file": "server/src/routes/preferences.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/preferences.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/preferences.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2279,7 +2279,7 @@
     },
     {
       "file": "server/src/routes/premiumReports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/premiumReports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/premiumReports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2292,7 +2292,7 @@
     },
     {
       "file": "server/src/routes/pricing.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pricing.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pricing.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2305,7 +2305,7 @@
     },
     {
       "file": "server/src/routes/project-members.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/project-members.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/project-members.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2318,7 +2318,7 @@
     },
     {
       "file": "server/src/routes/promo.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/promo.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/promo.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2331,7 +2331,7 @@
     },
     {
       "file": "server/src/routes/prompt-assistant.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/prompt-assistant.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/prompt-assistant.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2344,7 +2344,7 @@
     },
     {
       "file": "server/src/routes/raid.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/raid.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/raid.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2357,7 +2357,7 @@
     },
     {
       "file": "server/src/routes/rapidlean.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/rapidlean.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/rapidlean.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2370,7 +2370,7 @@
     },
     {
       "file": "server/src/routes/rbac.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/rbac.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/rbac.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2383,7 +2383,7 @@
     },
     {
       "file": "server/src/routes/referrals.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/referrals.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/referrals.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2396,7 +2396,7 @@
     },
     {
       "file": "server/src/routes/report-comments.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/report-comments.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/report-comments.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2409,7 +2409,7 @@
     },
     {
       "file": "server/src/routes/reports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/reports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/reports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2422,7 +2422,7 @@
     },
     {
       "file": "server/src/routes/roadmap.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/roadmap.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/roadmap.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2435,7 +2435,7 @@
     },
     {
       "file": "server/src/routes/scenarios.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/scenarios.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/scenarios.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2448,7 +2448,7 @@
     },
     {
       "file": "server/src/routes/scim.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/scim.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/scim.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2461,7 +2461,7 @@
     },
     {
       "file": "server/src/routes/security.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/security.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/security.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2474,7 +2474,7 @@
     },
     {
       "file": "server/src/routes/securityPolicies.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/securityPolicies.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/securityPolicies.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2487,7 +2487,7 @@
     },
     {
       "file": "server/src/routes/settlements.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/settlements.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/settlements.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2500,7 +2500,7 @@
     },
     {
       "file": "server/src/routes/sso.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/sso.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/sso.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2513,7 +2513,7 @@
     },
     {
       "file": "server/src/routes/stabilization.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/stabilization.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/stabilization.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2526,7 +2526,7 @@
     },
     {
       "file": "server/src/routes/stage-gates.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/stage-gates.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/stage-gates.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2539,7 +2539,7 @@
     },
     {
       "file": "server/src/routes/status-reports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/status-reports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/status-reports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2552,7 +2552,7 @@
     },
     {
       "file": "server/src/routes/status.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/status.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/status.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2565,7 +2565,7 @@
     },
     {
       "file": "server/src/routes/studio.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/studio.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/studio.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2578,7 +2578,7 @@
     },
     {
       "file": "server/src/routes/systemConfig.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/systemConfig.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/systemConfig.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2591,7 +2591,7 @@
     },
     {
       "file": "server/src/routes/task-advisor.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/task-advisor.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/task-advisor.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2604,7 +2604,7 @@
     },
     {
       "file": "server/src/routes/tasks.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/tasks.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/tasks.routes.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -2617,7 +2617,7 @@
     },
     {
       "file": "server/src/routes/user-appearance.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-appearance.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-appearance.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2630,7 +2630,7 @@
     },
     {
       "file": "server/src/routes/user-availability.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-availability.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-availability.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2643,7 +2643,7 @@
     },
     {
       "file": "server/src/routes/user-contact.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-contact.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-contact.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2656,7 +2656,7 @@
     },
     {
       "file": "server/src/routes/user-data-controls.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-data-controls.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-data-controls.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2669,7 +2669,7 @@
     },
     {
       "file": "server/src/routes/user-keyboard-shortcuts.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-keyboard-shortcuts.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-keyboard-shortcuts.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2682,7 +2682,7 @@
     },
     {
       "file": "server/src/routes/user-privacy-extended.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-privacy-extended.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-privacy-extended.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2695,7 +2695,7 @@
     },
     {
       "file": "server/src/routes/user-professional-profile.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-professional-profile.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-professional-profile.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2708,7 +2708,7 @@
     },
     {
       "file": "server/src/routes/user-profile-completeness.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-profile-completeness.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-profile-completeness.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2721,7 +2721,7 @@
     },
     {
       "file": "server/src/routes/user-profile-extended.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-profile-extended.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-profile-extended.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2734,7 +2734,7 @@
     },
     {
       "file": "server/src/routes/user-security-advanced.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-security-advanced.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-security-advanced.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2747,7 +2747,7 @@
     },
     {
       "file": "server/src/routes/user-settings-history.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-settings-history.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-settings-history.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2760,7 +2760,7 @@
     },
     {
       "file": "server/src/routes/user-settings-templates.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-settings-templates.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-settings-templates.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2773,7 +2773,7 @@
     },
     {
       "file": "server/src/routes/userGoals.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/userGoals.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/userGoals.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2786,7 +2786,7 @@
     },
     {
       "file": "server/src/routes/userIntegrations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/userIntegrations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/userIntegrations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2799,7 +2799,7 @@
     },
     {
       "file": "server/src/routes/userOrgs.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/userOrgs.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/userOrgs.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2812,7 +2812,7 @@
     },
     {
       "file": "server/src/routes/verify.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/verify.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/verify.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2825,7 +2825,7 @@
     },
     {
       "file": "server/src/routes/videos.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/videos.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/videos.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2838,7 +2838,7 @@
     },
     {
       "file": "server/src/routes/voice.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/voice.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/voice.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2851,7 +2851,7 @@
     },
     {
       "file": "server/src/routes/webauthn.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/webauthn.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/webauthn.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2864,7 +2864,7 @@
     },
     {
       "file": "server/src/routes/webhookSubscriptions.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/webhookSubscriptions.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/webhookSubscriptions.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2877,7 +2877,7 @@
     },
     {
       "file": "server/src/routes/workMode.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/workMode.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/workMode.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2890,7 +2890,7 @@
     },
     {
       "file": "server/src/routes/workqueue.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/workqueue.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/workqueue.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2903,7 +2903,7 @@
     },
     {
       "file": "server/src/routes/workspace-defaults.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/workspace-defaults.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/workspace-defaults.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2916,7 +2916,7 @@
     },
     {
       "file": "server/src/routes/workstreams.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/workstreams.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/workstreams.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2929,7 +2929,7 @@
     },
     {
       "file": "server/src/services/ActivityService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ActivityService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ActivityService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2942,7 +2942,7 @@
     },
     {
       "file": "server/src/services/MemoryMonitor.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/MemoryMonitor.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/MemoryMonitor.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2955,7 +2955,7 @@
     },
     {
       "file": "server/src/services/accessCodeService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/accessCodeService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/accessCodeService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -2968,7 +2968,7 @@
     },
     {
       "file": "server/src/services/adminAlertService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adminAlertService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/adminAlertService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -2981,7 +2981,7 @@
     },
     {
       "file": "server/src/services/attributionService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/attributionService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/attributionService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -2994,7 +2994,7 @@
     },
     {
       "file": "server/src/services/cqrs/registry.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/cqrs/registry.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/cqrs/registry.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -3007,7 +3007,7 @@
     },
     {
       "file": "server/src/services/initiative/InitiativeProgressService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiative/InitiativeProgressService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/initiative/InitiativeProgressService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3020,7 +3020,7 @@
     },
     {
       "file": "server/src/services/initiativeService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/initiativeService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3033,7 +3033,7 @@
     },
     {
       "file": "server/src/services/organizationService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3046,7 +3046,7 @@
     },
     {
       "file": "server/src/services/projectMemberService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/projectMemberService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/projectMemberService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3059,7 +3059,7 @@
     },
     {
       "file": "server/src/services/seatManagementService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/seatManagementService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/seatManagementService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3072,7 +3072,7 @@
     },
     {
       "file": "server/src/services/statusReportService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/statusReportService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/statusReportService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3085,7 +3085,7 @@
     },
     {
       "file": "server/src/services/tokenBillingService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/tokenBillingService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/tokenBillingService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3098,7 +3098,7 @@
     },
     {
       "file": "server/src/utils/AssessmentAuditLogger.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/AssessmentAuditLogger.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/AssessmentAuditLogger.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3111,7 +3111,7 @@
     },
     {
       "file": "server/src/utils/lazyRouteLoader.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/lazyRouteLoader.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/lazyRouteLoader.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3126,7 +3126,7 @@
   "all": [
     {
       "file": "server/src/routes/ai.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai.routes.ts",
       "critical": true,
       "counts": {
         "log": 3,
@@ -3139,7 +3139,7 @@
     },
     {
       "file": "server/src/routes/billing.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/billing.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/billing.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3152,7 +3152,7 @@
     },
     {
       "file": "server/src/routes/auth.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/auth.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/auth.routes.ts",
       "critical": true,
       "counts": {
         "log": 2,
@@ -3165,7 +3165,7 @@
     },
     {
       "file": "server/src/routes/ai-development.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-development.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-development.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3178,7 +3178,7 @@
     },
     {
       "file": "server/src/routes/ai-settings.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-settings.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-settings.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3191,7 +3191,7 @@
     },
     {
       "file": "server/src/routes/ai-budgets.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-budgets.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-budgets.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3204,7 +3204,7 @@
     },
     {
       "file": "server/src/routes/ai-operations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-operations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-operations.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3217,7 +3217,7 @@
     },
     {
       "file": "server/src/controllers/TaskController.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/controllers/TaskController.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/controllers/TaskController.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -3230,7 +3230,7 @@
     },
     {
       "file": "server/src/services/aiActionExecutor.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiActionExecutor.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiActionExecutor.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3243,7 +3243,7 @@
     },
     {
       "file": "server/src/services/aiContextBuilder.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiContextBuilder.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiContextBuilder.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3256,7 +3256,7 @@
     },
     {
       "file": "server/src/routes/ai-prompts.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-prompts.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-prompts.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3269,7 +3269,7 @@
     },
     {
       "file": "server/src/routes/ai-nudges.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-nudges.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-nudges.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3282,7 +3282,7 @@
     },
     {
       "file": "server/src/routes/aiMemory.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/aiMemory.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/aiMemory.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3295,7 +3295,7 @@
     },
     {
       "file": "server/src/services/ai/logger.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/logger.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/logger.ts",
       "critical": true,
       "counts": {
         "log": 4,
@@ -3308,7 +3308,7 @@
     },
     {
       "file": "server/src/services/aiMemoryManager.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiMemoryManager.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiMemoryManager.ts",
       "critical": true,
       "counts": {
         "log": 4,
@@ -3321,7 +3321,7 @@
     },
     {
       "file": "server/src/services/aiOrchestrator.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiOrchestrator.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiOrchestrator.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -3334,7 +3334,7 @@
     },
     {
       "file": "server/src/services/ai/rerankerService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/rerankerService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/rerankerService.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3347,7 +3347,7 @@
     },
     {
       "file": "server/src/services/ai/embeddingService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/embeddingService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/embeddingService.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -3360,7 +3360,7 @@
     },
     {
       "file": "server/src/services/billing/BillingCommandService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/billing/BillingCommandService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/billing/BillingCommandService.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3373,7 +3373,7 @@
     },
     {
       "file": "server/src/services/billing/billingDependencyLoader.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/billing/billingDependencyLoader.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/billing/billingDependencyLoader.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -3386,7 +3386,7 @@
     },
     {
       "file": "server/src/controllers/AuthController.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/controllers/AuthController.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/controllers/AuthController.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -3399,7 +3399,7 @@
     },
     {
       "file": "server/src/middleware/auth.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/auth.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/auth.middleware.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3412,7 +3412,7 @@
     },
     {
       "file": "server/src/routes/ai-drafts.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-drafts.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-drafts.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3425,7 +3425,7 @@
     },
     {
       "file": "server/src/routes/ai-feedback.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-feedback.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-feedback.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3438,7 +3438,7 @@
     },
     {
       "file": "server/src/services/ai/AIPipeline.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/AIPipeline.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/AIPipeline.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -3451,7 +3451,7 @@
     },
     {
       "file": "server/src/services/aiPolicyEngine.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiPolicyEngine.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiPolicyEngine.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3464,7 +3464,7 @@
     },
     {
       "file": "server/src/controllers/InitiativeController.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/controllers/InitiativeController.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/controllers/InitiativeController.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3477,7 +3477,7 @@
     },
     {
       "file": "server/src/routes/ai-analytics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/ai-analytics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/ai-analytics.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3490,7 +3490,7 @@
     },
     {
       "file": "server/src/routes/aiPlaybooks.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/aiPlaybooks.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/aiPlaybooks.routes.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3503,7 +3503,7 @@
     },
     {
       "file": "server/src/services/ai/circuitBreaker.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/circuitBreaker.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/circuitBreaker.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3516,7 +3516,7 @@
     },
     {
       "file": "server/src/services/ai/tools/index.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/tools/index.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/tools/index.ts",
       "critical": true,
       "counts": {
         "log": 1,
@@ -3529,7 +3529,7 @@
     },
     {
       "file": "server/src/services/ai/tools/searchKnowledgeBase.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ai/tools/searchKnowledgeBase.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ai/tools/searchKnowledgeBase.ts",
       "critical": true,
       "counts": {
         "log": 0,
@@ -3542,7 +3542,7 @@
     },
     {
       "file": "server/src/cron/Scheduler.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/cron/Scheduler.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/cron/Scheduler.ts",
       "critical": false,
       "counts": {
         "log": 29,
@@ -3555,7 +3555,7 @@
     },
     {
       "file": "server/src/database/PostgresDatabase.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/PostgresDatabase.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/database/PostgresDatabase.ts",
       "critical": false,
       "counts": {
         "log": 16,
@@ -3568,7 +3568,7 @@
     },
     {
       "file": "server/src/index.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/index.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/index.ts",
       "critical": false,
       "counts": {
         "log": 12,
@@ -3581,7 +3581,7 @@
     },
     {
       "file": "server/src/routes/actionDecisions.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/actionDecisions.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/actionDecisions.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3594,7 +3594,7 @@
     },
     {
       "file": "server/src/utils/RedisClient.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/RedisClient.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/RedisClient.ts",
       "critical": false,
       "counts": {
         "log": 9,
@@ -3607,7 +3607,7 @@
     },
     {
       "file": "server/src/routes/webhooks/stripe.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/webhooks/stripe.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/webhooks/stripe.routes.ts",
       "critical": false,
       "counts": {
         "log": 8,
@@ -3620,7 +3620,7 @@
     },
     {
       "file": "server/src/config/ConfigValidator.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/ConfigValidator.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/ConfigValidator.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3633,7 +3633,7 @@
     },
     {
       "file": "server/src/routes/documents.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/documents.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/documents.routes.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -3646,7 +3646,7 @@
     },
     {
       "file": "server/src/config/DatabaseConfig.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/DatabaseConfig.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/DatabaseConfig.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3659,7 +3659,7 @@
     },
     {
       "file": "server/src/database/Database.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/Database.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/database/Database.ts",
       "critical": false,
       "counts": {
         "log": 7,
@@ -3672,7 +3672,7 @@
     },
     {
       "file": "server/src/routes/budgets.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/budgets.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/budgets.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3685,7 +3685,7 @@
     },
     {
       "file": "server/src/routes/agents.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/agents.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/agents.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3698,7 +3698,7 @@
     },
     {
       "file": "server/src/routes/knowledge.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/knowledge.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/knowledge.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3711,7 +3711,7 @@
     },
     {
       "file": "server/src/routes/tokenBilling.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/tokenBilling.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/tokenBilling.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3724,7 +3724,7 @@
     },
     {
       "file": "server/src/services/systemIntegrity.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/systemIntegrity.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/systemIntegrity.ts",
       "critical": false,
       "counts": {
         "log": 8,
@@ -3737,7 +3737,7 @@
     },
     {
       "file": "server/src/utils/RedisStore.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/RedisStore.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/RedisStore.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3750,7 +3750,7 @@
     },
     {
       "file": "server/src/middleware/permission.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/permission.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/permission.middleware.ts",
       "critical": false,
       "counts": {
         "log": 3,
@@ -3763,7 +3763,7 @@
     },
     {
       "file": "server/src/services/emailService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/emailService.ts",
       "critical": false,
       "counts": {
         "log": 6,
@@ -3776,7 +3776,7 @@
     },
     {
       "file": "server/src/services/pmoHealthService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoHealthService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pmoHealthService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -3789,7 +3789,7 @@
     },
     {
       "file": "server/src/middleware/superAdmin.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/superAdmin.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/superAdmin.middleware.ts",
       "critical": false,
       "counts": {
         "log": 5,
@@ -3802,7 +3802,7 @@
     },
     {
       "file": "server/src/routes/admin/backup.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/admin/backup.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/admin/backup.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3815,7 +3815,7 @@
     },
     {
       "file": "server/src/routes/megatrend.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/megatrend.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/megatrend.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3828,7 +3828,7 @@
     },
     {
       "file": "server/src/routes/systemHealth.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/systemHealth.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/systemHealth.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3841,7 +3841,7 @@
     },
     {
       "file": "server/src/services/permissionService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/permissionService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/permissionService.ts",
       "critical": false,
       "counts": {
         "log": 4,
@@ -3854,7 +3854,7 @@
     },
     {
       "file": "server/src/config/SentryConfig.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/SentryConfig.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/SentryConfig.ts",
       "critical": false,
       "counts": {
         "log": 3,
@@ -3867,7 +3867,7 @@
     },
     {
       "file": "server/src/middleware/quota.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/quota.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/quota.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3880,7 +3880,7 @@
     },
     {
       "file": "server/src/routes/analyticsAdvanced.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/analyticsAdvanced.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/analyticsAdvanced.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3893,7 +3893,7 @@
     },
     {
       "file": "server/src/routes/llmHealth.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/llmHealth.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/llmHealth.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3906,7 +3906,7 @@
     },
     {
       "file": "server/src/routes/trial.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/trial.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/trial.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3919,7 +3919,7 @@
     },
     {
       "file": "server/src/services/externalAssessmentService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/externalAssessmentService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/externalAssessmentService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -3932,7 +3932,7 @@
     },
     {
       "file": "server/src/services/genericReportService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/genericReportService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/genericReportService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -3945,7 +3945,7 @@
     },
     {
       "file": "server/src/services/promoCodeService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/promoCodeService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/promoCodeService.ts",
       "critical": false,
       "counts": {
         "log": 2,
@@ -3958,7 +3958,7 @@
     },
     {
       "file": "server/src/services/slaService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/slaService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/slaService.ts",
       "critical": false,
       "counts": {
         "log": 2,
@@ -3971,7 +3971,7 @@
     },
     {
       "file": "server/src/services/taskAssignmentService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/taskAssignmentService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/taskAssignmentService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -3984,7 +3984,7 @@
     },
     {
       "file": "server/src/services/usageService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/usageService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/usageService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -3997,7 +3997,7 @@
     },
     {
       "file": "server/src/utils/auditLogger.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/auditLogger.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/auditLogger.ts",
       "critical": false,
       "counts": {
         "log": 2,
@@ -4010,7 +4010,7 @@
     },
     {
       "file": "server/src/utils/queryHelpers.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/queryHelpers.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/queryHelpers.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4023,7 +4023,7 @@
     },
     {
       "file": "server/src/config/Config.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/Config.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/Config.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4036,7 +4036,7 @@
     },
     {
       "file": "server/src/config/FeatureFlags.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/FeatureFlags.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/FeatureFlags.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4049,7 +4049,7 @@
     },
     {
       "file": "server/src/config/QueueConfig.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/config/QueueConfig.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/config/QueueConfig.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4062,7 +4062,7 @@
     },
     {
       "file": "server/src/middleware/alertWatchdog.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/alertWatchdog.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/alertWatchdog.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4075,7 +4075,7 @@
     },
     {
       "file": "server/src/middleware/userStateGuard.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/userStateGuard.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/userStateGuard.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4088,7 +4088,7 @@
     },
     {
       "file": "server/src/middleware/validation.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/validation.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/validation.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4101,7 +4101,7 @@
     },
     {
       "file": "server/src/routes/accessCodes.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/accessCodes.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/accessCodes.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4114,7 +4114,7 @@
     },
     {
       "file": "server/src/routes/feedback.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/feedback.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/feedback.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4127,7 +4127,7 @@
     },
     {
       "file": "server/src/routes/loginHistory.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/loginHistory.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/loginHistory.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4140,7 +4140,7 @@
     },
     {
       "file": "server/src/routes/webhooks.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/webhooks.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/webhooks.routes.ts",
       "critical": false,
       "counts": {
         "log": 2,
@@ -4153,7 +4153,7 @@
     },
     {
       "file": "server/src/services/accessPolicyService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/accessPolicyService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/accessPolicyService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4166,7 +4166,7 @@
     },
     {
       "file": "server/src/services/alertService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/alertService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/alertService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4179,7 +4179,7 @@
     },
     {
       "file": "server/src/services/encryption/KeyManagementService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/encryption/KeyManagementService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/encryption/KeyManagementService.ts",
       "critical": false,
       "counts": {
         "log": 3,
@@ -4192,7 +4192,7 @@
     },
     {
       "file": "server/src/services/invitationService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/invitationService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/invitationService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4205,7 +4205,7 @@
     },
     {
       "file": "server/src/utils/DbPromise.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/DbPromise.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/DbPromise.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -4218,7 +4218,7 @@
     },
     {
       "file": "server/src/utils/cacheHelper.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/cacheHelper.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/cacheHelper.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4231,7 +4231,7 @@
     },
     {
       "file": "server/src/middleware/auditLog.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/auditLog.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/auditLog.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4244,7 +4244,7 @@
     },
     {
       "file": "server/src/middleware/demoGuard.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/demoGuard.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/demoGuard.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4257,7 +4257,7 @@
     },
     {
       "file": "server/src/middleware/inputSanitization.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/inputSanitization.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/inputSanitization.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4270,7 +4270,7 @@
     },
     {
       "file": "server/src/middleware/planLimits.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/planLimits.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/planLimits.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4283,7 +4283,7 @@
     },
     {
       "file": "server/src/middleware/projectQuota.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/projectQuota.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/projectQuota.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4296,7 +4296,7 @@
     },
     {
       "file": "server/src/routes/gamification.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/gamification.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/gamification.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4309,7 +4309,7 @@
     },
     {
       "file": "server/src/routes/performance.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/performance.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/performance.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4322,7 +4322,7 @@
     },
     {
       "file": "server/src/services/WebhookService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/WebhookService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/WebhookService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4335,7 +4335,7 @@
     },
     {
       "file": "server/src/services/governanceAuditService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/governanceAuditService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/governanceAuditService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -4348,7 +4348,7 @@
     },
     {
       "file": "server/src/services/metricsCollector.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsCollector.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/metricsCollector.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -4361,7 +4361,7 @@
     },
     {
       "file": "server/src/utils/AISchemaValidator.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/AISchemaValidator.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/AISchemaValidator.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4374,7 +4374,7 @@
     },
     {
       "file": "server/src/utils/RedisRateLimitStore.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/RedisRateLimitStore.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/RedisRateLimitStore.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4387,7 +4387,7 @@
     },
     {
       "file": "server/src/middleware/errorHandler.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/errorHandler.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/errorHandler.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4400,7 +4400,7 @@
     },
     {
       "file": "server/src/middleware/featureGate.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/featureGate.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/featureGate.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4413,7 +4413,7 @@
     },
     {
       "file": "server/src/middleware/orgContext.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/orgContext.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/orgContext.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4426,7 +4426,7 @@
     },
     {
       "file": "server/src/middleware/pmoValidation.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/pmoValidation.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/pmoValidation.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4439,7 +4439,7 @@
     },
     {
       "file": "server/src/middleware/trialEntryGuard.middleware.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/middleware/trialEntryGuard.middleware.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/middleware/trialEntryGuard.middleware.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4452,7 +4452,7 @@
     },
     {
       "file": "server/src/routes/api-keys.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/api-keys.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/api-keys.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4465,7 +4465,7 @@
     },
     {
       "file": "server/src/routes/assessment-hub.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment-hub.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment-hub.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4478,7 +4478,7 @@
     },
     {
       "file": "server/src/routes/assessment-level-attachments.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment-level-attachments.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment-level-attachments.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4491,7 +4491,7 @@
     },
     {
       "file": "server/src/routes/assessment-reports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment-reports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment-reports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4504,7 +4504,7 @@
     },
     {
       "file": "server/src/routes/assessment-workflow.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment-workflow.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment-workflow.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4517,7 +4517,7 @@
     },
     {
       "file": "server/src/routes/assessment.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessment.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessment.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4530,7 +4530,7 @@
     },
     {
       "file": "server/src/routes/assessments.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/assessments.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/assessments.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4543,7 +4543,7 @@
     },
     {
       "file": "server/src/routes/audit.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/audit.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/audit.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4556,7 +4556,7 @@
     },
     {
       "file": "server/src/routes/auditLog.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/auditLog.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/auditLog.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4569,7 +4569,7 @@
     },
     {
       "file": "server/src/routes/backup.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/backup.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/backup.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4582,7 +4582,7 @@
     },
     {
       "file": "server/src/routes/baselines.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/baselines.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/baselines.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4595,7 +4595,7 @@
     },
     {
       "file": "server/src/routes/benchmark.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/benchmark.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/benchmark.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4608,7 +4608,7 @@
     },
     {
       "file": "server/src/routes/branding.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/branding.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/branding.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4621,7 +4621,7 @@
     },
     {
       "file": "server/src/routes/budget.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/budget.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/budget.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4634,7 +4634,7 @@
     },
     {
       "file": "server/src/routes/calendarIntegrations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/calendarIntegrations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/calendarIntegrations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4647,7 +4647,7 @@
     },
     {
       "file": "server/src/routes/capacity.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/capacity.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/capacity.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4660,7 +4660,7 @@
     },
     {
       "file": "server/src/routes/chaos.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/chaos.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/chaos.routes.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -4673,7 +4673,7 @@
     },
     {
       "file": "server/src/routes/chat-projects.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/chat-projects.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/chat-projects.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4686,7 +4686,7 @@
     },
     {
       "file": "server/src/routes/connectors.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/connectors.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/connectors.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4699,7 +4699,7 @@
     },
     {
       "file": "server/src/routes/consultant-project-access.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/consultant-project-access.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/consultant-project-access.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4712,7 +4712,7 @@
     },
     {
       "file": "server/src/routes/consultants.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/consultants.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/consultants.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4725,7 +4725,7 @@
     },
     {
       "file": "server/src/routes/content.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/content.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/content.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4738,7 +4738,7 @@
     },
     {
       "file": "server/src/routes/context.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/context.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/context.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4751,7 +4751,7 @@
     },
     {
       "file": "server/src/routes/conversations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/conversations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/conversations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4764,7 +4764,7 @@
     },
     {
       "file": "server/src/routes/daily-brief.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/daily-brief.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/daily-brief.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4777,7 +4777,7 @@
     },
     {
       "file": "server/src/routes/dataExport.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/dataExport.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/dataExport.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4790,7 +4790,7 @@
     },
     {
       "file": "server/src/routes/dbr77.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/dbr77.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/dbr77.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4803,7 +4803,7 @@
     },
     {
       "file": "server/src/routes/demo.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/demo.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/demo.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4816,7 +4816,7 @@
     },
     {
       "file": "server/src/routes/economics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/economics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/economics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4829,7 +4829,7 @@
     },
     {
       "file": "server/src/routes/execution.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/execution.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/execution.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4842,7 +4842,7 @@
     },
     {
       "file": "server/src/routes/external-assessments.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/external-assessments.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/external-assessments.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4855,7 +4855,7 @@
     },
     {
       "file": "server/src/routes/featureFlags.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/featureFlags.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/featureFlags.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4868,7 +4868,7 @@
     },
     {
       "file": "server/src/routes/framework-rbac.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/framework-rbac.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/framework-rbac.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4881,7 +4881,7 @@
     },
     {
       "file": "server/src/routes/generic-reports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/generic-reports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/generic-reports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4894,7 +4894,7 @@
     },
     {
       "file": "server/src/routes/governance.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/governance.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/governance.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4907,7 +4907,7 @@
     },
     {
       "file": "server/src/routes/governanceAdmin.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/governanceAdmin.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/governanceAdmin.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4920,7 +4920,7 @@
     },
     {
       "file": "server/src/routes/help.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/help.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/help.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4933,7 +4933,7 @@
     },
     {
       "file": "server/src/routes/helpAnalytics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/helpAnalytics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/helpAnalytics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4946,7 +4946,7 @@
     },
     {
       "file": "server/src/routes/helpChat.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/helpChat.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/helpChat.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4959,7 +4959,7 @@
     },
     {
       "file": "server/src/routes/helpFeedback.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/helpFeedback.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/helpFeedback.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4972,7 +4972,7 @@
     },
     {
       "file": "server/src/routes/initiative-generator.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/initiative-generator.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/initiative-generator.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4985,7 +4985,7 @@
     },
     {
       "file": "server/src/routes/integrations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/integrations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/integrations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -4998,7 +4998,7 @@
     },
     {
       "file": "server/src/routes/intelligence.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/intelligence.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/intelligence.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5011,7 +5011,7 @@
     },
     {
       "file": "server/src/routes/journeyAnalytics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/journeyAnalytics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/journeyAnalytics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5024,7 +5024,7 @@
     },
     {
       "file": "server/src/routes/legal.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/legal.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/legal.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5037,7 +5037,7 @@
     },
     {
       "file": "server/src/routes/locations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/locations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/locations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5050,7 +5050,7 @@
     },
     {
       "file": "server/src/routes/managementReports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/managementReports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/managementReports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5063,7 +5063,7 @@
     },
     {
       "file": "server/src/routes/managementReportsAnalytics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/managementReportsAnalytics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/managementReportsAnalytics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5076,7 +5076,7 @@
     },
     {
       "file": "server/src/routes/mcp.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/mcp.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/mcp.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5089,7 +5089,7 @@
     },
     {
       "file": "server/src/routes/media-ingestion.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/media-ingestion.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/media-ingestion.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5102,7 +5102,7 @@
     },
     {
       "file": "server/src/routes/metrics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/metrics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/metrics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5115,7 +5115,7 @@
     },
     {
       "file": "server/src/routes/multi-framework-assessment.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/multi-framework-assessment.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/multi-framework-assessment.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5128,7 +5128,7 @@
     },
     {
       "file": "server/src/routes/multi-framework-workflow.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/multi-framework-workflow.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/multi-framework-workflow.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5141,7 +5141,7 @@
     },
     {
       "file": "server/src/routes/my-work.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/my-work.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/my-work.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5154,7 +5154,7 @@
     },
     {
       "file": "server/src/routes/myWork.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/myWork.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/myWork.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5167,7 +5167,7 @@
     },
     {
       "file": "server/src/routes/notification-rules.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/notification-rules.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/notification-rules.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5180,7 +5180,7 @@
     },
     {
       "file": "server/src/routes/notificationSettings.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/notificationSettings.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/notificationSettings.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5193,7 +5193,7 @@
     },
     {
       "file": "server/src/routes/oauthRoutes.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/oauthRoutes.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/oauthRoutes.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5206,7 +5206,7 @@
     },
     {
       "file": "server/src/routes/onboarding.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/onboarding.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/onboarding.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5219,7 +5219,7 @@
     },
     {
       "file": "server/src/routes/organization-data.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/organization-data.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/organization-data.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5232,7 +5232,7 @@
     },
     {
       "file": "server/src/routes/organization-limits.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/organization-limits.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/organization-limits.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5245,7 +5245,7 @@
     },
     {
       "file": "server/src/routes/organization-profiles.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/organization-profiles.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/organization-profiles.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5258,7 +5258,7 @@
     },
     {
       "file": "server/src/routes/partners.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/partners.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/partners.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5271,7 +5271,7 @@
     },
     {
       "file": "server/src/routes/pdf-import.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pdf-import.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pdf-import.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5284,7 +5284,7 @@
     },
     {
       "file": "server/src/routes/performance-metrics.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/performance-metrics.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/performance-metrics.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5297,7 +5297,7 @@
     },
     {
       "file": "server/src/routes/permissionRequests.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/permissionRequests.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/permissionRequests.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5310,7 +5310,7 @@
     },
     {
       "file": "server/src/routes/pinned-prompts.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pinned-prompts.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pinned-prompts.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5323,7 +5323,7 @@
     },
     {
       "file": "server/src/routes/pmo-analysis.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pmo-analysis.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pmo-analysis.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5336,7 +5336,7 @@
     },
     {
       "file": "server/src/routes/pmo-context.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pmo-context.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pmo-context.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5349,7 +5349,7 @@
     },
     {
       "file": "server/src/routes/pmoDomains.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pmoDomains.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pmoDomains.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5362,7 +5362,7 @@
     },
     {
       "file": "server/src/routes/pmoRoles.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pmoRoles.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pmoRoles.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5375,7 +5375,7 @@
     },
     {
       "file": "server/src/routes/preferences.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/preferences.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/preferences.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5388,7 +5388,7 @@
     },
     {
       "file": "server/src/routes/premiumReports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/premiumReports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/premiumReports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5401,7 +5401,7 @@
     },
     {
       "file": "server/src/routes/pricing.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/pricing.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/pricing.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5414,7 +5414,7 @@
     },
     {
       "file": "server/src/routes/project-members.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/project-members.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/project-members.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5427,7 +5427,7 @@
     },
     {
       "file": "server/src/routes/promo.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/promo.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/promo.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5440,7 +5440,7 @@
     },
     {
       "file": "server/src/routes/prompt-assistant.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/prompt-assistant.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/prompt-assistant.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5453,7 +5453,7 @@
     },
     {
       "file": "server/src/routes/raid.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/raid.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/raid.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5466,7 +5466,7 @@
     },
     {
       "file": "server/src/routes/rapidlean.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/rapidlean.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/rapidlean.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5479,7 +5479,7 @@
     },
     {
       "file": "server/src/routes/rbac.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/rbac.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/rbac.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5492,7 +5492,7 @@
     },
     {
       "file": "server/src/routes/referrals.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/referrals.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/referrals.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5505,7 +5505,7 @@
     },
     {
       "file": "server/src/routes/report-comments.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/report-comments.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/report-comments.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5518,7 +5518,7 @@
     },
     {
       "file": "server/src/routes/reports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/reports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/reports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5531,7 +5531,7 @@
     },
     {
       "file": "server/src/routes/roadmap.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/roadmap.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/roadmap.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5544,7 +5544,7 @@
     },
     {
       "file": "server/src/routes/scenarios.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/scenarios.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/scenarios.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5557,7 +5557,7 @@
     },
     {
       "file": "server/src/routes/scim.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/scim.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/scim.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5570,7 +5570,7 @@
     },
     {
       "file": "server/src/routes/security.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/security.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/security.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5583,7 +5583,7 @@
     },
     {
       "file": "server/src/routes/securityPolicies.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/securityPolicies.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/securityPolicies.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5596,7 +5596,7 @@
     },
     {
       "file": "server/src/routes/settlements.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/settlements.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/settlements.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5609,7 +5609,7 @@
     },
     {
       "file": "server/src/routes/sso.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/sso.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/sso.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5622,7 +5622,7 @@
     },
     {
       "file": "server/src/routes/stabilization.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/stabilization.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/stabilization.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5635,7 +5635,7 @@
     },
     {
       "file": "server/src/routes/stage-gates.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/stage-gates.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/stage-gates.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5648,7 +5648,7 @@
     },
     {
       "file": "server/src/routes/status-reports.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/status-reports.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/status-reports.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5661,7 +5661,7 @@
     },
     {
       "file": "server/src/routes/status.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/status.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/status.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5674,7 +5674,7 @@
     },
     {
       "file": "server/src/routes/studio.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/studio.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/studio.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5687,7 +5687,7 @@
     },
     {
       "file": "server/src/routes/systemConfig.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/systemConfig.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/systemConfig.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5700,7 +5700,7 @@
     },
     {
       "file": "server/src/routes/task-advisor.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/task-advisor.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/task-advisor.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5713,7 +5713,7 @@
     },
     {
       "file": "server/src/routes/tasks.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/tasks.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/tasks.routes.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -5726,7 +5726,7 @@
     },
     {
       "file": "server/src/routes/user-appearance.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-appearance.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-appearance.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5739,7 +5739,7 @@
     },
     {
       "file": "server/src/routes/user-availability.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-availability.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-availability.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5752,7 +5752,7 @@
     },
     {
       "file": "server/src/routes/user-contact.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-contact.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-contact.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5765,7 +5765,7 @@
     },
     {
       "file": "server/src/routes/user-data-controls.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-data-controls.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-data-controls.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5778,7 +5778,7 @@
     },
     {
       "file": "server/src/routes/user-keyboard-shortcuts.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-keyboard-shortcuts.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-keyboard-shortcuts.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5791,7 +5791,7 @@
     },
     {
       "file": "server/src/routes/user-privacy-extended.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-privacy-extended.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-privacy-extended.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5804,7 +5804,7 @@
     },
     {
       "file": "server/src/routes/user-professional-profile.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-professional-profile.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-professional-profile.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5817,7 +5817,7 @@
     },
     {
       "file": "server/src/routes/user-profile-completeness.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-profile-completeness.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-profile-completeness.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5830,7 +5830,7 @@
     },
     {
       "file": "server/src/routes/user-profile-extended.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-profile-extended.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-profile-extended.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5843,7 +5843,7 @@
     },
     {
       "file": "server/src/routes/user-security-advanced.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-security-advanced.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-security-advanced.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5856,7 +5856,7 @@
     },
     {
       "file": "server/src/routes/user-settings-history.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-settings-history.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-settings-history.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5869,7 +5869,7 @@
     },
     {
       "file": "server/src/routes/user-settings-templates.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/user-settings-templates.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/user-settings-templates.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5882,7 +5882,7 @@
     },
     {
       "file": "server/src/routes/userGoals.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/userGoals.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/userGoals.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5895,7 +5895,7 @@
     },
     {
       "file": "server/src/routes/userIntegrations.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/userIntegrations.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/userIntegrations.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5908,7 +5908,7 @@
     },
     {
       "file": "server/src/routes/userOrgs.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/userOrgs.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/userOrgs.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5921,7 +5921,7 @@
     },
     {
       "file": "server/src/routes/verify.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/verify.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/verify.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5934,7 +5934,7 @@
     },
     {
       "file": "server/src/routes/videos.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/videos.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/videos.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5947,7 +5947,7 @@
     },
     {
       "file": "server/src/routes/voice.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/voice.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/voice.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5960,7 +5960,7 @@
     },
     {
       "file": "server/src/routes/webauthn.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/webauthn.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/webauthn.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5973,7 +5973,7 @@
     },
     {
       "file": "server/src/routes/webhookSubscriptions.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/webhookSubscriptions.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/webhookSubscriptions.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5986,7 +5986,7 @@
     },
     {
       "file": "server/src/routes/workMode.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/workMode.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/workMode.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -5999,7 +5999,7 @@
     },
     {
       "file": "server/src/routes/workqueue.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/workqueue.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/workqueue.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6012,7 +6012,7 @@
     },
     {
       "file": "server/src/routes/workspace-defaults.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/workspace-defaults.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/workspace-defaults.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6025,7 +6025,7 @@
     },
     {
       "file": "server/src/routes/workstreams.routes.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/routes/workstreams.routes.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/routes/workstreams.routes.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6038,7 +6038,7 @@
     },
     {
       "file": "server/src/services/ActivityService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ActivityService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ActivityService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6051,7 +6051,7 @@
     },
     {
       "file": "server/src/services/MemoryMonitor.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/MemoryMonitor.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/MemoryMonitor.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6064,7 +6064,7 @@
     },
     {
       "file": "server/src/services/accessCodeService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/accessCodeService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/accessCodeService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6077,7 +6077,7 @@
     },
     {
       "file": "server/src/services/adminAlertService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adminAlertService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/adminAlertService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -6090,7 +6090,7 @@
     },
     {
       "file": "server/src/services/attributionService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/attributionService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/attributionService.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -6103,7 +6103,7 @@
     },
     {
       "file": "server/src/services/cqrs/registry.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/cqrs/registry.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/cqrs/registry.ts",
       "critical": false,
       "counts": {
         "log": 1,
@@ -6116,7 +6116,7 @@
     },
     {
       "file": "server/src/services/initiative/InitiativeProgressService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiative/InitiativeProgressService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/initiative/InitiativeProgressService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6129,7 +6129,7 @@
     },
     {
       "file": "server/src/services/initiativeService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/initiativeService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6142,7 +6142,7 @@
     },
     {
       "file": "server/src/services/organizationService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6155,7 +6155,7 @@
     },
     {
       "file": "server/src/services/projectMemberService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/projectMemberService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/projectMemberService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6168,7 +6168,7 @@
     },
     {
       "file": "server/src/services/seatManagementService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/seatManagementService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/seatManagementService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6181,7 +6181,7 @@
     },
     {
       "file": "server/src/services/statusReportService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/statusReportService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/statusReportService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6194,7 +6194,7 @@
     },
     {
       "file": "server/src/services/tokenBillingService.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/tokenBillingService.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/tokenBillingService.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6207,7 +6207,7 @@
     },
     {
       "file": "server/src/utils/AssessmentAuditLogger.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/AssessmentAuditLogger.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/AssessmentAuditLogger.ts",
       "critical": false,
       "counts": {
         "log": 0,
@@ -6220,7 +6220,7 @@
     },
     {
       "file": "server/src/utils/lazyRouteLoader.ts",
-      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/utils/lazyRouteLoader.ts",
+      "path": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/utils/lazyRouteLoader.ts",
       "critical": false,
       "counts": {
         "log": 0,

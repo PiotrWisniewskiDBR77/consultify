@@ -401,7 +401,7 @@ export const useContextBuilderStore = create<ContextBuilderState>()(
                 }),
         }),
         {
-            name: 'consultify-context-builder',
+            name: 'consultinity-context-builder',
             storage: createJSONStorage(() => localStorage),
         },
     ),

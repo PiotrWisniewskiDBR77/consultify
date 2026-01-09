@@ -75,8 +75,8 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({ onClose, initialQuesti
             role: 'assistant',
             content:
                 lang === 'pl'
-                    ? 'Cześć! Jestem Twoim asystentem Consultify. Jak mogę Ci dzisiaj pomóc? Możesz zapytać o dowolną funkcję aplikacji.'
-                    : "Hi! I'm your Consultify assistant. How can I help you today? Feel free to ask about any feature of the application.",
+                    ? 'Cześć! Jestem Twoim asystentem Consultinity. Jak mogę Ci dzisiaj pomóc? Możesz zapytać o dowolną funkcję aplikacji.'
+                    : "Hi! I'm your Consultinity assistant. How can I help you today? Feel free to ask about any feature of the application.",
             timestamp: new Date(),
         };
         setMessages([welcomeMessage]);

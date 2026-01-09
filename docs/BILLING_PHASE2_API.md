@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the Phase 2 enhancements to the Consultify Billing Module, including Credit Notes, Tax Configuration, Invoice Templates, Subscription Analytics, and Billing Webhooks.
+This document describes the Phase 2 enhancements to the Consultinity Billing Module, including Credit Notes, Tax Configuration, Invoice Templates, Subscription Analytics, and Billing Webhooks.
 
 ---
 
@@ -207,7 +207,7 @@ POST /api/billing/templates
   "templateData": {
     "header": {
       "showLogo": true,
-      "companyName": "Consultify Inc.",
+      "companyName": "Consultinity Inc.",
       "address": "123 Main St"
     },
     "footer": {
@@ -558,7 +558,7 @@ All webhook events follow this format:
 
 ### Signature Verification
 
-Webhooks include HMAC signature in the `X-Consultify-Signature` header:
+Webhooks include HMAC signature in the `X-Consultinity-Signature` header:
 
 ```javascript
 const crypto = require('crypto');
@@ -677,5 +677,5 @@ npx vitest run --coverage tests/unit/backend/billing*.test.js
 
 ## Support
 
-For API support, contact: api-support@consultify.ai
+For API support, contact: api-support@consultinity.ai
 

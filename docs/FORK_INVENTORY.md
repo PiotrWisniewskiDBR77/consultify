@@ -1,16 +1,16 @@
-# Fork Inventory - Consultify Platform
+# Fork Inventory - Consultinity Platform
 
 **Document Version:** 1.0.0  
 **Last Updated:** January 4, 2026  
-**Purpose:** Code analysis for splitting Consultify into shared core + application-specific modules
+**Purpose:** Code analysis for splitting Consultinity into shared core + application-specific modules
 
 ---
 
 ## Executive Summary
 
-This document inventories the Consultify codebase to prepare for forking into:
+This document inventories the Consultinity codebase to prepare for forking into:
 1. **Shared Core Library** - Reusable across multiple applications
-2. **Consultify Application** - PMO/Digital Transformation specific
+2. **Consultinity Application** - PMO/Digital Transformation specific
 3. **New Application** - Future fork with different business domain
 
 ---
@@ -29,7 +29,7 @@ This document inventories the Consultify codebase to prepare for forking into:
 
 ---
 
-## 1. SHARED CORE (Both Apps) - `@consultify/core`
+## 1. SHARED CORE (Both Apps) - `@consultinity/core`
 
 ### 1.1 Authentication & Authorization
 
@@ -187,11 +187,11 @@ server/src/cron/
 
 ---
 
-## 2. CONSULTIFY-SPECIFIC (PMO/Digital Transformation)
+## 2. CONSULTINITY-SPECIFIC (PMO/Digital Transformation)
 
 ### 2.1 PMO Module
 
-**Services (Consultify Only):**
+**Services (Consultinity Only):**
 ```
 server/src/services/
 ├── pmoHealthService.ts          🔵 PMO health dashboard
@@ -219,7 +219,7 @@ server/src/services/
 └── ai/agents/pmoAgent.ts        🔵 PMO AI agent
 ```
 
-**Routes (Consultify Only):**
+**Routes (Consultinity Only):**
 ```
 server/src/routes/
 ├── pmo.routes.ts
@@ -235,7 +235,7 @@ server/src/routes/
 
 ### 2.2 Assessment Module (DRD Methodology)
 
-**Services (Consultify Only):**
+**Services (Consultinity Only):**
 ```
 server/src/services/
 ├── assessmentService.ts         🔵 Core assessment
@@ -266,7 +266,7 @@ server/src/services/
 └── aiCharterGeneratorService.ts 🔵 Charter generation
 ```
 
-**Routes (Consultify Only):**
+**Routes (Consultinity Only):**
 ```
 server/src/routes/
 ├── assessment.routes.ts
@@ -281,7 +281,7 @@ server/src/routes/
 
 ### 2.3 Initiative Management
 
-**Services (Consultify Only):**
+**Services (Consultinity Only):**
 ```
 server/src/services/
 ├── initiativeService.ts         🔵 Core initiatives
@@ -297,7 +297,7 @@ server/src/services/
 └── progressService.ts           🔵 Progress tracking
 ```
 
-**Routes (Consultify Only):**
+**Routes (Consultinity Only):**
 ```
 server/src/routes/
 ├── initiatives.routes.ts
@@ -312,7 +312,7 @@ server/src/routes/
 
 ### 2.4 Consulting-Specific Features
 
-**Services (Consultify Only):**
+**Services (Consultinity Only):**
 ```
 server/src/services/
 ├── consultantService.ts         🔵 Consultant management
@@ -429,7 +429,7 @@ audit_logs, system_config, feature_flags
 scheduled_jobs, job_logs
 ```
 
-### 4.2 Consultify-Specific Tables
+### 4.2 Consultinity-Specific Tables
 
 ```sql
 -- PMO Framework
@@ -443,7 +443,7 @@ framework_assessments, framework_benchmarks
 evidence_items, evidence_attachments
 adkar_assessments, rapid_lean_assessments
 
--- Initiatives & Projects (Consultify flavor)
+-- Initiatives & Projects (Consultinity flavor)
 projects, project_members, project_roles
 initiatives, initiative_templates, initiative_milestones
 roadmaps, roadmap_items, dependencies
@@ -463,7 +463,7 @@ report_templates, report_versions
 
 ## 5. FRONTEND COMPONENT SPLIT
 
-### 5.1 Shared Components (`@consultify/ui`)
+### 5.1 Shared Components (`@consultinity/ui`)
 
 ```
 components/common/              ✅ All shared
@@ -475,7 +475,7 @@ components/modals/              ✅ Modal dialogs
 components/notifications/       ✅ Notification UI
 ```
 
-### 5.2 Consultify-Specific Components
+### 5.2 Consultinity-Specific Components
 
 ```
 components/assessment/          🔵 Assessment UI
@@ -490,7 +490,7 @@ components/roadmap/             🔵 Roadmap planning
 
 ## 6. TYPES & SCHEMAS SPLIT
 
-### 6.1 Shared Types Package (`@consultify/types`)
+### 6.1 Shared Types Package (`@consultinity/types`)
 
 ```typescript
 // types/shared/
@@ -507,17 +507,17 @@ components/roadmap/             🔵 Roadmap planning
 └── ai.schema.ts
 ```
 
-### 6.2 Consultify-Specific Types
+### 6.2 Consultinity-Specific Types
 
 ```typescript
-// types/consultify/
+// types/consultinity/
 ├── pmo.types.ts        // PMO domain types
 ├── assessment.types.ts // Assessment types
 ├── initiative.types.ts // Initiative types
 ├── governance.types.ts // Governance types
 └── consulting.types.ts // Consulting types
 
-// schemas/consultify/
+// schemas/consultinity/
 ├── pmo.schema.ts
 ├── initiative.schema.ts
 ├── project.schema.ts   // PMO-flavored projects
@@ -553,7 +553,7 @@ components/roadmap/             🔵 Roadmap planning
 
 ### Phase 4: Application Split (Week 6-8)
 
-1. Create `apps/consultify/` with PMO-specific code
+1. Create `apps/consultinity/` with PMO-specific code
 2. Create `apps/new-app/` skeleton
 3. Configure shared dependency imports
 4. Update build system
@@ -563,7 +563,7 @@ components/roadmap/             🔵 Roadmap planning
 ## 8. RECOMMENDED MONOREPO STRUCTURE
 
 ```
-consultify/
+consultinity/
 ├── packages/
 │   ├── shared-core/           # Core utilities, DB, auth
 │   │   ├── src/
@@ -602,7 +602,7 @@ consultify/
 │       └── tsconfig.json
 │
 ├── apps/
-│   ├── consultify/            # PMO/Consulting app
+│   ├── consultinity/            # PMO/Consulting app
 │   │   ├── frontend/
 │   │   ├── backend/
 │   │   ├── package.json
@@ -626,7 +626,7 @@ consultify/
 ```mermaid
 graph TB
     subgraph Apps
-        Consultify[Consultify App]
+        Consultinity[Consultinity App]
         NewApp[New App]
     end
 
@@ -638,11 +638,11 @@ graph TB
         UI[shared-ui]
     end
 
-    Consultify --> Core
-    Consultify --> AI
-    Consultify --> Billing
-    Consultify --> Types
-    Consultify --> UI
+    Consultinity --> Core
+    Consultinity --> AI
+    Consultinity --> Billing
+    Consultinity --> Types
+    Consultinity --> UI
 
     NewApp --> Core
     NewApp --> AI

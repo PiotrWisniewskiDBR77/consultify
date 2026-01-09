@@ -193,9 +193,9 @@ describe('Edge Cases & Boundary Conditions', () => {
         });
 
         it('should handle far future dates', () => {
-            const future = new Date('2100-12-31T23:59:59Z');
+            const future = new Date(Date.UTC(2100, 11, 31, 23, 59, 59));
 
-            expect(future.getFullYear()).toBe(2100);
+            expect(future.getUTCFullYear()).toBe(2100);
             expect(isNaN(future.getTime())).toBe(false);
         });
 
@@ -322,9 +322,9 @@ describe('Edge Cases & Boundary Conditions', () => {
         it('should handle frozen objects', () => {
             const frozen = Object.freeze({ key: 'value' });
 
-            expect(() => {
-                frozen.key = 'new value';
-            }).not.toThrow(); // In non-strict mode, fails silently
+            // Object should be frozen
+            expect(Object.isFrozen(frozen)).toBe(true);
+            // Original value should be preserved
             expect(frozen.key).toBe('value');
         });
 

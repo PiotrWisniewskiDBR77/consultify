@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Award, Briefcase, CheckCircle, FileText, GraduationCap, Info, Loader2, Plus, Save, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

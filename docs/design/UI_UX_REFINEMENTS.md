@@ -1,6 +1,6 @@
 # UI/UX Premium Refinements v3.0
 
-This document outlines the design refinements implemented to elevate the Consultify interface to premium SaaS standards (inspired by ClickUp, Slack, Linear, and HubSpot).
+This document outlines the design refinements implemented to elevate the Consultinity interface to premium SaaS standards (inspired by ClickUp, Slack, Linear, and HubSpot).
 
 > **Last Updated:** January 2026
 > **Version:** 3.0

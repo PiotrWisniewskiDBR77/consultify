@@ -169,14 +169,14 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
     };
 
     const currentBreakdown = useMemo(() => {
-        if (!usage) return [];
+        if (!usage?.breakdown) return [];
         switch (breakdownView) {
             case 'user':
-                return usage.breakdown.byUser;
+                return usage.breakdown.byUser || [];
             case 'project':
-                return usage.breakdown.byProject;
+                return usage.breakdown.byProject || [];
             case 'feature':
-                return usage.breakdown.byFeature;
+                return usage.breakdown.byFeature || [];
             default:
                 return [];
         }

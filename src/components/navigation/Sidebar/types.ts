@@ -12,6 +12,7 @@ export interface MenuItem {
     subItems?: MenuItem[];
     requiresView?: AppView;
     isFloating?: boolean;
+    badge?: 'beta' | 'new' | 'soon'; // Optional badge for items in development
 }
 
 export interface FloatingMenuPosition {

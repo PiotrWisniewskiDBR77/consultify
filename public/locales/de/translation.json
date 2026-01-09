@@ -2751,7 +2751,7 @@
     "masterclassTitle": "Want to deepen your knowledge?",
     "masterclassDesc": "Join our Masterclass program and learn proven tools from transformation leaders.",
     "masterclassLink": "View Masterclass Details",
-    "videoTitle": "See how CONSULTIFY works",
+    "videoTitle": "See how CONSULTINITY works",
     "videoPerson": "Dr. Piotr Wiśniewski",
     "videoRole": "Your guide to digital transformation"
   },
@@ -2803,155 +2803,217 @@
       "dismiss": "Dismiss"
     },
     "widget": {
-      "label": "Help",
-      "header": "Help center",
-      "searchPlaceholder": "Search in help...",
-      "noResults": "No results for \"{{query}}\"",
-      "docs": "Documentation",
-      "contact": "Contact"
+      "label": "Hilfe",
+      "header": "Hilfezentrum",
+      "searchPlaceholder": "In Hilfe suchen...",
+      "noResults": "Keine Ergebnisse für \"{{query}}\"",
+      "docs": "Dokumentation",
+      "contact": "Kontakt"
+    },
+    "ai": {
+      "welcome": {
+        "title": "KI-Hilfeassistent",
+        "subtitle": "Fragen Sie mich alles über Consultinity. Ich bin hier, um zu helfen!"
+      },
+      "placeholder": "Stellen Sie eine Frage...",
+      "error": "Entschuldigung, es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+      "quick": {
+        "label": "Schnelle Fragen:",
+        "howto": "Wie verwende ich dieses Modul?",
+        "explain": "Erklären Sie, was ich hier tun kann",
+        "troubleshoot": "Helfen Sie mir, ein Problem zu lösen"
+      },
+      "prompts": {
+        "howto": "Wie verwende ich dieses Modul effektiv?",
+        "explain": "Welche Funktionen und Möglichkeiten sind hier verfügbar?",
+        "troubleshoot": "Ich habe ein Problem. Können Sie mir helfen, es zu beheben?"
+      }
+    },
+    "onboarding": {
+      "checklist": {
+        "title": "Erste Schritte",
+        "completed": "abgeschlossen",
+        "more": "weitere Schritte",
+        "dismiss": "Ich erkunde selbst",
+        "profile": {
+          "title": "Profil vervollständigen",
+          "description": "Fügen Sie Ihren Namen und Firmeninformationen hinzu"
+        },
+        "firstChat": {
+          "title": "KI-Assistenten ausprobieren",
+          "description": "Stellen Sie Ihre erste Frage"
+        },
+        "firstAssessment": {
+          "title": "Bewertung starten",
+          "description": "Beginnen Sie Ihre digitale Bereitschaftsdiagnose"
+        },
+        "firstInitiative": {
+          "title": "Initiative erstellen",
+          "description": "Planen Sie Ihr erstes Transformationsprojekt"
+        },
+        "roadmap": {
+          "title": "Roadmap erkunden",
+          "description": "Zeitplan für Ihre Transformation anzeigen"
+        },
+        "inviteTeam": {
+          "title": "Team einladen",
+          "description": "Mit Kollegen zusammenarbeiten"
+        },
+        "billing": {
+          "title": "Zahlung einrichten",
+          "description": "Zahlungsmethode konfigurieren"
+        }
+      }
     },
     "sidePanel": {
+      "tabs": {
+        "ai": "KI-Assistent",
+        "overview": "Übersicht",
+        "howto": "Anleitung",
+        "faq": "FAQ",
+        "video": "Videos"
+      },
       "modules": {
         "dashboard": {
           "name": "Dashboard",
-          "description": "Your central command center for monitoring digital transformation progress. The dashboard provides a real-time overview of assessments, initiatives, and key metrics across your organization.",
-          "purpose": "Quickly understand the current state of your transformation journey, identify areas needing attention, and track progress toward strategic goals.",
+          "description": "Ihre zentrale Kommandozentrale zur Überwachung des digitalen Transformationsfortschritts. Das Dashboard bietet einen Echtzeit-Überblick über Assessments, Initiativen und wichtige Kennzahlen in Ihrer gesamten Organisation.",
+          "purpose": "Schnelles Verständnis des aktuellen Status Ihrer Transformationsreise, Identifizierung von Bereichen, die Aufmerksamkeit erfordern, und Verfolgung des Fortschritts in Richtung strategischer Ziele.",
           "keyFeatures": [
-            "Real-time transformation maturity score",
-            "Initiative progress tracking",
-            "Active assessment status",
-            "Recent activity timeline",
-            "Quick access to pending tasks",
-            "Organization-wide metrics overview"
+            "Transformations-Reifegrad-Score in Echtzeit",
+            "Fortschrittsverfolgung von Initiativen",
+            "Status aktiver Assessments",
+            "Timeline der letzten Aktivitäten",
+            "Schneller Zugriff auf anstehende Aufgaben",
+            "Unternehmensweiter Kennzahlen-Überblick"
           ],
           "workflow": [
-            "Review your overall maturity score",
-            "Check for any pending assessments or tasks",
-            "Review recent activity and updates",
-            "Navigate to specific modules from quick links"
+            "Überprüfen Sie Ihren Gesamt-Reifegrad-Score",
+            "Prüfen Sie auf anstehende Assessments oder Aufgaben",
+            "Überprüfen Sie die letzten Aktivitäten und Updates",
+            "Navigieren Sie über Quick-Links zu spezifischen Modulen"
           ],
           "tips": [
-            "Customize widgets to show metrics most relevant to your role",
-            "Set up dashboard notifications for important milestones",
-            "Use the snapshot view for executive presentations"
+            "Passen Sie Widgets an, um die für Ihre Rolle relevantesten Kennzahlen anzuzeigen",
+            "Richten Sie Dashboard-Benachrichtigungen für wichtige Meilensteine ein",
+            "Nutzen Sie die Snapshot-Ansicht für Präsentationen vor der Geschäftsführung"
           ]
         },
         "assessment": {
           "name": "Assessment",
-          "description": "Comprehensive digital maturity assessment using industry-standard frameworks including DRD, SIRI, ADMA, CMMI, and Lean 4.0. Evaluate your organization across multiple dimensions to identify gaps and opportunities.",
-          "purpose": "Objectively measure your current digital maturity level, benchmark against industry standards, and generate actionable insights for improvement.",
+          "description": "Umfassende Bewertung der digitalen Reife unter Verwendung von branchenüblichen Frameworks wie DRD, SIRI, ADMA, CMMI und Lean 4.0. Bewerten Sie Ihre Organisation in mehreren Dimensionen, um Lücken und Chancen zu identifizieren.",
+          "purpose": "Objektive Messung Ihres aktuellen digitalen Reifegrades, Benchmark gegen Branchenstandards und Generierung umsetzbarer Erkenntnisse zur Verbesserung.",
           "keyFeatures": [
-            "Multiple assessment frameworks (DRD, SIRI, ADMA, CMMI, Lean)",
-            "AI-assisted evaluation with evidence tracking",
-            "Gap analysis and heatmaps",
-            "Benchmark comparisons with industry peers",
-            "Automatic report generation",
-            "Multi-axis assessment (Processes, Digital, Data, Culture, etc.)",
-            "Reviewer workflow for quality assurance"
+            "Mehrere Assessment-Frameworks (DRD, SIRI, ADMA, CMMI, Lean)",
+            "KI-assistierte Bewertung mit Nachweisverfolgung",
+            "Gap-Analyse und Heatmaps",
+            "Benchmark-Vergleiche mit Branchenkollegen",
+            "Automatische Berichterstellung",
+            "Mehrdimensionale Bewertung (Prozesse, Digital, Daten, Kultur, etc.)",
+            "Reviewer-Workflow zur Qualitätssicherung"
           ],
           "workflow": [
-            "Select the appropriate assessment framework",
-            "Complete questionnaires for each assessment axis",
-            "Upload evidence documents to support your answers",
-            "AI analyzes responses and generates preliminary scores",
-            "Review and adjust scores with your team",
-            "Submit for reviewer approval if required",
-            "Generate comprehensive assessment report"
+            "Wählen Sie das passende Assessment-Framework",
+            "Füllen Sie Fragebögen für jede Bewertungsachse aus",
+            "Laden Sie Nachweisdokumente hoch, um Ihre Antworten zu stützen",
+            "KI analysiert Antworten und generiert vorläufige Scores",
+            "Überprüfen und passen Sie Scores mit Ihrem Team an",
+            "Reichen Sie diese zur Genehmigung durch einen Reviewer ein, falls erforderlich",
+            "Generieren Sie einen umfassenden Assessment-Bericht"
           ],
           "tips": [
-            "Complete the Context Builder first for more accurate AI recommendations",
-            "Upload real evidence documents for credible assessments",
-            "Use the comparison view to track improvement over time",
-            "Schedule regular re-assessments (quarterly recommended)"
+            "Füllen Sie zuerst den Context Builder aus für genauere KI-Empfehlungen",
+            "Laden Sie echte Nachweisdokumente hoch für glaubwürdige Bewertungen",
+            "Nutzen Sie die Vergleichsansicht, um Verbesserungen im Zeitverlauf zu verfolgen",
+            "Planen Sie regelmäßige Re-Assessments (vierteljährlich empfohlen)"
           ]
         },
         "initiatives": {
-          "name": "Initiatives",
-          "description": "Transform assessment insights into actionable improvement initiatives. Generate, prioritize, and manage transformation projects that address identified gaps and drive organizational improvement.",
-          "purpose": "Bridge the gap between assessment findings and concrete actions by creating structured initiatives with clear ownership, timelines, and expected outcomes.",
+          "name": "Initiativen",
+          "description": "Wandeln Sie Assessment-Erkenntnisse in umsetzbare Verbesserungsinitiativen um. Generieren, priorisieren und verwalten Sie Transformationsprojekte, die identifizierte Lücken adressieren und die organisatorische Verbesserung vorantreiben.",
+          "purpose": "Schließen der Lücke zwischen Assessment-Ergebnissen und konkreten Maßnahmen durch die Erstellung strukturierter Initiativen mit klarer Verantwortlichkeit, Zeitplänen und erwarteten Ergebnissen.",
           "keyFeatures": [
-            "AI-powered initiative generation based on gaps",
-            "Initiative templates library",
-            "Business case builder with ROI estimation",
-            "Priority scoring (impact vs. effort matrix)",
-            "Resource allocation planning",
-            "Initiative dependencies tracking",
-            "Progress monitoring and milestones"
+            "KI-gestützte Initiativenerstellung basierend auf Lücken",
+            "Bibliothek für Initiativen-Vorlagen",
+            "Business Case Builder mit ROI-Schätzung",
+            "Priorisierungsscore (Impact vs. Effort Matrix)",
+            "Ressourcenallokationsplanung",
+            "Verfolgung von Initiativen-Abhängigkeiten",
+            "Fortschrittsüberwachung und Meilensteine"
           ],
           "workflow": [
-            "Review identified gaps from assessments",
-            "Use AI to generate initiative suggestions",
-            "Select and customize initiatives for your context",
-            "Define scope, timeline, and resource requirements",
-            "Assign ownership and team members",
-            "Prioritize using impact/effort scoring",
-            "Add to roadmap for execution planning"
+            "Überprüfen Sie identifizierte Lücken aus Assessments",
+            "Nutzen Sie KI, um Initiativen-Vorschläge zu generieren",
+            "Wählen Sie Initiativen aus und passen Sie diese an Ihren Kontext an",
+            "Definieren Sie Umfang, Zeitrahmen und Ressourcenanforderungen",
+            "Weisen Sie Verantwortlichkeiten und Teammitglieder zu",
+            "Priorisieren Sie mittels Impact/Effort-Scoring",
+            "Fügen Sie diese zur Roadmap für die Ausführungsplanung hinzu"
           ],
           "tips": [
-            "Start with quick wins to build momentum",
-            "Ensure each initiative has a clear owner",
-            "Link initiatives to specific assessment gaps for traceability",
-            "Review and reprioritize initiatives quarterly"
+            "Starten Sie mit Quick Wins, um Dynamik aufzubauen",
+            "Stellen Sie sicher, dass jede Initiative einen klaren Verantwortlichen hat",
+            "Verknüpfen Sie Initiativen mit spezifischen Assessment-Lücken zur Rückverfolgbarkeit",
+            "Überprüfen und reprioritisieren Sie Initiativen vierteljährlich"
           ]
         },
         "roadmap": {
           "name": "Roadmap",
-          "description": "Visual strategic planning for your transformation journey. Organize initiatives into a timeline-based roadmap with phases, dependencies, and resource considerations.",
-          "purpose": "Create a clear, shareable transformation timeline that aligns stakeholders and guides execution over months and years.",
+          "description": "Visuelle strategische Planung für Ihre Transformationsreise. Organisieren Sie Initiativen in einer zeitbasierten Roadmap mit Phasen, Abhängigkeiten und Ressourcenbetrachtung.",
+          "purpose": "Erstellen Sie einen klaren, teilbaren Transformationszeitplan, der Stakeholder ausrichtet und die Ausführung über Monate und Jahre leitet.",
           "keyFeatures": [
-            "Gantt chart and timeline views",
-            "Drag-and-drop initiative scheduling",
-            "Phase management (Quick Wins, Foundation, Advanced)",
-            "Dependency visualization",
-            "Resource capacity planning",
-            "Milestone tracking",
-            "Export for presentations"
+            "Gantt-Chart- und Zeitlinienansichten",
+            "Drag-and-Drop-Initiativenplanung",
+            "Phasenmanagement (Quick Wins, Fundament, Fortgeschritten)",
+            "Abhängigkeitsvisualisierung",
+            "Ressourcenkapazitätsplanung",
+            "Meilensteinverfolgung",
+            "Export für Präsentationen"
           ],
           "workflow": [
-            "Review prioritized initiatives",
-            "Organize initiatives into strategic phases",
-            "Set start dates and durations",
-            "Define dependencies between initiatives",
-            "Assign resources and check capacity",
-            "Set key milestones and review gates",
-            "Share roadmap with stakeholders"
+            "Überprüfen Sie priorisierte Initiativen",
+            "Organisieren Sie Initiativen in strategische Phasen",
+            "Legen Sie Startdaten und Dauern fest",
+            "Definieren Sie Abhängigkeiten zwischen den Initiativen",
+            "Weisen Sie Ressourcen zu und prüfen Sie Kapazitäten",
+            "Legen Sie wichtige Meilensteine und Review-Gates fest",
+            "Teilen Sie die Roadmap mit Stakeholdern"
           ],
           "tips": [
-            "Build in buffer time for unexpected delays",
-            "Start with a 12-18 month horizon",
-            "Use phases to communicate strategic intent",
-            "Review and adjust roadmap monthly"
+            "Planen Sie Pufferzeiten für unerwartete Verzögerungen ein",
+            "Starten Sie mit einem Horizont von 12-18 Monaten",
+            "Nutzen Sie Phasen, um die strategische Absicht zu kommunizieren",
+            "Überprüfen und passen Sie die Roadmap monatlich an"
           ]
         },
         "implementation": {
-          "name": "Implementation",
-          "description": "Execute your transformation initiatives through structured pilot programs and full rollouts. Track progress, manage changes, and ensure successful delivery.",
-          "purpose": "Move from planning to action with disciplined execution, change management, and continuous improvement feedback loops.",
+          "name": "Implementierung",
+          "description": "Führen Sie Ihre Transformationsinitiativen durch strukturierte Pilotprogramme und vollständige Rollouts aus. Verfolgen Sie den Fortschritt, verwalten Sie Änderungen und stellen Sie eine erfolgreiche Bereitstellung sicher.",
+          "purpose": "Übergang von der Planung zur Aktion mit disziplinierter Ausführung, Change Management und kontinuierlichen Verbesserungs-Feedbackschleifen.",
           "keyFeatures": [
-            "Pilot program management",
-            "Stage-gate workflow",
-            "Change request tracking",
-            "Risk and issue management",
-            "Stakeholder communication",
-            "Go/No-go decision support",
-            "Rollout planning and execution",
-            "ADKAR change management"
+            "Management von Pilotprogrammen",
+            "Stage-Gate-Workflow",
+            "Verfolgung von Änderungsanforderungen",
+            "Risiko- und Problemanagement",
+            "Stakeholder-Kommunikation",
+            "Unterstützung für Go/No-go-Entscheidungen",
+            "Rollout-Planung und -Ausführung",
+            "ADKAR-Change-Management"
           ],
           "workflow": [
-            "Select initiatives for pilot",
-            "Define pilot scope and success criteria",
-            "Execute pilot with monitoring",
-            "Collect feedback and lessons learned",
-            "Make Go/No-go decision",
-            "Plan full rollout based on pilot learnings",
-            "Execute rollout with change management",
-            "Transition to operations"
+            "Wählen Sie Initiativen für den Piloten aus",
+            "Definieren Sie Pilotumfang und Erfolgskriterien",
+            "Führen Sie den Piloten mit Überwachung aus",
+            "Sammeln Sie Feedback und gewonnene Erkenntnisse",
+            "Treffen Sie eine Go/No-go-Entscheidung",
+            "Planen Sie den vollständigen Rollout basierend auf den Erkenntnissen des Piloten",
+            "Führen Sie den Rollout mit Change Management durch",
+            "Übergang in den Betrieb"
           ],
           "tips": [
-            "Always pilot before full rollout",
-            "Define clear success metrics upfront",
-            "Engage change champions early",
-            "Document everything for future reference"
+            "Führen Sie immer einen Piloten vor dem vollständigen Rollout durch",
+            "Definieren Sie im Vorfeld klare Erfolgsmetriken",
+            "Binden Sie Change-Champions frühzeitig ein",
+            "Dokumentuj wszystko do przyszłego użycia"
           ]
         }
       },
@@ -2997,84 +3059,84 @@
         "modules": {
           "dashboard": {
             "name": "Dashboard",
-            "description": "Your central command center for monitoring digital transformation progress. The dashboard provides a real-time overview of assessments, initiatives, and key metrics across your organization.",
-            "purpose": "Quickly understand the current state of your transformation journey, identify areas needing attention, and track progress toward strategic goals.",
+            "description": "Ihre zentrale Kommandozentrale zur Überwachung des digitalen Transformationsfortschritts. Das Dashboard bietet einen Echtzeit-Überblick über Assessments, Initiativen und wichtige Kennzahlen in Ihrer gesamten Organisation.",
+            "purpose": "Schnelles Verständnis des aktuellen Status Ihrer Transformationsreise, Identifizierung von Bereichen, die Aufmerksamkeit erfordern, und Verfolgung des Fortschritts in Richtung strategischer Ziele.",
             "keyFeatures": [
-              "Real-time transformation maturity score",
-              "Initiative progress tracking",
-              "Active assessment status",
-              "Recent activity timeline",
-              "Quick access to pending tasks",
-              "Organization-wide metrics overview"
+              "Transformations-Reifegrad-Score in Echtzeit",
+              "Fortschrittsverfolgung von Initiativen",
+              "Status aktiver Assessments",
+              "Timeline der letzten Aktivitäten",
+              "Schneller Zugriff auf anstehende Aufgaben",
+              "Unternehmensweiter Kennzahlen-Überblick"
             ],
             "workflow": [
-              "Review your overall maturity score",
-              "Check for any pending assessments or tasks",
-              "Review recent activity and updates",
-              "Navigate to specific modules from quick links"
+              "Überprüfen Sie Ihren Gesamt-Reifegrad-Score",
+              "Prüfen Sie auf anstehende Assessments oder Aufgaben",
+              "Überprüfen Sie die letzten Aktivitäten und Updates",
+              "Navigieren Sie über Quick-Links zu spezifischen Modulen"
             ],
             "tips": [
-              "Customize widgets to show metrics most relevant to your role",
-              "Set up dashboard notifications for important milestones",
-              "Use the snapshot view for executive presentations"
+              "Passen Sie Widgets an, um die für Ihre Rolle relevantesten Kennzahlen anzuzeigen",
+              "Richten Sie Dashboard-Benachrichtigungen für wichtige Meilensteine ein",
+              "Nutzen Sie die Snapshot-Ansicht für Präsentationen vor der Geschäftsführung"
             ]
           },
           "assessment": {
             "name": "Assessment",
-            "description": "Comprehensive digital maturity assessment using industry-standard frameworks including DRD, SIRI, ADMA, CMMI, and Lean 4.0. Evaluate your organization across multiple dimensions to identify gaps and opportunities.",
-            "purpose": "Objectively measure your current digital maturity level, benchmark against industry standards, and generate actionable insights for improvement.",
+            "description": "Umfassende Bewertung der digitalen Reife unter Verwendung von branchenüblichen Frameworks wie DRD, SIRI, ADMA, CMMI und Lean 4.0. Bewerten Sie Ihre Organisation in mehreren Dimensionen, um Lücken und Chancen zu identifizieren.",
+            "purpose": "Objektive Messung Ihres aktuellen digitalen Reifegrades, Benchmark gegen Branchenstandards und Generierung umsetzbarer Erkenntnisse zur Verbesserung.",
             "keyFeatures": [
-              "Multiple assessment frameworks (DRD, SIRI, ADMA, CMMI, Lean)",
-              "AI-assisted evaluation with evidence tracking",
-              "Gap analysis and heatmaps",
-              "Benchmark comparisons with industry peers",
-              "Automatic report generation",
-              "Multi-axis assessment (Processes, Digital, Data, Culture, etc.)",
-              "Reviewer workflow for quality assurance"
+              "Mehrere Assessment-Frameworks (DRD, SIRI, ADMA, CMMI, Lean)",
+              "KI-assistierte Bewertung mit Nachweisverfolgung",
+              "Gap-Analyse und Heatmaps",
+              "Benchmark-Vergleiche mit Branchenkollegen",
+              "Automatische Berichterstellung",
+              "Mehrdimensionale Bewertung (Prozesse, Digital, Daten, Kultur, etc.)",
+              "Reviewer-Workflow zur Qualitätssicherung"
             ],
             "workflow": [
-              "Select the appropriate assessment framework",
-              "Complete questionnaires for each assessment axis",
-              "Upload evidence documents to support your answers",
-              "AI analyzes responses and generates preliminary scores",
-              "Review and adjust scores with your team",
-              "Submit for reviewer approval if required",
-              "Generate comprehensive assessment report"
+              "Wählen Sie das passende Assessment-Framework",
+              "Füllen Sie Fragebögen für jede Bewertungsachse aus",
+              "Laden Sie Nachweisdokumente hoch, um Ihre Antworten zu stützen",
+              "KI analysiert Antworten und generiert vorläufige Scores",
+              "Überprüfen und passen Sie Scores mit Ihrem Team an",
+              "Reichen Sie diese zur Genehmigung durch einen Reviewer ein, falls erforderlich",
+              "Generieren Sie einen umfassenden Assessment-Bericht"
             ],
             "tips": [
-              "Complete the Context Builder first for more accurate AI recommendations",
-              "Upload real evidence documents for credible assessments",
-              "Use the comparison view to track improvement over time",
-              "Schedule regular re-assessments (quarterly recommended)"
+              "Füllen Sie zuerst den Context Builder aus für genauere KI-Empfehlungen",
+              "Laden Sie echte Nachweisdokumente hoch für glaubwürdige Bewertungen",
+              "Nutzen Sie die Vergleichsansicht, um Verbesserungen im Zeitverlauf zu verfolgen",
+              "Planen Sie regelmäßige Re-Assessments (vierteljährlich empfohlen)"
             ]
           },
           "initiatives": {
-            "name": "Initiatives",
-            "description": "Transform assessment insights into actionable improvement initiatives. Generate, prioritize, and manage transformation projects that address identified gaps and drive organizational improvement.",
-            "purpose": "Bridge the gap between assessment findings and concrete actions by creating structured initiatives with clear ownership, timelines, and expected outcomes.",
+            "name": "Initiativen",
+            "description": "Wandeln Sie Assessment-Erkenntnisse in umsetzbare Verbesserungsinitiativen um. Generieren, priorisieren und verwalten Sie Transformationsprojekte, die identifizierte Lücken adressieren und die organisatorische Verbesserung vorantreiben.",
+            "purpose": "Schließen der Lücke zwischen Assessment-Ergebnissen und konkreten Maßnahmen durch die Erstellung strukturierter Initiativen mit klarer Verantwortlichkeit, Zeitplänen und erwarteten Ergebnissen.",
             "keyFeatures": [
-              "AI-powered initiative generation based on gaps",
-              "Initiative templates library",
-              "Business case builder with ROI estimation",
-              "Priority scoring (impact vs. effort matrix)",
-              "Resource allocation planning",
-              "Initiative dependencies tracking",
-              "Progress monitoring and milestones"
+              "KI-gestützte Initiativenerstellung basierend auf Lücken",
+              "Bibliothek für Initiativen-Vorlagen",
+              "Business Case Builder mit ROI-Schätzung",
+              "Priorisierungsscore (Impact vs. Effort Matrix)",
+              "Ressourcenallokationsplanung",
+              "Verfolgung von Initiativen-Abhängigkeiten",
+              "Fortschrittsüberwachung und Meilensteine"
             ],
             "workflow": [
-              "Review identified gaps from assessments",
-              "Use AI to generate initiative suggestions",
-              "Select and customize initiatives for your context",
-              "Define scope, timeline, and resource requirements",
-              "Assign ownership and team members",
-              "Prioritize using impact/effort scoring",
-              "Add to roadmap for execution planning"
+              "Überprüfen Sie identifizierte Lücken aus Assessments",
+              "Nutzen Sie KI, um Initiativen-Vorschläge zu generieren",
+              "Wählen Sie Initiativen aus und passen Sie diese an Ihren Kontext an",
+              "Definieren Sie Umfang, Zeitrahmen und Ressourcenanforderungen",
+              "Weisen Sie Verantwortlichkeiten und Teammitglieder zu",
+              "Priorisieren Sie mittels Impact/Effort-Scoring",
+              "Fügen Sie diese zur Roadmap für die Ausführungsplanung hinzu"
             ],
             "tips": [
-              "Start with quick wins to build momentum",
-              "Ensure each initiative has a clear owner",
-              "Link initiatives to specific assessment gaps for traceability",
-              "Review and reprioritize initiatives quarterly"
+              "Starten Sie mit Quick Wins, um Dynamik aufzubauen",
+              "Stellen Sie sicher, dass jede Initiative einen klaren Verantwortlichen hat",
+              "Verknüpfen Sie Initiativen mit spezifischen Assessment-Lücken zur Rückverfolgbarkeit",
+              "Überprüfen und reprioritisieren Sie Initiativen vierteljährlich"
             ]
           },
           "roadmap": {
@@ -3223,7 +3285,7 @@
           },
           "settings": {
             "name": "User Settings",
-            "description": "Personalize your Consultify experience. Configure your profile, security, notifications, AI preferences, integrations, and accessibility options.",
+            "description": "Personalize your Consultinity experience. Configure your profile, security, notifications, AI preferences, integrations, and accessibility options.",
             "purpose": "Customize the application to match your work style, security requirements, and communication preferences.",
             "keyFeatures": [
               "Profile management",
@@ -3253,7 +3315,7 @@
           "admin": {
             "name": "Admin Panel",
             "description": "Organization administration center for managing users, projects, AI configuration, knowledge base, and operational metrics. Available to organization administrators.",
-            "purpose": "Manage your organization's Consultify instance, control access, monitor usage, and configure organizational settings.",
+            "purpose": "Manage your organization's Consultinity instance, control access, monitor usage, and configure organizational settings.",
             "keyFeatures": [
               "User management and invitations",
               "Project administration",
@@ -3282,8 +3344,8 @@
           },
           "superadmin": {
             "name": "Super Admin Console",
-            "description": "Platform-wide administration for DBR77 operators. Manage all organizations, users, billing, AI configuration, SSO, security policies, white-labeling, and compliance across the entire Consultify platform.",
-            "purpose": "Full control over the Consultify platform for DBR77 team members to manage multi-tenant operations, enterprise features, and platform health.",
+            "description": "Platform-wide administration for DBR77 operators. Manage all organizations, users, billing, AI configuration, SSO, security policies, white-labeling, and compliance across the entire Consultinity platform.",
+            "purpose": "Full control over the Consultinity platform for DBR77 team members to manage multi-tenant operations, enterprise features, and platform health.",
             "keyFeatures": [
               "Multi-organization management",
               "Global user administration",

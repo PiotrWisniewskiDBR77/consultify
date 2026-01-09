@@ -28,7 +28,7 @@ const AuditExportService = {
         LEFT JOIN users u ON ad.decided_by_user_id = u.id
         WHERE 1=1 `;
 
-        const params = [];
+        const params: (string | number)[] = [];
 
         if (organizationId !== 'SUPERADMIN_BYPASS') {
             sql += ` AND ad.organization_id = ? `;
@@ -80,7 +80,7 @@ const AuditExportService = {
         FROM action_executions
         WHERE 1=1 `;
 
-        const params = [];
+        const params: (string | number)[] = [];
 
         if (organizationId !== 'SUPERADMIN_BYPASS') {
             sql += ` AND organization_id = ? `;

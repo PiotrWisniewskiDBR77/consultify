@@ -75,7 +75,7 @@ export const PromptAssistantPanel: React.FC<PromptAssistantPanelProps> = ({
                     role: 'assistant',
                     content: `👋 **Welcome to Prompt Engineering Assistant!**
 
-I can help you create effective, language-independent prompts for the Consultify platform.
+I can help you create effective, language-independent prompts for the Consultinity platform.
 
 **What I can do:**
 - Analyze your prompts for issues

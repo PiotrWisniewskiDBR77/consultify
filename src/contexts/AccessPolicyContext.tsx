@@ -68,7 +68,7 @@ const AccessPolicyContext = createContext<AccessPolicyContextValue | undefined>(
 // Helper to get auth token from localStorage
 const getAuthToken = (): string | null => {
     try {
-        const stored = localStorage.getItem('consultify-storage');
+        const stored = localStorage.getItem('consultinity-storage');
         if (stored) {
             const parsed = JSON.parse(stored);
             // Token may be stored in user object or separately

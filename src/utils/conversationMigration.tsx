@@ -8,8 +8,8 @@
 import { Api } from '@/services/api';
 import { ChatMessage } from '../types';
 
-const MIGRATION_KEY = 'consultify-conversations-migrated';
-const LEGACY_STORAGE_KEY = 'consultify-storage';
+const MIGRATION_KEY = 'consultinity-conversations-migrated';
+const LEGACY_STORAGE_KEY = 'consultinity-storage';
 
 interface LegacyStoreState {
     state: {

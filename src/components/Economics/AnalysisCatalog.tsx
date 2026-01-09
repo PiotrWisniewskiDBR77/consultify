@@ -197,7 +197,7 @@ export const AnalysisCatalog: React.FC<AnalysisCatalogProps> = ({ onSelect, onCr
                     <StatCard label="W trakcie" value={stats.inProgress} icon={Calendar} color="yellow" />
                     <StatCard
                         label="Średni wynik"
-                        value={`${stats.avgScore.toFixed(1)}/7`}
+                        value={`${(stats.avgScore ?? 0).toFixed(1)}/7`}
                         icon={TrendingUp}
                         color="emerald"
                     />

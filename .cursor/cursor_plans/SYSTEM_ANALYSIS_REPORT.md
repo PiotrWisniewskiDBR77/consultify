@@ -1,4 +1,4 @@
-# Raport Analizy Systemu Consultify
+# Raport Analizy Systemu Consultinity
 
 ## Data: $(date)
 

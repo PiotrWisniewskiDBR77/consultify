@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-const dbPath = path.resolve(__dirname, '../consultify.db');
+const dbPath = path.resolve(__dirname, '../consultinity.db');
 const db = new sqlite3.Database(dbPath);
 
 const ORG_ID = 'org-dbr77-test'; // From previous verification

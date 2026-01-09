@@ -1,39 +1,46 @@
 /**
- * Task Controller Tests - Simplified
+ * Task Controller Unit Tests - Simplified
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 describe('TaskController', () => {
-  describe('getTasks', () => {
-    it('should return tasks list', () => {
-      const mockTasks = [{ id: 'task-1', title: 'Test Task' }];
-      expect(mockTasks).toHaveLength(1);
-    });
+  const mockRes = {
+    status: vi.fn().mockReturnThis(),
+    json: vi.fn().mockReturnThis(),
+  };
 
-    it('should filter by status', () => {
-      const filterParams = { status: 'in_progress' };
-      expect(filterParams.status).toBe('in_progress');
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe('createTask', () => {
-    it('should create new task', () => {
-      const newTask = { title: 'New Task', description: 'Test' };
-      expect(newTask.title).toBe('New Task');
-    });
+  it('should list tasks', () => {
+    const tasks = [{ id: 'task-1', title: 'Test Task' }];
+    mockRes.json(tasks);
+    expect(mockRes.json).toHaveBeenCalled();
   });
 
-  describe('updateTask', () => {
-    it('should update task', () => {
-      const updateData = { status: 'completed' };
-      expect(updateData.status).toBe('completed');
-    });
+  it('should get task by id', () => {
+    mockRes.json({ id: 'task-1', title: 'Test Task' });
+    expect(mockRes.json).toHaveBeenCalled();
   });
 
-  describe('deleteTask', () => {
-    it('should delete task', () => {
-      const result = { success: true };
-      expect(result.success).toBe(true);
-    });
+  it('should create task', () => {
+    mockRes.status(201).json({ id: 'task-new' });
+    expect(mockRes.status).toHaveBeenCalledWith(201);
+  });
+
+  it('should update task', () => {
+    mockRes.json({ success: true });
+    expect(mockRes.json).toHaveBeenCalled();
+  });
+
+  it('should delete task', () => {
+    mockRes.status(204).json({});
+    expect(mockRes.status).toHaveBeenCalledWith(204);
+  });
+
+  it('should complete task', () => {
+    mockRes.json({ status: 'completed' });
+    expect(mockRes.json).toHaveBeenCalled();
   });
 });

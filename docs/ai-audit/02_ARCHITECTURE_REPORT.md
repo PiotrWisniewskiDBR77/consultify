@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary
 
-The architectural audit reveals a world-class, modular AI system designed for complex consulting workflows. The use of a coordinator-agent pattern, a unified capability-based pipeline, and a sophisticated 5-layer memory system positions Consultify as a leader in enterprise AI applications.
+The architectural audit reveals a world-class, modular AI system designed for complex consulting workflows. The use of a coordinator-agent pattern, a unified capability-based pipeline, and a sophisticated 5-layer memory system positions Consultinity as a leader in enterprise AI applications.
 
 ## 2. Modular AI Architecture
 

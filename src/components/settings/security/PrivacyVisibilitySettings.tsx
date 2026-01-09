@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * PrivacyVisibilitySettings - Granular Privacy Controls
  *

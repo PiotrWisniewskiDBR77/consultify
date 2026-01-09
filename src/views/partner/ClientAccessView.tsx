@@ -8,7 +8,6 @@
 import { Link2, MapPin, Plus, Shield, UserCheck, Users, UserX } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
-import { SplitLayout } from '../../components/layout/SplitLayout';
 import { PMODomainBadge } from '../../components/Partner/EcosystemAnalytics';
 import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
 import { useAppStore } from '../../store/useAppStore';
@@ -39,12 +38,8 @@ export const ClientAccessView: React.FC = () => {
     const regions = [...new Set(clients.map((c) => c.region))];
 
     return (
-        <SplitLayout
-            title="Client Access Manager"
-            subtitle="Zarządzaj dostępem klientów i pracowników z PMO compliance"
-            currentView={AppView.PARTNER_CLIENT_ACCESS}
-        >
-            <div className="space-y-6 overflow-y-auto px-6 py-4">
+        <div className="h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
+            <div className="space-y-6 px-6 py-4">
                 {/* Header with PMO Badge */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -223,7 +218,7 @@ export const ClientAccessView: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </SplitLayout>
+        </div>
     );
 };
 

@@ -1,12 +1,12 @@
-# Consultify Kubernetes Ingress
+# Consultinity Kubernetes Ingress
 # Routes external traffic to services
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: consultify-ingress
+  name: consultinity-ingress
   labels:
-    app: consultify
+    app: consultinity
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -26,30 +26,30 @@ metadata:
 spec:
   tls:
     - hosts:
-        - consultify.app
-        - api.consultify.app
-      secretName: consultify-tls
+        - consultinity.app
+        - api.consultinity.app
+      secretName: consultinity-tls
   rules:
     # Frontend
-    - host: consultify.app
+    - host: consultinity.app
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: consultify-frontend
+                name: consultinity-frontend
                 port:
                   number: 80
     # API (subdomain)
-    - host: api.consultify.app
+    - host: api.consultinity.app
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: consultify-api
+                name: consultinity-api
                 port:
                   number: 3001
 ---
@@ -57,10 +57,10 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: consultify-ingress-staging
+  name: consultinity-ingress-staging
   namespace: staging
   labels:
-    app: consultify
+    app: consultinity
     environment: staging
   annotations:
     kubernetes.io/ingress.class: nginx
@@ -69,28 +69,28 @@ metadata:
 spec:
   tls:
     - hosts:
-        - staging.consultify.app
-        - api-staging.consultify.app
-      secretName: consultify-staging-tls
+        - staging.consultinity.app
+        - api-staging.consultinity.app
+      secretName: consultinity-staging-tls
   rules:
-    - host: staging.consultify.app
+    - host: staging.consultinity.app
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: consultify-frontend
+                name: consultinity-frontend
                 port:
                   number: 80
-    - host: api-staging.consultify.app
+    - host: api-staging.consultinity.app
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: consultify-api
+                name: consultinity-api
                 port:
                   number: 3001
 

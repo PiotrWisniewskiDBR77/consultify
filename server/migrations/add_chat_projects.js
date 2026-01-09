@@ -9,7 +9,7 @@ const sqlite3 = require('sqlite3').verbose();
 import path from 'path';
 
 // Use the same database path as the main application
-const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../consultify.db');
+const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../consultinity.db');
 
 async function migrate() {
     const db = new sqlite3.Database(DB_PATH);

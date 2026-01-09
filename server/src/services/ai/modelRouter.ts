@@ -265,7 +265,7 @@ export class ModelRouter {
                   AND p.api_key != ''
                   AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
-                ORDER BY COALESCE(ops.custom_priority, mta.priority), p.priority
+                ORDER BY COALESCE(ops.custom_priority, mta.priority), p.cost_per_1k, p.priority
             `;
             params = [organizationId, tier];
         } else {
@@ -279,7 +279,7 @@ export class ModelRouter {
                   AND p.api_key IS NOT NULL
                   AND p.api_key != ''
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
-                ORDER BY mta.priority, p.priority
+                ORDER BY mta.priority, p.cost_per_1k, p.priority
             `;
             params = [tier];
         }

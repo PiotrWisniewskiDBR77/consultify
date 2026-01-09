@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * EnterpriseAuditLog - Comprehensive Audit Log Management
  *

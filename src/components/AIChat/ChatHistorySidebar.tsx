@@ -1,15 +1,28 @@
 /**
  * ChatHistorySidebar
  *
- * FLOATING overlay sidebar showing conversation history.
+ * FLOATING overlay sidebar showing conversation history AND projects.
  * When closed, completely disappears except for a floating toggle button.
- * Groups: Pinned → Today → Yesterday → This Week → Last Month → Older → Archived
+ * Groups: Projects → Pinned → Today → Yesterday → This Week → Last Month → Older → Archived
  */
 
-import { Archive, ChevronLeft, ChevronRight, PanelLeft, Plus, Search, Star, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import {
+    Archive,
+    ChevronDown,
+    ChevronRight,
+    Folder,
+    FolderPlus,
+    MoreHorizontal,
+    Pencil,
+    Plus,
+    Search,
+    Trash2,
+    X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useChatProjectStore, ChatProject } from '../../store/useChatProjectStore';
 import { Conversation, groupConversations, useConversationStore } from '../../store/useConversationStore';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
@@ -22,6 +35,8 @@ interface ChatHistorySidebarProps {
 
 export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({ projectId, onNewChat, className = '' }) => {
     const { t } = useTranslation();
+    
+    // Conversation store
     const {
         conversations,
         groupedConversations,
@@ -38,10 +53,28 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({ projectI
         clearActiveChat,
     } = useConversationStore();
 
-    // Fetch conversations on mount
+    // Project store
+    const {
+        projects,
+        expandedProjectIds,
+        isLoading: isLoadingProjects,
+        fetchProjects,
+        createProject,
+        deleteProject,
+        toggleProjectExpanded,
+        getConversationsByProjectId,
+    } = useChatProjectStore();
+
+    // Local state
+    const [showNewProjectInput, setShowNewProjectInput] = useState(false);
+    const [newProjectName, setNewProjectName] = useState('');
+    const [projectMenuId, setProjectMenuId] = useState<string | null>(null);
+
+    // Fetch conversations and projects on mount
     useEffect(() => {
         fetchConversations({ projectId });
-    }, [projectId, fetchConversations]);
+        fetchProjects();
+    }, [projectId, fetchConversations, fetchProjects]);
 
     // Filter conversations based on search
     const filteredConversations = searchQuery
@@ -67,6 +100,28 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({ projectI
         clearActiveChat();
         onNewChat();
     };
+
+    // Handle create project
+    const handleCreateProject = useCallback(async () => {
+        if (!newProjectName.trim()) return;
+        try {
+            await createProject({ name: newProjectName.trim() });
+            setNewProjectName('');
+            setShowNewProjectInput(false);
+        } catch (err) {
+            console.error('[ChatHistorySidebar] Failed to create project:', err);
+        }
+    }, [newProjectName, createProject]);
+
+    // Handle delete project
+    const handleDeleteProject = useCallback(async (id: string) => {
+        try {
+            await deleteProject(id);
+            setProjectMenuId(null);
+        } catch (err) {
+            console.error('[ChatHistorySidebar] Failed to delete project:', err);
+        }
+    }, [deleteProject]);
 
     return (
         <>
@@ -123,6 +178,183 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({ projectI
                         placeholder={t('aiChat.searchPlaceholder', 'Search conversations...')}
                     />
                 </div>
+
+                {/* Projects Section */}
+                {!searchQuery && projects.length > 0 && (
+                    <div className="px-3 pb-3 border-b border-slate-200 dark:border-white/5">
+                        <div className="flex items-center justify-between mb-2 px-1">
+                            <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                {t('aiChat.projects', 'Projects')}
+                            </h5>
+                            <button
+                                onClick={() => setShowNewProjectInput(true)}
+                                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded transition-colors"
+                                title={t('aiChat.newProject', 'New Project')}
+                            >
+                                <FolderPlus size={14} />
+                            </button>
+                        </div>
+
+                        {/* New Project Input */}
+                        {showNewProjectInput && (
+                            <div className="mb-2 flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newProjectName}
+                                    onChange={(e) => setNewProjectName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleCreateProject();
+                                        if (e.key === 'Escape') {
+                                            setShowNewProjectInput(false);
+                                            setNewProjectName('');
+                                        }
+                                    }}
+                                    placeholder={t('aiChat.projectName', 'Project name...')}
+                                    className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={handleCreateProject}
+                                    disabled={!newProjectName.trim()}
+                                    className="px-2 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
+                                >
+                                    {t('common.add', 'Add')}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Project List */}
+                        <div className="space-y-0.5">
+                            {projects.map((project) => {
+                                const isExpanded = expandedProjectIds.includes(project.id);
+                                const projectConversations = getConversationsByProjectId(project.id);
+                                
+                                return (
+                                    <div key={project.id}>
+                                        <div
+                                            className="group flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 cursor-pointer transition-colors"
+                                            onClick={() => toggleProjectExpanded(project.id)}
+                                        >
+                                            <button className="shrink-0 text-slate-400">
+                                                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                            </button>
+                                            <Folder 
+                                                size={16} 
+                                                className="shrink-0"
+                                                style={{ color: project.color }}
+                                            />
+                                            <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                                                {project.name}
+                                            </span>
+                                            <span className="text-xs text-slate-400 dark:text-slate-500">
+                                                {project.conversationCount}
+                                            </span>
+                                            <div className="relative">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setProjectMenuId(projectMenuId === project.id ? null : project.id);
+                                                    }}
+                                                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded transition-all"
+                                                >
+                                                    <MoreHorizontal size={14} />
+                                                </button>
+                                                
+                                                {/* Project Menu */}
+                                                {projectMenuId === project.id && (
+                                                    <div className="absolute right-0 top-full mt-1 z-50 w-32 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeleteProject(project.id);
+                                                            }}
+                                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                            {t('common.delete', 'Delete')}
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Project Conversations */}
+                                        {isExpanded && projectConversations.length > 0 && (
+                                            <div className="ml-6 mt-1 space-y-0.5">
+                                                {projectConversations.map((conv) => (
+                                                    <button
+                                                        key={conv.id}
+                                                        onClick={() => {
+                                                            setActiveConversation(conv.id);
+                                                            if (window.innerWidth < 1024) toggleSidebar();
+                                                        }}
+                                                        className={`w-full text-left px-2 py-1.5 rounded-lg text-sm truncate transition-colors ${
+                                                            activeConversationId === conv.id
+                                                                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-900 dark:text-primary-100'
+                                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                                                        }`}
+                                                    >
+                                                        {conv.title || t('aiChat.newConversation', 'New conversation')}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        
+                                        {isExpanded && projectConversations.length === 0 && (
+                                            <div className="ml-6 mt-1 px-2 py-2 text-xs text-slate-400 dark:text-slate-500 italic">
+                                                {t('aiChat.noProjectConversations', 'No conversations in this project')}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Create First Project Section */}
+                {!searchQuery && projects.length === 0 && (
+                    <div className="px-3 pb-3 border-b border-slate-200 dark:border-white/5">
+                        <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 px-1">
+                            {t('aiChat.projects', 'Projects')}
+                        </h5>
+                        
+                        {showNewProjectInput ? (
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newProjectName}
+                                    onChange={(e) => setNewProjectName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleCreateProject();
+                                        if (e.key === 'Escape') {
+                                            setShowNewProjectInput(false);
+                                            setNewProjectName('');
+                                        }
+                                    }}
+                                    placeholder={t('aiChat.projectName', 'Project name...')}
+                                    className="flex-1 px-2 py-1.5 text-sm rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={handleCreateProject}
+                                    disabled={!newProjectName.trim()}
+                                    className="px-2 py-1.5 text-sm bg-primary-600 hover:bg-primary-500 disabled:bg-slate-300 dark:disabled:bg-navy-700 text-white rounded-lg transition-colors"
+                                >
+                                    {t('common.add', 'Add')}
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setShowNewProjectInput(true)}
+                                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 border border-dashed border-slate-300 dark:border-navy-700 rounded-lg hover:border-slate-400 dark:hover:border-navy-600 transition-colors"
+                            >
+                                <FolderPlus size={16} />
+                                {t('aiChat.createProject', 'Create a project')}
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {/* Conversation List */}
                 <div className="flex-1 overflow-y-auto px-3">

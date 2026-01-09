@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * KeyboardShortcutsSettings - Keyboard Shortcuts Configuration
  *

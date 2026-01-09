@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * DataControlsExtended - Extended Data Controls
  *

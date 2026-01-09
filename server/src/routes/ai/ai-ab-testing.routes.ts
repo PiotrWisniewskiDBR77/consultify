@@ -25,9 +25,13 @@ interface ABTestingServiceInterface {
         }>
     >;
     createExperiment?: (data: { createdBy: string;[key: string]: unknown }) => Promise<unknown>;
+    getExperiment?: (id: string) => Promise<unknown>;
     getExperimentStats?: (id: string) => Promise<unknown>;
     startExperiment?: (id: string, userId: string) => Promise<unknown>;
-    stopExperiment?: (id: string, reason: string) => Promise<unknown>;
+    stopExperiment?: (id: string, reason?: string) => Promise<unknown>;
+    pauseExperiment?: (id: string) => Promise<unknown>;
+    resumeExperiment?: (id: string) => Promise<unknown>;
+    archiveExperiment?: (id: string) => Promise<unknown>;
     recordOutcome?: (experimentId: string, userId: string, metric: string, value: unknown) => Promise<void>;
 }
 
@@ -193,6 +197,115 @@ router.post(
             console.error('[AB Testing API] Error stopping experiment:', error);
             return res.status(500).json({
                 error: 'Failed to stop experiment',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
+
+/**
+ * POST /api/ai-ab-testing/experiments/:id/pause
+ * Pause an experiment
+ */
+router.post(
+    '/experiments/:id/pause',
+    verifyToken,
+    requireRole(['super_admin']),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.pauseExperiment) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
+        }
+
+        try {
+            const result = await abTestingService.pauseExperiment(req.params.id);
+            return res.json({ success: true, data: result });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error pausing experiment:', error);
+            return res.status(500).json({
+                error: 'Failed to pause experiment',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
+
+/**
+ * POST /api/ai-ab-testing/experiments/:id/resume
+ * Resume a paused experiment
+ */
+router.post(
+    '/experiments/:id/resume',
+    verifyToken,
+    requireRole(['super_admin']),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.resumeExperiment) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
+        }
+
+        try {
+            const result = await abTestingService.resumeExperiment(req.params.id);
+            return res.json({ success: true, data: result });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error resuming experiment:', error);
+            return res.status(500).json({
+                error: 'Failed to resume experiment',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
+
+/**
+ * POST /api/ai-ab-testing/experiments/:id/archive
+ * Archive an experiment
+ */
+router.post(
+    '/experiments/:id/archive',
+    verifyToken,
+    requireRole(['super_admin']),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.archiveExperiment) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
+        }
+
+        try {
+            const result = await abTestingService.archiveExperiment(req.params.id);
+            return res.json({ success: true, data: result });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error archiving experiment:', error);
+            return res.status(500).json({
+                error: 'Failed to archive experiment',
+                details: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
+
+/**
+ * POST /api/ai-ab-testing/experiments/:id/declare-winner
+ * Declare a winner variant
+ */
+router.post(
+    '/experiments/:id/declare-winner',
+    verifyToken,
+    requireRole(['super_admin']),
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!abTestingService?.stopExperiment) {
+            return res.status(503).json({ error: 'AB Testing service not available' });
+        }
+
+        try {
+            const { winningVariantId } = req.body;
+            if (!winningVariantId) {
+                return res.status(400).json({ error: 'winningVariantId is required' });
+            }
+
+            const result = await abTestingService.stopExperiment(req.params.id, `Winner declared: ${winningVariantId}`);
+            return res.json({ success: true, data: result, winner: winningVariantId });
+        } catch (error: unknown) {
+            console.error('[AB Testing API] Error declaring winner:', error);
+            return res.status(500).json({
+                error: 'Failed to declare winner',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
         }

@@ -11,14 +11,14 @@
 ## Avatar Script
 
 [INTRO - 0:00-0:35]
-"Transformation requires investment, and investments require justification. Return on Investment – ROI – is the language executives and boards understand. In this video, I'll show you how to calculate, track, and communicate ROI for your transformation initiatives using Consultify's reporting tools."
+"Transformation requires investment, and investments require justification. Return on Investment – ROI – is the language executives and boards understand. In this video, I'll show you how to calculate, track, and communicate ROI for your transformation initiatives using Consultinity's reporting tools."
 
 [SECTION 1: Understanding Transformation ROI - 0:35-1:30]
 "ROI measures the return you receive relative to what you invested. The basic formula is simple: ROI equals Net Benefit divided by Cost, expressed as a percentage.
 
 But transformation ROI has nuances. Benefits often take time to materialize. Costs come upfront. Intangible benefits are real but hard to quantify.
 
-Consultify helps you handle these complexities with structured ROI modeling that captures both tangible and intangible value, accounts for timing, and presents results in formats stakeholders trust."
+Consultinity helps you handle these complexities with structured ROI modeling that captures both tangible and intangible value, accounts for timing, and presents results in formats stakeholders trust."
 
 [SECTION 2: Accessing ROI Tools - 1:30-2:15]
 "ROI calculations are available in the Reports module. Click 'ROI Analysis' to access the tools.
@@ -28,7 +28,7 @@ You can analyze ROI at different levels: individual initiative, a group of relat
 Select the scope you want to analyze. For most stakeholder discussions, program-level or phase-level ROI is most meaningful. Individual initiative ROI is useful for prioritization decisions."
 
 [SECTION 3: Defining Benefits - 2:15-3:30]
-"The first step is capturing benefits. Consultify structures benefits into categories:
+"The first step is capturing benefits. Consultinity structures benefits into categories:
 
 Revenue benefits: New revenue streams, increased sales, improved pricing.
 
@@ -56,7 +56,7 @@ Enter actual or estimated costs per initiative. As implementation progresses, up
 Cost timing matters too. Upfront costs hit hard; spread costs are easier to absorb. The model accounts for when costs are incurred."
 
 [SECTION 5: ROI Calculation - 4:30-5:30]
-"With benefits and costs entered, Consultify calculates several ROI metrics:
+"With benefits and costs entered, Consultinity calculates several ROI metrics:
 
 Simple ROI: Net benefit divided by cost. Easy to understand, but doesn't account for timing.
 
@@ -69,7 +69,7 @@ Payback Period: How long until cumulative benefits exceed cumulative costs. Answ
 The ROI dashboard displays all these metrics with visualizations showing benefit and cost flows over time."
 
 [SECTION 6: Scenario Modeling - 5:30-6:15]
-"ROI projections involve uncertainty. Consultify supports scenario analysis.
+"ROI projections involve uncertainty. Consultinity supports scenario analysis.
 
 Create optimistic, baseline, and pessimistic scenarios by adjusting benefit assumptions or confidence levels. See how ROI changes under different conditions.
 
@@ -78,7 +78,7 @@ Sensitivity analysis shows which assumptions most affect ROI. If your ROI depend
 Monte Carlo simulation (available in Enterprise plans) runs thousands of scenarios to provide probability distributions – not just single ROI numbers, but likely ranges."
 
 [SECTION 7: Communicating ROI - 6:15-6:40]
-"Numbers alone aren't compelling. Consultify generates ROI presentations combining metrics with context.
+"Numbers alone aren't compelling. Consultinity generates ROI presentations combining metrics with context.
 
 The executive summary highlights key figures: total investment, total expected return, ROI percentage, payback period. One slide, all key facts.
 

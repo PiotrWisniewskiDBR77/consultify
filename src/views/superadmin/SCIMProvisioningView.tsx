@@ -527,7 +527,7 @@ const SCIMProvisioningView: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h3 className="text-lg font-semibold text-white">Group Mappings</h3>
-                    <p className="text-sm text-gray-400">Map IdP groups to Consultify roles</p>
+                    <p className="text-sm text-gray-400">Map IdP groups to Consultinity roles</p>
                 </div>
                 <button
                     onClick={() => setShowMappingModal(true)}
@@ -611,7 +611,7 @@ const SCIMProvisioningView: React.FC = () => {
                                     onChange={(e) =>
                                         setNewMapping({ ...newMapping, externalGroupName: e.target.value })
                                     }
-                                    placeholder="e.g., Consultify Admins"
+                                    placeholder="e.g., Consultinity Admins"
                                     className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white"
                                 />
                             </div>

@@ -24,7 +24,7 @@ Status: **Production Ready**
 
 ## Overview
 
-ConsultifyAI is an enterprise-grade AI assistant system designed for project management and consulting workflows. The system implements:
+ConsultinityAI is an enterprise-grade AI assistant system designed for project management and consulting workflows. The system implements:
 
 - **4-Layer Memory System**: Session, Project, Organization, and User preferences
 - **Multi-Provider LLM Support**: OpenAI, Anthropic, Google, with automatic failover

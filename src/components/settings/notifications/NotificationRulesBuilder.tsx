@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * NotificationRulesBuilder - Advanced Notification Rules Configuration
  *

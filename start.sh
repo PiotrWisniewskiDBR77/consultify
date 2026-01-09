@@ -1,11 +1,11 @@
 #!/bin/bash
-# Consultify Local Startup Script
+# Consultinity Local Startup Script
 # This script prepares and starts the application for local development
 
 set -e  # Exit on error
 
 echo "=========================================="
-echo "Consultify - Local Startup"
+echo "Consultinity - Local Startup"
 echo "=========================================="
 
 # Check if npm is installed
@@ -27,12 +27,12 @@ if [ ! -f ".env.local" ] && [ ! -f ".env" ]; then
     echo "⚠️  Warning: No .env.local or .env file found!"
     echo "Creating .env.local from template..."
     echo ""
-    echo "# Consultify Environment Variables" > .env.local
+    echo "# Consultinity Environment Variables" > .env.local
     echo "NODE_ENV=development" >> .env.local
     echo "PORT=3005" >> .env.local
     echo "FRONTEND_URL=http://localhost:3000" >> .env.local
     echo "DB_TYPE=sqlite" >> .env.local
-    echo "SQLITE_PATH=./server/consultify.db" >> .env.local
+    echo "SQLITE_PATH=./server/consultinity.db" >> .env.local
     echo "REDIS_URL=redis://localhost:6379" >> .env.local
     echo "MOCK_REDIS=false" >> .env.local
     echo "JWT_SECRET=supersecretkey_change_this_in_production" >> .env.local
@@ -99,7 +99,7 @@ fi
 # Start application
 echo ""
 echo "=========================================="
-echo "🚀 Starting Consultify..."
+echo "🚀 Starting Consultinity..."
 echo "=========================================="
 echo ""
 echo "Frontend will be available at: http://localhost:3000"

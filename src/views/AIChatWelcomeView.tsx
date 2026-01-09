@@ -68,8 +68,7 @@ export const AIChatWelcomeView: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // App state
-    const { currentUser, currentProjectId, activeChatMessages, addChatMessage, clearChat, setChatSlidingPanelOpen } =
-        useAppStore();
+    const { currentUser, currentProjectId, activeChatMessages, addChatMessage, clearChat } = useAppStore();
     const { projectName } = usePMOStore();
 
     // Derived state for compatibility
@@ -83,6 +82,7 @@ export const AIChatWelcomeView: React.FC = () => {
         activeConversationId,
         activeMessages,
         isSidebarOpen,
+        toggleSidebar,
         createConversation,
         addMessage,
         updateLastMessage,
@@ -586,7 +586,7 @@ For example: REMEMBER: preferred_language: Polish`;
                     <div className="shrink-0 h-14 border-b border-slate-200 dark:border-white/5 flex items-center px-4 justify-between bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm z-10">
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => setChatSlidingPanelOpen(true)}
+                                onClick={() => toggleSidebar()}
                                 className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
                                 title={t('aiChat.openSidebar', 'Open Sidebar')}
                             >
@@ -810,7 +810,7 @@ For example: REMEMBER: preferred_language: Polish`;
                 <div className="shrink-0 h-14 flex items-center px-4 justify-between absolute top-0 left-0 right-0 z-10">
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setChatSlidingPanelOpen(true)}
+                            onClick={() => toggleSidebar()}
                             className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
                             title={t('aiChat.openSidebar', 'Open Sidebar')}
                         >

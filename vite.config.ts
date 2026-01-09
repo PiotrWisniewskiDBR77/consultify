@@ -42,11 +42,15 @@ export default defineConfig(({ mode }) => {
                 'date-fns',
                 'clsx',
                 'tailwind-merge',
+                // React Flow and its dependencies need to be pre-bundled
+                'reactflow',
+                'use-sync-external-store',
+                'use-sync-external-store/shim',
+                'use-sync-external-store/shim/with-selector',
             ],
             exclude: [
                 // Large libs that should be lazy loaded
                 'mermaid',
-                'reactflow',
                 '@tiptap/react',
                 'jspdf',
                 'xlsx',

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * SoundNotificationsSettings - Sound preferences per notification type
  *

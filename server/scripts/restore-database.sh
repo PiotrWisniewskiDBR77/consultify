@@ -5,7 +5,7 @@
 set -e
 
 BACKUP_DIR="server/backups"
-DB_PATH="server/consultify.db"
+DB_PATH="server/consultinity.db"
 SAFETY_BACKUP="${DB_PATH}.pre-restore-$(date +%Y%m%d_%H%M%S)"
 
 # Colors
@@ -19,7 +19,7 @@ echo ""
 
 # List available backups
 echo -e "${YELLOW}Available backups:${NC}"
-BACKUPS=($(find "${BACKUP_DIR}" -name "consultify_*.db.gz" -type f | sort -r))
+BACKUPS=($(find "${BACKUP_DIR}" -name "consultinity_*.db.gz" -type f | sort -r))
 
 if [ ${#BACKUPS[@]} -eq 0 ]; then
     echo -e "${RED}[Restore] No backups found in ${BACKUP_DIR}${NC}"
@@ -61,7 +61,7 @@ if [ -f "${DB_PATH}" ]; then
 fi
 
 # Decompress backup
-TEMP_BACKUP="/tmp/consultify_restore_$$.db"
+TEMP_BACKUP="/tmp/consultinity_restore_$$.db"
 echo -e "${YELLOW}[Restore] Decompressing backup...${NC}"
 gunzip -c "${SELECTED_BACKUP}" > "${TEMP_BACKUP}"
 

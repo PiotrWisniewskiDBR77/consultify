@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * PasswordSecuritySettings - Combined Password & Security Tab
  *

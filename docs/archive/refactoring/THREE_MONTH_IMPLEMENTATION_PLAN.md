@@ -310,4 +310,4 @@
 **Budget:** $30,000 (internal resources)
 **ROI:** Enterprise-grade testing infrastructure
 
-*Ten plan zapewnia systematyczną transformację systemu testów Consultify do poziomu złotego standardu enterprise testing w ciągu 3 miesięcy.*
+*Ten plan zapewnia systematyczną transformację systemu testów Consultinity do poziomu złotego standardu enterprise testing w ciągu 3 miesięcy.*

@@ -12,7 +12,7 @@ describe('EntryTopBar Component', () => {
     it('renders top bar', () => {
         render(<EntryTopBar />);
 
-        expect(screen.getByText(/Consultify/i) || screen.getByRole('banner')).toBeInTheDocument();
+        expect(screen.getByText(/Consultinity/i) || screen.getByRole('banner')).toBeInTheDocument();
     });
 
     it('displays login button', () => {

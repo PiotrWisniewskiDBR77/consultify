@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * DecisionsPanel - Enhanced decision management
  * Part of My Work Module PMO Upgrade

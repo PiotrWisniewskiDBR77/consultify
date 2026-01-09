@@ -71,39 +71,42 @@ const createAnnouncer = () => {
     let announcements = [];
     let element = null;
 
+    const init = (el) => {
+        element = el;
+        if (element) {
+            element.setAttribute('role', 'status');
+            element.setAttribute('aria-live', 'polite');
+            element.setAttribute('aria-atomic', 'true');
+        }
+    };
+
+    const announce = (message, priority = 'polite') => {
+        announcements.push({ message, priority, timestamp: Date.now() });
+
+        if (element) {
+            element.setAttribute('aria-live', priority);
+            element.textContent = message;
+        }
+
+        return message;
+    };
+
+    const announceAssertive = (message) => {
+        return announce(message, 'assertive');
+    };
+
+    const clear = () => {
+        if (element) {
+            element.textContent = '';
+        }
+    };
+
     return {
-        init: (el) => {
-            element = el;
-            if (element) {
-                element.setAttribute('role', 'status');
-                element.setAttribute('aria-live', 'polite');
-                element.setAttribute('aria-atomic', 'true');
-            }
-        },
-
-        announce: (message, priority = 'polite') => {
-            announcements.push({ message, priority, timestamp: Date.now() });
-
-            if (element) {
-                element.setAttribute('aria-live', priority);
-                element.textContent = message;
-            }
-
-            return message;
-        },
-
-        announceAssertive: (message) => {
-            return this.announce(message, 'assertive');
-        },
-
-        clear: () => {
-            if (element) {
-                element.textContent = '';
-            }
-        },
-
+        init,
+        announce,
+        announceAssertive,
+        clear,
         getAnnouncements: () => [...announcements],
-
         getLastAnnouncement: () => announcements[announcements.length - 1],
     };
 };
@@ -228,39 +231,39 @@ const createContrastChecker = () => {
         } : null;
     };
 
-    return {
-        getContrastRatio: (color1, color2) => {
-            const rgb1 = typeof color1 === 'string' ? hexToRgb(color1) : color1;
-            const rgb2 = typeof color2 === 'string' ? hexToRgb(color2) : color2;
+    const getContrastRatio = (color1, color2) => {
+        const rgb1 = typeof color1 === 'string' ? hexToRgb(color1) : color1;
+        const rgb2 = typeof color2 === 'string' ? hexToRgb(color2) : color2;
 
-            const l1 = getLuminance(rgb1.r, rgb1.g, rgb1.b);
-            const l2 = getLuminance(rgb2.r, rgb2.g, rgb2.b);
+        const l1 = getLuminance(rgb1.r, rgb1.g, rgb1.b);
+        const l2 = getLuminance(rgb2.r, rgb2.g, rgb2.b);
 
-            const lighter = Math.max(l1, l2);
-            const darker = Math.min(l1, l2);
+        const lighter = Math.max(l1, l2);
+        const darker = Math.min(l1, l2);
 
-            return (lighter + 0.05) / (darker + 0.05);
-        },
-
-        meetsWCAG: (color1, color2, level = 'AA', size = 'normal') => {
-            const ratio = this.getContrastRatio(color1, color2);
-
-            if (level === 'AAA') {
-                return size === 'large' ? ratio >= 4.5 : ratio >= 7;
-            }
-            // AA
-            return size === 'large' ? ratio >= 3 : ratio >= 4.5;
-        },
-
-        findAccessibleColor: (background, targetColors) => {
-            for (const color of targetColors) {
-                if (this.meetsWCAG(background, color)) {
-                    return color;
-                }
-            }
-            return null;
-        },
+        return (lighter + 0.05) / (darker + 0.05);
     };
+
+    const meetsWCAG = (color1, color2, level = 'AA', size = 'normal') => {
+        const ratio = getContrastRatio(color1, color2);
+
+        if (level === 'AAA') {
+            return size === 'large' ? ratio >= 4.5 : ratio >= 7;
+        }
+        // AA
+        return size === 'large' ? ratio >= 3 : ratio >= 4.5;
+    };
+
+    const findAccessibleColor = (background, targetColors) => {
+        for (const color of targetColors) {
+            if (meetsWCAG(background, color)) {
+                return color;
+            }
+        }
+        return null;
+    };
+
+    return { getContrastRatio, meetsWCAG, findAccessibleColor };
 };
 
 describe('Focus Trap Tests', () => {

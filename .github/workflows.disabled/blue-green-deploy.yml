@@ -11,7 +11,7 @@ on:
                 required: true
                 type: choice
                 options:
-                    - consultify
+                    - consultinity
                     - new-app
             environment:
                 description: 'Environment'

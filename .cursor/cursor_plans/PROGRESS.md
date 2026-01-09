@@ -1,4 +1,4 @@
-# Consultify — Test Coverage Progress
+# Consultinity — Test Coverage Progress
 
 ## How to Update
 - After each milestone, run `npm run test:coverage`.

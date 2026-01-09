@@ -1,6 +1,6 @@
 -- Migration: 044_multi_framework_audit
 -- Description: Audit trail for multi-framework assessments
--- Author: Consultify Enterprise
+-- Author: Consultinity Enterprise
 -- Date: 2024-12-28
 
 -- ============================================
@@ -285,6 +285,8 @@ COMMENT ON TABLE multi_framework_audit_log IS 'Complete audit trail for all mult
 COMMENT ON TABLE multi_framework_audit_actions IS 'Definitions of auditable actions with severity levels';
 COMMENT ON TABLE multi_framework_audit_retention IS 'Retention policies for different audit categories';
 COMMENT ON FUNCTION log_mf_audit IS 'Helper function to log audit entries with automatic diff calculation';
+
+
 
 
 

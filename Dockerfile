@@ -1,4 +1,4 @@
-# Consultify Multi-stage Dockerfile
+# Consultinity Multi-stage Dockerfile
 # Production-optimized build with security best practices
 
 # ==========================================

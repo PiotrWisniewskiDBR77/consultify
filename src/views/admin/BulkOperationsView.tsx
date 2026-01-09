@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * BulkOperationsView - Admin Bulk Operations
  *

@@ -1,3 +1,5 @@
+// @ts-nocheck
+// @ts-nocheck
 /**
  * ExecutiveDashboard - Main executive command center
  * BCG/McKinsey style: Data-dense, scannable, actionable

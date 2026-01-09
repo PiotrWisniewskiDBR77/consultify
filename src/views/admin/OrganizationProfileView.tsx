@@ -786,7 +786,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                                         <div className="flex justify-between mt-1">
                                             <span className="text-slate-500">Value:</span>
                                             <span className="text-slate-900 dark:text-white">
-                                                custom.consultify.app
+                                                custom.consultinity.app
                                             </span>
                                         </div>
                                     </div>

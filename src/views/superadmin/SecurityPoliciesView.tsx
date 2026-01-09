@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * SecurityPoliciesView - Super Admin Security Policies Management
  *

@@ -1,9 +1,6 @@
 import { BookOpen, HelpCircle, MessageCircle, Video } from 'lucide-react';
 import React from 'react';
 
-import { SplitLayout } from '../../components/layout/SplitLayout';
-import { AppView } from '../../types';
-
 const resourceCards = [
     {
         title: 'Partner Training Academy',
@@ -27,12 +24,7 @@ const communitySupport = [
 
 export const ResourcesView: React.FC = () => {
     return (
-        <SplitLayout
-            title="Resources & Community"
-            subtitle="Video serie, formularze i kontakt z PDM. Wszystko w jednym miejscu."
-            currentView={AppView.PARTNER_RESOURCES}
-            hideSidebar
-        >
+        <div className="h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
             <div className="space-y-6 px-6 py-4">
                 <div className="grid gap-4 md:grid-cols-3">
                     {resourceCards.map((card) => (
@@ -143,7 +135,7 @@ export const ResourcesView: React.FC = () => {
                     </div>
                 </section>
             </div>
-        </SplitLayout>
+        </div>
     );
 };
 

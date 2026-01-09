@@ -389,7 +389,7 @@
             
             {{#unless branding.hidePoweredBy}}
             <div class="powered-by">
-                <p>Powered by <a href="https://consultify.ai">Consultify</a> - Enterprise PMO Platform</p>
+                <p>Powered by <a href="https://consultinity.ai">Consultinity</a> - Enterprise PMO Platform</p>
             </div>
             {{/unless}}
         </div>

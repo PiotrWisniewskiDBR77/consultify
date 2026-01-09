@@ -1,6 +1,6 @@
 # Billing Integration Guide
 
-This guide covers how to set up and integrate the Consultify billing system with Stripe for production use.
+This guide covers how to set up and integrate the Consultinity billing system with Stripe for production use.
 
 ## Table of Contents
 
@@ -38,15 +38,15 @@ SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
 SMTP_USER=apikey
 SMTP_PASS=SG.xxx
-SMTP_FROM="Consultify Billing" <billing@consultify.app>
+SMTP_FROM="Consultinity Billing" <billing@consultinity.app>
 
 # Optional: Redis for Email Queue
 REDIS_URL=redis://localhost:6379
 
 # Application URLs
-APP_URL=https://app.consultify.app
-COMPANY_NAME=Consultify
-COMPANY_EMAIL=billing@consultify.app
+APP_URL=https://app.consultinity.app
+COMPANY_NAME=Consultinity
+COMPANY_EMAIL=billing@consultinity.app
 ```
 
 ### Configuration in Database
@@ -74,7 +74,7 @@ In your Stripe Dashboard or via API:
 ```javascript
 // Example: Create a product and price
 const product = await stripe.products.create({
-    name: 'Consultify Pro',
+    name: 'Consultinity Pro',
     description: 'Professional plan with unlimited projects'
 });
 
@@ -331,5 +331,5 @@ DEBUG=billing:*
 
 For additional support:
 - Stripe Documentation: https://stripe.com/docs
-- Consultify Support: support@consultify.app
+- Consultinity Support: support@consultinity.app
 

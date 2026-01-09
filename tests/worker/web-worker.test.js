@@ -267,6 +267,9 @@ describe('Worker Pool Tests', () => {
         resolveTask('done');
         await promise;
 
+        // Wait for .finally() to execute
+        await new Promise(r => setTimeout(r, 0));
+
         expect(pool.getActiveCount()).toBe(0);
     });
 

@@ -5,7 +5,7 @@ const options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'Consultify API',
+            title: 'Consultinity API',
             version: '1.0.0',
             description: 'Enterprise SaaS API Documentation',
         },

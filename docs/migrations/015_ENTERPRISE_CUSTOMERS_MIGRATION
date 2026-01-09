@@ -2,7 +2,7 @@
 
 ## Overview
 
-This migration adds comprehensive enterprise-level customer management features to the Consultify platform, including extended organization and user management, security features, support systems, analytics, compliance, automation, and communication tools.
+This migration adds comprehensive enterprise-level customer management features to the Consultinity platform, including extended organization and user management, security features, support systems, analytics, compliance, automation, and communication tools.
 
 ## Migration Script
 
@@ -73,7 +73,7 @@ The migration is automatically applied when the database is initialized via `ser
 ### PostgreSQL
 Run the migration script manually:
 ```bash
-psql -d consultify -f server/migrations/015_enterprise_customers_module.sql
+psql -d consultinity -f server/migrations/015_enterprise_customers_module.sql
 ```
 
 ## Seed Data

@@ -16,7 +16,7 @@ const require = createRequire(import.meta.url);
 
 const sqlite3 = require('sqlite3').verbose();
 
-const DB_PATH = path.join(__dirname, '..', 'consultify.db');
+const DB_PATH = path.join(__dirname, '..', 'consultinity.db');
 const db = new sqlite3.Database(DB_PATH);
 
 // Helper to run SQL

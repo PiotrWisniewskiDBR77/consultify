@@ -7,7 +7,7 @@
 - Matrix strategy dla testów
 - Blue-green deployment strategy
 - Shared modules pipeline
-- Podział na aplikacje (consultify/new-app)
+- Podział na aplikacje (consultinity/new-app)
 
 ## 🚀 Rekomendacje Priorytetowe
 
@@ -48,11 +48,11 @@
 **Rozwiązanie**:
 ```yaml
 # W monorepo-ci.yml, zmień dependencies:
-consultify-lint:
+consultinity-lint:
   needs: [detect-changes, build-shared]  # ✅ OK
 
-consultify-test:
-  needs: [detect-changes, build-shared]  # ⚠️ Może być równolegle z consultify-lint
+consultinity-test:
+  needs: [detect-changes, build-shared]  # ⚠️ Może być równolegle z consultinity-lint
   # Zmień na:
   needs: [build-shared]  # Lint nie blokuje testów
 ```
@@ -85,7 +85,7 @@ e2e-tests:
 aggregate-test-results:
   name: Aggregate Test Results
   runs-on: ubuntu-latest
-  needs: [consultify-test, new-app-test]
+  needs: [consultinity-test, new-app-test]
   if: always()
   steps:
     - name: Download all test results
@@ -207,14 +207,14 @@ updates:
 # Dodaj kompresję przed upload:
 - name: Compress artifacts
   run: |
-    tar -czf consultify-build.tar.gz apps/consultify/frontend/dist apps/consultify/backend/dist
-    ls -lh consultify-build.tar.gz
+    tar -czf consultinity-build.tar.gz apps/consultinity/frontend/dist apps/consultinity/backend/dist
+    ls -lh consultinity-build.tar.gz
 
 - name: Upload Build Artifacts
   uses: actions/upload-artifact@v4
   with:
-    name: consultify-build
-    path: consultify-build.tar.gz
+    name: consultinity-build
+    path: consultinity-build.tar.gz
     compression-level: 9
 ```
 
@@ -294,7 +294,7 @@ on:
         required: true
         type: choice
         options:
-          - consultify
+          - consultinity
           - new-app
       environment:
         description: 'Environment'
@@ -491,6 +491,8 @@ monitor-deployment:
 5. Zoptymalizuj parallel execution (1h)
 
 **Total**: ~7 godzin pracy dla najważniejszych ulepszeń
+
+
 
 
 

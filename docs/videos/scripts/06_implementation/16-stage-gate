@@ -11,7 +11,7 @@
 ## Avatar Script
 
 [INTRO - 0:00-0:30]
-"How do you ensure transformation initiatives stay on track and meet quality standards? The Stage-Gate process provides structured checkpoints throughout implementation. In this video, I'll explain how Stage-Gates work in Consultify and why they're essential for successful transformation governance."
+"How do you ensure transformation initiatives stay on track and meet quality standards? The Stage-Gate process provides structured checkpoints throughout implementation. In this video, I'll explain how Stage-Gates work in Consultinity and why they're essential for successful transformation governance."
 
 [SECTION 1: What is Stage-Gate? - 0:30-1:30]
 "Stage-Gate is a project management approach that divides implementation into distinct stages, separated by decision points called gates.
@@ -22,8 +22,8 @@ A gate is a formal review where stakeholders assess progress, evaluate deliverab
 
 Stage-Gate provides governance without micromanagement. Between gates, teams have autonomy. At gates, there's accountability."
 
-[SECTION 2: Consultify's Stage-Gate Framework - 1:30-2:30]
-"Consultify implements a configurable Stage-Gate framework. The default stages are:
+[SECTION 2: Consultinity's Stage-Gate Framework - 1:30-2:30]
+"Consultinity implements a configurable Stage-Gate framework. The default stages are:
 
 Stage 1: Initiation – confirming scope, resources, and approach.
 Stage 2: Design – detailed solution design and planning.
@@ -43,7 +43,7 @@ For example, the Gate 3 review (after Build) might require: working functionalit
 
 Gates also have deliverable checklists. You can see which items are complete, in progress, or missing.
 
-In Consultify, the initiative dashboard shows gate readiness. A green checkmark means all criteria are met. Yellow means in progress. Red means missing requirements.
+In Consultinity, the initiative dashboard shows gate readiness. A green checkmark means all criteria are met. Yellow means in progress. Red means missing requirements.
 
 Gate reviews shouldn't be surprises. The system provides early warning if you're approaching a gate without meeting criteria."
 
@@ -56,7 +56,7 @@ The review can happen synchronously – a meeting where reviewers assess the ini
 
 Reviewers evaluate: Are deliverables complete and acceptable? Are success metrics on track? Are risks under control? Is the team ready for the next stage?
 
-Each reviewer records their assessment in Consultify. Approvals, conditional approvals, or rejections are captured with comments."
+Each reviewer records their assessment in Consultinity. Approvals, conditional approvals, or rejections are captured with comments."
 
 [SECTION 5: Gate Decisions - 4:30-5:30]
 "Gate reviews result in one of four outcomes:

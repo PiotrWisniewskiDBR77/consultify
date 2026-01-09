@@ -1,7 +1,7 @@
 /**
  * Enterprise System Module Components
  *
- * Comprehensive system administration components for the Consultify platform.
+ * Comprehensive system administration components for the Consultinity platform.
  */
 
 export { EnterpriseAnalyticsPanel } from './EnterpriseAnalyticsPanel';

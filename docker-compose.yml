@@ -1,4 +1,4 @@
-# Consultify Docker Compose
+# Consultinity Docker Compose
 # Local development and testing environment
 
 version: '3.9'
@@ -23,7 +23,7 @@ services:
     depends_on:
       - api
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # API Server
@@ -38,7 +38,7 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3001
-      - DATABASE_URL=postgresql://consultify:consultify@postgres:5432/consultify
+      - DATABASE_URL=postgresql://consultinity:consultinity@postgres:5432/consultinity
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=dev-jwt-secret-change-in-production
       - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -55,7 +55,7 @@ services:
       retries: 3
       start_period: 30s
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # PostgreSQL Database
@@ -65,19 +65,19 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=consultify
-      - POSTGRES_PASSWORD=consultify
-      - POSTGRES_DB=consultify
+      - POSTGRES_USER=consultinity
+      - POSTGRES_PASSWORD=consultinity
+      - POSTGRES_DB=consultinity
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U consultify"]
+      test: ["CMD-SHELL", "pg_isready -U consultinity"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # Redis Cache
@@ -95,7 +95,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # Prometheus (Metrics)
@@ -112,7 +112,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # Grafana (Dashboards)
@@ -131,13 +131,13 @@ services:
     depends_on:
       - prometheus
     networks:
-      - consultify-network
+      - consultinity-network
 
 # ==========================================
 # Networks
 # ==========================================
 networks:
-  consultify-network:
+  consultinity-network:
     driver: bridge
 
 # ==========================================

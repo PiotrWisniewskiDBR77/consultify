@@ -172,7 +172,7 @@ async function seedEnterpriseCustomers() {
         // 10. Email Templates
         console.log('  📧 Seeding email templates...');
         const templates = [
-            { key: 'welcome', name: 'Welcome Email', subject: 'Welcome to Consultify', category: 'onboarding' },
+            { key: 'welcome', name: 'Welcome Email', subject: 'Welcome to Consultinity', category: 'onboarding' },
             { key: 'password_reset', name: 'Password Reset', subject: 'Reset Your Password', category: 'security' }
         ];
         for (const template of templates) {

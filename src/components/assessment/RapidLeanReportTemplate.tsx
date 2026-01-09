@@ -356,7 +356,7 @@ export const RapidLeanReportTemplate: React.FC<RapidLeanReportTemplateProps> = (
 
             {/* Footer */}
             <footer className="p-8 text-center text-sm text-gray-500 dark:text-gray-400 print:p-6">
-                <p>RapidLean Assessment Report | DBR77 Format | © {new Date().getFullYear()} Consultify</p>
+                <p>RapidLean Assessment Report | DBR77 Format | © {new Date().getFullYear()} Consultinity</p>
                 <p className="mt-1">Report ID: {reportData.id.substring(0, 8)}</p>
             </footer>
         </div>

@@ -1,13 +1,13 @@
-# Consultify Architecture Guide
+# Consultinity Architecture Guide
 
 ## Overview
 
-Consultify follows a feature-based (domain-driven) architecture for both frontend and backend, enabling scalability, maintainability, and team autonomy.
+Consultinity follows a feature-based (domain-driven) architecture for both frontend and backend, enabling scalability, maintainability, and team autonomy.
 
 ## Project Structure
 
 ```
-consultify/
+consultinity/
 ├── src/                          # Frontend source
 │   ├── components/               # UI components
 │   │   ├── ui/                   # Primitive UI components (Button, Card, etc.)
@@ -152,5 +152,7 @@ npm run test:component
 npm run test:integration
 npm run test:e2e
 ```
+
+
 
 

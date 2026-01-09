@@ -8,12 +8,14 @@ export interface AuthSlice {
     sessionMode: SessionMode;
     authInitialStep: AuthStep;
     currentOrganization: { id: string; name: string } | null;
+    isAuthInitializing: boolean; // Prevents form remount during auth check
 
     // Actions
     setCurrentUser: (user: User | null) => void;
     setSessionMode: (mode: SessionMode) => void;
     setAuthInitialStep: (step: AuthStep) => void;
     setCurrentOrganization: (org: { id: string; name: string } | null) => void;
+    setAuthInitializing: (value: boolean) => void;
     logout: () => void;
 }
 
@@ -22,14 +24,37 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
     sessionMode: SessionMode.FREE,
     authInitialStep: AuthStep.REGISTER,
     currentOrganization: null,
+    isAuthInitializing: true, // Start as true, will be set to false after initial auth check
 
     setCurrentUser: (user) => set({ currentUser: user }),
     setSessionMode: (mode) => set({ sessionMode: mode }),
     setAuthInitialStep: (step) => set({ authInitialStep: step }),
     setCurrentOrganization: (org) => set({ currentOrganization: org }),
+    setAuthInitializing: (value) => set({ isAuthInitializing: value }),
 
-    logout: () =>
-        set((state) => ({
+    logout: () => {
+        // Get token BEFORE removing it (for API logout call)
+        const token = localStorage.getItem('token');
+        
+        // Clear ALL auth-related localStorage items
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('consultinity-storage');
+        
+        // Call API logout (fire and forget)
+        if (token) {
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).catch(() => {}); // Ignore errors
+        }
+        
+        // Force page refresh to clear all state
+        window.location.href = '/';
+        
+        return set((state) => ({
             // Auth Reset
             currentUser: null,
             currentOrganization: null,
@@ -84,5 +109,6 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
                 step4Completed: false,
                 step5Completed: false,
             },
-        })),
+        }));
+    },
 });

@@ -49,5 +49,5 @@
 4. **Restart** services.
 
 ## 5. Contact List
-- **Infrastructure Lead:** infra@consultify.com
+- **Infrastructure Lead:** infra@consultinity.com
 - **CTO:** cto@dbr77.com

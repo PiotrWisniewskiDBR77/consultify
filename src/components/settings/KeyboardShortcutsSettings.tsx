@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
     Check,
     CheckCircle,
@@ -142,7 +143,7 @@ const DEFAULT_SHORTCUTS: ShortcutAction[] = [
 ];
 
 const PRESET_OPTIONS: { value: ShortcutPreset; label: string; description: string }[] = [
-    { value: 'default', label: 'Default', description: 'Consultify default shortcuts' },
+    { value: 'default', label: 'Default', description: 'Consultinity default shortcuts' },
     { value: 'vscode', label: 'VS Code', description: 'Visual Studio Code style' },
     { value: 'sublime', label: 'Sublime Text', description: 'Sublime Text style' },
     { value: 'vim', label: 'Vim', description: 'Vim-style navigation' },

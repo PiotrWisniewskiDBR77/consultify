@@ -153,6 +153,55 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // --------------------------------------------------------
+// Global Mock for AIContext
+// --------------------------------------------------------
+const mockAIContext = {
+    isChatOpen: false,
+    toggleChat: vi.fn(),
+    openChat: vi.fn(),
+    screenContext: null,
+    setScreenContext: vi.fn(),
+    globalContext: {},
+    pmoContext: {
+        organizationId: null,
+        projectId: null,
+        currentPhase: 'planning',
+        currentScreen: 'dashboard',
+        userRole: 'user',
+        selectedObject: { type: null, id: null },
+        aiRole: 'ADVISOR' as const,
+    },
+    triggerProjectSummary: vi.fn(),
+    autoSummaryEnabled: false,
+    setAutoSummaryEnabled: vi.fn(),
+    assessmentContext: {
+        isInAssessmentMode: false,
+        currentAxis: null,
+        currentScore: null,
+        targetScore: null,
+        justification: null,
+        completedAxes: [],
+        assessmentProgress: 0,
+    },
+    updateAssessmentContext: vi.fn(),
+    clearAssessmentContext: vi.fn(),
+    requestAssessmentGuidance: vi.fn(),
+    requestGapAnalysis: vi.fn(),
+    workspaceContext: null,
+    chatDisplayMode: 'floating' as const,
+    isInSplitMode: false,
+};
+
+vi.mock('@/contexts/AIContext', () => ({
+    AIContext: {
+        Provider: ({ children }: any) => children,
+        Consumer: ({ children }: any) => children(mockAIContext),
+    },
+    AIProvider: ({ children }: any) => children,
+    useAIContext: () => mockAIContext,
+}));
+
+// --------------------------------------------------------
 // Global Database Mock (SQLite-compatible)
 // --------------------------------------------------------
 // We define this on global so server/database.js picks it up.
@@ -511,11 +560,169 @@ vi.mock('../server/src/middleware/auth.middleware.js', async (importOriginal) =>
     };
 });
 
-// Global mock for Api service disabled
-/*
- */
+// Global mock for Api service - comprehensive mock for component tests
+vi.mock('@/services/api', () => ({
+    Api: {
+        // Dashboard & Overview
+        getDashboardData: vi.fn().mockResolvedValue({ overview: {}, recentActivity: [], quickStats: {} }),
+        getRecentActivity: vi.fn().mockResolvedValue([]),
+        getQuickStats: vi.fn().mockResolvedValue({}),
+
+        // Tasks
+        getTasks: vi.fn().mockResolvedValue([]),
+        getTask: vi.fn().mockResolvedValue(null),
+        createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+        updateTask: vi.fn().mockResolvedValue({}),
+        deleteTask: vi.fn().mockResolvedValue({}),
+
+        // Projects
+        getProjects: vi.fn().mockResolvedValue([]),
+        getProject: vi.fn().mockResolvedValue(null),
+        createProject: vi.fn().mockResolvedValue({ id: 'proj-1' }),
+        updateProject: vi.fn().mockResolvedValue({}),
+        deleteProject: vi.fn().mockResolvedValue({}),
+
+        // Users & Teams
+        getUsers: vi.fn().mockResolvedValue([]),
+        getUser: vi.fn().mockResolvedValue(null),
+        createUser: vi.fn().mockResolvedValue({ id: 'user-1' }),
+        updateUser: vi.fn().mockResolvedValue({}),
+        deleteUser: vi.fn().mockResolvedValue({}),
+        getUserPlans: vi.fn().mockResolvedValue([]),
+        getTeamMembers: vi.fn().mockResolvedValue([]),
+
+        // Organization
+        getOrganization: vi.fn().mockResolvedValue({ id: 'org-1', name: 'Test Org' }),
+        updateOrganization: vi.fn().mockResolvedValue({}),
+        getOrganizationSettings: vi.fn().mockResolvedValue({}),
+        updateOrganizationSettings: vi.fn().mockResolvedValue({}),
+
+        // AI/LLM
+        chatWithAI: vi.fn().mockResolvedValue('AI Response'),
+        chatWithAIStream: vi.fn().mockResolvedValue({}),
+        getPublicLLMProviders: vi.fn().mockResolvedValue([]),
+        getRecommendedProvider: vi.fn().mockResolvedValue({ recommendation: { model_id: 'gpt-4' } }),
+
+        // Assessments
+        getAssessments: vi.fn().mockResolvedValue([]),
+        getAssessment: vi.fn().mockResolvedValue(null),
+        createAssessment: vi.fn().mockResolvedValue({ id: 'assess-1' }),
+        updateAssessment: vi.fn().mockResolvedValue({}),
+
+        // Initiatives
+        getInitiatives: vi.fn().mockResolvedValue([]),
+        getInitiative: vi.fn().mockResolvedValue(null),
+        createInitiative: vi.fn().mockResolvedValue({ id: 'init-1' }),
+
+        // Admin
+        getAdminStats: vi.fn().mockResolvedValue({}),
+        getAuditLog: vi.fn().mockResolvedValue([]),
+        getBillingInfo: vi.fn().mockResolvedValue({}),
+        getSubscription: vi.fn().mockResolvedValue({}),
+
+        // SuperAdmin
+        getSuperAdminOrganizations: vi.fn().mockResolvedValue([]),
+        getSuperAdminMetrics: vi.fn().mockResolvedValue({}),
+
+        // Notifications
+        getNotifications: vi.fn().mockResolvedValue([]),
+        markNotificationRead: vi.fn().mockResolvedValue({}),
+
+        // Settings
+        getSettings: vi.fn().mockResolvedValue({}),
+        updateSettings: vi.fn().mockResolvedValue({}),
+
+        // Generic fallback for any other method
+        get: vi.fn().mockResolvedValue({}),
+        post: vi.fn().mockResolvedValue({}),
+        put: vi.fn().mockResolvedValue({}),
+        patch: vi.fn().mockResolvedValue({}),
+        delete: vi.fn().mockResolvedValue({}),
+    },
+}));
+
+// Also mock the path without @ alias
+vi.mock('../../src/services/api', () => ({
+    Api: {
+        getDashboardData: vi.fn().mockResolvedValue({ overview: {}, recentActivity: [], quickStats: {} }),
+        getRecentActivity: vi.fn().mockResolvedValue([]),
+        getTasks: vi.fn().mockResolvedValue([]),
+        getTask: vi.fn().mockResolvedValue(null),
+        createTask: vi.fn().mockResolvedValue({ id: 'task-1' }),
+        updateTask: vi.fn().mockResolvedValue({}),
+        deleteTask: vi.fn().mockResolvedValue({}),
+        getProjects: vi.fn().mockResolvedValue([]),
+        getUsers: vi.fn().mockResolvedValue([]),
+        getUserPlans: vi.fn().mockResolvedValue([]),
+        getOrganization: vi.fn().mockResolvedValue({ id: 'org-1' }),
+        chatWithAI: vi.fn().mockResolvedValue('AI Response'),
+        getPublicLLMProviders: vi.fn().mockResolvedValue([]),
+        getRecommendedProvider: vi.fn().mockResolvedValue({ recommendation: { model_id: 'gpt-4' } }),
+        getNotifications: vi.fn().mockResolvedValue([]),
+        get: vi.fn().mockResolvedValue({}),
+        post: vi.fn().mockResolvedValue({}),
+    },
+}));
 
 // Mock the other aliases too
+
+// Global mock for useAppStore - comprehensive mock for component tests
+vi.mock('@/store/useAppStore', () => ({
+    useAppStore: (selector?: any) => {
+        const state = {
+            user: { id: 'user-123', email: 'test@example.com', name: 'Test User', role: 'owner' },
+            currentUser: { id: 'user-123', email: 'test@example.com', name: 'Test User' },
+            currentOrg: { id: 'org-123', name: 'Test Organization', plan: 'professional' },
+            organization: { id: 'org-123', name: 'Test Organization' },
+            aiConfig: { selectedTier: 'STANDARD', selectedModelId: null, autoMode: false },
+            setAIConfig: vi.fn(),
+            setCurrentView: vi.fn(),
+            navigateTo: vi.fn(),
+            theme: 'dark',
+            setTheme: vi.fn(),
+            language: 'en',
+            setLanguage: vi.fn(),
+            notifications: [],
+            addNotification: vi.fn(),
+            clearNotifications: vi.fn(),
+            isAuthenticated: true,
+            login: vi.fn(),
+            logout: vi.fn(),
+        };
+        return selector ? selector(state) : state;
+    },
+}));
+
+// Also mock the path without @ alias for useAppStore
+vi.mock('../../src/store/useAppStore', () => ({
+    useAppStore: (selector?: any) => {
+        const state = {
+            user: { id: 'user-123', email: 'test@example.com', name: 'Test User', role: 'owner' },
+            currentUser: { id: 'user-123', email: 'test@example.com', name: 'Test User' },
+            currentOrg: { id: 'org-123', name: 'Test Organization', plan: 'professional' },
+            aiConfig: { selectedTier: 'STANDARD', selectedModelId: null, autoMode: false },
+            setAIConfig: vi.fn(),
+            setCurrentView: vi.fn(),
+            navigateTo: vi.fn(),
+            theme: 'dark',
+            setTheme: vi.fn(),
+            isAuthenticated: true,
+        };
+        return selector ? selector(state) : state;
+    },
+}));
+
+// Global mock for usePMOStore
+vi.mock('../../src/store/usePMOStore', () => ({
+    usePMOStore: (selector?: any) => {
+        const state = {
+            getTaskLabel: vi.fn().mockReturnValue([]),
+            setTaskLabel: vi.fn(),
+            labels: [],
+        };
+        return selector ? selector(state) : state;
+    },
+}));
 
 // Global Setup
 beforeAll(async () => {
@@ -550,9 +757,9 @@ afterEach(() => {
 
 if (typeof window !== 'undefined') {
     global.ResizeObserver = class ResizeObserver {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
+        observe() { }
+        unobserve() { }
+        disconnect() { }
     };
 
     Object.defineProperty(window, 'matchMedia', {
@@ -568,6 +775,9 @@ if (typeof window !== 'undefined') {
             dispatchEvent: vi.fn(),
         })),
     });
+
+    // Mock scrollIntoView for ChatPanel and other components
+    Element.prototype.scrollIntoView = vi.fn();
 }
 
 // Node Polyfills
@@ -583,7 +793,7 @@ global.DOMMatrix = class DOMMatrix {
     d = 1;
     e = 0;
     f = 0;
-    constructor() {}
+    constructor() { }
 } as any;
 
 // Mock Google Generative AI SDK - prevent real API calls in tests

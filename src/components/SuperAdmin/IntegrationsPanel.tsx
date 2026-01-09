@@ -109,7 +109,7 @@ export const IntegrationsPanel: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white mb-2">Integrations Hub</h2>
-                    <p className="text-slate-400 text-sm">Connect Consultify with your existing tools</p>
+                    <p className="text-slate-400 text-sm">Connect Consultinity with your existing tools</p>
                 </div>
                 <button
                     onClick={() => setShowCreateModal(true)}

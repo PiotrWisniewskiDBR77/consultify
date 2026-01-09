@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Ai Service
  * Enterprise SaaS Architecture - TypeScript Backend

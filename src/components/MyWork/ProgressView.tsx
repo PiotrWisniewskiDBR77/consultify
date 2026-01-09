@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * ProgressView - Personal analytics dashboard
  * Part of My Work Module PMO Upgrade

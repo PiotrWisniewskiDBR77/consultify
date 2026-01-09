@@ -19,3 +19,5 @@ describe('GDPRService', () => {
         expect(consent).toBeDefined();
     });
 });
+
+

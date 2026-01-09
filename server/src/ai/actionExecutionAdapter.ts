@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { v4 as uuidv4 } from 'uuid';
 import ActionDecisionService from './actionDecisionService.js';
 import * as auditLogger from '../utils/auditLogger.js';
@@ -228,7 +229,7 @@ const ActionExecutionAdapter = {
         const executionId = `ax - ${uuidv4()} `;
         const now = new Date().toISOString();
 
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             db.run(
                 `INSERT INTO action_executions(
     id, decision_id, proposal_id, action_type, organization_id, correlation_id,

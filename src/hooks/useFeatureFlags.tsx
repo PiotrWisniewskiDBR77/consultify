@@ -152,7 +152,7 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
 // STORAGE HELPERS
 // ============================================
 
-const STORAGE_KEY = 'consultify_feature_flags';
+const STORAGE_KEY = 'consultinity_feature_flags';
 
 function getStoredOverrides(): Record<string, boolean> {
     if (typeof window === 'undefined') return {};

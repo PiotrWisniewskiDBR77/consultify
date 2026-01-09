@@ -146,7 +146,7 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
         }
     };
 
-    const filteredTasks = tasks.filter((t) => {
+    const filteredTasks = (tasks || []).filter((t) => {
         const isDone = ['done', 'completed', 'validated'].includes(t.status?.toLowerCase() || '');
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -301,11 +301,10 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     <div className="shrink-0 mt-1">
                         <button
                             onClick={(e) => handleStatusChange(task, isDone ? 'todo' : 'completed', e)}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                                isDone
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isDone
                                     ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
                                     : 'bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-500 dark:bg-navy-800 dark:border-white/10'
-                            }`}
+                                }`}
                         >
                             {isDone ? <CheckCircle size={18} /> : <Circle size={18} />}
                         </button>
@@ -378,11 +377,10 @@ export const TaskInbox: React.FC<TaskInboxProps> = ({ onEditTask, onCreateTask }
                     <div className="shrink-0 flex flex-col justify-center items-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity pl-2">
                         <button
                             onClick={(e) => togglePinTask(task.id, e)}
-                            className={`p-1.5 rounded transition-colors ${
-                                pinnedTaskIds.has(task.id)
+                            className={`p-1.5 rounded transition-colors ${pinnedTaskIds.has(task.id)
                                     ? 'text-purple-500 bg-purple-50 dark:bg-purple-500/20'
                                     : 'text-slate-300 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10'
-                            }`}
+                                }`}
                             title={pinnedTaskIds.has(task.id) ? 'Unpin from top' : 'Pin to top'}
                         >
                             <Pin size={14} />

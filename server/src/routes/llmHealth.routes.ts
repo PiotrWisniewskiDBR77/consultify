@@ -387,4 +387,131 @@ router.get(
     }),
 );
 
+/**
+ * GET /api/llm/health/status
+ * Alias for /api/llm/health - used by frontend HealthMonitoringTab
+ */
+router.get(
+    '/health/status',
+    asyncHandler(async (_req, res: Response) => {
+        try {
+            // Get providers from database
+            const providers = (await dbAll(`
+                SELECT id, name, provider, api_key, endpoint, model_id, is_active, visibility 
+                FROM llm_providers 
+                WHERE is_active = 1
+            `)) as Array<{
+                id: string;
+                name: string;
+                provider: string;
+                api_key: string | null;
+                endpoint: string | null;
+                model_id: string | null;
+                is_active: number;
+                visibility: string;
+            }>;
+
+            // Get basic metrics from llm_logs
+            const metricsResult = (await dbAll(`
+                SELECT 
+                    COUNT(*) as totalRequests,
+                    AVG(latency_ms) as avgLatencyMs,
+                    SUM(CASE WHEN error IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*) as uptime50
+                FROM (
+                    SELECT latency_ms, error FROM llm_logs 
+                    ORDER BY created_at DESC LIMIT 50
+                )
+            `)) as Array<{ totalRequests: number; avgLatencyMs: number; uptime50: number }>;
+
+            const metrics = metricsResult[0] || { totalRequests: 0, avgLatencyMs: 0, uptime50: 100 };
+
+            return res.json({
+                providers: providers.map(p => ({
+                    name: p.name,
+                    type: p.provider,
+                    status: 'ACTIVE',
+                    visibility: p.visibility || 'internal'
+                })),
+                metrics: {
+                    uptime50: metrics.uptime50 || 100,
+                    avgLatencyMs: Math.round(metrics.avgLatencyMs || 0),
+                    totalRequests: metrics.totalRequests || 0
+                },
+                timestamp: new Date().toISOString()
+            });
+        } catch (error: unknown) {
+            logger.error('[LLMHealth] Status error:', error);
+            return res.status(500).json({
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
+
+/**
+ * GET /api/llm/health/detailed
+ * Detailed health info for LLMHealthPanel
+ */
+router.get(
+    '/health/detailed',
+    asyncHandler(async (_req, res: Response) => {
+        try {
+            // Get providers with health info
+            const providers = (await dbAll(`
+                SELECT 
+                    id, name, provider, is_active, visibility,
+                    COALESCE(
+                        (SELECT AVG(latency_ms) FROM llm_logs WHERE provider = lp.provider ORDER BY created_at DESC LIMIT 10),
+                        0
+                    ) as avgLatency
+                FROM llm_providers lp
+                WHERE is_active = 1
+            `)) as Array<{
+                id: string;
+                name: string;
+                provider: string;
+                is_active: number;
+                visibility: string;
+                avgLatency: number;
+            }>;
+
+            // Get summary metrics
+            const summaryResult = (await dbAll(`
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as healthy
+                FROM llm_providers
+            `)) as Array<{ total: number; healthy: number }>;
+
+            const summary = summaryResult[0] || { total: 0, healthy: 0 };
+
+            return res.json({
+                success: true,
+                providers: providers.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    provider: p.provider,
+                    status: p.is_active ? 'healthy' : 'unhealthy',
+                    latency: Math.round(p.avgLatency || 0),
+                    visibility: p.visibility || 'internal'
+                })),
+                alerts: [],
+                summary: {
+                    total: summary.total,
+                    healthy: summary.healthy,
+                    degraded: 0,
+                    unhealthy: summary.total - summary.healthy
+                }
+            });
+        } catch (error: unknown) {
+            logger.error('[LLMHealth] Detailed error:', error);
+            return res.status(500).json({
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error',
+            });
+        }
+    }),
+);
+
 export default router;

@@ -22,5 +22,5 @@ CREATE TABLE feature_flag_evaluations (
 
 -- Seed some initial flags
 INSERT INTO feature_flags (id, key, description, is_enabled, rules) VALUES
-('flag-1', 'beta_features', 'Enable beta features for internal users', 1, '[{"type": "email_domain", "values": ["consultify.app"]}]'),
+('flag-1', 'beta_features', 'Enable beta features for internal users', 1, '[{"type": "email_domain", "values": ["consultinity.app"]}]'),
 ('flag-2', 'new_billing_ui', 'Rollout new billing dashboard', 0, '[]');

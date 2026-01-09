@@ -8,7 +8,6 @@
 import { ChartBar, FileText, HelpCircle, Send } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
-import { SplitLayout } from '../../components/layout/SplitLayout';
 import { CommissionIntelligence } from '../../components/Partner/CommissionIntelligence';
 import { PMODomainBadge } from '../../components/Partner/EcosystemAnalytics';
 import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
@@ -48,12 +47,8 @@ export const CommissionView: React.FC = () => {
     }, []);
 
     return (
-        <SplitLayout
-            title="Commission Portal"
-            subtitle="AI-powered commission intelligence z PMO compliance"
-            currentView={AppView.PARTNER_COMMISSION}
-        >
-            <div className="space-y-6 overflow-y-auto px-6 py-4">
+        <div className="h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
+            <div className="space-y-6 px-6 py-4">
                 {/* Commission Intelligence */}
                 <CommissionIntelligence
                     deals={deals}
@@ -212,7 +207,7 @@ export const CommissionView: React.FC = () => {
                     </button>
                 </div>
             </div>
-        </SplitLayout>
+        </div>
     );
 };
 

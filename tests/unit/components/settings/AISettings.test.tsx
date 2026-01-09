@@ -16,13 +16,7 @@ vi.mock('@/services/api', () => ({
     }
 }));
 
-// Mock toast
-vi.mock('react-hot-toast', () => ({
-    default: {
-        success: vi.fn(),
-        error: vi.fn()
-    }
-}));
+// Note: react-hot-toast is mocked globally in tests/setup.ts
 
 // Mock router
 vi.mock('react-router-dom', () => ({

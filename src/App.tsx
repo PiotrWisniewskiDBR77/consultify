@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 
 import { RouterSync } from './components/RouterSync';
-import { RouterSyncProvider } from './providers/RouterSyncProvider';
+// RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { Api } from '@/services/api';
@@ -51,7 +51,7 @@ function App() {
 
 // Separated content to use hooks inside providers
 function AppContent() {
-    const { setCurrentUser, setCurrentOrganization, logout, theme, currentUser } = useAppStore();
+    const { setCurrentUser, setCurrentOrganization, logout, theme, currentUser, setAuthInitializing } = useAppStore();
 
     const { i18n } = useTranslation();
 
@@ -100,6 +100,7 @@ function AppContent() {
             const token = localStorage.getItem('token');
             if (!token) {
                 if (currentUser) setCurrentUser(null);
+                setAuthInitializing(false); // Done initializing - no token
                 return;
             }
 
@@ -131,6 +132,8 @@ function AppContent() {
                 }
             } catch (error) {
                 console.error('[Auth] Profile sync failed:', error);
+            } finally {
+                setAuthInitializing(false); // Done initializing - auth check complete
             }
         };
 
@@ -138,7 +141,8 @@ function AppContent() {
     }, []);
 
     return (
-        <RouterSyncProvider>
+        <>
+            {/* Single source of truth for URL ↔ State sync */}
             <RouterSync />
             <Routes>
                 <Route path="/invite/:token" element={<InviteRouteWrapper />} />
@@ -158,7 +162,7 @@ function AppContent() {
                 />
                 <Route path="/*" element={<AppRoutes />} />
             </Routes>
-        </RouterSyncProvider>
+        </>
     );
 }
 

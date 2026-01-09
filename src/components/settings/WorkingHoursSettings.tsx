@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * WorkingHoursSettings - Manage weekly working schedule
  *

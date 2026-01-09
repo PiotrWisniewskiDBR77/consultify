@@ -266,8 +266,10 @@ describe('Drag Manager Tests', () => {
         it('should register drop zone', () => {
             manager.registerDropZone('zone-1', { data: { type: 'list' } });
 
-            // Registration should work
-            expect(true).toBe(true);
+            // Verify zone accepts the drag
+            manager.startDrag({ id: 1 }, { clientX: 0, clientY: 0 });
+            const entered = manager.enterDropZone('zone-1');
+            expect(entered).toBe(true);
         });
 
         it('should handle enter/leave', () => {

@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary
 
-The functional audit reveals a highly sophisticated AI system that transcends "chat-box" utility. By combining specialist agent personas with a multi-layered domain context engine, Consultify delivers consultant-grade insights tailored to specific industries and organizational maturity levels.
+The functional audit reveals a highly sophisticated AI system that transcends "chat-box" utility. By combining specialist agent personas with a multi-layered domain context engine, Consultinity delivers consultant-grade insights tailored to specific industries and organizational maturity levels.
 
 ## 2. Domain Context Precision
 
@@ -16,7 +16,7 @@ The functional audit reveals a highly sophisticated AI system that transcends "c
 - **Dynamic Inference:** The system intelligently infers industry and company size from metadata, reducing user input friction.
 
 ### 2.2 Assessment-Driven Insights
-- Unlike generic AI, Consultify uses actual maturity assessment data (Axes scores, gaps, justifications) to anchor its recommendations in reality.
+- Unlike generic AI, Consultinity uses actual maturity assessment data (Axes scores, gaps, justifications) to anchor its recommendations in reality.
 
 ## 3. Specialist Agent Utility
 

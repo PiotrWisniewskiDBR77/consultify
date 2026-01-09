@@ -1,4 +1,4 @@
-# Consultify — LLM Stub Contract (Your API)
+# Consultinity — LLM Stub Contract (Your API)
 
 ## Goal
 All automated tests must be deterministic and must not call real LLM providers. We stub **your API** and validate request/response contracts.

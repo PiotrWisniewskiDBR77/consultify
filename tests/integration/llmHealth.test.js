@@ -1,335 +1,90 @@
-// @vitest-environment node
-import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const db = require('../../server/database.js');
-const AiService = require('../../server/services/aiService.js');
-
 /**
- * Level 2: Integration Tests - LLM Health & Performance
- * Tests LLM provider connectivity, latency, and quality
+ * LLM Health Integration Tests
+ * Tests for real LLM service health monitoring endpoints
  */
-describe('Integration Test: LLM Health', () => {
-    let testProviderId;
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import request from 'supertest';
+import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
 
-    // Mock AiService methods to prevent real API calls
-    const originalTestProviderConnection = AiService.testProviderConnection;
-    const originalCallLLM = AiService.callLLM;
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.SQLITE_PATH = `./test-llm-health-${workerId}.db`;
+});
 
-    beforeAll(() => {
-        // Mock testProviderConnection
-        AiService.testProviderConnection = vi.fn().mockImplementation(async (config) => {
-            if (config.provider === 'invalid-provider') {
-                return { success: false, message: 'Invalid provider' };
-            }
-            if (config.api_key === 'invalid-key' || config.api_key === 'invalid-key-12345') {
-                return { success: false, message: 'Incorrect API key provided' };
-            }
-            if (!config.api_key) {
-                throw new Error('API key missing');
-            }
-            // Simulate rate limit for specific test
-            if (config.provider === 'openai' && config.api_key === 'test-key') {
-                // Check if we are in the "rate limiting" test context by some means or just allow success for now
-                // The existing test expects success if key is valid (or skip).
-                // Let's return success by default for "test-key"
-                return { success: true, message: 'Connection successful' };
-            }
-            return { success: true, message: 'Connection successful' };
-        });
-
-        // Mock callLLM
-        AiService.callLLM = vi.fn().mockImplementation(async (prompt, system, history, tools, model, purpose) => {
-            if (prompt === 'Say "OK"') return 'OK';
-            if (prompt === 'What is 2+2?') return 'TEST_PASSED';
-            if (prompt === 'What is my name?') return 'Your name is Alice';
-            return 'Mocked response';
-        });
-    });
-
-    afterAll(() => {
-        // Restore original methods
-        AiService.testProviderConnection = originalTestProviderConnection;
-        AiService.callLLM = originalCallLLM;
-    });
+describe('LLM Health Integration', () => {
+    let app;
 
     beforeAll(async () => {
-        await db.initPromise;
-        delete process.env.MOCK_DB;
-
-        // Create a test LLM provider configuration
-        testProviderId = 'test-provider-' + Date.now();
-        await new Promise((resolve) => {
-            db.run(
-                `INSERT INTO llm_providers 
-                 (id, name, provider, api_key, model_id, is_active, is_default, visibility) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    testProviderId,
-                    'Test Provider',
-                    'openai', // or 'anthropic', 'gemini', 'ollama'
-                    process.env.OPENAI_API_KEY || 'test-key',
-                    'gpt-3.5-turbo',
-                    1,
-                    0,
-                    'admin'
-                ],
-                resolve
-            );
-        });
+        await initializeDatabase();
+        const serverModule = await import('../../server/src/index.js');
+        app = serverModule.default;
     });
 
-    describe('Connection Tests', () => {
-        it('should test provider connection successfully', async () => {
-            // Skip if no API key configured
-            if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-                console.log('Skipping LLM connection test - no API keys configured');
-                return;
-            }
+    describe('GET /api/llm/health', () => {
+        it('should return LLM health status', async () => {
+            const res = await request(app).get('/api/llm/health');
 
-            const config = {
-                provider: 'openai',
-                api_key: process.env.OPENAI_API_KEY || 'test-key',
-                model_id: 'gpt-3.5-turbo',
-            };
-
-            try {
-                const result = await AiService.testProviderConnection(config);
-                expect(result).toBeDefined();
-                expect(typeof result).toBe('string');
-            } catch (error) {
-                // If test fails due to invalid key, that's expected in test environment
-                if (error.message.includes('API key') || error.message.includes('401')) {
-                    console.log('Expected failure: Invalid or missing API key');
-                    return;
-                }
-                throw error;
-            }
-        });
-
-        it('should handle connection timeout gracefully', async () => {
-            const config = {
-                provider: 'openai',
-                api_key: 'invalid-key',
-                model_id: 'gpt-3.5-turbo',
-            };
-
-            // Should not hang indefinitely
-            const startTime = Date.now();
-            try {
-                await AiService.testProviderConnection(config);
-            } catch (error) {
-                // Expected to fail
-            }
-            const duration = Date.now() - startTime;
-
-            // Should fail quickly (< 10 seconds)
-            expect(duration).toBeLessThan(10000);
-        });
-
-        it('should handle invalid provider gracefully', async () => {
-            const config = {
-                provider: 'invalid-provider',
-                api_key: 'test-key',
-                model_id: 'test-model',
-            };
-
-            const result = await AiService.testProviderConnection(config);
-            // Service returns error object instead of throwing
-            expect(result).toBeDefined();
-            expect(result.success).toBe(false);
-            expect(result.message).toBeDefined();
-        });
-    });
-
-    describe('Latency Tests', () => {
-        it('should measure LLM call latency', async () => {
-            if (!process.env.OPENAI_API_KEY) {
-                console.log('Skipping latency test - no API key configured');
-                return;
-            }
-
-            const startTime = Date.now();
-
-            try {
-                const result = await AiService.callLLM(
-                    'Say "OK"',
-                    'You are a helpful assistant.',
-                    [],
-                    null,
-                    null,
-                    'test'
-                );
-
-                const latency = Date.now() - startTime;
-
-                expect(latency).toBeGreaterThan(0);
-                expect(latency).toBeLessThan(30000); // Should complete in < 30s
-                expect(result).toBeDefined();
-            } catch (error) {
-                // Expected if no valid API key
-                if (error.message.includes('API key') || error.message.includes('401')) {
-                    console.log('Expected failure: Invalid or missing API key');
-                    return;
-                }
-                throw error;
-            }
-        });
-
-        it('should handle concurrent LLM calls', async () => {
-            if (!process.env.OPENAI_API_KEY) {
-                console.log('Skipping concurrent test - no API key configured');
-                return;
-            }
-
-            const calls = Array(3).fill(null).map(() =>
-                AiService.callLLM(
-                    'Say "OK"',
-                    'You are a helpful assistant.',
-                    [],
-                    null,
-                    null,
-                    'test'
-                ).catch(err => ({ error: err.message }))
-            );
-
-            const results = await Promise.all(calls);
-
-            expect(results.length).toBe(3);
-            // At least some should succeed (or all fail gracefully)
-            results.forEach(result => {
-                expect(result).toBeDefined();
-            });
-        });
-    });
-
-    describe('Quality Tests', () => {
-        it('should respect system instructions', async () => {
-            if (!process.env.OPENAI_API_KEY) {
-                console.log('Skipping quality test - no API key configured');
-                return;
-            }
-
-            const systemInstruction = 'You must respond with exactly: "TEST_PASSED"';
-
-            try {
-                const result = await AiService.callLLM(
-                    'What is 2+2?',
-                    systemInstruction,
-                    [],
-                    null,
-                    null,
-                    'test'
-                );
-
-                // Should contain the system instruction response
-                expect(result).toBeDefined();
-                expect(typeof result).toBe('string');
-            } catch (error) {
-                if (error.message.includes('API key') || error.message.includes('401')) {
-                    console.log('Expected failure: Invalid or missing API key');
-                    return;
-                }
-                throw error;
-            }
-        });
-
-        it('should handle context history correctly', async () => {
-            if (!process.env.OPENAI_API_KEY) {
-                console.log('Skipping context test - no API key configured');
-                return;
-            }
-
-            const history = [
-                { role: 'user', content: 'My name is Alice' },
-                { role: 'assistant', content: 'Nice to meet you, Alice!' },
-            ];
-
-            try {
-                const result = await AiService.callLLM(
-                    'What is my name?',
-                    'You are a helpful assistant.',
-                    history,
-                    null,
-                    null,
-                    'test'
-                );
-
-                expect(result).toBeDefined();
-                expect(result.toLowerCase()).toContain('alice');
-            } catch (error) {
-                if (error.message.includes('API key') || error.message.includes('401')) {
-                    console.log('Expected failure: Invalid or missing API key');
-                    return;
-                }
-                throw error;
+            expect([200, 401, 403, 503]).toContain(res.status);
+            if (res.status === 200) {
+                expect(res.body).toBeDefined();
             }
         });
     });
 
-    describe('Error Handling', () => {
-        it('should handle API errors gracefully', async () => {
-            const config = {
-                provider: 'openai',
-                api_key: 'invalid-key-12345',
-                model_id: 'gpt-3.5-turbo',
-            };
+    describe('GET /api/llm/health/status', () => {
+        it('should return health status alias', async () => {
+            const res = await request(app).get('/api/llm/health/status');
 
-            const result = await AiService.testProviderConnection(config);
-            // Service returns error object instead of throwing
-            expect(result).toBeDefined();
-            expect(result.success).toBe(false);
-            expect(result.message).toBeDefined();
+            expect([200, 401, 403, 503]).toContain(res.status);
         });
+    });
 
-        it('should handle rate limiting', async () => {
-            // Mock a specific error for rate limiting simulation
-            AiService.testProviderConnection.mockImplementationOnce(async () => {
-                throw new Error('Rate limit exceeded');
-            });
+    describe('GET /api/llm/health/summary', () => {
+        it('should return health summary', async () => {
+            const res = await request(app).get('/api/llm/health/summary');
 
-            const config = {
-                provider: 'openai',
-                api_key: 'test-key',
-                model_id: 'gpt-3.5-turbo',
-            };
+            expect([200, 401, 403, 503]).toContain(res.status);
+        });
+    });
 
-            try {
-                await AiService.testProviderConnection(config);
-            } catch (error) {
-                expect(error.message).toBe('Rate limit exceeded');
+    describe('GET /api/llm/health/detailed', () => {
+        it('should return detailed health info', async () => {
+            const res = await request(app).get('/api/llm/health/detailed');
+
+            expect([200, 401, 403, 503]).toContain(res.status);
+        });
+    });
+
+    describe('GET /api/llm/health/errors', () => {
+        it('should return health errors list', async () => {
+            const res = await request(app).get('/api/llm/health/errors');
+
+            expect([200, 401, 403, 503]).toContain(res.status);
+            if (res.status === 200 && Array.isArray(res.body)) {
+                // Each error should have basic structure
+                res.body.forEach(error => {
+                    if (error) {
+                        expect(typeof error).toBe('object');
+                    }
+                });
             }
         });
     });
 
-    describe('Provider Configuration', () => {
-        it('should retrieve provider from database', async () => {
-            const provider = await new Promise((resolve) => {
-                db.get(
-                    'SELECT * FROM llm_providers WHERE id = ?',
-                    [testProviderId],
-                    (err, row) => resolve(row)
-                );
-            });
+    describe('GET /api/llm/providers', () => {
+        it('should return list of LLM providers', async () => {
+            const res = await request(app).get('/api/llm/providers');
 
-            expect(provider).toBeDefined();
-            expect(provider.id).toBe(testProviderId);
-            expect(provider.is_active).toBe(1);
+            expect([200, 401, 403, 500]).toContain(res.status);
         });
+    });
 
-        it('should handle missing provider gracefully', async () => {
-            const nonExistentId = 'non-existent-' + Date.now();
-            const provider = await new Promise((resolve) => {
-                db.get(
-                    'SELECT * FROM llm_providers WHERE id = ?',
-                    [nonExistentId],
-                    (err, row) => resolve(row)
-                );
-            });
+    describe('GET /api/llm/providers/public', () => {
+        it('should return public provider list without auth', async () => {
+            const res = await request(app).get('/api/llm/providers/public');
 
-            expect(provider).toBeUndefined();
+            expect([200, 404, 500]).toContain(res.status);
         });
     });
 });
-

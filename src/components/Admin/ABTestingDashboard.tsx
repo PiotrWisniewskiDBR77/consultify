@@ -128,7 +128,7 @@ export function ABTestingDashboard() {
 
         try {
             const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
-            const response = await api.get(`/ai-ab-testing/experiments${params}`);
+            const response = await api.get(`/ai/ab-testing/experiments${params}`);
 
             if (response.data.success) {
                 setExperiments(response.data.experiments || []);
@@ -161,7 +161,7 @@ export function ABTestingDashboard() {
 
         setCreating(true);
         try {
-            const response = await api.post('/ai-ab-testing/experiments', newExperiment);
+            const response = await api.post('/ai/ab-testing/experiments', newExperiment);
 
             if (response.data.success) {
                 toast.success('Experiment created');
@@ -208,7 +208,7 @@ export function ABTestingDashboard() {
         if (!confirm('Are you sure you want to declare this variant as the winner?')) return;
 
         try {
-            const response = await api.post(`/ai-ab-testing/experiments/${experimentId}/declare-winner`, {
+            const response = await api.post(`/ai/ab-testing/experiments/${experimentId}/declare-winner`, {
                 winningVariantId: variantId,
             });
 

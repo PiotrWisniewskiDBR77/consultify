@@ -14,8 +14,8 @@ import { getLatestRelease, hasNewRelease, ReleaseFeature, ReleaseNote } from '..
 import DynamicIcon from '../shared/DynamicIcon';
 
 // Storage key for last seen version
-const LAST_SEEN_KEY = 'consultify_last_seen_version';
-const DONT_SHOW_KEY = 'consultify_dont_show_whatsnew';
+const LAST_SEEN_KEY = 'consultinity_last_seen_version';
+const DONT_SHOW_KEY = 'consultinity_dont_show_whatsnew';
 
 interface WhatsNewModalProps {
     forceShow?: boolean;

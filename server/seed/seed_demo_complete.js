@@ -2,7 +2,7 @@
  * Seed Complete Demo Data
  * 
  * Creates comprehensive demo data for a realistic demo experience:
- * - Demo organization with demo user (demo@consultify.io / demo123)
+ * - Demo organization with demo user (demo@consultinity.io / demo123)
  * - 5 DRD assessments at different stages
  * - 15 initiatives with various statuses
  * - 25 tasks across multiple projects
@@ -90,7 +90,7 @@ const DEMO_ORG = {
 
 const DEMO_USER = {
     id: DEMO_USER_ID,
-    email: 'demo@consultify.io',
+    email: 'demo@consultinity.io',
     password: 'demo123',
     firstName: 'Alex',
     lastName: 'Morgan',

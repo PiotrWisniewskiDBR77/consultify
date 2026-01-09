@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { TaskDetailModal } from '../../src/components/TaskDetailModal';
 import { Api } from '../../src/services/api';
 
-vi.mock('@/services/api', () => ({
+vi.mock('../../src/services/api', () => ({
     Api: {
         generateTaskInsight: vi.fn()
     }

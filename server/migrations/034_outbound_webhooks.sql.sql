@@ -1,5 +1,5 @@
 -- 034_outbound_webhooks.sql
--- Subscriptions for external systems to listen to Consultify events
+-- Subscriptions for external systems to listen to Consultinity events
 
 CREATE TABLE webhook_subscriptions (
     id TEXT PRIMARY KEY,

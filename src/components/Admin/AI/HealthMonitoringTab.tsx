@@ -260,16 +260,16 @@ export const HealthMonitoringTab: React.FC = () => {
                             </h3>
                             <div className="flex items-baseline">
                                 <span className="text-3xl font-bold text-navy-900 dark:text-white">
-                                    {status?.metrics.uptime50?.toFixed(1) || '0.0'}%
+                                    {status?.metrics?.uptime50?.toFixed(1) ?? '0.0'}%
                                 </span>
                                 <span
                                     className={`ml-2 text-sm font-medium ${
-                                        status && status.metrics.uptime50 > 95
+                                        status?.metrics?.uptime50 && status.metrics.uptime50 > 95
                                             ? 'text-success-600 dark:text-green-400'
                                             : 'text-warning-600 dark:text-amber-400'
                                     }`}
                                 >
-                                    {status && status.metrics.uptime50 > 95 ? 'Excellent' : 'Degraded'}
+                                    {status?.metrics?.uptime50 && status.metrics.uptime50 > 95 ? 'Excellent' : 'Degraded'}
                                 </span>
                             </div>
                         </div>
@@ -279,7 +279,7 @@ export const HealthMonitoringTab: React.FC = () => {
                             </h3>
                             <div className="flex items-baseline">
                                 <span className="text-3xl font-bold text-navy-900 dark:text-white">
-                                    {status?.metrics.avgLatencyMs || 0}ms
+                                    {status?.metrics?.avgLatencyMs ?? 0}ms
                                 </span>
                                 <span className="ml-2 text-sm text-slate-500">per request</span>
                             </div>

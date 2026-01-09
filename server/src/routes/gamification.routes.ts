@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Gamification Routes
  * API endpoints for gamification

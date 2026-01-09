@@ -23,7 +23,7 @@ Dependencies can be: Finish-to-Start (most common – A must finish before B sta
 Identifying dependencies prevents scheduling conflicts and ensures smooth handoffs between initiatives."
 
 [SECTION 2: Creating Dependencies - 1:30-2:45]
-"In Consultify's Roadmap module, there are two ways to create dependencies.
+"In Consultinity's Roadmap module, there are two ways to create dependencies.
 
 From Timeline view, hold Shift and drag from one initiative to another. An arrow appears showing the dependency relationship. By default, this creates a Finish-to-Start dependency.
 
@@ -32,7 +32,7 @@ Alternatively, open an initiative's detail panel and look for the Dependencies s
 The dependency arrow visually connects the initiatives on the timeline. If the predecessor moves, the dependent initiative's earliest start date adjusts automatically."
 
 [SECTION 3: Dependency Validation - 2:45-3:45]
-"Consultify validates your dependencies to catch problems. You'll see warnings for:
+"Consultinity validates your dependencies to catch problems. You'll see warnings for:
 
 Circular dependencies – A depends on B which depends on C which depends on A. This is impossible and must be resolved.
 
@@ -43,7 +43,7 @@ Critical path violations – Dependencies that create unrealistic timelines give
 The Dependency Analyzer, accessible from the Roadmap menu, shows all dependencies in a network diagram. This is especially useful for complex roadmaps with many interconnected initiatives."
 
 [SECTION 4: Resource Types - 3:45-4:30]
-"Resource planning ensures you don't overcommit. In Consultify, you can define different resource types:
+"Resource planning ensures you don't overcommit. In Consultinity, you can define different resource types:
 
 People resources: your team members, external consultants, stakeholder time.
 
@@ -78,7 +78,7 @@ The Resource Optimizer tool suggests resequencing options that resolve conflicts
 [SECTION 7: Critical Path Analysis - 6:30-7:05]
 "The critical path is the longest sequence of dependent initiatives. It determines your minimum timeline – if anything on the critical path is delayed, the entire roadmap slips.
 
-Consultify highlights the critical path in your Timeline view. Use this to focus attention on the initiatives that matter most for schedule performance.
+Consultinity highlights the critical path in your Timeline view. Use this to focus attention on the initiatives that matter most for schedule performance.
 
 Non-critical initiatives have float – they can slip without affecting the overall timeline. Knowing this helps you prioritize when trade-offs are necessary."
 

@@ -140,4 +140,5 @@ coverage-*/
 *.bak
 coverage/.tmp
 .nx/
-junit.xml
+junit.xml# Quarantine folder for duplicate files
+_quarantine/

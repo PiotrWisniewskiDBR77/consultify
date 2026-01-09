@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Email Service
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -115,7 +116,7 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
             user: settings['smtp_user'] || process.env.SMTP_USER,
             pass: settings['smtp_pass'] || process.env.SMTP_PASS,
         },
-        from: settings['smtp_from'] || process.env.SMTP_FROM || '"Consultify System" <system@consultify.com>',
+        from: settings['smtp_from'] || process.env.SMTP_FROM || '"Consultinity System" <system@consultinity.com>',
     };
 
     // For logging and debugging

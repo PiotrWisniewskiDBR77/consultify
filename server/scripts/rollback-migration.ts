@@ -47,7 +47,7 @@ export async function rollbackMigration(version?: string): Promise<RollbackResul
         logger.info('[Rollback] Creating safety backup...');
         const { execSync } = await import('child_process');
         const backupPath = path.join(__dirname, `../../backups/pre-rollback-${version}-${Date.now()}.db`);
-        execSync(`sqlite3 server/consultify.db ".backup '${backupPath}'"`);
+        execSync(`sqlite3 server/consultinity.db ".backup '${backupPath}'"`);
 
         // Mark migration as rolled back
         await db.query(

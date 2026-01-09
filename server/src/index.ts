@@ -41,6 +41,25 @@ const PORT = Number(process.env.PORT) || 3005;
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
+// Validate environment variables on startup (skip in test mode)
+if (!isTest && !process.env.SKIP_ENV_VALIDATION) {
+    try {
+        const { validateEnvOrThrow } = await import('./config/envValidator.js');
+        validateEnvOrThrow();
+    } catch (error: any) {
+        // envValidator might not exist yet or validation failed
+        if (error.code === 'MODULE_NOT_FOUND') {
+            logger.warn('[Server] Environment validator not found, skipping validation');
+        } else {
+            logger.error('[Server] Environment validation failed:', error.message);
+            if (isProduction) {
+                logger.error('[Server] CRITICAL: Invalid environment configuration. Exiting...');
+                process.exit(1);
+            }
+        }
+    }
+}
+
 // Trust proxy (required for Railway and other reverse proxies)
 app.set('trust proxy', 1);
 

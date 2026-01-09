@@ -12,7 +12,7 @@ describe('HeroSection Component', () => {
     it('renders hero section', () => {
         render(<HeroSection />);
 
-        expect(screen.getByText(/Consultify/i) || screen.getByText(/Digital/i)).toBeInTheDocument();
+        expect(screen.getByText(/Consultinity/i) || screen.getByText(/Digital/i)).toBeInTheDocument();
     });
 
     it('displays CTA button', () => {

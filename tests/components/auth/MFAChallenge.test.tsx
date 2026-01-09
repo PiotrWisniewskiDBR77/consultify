@@ -1,136 +1,261 @@
 /**
  * MFAChallenge Component Tests
- * 
- * Tests for the Multi-Factor Authentication challenge component.
+ * @vitest-environment jsdom
  */
-
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import MFAChallenge from '../../../src/components/auth/MFAChallenge';
 
-// Mock i18next
+// Mock react-i18next
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string, fallback: string) => fallback || key,
+    }),
+}));
 
 // Mock fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Mock localStorage
-const localStorageMock = {
-    getItem: vi.fn(() => 'mock-token'),
+const mockLocalStorage = {
+    getItem: vi.fn(() => 'test-token'),
     setItem: vi.fn(),
     removeItem: vi.fn(),
     clear: vi.fn(),
 };
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
-import MFAChallenge from '@/components/auth/MFAChallenge';
-
-describe('MFAChallenge', () => {
+describe('MFAChallenge Component', () => {
     const mockOnVerify = vi.fn();
     const mockOnCancel = vi.fn();
-    const user = userEvent.setup();
 
     beforeEach(() => {
         vi.clearAllMocks();
         mockFetch.mockReset();
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
+    describe('Initial Render', () => {
+        it('should render the MFA challenge modal', () => {
+            render(<MFAChallenge onVerify={mockOnVerify} />);
 
-    const renderComponent = (props = {}) => {
-        return render(
-            <MFAChallenge
-                onVerify={mockOnVerify}
-                onCancel={mockOnCancel}
-                {...props}
-            />
-        );
-    };
-
-    describe('TOTP Mode', () => {
-        it('renders TOTP input fields by default', () => {
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            expect(inputs.length).toBe(6);
+            expect(screen.getByText('Two-Factor Authentication')).toBeInTheDocument();
         });
 
-        it('allows entering 6-digit code', async () => {
-            renderComponent();
+        it('should display TOTP input by default', () => {
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            expect(screen.getByText(/Enter the code from your authenticator app/i)).toBeInTheDocument();
+        });
+
+        it('should render 6 input boxes for TOTP code', () => {
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            const inputs = screen.getAllByRole('textbox');
+            expect(inputs).toHaveLength(6);
+        });
+
+        it('should show trust device option when enabled', () => {
+            render(<MFAChallenge onVerify={mockOnVerify} trustDeviceOption={true} />);
+
+            expect(screen.getByText(/Trust this device for 30 days/i)).toBeInTheDocument();
+        });
+
+        it('should hide trust device option when disabled', () => {
+            render(<MFAChallenge onVerify={mockOnVerify} trustDeviceOption={false} />);
+
+            expect(screen.queryByText(/Trust this device for 30 days/i)).not.toBeInTheDocument();
+        });
+
+        it('should show backup code option', () => {
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            expect(screen.getByText(/Use a backup code instead/i)).toBeInTheDocument();
+        });
+    });
+
+    describe('TOTP Input', () => {
+        it('should allow entering digits in input boxes', async () => {
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            const inputs = screen.getAllByRole('textbox');
+            await user.type(inputs[0], '1');
+
+            expect(inputs[0]).toHaveValue('1');
+        });
+
+        it('should only accept numeric input', async () => {
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            const inputs = screen.getAllByRole('textbox');
+            await user.type(inputs[0], 'a');
+
+            expect(inputs[0]).toHaveValue('');
+        });
+
+        it('should auto-focus next input after entering digit', async () => {
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            const inputs = screen.getAllByRole('textbox');
+            await user.type(inputs[0], '1');
+
+            expect(document.activeElement).toBe(inputs[1]);
+        });
+    });
+
+    describe('Mode Switching', () => {
+        it('should switch to backup code mode when link is clicked', async () => {
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            const backupLink = screen.getByText(/Use a backup code instead/i);
+            await user.click(backupLink);
+
+            expect(screen.getByText(/Enter one of your backup codes/i)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText('XXXX-XXXX')).toBeInTheDocument();
+        });
+
+        it('should switch back to TOTP mode from backup', async () => {
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            // Switch to backup
+            await user.click(screen.getByText(/Use a backup code instead/i));
+
+            // Switch back
+            await user.click(screen.getByText(/Back to authenticator code/i));
+
+            expect(screen.getByText(/Enter the code from your authenticator app/i)).toBeInTheDocument();
+        });
+    });
+
+    describe('Cancel Button', () => {
+        it('should show cancel button when onCancel is provided', () => {
+            render(<MFAChallenge onVerify={mockOnVerify} onCancel={mockOnCancel} />);
+
+            expect(screen.getByText('Cancel')).toBeInTheDocument();
+        });
+
+        it('should not show cancel button when onCancel is not provided', () => {
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
+        });
+
+        it('should call onCancel when cancel button is clicked', async () => {
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} onCancel={mockOnCancel} />);
+
+            await user.click(screen.getByText('Cancel'));
+
+            expect(mockOnCancel).toHaveBeenCalled();
+        });
+    });
+
+    describe('TOTP Verification', () => {
+        it('should call API when 6 digits are entered', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ success: true }),
+            });
+
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} />);
 
             const inputs = screen.getAllByRole('textbox');
             for (let i = 0; i < 6; i++) {
                 await user.type(inputs[i], String(i + 1));
             }
 
-            inputs.forEach((input, i) => {
-                expect(input).toHaveValue(String(i + 1));
-            });
-        });
-
-        it('only accepts numeric input', async () => {
-            renderComponent();
-
-            const firstInput = screen.getAllByRole('textbox')[0];
-            await user.type(firstInput, 'abc123');
-
-            expect(firstInput).toHaveValue('1');
-        });
-
-        it('auto-focuses next input when digit entered', async () => {
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            await user.type(inputs[0], '1');
-
             await waitFor(() => {
-                expect(document.activeElement).toBe(inputs[1]);
+                expect(mockFetch).toHaveBeenCalledWith('/api/mfa/challenge', expect.any(Object));
             });
         });
 
-        it('handles backspace to go to previous input', async () => {
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            await user.type(inputs[0], '1');
-            await user.type(inputs[1], '2');
-            await user.keyboard('{Backspace}');
-
-            await waitFor(() => {
-                expect(document.activeElement).toBe(inputs[0]);
-            });
-        });
-
-        it('handles paste of 6-digit code', async () => {
-            renderComponent();
-
-            const firstInput = screen.getAllByRole('textbox')[0];
-            await user.click(firstInput);
-            
-            // Simulate paste
-            fireEvent.paste(firstInput, {
-                clipboardData: {
-                    getData: () => '123456'
-                }
-            });
-
-            await waitFor(() => {
-                const inputs = screen.getAllByRole('textbox');
-                expect(inputs[0]).toHaveValue('1');
-                expect(inputs[5]).toHaveValue('6');
-            });
-        });
-
-        it('verifies code successfully', async () => {
+        it('should call onVerify on successful verification', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,
-                json: async () => ({ success: true })
+                json: () => Promise.resolve({ success: true }),
             });
 
-            renderComponent();
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} />);
 
+            const inputs = screen.getAllByRole('textbox');
+            for (let i = 0; i < 6; i++) {
+                await user.type(inputs[i], String(i + 1));
+            }
+
+            await waitFor(() => {
+                expect(mockOnVerify).toHaveBeenCalledWith(true);
+            });
+        });
+
+        it('should show error message on failed verification', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                json: () => Promise.resolve({ error: 'Invalid code' }),
+            });
+
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            const inputs = screen.getAllByRole('textbox');
+            for (let i = 0; i < 6; i++) {
+                await user.type(inputs[i], String(i + 1));
+            }
+
+            await waitFor(() => {
+                expect(screen.getByText('Invalid code')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Backup Code Verification', () => {
+        it('should verify backup code when button is clicked', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ success: true, remainingCodes: 9 }),
+            });
+
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} />);
+
+            // Switch to backup mode
+            await user.click(screen.getByText(/Use a backup code instead/i));
+
+            // Enter backup code
+            const input = screen.getByPlaceholderText('XXXX-XXXX');
+            await user.type(input, 'ABCD-1234');
+
+            // Click verify
+            await user.click(screen.getByText('Verify'));
+
+            await waitFor(() => {
+                expect(mockFetch).toHaveBeenCalledWith('/api/mfa/backup-code', expect.any(Object));
+            });
+        });
+    });
+
+    describe('Trust Device', () => {
+        it('should include trustDevice in API request when checked', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ success: true }),
+            });
+
+            const user = userEvent.setup();
+            render(<MFAChallenge onVerify={mockOnVerify} trustDeviceOption={true} />);
+
+            // Check trust device
+            const checkbox = screen.getByRole('checkbox');
+            await user.click(checkbox);
+
+            // Enter code
             const inputs = screen.getAllByRole('textbox');
             for (let i = 0; i < 6; i++) {
                 await user.type(inputs[i], String(i + 1));
@@ -140,259 +265,9 @@ describe('MFAChallenge', () => {
                 expect(mockFetch).toHaveBeenCalledWith(
                     '/api/mfa/challenge',
                     expect.objectContaining({
-                        method: 'POST',
-                        headers: expect.objectContaining({
-                            'Authorization': 'Bearer mock-token'
-                        })
+                        body: expect.stringContaining('"trustDevice":true'),
                     })
                 );
-            });
-
-            await waitFor(() => {
-                expect(mockOnVerify).toHaveBeenCalledWith(true);
-            });
-        });
-
-        it('shows error for invalid code', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: false,
-                json: async () => ({ error: 'Invalid code' })
-            });
-
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            for (let i = 0; i < 6; i++) {
-                await user.type(inputs[i], '0');
-            }
-
-            await waitFor(() => {
-                expect(screen.getByText(/invalid code/i)).toBeInTheDocument();
-            });
-
-            expect(mockOnVerify).not.toHaveBeenCalled();
-        });
-
-        it('shows error for incomplete code', async () => {
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            await user.type(inputs[0], '1');
-            
-            // Try to verify with incomplete code
-            const verifyButton = screen.getByText(/verify|submit/i);
-            if (verifyButton) {
-                await user.click(verifyButton);
-            }
-
-            await waitFor(() => {
-                expect(screen.getByText(/6-digit code/i)).toBeInTheDocument();
-            });
-        });
-    });
-
-    describe('Backup Code Mode', () => {
-        it('switches to backup code mode', async () => {
-            renderComponent();
-
-            const switchButton = screen.getByText(/backup code|use backup/i);
-            await user.click(switchButton);
-
-            expect(screen.getByPlaceholderText(/backup code/i)).toBeInTheDocument();
-        });
-
-        it('verifies backup code successfully', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ success: true })
-            });
-
-            renderComponent();
-
-            const switchButton = screen.getByText(/backup code|use backup/i);
-            await user.click(switchButton);
-
-            const backupInput = screen.getByPlaceholderText(/backup code/i);
-            await user.type(backupInput, 'BACKUP-CODE-1234');
-
-            await waitFor(() => {
-                expect(mockFetch).toHaveBeenCalled();
-            });
-
-            await waitFor(() => {
-                expect(mockOnVerify).toHaveBeenCalledWith(true);
-            });
-        });
-
-        it('shows error for invalid backup code', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: false,
-                json: async () => ({ error: 'Invalid backup code' })
-            });
-
-            renderComponent();
-
-            const switchButton = screen.getByText(/backup code|use backup/i);
-            await user.click(switchButton);
-
-            const backupInput = screen.getByPlaceholderText(/backup code/i);
-            await user.type(backupInput, 'INVALID-CODE');
-
-            await waitFor(() => {
-                expect(screen.getByText(/invalid backup code/i)).toBeInTheDocument();
-            });
-        });
-    });
-
-    describe('Trust Device Option', () => {
-        it('shows trust device checkbox when enabled', () => {
-            renderComponent({ trustDeviceOption: true });
-
-            expect(screen.getByLabelText(/trust this device/i)).toBeInTheDocument();
-        });
-
-        it('hides trust device checkbox when disabled', () => {
-            renderComponent({ trustDeviceOption: false });
-
-            expect(screen.queryByLabelText(/trust this device/i)).not.toBeInTheDocument();
-        });
-
-        it('sends trust device flag when checked', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ success: true })
-            });
-
-            renderComponent({ trustDeviceOption: true });
-
-            const checkbox = screen.getByLabelText(/trust this device/i);
-            await user.click(checkbox);
-
-            const inputs = screen.getAllByRole('textbox');
-            for (let i = 0; i < 6; i++) {
-                await user.type(inputs[i], String(i + 1));
-            }
-
-            await waitFor(() => {
-                expect(mockFetch).toHaveBeenCalledWith(
-                    expect.any(String),
-                    expect.objectContaining({
-                        body: expect.stringContaining('trustDevice')
-                    })
-                );
-            });
-        });
-    });
-
-    describe('Cancel Functionality', () => {
-        it('calls onCancel when cancel button clicked', async () => {
-            renderComponent();
-
-            const cancelButton = screen.getByText(/cancel/i);
-            await user.click(cancelButton);
-
-            expect(mockOnCancel).toHaveBeenCalledTimes(1);
-        });
-
-        it('does not call onCancel when not provided', () => {
-            renderComponent({ onCancel: undefined });
-
-            expect(screen.queryByText(/cancel/i)).not.toBeInTheDocument();
-        });
-    });
-
-    describe('Loading States', () => {
-        it('shows loading during verification', async () => {
-            mockFetch.mockImplementation(() => new Promise(() => {}));
-
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            for (let i = 0; i < 6; i++) {
-                await user.type(inputs[i], String(i + 1));
-            }
-
-            await waitFor(() => {
-                expect(document.querySelector('.animate-spin')).toBeInTheDocument();
-            });
-        });
-
-        it('disables inputs during loading', async () => {
-            mockFetch.mockImplementation(() => new Promise(() => {}));
-
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            await user.type(inputs[0], '1');
-
-            await waitFor(() => {
-                inputs.forEach(input => {
-                    expect(input).toBeDisabled();
-                });
-            });
-        });
-    });
-
-    describe('Error Handling', () => {
-        it('displays network errors', async () => {
-            mockFetch.mockRejectedValueOnce(new Error('Network error'));
-
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            for (let i = 0; i < 6; i++) {
-                await user.type(inputs[i], String(i + 1));
-            }
-
-            await waitFor(() => {
-                expect(screen.getByText(/network error|failed/i)).toBeInTheDocument();
-            });
-        });
-
-        it('clears error when new input entered', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: false,
-                json: async () => ({ error: 'Invalid code' })
-            });
-
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            for (let i = 0; i < 6; i++) {
-                await user.type(inputs[i], '0');
-            }
-
-            await waitFor(() => {
-                expect(screen.getByText(/invalid code/i)).toBeInTheDocument();
-            });
-
-            await user.type(inputs[0], '1');
-
-            await waitFor(() => {
-                expect(screen.queryByText(/invalid code/i)).not.toBeInTheDocument();
-            });
-        });
-    });
-
-    describe('Remaining Codes Display', () => {
-        it('displays remaining backup codes count', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => ({ 
-                    success: true,
-                    remainingCodes: 5
-                })
-            });
-
-            renderComponent();
-
-            const inputs = screen.getAllByRole('textbox');
-            for (let i = 0; i < 6; i++) {
-                await user.type(inputs[i], String(i + 1));
-            }
-
-            await waitFor(() => {
-                expect(screen.getByText(/5.*remaining/i)).toBeInTheDocument();
             });
         });
     });

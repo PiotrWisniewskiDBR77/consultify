@@ -1,19 +1,19 @@
-# Consultify Kubernetes Deployment
+# Consultinity Kubernetes Deployment
 # Base configuration for all environments
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: consultify-api
+  name: consultinity-api
   labels:
-    app: consultify
+    app: consultinity
     component: api
     version: v1
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: consultify
+      app: consultinity
       component: api
   strategy:
     type: RollingUpdate
@@ -23,7 +23,7 @@ spec:
   template:
     metadata:
       labels:
-        app: consultify
+        app: consultinity
         component: api
         version: v1
       annotations:
@@ -31,14 +31,14 @@ spec:
         prometheus.io/port: "3001"
         prometheus.io/path: "/api/metrics"
     spec:
-      serviceAccountName: consultify-api
+      serviceAccountName: consultinity-api
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
       containers:
         - name: api
-          image: consultify/api:latest
+          image: consultinity/api:latest
           imagePullPolicy: Always
           ports:
             - name: http
@@ -52,27 +52,27 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: consultify-secrets
+                  name: consultinity-secrets
                   key: database-url
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
-                  name: consultify-secrets
+                  name: consultinity-secrets
                   key: redis-url
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: consultify-secrets
+                  name: consultinity-secrets
                   key: jwt-secret
             - name: ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
-                  name: consultify-secrets
+                  name: consultinity-secrets
                   key: encryption-key
             - name: ENCRYPTION_SALT
               valueFrom:
                 secretKeyRef:
-                  name: consultify-secrets
+                  name: consultinity-secrets
                   key: encryption-salt
           resources:
             requests:
@@ -116,23 +116,23 @@ spec:
               podAffinityTerm:
                 labelSelector:
                   matchLabels:
-                    app: consultify
+                    app: consultinity
                     component: api
                 topologyKey: kubernetes.io/hostname
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: consultify-frontend
+  name: consultinity-frontend
   labels:
-    app: consultify
+    app: consultinity
     component: frontend
     version: v1
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: consultify
+      app: consultinity
       component: frontend
   strategy:
     type: RollingUpdate
@@ -142,7 +142,7 @@ spec:
   template:
     metadata:
       labels:
-        app: consultify
+        app: consultinity
         component: frontend
         version: v1
     spec:
@@ -152,7 +152,7 @@ spec:
         fsGroup: 101
       containers:
         - name: frontend
-          image: consultify/frontend:latest
+          image: consultinity/frontend:latest
           imagePullPolicy: Always
           ports:
             - name: http
@@ -183,30 +183,30 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: consultify-worker
+  name: consultinity-worker
   labels:
-    app: consultify
+    app: consultinity
     component: worker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: consultify
+      app: consultinity
       component: worker
   template:
     metadata:
       labels:
-        app: consultify
+        app: consultinity
         component: worker
     spec:
-      serviceAccountName: consultify-api
+      serviceAccountName: consultinity-api
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
       containers:
         - name: worker
-          image: consultify/api:latest
+          image: consultinity/api:latest
           imagePullPolicy: Always
           command: ["node", "dist/worker.js"]
           env:
@@ -217,12 +217,12 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: consultify-secrets
+                  name: consultinity-secrets
                   key: database-url
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
-                  name: consultify-secrets
+                  name: consultinity-secrets
                   key: redis-url
           resources:
             requests:

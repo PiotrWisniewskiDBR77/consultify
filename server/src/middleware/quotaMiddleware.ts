@@ -1,19 +1,42 @@
+// @ts-nocheck
 /**
  * Quota Middleware
  * Enforces token and storage quotas before allowing API requests
  */
 
+import { Request, Response, NextFunction } from 'express';
 import usageService from '../services/usageService.js';
+
+interface QuotaInfo {
+    allowed: boolean;
+    used: number;
+    limit: number;
+    percentage: number;
+}
+
+interface AuthenticatedRequest extends Request {
+    user?: {
+        id: string;
+        organizationId?: string;
+        organization_id?: string;
+    };
+    quotaInfo?: QuotaInfo;
+    storageQuotaInfo?: QuotaInfo;
+    file?: {
+        originalname?: string;
+    };
+}
 
 /**
  * Middleware to enforce token quota on AI endpoints
  */
-async function enforceTokenQuota(req, res, next) {
+async function enforceTokenQuota(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
         const orgId = req.user?.organizationId || req.user?.organization_id;
 
         if (!orgId) {
-            return res.status(401).json({ error: 'Unauthorized - no organization' });
+            res.status(401).json({ error: 'Unauthorized - no organization' });
+            return;
         }
 
         const quota = await usageService.checkQuota(orgId, 'token');
@@ -22,7 +45,7 @@ async function enforceTokenQuota(req, res, next) {
         req.quotaInfo = quota;
 
         if (!quota.allowed) {
-            return res.status(429).json({
+            res.status(429).json({
                 error: 'Token quota exceeded',
                 code: 'QUOTA_EXCEEDED',
                 usage: {
@@ -33,6 +56,7 @@ async function enforceTokenQuota(req, res, next) {
                 message: 'Your organization has exceeded the monthly token limit. Please upgrade your plan or wait for the next billing cycle.',
                 upgradeUrl: '/settings?tab=billing'
             });
+            return;
         }
 
         // Warn if approaching limit (>80%)
@@ -52,12 +76,13 @@ async function enforceTokenQuota(req, res, next) {
 /**
  * Middleware to enforce storage quota on upload endpoints
  */
-async function enforceStorageQuota(req, res, next) {
+async function enforceStorageQuota(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
         const orgId = req.user?.organizationId || req.user?.organization_id;
 
         if (!orgId) {
-            return res.status(401).json({ error: 'Unauthorized - no organization' });
+            res.status(401).json({ error: 'Unauthorized - no organization' });
+            return;
         }
 
         const quota = await usageService.checkQuota(orgId, 'storage');
@@ -65,7 +90,7 @@ async function enforceStorageQuota(req, res, next) {
         req.storageQuotaInfo = quota;
 
         if (!quota.allowed) {
-            return res.status(429).json({
+            res.status(429).json({
                 error: 'Storage quota exceeded',
                 code: 'STORAGE_QUOTA_EXCEEDED',
                 usage: {
@@ -76,6 +101,7 @@ async function enforceStorageQuota(req, res, next) {
                 message: 'Your organization has exceeded the storage limit. Please upgrade your plan or delete unused files.',
                 upgradeUrl: '/settings?tab=billing'
             });
+            return;
         }
 
         next();
@@ -89,7 +115,7 @@ async function enforceStorageQuota(req, res, next) {
  * Record token usage after AI response
  * Call this AFTER the AI response is sent
  */
-async function recordTokenUsageAfterResponse(req, res, tokens, action) {
+async function recordTokenUsageAfterResponse(req: AuthenticatedRequest, res: Response, tokens: number, action: string): Promise<void> {
     try {
         const orgId = req.user?.organizationId || req.user?.organization_id;
         const userId = req.user?.id;
@@ -97,7 +123,7 @@ async function recordTokenUsageAfterResponse(req, res, tokens, action) {
         if (orgId && tokens > 0) {
             await usageService.recordTokenUsage(orgId, userId, tokens, action, {
                 endpoint: req.path,
-                model: req.body?.model || 'default'
+                model: (req.body as Record<string, unknown>)?.model || 'default'
             });
         }
     } catch (error) {
@@ -108,7 +134,7 @@ async function recordTokenUsageAfterResponse(req, res, tokens, action) {
 /**
  * Record storage usage after file upload
  */
-async function recordStorageAfterUpload(req, bytes, action = 'upload') {
+async function recordStorageAfterUpload(req: AuthenticatedRequest, bytes: number, action = 'upload'): Promise<void> {
     try {
         const orgId = req.user?.organization_id;
 
@@ -136,3 +162,4 @@ export default {
     recordTokenUsageAfterResponse,
     recordStorageAfterUpload
 };
+

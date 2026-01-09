@@ -403,7 +403,7 @@ export const ProfileCompleteness: React.FC<ProfileCompletenessProps> = ({
                         <Sparkles className="text-green-500" size={20} />
                         <p className="text-sm text-green-700 dark:text-green-300">
                             <span className="font-medium">Congratulations!</span> Your profile is complete. You're
-                            getting the most out of Consultify.
+                            getting the most out of Consultinity.
                         </p>
                     </div>
                 </div>

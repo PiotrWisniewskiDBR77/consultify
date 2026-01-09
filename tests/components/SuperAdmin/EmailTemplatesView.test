@@ -43,7 +43,7 @@ describe('EmailTemplatesView', () => {
             templateKey: 'welcome',
             name: 'Welcome Email',
             description: 'Sent to new users',
-            subject: 'Welcome to Consultify!',
+            subject: 'Welcome to Consultinity!',
             status: 'PUBLISHED',
             version: 2,
             createdAt: '2024-01-01T00:00:00Z',

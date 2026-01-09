@@ -135,7 +135,7 @@ export const CARD_DOCS = {
     'settings-integrations': {
         id: 'settings-integrations',
         title: 'Integrations',
-        description: 'Connect Consultify with external tools and services. Set up webhooks, connect to Slack/Teams, and configure third-party integrations.',
+        description: 'Connect Consultinity with external tools and services. Set up webhooks, connect to Slack/Teams, and configure third-party integrations.',
         features: [
             'Connect to Slack workspaces',
             'Integrate with Microsoft Teams',
@@ -420,7 +420,7 @@ export const CARD_DOCS = {
     'superadmin-dashboard': {
         id: 'superadmin-dashboard',
         title: 'Platform Dashboard',
-        description: 'Global overview of the entire Consultify platform. Monitor all organizations, users, revenue, and system health from a single view.',
+        description: 'Global overview of the entire Consultinity platform. Monitor all organizations, users, revenue, and system health from a single view.',
         features: [
             'Total organizations and users across platform',
             'Monthly Recurring Revenue (MRR) tracking',
@@ -1785,7 +1785,7 @@ export const CARD_DOCS = {
     'onboarding-wizard': {
         id: 'onboarding-wizard',
         title: 'Getting Started Wizard',
-        description: 'Step-by-step guide to help new users understand Consultify and complete initial setup.',
+        description: 'Step-by-step guide to help new users understand Consultinity and complete initial setup.',
         features: [
             'Interactive walkthrough',
             'Feature introduction',

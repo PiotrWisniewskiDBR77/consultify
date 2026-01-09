@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Content Module in Consultify provides enterprise-level management for two main content types:
+The Content Module in Consultinity provides enterprise-level management for two main content types:
 
 1. **Email Templates** - Reusable email designs with variable substitution
 2. **AI Playbook Templates** - Multi-step action plans for AI-driven workflows
@@ -15,7 +15,7 @@ This guide covers how to use the Content Module effectively.
 
 ### Accessing the Content Module
 
-1. Log in to Consultify as an Admin or SuperAdmin
+1. Log in to Consultinity as an Admin or SuperAdmin
 2. Navigate to **SuperAdmin** → **Content** in the main menu
 3. Select the content type you want to manage:
    - Email Templates
@@ -376,7 +376,7 @@ Access is controlled by role-based permissions:
 ## Getting Help
 
 - **Documentation** - This guide and API docs
-- **Support** - Contact support@consultify.app
+- **Support** - Contact support@consultinity.app
 - **Community** - Join our Slack channel
 
 

@@ -13,15 +13,15 @@ commonLabels:
   environment: staging
 
 replicas:
-  - name: consultify-api
+  - name: consultinity-api
     count: 2
-  - name: consultify-frontend
+  - name: consultinity-frontend
     count: 1
 
 images:
-  - name: consultify/api
+  - name: consultinity/api
     newTag: develop
-  - name: consultify/frontend
+  - name: consultinity/frontend
     newTag: develop
 
 patches:
@@ -34,10 +34,10 @@ patches:
         value: "1000m"
     target:
       kind: Deployment
-      name: consultify-api
+      name: consultinity-api
 
 configMapGenerator:
-  - name: consultify-config
+  - name: consultinity-config
     behavior: merge
     literals:
       - NODE_ENV=staging

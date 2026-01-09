@@ -920,7 +920,7 @@ PUT /settings/email-config
   "smtp_password_encrypted": "encrypted_password",
   "smtp_use_tls": true,
   "from_email": "noreply@example.com",
-  "from_name": "Consultify",
+  "from_name": "Consultinity",
   "reply_to_email": "support@example.com"
 }
 ```
@@ -1043,7 +1043,7 @@ Events that can trigger webhooks:
 ### JavaScript/TypeScript
 
 ```typescript
-import { Api } from '@consultify/api';
+import { Api } from '@consultinity/api';
 
 // Security policy
 const policy = await Api.get('/security-policies/org-123');
@@ -1104,6 +1104,8 @@ requests.post(
 - Added Data Export functionality
 - Added Backup Configuration
 - Added Email Configuration with DNS verification
+
+
 
 
 

@@ -50,6 +50,10 @@
     "logOut": "Log Out",
     "intro": "Intro",
     "organization": "Organization",
+    "projectIntelligence": "Project Intelligence",
+    "partnerPortal": "Partner Portal",
+    "studio": "Studio",
+    "superAdmin": "SuperAdmin",
     "context": {
       "profile": "Company Profile",
       "goals": "Goals & Expectations",
@@ -96,6 +100,12 @@
       "timeline": "Timeline",
       "matrix": "Matrix"
     },
+    "emptyState": {
+      "title": "No initiatives yet",
+      "description": "Create your first initiative or generate from assessment to start building your portfolio.",
+      "createFirst": "New Initiative"
+    },
+    "newInitiative": "New Initiative",
     "filters": {
       "allProjects": "All Projects",
       "allStatuses": "All Statuses",
@@ -145,6 +155,13 @@
       "title": "No initiatives yet",
       "description": "Create your first initiative or generate from assessment"
     }
+  },
+  "superadmin": {
+    "overview": "Overview",
+    "customers": "Customers",
+    "aiPlatform": "AI Platform",
+    "revenue": "Revenue",
+    "system": "System"
   },
   "myWork": {
     "title": "My Work",
@@ -711,7 +728,33 @@
       "docs": "Documentation",
       "contact": "Contact"
     },
+    "ai": {
+      "welcome": {
+        "title": "AI Help Assistant",
+        "subtitle": "Ask me anything about using Consultinity. I'm here to help!"
+      },
+      "placeholder": "Ask a question...",
+      "error": "Sorry, I encountered an error. Please try again.",
+      "quick": {
+        "label": "Quick questions:",
+        "howto": "How do I use this module?",
+        "explain": "Explain what I can do here",
+        "troubleshoot": "Help me troubleshoot an issue"
+      },
+      "prompts": {
+        "howto": "How do I use this module effectively?",
+        "explain": "What features and capabilities are available here?",
+        "troubleshoot": "I'm having trouble. Can you help me fix it?"
+      }
+    },
     "sidePanel": {
+      "tabs": {
+        "ai": "AI Assistant",
+        "overview": "Overview",
+        "howto": "How to Use",
+        "faq": "FAQ",
+        "video": "Videos"
+      },
       "modules": {
         "dashboard": {
           "name": "Dashboard",
@@ -1401,7 +1444,7 @@
           },
           "settings": {
             "name": "User Settings",
-            "description": "Personalize your Consultify experience. Configure your profile, security, notifications, AI preferences, integrations, and accessibility options.",
+            "description": "Personalize your Consultinity experience. Configure your profile, security, notifications, AI preferences, integrations, and accessibility options.",
             "purpose": "Customize the application to match your work style, security requirements, and communication preferences.",
             "keyFeatures": [
               "Profile management",
@@ -1431,7 +1474,7 @@
           "admin": {
             "name": "Admin Panel",
             "description": "Organization administration center for managing users, projects, AI configuration, knowledge base, and operational metrics. Available to organization administrators.",
-            "purpose": "Manage your organization's Consultify instance, control access, monitor usage, and configure organizational settings.",
+            "purpose": "Manage your organization's Consultinity instance, control access, monitor usage, and configure organizational settings.",
             "keyFeatures": [
               "User management and invitations",
               "Project administration",
@@ -1460,8 +1503,8 @@
           },
           "superadmin": {
             "name": "Super Admin Console",
-            "description": "Platform-wide administration for DBR77 operators. Manage all organizations, users, billing, AI configuration, SSO, security policies, white-labeling, and compliance across the entire Consultify platform.",
-            "purpose": "Full control over the Consultify platform for DBR77 team members to manage multi-tenant operations, enterprise features, and platform health.",
+            "description": "Platform-wide administration for DBR77 operators. Manage all organizations, users, billing, AI configuration, SSO, security policies, white-labeling, and compliance across the entire Consultinity platform.",
+            "purpose": "Full control over the Consultinity platform for DBR77 team members to manage multi-tenant operations, enterprise features, and platform health.",
             "keyFeatures": [
               "Multi-organization management",
               "Global user administration",
@@ -1489,6 +1532,37 @@
               "Document all configuration changes",
               "Test SSO changes in sandbox first",
               "Monitor AI costs across organizations"
+            ]
+          },
+          "ai-infrastructure": {
+            "name": "AI Infrastructure",
+            "description": "Central management hub for all LLM providers and AI services. Configure API keys, manage model tiers, set global limits, and monitor AI system health across the platform.",
+            "purpose": "Configure and maintain the AI/LLM infrastructure that powers all intelligent features across Consultinity, ensuring optimal performance and cost control.",
+            "keyFeatures": [
+              "LLM provider configuration (OpenAI, Google, Ollama, etc.)",
+              "Model tier assignments (Budget, Standard, Premium, Reasoning)",
+              "API key management and testing",
+              "Global rate limits and token budgets",
+              "Real-time health monitoring",
+              "Cost tracking and analytics",
+              "Circuit breaker configuration",
+              "PII detection settings"
+            ],
+            "workflow": [
+              "Add and configure LLM providers with API keys",
+              "Assign models to performance tiers",
+              "Set global rate limits and token budgets",
+              "Test provider connections",
+              "Monitor health dashboard for issues",
+              "Review usage analytics and costs",
+              "Adjust circuit breaker thresholds as needed"
+            ],
+            "tips": [
+              "Always test connections after adding new providers",
+              "Assign budget models to simple tasks to optimize costs",
+              "Monitor latency trends to detect degraded performance",
+              "Keep at least one fallback provider active",
+              "Review costs weekly to prevent budget overruns"
             ]
           },
           "ai-tools": {
@@ -1955,14 +2029,20 @@
       "header": "Settings",
       "myProfile": "My Profile",
       "billing": "Billing & Plans",
-      "aiConfig": "LLM Management",
+      "aiConfig": "AI Configuration",
       "notifications": "Notifications",
       "integrations": "Integrations",
       "regionalization": "Regionalization",
       "workPreferences": "Work Preferences",
       "dashboardPreferences": "Dashboard",
       "accessibility": "Accessibility",
-      "privacy": "Privacy"
+      "privacy": "Privacy",
+      "preferences": "Preferences",
+      "theme": "Theme",
+      "language": "Language",
+      "demoMode": "Demo Mode",
+      "demoModeOn": "Demo Mode is ON - viewing sample data",
+      "demoModeOff": "Demo Mode is OFF"
     },
     "profile": {
       "header": "Personal Information",
@@ -2652,6 +2732,18 @@
     }
   },
   "assessment": {
+    "emptyState": {
+      "title": "No assessments yet",
+      "noMatch": "No assessments match your search",
+      "createFirst": "Create First Assessment"
+    },
+    "table": {
+      "assessment": "Assessment",
+      "status": "Status",
+      "progress": "Progress",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
     "workspace": {
       "header": "DRD Assessment",
       "senseCheck": "AI Sense Check",
@@ -5239,6 +5331,26 @@
     "program": "Transformation Program",
     "lastUpdated": "Last updated:",
     "justNow": "Just now",
+    "setup": {
+      "title": "Quick Start",
+      "subtitle": "Get the most out of Consultinity",
+      "done": "Done",
+      "next": "Next",
+      "actions": {
+        "chat": {
+          "title": "Try AI Assistant",
+          "description": "Ask your first question to the AI"
+        },
+        "assessment": {
+          "title": "Start Assessment",
+          "description": "Begin your digital readiness diagnosis"
+        },
+        "roadmap": {
+          "title": "View Roadmap",
+          "description": "Explore your transformation timeline"
+        }
+      }
+    },
     "tabs": {
       "overview": "Overview",
       "progress": "Progress",
@@ -5404,7 +5516,7 @@
     "masterclassTitle": "Want to deepen your knowledge?",
     "masterclassDesc": "Join our Masterclass program and learn proven tools from transformation leaders.",
     "masterclassLink": "View Masterclass Details",
-    "videoTitle": "See how CONSULTIFY works",
+    "videoTitle": "See how CONSULTINITY works",
     "videoPerson": "Dr. Piotr Wiśniewski",
     "videoRole": "Your guide to digital transformation"
   },
@@ -5448,7 +5560,7 @@
       "name": "SIRI",
       "fullName": "Smart Industry Readiness Index",
       "description": "Industry 4.0 readiness assessment - 3 Building Blocks × 8 Dimensions",
-      "legalNotice": "SIRI (Smart Industry Readiness Index) is a tool developed by Singapore Economic Development Board (EDB) in collaboration with TÜV SÜD. The use of SIRI structure in Consultify is for educational purposes only and serves to learn Industry 4.0 methodology. Official SIRI certification requires an accredited assessor.",
+      "legalNotice": "SIRI (Smart Industry Readiness Index) is a tool developed by Singapore Economic Development Board (EDB) in collaboration with TÜV SÜD. The use of SIRI structure in Consultinity is for educational purposes only and serves to learn Industry 4.0 methodology. Official SIRI certification requires an accredited assessor.",
       "buildingBlocks": {
         "process": "Process",
         "technology": "Technology",
@@ -5477,7 +5589,7 @@
       "name": "ADMA",
       "fullName": "Advanced Digital Maturity Assessment",
       "description": "European Digital Innovation Hubs framework - 5 Pillars × 12 Dimensions",
-      "legalNotice": "ADMA (Advanced Digital Maturity Assessment) is a tool developed by the European Commission as part of the Digital Innovation Hubs program. Use in Consultify is for educational purposes.",
+      "legalNotice": "ADMA (Advanced Digital Maturity Assessment) is a tool developed by the European Commission as part of the Digital Innovation Hubs program. Use in Consultinity is for educational purposes.",
       "pillars": {
         "strategy": "Strategy & Organization",
         "smartProducts": "Smart Products",
@@ -5511,7 +5623,7 @@
       "name": "CMMI",
       "fullName": "Capability Maturity Model Integration",
       "description": "Process improvement framework - 5 Maturity Levels × 20 Practice Areas",
-      "legalNotice": "CMMI is a trademark of ISACA (formerly CMMI Institute). Official CMMI certification requires an accredited Lead Appraiser. Implementation in Consultify is for educational purposes.",
+      "legalNotice": "CMMI is a trademark of ISACA (formerly CMMI Institute). Official CMMI certification requires an accredited Lead Appraiser. Implementation in Consultinity is for educational purposes.",
       "categories": {
         "doing": "Doing",
         "managing": "Managing",
@@ -5551,7 +5663,7 @@
       "name": "Lean 4.0",
       "fullName": "DBR77 Lean 4.0 Assessment",
       "description": "Proprietary DBR77 method: Measure → Optimize → Automate",
-      "legalNotice": "The DBR77 Lean 4.0 method (Measure-Optimize-Automate) is a proprietary Consultify methodology combining classic Lean tools with automation and AI potential assessment.",
+      "legalNotice": "The DBR77 Lean 4.0 method (Measure-Optimize-Automate) is a proprietary Consultinity methodology combining classic Lean tools with automation and AI potential assessment.",
       "phases": {
         "measure": "Measure",
         "optimize": "Optimize",
@@ -5642,28 +5754,104 @@
       "tooltip": "Feedback"
     }
   },
+  "onboarding": {
+    "checklist": {
+      "title": "Getting Started",
+      "completed": "completed",
+      "more": "more steps",
+      "dismiss": "I'll explore on my own",
+      "profile": {
+        "title": "Complete your profile",
+        "description": "Add your name and company info"
+      },
+      "firstChat": {
+        "title": "Try AI Assistant",
+        "description": "Ask your first question"
+      },
+      "firstAssessment": {
+        "title": "Start an assessment",
+        "description": "Begin your digital readiness diagnosis"
+      },
+      "firstInitiative": {
+        "title": "Create an initiative",
+        "description": "Plan your first transformation project"
+      },
+      "roadmap": {
+        "title": "Explore Roadmap",
+        "description": "View your transformation timeline"
+      },
+      "inviteTeam": {
+        "title": "Invite your team",
+        "description": "Collaborate with colleagues"
+      },
+      "billing": {
+        "title": "Set up billing",
+        "description": "Configure payment method"
+      }
+    }
+  },
   "feedback": {
-    "title": "Submit Feedback",
+    "title": "Feedback",
+    "tabs": {
+      "report": "Report",
+      "pulse": "Quick",
+      "feature": "Feature"
+    },
     "type": {
       "bug": "Bug",
       "idea": "Idea"
+    },
+    "severity": {
+      "label": "Severity"
     },
     "label": {
       "bug": "Bug Description",
       "idea": "Idea Description"
     },
     "placeholder": {
-      "bug": "Describe what's not working and how to reproduce it...",
-      "idea": "Describe your idea for improvement..."
+      "bug": "Describe what happened and steps to reproduce...",
+      "idea": "Share your idea for improvement..."
     },
-    "submit": "Submit Report",
-    "submitting": "Sending...",
+    "report": {
+      "intro": "Help us improve by reporting issues or sharing ideas."
+    },
+    "submit": "Submit",
+    "submitting": "Submitting...",
     "success": {
-      "title": "Message Sent!",
-      "message": "Thank you for your feedback. We will analyze it as soon as possible."
+      "title": "Thank You!",
+      "message": "Thank you for your feedback. We will analyze it as soon as possible.",
+      "bugReported": "Bug reported! We'll investigate ASAP.",
+      "ideaSubmitted": "Great idea! Added to our backlog.",
+      "pulse": "Thanks for your feedback! 🎉",
+      "feature": "Feature request submitted!",
+      "featureWithAI": "Feature request submitted! AI found similar requests."
+    },
+    "error": {
+      "submit": "Failed to submit feedback"
     },
     "intro": "Your feedback helps us improve the platform. Report a bug or share an idea.",
-    "footer": "Submission will include data:"
+    "footer": "Feedback sent as",
+    "pulse": {
+      "title": "How's your experience?",
+      "subtitle": "Quick feedback helps us improve",
+      "context": "Feedback for:",
+      "sorry": "Sorry to hear that!",
+      "tellUs": "Tell us what went wrong",
+      "commentPlaceholder": "What can we improve?"
+    },
+    "feature": {
+      "category": "Category",
+      "name": "Feature Name",
+      "namePlaceholder": "e.g., Dark mode, Export to PDF",
+      "description": "Description",
+      "descPlaceholder": "Describe the feature and how it would help you...",
+      "impact": "Business Impact",
+      "submit": "Submit Feature Request"
+    },
+    "ai": {
+      "insights": "AI Insights",
+      "loading": "Loading AI insights..."
+    }
   },
   "documents": {
     "library": "Document Library",

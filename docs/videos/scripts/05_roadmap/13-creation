@@ -11,14 +11,14 @@
 ## Avatar Script
 
 [INTRO - 0:00-0:40]
-"You have prioritized initiatives and approved business cases. Now it's time to sequence them into a coherent transformation roadmap. A roadmap isn't just a timeline – it's a strategic plan that shows when initiatives happen, how they connect, and what the journey looks like. In this video, I'll guide you through creating an effective roadmap in Consultify."
+"You have prioritized initiatives and approved business cases. Now it's time to sequence them into a coherent transformation roadmap. A roadmap isn't just a timeline – it's a strategic plan that shows when initiatives happen, how they connect, and what the journey looks like. In this video, I'll guide you through creating an effective roadmap in Consultinity."
 
 [SECTION 1: What is a Roadmap? - 0:40-1:45]
 "A transformation roadmap is a time-based plan showing how your initiatives are organized into phases, waves, or releases. It answers critical questions: What do we do first? What can we do in parallel? Where are the dependencies? What are the key milestones?
 
 Unlike a simple project list, a roadmap shows relationships between initiatives. It accounts for resource constraints – you can't do everything at once. And it tells a story stakeholders can follow.
 
-In Consultify, roadmaps are living documents. As reality changes – delays, new priorities, completed work – your roadmap updates to reflect the current plan."
+In Consultinity, roadmaps are living documents. As reality changes – delays, new priorities, completed work – your roadmap updates to reflect the current plan."
 
 [SECTION 2: Starting Your Roadmap - 1:45-2:45]
 "Navigate to the Roadmap module and click 'Create New Roadmap' if you don't have one yet. Most organizations have one master transformation roadmap, but you can create multiple for different programs if needed.
@@ -28,13 +28,13 @@ You'll name your roadmap and set its timeframe. Transformations typically span o
 Select the initiatives to include. You can pull from your prioritized backlog, or add specific initiatives manually. Typically, you'd include all active and planned initiatives that are part of this transformation program."
 
 [SECTION 3: Organizing into Phases - 2:45-4:15]
-"Consultify organizes roadmaps into phases – typically called Waves, Quarters, or Release cycles. Phases group related work and set boundaries for planning.
+"Consultinity organizes roadmaps into phases – typically called Waves, Quarters, or Release cycles. Phases group related work and set boundaries for planning.
 
 Click 'Add Phase' to create your first phase. Give it a name like 'Wave 1: Foundation' and set the date range. Add subsequent phases for your timeline.
 
 Now drag initiatives into phases. Consider: What must come first? Foundation work – infrastructure, governance, basic capabilities – typically leads. Quick wins can provide early momentum. Major programs need positioning where resources and attention are available.
 
-As you drag initiatives, Consultify checks for conflicts. If you place two resource-heavy initiatives in the same phase, you'll see a warning about potential overload."
+As you drag initiatives, Consultinity checks for conflicts. If you place two resource-heavy initiatives in the same phase, you'll see a warning about potential overload."
 
 [SECTION 4: The Timeline View - 4:15-5:15]
 "Switch to Timeline view to see initiatives plotted on a Gantt-style chart. Here you can visually adjust duration by dragging initiative edges, and move initiatives by dragging their bars.
@@ -60,7 +60,7 @@ If a phase shows red – indicating over-allocation – you need to rebalance. E
 You can filter by resource type: technology team, consultants, business stakeholders. This helps different groups understand their involvement throughout the transformation."
 
 [SECTION 7: Scenario Planning - 7:15-8:00]
-"Consultify supports scenario planning – creating alternative roadmap versions to compare different approaches.
+"Consultinity supports scenario planning – creating alternative roadmap versions to compare different approaches.
 
 Duplicate your roadmap to create a 'What-if' scenario. Try a more aggressive timeline, or see what happens if a major initiative gets delayed. Compare scenarios side-by-side to inform decision-making.
 

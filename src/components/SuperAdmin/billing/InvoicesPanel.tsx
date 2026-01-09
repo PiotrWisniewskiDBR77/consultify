@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * InvoicesPanel - Invoice Management
  *

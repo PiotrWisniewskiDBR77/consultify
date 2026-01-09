@@ -1,4 +1,4 @@
-# 🔧 Plan Migracji ES Modules - Consultify Backend
+# 🔧 Plan Migracji ES Modules - Consultinity Backend
 
 ## 📊 Diagnoza
 
@@ -63,7 +63,7 @@ await import('./services/systemIntegrity.js');
 #!/bin/bash
 # change_to_cjs.sh
 
-cd /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server
+cd /Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server
 
 # Lista plików do zmiany na .cjs (utility scripts, nie główna aplikacja)
 FILES_TO_CONVERT=(

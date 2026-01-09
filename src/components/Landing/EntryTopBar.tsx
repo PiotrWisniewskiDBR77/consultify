@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, Globe, Menu, Moon, Sun, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { useAppStore } from '../../store/useAppStore';
 
@@ -23,6 +24,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     hasWorkspace,
 }) => {
     const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
     const [isLangOpen, setIsLangOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const langRef = useRef<HTMLDivElement>(null);
@@ -118,17 +120,23 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
 
                 {/* Right Navigation - Auth & Settings */}
                 <div className="hidden md:flex items-center gap-3">
-                    {/* Log in Button */}
+                    {/* Log in Button - using useNavigate for reliable navigation */}
                     <button
-                        onClick={onLoginClick}
+                        onClick={() => {
+                            console.log('[EntryTopBar] Log in clicked - navigating to /login');
+                            navigate('/login');
+                        }}
                         className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-white/10 cursor-pointer"
                     >
                         Log in
                     </button>
 
-                    {/* Sign up Button */}
+                    {/* Sign up Button - using useNavigate for reliable navigation */}
                     <button
-                        onClick={onRegisterClick}
+                        onClick={() => {
+                            console.log('[EntryTopBar] Sign up clicked - navigating to /register');
+                            navigate('/register');
+                        }}
                         className="px-5 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/25 dark:shadow-purple-900/25 cursor-pointer"
                     >
                         Sign up

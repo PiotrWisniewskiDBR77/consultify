@@ -42,7 +42,7 @@ The Phase 0 "System Stabilization" audit has been successfully completed. The st
 - **Command:** `npm run type-check`
 - **Result:**
   ```bash
-  > consultify@0.0.1 type-check
+  > consultinity@0.0.1 type-check
   > tsc --noEmit
   Exit code: 0
   ```

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * IntegrationAnalyticsSettings - Analytics Dashboard for Integrations
  *

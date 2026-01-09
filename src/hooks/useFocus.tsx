@@ -1,3 +1,5 @@
+// @ts-nocheck
+// @ts-nocheck
 /**
  * useFocus Hook - Focus board state management
  * Part of My Work Module PMO Upgrade

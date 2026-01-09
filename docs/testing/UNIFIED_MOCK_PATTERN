@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the unified mock pattern for all tests in the Consultify codebase. Following this pattern ensures consistent, reliable, and maintainable tests.
+This document describes the unified mock pattern for all tests in the Consultinity codebase. Following this pattern ensures consistent, reliable, and maintainable tests.
 
 ## Quick Start
 

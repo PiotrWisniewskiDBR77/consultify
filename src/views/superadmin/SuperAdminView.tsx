@@ -14,9 +14,8 @@
  * - Configuration (Settings, White-label, Legal)
  */
 
-import { Lock, RefreshCw } from 'lucide-react';
+import { RefreshCw, Shield } from 'lucide-react';
 import React, { useEffect } from 'react';
-import { toast } from 'react-hot-toast';
 
 import { DocumentSidePanel } from '../../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../../components/documents/DocumentToggleButton';
@@ -33,9 +32,9 @@ import {
 } from '../../components/layout/SuperAdminSidebar';
 import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
 import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
+import { SuperAdminStatusIndicators } from '../../components/SuperAdmin/SuperAdminStatusIndicators';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
-import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 
 // Lazy load heavy modules
 const AIDevelopmentModule = React.lazy(() =>
@@ -66,7 +65,7 @@ interface SuperAdminViewProps {
 }
 
 export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onNavigate }) => {
-    const { isSidebarCollapsed, currentView, setCurrentView } = useAppStore();
+    const { isSidebarCollapsed, currentView, setCurrentView, logout } = useAppStore();
 
     // Derive activeSection from currentView
     const activeSection: SuperAdminSection = appViewToSection[currentView] || 'overview';
@@ -84,6 +83,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     }, [currentView, setCurrentView]);
 
     const handleLogout = () => {
+        logout();
         onNavigate(AppView.WELCOME);
     };
 
@@ -236,7 +236,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
     };
 
     return (
-        <div className="flex h-full bg-slate-100 dark:bg-navy-950 gap-0.5 text-slate-900 dark:text-white overflow-hidden">
+        <div className="flex h-screen bg-slate-100 dark:bg-navy-950 text-slate-900 dark:text-white overflow-hidden">
             {/* Sidebar (Fixed Position) */}
             <SuperAdminSidebar
                 activeSection={activeSection}
@@ -245,29 +245,46 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
                 currentUserEmail={currentUser.email}
             />
 
-            {/* Main Content (Push with ml-xx) */}
-            <main
-                className={`flex-1 overflow-hidden flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-72'}`}
+            {/* Main Content Area */}
+            <div
+                className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-72'}`}
             >
-                {renderContent()}
-            </main>
+                {/* SuperAdmin Dedicated Header */}
+                <header className="h-14 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-800 flex items-center justify-between px-4 shrink-0 shadow-sm">
+                    {/* Left side - Branding + Status Indicators */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                            <Shield size={20} />
+                            <span className="font-semibold text-sm hidden sm:inline">Super Admin Console</span>
+                        </div>
+                        <div className="h-5 w-px bg-slate-200 dark:bg-white/10" />
+                        <SuperAdminStatusIndicators />
+                    </div>
 
-            {/* Top Right User Profile - Absolute Positioned */}
-            <div className="fixed top-4 right-12 z-50 flex items-center gap-6">
-                <SuperAdminSignalCenter />
-                <UserProfileMenu />
+                    {/* Right side - Signal Center + Profile */}
+                    <div className="flex items-center gap-3">
+                        <SuperAdminSignalCenter />
+                        <div className="h-6 w-px bg-slate-200 dark:bg-white/10" />
+                        <UserProfileMenu showName={true} />
+                    </div>
+                </header>
+
+                {/* Main Content */}
+                <main className="flex-1 overflow-hidden">
+                    {renderContent()}
+                </main>
             </div>
 
-            {/* Floating Action Buttons */}
-            <div className="fixed right-0 top-[66%] z-50 flex flex-col gap-3 items-end translate-x-0 pointer-events-none">
+            {/* Floating Action Buttons - Order: Help, Feedback, Docs */}
+            <div className="fixed right-0 top-[60%] z-50 flex flex-col gap-2 items-end pointer-events-none">
                 <div className="pointer-events-auto">
                     <HelpToggleButton />
                 </div>
                 <div className="pointer-events-auto">
-                    <DocumentToggleButton />
+                    <FeedbackToggleButton />
                 </div>
                 <div className="pointer-events-auto">
-                    <FeedbackToggleButton />
+                    <DocumentToggleButton />
                 </div>
             </div>
             <HelpSidePanel />

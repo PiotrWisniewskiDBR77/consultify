@@ -72,32 +72,44 @@ export const RouterSync: React.FC = () => {
         } else if (path.startsWith('/share/')) {
             // Public share links - no auth required, handled by App.tsx directly
             console.log('[RouterSync] Public Share Link accessed');
-        } else if (path === '/login' || path === '/auth') {
-            // Login/Auth route - show auth view ONLY if not authenticated
+        } else if (path === '/login') {
+            // Login route - redirect if already authenticated, otherwise let React Router handle
             if (currentUser?.isAuthenticated) {
-                console.log('[RouterSync] User authenticated, redirecting to chat');
-                navigate('/chat', { replace: true });
+                // SUPERADMIN goes to SuperAdmin panel
+                if (currentUser.role === 'SUPERADMIN') {
+                    console.log('[RouterSync] SUPERADMIN authenticated, redirecting to superadmin');
+                    navigate('/superadmin', { replace: true });
+                } else {
+                    console.log('[RouterSync] User authenticated, redirecting to chat');
+                    navigate('/chat', { replace: true });
+                }
                 return;
             }
-            if (currentView !== AppView.AUTH) {
-                console.log('[RouterSync] Navigating to AUTH/LOGIN');
-                setAuthInitialStep(AuthStep.LOGIN);
-                setCurrentView(AppView.AUTH);
-            }
+            // Don't change currentView - let React Router handle /login directly
+            console.log('[RouterSync] At /login - React Router handles this');
+            return; // IMPORTANT: Stop here, don't let other effects interfere
         } else if (path === '/register') {
-            // Registration route - show auth view with register step
+            // Registration route - redirect if already authenticated, otherwise let React Router handle
             if (currentUser?.isAuthenticated) {
-                console.log('[RouterSync] User authenticated, redirecting to chat');
-                navigate('/chat', { replace: true });
+                // SUPERADMIN goes to SuperAdmin panel
+                if (currentUser.role === 'SUPERADMIN') {
+                    console.log('[RouterSync] SUPERADMIN authenticated, redirecting to superadmin');
+                    navigate('/superadmin', { replace: true });
+                } else {
+                    console.log('[RouterSync] User authenticated, redirecting to chat');
+                    navigate('/chat', { replace: true });
+                }
                 return;
             }
-            if (currentView !== AppView.AUTH) {
-                console.log('[RouterSync] Navigating to REGISTER');
-                setAuthInitialStep(AuthStep.REGISTER);
-                setCurrentView(AppView.AUTH);
-            }
+            // Don't change currentView - let React Router handle /register directly
+            console.log('[RouterSync] At /register - React Router handles this');
+            return; // IMPORTANT: Stop here, don't let other effects interfere
+        } else if (path === '/auth') {
+            // Legacy /auth route - redirect to /login
+            console.log('[RouterSync] Legacy /auth route, redirecting to /login');
+            navigate('/login', { replace: true });
         } else if (path === '/studio') {
-            // Consultify Studio - Visual AI Workspace
+            // Consultinity Studio - Visual AI Workspace
             if (!currentUser?.isAuthenticated) {
                 console.log('[RouterSync] Not authenticated, redirecting to login');
                 navigate('/login', { replace: true });
@@ -126,6 +138,12 @@ export const RouterSync: React.FC = () => {
             if (!currentUser?.isAuthenticated) {
                 console.log('[RouterSync] Not authenticated, redirecting to login');
                 navigate('/login', { replace: true });
+                return;
+            }
+            // SUPERADMIN users should go to SuperAdmin panel, not chat
+            if (currentUser.role === 'SUPERADMIN') {
+                console.log('[RouterSync] SUPERADMIN on /chat, redirecting to /superadmin');
+                navigate('/superadmin', { replace: true });
                 return;
             }
             // Don't override Admin/SuperAdmin/Settings/etc views - they share /chat URL
@@ -168,8 +186,14 @@ export const RouterSync: React.FC = () => {
             }
         } else if (path === '/' || path === '') {
             if (currentUser?.isAuthenticated) {
-                console.log('[RouterSync] User authenticated, redirecting to AI Chat');
-                navigate('/chat', { replace: true });
+                // SUPERADMIN goes to SuperAdmin panel
+                if (currentUser.role === 'SUPERADMIN') {
+                    console.log('[RouterSync] SUPERADMIN authenticated, redirecting to superadmin');
+                    navigate('/superadmin', { replace: true });
+                } else {
+                    console.log('[RouterSync] User authenticated, redirecting to AI Chat');
+                    navigate('/chat', { replace: true });
+                }
                 return;
             }
             console.log('[RouterSync] Phase A: Product Entry Page');

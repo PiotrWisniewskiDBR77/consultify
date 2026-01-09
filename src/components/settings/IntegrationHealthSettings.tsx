@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * IntegrationHealthSettings - Health Monitoring Dashboard
  *

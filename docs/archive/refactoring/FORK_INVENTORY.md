@@ -1,4 +1,4 @@
-# Fork Inventory - Consultify Split Analysis
+# Fork Inventory - Consultinity Split Analysis
 **Date**: 2026-01-03  
 **Phase**: 0 - Audit and Assessment  
 **Purpose**: Prepare codebase for fork into two applications
@@ -94,7 +94,7 @@
 
 ---
 
-## 2. Consultify-Specific Code
+## 2. Consultinity-Specific Code
 
 ### 2.1 Assessment Framework
 **Location**: `/server/src/services`, `/components`, `/views`
@@ -107,7 +107,7 @@
 - BCG-style report generation
 
 **Size**: ~150 files  
-**Keep in**: Consultify app
+**Keep in**: Consultinity app
 
 ### 2.2 Consulting Features
 **Location**: `/server/services`, `/components`
@@ -120,7 +120,7 @@
 - Initiative generator
 
 **Size**: ~100 files  
-**Keep in**: Consultify app
+**Keep in**: Consultinity app
 
 ### 2.3 Knowledge Base (Consulting)
 **Location**: `/server/routes/knowledge`, `/views`
@@ -132,7 +132,7 @@
 - Case studies
 
 **Size**: ~50 files  
-**Keep in**: Consultify app
+**Keep in**: Consultinity app
 
 ### 2.4 Consulting-Specific UI
 **Location**: `/views`, `/components`
@@ -145,7 +145,7 @@
 - Playbook executor
 
 **Size**: ~200 files  
-**Keep in**: Consultify app
+**Keep in**: Consultinity app
 
 ---
 
@@ -196,7 +196,7 @@ ai_conversations
 ai_context
 ```
 
-### 4.2 Consultify-Specific Tables
+### 4.2 Consultinity-Specific Tables
 ```sql
 -- Assessment & Diagnostics
 maturity_assessments
@@ -235,7 +235,7 @@ best_practices
 
 ### Proposed Structure
 ```
-/consultify-monorepo
+/consultinity-monorepo
   /packages
     /shared-types
     /shared-utils
@@ -244,7 +244,7 @@ best_practices
     /shared-database
     /shared-ui
   /apps
-    /consultify
+    /consultinity
       /client
       /server
     /new-app
@@ -313,7 +313,7 @@ best_practices
 - [ ] Extract @shared/ui
 
 ### Phase 3: Refactor Applications (Weeks 4-5)
-- [ ] Update Consultify imports
+- [ ] Update Consultinity imports
 - [ ] Create new app skeleton
 - [ ] Configure shared dependencies
 - [ ] Test integration
@@ -347,7 +347,7 @@ best_practices
 }
 ```
 
-### Consultify-Specific
+### Consultinity-Specific
 ```json
 {
   "jspdf": "^4.x",
@@ -373,7 +373,7 @@ best_practices
 
 ### Deployment Strategy
 - **Shared packages**: Published to private registry
-- **Consultify**: Independent deployment
+- **Consultinity**: Independent deployment
 - **New App**: Independent deployment
 - **Infrastructure**: Shared or separate (TBD)
 

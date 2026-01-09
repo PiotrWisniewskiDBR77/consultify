@@ -66,6 +66,7 @@ interface MenuItem {
     subItems?: MenuItem[];
     requiresView?: AppView;
     isFloating?: boolean; // Deprecated but kept for compatibility logic if needed (we default to true now)
+    badge?: 'beta' | 'new' | 'soon'; // Optional badge for items in development
 }
 
 // ---------------------------------------------------------------------------
@@ -298,6 +299,7 @@ export const Sidebar: React.FC = () => {
             label: t('sidebar.projectIntelligence', 'Project Intelligence'),
             icon: <Brain size={20} />,
             viewId: AppView.PROJECT_INTELLIGENCE,
+            badge: 'beta',
         },
         // Phase G: Ecosystem Affiliate Dashboard
         ...(currentUser?.journeyState === 'ECOSYSTEM_NODE'
@@ -386,12 +388,14 @@ export const Sidebar: React.FC = () => {
             icon: <BookOpen size={20} />,
             viewId: AppView.FULL_STEP6_REPORTS,
             requiresView: AppView.FULL_STEP5_EXECUTION,
+            badge: 'beta',
         },
         // Tools Section with AI Advisor, Automation Scheme and Studio
         {
             id: 'MODULE_TOOLS',
             label: t('sidebar.tools'),
             icon: <Wrench size={20} />,
+            badge: 'beta',
             subItems: [
                 {
                     id: 'TOOLS_AI_ADVISOR',
@@ -645,7 +649,12 @@ export const Sidebar: React.FC = () => {
                 <button
                     data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
                     onClick={() => {
-                        if (isLocked) return;
+                        console.log('[Sidebar-old] Button clicked:', item.id, item.viewId);
+                        
+                        if (isLocked) {
+                            console.log('[Sidebar-old] Item is locked:', item.id);
+                            return;
+                        }
 
                         // =====================================================
                         // UNIFIED CHAT SYSTEM: Smart Navigation
@@ -664,6 +673,7 @@ export const Sidebar: React.FC = () => {
                         }
 
                         if (item.viewId) {
+                            console.log('[Sidebar-old] Navigating to view:', item.viewId);
                             // Check if we have an active conversation
                             // If yes, navigate with chat context preserved (split mode)
                             // If no, navigate normally
@@ -677,6 +687,8 @@ export const Sidebar: React.FC = () => {
                             if (isMobile || (isTablet && isSidebarOpen)) {
                                 setIsSidebarOpen(false);
                             }
+                        } else {
+                            console.warn('[Sidebar-old] Item has no viewId:', item.id);
                         }
                     }}
                     disabled={isLocked}
@@ -705,6 +717,19 @@ export const Sidebar: React.FC = () => {
                         )}
 
                         {showFull && <span className="truncate tracking-wide flex-1 text-left">{item.label}</span>}
+                        {/* Beta/New/Soon Badge */}
+                        {item.badge && showFull && (
+                            <span
+                                className={`
+                                    ml-auto px-2 py-0.5 text-[10px] font-bold uppercase rounded-full tracking-wide shrink-0
+                                    ${item.badge === 'beta' ? 'bg-amber-500/30 text-amber-500 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-500/30' : ''}
+                                    ${item.badge === 'new' ? 'bg-green-500/30 text-green-500 dark:bg-green-500/20 dark:text-green-400 border border-green-500/30' : ''}
+                                    ${item.badge === 'soon' ? 'bg-slate-500/30 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400 border border-slate-500/30' : ''}
+                                `}
+                            >
+                                {item.badge}
+                            </span>
+                        )}
                     </div>
 
                     {showFull && (
@@ -777,7 +802,7 @@ export const Sidebar: React.FC = () => {
                                             ? '/assets/logos/logo-dark.png'
                                             : '/assets/logos/logo-light.png'
                                     }
-                                    alt="DBR77 Consultify"
+                                    alt="DBR77 Consultinity"
                                     className="h-8 w-auto object-contain"
                                 />
                             </div>

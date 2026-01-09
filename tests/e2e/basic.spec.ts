@@ -5,5 +5,5 @@ test('Level 4: E2E - App Loads', async ({ page }) => {
 
     // Expect a title "to contain" a substring.
     // Note: Adjust the expected title based on actual index.html
-    await expect(page).toHaveTitle(/Consultify|Vite/i);
+    await expect(page).toHaveTitle(/Consultinity|Vite/i);
 });

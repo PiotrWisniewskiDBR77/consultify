@@ -1,4 +1,4 @@
-# Consultify Infrastructure
+# Consultinity Infrastructure
 # Terraform configuration for multi-cloud deployment
 
 terraform {
@@ -25,11 +25,11 @@ terraform {
 
   # Remote state storage (uncomment for production)
   # backend "s3" {
-  #   bucket         = "consultify-terraform-state"
+  #   bucket         = "consultinity-terraform-state"
   #   key            = "infrastructure/terraform.tfstate"
   #   region         = "eu-central-1"
   #   encrypt        = true
-  #   dynamodb_table = "consultify-terraform-locks"
+  #   dynamodb_table = "consultinity-terraform-locks"
   # }
 }
 
@@ -63,7 +63,7 @@ variable "aws_secondary_region" {
 variable "domain_name" {
   description = "Main domain name"
   type        = string
-  default     = "consultify.app"
+  default     = "consultinity.app"
 }
 
 variable "db_instance_class" {
@@ -88,7 +88,7 @@ variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)
   default = {
-    Project     = "Consultify"
+    Project     = "Consultinity"
     ManagedBy   = "Terraform"
     Environment = "production"
   }
@@ -130,7 +130,7 @@ data "aws_caller_identity" "current" {}
 # ==========================================
 
 locals {
-  name_prefix = "consultify-${var.environment}"
+  name_prefix = "consultinity-${var.environment}"
   
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
   
@@ -319,8 +319,8 @@ module "rds" {
   allocated_storage     = 20
   max_allocated_storage = 100
 
-  db_name  = "consultify"
-  username = "consultify_admin"
+  db_name  = "consultinity"
+  username = "consultinity_admin"
   password = random_password.db_password.result
   port     = 5432
 
@@ -369,7 +369,7 @@ resource "aws_elasticache_subnet_group" "redis" {
 
 resource "aws_elasticache_replication_group" "redis" {
   replication_group_id = "${local.name_prefix}-redis"
-  description          = "Redis cluster for Consultify"
+  description          = "Redis cluster for Consultinity"
 
   node_type            = var.redis_node_type
   num_cache_clusters   = var.environment == "production" ? 2 : 1
@@ -403,7 +403,7 @@ resource "aws_elasticache_replication_group" "redis" {
 
 resource "aws_secretsmanager_secret" "db_credentials" {
   name        = "${local.name_prefix}/database-credentials"
-  description = "Database credentials for Consultify"
+  description = "Database credentials for Consultinity"
 
   tags = {
     Name = "${local.name_prefix}-db-credentials"
@@ -417,7 +417,7 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
     password = random_password.db_password.result
     host     = module.rds.db_instance_address
     port     = module.rds.db_instance_port
-    database = "consultify"
+    database = "consultinity"
   })
 }
 
@@ -438,7 +438,7 @@ resource "random_password" "encryption_salt" {
 
 resource "aws_secretsmanager_secret" "app_secrets" {
   name        = "${local.name_prefix}/app-secrets"
-  description = "Application secrets for Consultify"
+  description = "Application secrets for Consultinity"
 
   tags = {
     Name = "${local.name_prefix}-app-secrets"

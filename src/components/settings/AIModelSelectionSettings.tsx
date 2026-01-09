@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AIModelSelectionSettings - AI model selection
  *

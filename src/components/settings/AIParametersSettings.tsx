@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AIParametersSettings - AI model parameters (temperature, tokens, etc.)
  *

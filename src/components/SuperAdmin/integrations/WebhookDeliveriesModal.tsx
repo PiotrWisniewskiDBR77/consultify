@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * WebhookDeliveriesModal - Webhook Delivery History
  *

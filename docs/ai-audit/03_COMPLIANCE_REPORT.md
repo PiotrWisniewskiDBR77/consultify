@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary
 
-Consultify exhibits strong compliance readiness for Enterprise SaaS. The integration of 3-level quota management, risk-based audit logging, and external tracing (Langfuse) provides the transparency required for SOC2 and GDPR compliance.
+Consultinity exhibits strong compliance readiness for Enterprise SaaS. The integration of 3-level quota management, risk-based audit logging, and external tracing (Langfuse) provides the transparency required for SOC2 and GDPR compliance.
 
 ## 2. Audit Logging & Traceability
 

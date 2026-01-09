@@ -74,7 +74,7 @@ function addResult(name: string, passed: boolean, message: string, autoFixed = f
 }
 
 // Database path
-const dbPath = process.env.SQLITE_PATH || path.resolve(__dirname, '../consultify.db');
+const dbPath = process.env.SQLITE_PATH || path.resolve(__dirname, '../consultinity.db');
 
 async function runQuery(db: any, sql: string, params: any[] = []): Promise<any> {
     return new Promise((resolve, reject) => {

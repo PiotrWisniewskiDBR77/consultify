@@ -149,6 +149,14 @@ const createLongPressDetector = (options = {}) => {
     let startPos = null;
     let callback = null;
 
+    const cancel = () => {
+        if (timer) {
+            clearTimeout(timer);
+            timer = null;
+        }
+        startPos = null;
+    };
+
     return {
         onLongPress: (handler) => {
             callback = handler;
@@ -168,21 +176,15 @@ const createLongPressDetector = (options = {}) => {
             const dy = y - startPos.y;
 
             if (Math.sqrt(dx * dx + dy * dy) > moveTolerance) {
-                this.cancel();
+                cancel();
             }
         },
 
         end: () => {
-            this.cancel();
+            cancel();
         },
 
-        cancel: () => {
-            if (timer) {
-                clearTimeout(timer);
-                timer = null;
-            }
-            startPos = null;
-        },
+        cancel,
 
         isPending: () => timer !== null,
     };

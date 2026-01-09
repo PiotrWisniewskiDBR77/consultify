@@ -24,7 +24,15 @@ import React, { useEffect, useState } from 'react';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { Api } from '../../services/api';
 import { BulkOperationsView } from '../admin/BulkOperationsView';
-import { ContractManagementView, CustomerLifecycleView, CustomerSuccessPlaybooksView } from './customers';
+import { 
+    ContractManagementView, 
+    CustomerLifecycleView, 
+    CustomerSuccessPlaybooksView,
+    CustomerAnalyticsView,
+    CustomerComplianceView,
+    CustomerAutomationView,
+    CustomerCommunicationView,
+} from './customers';
 import { OrganizationsView } from './OrganizationsView';
 import { SecurityModuleView } from './security/SecurityModuleView';
 import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
@@ -117,25 +125,25 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
             case 'analytics':
                 return (
                     <div className="p-6 overflow-y-auto h-full">
-                        <div className="text-white">Analytics - Coming Soon</div>
+                        <CustomerAnalyticsView />
                     </div>
                 );
             case 'compliance':
                 return (
                     <div className="p-6 overflow-y-auto h-full">
-                        <div className="text-white">Compliance - Coming Soon</div>
+                        <CustomerComplianceView />
                     </div>
                 );
             case 'automation':
                 return (
                     <div className="p-6 overflow-y-auto h-full">
-                        <div className="text-white">Automation - Coming Soon</div>
+                        <CustomerAutomationView />
                     </div>
                 );
             case 'communication':
                 return (
                     <div className="p-6 overflow-y-auto h-full">
-                        <div className="text-white">Communication - Coming Soon</div>
+                        <CustomerCommunicationView />
                     </div>
                 );
             case 'bulk-ops':

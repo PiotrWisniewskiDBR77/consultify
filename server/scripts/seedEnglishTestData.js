@@ -30,7 +30,7 @@ if (process.env.NODE_ENV === 'production') {
     process.exit(1);
 }
 
-const dbPath = path.resolve(__dirname, '../consultify.db');
+const dbPath = path.resolve(__dirname, '../consultinity.db');
 const db = new sqlite3.Database(dbPath);
 
 const DEFAULT_PASSWORD = 'test123456';
@@ -159,9 +159,9 @@ async function seedSuperAdmin() {
         await dbRun(
             `INSERT OR REPLACE INTO users (id, email, password, first_name, last_name, role, status, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-            [TEST_IDS.SUPERADMIN, 'superadmin@consultify.com', HASHED_PASSWORD, 'Super', 'Admin', 'SUPERADMIN', 'active']
+            [TEST_IDS.SUPERADMIN, 'superadmin@consultinity.com', HASHED_PASSWORD, 'Super', 'Admin', 'SUPERADMIN', 'active']
         );
-        console.log('✓ SuperAdmin user created: superadmin@consultify.com / test123456');
+        console.log('✓ SuperAdmin user created: superadmin@consultinity.com / test123456');
     } catch (error) {
         console.error('Error seeding SuperAdmin:', error);
         throw error;
@@ -529,7 +529,7 @@ async function seedAll() {
         
         console.log('\n✅ All test data seeded successfully!');
         console.log('\nTest Accounts:');
-        console.log('  SuperAdmin: superadmin@consultify.com / test123456');
+        console.log('  SuperAdmin: superadmin@consultinity.com / test123456');
         console.log('  Admin (Acme): john.smith@acme.com / test123456');
         console.log('  Admin (Technova): sarah.williams@technova.com / test123456');
         console.log('  User: jane.doe@acme.com / test123456');

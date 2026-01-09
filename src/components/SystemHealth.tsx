@@ -10,9 +10,13 @@ export const SystemHealth = () => {
     useEffect(() => {
         const checkHealth = async () => {
             try {
+                const startTime = performance.now();
                 const data = await Api.checkSystemHealth();
+                const endTime = performance.now();
+                const measuredLatency = Math.round(endTime - startTime);
+                
                 setStatus('online');
-                setLatency(data.latency);
+                setLatency(data.latency ?? measuredLatency);
                 setError(null);
             } catch (err) {
                 setStatus('offline');

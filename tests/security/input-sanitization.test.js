@@ -151,33 +151,33 @@ const createInputValidator = () => {
 
 // Path traversal prevention
 const createPathSanitizer = () => {
-    return {
-        sanitize: (path) => {
-            return path
-                .replace(/\.\./g, '')
-                .replace(/\/+/g, '/')
-                .replace(/^\//, '')
-                .replace(/\0/g, '');
-        },
-
-        isWithinBase: (path, basePath) => {
-            const resolvedPath = this.sanitize(path);
-            return !resolvedPath.includes('..') &&
-                !resolvedPath.startsWith('/') &&
-                !resolvedPath.includes('\0');
-        },
-
-        getExtension: (filename) => {
-            const parts = filename.split('.');
-            if (parts.length < 2) return '';
-            return parts.pop().toLowerCase();
-        },
-
-        isAllowedExtension: (filename, allowed) => {
-            const ext = this.getExtension(filename);
-            return allowed.includes(ext);
-        },
+    const sanitize = (path) => {
+        return path
+            .replace(/\.\./g, '')
+            .replace(/\/+/g, '/')
+            .replace(/^\//, '')
+            .replace(/\0/g, '');
     };
+
+    const isWithinBase = (path, basePath) => {
+        const resolvedPath = sanitize(path);
+        return !resolvedPath.includes('..') &&
+            !resolvedPath.startsWith('/') &&
+            !resolvedPath.includes('\0');
+    };
+
+    const getExtension = (filename) => {
+        const parts = filename.split('.');
+        if (parts.length < 2) return '';
+        return parts.pop().toLowerCase();
+    };
+
+    const isAllowedExtension = (filename, allowed) => {
+        const ext = getExtension(filename);
+        return allowed.includes(ext);
+    };
+
+    return { sanitize, isWithinBase, getExtension, isAllowedExtension };
 };
 
 describe('HTML Sanitizer Tests', () => {

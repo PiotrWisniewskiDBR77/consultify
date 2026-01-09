@@ -60,7 +60,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
                     <div className="h-8 px-2 rounded-sm bg-purple-600 flex items-center justify-center shadow-glow">
                         <span className="text-white font-bold text-xs tracking-tighter">DBR77</span>
                     </div>
-                    <span className="tracking-widest text-sm">CONSULTIFY</span>
+                    <span className="tracking-widest text-sm">CONSULTINITY</span>
                 </div>
 
                 <div className="flex items-center gap-6">

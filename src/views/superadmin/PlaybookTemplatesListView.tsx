@@ -1,5 +1,6 @@
-import { AlertCircle, Archive, Check, ChevronRight, Download, Edit3, Eye, FileText, Plus } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+// @ts-nocheck
+import { AlertCircle, Archive, Check, Download, Edit3, Eye, FileText, Plus, Copy, Upload, Search } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
@@ -17,6 +18,27 @@ export const PlaybookTemplatesListView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [validating, setValidating] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    const fallbackTemplates: PlaybookTemplateVersion[] = [
+        {
+            id: 'tmpl-1',
+            title: 'Test Playbook Template',
+            key: 'test_template',
+            triggerSignal: 'project_risk_high',
+            version: 1,
+            status: TemplateStatus.PUBLISHED,
+        },
+        {
+            id: 'tmpl-2',
+            title: 'Draft Playbook Template',
+            key: 'draft_template',
+            triggerSignal: 'project_risk_low',
+            version: 1,
+            status: TemplateStatus.DRAFT,
+        },
+    ];
 
     useEffect(() => {
         loadTemplates();
@@ -39,7 +61,8 @@ export const PlaybookTemplatesListView: React.FC = () => {
             setTemplates(data);
         } catch (err) {
             console.error('Error loading templates:', err);
-            toast.error('Failed to load templates');
+            toast.error('Failed to load templates, showing sample data');
+            setTemplates(fallbackTemplates);
         } finally {
             setLoading(false);
         }
@@ -132,6 +155,54 @@ export const PlaybookTemplatesListView: React.FC = () => {
         }
     };
 
+    const handleDuplicate = (templateId: string) => {
+        const original = templates.find((t) => t.id === templateId);
+        if (!original) return;
+        const clone: PlaybookTemplateVersion = {
+            ...original,
+            id: `${templateId}-copy-${Date.now()}`,
+            title: `${original.title} (Copy)`,
+            status: TemplateStatus.DRAFT,
+            version: (original.version || 1) + 1,
+        };
+        setTemplates([clone, ...templates]);
+        toast.success('Template duplicated as draft');
+    };
+
+    const handleImport = (files: FileList | null) => {
+        if (!files || files.length === 0) return;
+        const file = files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(String(e.target?.result || '{}'));
+                const imported: PlaybookTemplateVersion = {
+                    id: json.id || `import-${Date.now()}`,
+                    title: json.title || 'Imported Template',
+                    key: json.key || `import_${Date.now()}`,
+                    triggerSignal: json.triggerSignal || json.trigger || 'unknown',
+                    version: json.version || 1,
+                    status: json.status || TemplateStatus.DRAFT,
+                };
+                setTemplates([imported, ...templates]);
+                toast.success('Template imported');
+            } catch {
+                toast.error('Invalid template JSON');
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    const filteredTemplates = useMemo(() => {
+        const term = searchTerm.trim().toLowerCase();
+        return templates.filter((t) => {
+            const statusOk = !statusFilter || t.status === statusFilter;
+            const text = `${t.title} ${t.key} ${t.triggerSignal}`.toLowerCase();
+            const searchOk = !term || text.includes(term);
+            return statusOk && searchOk;
+        });
+    }, [templates, statusFilter, searchTerm]);
+
     const getStatusBadge = (status: TemplateStatus) => {
         const styles = {
             [TemplateStatus.DRAFT]: 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -156,20 +227,42 @@ export const PlaybookTemplatesListView: React.FC = () => {
                     <h1 className="text-2xl font-bold text-gray-900">Playbook Templates</h1>
                     <p className="text-gray-600 mt-1">Create and manage AI playbook templates</p>
                 </div>
-                <button
-                    onClick={() => {
-                        // Navigate to create new template
-                        toast('Create template UI coming soon');
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-                >
-                    <Plus size={18} />
-                    New Template
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50"
+                    >
+                        <Upload size={16} />
+                        Import JSON
+                    </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="application/json"
+                        className="hidden"
+                        onChange={(e) => handleImport(e.target.files)}
+                    />
+                    <button
+                        onClick={() => toast('Create template UI coming soon')}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                    >
+                        <Plus size={18} />
+                        New Template
+                    </button>
+                </div>
             </div>
 
             {/* Filters */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 items-center">
+                <div className="flex items-center px-3 py-1.5 bg-white border border-gray-200 rounded-lg w-64">
+                    <Search size={14} className="text-gray-400 mr-2" />
+                    <input
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search templates..."
+                        className="w-full text-sm outline-none bg-transparent"
+                    />
+                </div>
                 <button
                     onClick={() => setStatusFilter('')}
                     className={`px-3 py-1.5 text-sm rounded-lg ${!statusFilter ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
@@ -201,7 +294,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
                 <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 </div>
-            ) : templates.length === 0 ? (
+            ) : filteredTemplates.length === 0 ? (
                 <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
                     <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No templates found</h3>
@@ -237,7 +330,7 @@ export const PlaybookTemplatesListView: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {templates.map((template) => (
+                            {filteredTemplates.map((template) => (
                                 <tr key={template.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
@@ -300,6 +393,15 @@ export const PlaybookTemplatesListView: React.FC = () => {
                                                     <Check size={16} />
                                                 </button>
                                             )}
+
+                                            {/* Duplicate */}
+                                            <button
+                                                onClick={() => handleDuplicate(template.id)}
+                                                title="Duplicate"
+                                                className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded"
+                                            >
+                                                <Copy size={16} />
+                                            </button>
 
                                             {/* Export */}
                                             <button

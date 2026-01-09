@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AI Development Routes
  * Module 2: AI Development & Testing

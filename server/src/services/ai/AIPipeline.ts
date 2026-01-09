@@ -18,9 +18,11 @@ import type {
     CapabilityRegistry,
     ChatMessage,
     StreamCallback,
+    ThinkingStep,
     TokenUsage,
 } from '../../types/ai.types.js';
 import logger from '../../utils/Logger.js';
+import { llmService } from './llmService.js';
 
 // ==========================================
 // CAPABILITY REGISTRY
@@ -167,6 +169,7 @@ export class AIPipeline {
 
     /**
      * Process an AI request through the pipeline
+     * If request.stream is true, returns a response with a stream property
      */
     public async process(request: AIPipelineRequest): Promise<AIPipelineResponse> {
         const startTime = Date.now();
@@ -191,7 +194,44 @@ export class AIPipeline {
             // 6. Select model
             const modelConfig = await this.selectModel(request, capability);
 
-            // 7. Execute with provider
+            // Check if streaming is requested
+            if ((request as any).stream) {
+                logger.info(`[AIPipeline] Starting stream with ${modelConfig.provider}/${modelConfig.model}`);
+                
+                // Return a stream-enabled response
+                const streamResponse = await llmService.callStream({
+                    type: 'chat',
+                    modelConfig: {
+                        provider: modelConfig.provider,
+                        id: modelConfig.model,
+                        endpoint: (modelConfig as any).endpoint,
+                    },
+                    systemPrompt: prompt.find(m => m.role === 'system')?.content || '',
+                    messages: prompt.filter(m => m.role !== 'system').map(m => ({
+                        role: m.role as 'user' | 'assistant' | 'system' | 'tool',
+                        content: m.content,
+                    })),
+                    maxTokens: modelConfig.maxTokens,
+                    temperature: request.options?.temperature ?? 0.7,
+                    stream: true,
+                });
+
+                return {
+                    success: true,
+                    content: '',
+                    stream: (streamResponse as { stream?: AsyncIterable<string> }).stream,
+                    metadata: {
+                        provider: modelConfig.provider,
+                        model: modelConfig.model,
+                        latency: Date.now() - startTime,
+                        traceId,
+                        ragResults: enrichedContext.ragResults,
+                        memoryUsed: enrichedContext.memoryUsed,
+                    },
+                } as AIPipelineResponse & { stream?: AsyncIterable<string> };
+            }
+
+            // 7. Execute with provider (non-streaming)
             const response = await this.executeWithProvider(prompt, modelConfig, request.options);
 
             // 8. Post-process response
@@ -345,51 +385,111 @@ export class AIPipeline {
     private async selectModel(
         request: AIPipelineRequest,
         capability: AICapability,
-    ): Promise<{ provider: string; model: string; maxTokens: number }> {
-        // TODO: Implement model selection
-        // This will be migrated from modelRouter.js
+    ): Promise<{ provider: string; model: string; maxTokens: number; endpoint?: string }> {
+        // Use Ollama as default local provider if available
+        const provider = request.options?.provider || 'ollama';
+        const model = request.options?.model || 'gemma3:27b';
+        
+        // For Ollama, use local endpoint
+        const endpoint = provider === 'ollama' ? 'http://localhost:11434/v1' : undefined;
+        
+        logger.info(`[AIPipeline] Selected model: ${provider}/${model}, endpoint: ${endpoint || 'default'}`);
+        
         return {
-            provider: request.options?.provider || 'anthropic',
-            model: request.options?.model || 'claude-3-5-sonnet-20241022',
+            provider,
+            model,
             maxTokens: request.options?.maxTokens || capability.maxTokens,
+            endpoint,
         };
     }
 
     private async executeWithProvider(
-        _messages: ChatMessage[],
-        _modelConfig: { provider: string; model: string; maxTokens: number },
-        _options?: AIOptions,
+        messages: ChatMessage[],
+        modelConfig: { provider: string; model: string; maxTokens: number },
+        options?: AIOptions,
     ): Promise<{
         content: string;
         artifacts?: AIArtifact[];
         usage?: TokenUsage;
         cached?: boolean;
     }> {
-        // TODO: Implement provider execution
-        // This will be migrated from aiGateway.js
-        return {
-            content: 'Response placeholder - implement provider execution',
-            usage: {
-                promptTokens: 0,
-                completionTokens: 0,
-                totalTokens: 0,
-            },
-            cached: false,
-        };
+        try {
+            const systemMessage = messages.find(m => m.role === 'system');
+            const nonSystemMessages = messages.filter(m => m.role !== 'system');
+
+            const response = await llmService.call({
+                type: 'chat',
+                modelConfig: {
+                    provider: modelConfig.provider,
+                    id: modelConfig.model,
+                },
+                systemPrompt: systemMessage?.content || '',
+                messages: nonSystemMessages.map(m => ({
+                    role: m.role as 'user' | 'assistant' | 'system' | 'tool',
+                    content: m.content,
+                })),
+                maxTokens: modelConfig.maxTokens,
+                temperature: options?.temperature ?? 0.7,
+                cache: (options as any)?.cache ?? true,
+            });
+
+            return {
+                content: (response as { content?: string }).content || String(response),
+                usage: (response as { usage?: TokenUsage }).usage || {
+                    promptTokens: 0,
+                    completionTokens: 0,
+                    totalTokens: 0,
+                },
+                cached: false,
+            };
+        } catch (error: any) {
+            logger.error(`[AIPipeline] Provider execution failed: ${error.message}`);
+            throw error;
+        }
     }
 
     private async executeStreamingWithProvider(
-        _messages: ChatMessage[],
-        _modelConfig: { provider: string; model: string; maxTokens: number },
-        _options: AIOptions | undefined,
+        messages: ChatMessage[],
+        modelConfig: { provider: string; model: string; maxTokens: number },
+        options: AIOptions | undefined,
         onChunk: StreamCallback,
     ): Promise<void> {
-        // TODO: Implement streaming execution
-        // This will be migrated from aiGateway.js
-        onChunk({
-            type: 'text',
-            content: 'Streaming response placeholder - implement provider execution',
-        });
+        try {
+            const systemMessage = messages.find(m => m.role === 'system');
+            const nonSystemMessages = messages.filter(m => m.role !== 'system');
+
+            const response = await llmService.callStream({
+                type: 'chat',
+                modelConfig: {
+                    provider: modelConfig.provider,
+                    id: modelConfig.model,
+                },
+                systemPrompt: systemMessage?.content || '',
+                messages: nonSystemMessages.map(m => ({
+                    role: m.role as 'user' | 'assistant' | 'system' | 'tool',
+                    content: m.content,
+                })),
+                maxTokens: modelConfig.maxTokens,
+                temperature: options?.temperature ?? 0.7,
+                stream: true,
+            });
+
+            const stream = (response as { stream?: AsyncIterable<string> }).stream;
+            if (stream) {
+                for await (const chunk of stream) {
+                    onChunk({
+                        type: 'text',
+                        content: chunk,
+                    });
+                }
+            }
+        } catch (error: any) {
+            logger.error(`[AIPipeline] Streaming execution failed: ${error.message}`);
+            onChunk({
+                type: 'error',
+                content: error.message,
+            });
+        }
     }
 
     private async postProcess(

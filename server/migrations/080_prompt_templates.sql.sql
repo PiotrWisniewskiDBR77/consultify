@@ -387,7 +387,7 @@ INSERT INTO ai_prompt_variables (code, category, name, source, resolver_path, de
 ('context.screen.title', 'context', 'Screen Title', 'context', 'screen._meta.title', '', 'string', false, 'Current screen title'),
 ('context.screen.data', 'context', 'Screen Data', 'context', 'screen', '{}', 'object', false, 'Current screen data'),
 ('config.supported_languages', 'config', 'Supported Languages', 'config', 'supportedLanguages', 'en,pl,de,es,ja,ar', 'string', false, 'Comma-separated supported language codes'),
-('config.app_name', 'config', 'Application Name', 'config', 'appName', 'Consultify', 'string', false, 'Application name')
+('config.app_name', 'config', 'Application Name', 'config', 'appName', 'Consultinity', 'string', false, 'Application name')
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================================

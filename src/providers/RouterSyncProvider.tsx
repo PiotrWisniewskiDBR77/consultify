@@ -20,6 +20,9 @@ interface RouterSyncProviderProps {
     children: React.ReactNode;
 }
 
+// Routes that should NOT be synchronized (handled directly by React Router)
+const EXCLUDED_ROUTES = ['/login', '/register', '/auth', '/trial', '/demo'];
+
 export const RouterSyncProvider: React.FC<RouterSyncProviderProps> = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -29,8 +32,18 @@ export const RouterSyncProvider: React.FC<RouterSyncProviderProps> = ({ children
     const syncSource = useRef<'url' | 'view' | null>(null);
     const isInitialMount = useRef(true);
 
+    // Check if current path should be excluded from sync
+    const isExcludedRoute = EXCLUDED_ROUTES.some(route => 
+        location.pathname === route || location.pathname.startsWith(route + '/')
+    );
+
     // Synchronize URL → currentView
     useEffect(() => {
+        // Skip excluded routes - let React Router handle them directly
+        if (isExcludedRoute) {
+            return;
+        }
+
         // Skip if this change was triggered by currentView update
         if (syncSource.current === 'view') {
             syncSource.current = null;
@@ -49,10 +62,15 @@ export const RouterSyncProvider: React.FC<RouterSyncProviderProps> = ({ children
         }
 
         isInitialMount.current = false;
-    }, [location.pathname, currentView, setCurrentView]);
+    }, [location.pathname, currentView, setCurrentView, isExcludedRoute]);
 
     // Synchronize currentView → URL
     useEffect(() => {
+        // Skip excluded routes - let React Router handle them directly
+        if (isExcludedRoute) {
+            return;
+        }
+
         // Skip if this change was triggered by URL update
         if (syncSource.current === 'url') {
             syncSource.current = null;
@@ -66,7 +84,7 @@ export const RouterSyncProvider: React.FC<RouterSyncProviderProps> = ({ children
             syncSource.current = 'view';
             navigate(route, { replace: true });
         }
-    }, [currentView, location.pathname, navigate]);
+    }, [currentView, location.pathname, navigate, isExcludedRoute]);
 
     return <>{children}</>;
 };

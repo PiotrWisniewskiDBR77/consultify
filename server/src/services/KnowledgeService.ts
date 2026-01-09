@@ -91,11 +91,11 @@ export class KnowledgeService {
     }
 
     static async getDocuments(orgId: string, userId: string, role: string) {
-        return dbAll('SELECT * FROM knowledge_documents WHERE organization_id = ?', [orgId]);
+        return dbAll('SELECT * FROM knowledge_docs WHERE organization_id = ?', [orgId]);
     }
 
     static async getDocumentsByCategory(orgId: string, category: string) {
-        return dbAll('SELECT * FROM knowledge_documents WHERE organization_id = ? AND category = ?', [orgId, category]);
+        return dbAll('SELECT * FROM knowledge_docs WHERE organization_id = ? AND category = ?', [orgId, category]);
     }
 
     static async getDocumentsByStrategy(strategyId: string) {
@@ -105,4 +105,6 @@ export class KnowledgeService {
 }
 
 export default KnowledgeService;
+
+
 

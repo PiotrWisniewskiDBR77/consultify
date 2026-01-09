@@ -99,7 +99,7 @@ describe('Azure AD SSO Service', () => {
             const params = {
                 client_id: 'client-123',
                 response_type: 'code',
-                redirect_uri: 'https://consultify.app/api/sso/azure-ad/callback',
+                redirect_uri: 'https://consultinity.app/api/sso/azure-ad/callback',
                 scope: 'openid profile email',
                 state: crypto.randomBytes(16).toString('hex'),
                 response_mode: 'query',
@@ -140,7 +140,7 @@ describe('Azure AD SSO Service', () => {
                 client_id: 'client-123',
                 client_secret: 'secret-456',
                 code: 'auth-code',
-                redirect_uri: 'https://consultify.app/api/sso/azure-ad/callback',
+                redirect_uri: 'https://consultinity.app/api/sso/azure-ad/callback',
                 grant_type: 'authorization_code',
             };
             
@@ -377,7 +377,7 @@ describe('Azure AD SSO Service', () => {
         it('should support single logout', () => {
             const tenantId = 'tenant-123';
             const logoutUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/logout`;
-            const postLogoutRedirect = 'https://consultify.app';
+            const postLogoutRedirect = 'https://consultinity.app';
             
             expect(logoutUrl).toContain('/logout');
         });

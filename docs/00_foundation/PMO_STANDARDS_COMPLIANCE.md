@@ -2,7 +2,7 @@
 
 ## Official Compliance Statement
 
-> **Consultify implements a Meta-PMO Framework that is:**
+> **Consultinity implements a Meta-PMO Framework that is:**
 > - **ALIGNED** with ISO 21500:2021 (International PM Standard)
 > - **COMPATIBLE** with PMI PMBOK® Guide 7th Edition
 > - **TRACEABLE** to PRINCE2® Governance Themes
@@ -14,7 +14,7 @@
 
 ### 1.1 Primary Standards (Implemented)
 
-| Standard | Organization | Version | Role in Consultify |
+| Standard | Organization | Version | Role in Consultinity |
 |----------|--------------|---------|-------------------|
 | **ISO 21500** | ISO | 2021 | Foundation layer - methodology-neutral guidance |
 | **PMBOK® Guide** | PMI (USA) | 7th Edition | Implementation details - 8 Performance Domains |
@@ -36,7 +36,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    CONSULTIFY PMO COMPLIANCE ARCHITECTURE                    │
+│                    CONSULTINITY PMO COMPLIANCE ARCHITECTURE                    │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
@@ -70,9 +70,9 @@
 
 ---
 
-## 3. Consultify PMO Domains
+## 3. Consultinity PMO Domains
 
-Consultify organizes PMO functionality into **7 certifiable domains**. Each domain:
+Consultinity organizes PMO functionality into **7 certifiable domains**. Each domain:
 - Is **optional** and can be enabled/disabled per project
 - Is **configurable** with customizable labels
 - Uses **neutral** terminology (no methodology-specific language)
@@ -106,7 +106,7 @@ Consultify organizes PMO functionality into **7 certifiable domains**. Each doma
 
 ## 4. SCMS Concept Mapping Table
 
-Every concept in Consultify maps explicitly to professional standards:
+Every concept in Consultinity maps explicitly to professional standards:
 
 | SCMS Concept | SCMS Object | ISO 21500 | PMI PMBOK 7th | PRINCE2 | Domain |
 |--------------|-------------|-----------|---------------|---------|--------|
@@ -131,7 +131,7 @@ Every concept in Consultify maps explicitly to professional standards:
 
 ### 5.1 Role Hierarchy
 
-Consultify implements a three-level role hierarchy aligned with PMO standards:
+Consultinity implements a three-level role hierarchy aligned with PMO standards:
 
 ```
 PLATFORM LEVEL              ORGANIZATION LEVEL           PROJECT LEVEL
@@ -321,7 +321,7 @@ Every governance action is logged with full certification traceability:
 
 ## 9. Certification Audit Checklist
 
-For certification auditors verifying Consultify compliance:
+For certification auditors verifying Consultinity compliance:
 
 ### 9.1 Domain Coverage
 - [x] All 7 PMO domains are defined
@@ -457,7 +457,7 @@ Key types for PMO compliance are defined in `types.ts`:
 
 ## 14. Definition of Done
 
-A compliant Consultify implementation must satisfy:
+A compliant Consultinity implementation must satisfy:
 
 - [x] PMO model maps to ISO 21500, PMI PMBOK, and PRINCE2
 - [x] No part of system assumes one methodology
@@ -525,7 +525,7 @@ For full details, see: `docs/architecture/WORK_DIMENSIONS.md`
 
 ---
 
-*This document is the canonical source of truth for PMO standards compliance in Consultify.*
+*This document is the canonical source of truth for PMO standards compliance in Consultinity.*
 *All development must align with this specification.*
 *Deviations require explicit approval and documentation update.*
 

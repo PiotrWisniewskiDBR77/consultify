@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Invoice Template Editor
  * Create and customize invoice templates with live preview

@@ -206,9 +206,9 @@ describe('WebhookService', () => {
             expect(callArgs[0]).toBe(webhook.url);
             expect(callArgs[1].method).toBe('POST');
             expect(callArgs[1].headers['Content-Type']).toBe('application/json');
-            expect(callArgs[1].headers['X-Consultify-Event']).toBe(eventType);
-            expect(callArgs[1].headers['X-Consultify-Signature']).toBeDefined();
-            expect(callArgs[1].headers['User-Agent']).toBe('Consultify-Webhook/1.0');
+            expect(callArgs[1].headers['X-Consultinity-Event']).toBe(eventType);
+            expect(callArgs[1].headers['X-Consultinity-Signature']).toBeDefined();
+            expect(callArgs[1].headers['User-Agent']).toBe('Consultinity-Webhook/1.0');
         });
 
         it('should include payload in body', async () => {
@@ -342,7 +342,7 @@ describe('WebhookService', () => {
             await WebhookService.sendWebhook(webhook, 'test', {});
 
             const callArgs = mockFetch.mock.calls[0];
-            const signature = callArgs[1].headers['X-Consultify-Signature'];
+            const signature = callArgs[1].headers['X-Consultinity-Signature'];
             // Signature should be a hex string (SHA256 = 64 hex chars)
             expect(signature).toMatch(/^[a-f0-9]{64}$/);
         });
@@ -357,7 +357,7 @@ describe('WebhookService', () => {
             await WebhookService.sendWebhook(webhook, 'initiative.created', {});
 
             const callArgs = mockFetch.mock.calls[0];
-            expect(callArgs[1].headers['X-Consultify-Event']).toBe('initiative.created');
+            expect(callArgs[1].headers['X-Consultinity-Event']).toBe('initiative.created');
         });
 
         it('should generate different signatures for different secrets', async () => {
@@ -376,8 +376,8 @@ describe('WebhookService', () => {
             await WebhookService.sendWebhook(webhook1, 'test', data);
             await WebhookService.sendWebhook(webhook2, 'test', data);
 
-            const sig1 = mockFetch.mock.calls[0][1].headers['X-Consultify-Signature'];
-            const sig2 = mockFetch.mock.calls[1][1].headers['X-Consultify-Signature'];
+            const sig1 = mockFetch.mock.calls[0][1].headers['X-Consultinity-Signature'];
+            const sig2 = mockFetch.mock.calls[1][1].headers['X-Consultinity-Signature'];
 
             expect(sig1).not.toBe(sig2);
         });

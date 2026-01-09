@@ -194,7 +194,7 @@ export const useArtifactsStore = create<ArtifactsState>()(
             getArtifactsByType: (type) => get().artifacts.filter((a) => a.type === type),
         }),
         {
-            name: 'consultify-artifacts',
+            name: 'consultinity-artifacts',
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
                 // Only persist conversation artifacts, not current session

@@ -32,7 +32,7 @@ interface FeatureSpotlightProps {
 }
 
 // Storage key for dismissed spotlights
-const DISMISSED_KEY = 'consultify_dismissed_spotlights';
+const DISMISSED_KEY = 'consultinity_dismissed_spotlights';
 
 // Get dismissed spotlights
 const getDismissed = (): string[] => {

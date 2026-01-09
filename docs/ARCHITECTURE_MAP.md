@@ -1,4 +1,4 @@
-# Consultify Architecture Map
+# Consultinity Architecture Map
 
 **Document Version:** 1.0.0  
 **Last Updated:** January 4, 2026  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Consultify is an enterprise SaaS platform for digital transformation consulting, implementing a Meta-PMO Framework compliant with ISO 21500, PMBOK 7, and PRINCE2 standards. The architecture follows a monolithic modular design with clear separation of concerns, preparing for future microservices extraction and application fork.
+Consultinity is an enterprise SaaS platform for digital transformation consulting, implementing a Meta-PMO Framework compliant with ISO 21500, PMBOK 7, and PRINCE2 standards. The architecture follows a monolithic modular design with clear separation of concerns, preparing for future microservices extraction and application fork.
 
 ---
 
@@ -16,7 +16,7 @@ Consultify is an enterprise SaaS platform for digital transformation consulting,
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                          CONSULTIFY PLATFORM                             │
+│                          CONSULTINITY PLATFORM                             │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  Frontend (React 19 + TypeScript)                                        │
 │  ├── components/     (717 TSX files) - UI Components                     │

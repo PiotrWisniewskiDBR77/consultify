@@ -1,4 +1,4 @@
-# Consultify — Test Strategy (5 Levels)
+# Consultinity — Test Strategy (5 Levels)
 
 ## Goals
 - **Security-first**: prioritize correctness for auth, permissions, tenant isolation, billing, webhooks, legal/export.

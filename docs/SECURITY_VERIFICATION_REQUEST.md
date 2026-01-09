@@ -1,6 +1,6 @@
 # Security Verification Request (Penetration Testing Scope)
 
-**Project Name**: Consultify Platform (Pre-Fork)
+**Project Name**: Consultinity Platform (Pre-Fork)
 **Type**: Black/Grey Box Penetration Test
 **Target Environment**: Staging (Cluster A)
 **Codebase**: Node.js (Express), React, PostgreSQL, Redis

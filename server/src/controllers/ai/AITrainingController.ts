@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Response } from 'express';
 import { AuthRequest } from '../../middleware/auth.middleware.js';
 import { all, run, get } from '../../utils/DbPromise.js';

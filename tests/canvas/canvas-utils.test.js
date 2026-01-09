@@ -175,31 +175,30 @@ const createAnimationManager = () => {
 
 // Color utilities
 const createColorUtils = () => {
-    return {
-        rgba: (r, g, b, a = 1) => `rgba(${r}, ${g}, ${b}, ${a})`,
+    const rgba = (r, g, b, a = 1) => `rgba(${r}, ${g}, ${b}, ${a})`;
+    const hsla = (h, s, l, a = 1) => `hsla(${h}, ${s}%, ${l}%, ${a})`;
 
-        hsla: (h, s, l, a = 1) => `hsla(${h}, ${s}%, ${l}%, ${a})`,
-
-        hexToRgb: (hex) => {
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? {
-                r: parseInt(result[1], 16),
-                g: parseInt(result[2], 16),
-                b: parseInt(result[3], 16),
-            } : null;
-        },
-
-        lerp: (color1, color2, t) => {
-            const c1 = typeof color1 === 'string' ? this.hexToRgb(color1) : color1;
-            const c2 = typeof color2 === 'string' ? this.hexToRgb(color2) : color2;
-
-            return {
-                r: Math.round(c1.r + (c2.r - c1.r) * t),
-                g: Math.round(c1.g + (c2.g - c1.g) * t),
-                b: Math.round(c1.b + (c2.b - c1.b) * t),
-            };
-        },
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+        } : null;
     };
+
+    const lerp = (color1, color2, t) => {
+        const c1 = typeof color1 === 'string' ? hexToRgb(color1) : color1;
+        const c2 = typeof color2 === 'string' ? hexToRgb(color2) : color2;
+
+        return {
+            r: Math.round(c1.r + (c2.r - c1.r) * t),
+            g: Math.round(c1.g + (c2.g - c1.g) * t),
+            b: Math.round(c1.b + (c2.b - c1.b) * t),
+        };
+    };
+
+    return { rgba, hsla, hexToRgb, lerp };
 };
 
 describe('Mock Context Tests', () => {

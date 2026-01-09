@@ -13,7 +13,7 @@ console.log('Verification test:', isValid);
 
 // Get hash from database
 import Database from 'better-sqlite3';
-const db = new Database('./server/consultify.db');
+const db = new Database('./server/consultinity.db');
 
 const user = db.prepare('SELECT email, password FROM users WHERE email = ?').get('admin@dbr77.com');
 console.log('\nUser from DB:', user?.email);

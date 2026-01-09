@@ -1,4 +1,4 @@
-# MASTER PLAN REFAKTORYZACJI - CONSULTIFY
+# MASTER PLAN REFAKTORYZACJI - CONSULTINITY
 ## Przygotowanie do Przeglądu Klienta i Forka Aplikacji
 
 > [!IMPORTANT]
@@ -6,7 +6,7 @@
 > - Clean, secure, auditable, scalable
 > - Zero wstydu, zero długu technicznego
 > - Enterprise-grade quality & security
-> - Jasny podział: Consultify + Nowa Aplikacja
+> - Jasny podział: Consultinity + Nowa Aplikacja
 
 **Status po FAZA 2.1**: ✅ Pass rate: 76% (3156/4141 testów), Coverage: ~75-80%, Test Regression FIXED
 
@@ -68,7 +68,7 @@
 
 **Fork Inventory**
 - [x] Kod wspólny (shared core)
-- [x] Kod Consultify-specific
+- [x] Kod Consultinity-specific
 - [x] Kod dla nowej aplikacji
 - [x] Database schema split analysis
 - [x] Shared vs. separate dependencies
@@ -122,7 +122,7 @@
     > Centralized in `server/src/config/Config.ts` with Zod validation.
 - [x] Multi-target build system
     > [!NOTE]
-    > Managed via Nx (`nx.json`) for `consultify` and potential forks.
+    > Managed via Nx (`nx.json`) for `consultinity` and potential forks.
 
 ### 1.3 Database Optimization
 
@@ -143,13 +143,13 @@
 
 **Shared Core Library**
 - [x] Wydzielenie wspólnych komponentów (AI, auth, DB)
-- [x] Utworzenie npm package dla shared code (`@consultify/shared`)
+- [x] Utworzenie npm package dla shared code (`@consultinity/shared`)
 - [x] Typy, utils, constants → shared
 - [x] Interfaces i kontrakty API
 
 **Monorepo Setup**
 - [x] Nx configuration (`nx.json`, `tsconfig.base.json`, `project.json` files)
-- [x] Workspace structure (`apps/consultify/`, `apps/new-app/`)
+- [x] Workspace structure (`apps/consultinity/`, `apps/new-app/`)
 - [x] Shared dependencies management (npm workspaces + Nx orchestration)
 - [x] Build orchestration (`npm run nx:build`, `npm run nx:serve:*`)
 
@@ -157,7 +157,7 @@
 - [x] Pełna migracja TypeScript (100%) - Faza 1.1
 - [x] Service architecture documentation → `docs/SERVICE_ARCHITECTURE.md`
 - [x] Database optimization report → `docs/DATABASE_OPTIMIZATION_REPORT.md`
-- [x] Shared library package → `packages/shared` (@consultify/shared v0.0.1)
+- [x] Shared library package → `packages/shared` (@consultinity/shared v0.0.1)
 
 ---
 
@@ -558,7 +558,7 @@
   /shared-auth
   /shared-db
 /apps
-  /consultify
+  /consultinity
   /new-app
 ```
 
@@ -567,13 +567,13 @@
 - [x] ✅ Wyciągnięcie wspólnych utils (packages/shared)
 - [x] ✅ Wyciągnięcie wspólnych UI components
     > [!NOTE]
-    > Extracted `Button`, `Input`, `Card` to `@consultify/shared` library.
+    > Extracted `Button`, `Input`, `Card` to `@consultinity/shared` library.
 - [x] ✅ Shared API contracts (Zod schemas w ConfigValidator)
     > [!NOTE]
     > Basic shared structure exists in `packages/shared` including UI theme foundation. Further extraction pending.
 
 **Application-Specific Code**
-- [x] ✅ Consultify-specific features (apps/consultify)
+- [x] ✅ Consultinity-specific features (apps/consultinity)
 - [x] ✅ New app-specific features (apps/new-app)
 - [x] ✅ Feature flags dla różnicowania (FeatureFlagsContext)
 - [x] ✅ Configuration per app (nx.json workspace configuration)
@@ -588,7 +588,7 @@
 - [x] ✅ Build orchestration (nx:build, nx:serve commands)
 - [ ] Version control strategy
     > [!NOTE]
-    > Nx workspace fully configured. Build orchestration working for consultify and new-app.
+    > Nx workspace fully configured. Build orchestration working for consultinity and new-app.
 
 **CI/CD Pipeline** ✅ UKOŃCZONE
 - [x] ✅ Pipeline dla obu aplikacji (monorepo-ci.yml z Nx affected)

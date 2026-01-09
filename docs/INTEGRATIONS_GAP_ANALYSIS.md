@@ -193,35 +193,37 @@
 - ✅ Integration marketplace
 - ✅ Workflow automations
 - ✅ Detailed integration settings
-- ❌ Brakuje w Consultify
+- ❌ Brakuje w Consultinity
 
 ### HubSpot
 - ✅ AI Studio for Workflows
 - ✅ Integration health monitoring
 - ✅ Detailed analytics
 - ✅ OAuth scope management
-- ❌ Brakuje w Consultify
+- ❌ Brakuje w Consultinity
 
 ### Monday.com
 - ✅ Visual workflow builder
 - ✅ Integration templates
 - ✅ Sync status dashboard
 - ✅ Field mapping UI
-- ❌ Brakuje w Consultify
+- ❌ Brakuje w Consultinity
 
 ### Cursor IDE
 - ✅ AI provider management
 - ✅ API key rotation
 - ✅ Usage tracking
 - ✅ Cost monitoring
-- ❌ Brakuje w Consultify
+- ❌ Brakuje w Consultinity
 
 ### Google AI Studio
 - ✅ API key management
 - ✅ Usage quotas
 - ✅ Rate limits
 - ✅ Cost tracking
-- ❌ Brakuje w Consultify
+- ❌ Brakuje w Consultinity
+
+
 
 
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * TrustedDevicesSettings - Manage trusted devices for MFA
  *

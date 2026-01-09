@@ -362,15 +362,15 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({ analys
                                         <span className="text-slate-500">Zmiana wyniku: </span>
                                         <span
                                             className={
-                                                comparisonResult.metricsDiff.overallScore.change > 0
+                                                (comparisonResult.metricsDiff?.overallScore?.change ?? 0) > 0
                                                     ? 'text-emerald-500'
-                                                    : comparisonResult.metricsDiff.overallScore.change < 0
+                                                    : (comparisonResult.metricsDiff?.overallScore?.change ?? 0) < 0
                                                       ? 'text-red-500'
                                                       : 'text-slate-500'
                                             }
                                         >
-                                            {comparisonResult.metricsDiff.overallScore.change > 0 ? '+' : ''}
-                                            {comparisonResult.metricsDiff.overallScore.change.toFixed(2)}
+                                            {(comparisonResult.metricsDiff?.overallScore?.change ?? 0) > 0 ? '+' : ''}
+                                            {(comparisonResult.metricsDiff?.overallScore?.change ?? 0).toFixed(2)}
                                         </span>
                                     </div>
                                 </div>

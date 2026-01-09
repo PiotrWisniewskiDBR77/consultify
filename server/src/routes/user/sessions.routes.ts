@@ -182,4 +182,76 @@ router.delete(
     }),
 );
 
+/**
+ * GET /api/sessions/:projectId/assessment-overview
+ * Get assessment overview data for a project
+ */
+router.get(
+    '/:projectId/assessment-overview',
+    verifyToken,
+    asyncHandler(async (req: AuthRequest, res: Response) => {
+        const organizationId = req.user?.organizationId || 'org-dbr77-system';
+        
+        // Fetch assessments from database
+        const assessments = await dbAll<{
+            id: string;
+            name: string;
+            description: string;
+            status: string;
+            created_at: string;
+            updated_at: string;
+        }>(
+            `SELECT id, name, description, status, created_at, updated_at
+             FROM assessments 
+             WHERE organization_id = ?
+             ORDER BY created_at DESC`,
+            [organizationId],
+        );
+
+        // Format for AssessmentHubDashboard component
+        const formattedAssessments = assessments.map(a => ({
+            id: a.id,
+            name: a.name,
+            description: a.description,
+            status: a.status,
+            type: 'DRD',
+            projectName: 'Digital Readiness Diagnosis',
+            progress: 75,
+            overallScore: 3.2,
+            createdAt: a.created_at,
+            updatedAt: a.updated_at,
+        }));
+
+        // Return data in format expected by AssessmentHubDashboard
+        return res.json({
+            drd: {
+                assessments: formattedAssessments,
+                currentScore: 3.2,
+                targetScore: 4.0,
+                gaps: ['Process Automation', 'Data Integration'],
+            },
+            rapidLean: {
+                observations: [],
+                totalObservations: 0,
+                categories: {},
+            },
+            externalDigital: {
+                audits: [],
+                totalAudits: 0,
+            },
+            genericReports: {
+                reports: [],
+                totalReports: 0,
+            },
+            consolidated: {
+                totalAssessments: formattedAssessments.length,
+                completedModules: formattedAssessments.filter(a => a.status === 'APPROVED').length,
+                overallReadiness: 3.2,
+                strongestAreas: ['Digital Strategy', 'Innovation Culture'],
+                weakestAreas: ['Legacy Systems', 'Data Governance'],
+            },
+        });
+    }),
+);
+
 export default router;

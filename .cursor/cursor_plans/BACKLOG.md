@@ -1,4 +1,4 @@
-# 📋 CONSULTIFY BACKLOG
+# 📋 CONSULTINITY BACKLOG
 
 > Tematy do realizacji w przyszłości, zgrupowane tematycznie.
 

@@ -4,7 +4,7 @@
 
 ## Overview
 
-This document provides the complete roadmap for achieving enterprise-grade testing standards in the Consultify SaaS application. All infrastructure and tooling has been implemented according to the plan.
+This document provides the complete roadmap for achieving enterprise-grade testing standards in the Consultinity SaaS application. All infrastructure and tooling has been implemented according to the plan.
 
 ## Implementation Status
 

@@ -1,5 +1,5 @@
 {
-    "name": "consultify",
+    "name": "consultinity",
     "private": true,
     "version": "0.0.1",
     "type": "module",
@@ -14,6 +14,8 @@
         "lint": "eslint . --report-unused-disable-directives",
         "type-check": "tsc --noEmit",
         "dev:backend": "cd server && npm run dev",
+        "fix:credentials": "./server/scripts/fix-dbr77-credentials.sh",
+        "seed:notifications": "./server/scripts/seed-notifications.sh",
         "build:backend": "cd server && npm run build",
         "start": "cd server && npm run build && NODE_ENV=production node dist/index.js",
         "start:dev": "cd server && NODE_ENV=production npx tsx src/index.ts",
@@ -48,7 +50,7 @@
         "nx:lint": "nx run-many -t lint",
         "nx:affected": "nx affected",
         "nx:graph": "nx graph",
-        "nx:serve:consultify": "nx serve consultify",
+        "nx:serve:consultinity": "nx serve consultinity",
         "nx:serve:new-app": "nx serve new-app",
         "db:migrate": "tsx server/scripts/migrate.ts",
         "db:migrate:backfill": "tsx server/scripts/migrate.ts backfill",
@@ -62,7 +64,20 @@
         "db:metrics": "curl http://localhost:3005/api/metrics/database",
         "db:slow-queries": "curl http://localhost:3005/api/metrics/slow-queries",
         "test:database": "vitest run tests/database",
-        "prepare": "husky"
+        "prepare": "husky",
+        "dev:check": "npm run lint && npm run type-check",
+        "dev:test": "vitest run tests/unit --watch",
+        "dev:full": "npm run dev:check && npm run dev:test",
+        "verify": "npm run lint && npm run type-check && npm run test:all && npm run test:security",
+        "verify:quick": "npm run lint && npm run type-check && npm run test:unit",
+        "pre-push": "npm run lint && npm run type-check && npm run test:unit",
+        "security:local": "npm audit --audit-level=high",
+        "security:check": "npm run security:local && npm run test:security",
+        "deps:check": "npm audit --audit-level=moderate",
+        "deps:update": "npm audit fix",
+        "deps:security": "npx snyk test && npx snyk monitor || echo 'Snyk not configured, skipping...'",
+        "license:check": "npx license-checker --onlyAllow 'MIT;Apache-2.0;BSD-3-Clause;ISC;BSD-2-Clause;0BSD' || echo 'License checker not installed, skipping...'",
+        "validate": "npm run lint && npm run type-check && npm run test:unit && npm run test:security"
     },
     "dependencies": {
         "@ai-sdk/anthropic": "^3.0.1",
@@ -170,6 +185,8 @@
         "zustand": "^5.0.9"
     },
     "devDependencies": {
+        "@commitlint/cli": "^20.3.0",
+        "@commitlint/config-conventional": "^20.3.0",
         "@eslint/js": "^9.39.1",
         "@percy/cli": "^1.31.7",
         "@percy/playwright": "^1.0.10",

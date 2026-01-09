@@ -14,7 +14,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 const router = Router();
 
 /**
- * PMO Domains following Consultify's Meta-PMO Framework
+ * PMO Domains following Consultinity's Meta-PMO Framework
  * Each domain maps to ISO 21500, PMBOK 7, and PRINCE2
  */
 const PMO_DOMAINS = [

@@ -5,10 +5,10 @@
 
 module.exports = {
   consumer: {
-    name: 'consultify-frontend',
+    name: 'consultinity-frontend',
   },
   provider: {
-    name: 'consultify-backend',
+    name: 'consultinity-backend',
   },
   pactDir: './tests/contracts/pacts',
   logDir: './tests/contracts/logs',
@@ -31,6 +31,8 @@ module.exports = {
   // Tags for consumer/provider versions
   tags: [process.env.GIT_BRANCH || 'main'],
 };
+
+
 
 
 

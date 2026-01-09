@@ -46,7 +46,7 @@ test.describe('Authentication Flows', () => {
             await page.goto(BASE_URL);
             
             // Use test credentials
-            await page.getByLabel(/email/i).fill('demo@consultify.io');
+            await page.getByLabel(/email/i).fill('demo@consultinity.io');
             await page.getByLabel(/password/i).fill('demo123');
             await page.getByRole('button', { name: /sign in|log in/i }).click();
             
@@ -123,7 +123,7 @@ test.describe('MFA (Multi-Factor Authentication)', () => {
     test.beforeEach(async ({ page }) => {
         // Login first
         await page.goto(BASE_URL);
-        await page.getByLabel(/email/i).fill('demo@consultify.io');
+        await page.getByLabel(/email/i).fill('demo@consultinity.io');
         await page.getByLabel(/password/i).fill('demo123');
         await page.getByRole('button', { name: /sign in|log in/i }).click();
         await page.waitForURL(/dashboard|app/, { timeout: 10000 });
@@ -158,7 +158,7 @@ test.describe('MFA (Multi-Factor Authentication)', () => {
 test.describe('Session Management', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(BASE_URL);
-        await page.getByLabel(/email/i).fill('demo@consultify.io');
+        await page.getByLabel(/email/i).fill('demo@consultinity.io');
         await page.getByLabel(/password/i).fill('demo123');
         await page.getByRole('button', { name: /sign in|log in/i }).click();
         await page.waitForURL(/dashboard|app/, { timeout: 10000 });
@@ -199,7 +199,7 @@ test.describe('Authorization & Protected Routes', () => {
     test('should protect admin routes from non-admin users', async ({ page }) => {
         // Login as regular user
         await page.goto(BASE_URL);
-        await page.getByLabel(/email/i).fill('demo@consultify.io');
+        await page.getByLabel(/email/i).fill('demo@consultinity.io');
         await page.getByLabel(/password/i).fill('demo123');
         await page.getByRole('button', { name: /sign in/i }).click();
         await page.waitForURL(/dashboard|app/, { timeout: 10000 });
@@ -214,7 +214,7 @@ test.describe('Authorization & Protected Routes', () => {
 
     test('should maintain session across page refreshes', async ({ page }) => {
         await page.goto(BASE_URL);
-        await page.getByLabel(/email/i).fill('demo@consultify.io');
+        await page.getByLabel(/email/i).fill('demo@consultinity.io');
         await page.getByLabel(/password/i).fill('demo123');
         await page.getByRole('button', { name: /sign in/i }).click();
         await page.waitForURL(/dashboard|app/, { timeout: 10000 });
@@ -230,7 +230,7 @@ test.describe('Authorization & Protected Routes', () => {
 test.describe('Logout', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(BASE_URL);
-        await page.getByLabel(/email/i).fill('demo@consultify.io');
+        await page.getByLabel(/email/i).fill('demo@consultinity.io');
         await page.getByLabel(/password/i).fill('demo123');
         await page.getByRole('button', { name: /sign in/i }).click();
         await page.waitForURL(/dashboard|app/, { timeout: 10000 });
@@ -280,7 +280,7 @@ test.describe('Security Headers & CSRF', () => {
     test('should reject requests without valid CSRF token', async ({ page, request }) => {
         // Login first
         await page.goto(BASE_URL);
-        await page.getByLabel(/email/i).fill('demo@consultify.io');
+        await page.getByLabel(/email/i).fill('demo@consultinity.io');
         await page.getByLabel(/password/i).fill('demo123');
         await page.getByRole('button', { name: /sign in/i }).click();
         await page.waitForURL(/dashboard|app/, { timeout: 10000 });

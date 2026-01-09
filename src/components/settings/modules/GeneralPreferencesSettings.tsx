@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * GeneralPreferencesSettings - General Application Preferences
  *

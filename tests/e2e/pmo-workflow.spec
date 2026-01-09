@@ -16,7 +16,7 @@ const BASE_URL = 'http://localhost:5173';
 // Helper to login before tests
 async function login(page: any) {
     await page.goto(BASE_URL);
-    await page.getByLabel(/email/i).fill('demo@consultify.io');
+    await page.getByLabel(/email/i).fill('demo@consultinity.io');
     await page.getByLabel(/password/i).fill('demo123');
     await page.getByRole('button', { name: /sign in/i }).click();
     await page.waitForURL(/dashboard|app/, { timeout: 10000 });

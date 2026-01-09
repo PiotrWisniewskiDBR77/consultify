@@ -13,15 +13,15 @@ commonLabels:
   environment: production
 
 replicas:
-  - name: consultify-api
+  - name: consultinity-api
     count: 3
-  - name: consultify-frontend
+  - name: consultinity-frontend
     count: 2
 
 images:
-  - name: consultify/api
+  - name: consultinity/api
     newTag: latest
-  - name: consultify/frontend
+  - name: consultinity/frontend
     newTag: latest
 
 patches:
@@ -40,10 +40,10 @@ patches:
         value: "250m"
     target:
       kind: Deployment
-      name: consultify-api
+      name: consultinity-api
 
 configMapGenerator:
-  - name: consultify-config
+  - name: consultinity-config
     behavior: merge
     literals:
       - NODE_ENV=production

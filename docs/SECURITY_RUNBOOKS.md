@@ -133,7 +133,7 @@ unset JWT_SECRET_OLD
 
 ```bash
 # Via API:
-curl -X POST "https://api.consultify.com/api/organizations/{orgId}/api-keys/{keyId}/rotate" \
+curl -X POST "https://api.consultinity.com/api/organizations/{orgId}/api-keys/{keyId}/rotate" \
   -H "Authorization: Bearer {adminToken}" \
   -H "Content-Type: application/json" \
   -d '{"gracePeriodHours": 24}'
@@ -150,19 +150,19 @@ curl -X POST "https://api.consultify.com/api/organizations/{orgId}/api-keys/{key
 
 ```bash
 # 1. Immediately revoke all sessions
-curl -X POST "https://api.consultify.com/api/admin/users/{userId}/revoke-sessions" \
+curl -X POST "https://api.consultinity.com/api/admin/users/{userId}/revoke-sessions" \
   -H "Authorization: Bearer {adminToken}"
 
 # 2. Force password reset
-curl -X POST "https://api.consultify.com/api/admin/users/{userId}/force-password-reset" \
+curl -X POST "https://api.consultinity.com/api/admin/users/{userId}/force-password-reset" \
   -H "Authorization: Bearer {adminToken}"
 
 # 3. Reset MFA
-curl -X POST "https://api.consultify.com/api/admin/users/{userId}/reset-mfa" \
+curl -X POST "https://api.consultinity.com/api/admin/users/{userId}/reset-mfa" \
   -H "Authorization: Bearer {adminToken}"
 
 # 4. Review recent activity
-curl "https://api.consultify.com/api/admin/users/{userId}/activity-log?days=7" \
+curl "https://api.consultinity.com/api/admin/users/{userId}/activity-log?days=7" \
   -H "Authorization: Bearer {adminToken}"
 
 # 5. Notify user
@@ -439,14 +439,16 @@ npm run security:scan
 
 | Role | Contact | Availability |
 |------|---------|--------------|
-| Security Team Lead | security@consultify.com | 24/7 |
-| Infrastructure Lead | infra@consultify.com | Business hours |
-| Legal/Compliance | legal@consultify.com | Business hours |
+| Security Team Lead | security@consultinity.com | 24/7 |
+| Infrastructure Lead | infra@consultinity.com | Business hours |
+| Legal/Compliance | legal@consultinity.com | Business hours |
 | Emergency Hotline | +48-XXX-XXX-XXX | 24/7 |
 
 ---
 
 *This document should be reviewed quarterly and updated after any major incident.*
+
+
 
 
 

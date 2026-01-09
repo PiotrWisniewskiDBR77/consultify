@@ -23,7 +23,7 @@ async function seed() {
     const adminHash = await bcrypt.hash('StagingAdmin123!', 10);
     await run(`
         INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role, status)
-        VALUES (?, ?, 'admin@staging.consultify.app', ?, 'Admin', 'User', 'OWNER', 'active')
+        VALUES (?, ?, 'admin@staging.consultinity.app', ?, 'Admin', 'User', 'OWNER', 'active')
     `, [adminId, orgId, adminHash]);
     console.log('✅ Admin user created');
 
@@ -32,7 +32,7 @@ async function seed() {
     const userHash = await bcrypt.hash('StagingUser123!', 10);
     await run(`
         INSERT INTO users (id, organization_id, email, password_hash, first_name, last_name, role, status)
-        VALUES (?, ?, 'user@staging.consultify.app', ?, 'Test', 'User', 'USER', 'active')
+        VALUES (?, ?, 'user@staging.consultinity.app', ?, 'Test', 'User', 'USER', 'active')
     `, [userId, orgId, userHash]);
     console.log('✅ Regular user created');
 

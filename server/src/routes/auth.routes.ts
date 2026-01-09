@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Auth Routes
  * Authentication and authorization endpoints

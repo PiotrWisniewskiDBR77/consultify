@@ -129,7 +129,7 @@ function generateEmailTemplate(alert: AlertEmailData): EmailTemplate {
             }
         </div>
         <div class="footer">
-            <p>This is an automated alert from Consultify Enterprise SaaS Platform</p>
+            <p>This is an automated alert from Consultinity Enterprise SaaS Platform</p>
             <p>Please do not reply to this email</p>
         </div>
     </div>
@@ -266,5 +266,7 @@ export function getAlertEmailService(): AlertEmailService {
 
 export default AlertEmailService;
 export type { AlertEmailData };
+
+
 
 

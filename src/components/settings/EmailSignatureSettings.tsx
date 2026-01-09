@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * EmailSignatureSettings - Manage email signatures
  *

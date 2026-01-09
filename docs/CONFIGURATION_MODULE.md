@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Configuration Module provides comprehensive enterprise-level settings management for the Consultify platform. It enables SuperAdmins to configure security policies, billing, integrations, data management, and email settings across organizations.
+The Configuration Module provides comprehensive enterprise-level settings management for the Consultinity platform. It enables SuperAdmins to configure security policies, billing, integrations, data management, and email settings across organizations.
 
 ## Architecture
 
@@ -450,6 +450,8 @@ const { requests } = await Api.get('/data-export/requests');
 - [Billing Integration](./BILLING_INTEGRATION.md)
 - [Webhook Events Reference](./WEBHOOK_EVENTS.md)
 - [API Reference](./API_CONFIGURATION_MODULE.md)
+
+
 
 
 

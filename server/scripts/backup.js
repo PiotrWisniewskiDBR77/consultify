@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Configuration
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = process.env.DB_PORT || '5432';
-const DB_NAME = process.env.DB_NAME || 'consultify';
+const DB_NAME = process.env.DB_NAME || 'consultinity';
 const DB_USER = process.env.DB_USER || 'postgres';
 const BACKUP_DIR = process.env.BACKUP_DIR || path.join(__dirname, '../../backups');
 

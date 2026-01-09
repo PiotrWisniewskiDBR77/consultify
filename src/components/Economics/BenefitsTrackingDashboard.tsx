@@ -97,7 +97,8 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
         }).format(value);
     };
 
-    const formatPercent = (value: number) => {
+    const formatPercent = (value: number | undefined | null) => {
+        if (value === undefined || value === null || isNaN(value)) return '0.0%';
         return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
     };
 

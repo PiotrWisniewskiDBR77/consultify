@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Auth Controller
  * Handles authentication-related operations

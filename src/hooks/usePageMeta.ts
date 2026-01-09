@@ -7,77 +7,101 @@ import { ROUTES } from '@/routes/routeConfig';
  * Maps routes to SEO-friendly titles and descriptions
  */
 const PAGE_META: Record<string, { title: string; description: string }> = {
+    [ROUTES.AI_CHAT]: {
+        title: 'AI Chat | Consultinity',
+        description: 'AI-powered strategic consulting chat',
+    },
+    [ROUTES.PROJECT_INTELLIGENCE]: {
+        title: 'Project Intelligence | Consultinity',
+        description: 'AI-driven project insights and knowledge management',
+    },
+    [ROUTES.AI_ACTIONS]: {
+        title: 'AI Actions | Consultinity',
+        description: 'AI-generated action proposals and recommendations',
+    },
     [ROUTES.DASHBOARD]: {
-        title: 'Dashboard | Consultify',
+        title: 'Dashboard | Consultinity',
         description: 'Your transformation dashboard - track progress, initiatives, and key metrics',
     },
     [ROUTES.STUDIO]: {
-        title: 'AI Studio | Consultify',
+        title: 'AI Studio | Consultinity',
         description: 'AI-powered consulting studio for strategic transformation',
     },
     [ROUTES.MY_WORK]: {
-        title: 'My Work | Consultify',
+        title: 'My Work | Consultinity',
         description: 'Manage your tasks, initiatives, and workspace',
     },
     [ROUTES.CONTEXT_BUILDER.ROOT]: {
-        title: 'Context Builder | Consultify',
+        title: 'Context Builder | Consultinity',
         description: 'Build your organizational context and strategic profile',
     },
     [ROUTES.ASSESSMENT.ROOT]: {
-        title: 'Assessment Hub | Consultify',
+        title: 'Assessment Hub | Consultinity',
         description: 'Comprehensive digital transformation assessments',
     },
     [ROUTES.INITIATIVES]: {
-        title: 'Initiatives | Consultify',
+        title: 'Initiatives | Consultinity',
         description: 'Manage and track transformation initiatives',
     },
     [ROUTES.ROADMAP]: {
-        title: 'Roadmap | Consultify',
+        title: 'Roadmap | Consultinity',
         description: 'Strategic transformation roadmap and timeline',
     },
     [ROUTES.PORTFOLIO]: {
-        title: 'Portfolio | Consultify',
+        title: 'Portfolio | Consultinity',
         description: 'Initiative portfolio management and prioritization',
     },
     [ROUTES.ROI]: {
-        title: 'ROI Analysis | Consultify',
+        title: 'ROI Analysis | Consultinity',
         description: 'Return on investment analysis and business case',
     },
     [ROUTES.ECONOMICS]: {
-        title: 'Economics | Consultify',
+        title: 'Economics | Consultinity',
         description: 'Financial analysis and economic impact',
     },
     [ROUTES.EXECUTION]: {
-        title: 'Execution | Consultify',
+        title: 'Execution | Consultinity',
         description: 'Initiative execution and delivery management',
     },
     [ROUTES.IMPLEMENTATION]: {
-        title: 'Implementation | Consultify',
+        title: 'Implementation | Consultinity',
         description: 'Implementation planning and tracking',
     },
     [ROUTES.ROLLOUT]: {
-        title: 'Rollout | Consultify',
+        title: 'Rollout | Consultinity',
         description: 'Change rollout and adoption management',
     },
     [ROUTES.REPORTS]: {
-        title: 'Reports | Consultify',
+        title: 'Reports | Consultinity',
         description: 'Executive reports and analytics',
     },
     [ROUTES.KPI_OKR]: {
-        title: 'KPIs & OKRs | Consultify',
+        title: 'KPIs & OKRs | Consultinity',
         description: 'Key performance indicators and objectives tracking',
     },
     [ROUTES.BENEFITS]: {
-        title: 'Benefits Realization | Consultify',
+        title: 'Benefits Realization | Consultinity',
         description: 'Track and measure transformation benefits',
     },
     [ROUTES.SETTINGS.ROOT]: {
-        title: 'Settings | Consultify',
+        title: 'Settings | Consultinity',
         description: 'Account and workspace settings',
     },
     [ROUTES.ADMIN.ROOT]: {
-        title: 'Admin Panel | Consultify',
+        title: 'Admin Panel | Consultinity',
         description: 'Administrative controls and configuration',
+    },
+    '/login': {
+        title: 'Log In | Consultinity',
+        description: 'Sign in to your Consultinity account',
+    },
+    '/register': {
+        title: 'Sign Up | Consultinity',
+        description: 'Create your Consultinity account',
+    },
+    '/': {
+        title: 'Consultinity - AI Strategic Consultant',
+        description: 'Professional digital transformation consulting platform powered by AI',
     },
 };
 
@@ -93,7 +117,7 @@ export function usePageMeta() {
     useEffect(() => {
         // Get meta for current route
         const meta = PAGE_META[location.pathname] || {
-            title: 'Consultify',
+            title: 'Consultinity',
             description: 'Professional digital transformation consulting platform',
         };
 

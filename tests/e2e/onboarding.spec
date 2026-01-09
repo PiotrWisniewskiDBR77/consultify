@@ -118,7 +118,7 @@ test.describe('User Onboarding Flow', () => {
             await page.click('button[type="submit"]');
 
             // Should show welcome modal
-            await expect(page.locator('text=Welcome to Consultify!')).toBeVisible();
+            await expect(page.locator('text=Welcome to Consultinity!')).toBeVisible();
             await expect(page.locator('text=Let\'s get you started')).toBeVisible();
 
             // Start tour
@@ -235,7 +235,7 @@ test.describe('User Onboarding Flow', () => {
 
             // Fill project details
             await page.fill('input[name="projectName"]', 'My First Project');
-            await page.fill('textarea[name="projectDescription"]', 'This is my first project to get started with Consultify');
+            await page.fill('textarea[name="projectDescription"]', 'This is my first project to get started with Consultinity');
             await page.selectOption('select[name="priority"]', 'medium');
             await page.fill('input[name="startDate"]', '2024-01-15');
             await page.fill('input[name="endDate"]', '2024-06-15');
@@ -372,7 +372,7 @@ test.describe('User Onboarding Flow', () => {
 
             // Should show completion summary
             await expect(page.locator('text=Onboarding Complete!')).toBeVisible();
-            await expect(page.locator('text=You\'re all set to start using Consultify')).toBeVisible();
+            await expect(page.locator('text=You\'re all set to start using Consultinity')).toBeVisible();
 
             // Should show summary of what was created
             await expect(page.locator('text=Organization: Onboarding Test Company')).toBeVisible();

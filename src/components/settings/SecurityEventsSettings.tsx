@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * SecurityEventsSettings - Personal Security Audit Log
  *

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Consultify uses **React Router v7** for client-side routing. This guide explains the routing structure, how to navigate, and how to add new routes.
+Consultinity uses **React Router v7** for client-side routing. This guide explains the routing structure, how to navigate, and how to add new routes.
 
 ## Route Structure
 
@@ -179,7 +179,7 @@ In `src/hooks/usePageMeta.ts`, add meta tags:
 const PAGE_META: Record<string, { title: string; description: string }> = {
   // ... existing meta
   [ROUTES.MY_NEW_ROUTE]: {
-    title: 'My New Route | Consultify',
+    title: 'My New Route | Consultinity',
     description: 'Description of my new route',
   },
 };

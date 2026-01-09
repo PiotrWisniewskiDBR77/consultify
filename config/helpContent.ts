@@ -38,6 +38,35 @@ export const HELP_CONTENT: ViewHelpConfig[] = [
         ],
     },
     {
+        viewId: 'ai-operations',
+        pathPattern: /\/superadmin\/ai-operations/,
+        items: [
+            {
+                title: 'AI Operations overview',
+                content:
+                    'Mission Control, Performance, Costs, SLA, Analytics. Monitor uptime, latency, cache hit, tokens, cost, and usage across providers and models.',
+                type: 'article',
+            },
+            {
+                title: 'Cost & tokens (why $0.00?)',
+                content:
+                    'Costs and tokens come from ai_usage_logs. Run the demo seed: pnpm tsx server/scripts/seed-ai-usage-demo.ts to populate dashboards when testing.',
+                type: 'article',
+            },
+            {
+                title: 'Health & diagnostics',
+                content:
+                    'Active Providers are read from /api/llm/health/status. Capability tests use /api/llm/health/test/:capability. Ensure a valid auth token and active providers.',
+                type: 'faq',
+            },
+            {
+                title: 'Docs: AI Operations',
+                content: 'See docs/AI_OPERATIONS_MODULE.md for endpoints, seeding, and runbook.',
+                type: 'article',
+            },
+        ],
+    },
+    {
         viewId: 'assessment',
         pathPattern: /\/assessment|\/full-step1/,
         items: [
@@ -212,6 +241,48 @@ export const HELP_CONTENT: ViewHelpConfig[] = [
             {
                 title: 'help.content.integrations.2.title',
                 content: 'help.content.integrations.2.content',
+                type: 'faq',
+            },
+        ],
+    },
+    {
+        viewId: 'ai-infrastructure',
+        pathPattern: /\/superadmin\/ai-infrastructure/,
+        items: [
+            {
+                title: 'help.content.aiInfrastructure.0.title',
+                content: 'help.content.aiInfrastructure.0.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.aiInfrastructure.1.title',
+                content: 'help.content.aiInfrastructure.1.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.aiInfrastructure.2.title',
+                content: 'help.content.aiInfrastructure.2.content',
+                type: 'faq',
+            },
+            {
+                title: 'help.content.aiInfrastructure.3.title',
+                content: 'help.content.aiInfrastructure.3.content',
+                type: 'article',
+            },
+        ],
+    },
+    {
+        viewId: 'llm-management',
+        pathPattern: /\/superadmin\/llm-management/,
+        items: [
+            {
+                title: 'help.content.llmManagement.0.title',
+                content: 'help.content.llmManagement.0.content',
+                type: 'article',
+            },
+            {
+                title: 'help.content.llmManagement.1.title',
+                content: 'help.content.llmManagement.1.content',
                 type: 'faq',
             },
         ],

@@ -25,78 +25,76 @@ const createPDFDocument = () => {
         };
     };
 
+    const addPage = (options) => {
+        currentPage = createPage(options);
+        pages.push(currentPage);
+        return currentPage;
+    };
+
+    const addText = (text, options = {}) => {
+        if (!currentPage) addPage();
+
+        const { x, y, fontSize = 12, fontFamily = 'Helvetica', color = '#000000', align = 'left' } = options;
+
+        currentPage.elements.push({
+            type: 'text',
+            content: text,
+            x: x ?? currentPage.cursor.x,
+            y: y ?? currentPage.cursor.y,
+            fontSize,
+            fontFamily,
+            color,
+            align,
+        });
+
+        // Update cursor
+        currentPage.cursor.y += fontSize * 1.2;
+    };
+
+    const addHeading = (text, level = 1) => {
+        const sizes = { 1: 24, 2: 20, 3: 16, 4: 14, 5: 12, 6: 10 };
+        addText(text, { fontSize: sizes[level] || 12, fontFamily: 'Helvetica-Bold' });
+        currentPage.cursor.y += 10; // Extra spacing
+    };
+
+    const addParagraph = (text, options = {}) => {
+        if (!currentPage) addPage();
+
+        const { width = currentPage.width - 2 * currentPage.margin, lineHeight = 1.5 } = options;
+        const words = text.split(' ');
+        let line = '';
+        const charWidth = 6; // Approximate
+
+        for (const word of words) {
+            const testLine = line + (line ? ' ' : '') + word;
+            if (testLine.length * charWidth > width) {
+                addText(line);
+                line = word;
+            } else {
+                line = testLine;
+            }
+        }
+
+        if (line) {
+            addText(line);
+        }
+
+        currentPage.cursor.y += 10; // Paragraph spacing
+    };
+
     return {
-        addPage: (options) => {
-            currentPage = createPage(options);
-            pages.push(currentPage);
-            return currentPage;
-        },
-
+        addPage,
         getCurrentPage: () => currentPage,
-
         getPageCount: () => pages.length,
-
-        setMetadata: (key, value) => {
-            metadata[key] = value;
-        },
-
+        setMetadata: (key, value) => { metadata[key] = value; },
         getMetadata: () => ({ ...metadata }),
-
-        // Text operations
-        addText: (text, options = {}) => {
-            if (!currentPage) this.addPage();
-
-            const { x, y, fontSize = 12, fontFamily = 'Helvetica', color = '#000000', align = 'left' } = options;
-
-            currentPage.elements.push({
-                type: 'text',
-                content: text,
-                x: x ?? currentPage.cursor.x,
-                y: y ?? currentPage.cursor.y,
-                fontSize,
-                fontFamily,
-                color,
-                align,
-            });
-
-            // Update cursor
-            currentPage.cursor.y += fontSize * 1.2;
-        },
-
-        addHeading: (text, level = 1) => {
-            const sizes = { 1: 24, 2: 20, 3: 16, 4: 14, 5: 12, 6: 10 };
-            this.addText(text, { fontSize: sizes[level] || 12, fontFamily: 'Helvetica-Bold' });
-            currentPage.cursor.y += 10; // Extra spacing
-        },
-
-        addParagraph: (text, options = {}) => {
-            if (!currentPage) this.addPage();
-
-            const { width = currentPage.width - 2 * currentPage.margin, lineHeight = 1.5 } = options;
-            const words = text.split(' ');
-            let line = '';
-            const charWidth = 6; // Approximate
-
-            for (const word of words) {
-                const testLine = line + (line ? ' ' : '') + word;
-                if (testLine.length * charWidth > width) {
-                    this.addText(line);
-                    line = word;
-                } else {
-                    line = testLine;
-                }
-            }
-
-            if (line) {
-                this.addText(line);
-            }
-
-            currentPage.cursor.y += 10; // Paragraph spacing
-        },
+        addText,
+        addHeading,
+        addParagraph,
 
         // Image operations
         addImage: (imageData, options = {}) => {
-            if (!currentPage) this.addPage();
+            if (!currentPage) addPage();
 
             const { x, y, width = 100, height = 100 } = options;
 
@@ -114,7 +112,7 @@ const createPDFDocument = () => {
 
         // Table operations
         addTable: (data, options = {}) => {
-            if (!currentPage) this.addPage();
+            if (!currentPage) addPage();
 
             const { headers, columnWidths, rowHeight = 20 } = options;
 
@@ -134,7 +132,7 @@ const createPDFDocument = () => {
 
         // Drawing operations
         drawLine: (x1, y1, x2, y2, options = {}) => {
-            if (!currentPage) this.addPage();
+            if (!currentPage) addPage();
 
             currentPage.elements.push({
                 type: 'line',
@@ -144,7 +142,7 @@ const createPDFDocument = () => {
         },
 
         drawRect: (x, y, width, height, options = {}) => {
-            if (!currentPage) this.addPage();
+            if (!currentPage) addPage();
 
             currentPage.elements.push({
                 type: 'rect',

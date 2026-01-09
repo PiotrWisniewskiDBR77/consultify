@@ -9,7 +9,7 @@ import { exec } from 'child_process';
 import crypto from 'crypto';
 
 const BACKUP_DIR = path.join(__dirname, '../../backups');
-const DB_PATH = path.join(__dirname, '../consultify.db');
+const DB_PATH = path.join(__dirname, '../consultinity.db');
 const KEY = process.env.BACKUP_ENCRYPTION_KEY;
 
 const backupFile = process.argv[2];

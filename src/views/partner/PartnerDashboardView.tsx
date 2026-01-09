@@ -7,7 +7,6 @@
 
 import React, { useCallback } from 'react';
 
-import { SplitLayout } from '../../components/layout/SplitLayout';
 import { EcosystemAnalytics } from '../../components/Partner/EcosystemAnalytics';
 import { TrustProgressionIndicator } from '../../components/Partner/TrustProgressionIndicator';
 import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
@@ -23,12 +22,8 @@ export const PartnerDashboardView: React.FC = () => {
     const complianceScore = getComplianceScore();
 
     return (
-        <SplitLayout
-            title="Partner Dashboard"
-            subtitle="Ecosystem analytics, trust progression i PMO compliance"
-            currentView={AppView.PARTNER_DASHBOARD}
-        >
-            <div className="space-y-6 overflow-y-auto px-6 py-4">
+        <div className="h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
+            <div className="space-y-6 px-6 py-4">
                 {/* Trust Progression (Compact) */}
                 <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 dark:border-white/5 dark:bg-navy-900/60">
                     <div className="mb-3 flex items-center justify-between">
@@ -99,7 +94,7 @@ export const PartnerDashboardView: React.FC = () => {
                     </ul>
                 </div>
             </div>
-        </SplitLayout>
+        </div>
     );
 };
 

@@ -191,14 +191,14 @@ describe('AIPlaybookService', () => {
 
             const context = {
                 user: { name: 'Piotr' },
-                org: { name: 'Consultify' },
+                org: { name: 'Consultinity' },
                 item: { id: 123 }
             };
 
             const resolved = AIPlaybookService.resolvePayloadTemplate(template, context);
 
             expect(resolved.userName).toBe('Piotr');
-            expect(resolved.orgName).toBe('Consultify');
+            expect(resolved.orgName).toBe('Consultinity');
             expect(resolved.data.id).toBe(123);
         });
     });

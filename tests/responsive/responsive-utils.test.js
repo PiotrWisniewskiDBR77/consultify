@@ -142,35 +142,35 @@ const createMediaQueryMatcher = () => {
 
 // Responsive value resolver
 const createResponsiveResolver = (breakpointManager) => {
-    return {
-        resolve: (values) => {
-            if (typeof values !== 'object' || values === null) {
-                return values;
+    const resolve = (values) => {
+        if (typeof values !== 'object' || values === null) {
+            return values;
+        }
+
+        const breakpoint = breakpointManager.getBreakpoint();
+        const breakpointOrder = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'];
+        const currentIndex = breakpointOrder.indexOf(breakpoint);
+
+        // Find value for current or smaller breakpoint
+        for (let i = currentIndex; i >= 0; i--) {
+            const bp = breakpointOrder[i];
+            if (values[bp] !== undefined) {
+                return values[bp];
             }
+        }
 
-            const breakpoint = breakpointManager.getBreakpoint();
-            const breakpointOrder = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'];
-            const currentIndex = breakpointOrder.indexOf(breakpoint);
-
-            // Find value for current or smaller breakpoint
-            for (let i = currentIndex; i >= 0; i--) {
-                const bp = breakpointOrder[i];
-                if (values[bp] !== undefined) {
-                    return values[bp];
-                }
-            }
-
-            return values.default || values.xs || Object.values(values)[0];
-        },
-
-        resolveAll: (valueMap) => {
-            const result = {};
-            for (const [key, values] of Object.entries(valueMap)) {
-                result[key] = this.resolve(values);
-            }
-            return result;
-        },
+        return values.default || values.xs || Object.values(values)[0];
     };
+
+    const resolveAll = (valueMap) => {
+        const result = {};
+        for (const [key, values] of Object.entries(valueMap)) {
+            result[key] = resolve(values);
+        }
+        return result;
+    };
+
+    return { resolve, resolveAll };
 };
 
 // Container query simulator

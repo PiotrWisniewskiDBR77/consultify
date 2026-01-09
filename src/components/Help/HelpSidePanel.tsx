@@ -16,6 +16,7 @@ import type { TFunction } from 'i18next';
 import {
     ArrowRight,
     BookOpen,
+    Bot,
     CheckCheck,
     CheckCircle2,
     ChevronDown,
@@ -27,8 +28,10 @@ import {
     Info,
     Lightbulb,
     Link2,
+    Loader2,
     MapPin,
     PlayCircle,
+    Send,
     Sparkles,
     Target,
     Users,
@@ -43,6 +46,7 @@ import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
 
 // Tab configuration
 const TABS: { id: HelpTab; labelKey: string; icon: React.ReactNode }[] = [
+    { id: 'ai', labelKey: 'help.sidePanel.tabs.ai', icon: <Bot size={16} /> },
     { id: 'overview', labelKey: 'help.sidePanel.tabs.overview', icon: <BookOpen size={16} /> },
     { id: 'howto', labelKey: 'help.sidePanel.tabs.howto', icon: <Lightbulb size={16} /> },
     { id: 'faq', labelKey: 'help.sidePanel.tabs.faq', icon: <HelpCircle size={16} /> },
@@ -57,7 +61,7 @@ const DynamicIcon: React.FC<{ name: string; size?: number; className?: string }>
 };
 
 // Video progress tracking helpers
-const VIDEO_PROGRESS_KEY = 'consultify_video_progress';
+const VIDEO_PROGRESS_KEY = 'consultinity_video_progress';
 
 const getWatchedVideos = (): string[] => {
     try {
@@ -241,6 +245,186 @@ const VideoCard: React.FC<{
     );
 };
 
+// AI Help Chat Component
+interface AIMessage {
+    role: 'user' | 'assistant';
+    content: string;
+}
+
+const QUICK_PROMPTS = [
+    { key: 'howto', icon: <Lightbulb size={14} />, labelKey: 'help.ai.quick.howto' },
+    { key: 'explain', icon: <Info size={14} />, labelKey: 'help.ai.quick.explain' },
+    { key: 'troubleshoot', icon: <HelpCircle size={14} />, labelKey: 'help.ai.quick.troubleshoot' },
+];
+
+const AIHelpChat: React.FC<{ moduleId: string }> = ({ moduleId }) => {
+    const { t } = useTranslation();
+    const [messages, setMessages] = useState<AIMessage[]>([]);
+    const [input, setInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+    // Scroll to bottom on new messages
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    // Get auth token
+    const getToken = () => {
+        try {
+            const stored = localStorage.getItem('consultinity-storage');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                return parsed.state?.currentUser?.token || localStorage.getItem('auth_token');
+            }
+            return localStorage.getItem('auth_token');
+        } catch {
+            return null;
+        }
+    };
+
+    const sendMessage = async (message: string) => {
+        if (!message.trim() || isLoading) return;
+
+        const userMessage: AIMessage = { role: 'user', content: message };
+        setMessages((prev) => [...prev, userMessage]);
+        setInput('');
+        setIsLoading(true);
+
+        try {
+            const token = getToken();
+            const response = await fetch('/api/help/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    message,
+                    context: moduleId,
+                    history: messages.slice(-6), // Last 6 messages for context
+                }),
+            });
+
+            const data = await response.json();
+            const assistantMessage: AIMessage = {
+                role: 'assistant',
+                content: data.message || t('help.ai.error', 'Sorry, I encountered an error.'),
+            };
+            setMessages((prev) => [...prev, assistantMessage]);
+        } catch (err: any) {
+            setMessages((prev) => [
+                ...prev,
+                { role: 'assistant', content: t('help.ai.error', 'Sorry, I encountered an error. Please try again.') },
+            ]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleQuickPrompt = (key: string) => {
+        const prompts: Record<string, string> = {
+            howto: t('help.ai.prompts.howto', `How do I use the ${moduleId} module?`),
+            explain: t('help.ai.prompts.explain', `Explain what I can do in the ${moduleId} module.`),
+            troubleshoot: t('help.ai.prompts.troubleshoot', `I'm having trouble with ${moduleId}. Can you help?`),
+        };
+        sendMessage(prompts[key] || prompts.howto);
+    };
+
+    return (
+        <div className="flex flex-col h-full -m-4">
+            {/* Messages area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {messages.length === 0 ? (
+                    <div className="text-center py-8">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                            <Bot size={32} className="text-white" />
+                        </div>
+                        <h3 className="font-semibold text-navy-900 dark:text-white mb-2">
+                            {t('help.ai.welcome.title', 'AI Help Assistant')}
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                            {t('help.ai.welcome.subtitle', "Ask me anything about using Consultinity. I'm here to help!")}
+                        </p>
+                        
+                        {/* Quick prompts */}
+                        <div className="space-y-2">
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+                                {t('help.ai.quick.label', 'Quick questions:')}
+                            </p>
+                            {QUICK_PROMPTS.map((prompt) => (
+                                <button
+                                    key={prompt.key}
+                                    onClick={() => handleQuickPrompt(prompt.key)}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-left text-sm text-slate-600 dark:text-slate-300 transition-colors"
+                                >
+                                    <span className="text-violet-500">{prompt.icon}</span>
+                                    {t(prompt.labelKey, prompt.key)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    messages.map((msg, idx) => (
+                        <div
+                            key={idx}
+                            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                            <div
+                                className={`
+                                    max-w-[85%] px-3 py-2 rounded-2xl text-sm
+                                    ${msg.role === 'user'
+                                        ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-br-md'
+                                        : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 rounded-bl-md'
+                                    }
+                                `}
+                            >
+                                <div className="whitespace-pre-wrap">{msg.content}</div>
+                            </div>
+                        </div>
+                    ))
+                )}
+                
+                {isLoading && (
+                    <div className="flex justify-start">
+                        <div className="bg-slate-100 dark:bg-navy-800 px-4 py-3 rounded-2xl rounded-bl-md">
+                            <Loader2 size={16} className="animate-spin text-violet-500" />
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input area */}
+            <div className="border-t border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-navy-900">
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        sendMessage(input);
+                    }}
+                    className="flex gap-2"
+                >
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder={t('help.ai.placeholder', 'Ask a question...')}
+                        className="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-navy-800 border border-transparent focus:border-violet-500 focus:outline-none text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400"
+                        disabled={isLoading}
+                    />
+                    <button
+                        type="submit"
+                        disabled={!input.trim() || isLoading}
+                        className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 hover:from-violet-400 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-white transition-all"
+                    >
+                        <Send size={16} />
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 export const HelpSidePanel: React.FC = () => {
     const { t, i18n } = useTranslation();
     const lang = i18n.language === 'pl' ? 'pl' : 'en';
@@ -374,6 +558,11 @@ export const HelpSidePanel: React.FC = () => {
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4">
+                    {/* AI Assistant Tab */}
+                    {activeTab === 'ai' && (
+                        <AIHelpChat moduleId={help.moduleId} />
+                    )}
+
                     {/* Overview Tab */}
                     {activeTab === 'overview' && moduleHelp && (
                         <div className="space-y-5">
@@ -741,7 +930,7 @@ export const HelpSidePanel: React.FC = () => {
                         {t('common.close', 'Zamknij')}
                     </button>
                     <a
-                        href="https://docs.consultify.app"
+                        href="https://docs.consultinity.app"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"

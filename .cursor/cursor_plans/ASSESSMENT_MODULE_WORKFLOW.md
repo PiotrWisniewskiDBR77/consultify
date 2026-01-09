@@ -3,7 +3,7 @@
 > **Wersja:** 2.0  
 > **Data:** 25 grudnia 2025  
 > **Status:** ✅ 100% Complete  
-> **Projekt:** ANTYGRACITY Consultify  
+> **Projekt:** ANTYGRACITY Consultinity  
 
 ---
 
@@ -648,5 +648,5 @@ AssessmentVersionDiff            # Porównanie wersji
 
 ---
 
-*Ten dokument jest standardem pracy dla modułu Assessment w projekcie ANTYGRACITY Consultify.*
+*Ten dokument jest standardem pracy dla modułu Assessment w projekcie ANTYGRACITY Consultinity.*
 

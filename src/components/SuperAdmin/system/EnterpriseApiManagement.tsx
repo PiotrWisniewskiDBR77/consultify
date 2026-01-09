@@ -549,9 +549,9 @@ export const EnterpriseApiManagement: React.FC = () => {
             {activeTab === 'docs' && (
                 <div className="space-y-6">
                     <div className="p-6 bg-gradient-to-br from-purple-500/10 to-cyan-500/10 rounded-xl border border-purple-500/20">
-                        <h3 className="text-xl font-bold text-white mb-2">Consultify API</h3>
+                        <h3 className="text-xl font-bold text-white mb-2">Consultinity API</h3>
                         <p className="text-slate-400 mb-4">
-                            Build powerful integrations with the Consultify REST API. Access projects, assessments,
+                            Build powerful integrations with the Consultinity REST API. Access projects, assessments,
                             reports, and more.
                         </p>
                         <div className="flex items-center gap-4">

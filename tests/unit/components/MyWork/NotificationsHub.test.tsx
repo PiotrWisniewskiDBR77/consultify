@@ -21,12 +21,7 @@ vi.mock('@/store/useAppStore', () => ({
     })
 }));
 
-vi.mock('react-hot-toast', () => ({
-    default: {
-        success: vi.fn(),
-        error: vi.fn()
-    }
-}));
+// Note: react-hot-toast is mocked globally in tests/setup.ts
 
 vi.mock('framer-motion', () => ({
     motion: {

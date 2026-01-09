@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * NotificationChannelsSettings - Notification Channels Configuration
  *

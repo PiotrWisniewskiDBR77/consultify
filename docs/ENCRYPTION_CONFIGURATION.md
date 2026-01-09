@@ -2,7 +2,7 @@
 
 ## Overview
 
-Consultify implements field-level encryption for PII (Personally Identifiable Information) and sensitive data using AES-256-GCM encryption.
+Consultinity implements field-level encryption for PII (Personally Identifiable Information) and sensitive data using AES-256-GCM encryption.
 
 ## Features
 
@@ -185,6 +185,8 @@ The `KeyManagementService` is designed to be extended for external KMS integrati
 - Google Cloud KMS
 
 Contact the development team for enterprise KMS integration.
+
+
 
 
 

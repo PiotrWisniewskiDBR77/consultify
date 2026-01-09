@@ -10,11 +10,34 @@ interface ProtectedRouteProps {
 }
 
 /**
+ * Role hierarchy - higher roles include permissions of lower roles
+ * SUPERADMIN > ADMIN > USER
+ */
+const roleHierarchy: Record<string, number> = {
+    USER: 1,
+    ADMIN: 2,
+    SUPERADMIN: 3,
+};
+
+/**
+ * Check if the user's role meets or exceeds the required role
+ */
+const hasRequiredRole = (userRole: string | undefined, requiredRole: string): boolean => {
+    if (!userRole) return false;
+    const userLevel = roleHierarchy[userRole] ?? 0;
+    const requiredLevel = roleHierarchy[requiredRole] ?? 0;
+    return userLevel >= requiredLevel;
+};
+
+/**
  * ProtectedRoute - Route guard component
  * 
  * Protects routes based on authentication and role requirements.
  * Redirects unauthenticated users to auth page.
  * Redirects unauthorized users to dashboard.
+ * 
+ * Role hierarchy: SUPERADMIN > ADMIN > USER
+ * Higher roles can access routes requiring lower roles.
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     children,
@@ -30,9 +53,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return <Navigate to="/auth" state={{ from: location }} replace />;
     }
 
-    // Check role authorization
-    if (requiredRole && currentUser?.role !== requiredRole) {
-        // User is authenticated but doesn't have required role
+    // Check role authorization with hierarchy
+    if (requiredRole && !hasRequiredRole(currentUser?.role, requiredRole)) {
+        // User is authenticated but doesn't have required role level
         console.warn(`[ProtectedRoute] User role "${currentUser?.role}" insufficient for route requiring "${requiredRole}"`);
         return <Navigate to={ROUTES.DASHBOARD} replace />;
     }

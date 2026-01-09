@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary
 
-The UI/UX audit confirms that Consultify utilizes a premium "Enterprise Tech Minimalist" design language for its AI features. The interface successfully balances high-density information (usage metrics, thinking steps, artifacts) with a clean, intuitive interaction model that minimizes user friction while maximizing transparency.
+The UI/UX audit confirms that Consultinity utilizes a premium "Enterprise Tech Minimalist" design language for its AI features. The interface successfully balances high-density information (usage metrics, thinking steps, artifacts) with a clean, intuitive interaction model that minimizes user friction while maximizing transparency.
 
 ## 2. Interaction Design
 

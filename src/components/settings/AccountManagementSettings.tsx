@@ -18,7 +18,7 @@ const AccountManagementSettings: React.FC<{ className?: string }> = ({ className
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'consultify-data-export.json';
+            a.download = 'consultinity-data-export.json';
             a.click();
             URL.revokeObjectURL(url);
             toast.success(t('settings.account.exportSuccess', 'Data exported successfully'));

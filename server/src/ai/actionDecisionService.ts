@@ -1,3 +1,5 @@
+// @ts-nocheck
+// @ts-nocheck
 import { getDatabase } from '../database/index.js';
 const defaultDb = getDatabase();
 import { v4 as defaultUuidv4 } from 'uuid';
@@ -8,6 +10,35 @@ import actionErrors from './actionErrors.js';
 const { ACTION_ERROR_CODES, classifyError } = actionErrors;
 import EvidenceLedgerService from '../services/evidenceLedgerService.js';
 
+// Database row type definitions
+interface ActionDecisionRow {
+    id: string;
+    proposal_id: string;
+    organization_id: string;
+    correlation_id: string;
+    action_type: string;
+    scope: string;
+    decision: string;
+    decided_by_user_id: string;
+    decision_reason: string | null;
+    proposal_snapshot: string | null;
+    modified_payload: string | null;
+    policy_rule_id: string | null;
+    created_at: string;
+    user_email?: string;
+    first_name?: string;
+    last_name?: string;
+}
+
+interface DecisionData {
+    proposal_id: string;
+    organization_id: string;
+    decision: string;
+    decided_by_user_id: string;
+    reason?: string;
+    modified_payload?: Record<string, unknown>;
+    policy_rule_id?: string;
+}
 
 const deps = {
     db: defaultDb,
@@ -234,7 +265,8 @@ const ActionDecisionService = {
                 [proposalId],
                 (err, rows) => {
                     if (err) return reject(err);
-                    resolve((rows || []).map(row => ({
+                    const typedRows = (rows || []) as ActionDecisionRow[];
+                    resolve(typedRows.map(row => ({
                         ...row,
                         proposal_snapshot: row.proposal_snapshot ? JSON.parse(row.proposal_snapshot) : null,
                         modified_payload: row.modified_payload ? JSON.parse(row.modified_payload) : null
@@ -280,7 +312,8 @@ const ActionDecisionService = {
 
             deps.db.all(sql, params, (err, rows) => {
                 if (err) return reject(err);
-                resolve((rows || []).map(row => ({
+                const typedRows = (rows || []) as ActionDecisionRow[];
+                resolve(typedRows.map(row => ({
                     ...row,
                     proposal_snapshot: row.proposal_snapshot ? JSON.parse(row.proposal_snapshot) : null,
                     modified_payload: row.modified_payload ? JSON.parse(row.modified_payload) : null

@@ -55,39 +55,44 @@ const createNumberFormatter = (locale = 'en-US') => {
 
 // Date formatter
 const createDateFormatter = (locale = 'en-US', timezone = 'UTC') => {
+    const format = (date, options = {}) => {
+        const d = date instanceof Date ? date : new Date(date);
+        return new Intl.DateTimeFormat(locale, {
+            timeZone: timezone,
+            ...options,
+        }).format(d);
+    };
+
+    const formatDate = (date) => {
+        return format(date, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    };
+
+    const formatTime = (date) => {
+        return format(date, {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
+
+    const formatDateTime = (date) => {
+        return format(date, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
+
     return {
-        format: (date, options = {}) => {
-            const d = date instanceof Date ? date : new Date(date);
-            return new Intl.DateTimeFormat(locale, {
-                timeZone: timezone,
-                ...options,
-            }).format(d);
-        },
-
-        formatDate: (date) => {
-            return this.format(date, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-            });
-        },
-
-        formatTime: (date) => {
-            return this.format(date, {
-                hour: '2-digit',
-                minute: '2-digit',
-            });
-        },
-
-        formatDateTime: (date) => {
-            return this.format(date, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-            });
-        },
+        format,
+        formatDate,
+        formatTime,
+        formatDateTime,
 
         formatRelative: (date, baseDate = new Date()) => {
             const d = date instanceof Date ? date : new Date(date);

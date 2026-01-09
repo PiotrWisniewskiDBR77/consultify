@@ -10,6 +10,7 @@ import { Router } from 'express';
 import TaskControllerRaw from '../../controllers/TaskController.js';
 const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
+import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import logger from '../../utils/Logger.js';
@@ -30,6 +31,9 @@ router.use(authRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
+
+// Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
+router.use(demoContextMiddleware);
 
 // ==========================================
 // TASK CRUD

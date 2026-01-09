@@ -22,6 +22,7 @@ import {
     Building2,
     CreditCard,
     Crown,
+    Database,
     Download,
     FileText,
     Globe,
@@ -31,6 +32,7 @@ import {
     Layers,
     LayoutDashboard,
     Lock,
+    Mail,
     MessageSquare,
     Palette,
     PlayCircle,
@@ -44,6 +46,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // New Layout Components
 import { AdminLayout, type Breadcrumb } from '../../components/Admin/AdminLayout';
@@ -171,6 +174,31 @@ const UsageDashboardView = React.lazy(() =>
 );
 const UserGroupsView = React.lazy(() => import('./UserGroupsView').then((m) => ({ default: m.UserGroupsView })));
 
+// Compliance components
+const GDPRComplianceDashboard = React.lazy(() =>
+    import('../../components/Admin/compliance/GDPRComplianceDashboard').then((m) => ({ default: m.GDPRComplianceDashboard })),
+);
+const CookieSettingsManager = React.lazy(() =>
+    import('../../components/Admin/compliance/CookieSettingsManager').then((m) => ({ default: m.CookieSettingsManager })),
+);
+const ComplianceDashboard = React.lazy(() =>
+    import('../../components/Admin/ComplianceDashboard').then((m) => ({ default: m.ComplianceDashboard })),
+);
+
+// Organization components
+const RegionalSettingsView = React.lazy(() =>
+    import('../../components/settings/RegionalSettings').then((m) => ({ default: m.RegionalSettings })),
+);
+const FiscalYearSettings = React.lazy(() =>
+    import('../../components/Admin/organization/FiscalYearSettings').then((m) => ({ default: m.FiscalYearSettings })),
+);
+const DataHostingSettings = React.lazy(() =>
+    import('../../components/Admin/organization/DataHostingSettings').then((m) => ({ default: m.DataHostingSettings })),
+);
+const ApprovedDomainsSettings = React.lazy(() =>
+    import('../../components/Admin/organization/ApprovedDomainsSettings').then((m) => ({ default: m.ApprovedDomainsSettings })),
+);
+
 // Note: AdminSection type is imported from AdminSidebar
 
 // Map AppView to new AdminSection values (specific sections)
@@ -214,6 +242,89 @@ const getAdminSection = (view: AppView): AdminSection => {
     return 'dashboard';
 };
 
+// Map URL path to AdminSection
+const getAdminSectionFromPath = (pathname: string): AdminSection => {
+    // Extract the path segment after /admin/
+    const pathMatch = pathname.match(/^\/admin(?:\/([^/?]+))?/);
+    const segment = pathMatch?.[1] || '';
+
+    const pathToSection: Record<string, AdminSection> = {
+        '': 'dashboard',
+        'overview': 'dashboard',
+        'organization': 'profile',
+        'team': 'users',
+        'workspace': 'projects',
+        'ai': 'ai-models',
+        'billing': 'usage',
+        'security': 'security-settings',
+        'feedback': 'feedback',
+    };
+
+    return pathToSection[segment] || 'dashboard';
+};
+
+// Map AdminSection to URL path
+const getSectionPath = (section: AdminSection): string => {
+    const sectionToPath: Record<string, string> = {
+        // Overview
+        'dashboard': '/admin/overview',
+        'metrics': '/admin/overview',
+        'analytics': '/admin/overview',
+        // Organization
+        'profile': '/admin/organization',
+        'branding': '/admin/organization',
+        'ownership': '/admin/organization',
+        'regional': '/admin/organization',
+        'fiscal-year': '/admin/organization',
+        'data-hosting': '/admin/organization',
+        'approved-domains': '/admin/organization',
+        // Team
+        'users': '/admin/team',
+        'groups': '/admin/team',
+        'invitations': '/admin/team',
+        'roles': '/admin/team',
+        'consultants': '/admin/team',
+        'org-chart': '/admin/team',
+        // Workspace
+        'projects': '/admin/workspace',
+        'knowledge': '/admin/workspace',
+        'playbooks': '/admin/workspace',
+        'bulk-ops': '/admin/workspace',
+        'custom-statuses': '/admin/workspace',
+        // AI
+        'ai-models': '/admin/ai',
+        'ai-health': '/admin/ai',
+        'ai-policy': '/admin/ai',
+        'ai-access': '/admin/ai',
+        'ai-features': '/admin/ai',
+        'ai-audit': '/admin/ai',
+        // Billing
+        'usage': '/admin/billing',
+        'plan': '/admin/billing',
+        'payment': '/admin/billing',
+        'invoices': '/admin/billing',
+        'alerts': '/admin/billing',
+        'billing-settings': '/admin/billing',
+        'cost-allocation': '/admin/billing',
+        'seats': '/admin/billing',
+        // Security
+        'security-settings': '/admin/security',
+        'authentication': '/admin/security',
+        'api-keys': '/admin/security',
+        'audit-log': '/admin/security',
+        'data-management': '/admin/security',
+        // Compliance
+        'gdpr': '/admin/compliance',
+        'cookie-settings': '/admin/compliance',
+        'data-requests': '/admin/compliance',
+        'compliance-overview': '/admin/compliance',
+        // Feedback
+        'feedback': '/admin/feedback',
+    };
+
+    return sectionToPath[section] || '/admin/overview';
+};
+
 // Get the module category for a section (for breadcrumbs)
 const getSectionModule = (section: AdminSection): string => {
     const overviewSections = ['dashboard', 'metrics', 'analytics'];
@@ -240,7 +351,7 @@ const getSectionModule = (section: AdminSection): string => {
         'seats',
     ];
     const securitySections = ['security-settings', 'authentication', 'api-keys', 'audit-log', 'data-management'];
-    const complianceSections = ['gdpr', 'cookie-settings', 'data-requests'];
+    const complianceSections = ['gdpr', 'cookie-settings', 'data-requests', 'compliance-overview'];
 
     if (overviewSections.includes(section)) return 'overview';
     if (orgSections.includes(section)) return 'organization';
@@ -263,36 +374,24 @@ interface AdminViewProps {
 export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate }) => {
     const { currentView, setCurrentView } = useAppStore();
     const { t } = useTranslation();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
+    
+    // Local state for the active section within current module (for tab switching)
+    const [localActiveSection, setLocalActiveSection] = useState<AdminSection>('dashboard');
 
-    // Handle URL module parameter on mount
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const moduleParam = params.get('module');
-        if (moduleParam) {
-            const moduleMap: Record<string, AppView> = {
-                dashboard: AppView.ADMIN_OVERVIEW,
-                overview: AppView.ADMIN_OVERVIEW,
-                organization: AppView.ADMIN_ORGANIZATION,
-                team: AppView.ADMIN_TEAM,
-                workspace: AppView.ADMIN_WORKSPACE,
-                ai: AppView.ADMIN_AI,
-                billing: AppView.ADMIN_BILLING,
-                security: AppView.ADMIN_SECURITY,
-                feedback: AppView.ADMIN_FEEDBACK,
-            };
-            const targetView = moduleMap[moduleParam.toLowerCase()];
-            if (targetView && currentView !== targetView) {
-                setCurrentView(targetView);
-            }
-        }
-    }, []); // Run only on mount
-
-    // Derive active section from currentView
+    // Derive active section from URL path
     const activeSection = useMemo<AdminSection>(() => {
-        return getAdminSection(currentView);
-    }, [currentView]);
+        const sectionFromPath = getAdminSectionFromPath(location.pathname);
+        return sectionFromPath;
+    }, [location.pathname]);
+    
+    // Sync local section when URL changes
+    useEffect(() => {
+        setLocalActiveSection(activeSection);
+    }, [activeSection]);
 
     // Load initial data
     useEffect(() => {
@@ -308,78 +407,25 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
         initData();
     }, []);
 
-    // Handle section change - maps sidebar sections to AppViews
+    // Handle section change - navigates to appropriate admin sub-route
     const handleSectionChange = (section: AdminSection) => {
-        // Overview
-        if (section === 'dashboard') setCurrentView(AppView.ADMIN_OVERVIEW);
-        else if (section === 'metrics') setCurrentView(AppView.ADMIN_METRICS);
-        else if (section === 'analytics') setCurrentView(AppView.ADMIN_ANALYTICS);
-        // Organization
-        else if (
-            section === 'profile' ||
-            section === 'branding' ||
-            section === 'ownership' ||
-            section === 'regional' ||
-            section === 'fiscal-year' ||
-            section === 'data-hosting' ||
-            section === 'approved-domains'
-        )
-            setCurrentView(AppView.ADMIN_ORGANIZATION);
-        // Team
-        else if (section === 'users' || section === 'groups' || section === 'org-chart')
-            setCurrentView(AppView.ADMIN_TEAM);
-        else if (section === 'invitations') setCurrentView(AppView.ADMIN_INVITATIONS);
-        else if (section === 'roles') setCurrentView(AppView.ADMIN_TEAM);
-        else if (section === 'consultants') setCurrentView(AppView.ADMIN_SETTINGS_CONSULTANTS);
-        // Workspace
-        else if (section === 'projects') setCurrentView(AppView.ADMIN_PROJECTS);
-        else if (section === 'knowledge') setCurrentView(AppView.ADMIN_KNOWLEDGE);
-        else if (section === 'playbooks') setCurrentView(AppView.ADMIN_PLAYBOOK_RUNS);
-        else if (section === 'bulk-ops') setCurrentView(AppView.ADMIN_BULK_OPERATIONS);
-        else if (section === 'custom-statuses') setCurrentView(AppView.ADMIN_WORKSPACE);
-        // AI
-        else if (
-            section === 'ai-models' ||
-            section === 'ai-policy' ||
-            section === 'ai-features' ||
-            section === 'ai-audit'
-        )
-            setCurrentView(AppView.ADMIN_AI);
-        else if (section === 'ai-health') setCurrentView(AppView.ADMIN_AI_HEALTH);
-        else if (section === 'ai-access') setCurrentView(AppView.ADMIN_TOKEN_MANAGEMENT);
-        // Billing
-        else if (
-            section === 'usage' ||
-            section === 'plan' ||
-            section === 'payment' ||
-            section === 'invoices' ||
-            section === 'alerts' ||
-            section === 'billing-settings' ||
-            section === 'cost-allocation' ||
-            section === 'seats'
-        )
-            setCurrentView(AppView.ADMIN_BILLING);
-        // Security
-        else if (
-            section === 'security-settings' ||
-            section === 'authentication' ||
-            section === 'api-keys' ||
-            section === 'audit-log' ||
-            section === 'data-management'
-        )
-            setCurrentView(AppView.ADMIN_SECURITY);
-        // Compliance
-        else if (section === 'gdpr' || section === 'cookie-settings' || section === 'data-requests')
-            setCurrentView(AppView.ADMIN_SECURITY);
-        // Feedback
-        else if (section === 'feedback') setCurrentView(AppView.ADMIN_FEEDBACK);
-        // Default
-        else setCurrentView(AppView.ADMIN_OVERVIEW);
+        // Update local state for tab switching within module
+        setLocalActiveSection(section);
+        
+        // Navigate to the appropriate URL
+        const targetPath = getSectionPath(section);
+        const currentModule = getSectionModule(activeSection);
+        const newModule = getSectionModule(section);
+        
+        // Only navigate if changing to a different module
+        if (currentModule !== newModule) {
+            navigate(targetPath);
+        }
     };
 
     // Get section title and subtitle based on module
     const getSectionInfo = () => {
-        const module = getSectionModule(activeSection);
+        const module = getSectionModule(localActiveSection);
 
         switch (module) {
             case 'overview':
@@ -413,12 +459,19 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                     subtitle: t('admin.billing.subtitle', 'Plans, payments, invoices, and spending controls'),
                 };
             case 'security':
-            case 'compliance':
                 return {
-                    title: t('admin.security.title', 'Security & Compliance'),
+                    title: t('admin.security.title', 'Security'),
                     subtitle: t(
                         'admin.security.subtitle',
                         'Authentication, access control, audit logs, and data management',
+                    ),
+                };
+            case 'compliance':
+                return {
+                    title: t('admin.compliance.title', 'Compliance'),
+                    subtitle: t(
+                        'admin.compliance.subtitle',
+                        'GDPR, cookie settings, data requests, and regulatory compliance',
                     ),
                 };
             case 'feedback':
@@ -444,7 +497,71 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
             </div>
         );
 
-        const module = getSectionModule(activeSection);
+        const module = getSectionModule(localActiveSection);
+        
+        // Map localActiveSection to tab value for controlled tabs
+        const getTabValue = (): string => {
+            // Overview tabs
+            if (['dashboard', 'metrics', 'analytics'].includes(localActiveSection)) {
+                return localActiveSection;
+            }
+            // Organization tabs
+            if (['profile', 'branding', 'ownership', 'regional', 'fiscal-year', 'data-hosting', 'approved-domains'].includes(localActiveSection)) {
+                if (localActiveSection === 'branding') return 'profile';
+                return localActiveSection;
+            }
+            // Team tabs
+            if (['users', 'groups', 'invitations', 'roles', 'consultants', 'org-chart'].includes(localActiveSection)) {
+                if (localActiveSection === 'org-chart') return 'users';
+                return localActiveSection;
+            }
+            // Workspace tabs
+            if (['projects', 'knowledge', 'playbooks', 'bulk-ops', 'custom-statuses'].includes(localActiveSection)) {
+                if (localActiveSection === 'custom-statuses') return 'projects';
+                return localActiveSection;
+            }
+            // AI tabs
+            if (['ai-models', 'ai-health', 'ai-policy', 'ai-access', 'ai-features', 'ai-audit'].includes(localActiveSection)) {
+                const aiTabMap: Record<string, string> = {
+                    'ai-models': 'models',
+                    'ai-health': 'health',
+                    'ai-policy': 'policy',
+                    'ai-access': 'access',
+                    'ai-features': 'features',
+                    'ai-audit': 'audit',
+                };
+                return aiTabMap[localActiveSection] || 'models';
+            }
+            // Billing tabs
+            if (['usage', 'plan', 'payment', 'invoices', 'alerts', 'billing-settings', 'cost-allocation', 'seats'].includes(localActiveSection)) {
+                if (localActiveSection === 'billing-settings') return 'settings';
+                return localActiveSection;
+            }
+            // Security tabs
+            if (['security-settings', 'authentication', 'api-keys', 'audit-log', 'data-management'].includes(localActiveSection)) {
+                const securityTabMap: Record<string, string> = {
+                    'security-settings': 'security-settings',
+                    'authentication': 'authentication',
+                    'api-keys': 'access',
+                    'audit-log': 'audit',
+                    'data-management': 'data',
+                };
+                return securityTabMap[localActiveSection] || 'security-settings';
+            }
+            // Compliance tabs
+            if (['compliance-overview', 'gdpr', 'cookie-settings', 'data-requests'].includes(localActiveSection)) {
+                const complianceTabMap: Record<string, string> = {
+                    'compliance-overview': 'overview',
+                    'gdpr': 'gdpr',
+                    'cookie-settings': 'cookies',
+                    'data-requests': 'data-requests',
+                };
+                return complianceTabMap[localActiveSection] || 'overview';
+            }
+            return 'dashboard';
+        };
+        
+        const currentTabValue = getTabValue();
 
         return (
             <React.Suspense fallback={<FallbackLoader />}>
@@ -452,7 +569,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                     switch (module) {
                         case 'overview':
                             return (
-                                <Tabs defaultValue="dashboard" className="w-full">
+                                <Tabs value={currentTabValue} onValueChange={(val) => setLocalActiveSection(val as AdminSection)} className="w-full">
                                     <TabsList className="admin-tabs bg-transparent p-0 h-auto">
                                         <TabsTrigger
                                             value="dashboard"
@@ -490,8 +607,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
 
                         case 'organization':
                             return (
-                                <Tabs defaultValue="profile" className="w-full">
-                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto">
+                                <Tabs value={currentTabValue} onValueChange={(val) => {
+                                    const orgValToSection: Record<string, AdminSection> = {
+                                        'profile': 'profile',
+                                        'ownership': 'ownership',
+                                        'regional': 'regional',
+                                        'fiscal-year': 'fiscal-year',
+                                        'data-hosting': 'data-hosting',
+                                        'approved-domains': 'approved-domains',
+                                    };
+                                    setLocalActiveSection(orgValToSection[val] || 'profile');
+                                }} className="w-full">
+                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
                                         <TabsTrigger
                                             value="profile"
                                             className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
@@ -506,6 +633,34 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                                             <Crown size={14} />
                                             {t('admin.organization.tabs.ownership', 'Ownership')}
                                         </TabsTrigger>
+                                        <TabsTrigger
+                                            value="regional"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Globe size={14} />
+                                            {t('admin.organization.tabs.regional', 'Regional Settings')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="fiscal-year"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <BarChart3 size={14} />
+                                            {t('admin.organization.tabs.fiscalYear', 'Fiscal Year')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="data-hosting"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Database size={14} />
+                                            {t('admin.organization.tabs.dataHosting', 'Data Hosting')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="approved-domains"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Mail size={14} />
+                                            {t('admin.organization.tabs.approvedDomains', 'Approved Domains')}
+                                        </TabsTrigger>
                                     </TabsList>
                                     <TabsContent value="profile" className="mt-6">
                                         <OrganizationProfileView />
@@ -513,12 +668,24 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                                     <TabsContent value="ownership" className="mt-6">
                                         <OwnershipManagementView />
                                     </TabsContent>
+                                    <TabsContent value="regional" className="mt-6">
+                                        <RegionalSettingsView currentUser={currentUser} onUpdateUser={() => {}} />
+                                    </TabsContent>
+                                    <TabsContent value="fiscal-year" className="mt-6">
+                                        <FiscalYearSettings config={{}} onChange={() => {}} onSave={() => {}} />
+                                    </TabsContent>
+                                    <TabsContent value="data-hosting" className="mt-6">
+                                        <DataHostingSettings config={{}} onChange={() => {}} onSave={() => {}} />
+                                    </TabsContent>
+                                    <TabsContent value="approved-domains" className="mt-6">
+                                        <ApprovedDomainsSettings domains={[]} onAdd={() => {}} onRemove={() => {}} onVerify={() => {}} />
+                                    </TabsContent>
                                 </Tabs>
                             );
 
                         case 'team':
                             return (
-                                <Tabs defaultValue="users" className="w-full">
+                                <Tabs value={currentTabValue} onValueChange={(val) => setLocalActiveSection(val as AdminSection)} className="w-full">
                                     <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
                                         <TabsTrigger
                                             value="users"
@@ -584,7 +751,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                                 );
                             }
                             return (
-                                <Tabs defaultValue="projects" className="w-full">
+                                <Tabs value={currentTabValue} onValueChange={(val) => setLocalActiveSection(val as AdminSection)} className="w-full">
                                     <TabsList className="admin-tabs bg-transparent p-0 h-auto">
                                         <TabsTrigger
                                             value="projects"
@@ -632,7 +799,17 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
 
                         case 'ai':
                             return (
-                                <Tabs defaultValue="models" className="w-full">
+                                <Tabs value={currentTabValue} onValueChange={(val) => {
+                                    const aiValToSection: Record<string, AdminSection> = {
+                                        'models': 'ai-models',
+                                        'health': 'ai-health',
+                                        'policy': 'ai-policy',
+                                        'access': 'ai-access',
+                                        'features': 'ai-features',
+                                        'audit': 'ai-audit',
+                                    };
+                                    setLocalActiveSection(aiValToSection[val] || 'ai-models');
+                                }} className="w-full">
                                     <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
                                         <TabsTrigger
                                             value="models"
@@ -700,7 +877,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
 
                         case 'billing':
                             return (
-                                <Tabs defaultValue="usage" className="w-full">
+                                <Tabs value={currentTabValue} onValueChange={(val) => {
+                                    const billingValToSection: Record<string, AdminSection> = {
+                                        'usage': 'usage',
+                                        'plan': 'plan',
+                                        'payment': 'payment',
+                                        'invoices': 'invoices',
+                                        'alerts': 'alerts',
+                                        'settings': 'billing-settings',
+                                        'cost-allocation': 'cost-allocation',
+                                    };
+                                    setLocalActiveSection(billingValToSection[val] || 'usage');
+                                }} className="w-full">
                                     <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
                                         <TabsTrigger
                                             value="usage"
@@ -777,9 +965,17 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                             );
 
                         case 'security':
-                        case 'compliance':
                             return (
-                                <Tabs defaultValue="security-settings" className="w-full">
+                                <Tabs value={currentTabValue} onValueChange={(val) => {
+                                    const securityValToSection: Record<string, AdminSection> = {
+                                        'security-settings': 'security-settings',
+                                        'authentication': 'authentication',
+                                        'access': 'api-keys',
+                                        'audit': 'audit-log',
+                                        'data': 'data-management',
+                                    };
+                                    setLocalActiveSection(securityValToSection[val] || 'security-settings');
+                                }} className="w-full">
                                     <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
                                         <TabsTrigger
                                             value="security-settings"
@@ -835,6 +1031,62 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
                                 </Tabs>
                             );
 
+                        case 'compliance':
+                            return (
+                                <Tabs value={currentTabValue} onValueChange={(val) => {
+                                    const complianceValToSection: Record<string, AdminSection> = {
+                                        'overview': 'compliance-overview',
+                                        'gdpr': 'gdpr',
+                                        'cookies': 'cookie-settings',
+                                        'data-requests': 'data-requests',
+                                    };
+                                    setLocalActiveSection(complianceValToSection[val] || 'compliance-overview');
+                                }} className="w-full">
+                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
+                                        <TabsTrigger
+                                            value="overview"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Shield size={14} />
+                                            {t('admin.compliance.tabs.overview', 'Overview')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="gdpr"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <FileText size={14} />
+                                            {t('admin.compliance.tabs.gdpr', 'GDPR')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="cookies"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Settings size={14} />
+                                            {t('admin.compliance.tabs.cookies', 'Cookie Settings')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="data-requests"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Download size={14} />
+                                            {t('admin.compliance.tabs.dataRequests', 'Data Requests')}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="overview" className="mt-6">
+                                        <ComplianceDashboard />
+                                    </TabsContent>
+                                    <TabsContent value="gdpr" className="mt-6">
+                                        <GDPRComplianceDashboard />
+                                    </TabsContent>
+                                    <TabsContent value="cookies" className="mt-6">
+                                        <CookieSettingsManager />
+                                    </TabsContent>
+                                    <TabsContent value="data-requests" className="mt-6">
+                                        <DataManagementView />
+                                    </TabsContent>
+                                </Tabs>
+                            );
+
                         case 'feedback':
                             return <AdminFeedbackView />;
 
@@ -850,26 +1102,26 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
     const breadcrumbs: Breadcrumb[] = useMemo(() => {
         const crumbs: Breadcrumb[] = [{ label: t('admin.breadcrumb.admin', 'Admin'), section: 'overview' }];
 
-        if (activeSection !== 'overview') {
+        if (localActiveSection !== 'dashboard' && localActiveSection !== 'overview') {
             crumbs.push({
                 label: sectionInfo.title,
-                section: activeSection,
+                section: localActiveSection,
             });
         }
 
         return crumbs;
-    }, [activeSection, sectionInfo.title, t]);
+    }, [localActiveSection, sectionInfo.title, t]);
 
     return (
         <AdminLayout
-            activeSection={activeSection}
+            activeSection={localActiveSection}
             onSectionChange={handleSectionChange}
             title={sectionInfo.title}
             subtitle={sectionInfo.subtitle}
             breadcrumbs={breadcrumbs}
             pendingInvites={0} // TODO: Get from API
             pendingDataRequests={0} // TODO: Get from API
-            onBack={() => onNavigate(AppView.DASHBOARD)}
+            onBack={() => navigate('/dashboard')}
         >
             {renderContent()}
         </AdminLayout>

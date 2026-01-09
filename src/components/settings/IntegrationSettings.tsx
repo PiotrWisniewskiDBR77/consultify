@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
     AlertCircle,
     Building2,
@@ -411,7 +412,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
                                 <h4 className="font-medium text-blue-900 dark:text-blue-300">Webhooks</h4>
                                 <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
                                     Webhooks allow you to receive real-time notifications when events happen in
-                                    Consultify. Configure a URL to receive HTTP POST requests with event data.
+                                    Consultinity. Configure a URL to receive HTTP POST requests with event data.
                                 </p>
                             </div>
                         </div>

@@ -2,7 +2,7 @@
  * Types Index
  * Master export file for all TypeScript types
  *
- * Enterprise SaaS Architecture - Consultify
+ * Enterprise SaaS Architecture - Consultinity
  */
 
 // Core Enums and UI-specific types (Explicitly selected to avoid collisions)

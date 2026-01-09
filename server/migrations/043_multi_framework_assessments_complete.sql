@@ -1,6 +1,6 @@
 -- Migration: 043_multi_framework_assessments_complete
 -- Description: Complete multi-framework assessment support for SIRI, ADMA, CMMI, LEAN
--- Author: Consultify Enterprise
+-- Author: Consultinity Enterprise
 -- Date: 2024-12-28
 
 -- ============================================
@@ -283,8 +283,8 @@ LEFT JOIN organizations o ON mfa.organization_id = o.id;
 -- ============================================
 
 -- Grant permissions to application role (if exists)
--- GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO consultify_app;
--- GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO consultify_app;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO consultinity_app;
+-- GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO consultinity_app;
 
 -- ============================================
 -- MIGRATION COMPLETE
@@ -296,6 +296,8 @@ COMMENT ON TABLE multi_framework_assessment_reviewers IS 'Reviewer assignments f
 COMMENT ON TABLE multi_framework_assessment_comments IS 'Comments and feedback on assessments';
 COMMENT ON TABLE multi_framework_reports IS 'Generated reports from framework assessments';
 COMMENT ON TABLE multi_framework_initiatives IS 'Initiatives generated from assessment gaps';
+
+
 
 
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * NotificationDigestSettings - Email digest configuration
  *

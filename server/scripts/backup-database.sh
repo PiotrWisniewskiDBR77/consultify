@@ -5,11 +5,11 @@
 set -e
 
 # Configuration
-DB_PATH="server/consultify.db"
+DB_PATH="server/consultinity.db"
 BACKUP_DIR="server/backups"
 RETENTION_DAYS=7
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="${BACKUP_DIR}/consultify_${TIMESTAMP}.db"
+BACKUP_FILE="${BACKUP_DIR}/consultinity_${TIMESTAMP}.db"
 COMPRESSED_FILE="${BACKUP_FILE}.gz"
 
 # Colors for output
@@ -62,9 +62,9 @@ echo -e "${GREEN}[Backup] Compression: ${COMPRESSION_RATIO}%${NC}"
 
 # Cleanup old backups (keep last N days)
 echo -e "${YELLOW}[Backup] Cleaning up old backups (keeping last ${RETENTION_DAYS} days)...${NC}"
-find "${BACKUP_DIR}" -name "consultify_*.db.gz" -type f -mtime +${RETENTION_DAYS} -delete
+find "${BACKUP_DIR}" -name "consultinity_*.db.gz" -type f -mtime +${RETENTION_DAYS} -delete
 
-REMAINING_BACKUPS=$(find "${BACKUP_DIR}" -name "consultify_*.db.gz" -type f | wc -l)
+REMAINING_BACKUPS=$(find "${BACKUP_DIR}" -name "consultinity_*.db.gz" -type f | wc -l)
 echo -e "${GREEN}[Backup] ✅ ${REMAINING_BACKUPS} backups retained${NC}"
 
 echo -e "${GREEN}[Backup] ✅ Backup complete!${NC}"

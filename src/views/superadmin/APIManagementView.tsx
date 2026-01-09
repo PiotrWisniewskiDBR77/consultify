@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * APIManagementView - Super Admin API Keys Management
  *

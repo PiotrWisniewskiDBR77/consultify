@@ -18,30 +18,29 @@ const createVirtualList = (options = {}) => {
     let items = [];
     let scrollTop = 0;
 
+    const getVisibleRange = () => {
+        const startIndex = Math.floor(scrollTop / itemHeight);
+        const endIndex = Math.min(
+            items.length - 1,
+            Math.ceil((scrollTop + containerHeight) / itemHeight)
+        );
+
+        return {
+            startIndex: Math.max(0, startIndex - overscan),
+            endIndex: Math.min(items.length - 1, endIndex + overscan),
+        };
+    };
+
+    const scrollToIndex = (index) => {
+        scrollTop = Math.max(0, index * itemHeight);
+    };
+
     return {
-        setItems: (newItems) => {
-            items = newItems;
-        },
-
-        setScrollTop: (value) => {
-            scrollTop = Math.max(0, value);
-        },
-
-        getVisibleRange: () => {
-            const startIndex = Math.floor(scrollTop / itemHeight);
-            const endIndex = Math.min(
-                items.length - 1,
-                Math.ceil((scrollTop + containerHeight) / itemHeight)
-            );
-
-            return {
-                startIndex: Math.max(0, startIndex - overscan),
-                endIndex: Math.min(items.length - 1, endIndex + overscan),
-            };
-        },
-
+        setItems: (newItems) => { items = newItems; },
+        setScrollTop: (value) => { scrollTop = Math.max(0, value); },
+        getVisibleRange,
         getVisibleItems: () => {
-            const { startIndex, endIndex } = this.getVisibleRange();
+            const { startIndex, endIndex } = getVisibleRange();
             return items.slice(startIndex, endIndex + 1).map((item, i) => ({
                 item,
                 index: startIndex + i,
@@ -52,19 +51,13 @@ const createVirtualList = (options = {}) => {
                 },
             }));
         },
-
         getTotalHeight: () => items.length * itemHeight,
-
         getItemCount: () => items.length,
-
-        scrollToIndex: (index) => {
-            scrollTop = Math.max(0, index * itemHeight);
-        },
-
+        scrollToIndex,
         scrollToItem: (predicate) => {
             const index = items.findIndex(predicate);
             if (index !== -1) {
-                this.scrollToIndex(index);
+                scrollToIndex(index);
             }
             return index;
         },
@@ -89,6 +82,26 @@ const createVariableList = (options = {}) => {
 
     const getItemHeight = (index) => heights.get(index) || estimatedHeight;
 
+    const getVisibleRange = () => {
+        let startIndex = 0;
+        let currentTop = 0;
+
+        // Find start index
+        while (startIndex < items.length && currentTop + getItemHeight(startIndex) < scrollTop) {
+            currentTop += getItemHeight(startIndex);
+            startIndex++;
+        }
+
+        // Find end index
+        let endIndex = startIndex;
+        while (endIndex < items.length && currentTop < scrollTop + containerHeight) {
+            currentTop += getItemHeight(endIndex);
+            endIndex++;
+        }
+
+        return { startIndex, endIndex: Math.min(endIndex, items.length - 1) };
+    };
+
     return {
         setItems: (newItems) => {
             items = newItems;
@@ -102,28 +115,10 @@ const createVariableList = (options = {}) => {
             scrollTop = Math.max(0, value);
         },
 
-        getVisibleRange: () => {
-            let startIndex = 0;
-            let currentTop = 0;
-
-            // Find start index
-            while (startIndex < items.length && currentTop + getItemHeight(startIndex) < scrollTop) {
-                currentTop += getItemHeight(startIndex);
-                startIndex++;
-            }
-
-            // Find end index
-            let endIndex = startIndex;
-            while (endIndex < items.length && currentTop < scrollTop + containerHeight) {
-                currentTop += getItemHeight(endIndex);
-                endIndex++;
-            }
-
-            return { startIndex, endIndex: Math.min(endIndex, items.length - 1) };
-        },
+        getVisibleRange,
 
         getVisibleItems: () => {
-            const { startIndex, endIndex } = this.getVisibleRange();
+            const { startIndex, endIndex } = getVisibleRange();
             const result = [];
 
             for (let i = startIndex; i <= endIndex; i++) {

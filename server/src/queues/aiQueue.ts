@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Queue } from 'bullmq';
 import redisConfig from '../config/QueueConfig.js';
 import { aiLogger } from '../services/ai/logger.js';

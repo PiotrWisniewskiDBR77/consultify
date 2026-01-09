@@ -31,14 +31,25 @@ export const SuperAdminSignalCenter: React.FC = () => {
 
     const fetchSignals = async () => {
         try {
-            // In a real scenario, we might have a specialized endpoint or query params
-            // For now, we fetch all and filter
-            const allNotifications = await Api.fetchNotifications();
+            // Use dedicated SuperAdmin signals endpoint
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/superadmin/signals', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-            // Filter and Group
-            const system = allNotifications.filter((n) => n.type === 'SYSTEM_ALERT' && !n.isRead);
-            const client = allNotifications.filter((n) => n.type === 'CLIENT_TICKET' && !n.isRead);
-            const feedback = allNotifications.filter((n) => n.type === 'USER_FEEDBACK' && !n.isRead);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const allSignals = await response.json();
+
+            // Group by type
+            const system = allSignals.filter((n: any) => n.type === 'SYSTEM_ALERT');
+            const client = allSignals.filter((n: any) => n.type === 'CLIENT_TICKET');
+            const feedback = allSignals.filter((n: any) => n.type === 'USER_FEEDBACK');
 
             queueMicrotask(() => setNotifications({ system, client, feedback }));
         } catch (error) {

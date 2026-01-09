@@ -101,7 +101,7 @@ const MOCK_STATEMENTS: CommissionStatement[] = [
 const MOCK_ACADEMY_MODULES: AcademyModule[] = [
     {
         id: 'mod-001',
-        title: 'Consultify Methodology Fundamentals',
+        title: 'Consultinity Methodology Fundamentals',
         description: 'Podstawy metodologii DRD i Meta-PMO Framework',
         duration: '45 min',
         category: 'METHODOLOGY',
@@ -179,7 +179,7 @@ const MOCK_EMPLOYEES: EmployeeAccess[] = [
 const MOCK_DIRECTORY_PROFILE: DirectoryProfile = {
     id: 'profile-001',
     partnerId: 'partner-001',
-    companyName: 'Consultify Partner Solutions',
+    companyName: 'Consultinity Partner Solutions',
     description:
         'Specjalizujemy się w transformacji cyfrowej i wdrożeniach enterprise dla średnich i dużych organizacji.',
     companySize: '11-50',
@@ -188,7 +188,7 @@ const MOCK_DIRECTORY_PROFILE: DirectoryProfile = {
     industries: ['Finance', 'Energy', 'Manufacturing'],
     services: ['Digital Transformation', 'PMO Setup', 'Change Management', 'AI Implementation'],
     budgetRange: { min: 50000, max: 500000, currency: 'EUR' },
-    certifications: ['CONSULTIFY_CERTIFIED', 'ISO_27001'],
+    certifications: ['CONSULTINITY_CERTIFIED', 'ISO_27001'],
     reviews: [
         {
             id: 'rev-001',

@@ -448,7 +448,7 @@ const SIRILegalNotice: React.FC = () => (
         <div className="text-sm text-amber-800 dark:text-amber-200">
             <strong>SIRI (Smart Industry Readiness Index)</strong> jest narzędziem opracowanym przez{' '}
             <strong>Singapore Economic Development Board (EDB)</strong> we współpracy z <strong>TÜV SÜD</strong>.
-            Wykorzystanie struktury SIRI w Consultify ma wyłącznie <strong>cel edukacyjny</strong> i służy do nauki
+            Wykorzystanie struktury SIRI w Consultinity ma wyłącznie <strong>cel edukacyjny</strong> i służy do nauki
             metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.
         </div>
     </div>

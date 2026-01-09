@@ -169,6 +169,24 @@ class ActivityService {
 
         return (await this.deps.dbAll(sql, [organizationId, limit])) as ActivityLog[];
     }
+
+    /**
+     * Get activity statistics for SuperAdmin dashboard
+     */
+    async getStats(): Promise<{ total: number; last_hour: number; last_24h: number; last_7d: number }> {
+        try {
+            const result = await this.deps.dbGet<{ total: number; last_hour: number; last_24h: number; last_7d: number }>(`
+                SELECT 
+                    (SELECT COUNT(*) FROM activity_logs) as total,
+                    (SELECT COUNT(*) FROM activity_logs WHERE created_at > datetime('now', '-1 hour')) as last_hour,
+                    (SELECT COUNT(*) FROM activity_logs WHERE created_at > datetime('now', '-24 hours')) as last_24h,
+                    (SELECT COUNT(*) FROM activity_logs WHERE created_at > datetime('now', '-7 days')) as last_7d
+            `);
+            return result || { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 };
+        } catch {
+            return { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 };
+        }
+    }
 }
 
 export const activityService = new ActivityService();

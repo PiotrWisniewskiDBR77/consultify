@@ -229,9 +229,7 @@ export interface BillingServiceDependencies {
     stripe: Stripe | null;
 }
 export type _BillingPlan = BillingPlan;
-export type _SetupIntent = SetupIntent;
-
-export interface UpdateTaxSettingsData {
+export type _SetupIntent = SetupIntent;export interface UpdateTaxSettingsData {
     tax_id?: string;
     tax_id_type?: string;
     tax_exempt?: number | boolean;

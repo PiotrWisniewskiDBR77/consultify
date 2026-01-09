@@ -1,4 +1,4 @@
-# Development Guide - Consultify
+# Development Guide - Consultinity
 
 ## Quick Start
 
@@ -13,7 +13,7 @@
 1. **Clone and Install**
    ```bash
    git clone <repository-url>
-   cd consultify
+   cd consultinity
    npm ci
    ```
 
@@ -101,7 +101,7 @@ npm run build && npm run build:backend
 ## Project Structure
 
 ```
-consultify/
+consultinity/
 ├── src/                    # Frontend React application
 │   ├── components/         # Reusable UI components
 │   ├── views/             # Page-level components
@@ -167,7 +167,7 @@ lsof -ti:3001 | xargs kill -9
 ### Database Locked
 ```bash
 # Remove lock files
-rm consultify.db-wal consultify.db-shm
+rm consultinity.db-wal consultinity.db-shm
 ```
 
 ### Module Not Found

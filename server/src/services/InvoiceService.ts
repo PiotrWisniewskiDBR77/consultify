@@ -365,7 +365,7 @@ export class InvoiceServiceClass {
 
         await EmailService.send({
             to: admin.email,
-            subject: `Invoice ${invoice.invoice_number} from Consultify`,
+            subject: `Invoice ${invoice.invoice_number} from Consultinity`,
             template: 'invoice',
             data: {
                 firstName: admin.first_name,

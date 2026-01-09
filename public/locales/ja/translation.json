@@ -2751,7 +2751,7 @@
     "masterclassTitle": "Want to deepen your knowledge?",
     "masterclassDesc": "Join our Masterclass program and learn proven tools from transformation leaders.",
     "masterclassLink": "View Masterclass Details",
-    "videoTitle": "See how CONSULTIFY works",
+    "videoTitle": "See how CONSULTINITY works",
     "videoPerson": "Dr. Piotr Wiśniewski",
     "videoRole": "Your guide to digital transformation"
   },
@@ -2803,14 +2803,76 @@
       "dismiss": "Dismiss"
     },
     "widget": {
-      "label": "Help",
-      "header": "Help center",
-      "searchPlaceholder": "Search in help...",
-      "noResults": "No results for \"{{query}}\"",
-      "docs": "Documentation",
-      "contact": "Contact"
+      "label": "ヘルプ",
+      "header": "ヘルプセンター",
+      "searchPlaceholder": "ヘルプを検索...",
+      "noResults": "\"{{query}}\"の結果が見つかりません",
+      "docs": "ドキュメント",
+      "contact": "お問い合わせ"
+    },
+    "ai": {
+      "welcome": {
+        "title": "AIヘルプアシスタント",
+        "subtitle": "Consultinityについて何でも聞いてください。お手伝いします！"
+      },
+      "placeholder": "質問を入力...",
+      "error": "申し訳ございません。エラーが発生しました。もう一度お試しください。",
+      "quick": {
+        "label": "クイック質問:",
+        "howto": "このモジュールの使い方は？",
+        "explain": "ここでできることを説明してください",
+        "troubleshoot": "問題の解決を手伝ってください"
+      },
+      "prompts": {
+        "howto": "このモジュールを効果的に使用するには？",
+        "explain": "ここで利用できる機能と機能は何ですか？",
+        "troubleshoot": "問題があります。解決を手伝ってもらえますか？"
+      }
+    },
+    "onboarding": {
+      "checklist": {
+        "title": "はじめに",
+        "completed": "完了",
+        "more": "その他のステップ",
+        "dismiss": "自分で探索します",
+        "profile": {
+          "title": "プロフィールを完成させる",
+          "description": "名前と会社情報を追加"
+        },
+        "firstChat": {
+          "title": "AIアシスタントを試す",
+          "description": "最初の質問をする"
+        },
+        "firstAssessment": {
+          "title": "評価を開始",
+          "description": "デジタル準備診断を開始"
+        },
+        "firstInitiative": {
+          "title": "イニシアチブを作成",
+          "description": "最初の変革プロジェクトを計画"
+        },
+        "roadmap": {
+          "title": "ロードマップを探索",
+          "description": "変革のタイムラインを表示"
+        },
+        "inviteTeam": {
+          "title": "チームを招待",
+          "description": "同僚と協力"
+        },
+        "billing": {
+          "title": "請求を設定",
+          "description": "支払い方法を設定"
+        }
+      }
     },
     "sidePanel": {
+      "tabs": {
+        "ai": "AIアシスタント",
+        "overview": "概要",
+        "howto": "使い方",
+        "faq": "よくある質問",
+        "video": "動画"
+      },
       "modules": {
         "dashboard": {
           "name": "Dashboard",
@@ -3223,7 +3285,7 @@
           },
           "settings": {
             "name": "User Settings",
-            "description": "Personalize your Consultify experience. Configure your profile, security, notifications, AI preferences, integrations, and accessibility options.",
+            "description": "Personalize your Consultinity experience. Configure your profile, security, notifications, AI preferences, integrations, and accessibility options.",
             "purpose": "Customize the application to match your work style, security requirements, and communication preferences.",
             "keyFeatures": [
               "Profile management",
@@ -3253,7 +3315,7 @@
           "admin": {
             "name": "Admin Panel",
             "description": "Organization administration center for managing users, projects, AI configuration, knowledge base, and operational metrics. Available to organization administrators.",
-            "purpose": "Manage your organization's Consultify instance, control access, monitor usage, and configure organizational settings.",
+            "purpose": "Manage your organization's Consultinity instance, control access, monitor usage, and configure organizational settings.",
             "keyFeatures": [
               "User management and invitations",
               "Project administration",
@@ -3282,8 +3344,8 @@
           },
           "superadmin": {
             "name": "Super Admin Console",
-            "description": "Platform-wide administration for DBR77 operators. Manage all organizations, users, billing, AI configuration, SSO, security policies, white-labeling, and compliance across the entire Consultify platform.",
-            "purpose": "Full control over the Consultify platform for DBR77 team members to manage multi-tenant operations, enterprise features, and platform health.",
+            "description": "Platform-wide administration for DBR77 operators. Manage all organizations, users, billing, AI configuration, SSO, security policies, white-labeling, and compliance across the entire Consultinity platform.",
+            "purpose": "Full control over the Consultinity platform for DBR77 team members to manage multi-tenant operations, enterprise features, and platform health.",
             "keyFeatures": [
               "Multi-organization management",
               "Global user administration",

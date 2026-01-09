@@ -22,7 +22,7 @@ const pool = new Pool({
 
 const schema = `
 -- ================================================
--- CONSULTIFY PostgreSQL Schema
+-- CONSULTINITY PostgreSQL Schema
 -- Generated from SQLite schema
 -- ================================================
 

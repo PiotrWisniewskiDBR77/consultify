@@ -11,3 +11,5 @@ export const getCsrfTokenHandler = (req: Request, res: Response) => {
     res.json({ csrfToken: 'mock-csrf-token' });
 };
 
+
+

@@ -67,8 +67,8 @@ describe('Performance Tests', () => {
             // and compare with baseline
             expect(baseline).toBeDefined();
         } else {
-            // No baseline available, skip comparison
-            expect(true).toBe(true);
+            // No baseline available - this is expected in CI/fresh environments
+            expect(baseline).toBeUndefined();
         }
     });
 });

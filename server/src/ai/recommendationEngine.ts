@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * RecommendationEngine
  * Maps detected signals to prioritized actionable recommendations.

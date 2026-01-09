@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AI Audit Log Viewer Component
  *

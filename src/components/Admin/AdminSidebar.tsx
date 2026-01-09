@@ -543,14 +543,21 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     }, []);
 
     // Auto-expand group containing active section
+    // Note: We intentionally exclude expandedGroups from deps to avoid infinite loop
     useEffect(() => {
         const activeGroup = navGroups.find((group) =>
             group.items.some((item) => item.id === activeSection),
         );
-        if (activeGroup && !expandedGroups.has(activeGroup.id)) {
-            setExpandedGroups((prev) => new Set([...prev, activeGroup.id]));
+        if (activeGroup) {
+            setExpandedGroups((prev) => {
+                if (prev.has(activeGroup.id)) {
+                    return prev; // Return same reference if already expanded
+                }
+                return new Set([...prev, activeGroup.id]);
+            });
         }
-    }, [activeSection, navGroups, expandedGroups]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeSection, navGroups]);
 
     // Default quick actions
     const defaultQuickActions: QuickAction[] = [

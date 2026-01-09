@@ -14,6 +14,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
 import { AppView, UserRole } from '../../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/workspace';
+import { OnboardingChecklist } from '../../Onboarding/OnboardingChecklist';
 import { PhaseIndicator } from '../../PMO/PhaseIndicator';
 import { FloatingSubmenu } from './FloatingSubmenu';
 import {
@@ -21,6 +22,7 @@ import {
     getMenuStructure,
     getOrganizationMenuItem,
     getSettingsMenuItem,
+    getSuperAdminMenuItem,
     getViewName,
 } from './menuConfig';
 import { NavItem } from './NavItem';
@@ -67,6 +69,7 @@ export const Sidebar: React.FC = () => {
     const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);
     const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
     const settingsMenuItem = React.useMemo(() => getSettingsMenuItem(t), [t]);
+    const superAdminMenuItem = React.useMemo(() => getSuperAdminMenuItem(t), [t]);
 
     // Completed views
     const completedViews = React.useMemo(() => {
@@ -107,12 +110,17 @@ export const Sidebar: React.FC = () => {
 
     const handleItemClick = React.useCallback(
         (item: MenuItem) => {
+            console.log('[Sidebar] handleItemClick called for:', item.id, item.viewId);
+            
             const isLocked =
                 item.requiresView &&
                 !completedViews.includes(item.requiresView) &&
                 !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
 
-            if (isLocked) return;
+            if (isLocked) {
+                console.log('[Sidebar] Item is locked:', item.id);
+                return;
+            }
 
             // AI Chat special handling
             if (item.id === 'AI_CHAT') {
@@ -125,6 +133,7 @@ export const Sidebar: React.FC = () => {
             }
 
             if (item.viewId) {
+                console.log('[Sidebar] Navigating to view:', item.viewId);
                 if (activeConversationId) {
                     navigateToViewWithChat(item.viewId);
                 } else {
@@ -134,6 +143,8 @@ export const Sidebar: React.FC = () => {
                 if (isMobile || (isTablet && isSidebarOpen)) {
                     setIsSidebarOpen(false);
                 }
+            } else {
+                console.warn('[Sidebar] Item has no viewId:', item.id);
             }
         },
         [
@@ -281,6 +292,9 @@ export const Sidebar: React.FC = () => {
                         <PhaseIndicator compact={!showFull} />
                     </div>
 
+                    {/* Onboarding Checklist (for new users) */}
+                    {showFull && <OnboardingChecklist />}
+
                     {/* Menu Items */}
                     <div className={`space-y-0.5 pb-2 ${showFull ? 'pt-4 px-2' : 'pt-4 px-1'}`}>
                         {menuStructure.map(renderNavItem)}
@@ -295,8 +309,9 @@ export const Sidebar: React.FC = () => {
                     t={t as any}
                     showPartnerPortal={currentUser?.role !== 'SUPERADMIN'}
                 >
-                    {currentUser?.role === UserRole.ADMIN && renderNavItem(organizationMenuItem)}
-                    {currentUser?.role === UserRole.ADMIN && renderNavItem(adminMenuItem)}
+                    {(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN') && renderNavItem(organizationMenuItem)}
+                    {(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN') && renderNavItem(adminMenuItem)}
+                    {currentUser?.role === 'SUPERADMIN' && renderNavItem(superAdminMenuItem)}
                     {renderNavItem(settingsMenuItem)}
                 </SidebarFooter>
             </motion.div>

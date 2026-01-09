@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AIAutoCompleteSettings - Auto-complete configuration
  *

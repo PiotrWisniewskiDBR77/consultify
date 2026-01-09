@@ -16,7 +16,7 @@ test.describe('User Onboarding Flow', () => {
 
         await test.step('Navigate to registration page', async () => {
             await page.goto('/register');
-            await expect(page).toHaveTitle(/Consultify/);
+            await expect(page).toHaveTitle(/Consultinity/);
         });
 
         await test.step('Fill registration form', async () => {
@@ -346,6 +346,8 @@ test.describe('User Onboarding Flow', () => {
         });
     });
 });
+
+
 
 
 

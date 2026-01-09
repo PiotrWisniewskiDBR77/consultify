@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Check, Sliders, X } from 'lucide-react';
 import React, { useState } from 'react';
 

@@ -2,7 +2,7 @@
 
 > **Wersja**: 1.0  
 > **Data**: 2026-01-02  
-> **Autor**: Consultify Design System
+> **Autor**: Consultinity Design System
 
 ## Zasada nadrzędna
 

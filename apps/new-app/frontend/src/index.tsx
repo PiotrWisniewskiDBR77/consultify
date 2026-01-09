@@ -2,7 +2,7 @@
  * New Application Fork - Frontend Entry Point
  *
  * This is a skeleton for the new application fork.
- * Use @consultify/shared for common functionality.
+ * Use @consultinity/shared for common functionality.
  */
 
 import React from 'react';
@@ -23,7 +23,7 @@ function App() {
             }}
         >
             <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚀 New Application</h1>
-            <p style={{ fontSize: '1.25rem', opacity: 0.9 }}>Fork of Consultify - Ready for customization</p>
+            <p style={{ fontSize: '1.25rem', opacity: 0.9 }}>Fork of Consultinity - Ready for customization</p>
             <div
                 style={{
                     marginTop: '2rem',
@@ -33,7 +33,7 @@ function App() {
                     backdropFilter: 'blur(10px)',
                 }}
             >
-                <code>@consultify/shared available</code>
+                <code>@consultinity/shared available</code>
             </div>
         </div>
     );

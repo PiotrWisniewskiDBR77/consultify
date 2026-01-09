@@ -90,7 +90,5 @@ export {
     setDependencies as setUserStateDependencies,
     transitionState,
     USER_STATES,
-} from './userStateGuard.middleware.js';
-
-// Re-export error handler from existing location
+} from './userStateGuard.middleware.js';// Re-export error handler from existing location
 export { errorHandler } from './errorHandler.js';

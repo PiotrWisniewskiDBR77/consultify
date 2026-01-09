@@ -114,6 +114,20 @@ export const NavItem: React.FC<NavItemProps> = ({
                     )}
 
                     {showFull && <span className="truncate tracking-wide flex-1 text-left">{item.label}</span>}
+                    
+                    {/* Beta/New/Soon Badge */}
+                    {item.badge && showFull && (
+                        <span
+                            className={`
+                                ml-1 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full tracking-wide shrink-0
+                                ${item.badge === 'beta' ? 'bg-amber-500/20 text-amber-500 dark:bg-amber-400/15 dark:text-amber-400' : ''}
+                                ${item.badge === 'new' ? 'bg-green-500/20 text-green-500 dark:bg-green-400/15 dark:text-green-400' : ''}
+                                ${item.badge === 'soon' ? 'bg-slate-500/20 text-slate-500 dark:bg-slate-400/15 dark:text-slate-400' : ''}
+                            `}
+                        >
+                            {item.badge}
+                        </span>
+                    )}
                 </div>
 
                 {/* Right side: Status icons */}

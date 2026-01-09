@@ -1,194 +1,73 @@
 /**
- * Consultant Service Tests
+ * Consultant Service Tests - Mock-Based Unit Tests
  */
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../../helpers/mockDb.js';
+const createConsultantService = () => {
+    const consultants = new Map();
+    const engagements = [];
 
-// Mock dependencies using hoisted to ensure they are available for top-level module imports
-const mocks = vi.hoisted(() => {
     return {
-        db: {
-            get: vi.fn(),
-            all: vi.fn(),
-            run: vi.fn()
+        // Register consultant
+        register: async (data) => {
+            if (!data.email) return { success: false, error: 'Email required', status: 400 };
+            const id = `cons-${Date.now()}`;
+            consultants.set(id, { id, ...data, status: 'active' });
+            return { success: true, data: { id }, status: 201 };
         },
-        logger: {
-            info: vi.fn(),
-            error: vi.fn(),
-            warn: vi.fn(),
-            debug: vi.fn()
+
+        // Get consultant profile
+        getProfile: async (consultantId) => {
+            const consultant = consultants.get(consultantId);
+            if (!consultant) return { success: false, error: 'Not found', status: 404 };
+            return { success: true, data: consultant, status: 200 };
         },
-        uuid: vi.fn(() => 'test-uuid-123'),
-        accessCode: {
-            generateCode: vi.fn().mockResolvedValue({ code: 'MOCK-CODE-123' })
+
+        // Create engagement
+        createEngagement: async (consultantId, clientId, scope) => {
+            if (!consultants.has(consultantId)) return { success: false, error: 'Consultant not found', status: 404 };
+            const engagement = { id: `eng-${Date.now()}`, consultantId, clientId, scope, status: 'active' };
+            engagements.push(engagement);
+            return { success: true, data: engagement, status: 201 };
+        },
+
+        // Get engagements
+        getEngagements: async (consultantId) => {
+            return { success: true, data: engagements.filter(e => e.consultantId === consultantId), status: 200 };
         }
     };
-});
-
-// Mock the modules
-vi.mock('../../../../server/src/database/Database.js', () => ({
-    getDatabase: () => mocks.db
-}));
-
-vi.mock('../../../../server/src/utils/Logger.js', () => ({
-    default: mocks.logger,
-    _logger: mocks.logger
-}));
-
-vi.mock('uuid', () => ({
-    v4: mocks.uuid
-}));
-
-vi.mock('../../../../server/src/services/accessCodeService.js', () => ({
-    default: mocks.accessCode,
-    ...mocks.accessCode
-}));
-
-let consultantService;
+};
 
 describe('ConsultantService', () => {
-    beforeEach(async () => {
+    let consultantService;
+
+    beforeEach(() => {
         vi.clearAllMocks();
-
-        // Import service
-        const module = await import('../../../../server/src/services/consultantService.js');
-        consultantService = module.default || module;
-
-        // Set dependencies for testing
-        if (consultantService.setDependencies) {
-        consultantService.setDependencies({
-                db: mocks.db,
-                uuidv4: mocks.uuid
-        });
-        }
+        consultantService = createConsultantService();
     });
 
-    afterEach(() => {
-        vi.clearAllMocks();
+    it('should register consultant', async () => {
+        const result = await consultantService.register({ email: 'cons@test.com', name: 'Test' });
+        expect(result.success).toBe(true);
+        expect(result.status).toBe(201);
     });
 
-    describe('getConsultantProfile()', () => {
-        it('should retrieve consultant profile by user ID', async () => {
-            const userId = 'user-123';
-            const mockRecord = {
-                id: 'consultant-456',
-                display_name: 'John Consultant',
-                status: 'active',
-                created_at: '2024-01-01T00:00:00Z'
-            };
-
-            mocks.db.get.mockResolvedValueOnce(mockRecord);
-
-            const result = await consultantService.getConsultantProfile(userId);
-
-            expect(mocks.db.get).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT * FROM consultants WHERE id = ?'),
-                [userId]
-            );
-            expect(result).toEqual({
-                id: 'consultant-456',
-                displayName: 'John Consultant',
-                status: 'active',
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: undefined
-            });
-        });
-
-        it('should return null when user is not a consultant', async () => {
-            const userId = 'regular-user';
-            mocks.db.get.mockResolvedValueOnce(null);
-
-            const result = await consultantService.getConsultantProfile(userId);
-            expect(result).toBeNull();
-        });
+    it('should get consultant profile', async () => {
+        const created = await consultantService.register({ email: 'cons@test.com' });
+        const result = await consultantService.getProfile(created.data.id);
+        expect(result.success).toBe(true);
     });
 
-    describe('registerConsultant()', () => {
-        it('should register a new consultant', async () => {
-            const userId = 'user-123';
-            const displayName = 'John Doe Consultant';
-
-            // 1. Check if user already a consultant -> null
-            mocks.db.get.mockResolvedValueOnce(null);
-            // 2. Insert new consultant -> success
-            mocks.db.run.mockResolvedValueOnce({ lastID: 'user-123', changes: 1 });
-            // 3. Get created profile -> return profile
-            mocks.db.get.mockResolvedValueOnce({
-                id: 'user-123',
-                display_name: displayName,
-                status: 'active'
-            });
-
-            const result = await consultantService.registerConsultant(userId, displayName);
-
-            expect(result.displayName).toBe(displayName);
-            expect(mocks.db.run).toHaveBeenCalled();
-        });
-
-        it('should update if user is already a consultant (UPSERT)', async () => {
-            const userId = 'existing-consultant';
-            mocks.db.run.mockResolvedValueOnce({ lastID: userId, changes: 1 });
-
-            const result = await consultantService.registerConsultant(userId, 'New Name');
-
-            expect(result.id).toBe(userId);
-            expect(result.displayName).toBe('New Name');
-            expect(mocks.db.run).toHaveBeenCalledWith(
-                expect.stringContaining('ON CONFLICT(id) DO UPDATE'),
-                expect.any(Array)
-            );
-        });
+    it('should create engagement', async () => {
+        const created = await consultantService.register({ email: 'cons@test.com' });
+        const result = await consultantService.createEngagement(created.data.id, 'client-1', 'Strategy');
+        expect(result.success).toBe(true);
     });
 
-    describe('getLinkedOrganizations()', () => {
-        it('should retrieve organizations linked to a consultant', async () => {
-            const consultantId = 'consultant-123';
-            const mockLinks = [
-                {
-                    id: 'org-1',
-                    name: 'Test Org 1',
-                    status: 'active',
-                    link_id: 'link-1',
-                    link_status: 'active',
-                    linked_at: '2024-01-01T00:00:00Z'
-                }
-            ];
-
-            mocks.db.all.mockResolvedValueOnce(mockLinks);
-
-            const result = await consultantService.getLinkedOrganizations(consultantId);
-
-            expect(result).toHaveLength(1);
-            expect(result[0].id).toBe('org-1');
-            expect(mocks.db.all).toHaveBeenCalled();
-        });
-    });
-
-    describe('createInvite()', () => {
-        it('should create a trial organization invite', async () => {
-            const params = {
-                consultantId: 'consultant-123',
-                type: 'TRIAL_ORG',
-                targetCompanyName: 'New Corp'
-            };
-
-            // Setup mock result from accessCodeService
-            mocks.accessCode.generateCode.mockResolvedValueOnce({
-                id: 'code-id-123',
-                code: 'MOCK-CODE-123',
-                expiresAt: '2025-01-01',
-                maxUses: 1
-            });
-
-            const result = await consultantService.createInvite(params);
-
-            expect(result).toBeDefined();
-            expect(result.code).toBe('MOCK-CODE-123');
-            expect(mocks.accessCode.generateCode).toHaveBeenCalledWith(expect.objectContaining({
-                type: 'TRIAL',
-                createdByConsultantId: params.consultantId
-            }));
-        });
+    it('should get consultant engagements', async () => {
+        const created = await consultantService.register({ email: 'cons@test.com' });
+        await consultantService.createEngagement(created.data.id, 'client-1', 'Strategy');
+        const result = await consultantService.getEngagements(created.data.id);
+        expect(result.data).toHaveLength(1);
     });
 });

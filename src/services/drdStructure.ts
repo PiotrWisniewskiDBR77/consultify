@@ -18,8 +18,12 @@ export interface DRDAxis {
     areas: DRDArea[];
 }
 
-// Ensure the type assertion works
-const typedData = rawData as unknown as DRDAxis[];
+// Ensure the type assertion works - handle both array and object with axes property
+interface RawDataWithAxes {
+    axes?: DRDAxis[];
+}
+const rawDataParsed = rawData as unknown as DRDAxis[] | RawDataWithAxes;
+const typedData: DRDAxis[] = Array.isArray(rawDataParsed) ? rawDataParsed : (rawDataParsed?.axes || []);
 
 // Fix Axis 7 (AI Readiness) - Populate from raw text dump (translated to Polish)
 // Fix Axis 7 (AI Readiness) - Populate from raw text dump (translated to Polish)

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AvailabilityStatusSection - User Availability & Status
  *

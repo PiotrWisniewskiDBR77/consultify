@@ -98,7 +98,7 @@ const resourceCards = [
 
 const partnerBenefits = [
     {
-        title: 'Co-selling razem z Consultify AI',
+        title: 'Co-selling razem z Consultinity AI',
         body: 'Wspólne szanse dealowe pod eskalacją, pełen widok pipeline’u i mechanizmy automatycznego przypisywania prowizji.',
     },
     {
@@ -457,7 +457,7 @@ export const PartnerPortalView: React.FC<PartnerPortalViewProps> = ({ currentSec
                                 <input
                                     type="email"
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-white"
-                                    placeholder="partner@consultify.com"
+                                    placeholder="partner@consultinity.com"
                                 />
                             </label>
                             <label className="block space-y-1">

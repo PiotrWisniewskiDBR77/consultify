@@ -226,7 +226,7 @@ describe('ProactiveNudgeDisplay - Different Capabilities', () => {
             ...mockNudge,
             nudgeId: 'first_login',
             capability: 'onboarding',
-            message: 'Witaj w Consultify! Jestem Twoim asystentem AI.'
+            message: 'Witaj w Consultinity! Jestem Twoim asystentem AI.'
         };
 
         (useProactiveNudges as jest.Mock).mockReturnValue({
@@ -239,7 +239,7 @@ describe('ProactiveNudgeDisplay - Different Capabilities', () => {
 
         render(<ProactiveNudgeDisplay />);
         
-        expect(screen.getByText(/Witaj w Consultify/)).toBeInTheDocument();
+        expect(screen.getByText(/Witaj w Consultinity/)).toBeInTheDocument();
     });
 });
 

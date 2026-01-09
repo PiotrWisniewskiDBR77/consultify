@@ -129,7 +129,7 @@ export function getDatabaseType(): DatabaseType {
 }
 
 // Database paths for SQLite
-const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultify.db');
+const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultinity.db');
 
 /**
  * Parse PostgreSQL connection URL
@@ -217,7 +217,7 @@ function getPostgresConfig(): PostgresConfig {
     return {
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432'),
-        database: process.env.DB_NAME || 'consultify',
+        database: process.env.DB_NAME || 'consultinity',
         user: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || '',
         ssl: sslConfig,
@@ -265,7 +265,7 @@ function getReadReplicaConfig(): PostgresConfig | undefined {
 export function loadDatabaseConfig(): DatabaseConfig {
     const isProduction = process.env.NODE_ENV === 'production';
     const databaseType = getDatabaseType();
-    const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultify.db');
+    const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultinity.db');
 
     console.log('[DB Config] Loading config. SQLITE_PATH env:', process.env.SQLITE_PATH);
     console.log('[DB Config] Resolved sqlitePath:', sqlitePath);

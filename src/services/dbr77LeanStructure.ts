@@ -1,7 +1,7 @@
 /**
  * DBR77 Lean 4.0 Assessment Structure
  *
- * Autorska metoda DBR77 Consultify:
+ * Autorska metoda DBR77 Consultinity:
  * KROK 1: POMIERZ (Measure) - analiza stanu obecnego
  * KROK 2: ZOPTYMALIZUJ (Optimize) - klasyczne metody Lean
  * KROK 3: AUTOMATYZUJ (Automate) - audyt możliwości automatyzacji i AI

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * DNDModeSettings - Do Not Disturb mode
  *

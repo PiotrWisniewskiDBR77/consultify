@@ -9,7 +9,7 @@ import { expect, Page, test } from '@playwright/test';
 
 // Test fixtures
 const testUser = {
-    email: 'e2e-test@consultify.dev',
+    email: 'e2e-test@consultinity.dev',
     password: 'TestPassword123!',
 };
 

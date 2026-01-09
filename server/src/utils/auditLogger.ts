@@ -27,6 +27,17 @@ export interface AuditLogParams {
     error_code?: string;
     error_message?: string;
     metadata?: Record<string, unknown>;
+    // Extended fields for AI services
+    job_id?: string;
+    existing_job_id?: string;
+    decision?: unknown;
+    meta?: Record<string, unknown>;
+    user_id?: string;
+    model?: string;
+    simulation_id?: string;
+    signal_id?: string;
+    policy_id?: string;
+    policy_result?: unknown;
 }
 
 export interface AuditLogEntry {

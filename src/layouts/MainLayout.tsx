@@ -9,6 +9,7 @@ import { FeedbackSidePanel } from '../components/Feedback/FeedbackSidePanel';
 import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButton';
 import { HelpSidePanel } from '../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../components/Help/HelpToggleButton';
+import { DemoModeBanner } from '../components/layout/DemoModeBanner';
 import { NotificationDropdown } from '../components/layout/NotificationDropdown';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { UserProfileMenu } from '../components/layout/UserProfileMenu';
@@ -35,21 +36,24 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs })
 
     return (
         <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
-            {/* Global Floating Help Buttons */}
-            <div className="fixed right-0 top-[66%] z-50 flex flex-col gap-3 items-end translate-x-0 pointer-events-none">
+            {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
+            <div className="fixed right-0 top-[60%] z-50 flex flex-col gap-2 items-end pointer-events-none">
                 <div className="pointer-events-auto">
                     <HelpToggleButton />
                 </div>
                 <div className="pointer-events-auto">
-                    <DocumentToggleButton />
+                    <FeedbackToggleButton />
                 </div>
                 <div className="pointer-events-auto">
-                    <FeedbackToggleButton />
+                    <DocumentToggleButton />
                 </div>
             </div>
             <HelpSidePanel />
             <DocumentSidePanel />
             <FeedbackSidePanel />
+
+            {/* Demo Mode Banner */}
+            <DemoModeBanner className="fixed top-0 left-0 right-0 z-50" />
 
             {/* Impersonation Banner */}
             {currentUser?.impersonatorId && (

@@ -5,7 +5,7 @@
 
 ## Overview
 
-This playbook provides step-by-step procedures for responding to common incidents in the Consultify Enterprise SaaS platform. Follow these procedures to ensure consistent and effective incident response.
+This playbook provides step-by-step procedures for responding to common incidents in the Consultinity Enterprise SaaS platform. Follow these procedures to ensure consistent and effective incident response.
 
 ## Incident Severity Levels
 
@@ -64,9 +64,9 @@ This playbook provides step-by-step procedures for responding to common incident
 4. **Restart Application** (if needed)
    ```bash
    # Graceful restart
-   pm2 restart consultify
+   pm2 restart consultinity
    # or
-   systemctl restart consultify
+   systemctl restart consultinity
    ```
 
 5. **Escalate** if database is unreachable
@@ -232,7 +232,7 @@ This playbook provides step-by-step procedures for responding to common incident
 
 4. **Restart Application** (temporary fix)
    ```bash
-   pm2 restart consultify
+   pm2 restart consultinity
    ```
 
 5. **Investigate Root Cause**
@@ -321,7 +321,7 @@ git push --force origin main
 **Docker:**
 ```bash
 # Rollback to previous image
-docker pull consultify:previous-version
+docker pull consultinity:previous-version
 docker-compose up -d
 ```
 
@@ -408,7 +408,7 @@ node scripts/restore-backup.js <backup-id>
 - `#engineering` - Technical discussions
 
 **Email:**
-- Send to: `engineering@consultify.com`
+- Send to: `engineering@consultinity.com`
 - Include: Severity, summary, status
 
 ### External Communication
@@ -435,7 +435,7 @@ node scripts/restore-backup.js <backup-id>
 ### Alert Channels
 
 - **Slack:** `#incidents-critical`
-- **Email:** `engineering@consultify.com`
+- **Email:** `engineering@consultinity.com`
 - **SMS:** On-call engineer (P0 only)
 
 ## Recovery Verification
@@ -468,6 +468,8 @@ After incident resolution:
 - Load Testing Guide: `docs/LOAD_TESTING_GUIDE.md`
 - Security Runbooks: `docs/SECURITY_RUNBOOKS.md`
 - Disaster Recovery: `docs/DISASTER_RECOVERY.md`
+
+
 
 
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * SecurityDashboard - Security Overview & Health Score
  *

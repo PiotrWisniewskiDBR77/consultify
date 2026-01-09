@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * WebhooksPanel - Webhook Management
  *

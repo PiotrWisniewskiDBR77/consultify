@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0  
 **Release Date:** January 2, 2026  
-**Author:** Consultify Development Team
+**Author:** Consultinity Development Team
 
 ---
 
@@ -127,7 +127,7 @@ The Content Module Enterprise extension has been successfully implemented, addin
 ### Prerequisites
 - Node.js 18+
 - SQLite 3.x
-- Existing Consultify installation with v0.x
+- Existing Consultinity installation with v0.x
 
 ### Step 1: Database Migration
 
@@ -156,7 +156,7 @@ npm run seed:email-templates
 ### Step 3: Restart Application
 
 ```bash
-pm2 restart consultify
+pm2 restart consultinity
 # or
 npm run start
 ```
@@ -178,7 +178,7 @@ If issues occur:
 cp server/database.sqlite.backup server/database.sqlite
 
 # Restart application
-pm2 restart consultify
+pm2 restart consultinity
 ```
 
 ---
@@ -389,8 +389,8 @@ npm run test:coverage
 
 For issues or questions:
 
-- **Email:** support@consultify.app
-- **Slack:** #consultify-support
+- **Email:** support@consultinity.app
+- **Slack:** #consultinity-support
 - **Documentation:** /docs/
 - **Issue Tracker:** GitHub Issues
 

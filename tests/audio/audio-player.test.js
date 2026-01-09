@@ -24,92 +24,97 @@ const createAudioPlayer = () => {
         handlers.forEach(h => h(data));
     };
 
+    const load = (track) => {
+        currentTrack = track;
+        currentTime = 0;
+        duration = track.duration || 0;
+        emit('load', track);
+    };
+
+    const play = () => {
+        if (!currentTrack) return false;
+        isPlaying = true;
+        emit('play', currentTrack);
+        return true;
+    };
+
+    const pause = () => {
+        isPlaying = false;
+        emit('pause', { currentTime });
+    };
+
+    const stop = () => {
+        isPlaying = false;
+        currentTime = 0;
+        emit('stop', {});
+    };
+
+    const seek = (time) => {
+        currentTime = Math.max(0, Math.min(time, duration));
+        emit('seek', { currentTime });
+    };
+
+    const setVolume = (v) => {
+        volume = Math.max(0, Math.min(1, v));
+        emit('volumechange', { volume });
+    };
+
+    const setPlaybackRate = (rate) => {
+        playbackRate = Math.max(0.25, Math.min(4, rate));
+    };
+
+    const setPlaylist = (tracks) => {
+        playlist.length = 0;
+        playlist.push(...tracks);
+        currentIndex = -1;
+    };
+
+    const next = () => {
+        if (playlist.length === 0) return false;
+        currentIndex = (currentIndex + 1) % playlist.length;
+        load(playlist[currentIndex]);
+        play();
+        return true;
+    };
+
+    const previous = () => {
+        if (playlist.length === 0) return false;
+        currentIndex = currentIndex <= 0 ? playlist.length - 1 : currentIndex - 1;
+        load(playlist[currentIndex]);
+        play();
+        return true;
+    };
+
+    const on = (event, handler) => {
+        if (!listeners.has(event)) {
+            listeners.set(event, []);
+        }
+        listeners.get(event).push(handler);
+        return () => {
+            const handlers = listeners.get(event);
+            const idx = handlers.indexOf(handler);
+            if (idx !== -1) handlers.splice(idx, 1);
+        };
+    };
+
     return {
-        load: (track) => {
-            currentTrack = track;
-            currentTime = 0;
-            duration = track.duration || 0;
-            emit('load', track);
-        },
-
-        play: () => {
-            if (!currentTrack) return false;
-            isPlaying = true;
-            emit('play', currentTrack);
-            return true;
-        },
-
-        pause: () => {
-            isPlaying = false;
-            emit('pause', { currentTime });
-        },
-
-        stop: () => {
-            isPlaying = false;
-            currentTime = 0;
-            emit('stop', {});
-        },
-
-        seek: (time) => {
-            currentTime = Math.max(0, Math.min(time, duration));
-            emit('seek', { currentTime });
-        },
-
-        setVolume: (v) => {
-            volume = Math.max(0, Math.min(1, v));
-            emit('volumechange', { volume });
-        },
-
+        load,
+        play,
+        pause,
+        stop,
+        seek,
+        setVolume,
         getVolume: () => volume,
-
-        setPlaybackRate: (rate) => {
-            playbackRate = Math.max(0.25, Math.min(4, rate));
-        },
-
+        setPlaybackRate,
         getPlaybackRate: () => playbackRate,
-
         getCurrentTime: () => currentTime,
-
         getDuration: () => duration,
-
         isPlaying: () => isPlaying,
-
         getCurrentTrack: () => currentTrack,
-
-        // Playlist management
-        setPlaylist: (tracks) => {
-            playlist.length = 0;
-            playlist.push(...tracks);
-            currentIndex = -1;
-        },
-
-        next: () => {
-            if (playlist.length === 0) return false;
-            currentIndex = (currentIndex + 1) % playlist.length;
-            this.load(playlist[currentIndex]);
-            this.play();
-            return true;
-        },
-
-        previous: () => {
-            if (playlist.length === 0) return false;
-            currentIndex = currentIndex <= 0 ? playlist.length - 1 : currentIndex - 1;
-            this.load(playlist[currentIndex]);
-            this.play();
-            return true;
-        },
-
-        on: (event, handler) => {
-            if (!listeners.has(event)) {
-                listeners.set(event, []);
-            }
-            listeners.get(event).push(handler);
-            return () => {
-                const handlers = listeners.get(event);
-                const idx = handlers.indexOf(handler);
-                if (idx !== -1) handlers.splice(idx, 1);
-            };
-        },
+        setPlaylist,
+        next,
+        previous,
+        on,
     };
 };
 

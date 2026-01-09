@@ -2,13 +2,12 @@
  * ProviderHomeView
  *
  * Partner onboarding hub with trust progression and academy
- * Aligned with Consultify's Trust Progression Model
+ * Aligned with Consultinity's Trust Progression Model
  */
 
 import { BookOpen, CheckCircle2, ClipboardCheck, Layers, Rocket, Shield } from 'lucide-react';
 import React, { useCallback } from 'react';
 
-import { SplitLayout } from '../../components/layout/SplitLayout';
 import { AcademyProgress } from '../../components/Partner/AcademyProgress';
 import { TrustProgressionIndicator } from '../../components/Partner/TrustProgressionIndicator';
 import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
@@ -48,12 +47,8 @@ export const ProviderHomeView: React.FC = () => {
     }, []);
 
     return (
-        <SplitLayout
-            title="Provider Home"
-            subtitle="Onboarding hub, trust progression i academy w jednym widoku"
-            currentView={AppView.PARTNER_PROVIDER_HOME}
-        >
-            <div className="space-y-6 overflow-y-auto px-6 py-4">
+        <div className="h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
+            <div className="space-y-6 px-6 py-4">
                 {/* Trust Progression */}
                 <TrustProgressionIndicator trustProgression={trustProgression} currentPhase={currentTrustPhase} />
 
@@ -181,7 +176,7 @@ export const ProviderHomeView: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </SplitLayout>
+        </div>
     );
 };
 

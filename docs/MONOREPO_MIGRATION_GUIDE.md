@@ -1,15 +1,15 @@
-# Consultify Monorepo Migration Guide
+# Consultinity Monorepo Migration Guide
 
 **Document Version:** 1.0.0  
 **Last Updated:** January 4, 2026  
-**Purpose:** Technical guide for migrating Consultify to an Nx monorepo structure
+**Purpose:** Technical guide for migrating Consultinity to an Nx monorepo structure
 
 ---
 
 ## Executive Summary
 
-This guide provides a step-by-step approach to restructure Consultify into a monorepo using **Nx** (recommended) or Lerna, enabling:
-- Code sharing between Consultify and future application forks
+This guide provides a step-by-step approach to restructure Consultinity into a monorepo using **Nx** (recommended) or Lerna, enabling:
+- Code sharing between Consultinity and future application forks
 - Independent deployment of shared packages
 - Improved build caching and dependency management
 - Clear separation of concerns
@@ -37,7 +37,7 @@ This guide provides a step-by-step approach to restructure Consultify into a mon
 ## 2. Target Structure
 
 ```
-consultify/
+consultinity/
 ├── package.json                    # Workspace root
 ├── nx.json                         # Nx configuration
 ├── tsconfig.base.json              # Shared TypeScript config
@@ -47,7 +47,7 @@ consultify/
 │       └── deploy-*.yml            # Per-app deployments
 │
 ├── packages/                       # Shared libraries
-│   ├── shared-types/               # @consultify/types
+│   ├── shared-types/               # @consultinity/types
 │   │   ├── src/
 │   │   │   ├── api/
 │   │   │   ├── domain/
@@ -55,7 +55,7 @@ consultify/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   ├── shared-core/                # @consultify/core
+│   ├── shared-core/                # @consultinity/core
 │   │   ├── src/
 │   │   │   ├── auth/
 │   │   │   ├── database/
@@ -64,7 +64,7 @@ consultify/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   ├── shared-ai/                  # @consultify/ai
+│   ├── shared-ai/                  # @consultinity/ai
 │   │   ├── src/
 │   │   │   ├── llm/
 │   │   │   ├── embeddings/
@@ -73,7 +73,7 @@ consultify/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   ├── shared-billing/             # @consultify/billing
+│   ├── shared-billing/             # @consultinity/billing
 │   │   ├── src/
 │   │   │   ├── stripe/
 │   │   │   ├── invoices/
@@ -81,7 +81,7 @@ consultify/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   └── shared-ui/                  # @consultify/ui
+│   └── shared-ui/                  # @consultinity/ui
 │       ├── src/
 │       │   ├── components/
 │       │   ├── hooks/
@@ -90,7 +90,7 @@ consultify/
 │       └── tsconfig.json
 │
 └── apps/                           # Applications
-    ├── consultify/                 # Main PMO application
+    ├── consultinity/                 # Main PMO application
     │   ├── frontend/
     │   │   ├── src/
     │   │   ├── package.json
@@ -115,7 +115,7 @@ consultify/
 
 ```bash
 # In existing project root
-npx create-nx-workspace@latest consultify-workspace --preset=empty
+npx create-nx-workspace@latest consultinity-workspace --preset=empty
 
 # Or migrate existing project
 npx nx@latest init
@@ -177,11 +177,11 @@ npx nx@latest init
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@consultify/types": ["packages/shared-types/src/index.ts"],
-      "@consultify/core": ["packages/shared-core/src/index.ts"],
-      "@consultify/ai": ["packages/shared-ai/src/index.ts"],
-      "@consultify/billing": ["packages/shared-billing/src/index.ts"],
-      "@consultify/ui": ["packages/shared-ui/src/index.ts"]
+      "@consultinity/types": ["packages/shared-types/src/index.ts"],
+      "@consultinity/core": ["packages/shared-core/src/index.ts"],
+      "@consultinity/ai": ["packages/shared-ai/src/index.ts"],
+      "@consultinity/billing": ["packages/shared-billing/src/index.ts"],
+      "@consultinity/ui": ["packages/shared-ui/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist"]
@@ -200,7 +200,7 @@ mkdir -p packages/shared-types/src/{api,domain,ui}
 **packages/shared-types/package.json:**
 ```json
 {
-  "name": "@consultify/types",
+  "name": "@consultinity/types",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -251,7 +251,7 @@ cp server/src/types/* packages/shared-types/src/backend/
 **packages/shared-core/package.json:**
 ```json
 {
-  "name": "@consultify/core",
+  "name": "@consultinity/core",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -275,7 +275,7 @@ cp server/src/types/* packages/shared-types/src/backend/
     }
   },
   "dependencies": {
-    "@consultify/types": "workspace:*",
+    "@consultinity/types": "workspace:*",
     "pg": "^8.16.0",
     "better-sqlite3": "^11.9.0",
     "jsonwebtoken": "^9.0.0",
@@ -290,16 +290,16 @@ cp server/src/types/* packages/shared-types/src/backend/
 
 ### Phase 3: Application Structure (Week 3)
 
-#### 3.1 Create Consultify App
+#### 3.1 Create Consultinity App
 
 ```bash
-mkdir -p apps/consultify/{frontend,backend}/src
+mkdir -p apps/consultinity/{frontend,backend}/src
 ```
 
-**apps/consultify/backend/package.json:**
+**apps/consultinity/backend/package.json:**
 ```json
 {
-  "name": "@consultify/app-backend",
+  "name": "@consultinity/app-backend",
   "version": "0.0.1",
   "type": "module",
   "private": true,
@@ -309,10 +309,10 @@ mkdir -p apps/consultify/{frontend,backend}/src
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@consultify/core": "workspace:*",
-    "@consultify/types": "workspace:*",
-    "@consultify/ai": "workspace:*",
-    "@consultify/billing": "workspace:*",
+    "@consultinity/core": "workspace:*",
+    "@consultinity/types": "workspace:*",
+    "@consultinity/ai": "workspace:*",
+    "@consultinity/billing": "workspace:*",
     "express": "^5.0.0"
   }
 }
@@ -330,8 +330,8 @@ import { getDatabase } from '../database/Database';
 
 **After:**
 ```typescript
-import { User } from '@consultify/types';
-import { getDatabase } from '@consultify/core/database';
+import { User } from '@consultinity/types';
+import { getDatabase } from '@consultinity/core/database';
 ```
 
 #### 4.2 Create Import Migration Script
@@ -345,11 +345,11 @@ const project = new Project({
 });
 
 const importMappings = {
-  '../../../types/domain/': '@consultify/types/',
-  '../../types/': '@consultify/types/',
-  '../database/': '@consultify/core/database/',
-  '../../database/': '@consultify/core/database/',
-  '../utils/Logger': '@consultify/core/utils',
+  '../../../types/domain/': '@consultinity/types/',
+  '../../types/': '@consultinity/types/',
+  '../database/': '@consultinity/core/database/',
+  '../../database/': '@consultinity/core/database/',
+  '../utils/Logger': '@consultinity/core/utils',
 };
 
 function migrateFile(file: SourceFile) {
@@ -381,7 +381,7 @@ project.save();
 nx run-many -t serve
 
 # Run specific app
-nx serve consultify-backend
+nx serve consultinity-backend
 
 # Run affected apps only
 nx affected -t serve
@@ -394,7 +394,7 @@ nx affected -t serve
 nx run-many -t build
 
 # Build specific package
-nx build @consultify/types
+nx build @consultinity/types
 
 # Build affected only
 nx affected -t build
@@ -407,7 +407,7 @@ nx affected -t build
 nx run-many -t test
 
 # Test specific package
-nx test @consultify/core
+nx test @consultinity/core
 
 # Test affected
 nx affected -t test
@@ -481,9 +481,9 @@ npx nx connect
 ### npm Organization Setup
 
 ```bash
-# Create @consultify organization on npm
+# Create @consultinity organization on npm
 npm login
-npm org create consultify
+npm org create consultinity
 ```
 
 ### Versioning Strategy
@@ -570,7 +570,7 @@ export function getTenantDb(config: TenantConfig): IDatabase {
 - [ ] Extract shared-ui
 
 ### Phase 3: Apps
-- [ ] Create consultify app structure
+- [ ] Create consultinity app structure
 - [ ] Move PMO-specific code
 - [ ] Update all imports
 - [ ] Run tests

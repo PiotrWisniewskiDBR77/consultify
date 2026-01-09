@@ -1,7 +1,6 @@
 import { Briefcase, Globe, Star } from 'lucide-react';
 import React, { useCallback } from 'react';
 
-import { SplitLayout } from '../../components/layout/SplitLayout';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView } from '../../types';
 
@@ -18,11 +17,7 @@ export const DirectoryView: React.FC = () => {
     const handleNavigate = useCallback((view: AppView) => () => setCurrentView(view), [setCurrentView]);
 
     return (
-        <SplitLayout
-            title="Directory Profile"
-            subtitle="Zbuduj katalogowy profil i zwiększ widoczność w Solutions Directory"
-            currentView={AppView.PARTNER_DIRECTORY}
-        >
+        <div className="h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
             <div className="space-y-6 px-6 py-4">
                 <div className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-white/5 dark:bg-navy-900/60">
                     <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
@@ -30,7 +25,7 @@ export const DirectoryView: React.FC = () => {
                         Company information
                     </div>
                     <p className="mt-2 text-lg font-semibold text-navy-900 dark:text-white">
-                        Consultify Partners Group
+                        Consultinity Partners Group
                     </p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                         Wsparcie dla firm chcących wdrożyć Meta-PMO, przygotować roadmaps i przeprowadzić shared selling
@@ -121,7 +116,7 @@ export const DirectoryView: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </SplitLayout>
+        </div>
     );
 };
 

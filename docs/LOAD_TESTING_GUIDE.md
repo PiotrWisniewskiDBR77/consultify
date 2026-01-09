@@ -5,7 +5,7 @@
 
 ## Overview
 
-This guide explains how to run load tests for the Consultify Enterprise SaaS platform using k6. Load testing helps verify that the system can handle expected traffic loads and identify performance bottlenecks.
+This guide explains how to run load tests for the Consultinity Enterprise SaaS platform using k6. Load testing helps verify that the system can handle expected traffic loads and identify performance bottlenecks.
 
 ## Prerequisites
 
@@ -149,7 +149,7 @@ k6 run --duration 30m tests/performance/load-test.js
 ### Set Base URL
 
 ```bash
-BASE_URL=https://api.consultify.com k6 run tests/performance/load-test.js
+BASE_URL=https://api.consultinity.com k6 run tests/performance/load-test.js
 ```
 
 ### Run with Custom Stages
@@ -364,6 +364,8 @@ Test results are automatically saved to:
 - [k6 Documentation](https://k6.io/docs/)
 - [k6 Examples](https://k6.io/docs/examples/)
 - Performance Baselines: See `docs/PERFORMANCE_COMPARISON.md`
+
+
 
 
 

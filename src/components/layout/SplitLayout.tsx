@@ -190,7 +190,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
         }));
 
         // System prompt for consulting context
-        const systemPrompt = `You are Consultify AI, an expert Digital Transformation Consultant.
+        const systemPrompt = `You are Consultinity AI, an expert Digital Transformation Consultant.
 Your role is to guide the user through strategic discovery and provide actionable insights.
 Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
 

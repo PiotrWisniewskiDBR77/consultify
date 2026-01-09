@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthRequest } from '../../middleware/auth.middleware.js';

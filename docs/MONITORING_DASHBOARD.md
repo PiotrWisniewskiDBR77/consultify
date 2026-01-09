@@ -5,7 +5,7 @@
 
 ## Overview
 
-This document describes the monitoring dashboard and metrics available in the Consultify Enterprise SaaS platform. The monitoring system provides real-time insights into system performance, health, and reliability.
+This document describes the monitoring dashboard and metrics available in the Consultinity Enterprise SaaS platform. The monitoring system provides real-time insights into system performance, health, and reliability.
 
 ## Metrics Endpoints
 
@@ -190,7 +190,7 @@ Add to `prometheus.yml`:
 
 ```yaml
 scrape_configs:
-  - job_name: 'consultify'
+  - job_name: 'consultinity'
     scrape_interval: 15s
     metrics_path: '/api/metrics'
     static_configs:
@@ -257,6 +257,8 @@ Import the following panels:
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Dashboard Examples](https://grafana.com/grafana/dashboards/)
 - Performance Baselines: See `docs/PERFORMANCE_COMPARISON.md`
+
+
 
 
 

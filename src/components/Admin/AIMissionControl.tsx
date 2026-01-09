@@ -100,34 +100,38 @@ export const AIMissionControl: React.FC = () => {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-medium text-gray-500 uppercase">Success Rate (Last 50)</h3>
                     <div className="mt-2 flex items-baseline">
-                        <span className="text-3xl font-bold text-gray-900">{status?.metrics.uptime50.toFixed(1)}%</span>
+                        <span className="text-3xl font-bold text-gray-900">{status?.metrics?.uptime50?.toFixed(1) ?? '0.0'}%</span>
                         <span
-                            className={`ml-2 text-sm font-medium ${status && status.metrics.uptime50 > 95 ? 'text-green-600' : 'text-amber-600'}`}
+                            className={`ml-2 text-sm font-medium ${status?.metrics?.uptime50 && status.metrics.uptime50 > 95 ? 'text-green-600' : 'text-amber-600'}`}
                         >
-                            {status && status.metrics.uptime50 > 95 ? 'Excellent' : 'Degraded'}
+                            {status?.metrics?.uptime50 && status.metrics.uptime50 > 95 ? 'Excellent' : 'Degraded'}
                         </span>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-medium text-gray-500 uppercase">Avg Latency</h3>
                     <div className="mt-2 flex items-baseline">
-                        <span className="text-3xl font-bold text-gray-900">{status?.metrics.avgLatencyMs}ms</span>
+                        <span className="text-3xl font-bold text-gray-900">{status?.metrics?.avgLatencyMs ?? 0}ms</span>
                         <span className="ml-2 text-sm text-gray-500">per request</span>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-medium text-gray-500 uppercase">Active Providers</h3>
                     <div className="mt-2 flex flex-wrap gap-2">
-                        {status?.providers
-                            .filter((p) => p.status === 'ACTIVE')
-                            .map((p) => (
+                        {(() => {
+                            const activeProviders = status?.providers?.filter((p) => p.status === 'ACTIVE') || [];
+                            if (activeProviders.length === 0) {
+                                return <span className="text-gray-400 text-sm">No active providers</span>;
+                            }
+                            return activeProviders.map((p) => (
                                 <span
                                     key={p.name}
                                     className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full"
                                 >
                                     {p.name}
                                 </span>
-                            ))}
+                            ));
+                        })()}
                     </div>
                 </div>
             </div>

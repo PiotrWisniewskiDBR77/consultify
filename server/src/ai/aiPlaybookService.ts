@@ -503,7 +503,7 @@ const AIPlaybookService = {
         });
 
         // Create run
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             deps.db.run(
                 `INSERT INTO ai_playbook_runs (id, template_id, organization_id, correlation_id, initiated_by, status, context_snapshot)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -523,7 +523,7 @@ const AIPlaybookService = {
                 contextSnapshot
             );
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 deps.db.run(
                     `INSERT INTO ai_playbook_run_steps (id, run_id, template_step_id, status, resolved_payload)
                      VALUES (?, ?, ?, ?, ?)`,
@@ -1296,7 +1296,7 @@ const AIPlaybookService = {
                 } else if (updates.status === 'DEPRECATED') {
                     await AIPlaybookService.deprecateTemplate(id);
                 } else if (updates.categoryId !== undefined) {
-                    await new Promise((resolve, reject) => {
+                    await new Promise<void>((resolve, reject) => {
                         deps.db.run(
                             'UPDATE ai_playbook_templates SET category_id = ?, updated_at = ? WHERE id = ?',
                             [updates.categoryId, new Date().toISOString(), id],
@@ -1304,7 +1304,7 @@ const AIPlaybookService = {
                         );
                     });
                 } else if (updates.isActive !== undefined) {
-                    await new Promise((resolve, reject) => {
+                    await new Promise<void>((resolve, reject) => {
                         deps.db.run(
                             'UPDATE ai_playbook_templates SET is_active = ?, updated_at = ? WHERE id = ?',
                             [updates.isActive ? 1 : 0, new Date().toISOString(), id],

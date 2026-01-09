@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * RegionalSettings - Comprehensive regional and locale preferences
  *

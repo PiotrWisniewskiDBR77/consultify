@@ -2751,7 +2751,7 @@
     "masterclassTitle": "Want to deepen your knowledge?",
     "masterclassDesc": "Join our Masterclass program and learn proven tools from transformation leaders.",
     "masterclassLink": "View Masterclass Details",
-    "videoTitle": "See how CONSULTIFY works",
+    "videoTitle": "See how CONSULTINITY works",
     "videoPerson": "Dr. Piotr Wiśniewski",
     "videoRole": "Your guide to digital transformation"
   },
@@ -2803,14 +2803,76 @@
       "dismiss": "Dismiss"
     },
     "widget": {
-      "label": "Help",
-      "header": "Help center",
-      "searchPlaceholder": "Search in help...",
-      "noResults": "No results for \"{{query}}\"",
-      "docs": "Documentation",
-      "contact": "Contact"
+      "label": "المساعدة",
+      "header": "مركز المساعدة",
+      "searchPlaceholder": "البحث في المساعدة...",
+      "noResults": "لا توجد نتائج لـ \"{{query}}\"",
+      "docs": "التوثيق",
+      "contact": "اتصل"
+    },
+    "ai": {
+      "welcome": {
+        "title": "مساعد المساعدة بالذكاء الاصطناعي",
+        "subtitle": "اسألني أي شيء عن Consultinity. أنا هنا للمساعدة!"
+      },
+      "placeholder": "اطرح سؤالاً...",
+      "error": "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.",
+      "quick": {
+        "label": "أسئلة سريعة:",
+        "howto": "كيف أستخدم هذه الوحدة؟",
+        "explain": "اشرح ما يمكنني فعله هنا",
+        "troubleshoot": "ساعدني في حل مشكلة"
+      },
+      "prompts": {
+        "howto": "كيف أستخدم هذه الوحدة بشكل فعال؟",
+        "explain": "ما هي الميزات والقدرات المتاحة هنا؟",
+        "troubleshoot": "لدي مشكلة. هل يمكنك مساعدتي في حلها؟"
+      }
+    },
+    "onboarding": {
+      "checklist": {
+        "title": "البدء",
+        "completed": "مكتمل",
+        "more": "خطوات أخرى",
+        "dismiss": "سأستكشف بنفسي",
+        "profile": {
+          "title": "أكمل ملفك الشخصي",
+          "description": "أضف اسمك ومعلومات الشركة"
+        },
+        "firstChat": {
+          "title": "جرب المساعد بالذكاء الاصطناعي",
+          "description": "اطرح سؤالك الأول"
+        },
+        "firstAssessment": {
+          "title": "بدء التقييم",
+          "description": "ابدأ تشخيص جاهزيتك الرقمية"
+        },
+        "firstInitiative": {
+          "title": "إنشاء مبادرة",
+          "description": "خطط لمشروع التحول الأول"
+        },
+        "roadmap": {
+          "title": "استكشف خارطة الطريق",
+          "description": "عرض الجدول الزمني للتحول"
+        },
+        "inviteTeam": {
+          "title": "دعوة فريقك",
+          "description": "التعاون مع الزملاء"
+        },
+        "billing": {
+          "title": "إعداد الفوترة",
+          "description": "تكوين طريقة الدفع"
+        }
+      }
     },
     "sidePanel": {
+      "tabs": {
+        "ai": "المساعد بالذكاء الاصطناعي",
+        "overview": "نظرة عامة",
+        "howto": "كيفية الاستخدام",
+        "faq": "الأسئلة الشائعة",
+        "video": "مقاطع الفيديو"
+      },
       "modules": {
         "dashboard": {
           "name": "Dashboard",
@@ -3223,7 +3285,7 @@
           },
           "settings": {
             "name": "User Settings",
-            "description": "Personalize your Consultify experience. Configure your profile, security, notifications, AI preferences, integrations, and accessibility options.",
+            "description": "Personalize your Consultinity experience. Configure your profile, security, notifications, AI preferences, integrations, and accessibility options.",
             "purpose": "Customize the application to match your work style, security requirements, and communication preferences.",
             "keyFeatures": [
               "Profile management",
@@ -3253,7 +3315,7 @@
           "admin": {
             "name": "Admin Panel",
             "description": "Organization administration center for managing users, projects, AI configuration, knowledge base, and operational metrics. Available to organization administrators.",
-            "purpose": "Manage your organization's Consultify instance, control access, monitor usage, and configure organizational settings.",
+            "purpose": "Manage your organization's Consultinity instance, control access, monitor usage, and configure organizational settings.",
             "keyFeatures": [
               "User management and invitations",
               "Project administration",
@@ -3282,8 +3344,8 @@
           },
           "superadmin": {
             "name": "Super Admin Console",
-            "description": "Platform-wide administration for DBR77 operators. Manage all organizations, users, billing, AI configuration, SSO, security policies, white-labeling, and compliance across the entire Consultify platform.",
-            "purpose": "Full control over the Consultify platform for DBR77 team members to manage multi-tenant operations, enterprise features, and platform health.",
+            "description": "Platform-wide administration for DBR77 operators. Manage all organizations, users, billing, AI configuration, SSO, security policies, white-labeling, and compliance across the entire Consultinity platform.",
+            "purpose": "Full control over the Consultinity platform for DBR77 team members to manage multi-tenant operations, enterprise features, and platform health.",
             "keyFeatures": [
               "Multi-organization management",
               "Global user administration",

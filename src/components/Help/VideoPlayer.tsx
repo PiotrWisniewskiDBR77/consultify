@@ -30,8 +30,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Video progress storage key
-const VIDEO_PROGRESS_KEY = 'consultify_video_progress';
-const VIDEO_POSITION_KEY = 'consultify_video_positions';
+const VIDEO_PROGRESS_KEY = 'consultinity_video_progress';
+const VIDEO_POSITION_KEY = 'consultinity_video_positions';
 
 interface Chapter {
     time: number; // seconds

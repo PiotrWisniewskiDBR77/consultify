@@ -1,12 +1,12 @@
-# Consultify Kubernetes Services
+# Consultinity Kubernetes Services
 # Exposes deployments within the cluster
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: consultify-api
+  name: consultinity-api
   labels:
-    app: consultify
+    app: consultinity
     component: api
 spec:
   type: ClusterIP
@@ -16,15 +16,15 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: consultify
+    app: consultinity
     component: api
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: consultify-frontend
+  name: consultinity-frontend
   labels:
-    app: consultify
+    app: consultinity
     component: frontend
 spec:
   type: ClusterIP
@@ -34,16 +34,16 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: consultify
+    app: consultinity
     component: frontend
 ---
 # Headless service for direct pod access (useful for debugging)
 apiVersion: v1
 kind: Service
 metadata:
-  name: consultify-api-headless
+  name: consultinity-api-headless
   labels:
-    app: consultify
+    app: consultinity
     component: api
 spec:
   type: ClusterIP
@@ -54,7 +54,7 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: consultify
+    app: consultinity
     component: api
 
 

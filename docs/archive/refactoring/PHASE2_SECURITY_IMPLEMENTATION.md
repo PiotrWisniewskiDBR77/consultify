@@ -162,7 +162,7 @@ snyk test
 trivy fs .
 
 # OWASP Dependency Check (requires OWASP CLI)
-dependency-check.sh --project Consultify --scan .
+dependency-check.sh --project Consultinity --scan .
 ```
 
 ### Run Compliance Tests

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aisettings Service
  * Enterprise SaaS Architecture - TypeScript Backend

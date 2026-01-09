@@ -23,8 +23,8 @@ export const AI_TOOLS_TOUR: TourConfig = {
             id: 'intro',
             title: { en: 'AI-Powered Assistance', pl: 'Wsparcie Napędzane AI' },
             content: {
-                en: 'Consultify uses AI to provide intelligent recommendations, automate analysis, and accelerate your work.',
-                pl: 'Consultify używa AI do dostarczania inteligentnych rekomendacji, automatyzacji analiz i przyspieszania Twojej pracy.',
+                en: 'Consultinity uses AI to provide intelligent recommendations, automate analysis, and accelerate your work.',
+                pl: 'Consultinity używa AI do dostarczania inteligentnych rekomendacji, automatyzacji analiz i przyspieszania Twojej pracy.',
             },
             placement: 'center',
         },

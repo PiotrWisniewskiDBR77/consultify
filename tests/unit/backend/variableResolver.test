@@ -95,7 +95,7 @@ describe('Variable Resolver Service', () => {
             const context = {};
 
             const result = await resolver.resolveTemplate(template, context);
-            expect(result).toContain('Consultify');
+            expect(result).toContain('Consultinity');
         });
 
         it('should handle unknown variables', async () => {

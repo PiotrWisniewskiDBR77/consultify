@@ -126,7 +126,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
                     <div className="text-sm text-amber-800 dark:text-amber-200">
                         <strong>CMMI®</strong> jest znakiem towarowym <strong>ISACA</strong> (dawniej CMMI Institute).
                         Oficjalna certyfikacja CMMI wymaga akredytowanego <strong>Lead Appraiser</strong>. Implementacja
-                        w Consultify służy wyłącznie celom edukacyjnym i wewnętrznej samooceny.
+                        w Consultinity służy wyłącznie celom edukacyjnym i wewnętrznej samooceny.
                     </div>
                 </div>
             )}
@@ -441,7 +441,7 @@ export const CMMIReportTemplate: React.FC<CMMIReportTemplateProps> = ({
 
             {/* Footer */}
             <footer className="border-t border-slate-200 dark:border-white/10 pt-4 text-center text-xs text-slate-400">
-                <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
+                <p>Raport wygenerowany przez Consultinity • {new Date().toLocaleDateString('pl-PL')}</p>
                 <p className="mt-1">CMMI Assessment (Educational) • {organizationName}</p>
                 <p className="mt-1 text-[10px]">CMMI® is a registered trademark of ISACA</p>
             </footer>

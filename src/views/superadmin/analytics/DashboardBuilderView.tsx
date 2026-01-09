@@ -91,6 +91,9 @@ const DashboardBuilderView: React.FC = () => {
         try {
             const response = await Api.getAnalyticsDashboards();
             setDashboards(response.dashboards || []);
+            if ((response.dashboards || []).length > 0) {
+                handleSelectDashboard(response.dashboards[0]);
+            }
         } catch (error) {
             console.error('Failed to fetch dashboards:', error);
         } finally {

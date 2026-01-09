@@ -25,7 +25,7 @@ export const WelcomeBackWidget: React.FC = () => {
     useEffect(() => {
         // In a real implementation, we would fetch this from backend
         // For now, we'll simulate reading from local storage history
-        const history = localStorage.getItem('consultify_view_history');
+        const history = localStorage.getItem('consultinity_view_history');
         if (history) {
             try {
                 const parsed = JSON.parse(history);

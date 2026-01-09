@@ -68,6 +68,16 @@ export const useStudioDocument = (options: UseStudioDocumentOptions = {}) => {
         async (createSnapshot = false) => {
             if (!document?.id) return;
 
+            // Skip API call for local documents
+            if (document.id.startsWith('local-')) {
+                setHasUnsavedChanges(false);
+                setLastSaved(new Date());
+                if (createSnapshot) {
+                    toast.success('Snapshot saved locally');
+                }
+                return;
+            }
+
             setSaving(true);
             try {
                 await Api.put(`/api/studio/documents/${document.id}`, {
@@ -82,7 +92,7 @@ export const useStudioDocument = (options: UseStudioDocumentOptions = {}) => {
                 if (createSnapshot) {
                     toast.success('Snapshot saved');
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('[Studio] Failed to save document:', error);
                 toast.error('Failed to save');
             } finally {
@@ -115,10 +125,25 @@ export const useStudioDocument = (options: UseStudioDocumentOptions = {}) => {
                 setHasUnsavedChanges(false);
                 toast.success('Document created');
                 return doc;
-            } catch (error) {
+            } catch (error: any) {
                 console.error('[Studio] Failed to create document:', error);
-                toast.error('Failed to create document');
-                return null;
+                // Create local-only document so Studio is still usable
+                const localDoc: StudioDocument = {
+                    id: `local-${Date.now()}`,
+                    name: data.name || 'Untitled Diagram',
+                    description: data.description,
+                    type: data.type || 'process_flow',
+                    nodes: data.nodes || [],
+                    edges: data.edges || [],
+                    linkedTaskId: data.linkedTaskId,
+                    linkedProjectId: data.linkedProjectId,
+                    linkedInitiativeId: data.linkedInitiativeId,
+                };
+                setDocument(localDoc);
+                setNodes(localDoc.nodes);
+                setEdges(localDoc.edges);
+                toast('Working in offline mode - changes won\'t be saved to server', { icon: '⚠️' });
+                return localDoc;
             } finally {
                 setLoading(false);
             }
@@ -147,11 +172,17 @@ export const useStudioDocument = (options: UseStudioDocumentOptions = {}) => {
         async (metadata: Partial<StudioDocument>) => {
             if (!document?.id) return;
 
+            // For local documents, just update state
+            if (document.id.startsWith('local-')) {
+                setDocument((prev) => (prev ? { ...prev, ...metadata } : null));
+                return;
+            }
+
             try {
                 await Api.put(`/api/studio/documents/${document.id}`, metadata);
                 setDocument((prev) => (prev ? { ...prev, ...metadata } : null));
                 toast.success('Updated');
-            } catch (error) {
+            } catch (error: any) {
                 console.error('[Studio] Failed to update metadata:', error);
                 toast.error('Failed to update');
             }

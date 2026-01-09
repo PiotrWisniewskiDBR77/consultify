@@ -62,7 +62,7 @@ npm run db:backup
 
 Expected output:
 ```
-✅ Backup created: server/backups/consultify_backup_20260106.db.gz
+✅ Backup created: server/backups/consultinity_backup_20260106.db.gz
 ```
 
 #### 2. Configure Environment
@@ -270,7 +270,7 @@ cat .env | grep DB_POOL
 tail -f logs/app.log
 
 # 3. Test database connection
-sqlite3 server/consultify.db "SELECT 1"
+sqlite3 server/consultinity.db "SELECT 1"
 ```
 
 **Solution:**
@@ -470,7 +470,7 @@ docs/database/
 ### Documentation
 - [walkthrough.md](file:///Users/piotrwisniewski/.gemini/antigravity/brain/b281744e-bb41-4127-9780-97cfd1bcebe2/walkthrough.md) - Complete guide
 - [success_criteria_analysis.md](file:///Users/piotrwisniewski/.gemini/antigravity/brain/b281744e-bb41-4127-9780-97cfd1bcebe2/success_criteria_analysis.md) - Success metrics
-- [CONNECTION_POOL.md](file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/docs/database/CONNECTION_POOL.md) - Pool configuration
+- [CONNECTION_POOL.md](file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/docs/database/CONNECTION_POOL.md) - Pool configuration
 
 ### Quick Help
 

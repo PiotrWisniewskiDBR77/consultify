@@ -322,7 +322,7 @@ const ADMALegalNotice: React.FC = () => (
         <div className="text-sm text-amber-800 dark:text-amber-200">
             <strong>ADMA (Advanced Digital Maturity Assessment)</strong> jest narzędziem opracowanym przez{' '}
             <strong>European Commission</strong> w ramach programu <strong>Digital Innovation Hubs</strong>.
-            Wykorzystanie w Consultify służy <strong>celom edukacyjnym</strong>.
+            Wykorzystanie w Consultinity służy <strong>celom edukacyjnym</strong>.
         </div>
     </div>
 );

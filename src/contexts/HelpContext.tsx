@@ -61,7 +61,7 @@ export interface HelpHint {
 }
 
 // New types for contextual help system
-export type HelpTab = 'overview' | 'howto' | 'faq' | 'video';
+export type HelpTab = 'overview' | 'howto' | 'faq' | 'video' | 'ai';
 
 export interface ContextualHelpState {
     moduleId: HelpModuleId;
@@ -100,7 +100,7 @@ const HelpContext = createContext<HelpContextValue | undefined>(undefined);
 // Helper to get auth token
 const getAuthToken = (): string | null => {
     try {
-        const stored = localStorage.getItem('consultify-storage');
+        const stored = localStorage.getItem('consultinity-storage');
         if (stored) {
             const parsed = JSON.parse(stored);
             return parsed.state?.currentUser?.token || localStorage.getItem('auth_token') || null;

@@ -498,7 +498,7 @@ test.describe('Settings Management Flow', () => {
             // Configure Jira integration
             await page.click('text=Jira');
             await page.fill('input[name="jiraUrl"]', 'https://company.atlassian.net');
-            await page.fill('input[name="jiraUsername"]', 'consultify@jira.com');
+            await page.fill('input[name="jiraUsername"]', 'consultinity@jira.com');
             await page.fill('input[name="jiraApiToken"]', 'jira-api-token');
 
             await page.click('button:has-text("Connect Jira")');

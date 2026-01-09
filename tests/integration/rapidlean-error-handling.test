@@ -147,30 +147,19 @@ describe('RapidLean Error Handling', () => {
     });
 
     describe('Database Error Handling', () => {
-        test('should handle database errors gracefully', async () => {
-            // This would require mocking database errors
-            // For now, we verify error handling structure exists
-            expect(true).toBe(true);
-        });
+        test.todo('should handle database errors gracefully');
+        // TODO: Implement with database error mocking
     });
 
     describe('File Upload Error Handling', () => {
-        test('should handle file upload errors', async () => {
-            // File upload errors are handled by multer middleware
-            // Tested in integration tests with actual file uploads
-            expect(true).toBe(true);
-        });
-
-        test('should reject files that are too large', async () => {
-            // This would require actual file upload testing
-            // Multer middleware should handle this
-            expect(true).toBe(true);
-        });
-
-        test('should reject invalid file types', async () => {
-            // Multer middleware should reject non-image files
-            expect(true).toBe(true);
-        });
+        test.todo('should handle file upload errors');
+        // TODO: Implement with actual file upload testing
+        
+        test.todo('should reject files that are too large');
+        // TODO: Implement with multer middleware testing
+        
+        test.todo('should reject invalid file types');
+        // TODO: Implement with multer file type validation
     });
 });
 

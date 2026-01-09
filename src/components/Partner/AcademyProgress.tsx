@@ -52,8 +52,8 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; icon: React.Re
 };
 
 const CERTIFICATION_INFO: Record<string, { label: string; description: string; color: string }> = {
-    CONSULTIFY_CERTIFIED: {
-        label: 'Consultify Certified Partner',
+    CONSULTINITY_CERTIFIED: {
+        label: 'Consultinity Certified Partner',
         description: 'Completed all required methodology modules',
         color: 'from-purple-500 to-indigo-600',
     },
@@ -129,7 +129,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
                                 Partner Development Academy
                             </h3>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Build expertise in Consultify methodology
+                                Build expertise in Consultinity methodology
                             </p>
                         </div>
                     </div>
@@ -261,7 +261,7 @@ export const AcademyProgress: React.FC<AcademyProgressProps> = ({
             {!stats.certificationReady && (
                 <div className="rounded-3xl border border-dashed border-purple-300 bg-purple-50/50 p-6 text-center dark:border-purple-500/30 dark:bg-purple-500/5">
                     <Lock size={32} className="mx-auto mb-3 text-purple-400" />
-                    <h4 className="font-semibold text-navy-900 dark:text-white">Unlock Consultify Certification</h4>
+                    <h4 className="font-semibold text-navy-900 dark:text-white">Unlock Consultinity Certification</h4>
                     <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                         Complete {stats.requiredModules - stats.completedRequired} more required module
                         {stats.requiredModules - stats.completedRequired !== 1 ? 's' : ''} to earn your certification

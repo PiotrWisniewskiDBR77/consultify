@@ -4,15 +4,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: consultify-api-hpa
+  name: consultinity-api-hpa
   labels:
-    app: consultify
+    app: consultinity
     component: api
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: consultify-api
+    name: consultinity-api
   minReplicas: 2
   maxReplicas: 10
   metrics:
@@ -52,15 +52,15 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: consultify-frontend-hpa
+  name: consultinity-frontend-hpa
   labels:
-    app: consultify
+    app: consultinity
     component: frontend
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: consultify-frontend
+    name: consultinity-frontend
   minReplicas: 2
   maxReplicas: 5
   metrics:
@@ -88,29 +88,29 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: consultify-api-pdb
+  name: consultinity-api-pdb
   labels:
-    app: consultify
+    app: consultinity
     component: api
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: consultify
+      app: consultinity
       component: api
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: consultify-frontend-pdb
+  name: consultinity-frontend-pdb
   labels:
-    app: consultify
+    app: consultinity
     component: frontend
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: consultify
+      app: consultinity
       component: frontend
 
 

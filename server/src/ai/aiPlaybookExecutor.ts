@@ -328,7 +328,7 @@ const AIPlaybookExecutor = {
             }
 
             // Insert decision
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 db.run(
                     `INSERT INTO action_decisions
     (id, proposal_id, organization_id, correlation_id, action_type, scope, decision, decided_by_user_id, proposal_snapshot, policy_rule_id)

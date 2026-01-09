@@ -14,6 +14,98 @@ import circuitBreaker from './circuitBreaker.js';
 import { embeddingService } from './embeddingService.js';
 import { aiLogger } from './logger.js';
 
+// Concurrency and rate limits per provider (process-level guard)
+const PROVIDER_CONCURRENCY_LIMITS: Record<string, number> = {
+    default: 20,
+    openai: 25,
+    google: 20,
+    gemini: 20,
+    deepseek: 15,
+    nvidia: 10,
+    cohere: 15,
+    ollama: 10,
+};
+
+const PROVIDER_RATE_LIMIT_PER_SEC: Record<string, number> = {
+    default: 30,
+    openai: 40,
+    google: 30,
+    gemini: 30,
+    deepseek: 25,
+    nvidia: 15,
+    cohere: 25,
+    ollama: 20,
+};
+
+const providerConcurrency = new Map<string, number>();
+const providerRateBuckets = new Map<string, number[]>();
+
+function getLimit(map: Record<string, number>, providerId: string): number {
+    const key = providerId.toLowerCase();
+    return map[key] ?? map.default;
+}
+
+function acquireProviderSlot(providerId: string) {
+    const current = providerConcurrency.get(providerId) || 0;
+    const limit = getLimit(PROVIDER_CONCURRENCY_LIMITS, providerId);
+    if (current >= limit) {
+        throw new Error(`Concurrency limit exceeded for provider ${providerId}`);
+    }
+    providerConcurrency.set(providerId, current + 1);
+}
+
+function releaseProviderSlot(providerId: string) {
+    const current = providerConcurrency.get(providerId) || 0;
+    providerConcurrency.set(providerId, Math.max(0, current - 1));
+}
+
+function enforceRateLimit(providerId: string) {
+    const now = Date.now();
+    const bucket = providerRateBuckets.get(providerId) || [];
+    const windowStart = now - 1000;
+    const recent = bucket.filter((ts) => ts >= windowStart);
+    const limit = getLimit(PROVIDER_RATE_LIMIT_PER_SEC, providerId);
+    if (recent.length >= limit) {
+        throw new Error(`Rate limit exceeded for provider ${providerId}`);
+    }
+    recent.push(now);
+    providerRateBuckets.set(providerId, recent);
+}
+
+async function withGuards<T>(
+    providerId: string,
+    fn: () => Promise<T>,
+    breakerOptions: Record<string, unknown> = {},
+): Promise<T> {
+    const startedAt = Date.now();
+    enforceRateLimit(providerId);
+    acquireProviderSlot(providerId);
+    try {
+        const result = await circuitBreaker.execute(providerId, fn, breakerOptions);
+        const durationMs = Date.now() - startedAt;
+        const usage = (result as any)?.usage || {};
+        aiLogger.info('LLMServiceMetrics', `LLM call success for ${providerId}`, {
+            providerId,
+            durationMs,
+            tokens: usage.totalTokens || usage.total || null,
+            promptTokens: usage.promptTokens || null,
+            completionTokens: usage.completionTokens || null,
+        });
+        return result;
+    } catch (error) {
+        const durationMs = Date.now() - startedAt;
+        const err = error as Error;
+        aiLogger.warn('LLMServiceMetrics', `LLM call failed for ${providerId}`, {
+            providerId,
+            durationMs,
+            error: err.message,
+        });
+        throw error;
+    } finally {
+        releaseProviderSlot(providerId);
+    }
+}
+
 type ModelConfig = {
     id?: string;
     provider?: string;
@@ -106,10 +198,19 @@ function getProviderSync(modelConfig: ModelConfig) {
         case 'zai':
         case 'qwen':
         case 'mistral':
-        case 'nvidia':
             return createOpenAI({
                 apiKey,
                 baseURL: endpoint || 'https://api.deepseek.com',
+            });
+        case 'nvidia':
+            return createOpenAI({
+                apiKey,
+                baseURL: endpoint || 'https://integrate.api.nvidia.com/v1',
+            });
+        case 'cohere':
+            return createOpenAI({
+                apiKey,
+                baseURL: endpoint || 'https://api.cohere.ai/v1',
             });
         case 'ollama':
             return createOpenAI({
@@ -361,15 +462,14 @@ export class LLMService {
 
         aiLogger.debug('LLMService', `Reasoning model call with ${formattedMessages.length} messages`);
 
-        const result = await circuitBreaker.execute(
+        const result = await withGuards(
             providerId,
-            async () => {
-                return generateText({
+            async () =>
+                generateText({
                     model,
                     messages: formattedMessages as any,
                     maxTokens: 16384,
-                } as any);
-            },
+                } as any),
             {
                 onRetry: (attempt: number, delay: number, error: Error) => {
                     aiLogger.info('LLMService', `Retrying ${providerId} reasoning (attempt ${attempt})`, {
@@ -417,16 +517,15 @@ export class LLMService {
             } as any) as any;
         }
 
-        const result = await circuitBreaker.execute(
+        const result = await withGuards(
             providerId,
-            async () => {
-                return generateText({
+            async () =>
+                generateText({
                     model,
                     messages: formattedMessages as any,
                     tools: toolDefinitions,
                     maxSteps: maxIterations,
-                } as any);
-            },
+                } as any),
             {
                 onRetry: (attempt: number, delay: number, error: Error) => {
                     aiLogger.info('LLMService', `Retrying ${providerId} with tools (attempt ${attempt})`, {
@@ -530,15 +629,14 @@ export class LLMService {
             ...messages.filter((m) => m.role !== 'system'),
         ];
 
-        const result = await circuitBreaker.execute(
+        const result = await withGuards(
             providerId,
-            async () => {
-                return generateText({
+            async () =>
+                generateText({
                     model,
                     messages: formattedMessages as any,
                     abortSignal: AbortSignal.timeout(60000),
-                });
-            },
+                }),
             {
                 timeout: 60000,
                 onRetry: (attempt: number, delay: number, error: Error) => {
@@ -634,16 +732,15 @@ export class LLMService {
             ...messages.filter((m) => m.role !== 'system'),
         ];
 
-        const result = await circuitBreaker.execute(
+        const result = await withGuards(
             providerId,
-            async () => {
-                return generateObject({
+            async () =>
+                generateObject({
                     model,
                     schema: zodSchema,
                     messages: formattedMessages as any,
                     abortSignal: AbortSignal.timeout(60000),
-                });
-            },
+                }),
             {
                 timeout: 60000,
                 onRetry: (attempt: number) => {

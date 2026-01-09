@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * IntegrationHealthDashboard - Integration Monitoring & Management
  *

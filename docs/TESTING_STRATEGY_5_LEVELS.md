@@ -4,7 +4,7 @@
 **Target Coverage:** 95%
 **Minimum Pass Rate:** 98%
 
-This document defines the comprehensive 5-level testing strategy for the Consultify platform.
+This document defines the comprehensive 5-level testing strategy for the Consultinity platform.
 
 ## Level 1: Unit Testing
 **Scope:** Individual functions, classes, and isolated components.

@@ -28,8 +28,9 @@ export class UserController {
             return;
         }
 
+        // Select only columns that exist in the users table
         let sql =
-            'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner, phone, linkedin_id FROM users WHERE organization_id = ?';
+            'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, title FROM users WHERE organization_id = ?';
         type SQLParam = string | number | boolean | null | undefined;
         const params: SQLParam[] = [orgId];
 
@@ -38,7 +39,7 @@ export class UserController {
             sql += ` AND (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER') OR status = 'ACTIVE')`;
         }
 
-        sql += ' ORDER BY is_owner DESC, first_name, last_name';
+        sql += ' ORDER BY first_name, last_name';
 
         const rows = await queryHelpers.queryAll(sql, params);
 
@@ -48,14 +49,16 @@ export class UserController {
             lastName: u.last_name,
             email: u.email,
             role: u.role,
-            status: u.status,
+            status: u.status || 'active',
             avatarUrl: u.avatar_url,
             lastLogin: u.last_login,
-            aiConfig: u.ai_config ? JSON.parse(u.ai_config as string) : {},
-            licensePlanId: u.license_plan_id,
-            isOwner: u.is_owner === 1 || u.is_owner === true,
-            phone: u.phone,
-            linkedinId: u.linkedin_id,
+            title: u.title,
+            // Default values for columns that may not exist
+            aiConfig: {},
+            licensePlanId: null,
+            isOwner: u.role === 'OWNER',
+            phone: null,
+            linkedinId: null,
         }));
 
         res.json({ users, total: users.length });

@@ -128,7 +128,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `consultify-settings-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `consultinity-settings-${new Date().toISOString().split('T')[0]}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -294,7 +294,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                         <p className="font-medium text-slate-700 dark:text-slate-300">
                             Drop settings file here or click to browse
                         </p>
-                        <p className="text-sm text-slate-500 mt-1">Accepts .json files exported from Consultify</p>
+                        <p className="text-sm text-slate-500 mt-1">Accepts .json files exported from Consultinity</p>
                         <input type="file" accept=".json" onChange={handleFileSelect} className="hidden" />
                     </label>
                 ) : (

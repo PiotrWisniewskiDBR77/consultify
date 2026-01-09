@@ -5,7 +5,7 @@
 
 ## Wprowadzenie
 
-Ten dokument opisuje proces migracji backendu Consultify z JavaScript (CommonJS) do TypeScript (ES Modules).
+Ten dokument opisuje proces migracji backendu Consultinity z JavaScript (CommonJS) do TypeScript (ES Modules).
 
 ## Obecny Stan Migracji
 
@@ -184,6 +184,8 @@ npm run test:backend:coverage
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
 - [ES Modules Guide](https://nodejs.org/api/esm.html)
 - [Migration Best Practices](https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html)
+
+
 
 
 

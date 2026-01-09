@@ -1,5 +1,5 @@
 /**
- * StudioView - Main View for Consultify Studio
+ * StudioView - Main View for Consultinity Studio
  *
  * Split-panel layout with AI chat and React Flow canvas.
  */
@@ -23,6 +23,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Edge, Node, ReactFlowProvider } from 'reactflow';
 
+import { SplitLayout } from '../components/layout/SplitLayout';
+import { AppView } from '../types';
 import { useStudioAI } from '../components/Studio/hooks/useStudioAI';
 import { useStudioDocument } from '../components/Studio/hooks/useStudioDocument';
 import { StudioCanvas } from '../components/Studio/StudioCanvas';
@@ -135,18 +137,21 @@ export const StudioView: React.FC<StudioViewProps> = ({
 
     if (loading && !document) {
         return (
-            <div className="h-full flex items-center justify-center bg-slate-950">
-                <div className="text-center">
-                    <Loader2 size={32} className="text-blue-500 animate-spin mx-auto mb-4" />
-                    <p className="text-slate-400">Loading Studio...</p>
+            <SplitLayout title="Studio" currentView={AppView.STUDIO}>
+                <div className="h-full flex items-center justify-center bg-slate-950">
+                    <div className="text-center">
+                        <Loader2 size={32} className="text-blue-500 animate-spin mx-auto mb-4" />
+                        <p className="text-slate-400">Loading Studio...</p>
+                    </div>
                 </div>
-            </div>
+            </SplitLayout>
         );
     }
 
     return (
-        <ReactFlowProvider>
-            <div className="h-full flex flex-col bg-slate-950">
+        <SplitLayout title="Studio" currentView={AppView.STUDIO}>
+            <ReactFlowProvider>
+                <div className="h-full flex flex-col bg-slate-950">
                 {/* Header */}
                 <header className="shrink-0 h-14 px-4 flex items-center justify-between border-b border-white/10 bg-slate-900/50">
                     <div className="flex items-center gap-3">
@@ -317,8 +322,9 @@ export const StudioView: React.FC<StudioViewProps> = ({
                         onClose={() => setShowLinkModal(false)}
                     />
                 )}
-            </div>
-        </ReactFlowProvider>
+                </div>
+            </ReactFlowProvider>
+        </SplitLayout>
     );
 };
 

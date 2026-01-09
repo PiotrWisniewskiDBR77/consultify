@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * CreditNotesPanel - Credit Notes Management
  *

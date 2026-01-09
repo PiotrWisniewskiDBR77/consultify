@@ -92,8 +92,9 @@ async function seedDemoUser() {
     });
 }
 
-// Run if called directly
-if (require.main === module) {
+// Run if called directly (ES module compatible)
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+if (isMainModule) {
     seedDemoUser()
         .then(() => {
             console.log('🎉 Demo user seeding complete!');
@@ -110,6 +111,8 @@ seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID
 };
 
 export default { seedDemoUser, DEMO_EMAIL, DEMO_PASSWORD, DEMO_ORG_ID, DEMO_USER_ID };
+
+
 
 
 

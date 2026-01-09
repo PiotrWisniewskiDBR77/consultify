@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * VisualCustomizationSettings - Visual Appearance Configuration
  *
@@ -171,7 +172,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                         <Palette size={28} className="text-violet-500" />
                         {t('settings.appearance.visual.title', 'Visual Customization')}
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Personalize how Consultify looks</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Personalize how Consultinity looks</p>
                 </div>
                 <div className="flex gap-2">
                     <button

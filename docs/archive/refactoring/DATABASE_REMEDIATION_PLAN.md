@@ -27,7 +27,7 @@ Transition the application from mock-driven to database-driven. ensure the "DBR7
 
 ### Stage 3: DBR77 Data Seeding (English)
 *Goal: Populate the "DBR77" organization with rich, realistic content.*
-- [ ] **Organization**: "Consultify / DBR77" (Enterprise Plan).
+- [ ] **Organization**: "Consultinity / DBR77" (Enterprise Plan).
 - [ ] **Users**: Ensure `admin@dbr77.com` (SuperAdmin) and `piotr.wisniewski@dbr77.com` (Admin).
 - [ ] **Content**:
     - **Initiatives**: 5-10 realistic transformation initiatives (e.g., "AI Customer Support", "Predictive Maintenance").

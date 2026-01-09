@@ -75,7 +75,7 @@ describe('ReportTemplateService', () => {
         await dbRun(
             `INSERT INTO users (id, organization_id, email, name, role, created_at) 
              VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-            ['system', 'system', 'system@consultify.io', 'System', 'admin']
+            ['system', 'system', 'system@consultinity.io', 'System', 'admin']
         );
 
         // Create test user

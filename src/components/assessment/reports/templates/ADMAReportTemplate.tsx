@@ -385,7 +385,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
 
             {/* Footer */}
             <footer className="border-t border-slate-200 dark:border-white/10 pt-4 text-center text-xs text-slate-400">
-                <p>Raport wygenerowany przez Consultify • {new Date().toLocaleDateString('pl-PL')}</p>
+                <p>Raport wygenerowany przez Consultinity • {new Date().toLocaleDateString('pl-PL')}</p>
                 <p className="mt-1">ADMA 2.0 Assessment • {organizationName}</p>
             </footer>
         </div>

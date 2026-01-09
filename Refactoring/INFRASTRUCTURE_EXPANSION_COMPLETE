@@ -62,8 +62,8 @@ Contract Tests: Consumer + Provider verification
 
 ### Contract Testing (Pact.io)
 - **Configuration:** pact.config.js
-- **Consumer:** consultify-frontend
-- **Provider:** consultify-backend
+- **Consumer:** consultinity-frontend
+- **Provider:** consultinity-backend
 - **Integration:** CI/CD pipeline
 - **Status:** Ready for activation (requires PACT_BROKER_URL)
 

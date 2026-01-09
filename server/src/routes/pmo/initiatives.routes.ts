@@ -10,6 +10,7 @@ import { Router } from 'express';
 import InitiativeControllerRaw from '../../controllers/InitiativeController.js';
 const InitiativeController = InitiativeControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
+import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
@@ -26,9 +27,18 @@ router.use(authRateLimiter);
 // Apply auth middleware to all routes
 router.use(verifyToken);
 
+// Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
+router.use(demoContextMiddleware);
+
 // ==========================================
 // INITIATIVE CRUD
 // ==========================================
+
+/**
+ * GET /api/initiatives/portfolio
+ * Get initiatives with portfolio stats
+ */
+router.get('/portfolio', InitiativeController.getPortfolioData);
 
 /**
  * GET /api/initiatives

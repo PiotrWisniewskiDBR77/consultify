@@ -11,8 +11,8 @@ Implemented contract testing with Pact.io for consumer-driven contracts, API con
 ### 1. Created Pact Configuration (`pact.config.js`)
 
 **Features:**
-- Consumer: consultify-frontend
-- Provider: consultify-backend
+- Consumer: consultinity-frontend
+- Provider: consultinity-backend
 - Pact directory configuration
 - Log directory configuration
 - Pact Broker integration
@@ -179,7 +179,7 @@ await provider.addInteraction({
 
 ```javascript
 const verifier = new Verifier({
-  provider: 'consultify-backend',
+  provider: 'consultinity-backend',
   providerBaseUrl: 'http://localhost:3000',
   pactUrls: ['./tests/contracts/pacts/...json'],
 });

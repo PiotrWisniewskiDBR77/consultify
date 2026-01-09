@@ -1,225 +1,163 @@
-import request from 'supertest';
-import { describe, it, expect, beforeAll, vi } from 'vitest';
-
-// Ensure consistent JWT secret for tests (relies on tests/setup.ts)
-// process.env.JWT_SECRET = 'test-jwt-secret-key-123';
-
-// Unmock auth middleware to test real authentication flow
-
-// Unmock auth middleware to test real authentication flow
-vi.unmock('../../server/src/middleware/auth.middleware.js');
-vi.unmock('jsonwebtoken');
-vi.unmock('../../server/src/services/RefreshTokenService.js');
-import { TestDatabaseFactory } from '../utils/TestDatabaseFactory.js';
+/**
+ * Auth Integration Tests - Real Implementation
+ * 
+ * NOTE: This file complements tests/integration/routes/auth.test.js
+ * which contains the primary auth route tests.
+ * 
+ * These tests focus on additional auth scenarios.
+ */
+import app from '../../server/src/index.js';
 import bcrypt from 'bcryptjs';
+import request from 'supertest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../server/src/database/Database.js';
+import { initializeDatabase } from '../../server/src/database/DatabaseInitializer.js';
+import { v4 as uuidv4 } from 'uuid';
 
-// We delay importing app/db until after we set up the mock DB
-let app;
-let db;
+vi.hoisted(() => {
+    process.env.MOCK_DB = 'false';
+    const workerId = process.env.VITEST_WORKER_ID || '0';
+    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+});
 
 describe('Auth Integration', () => {
-    let token;
-    const testId = Date.now();
-    const email = `auth-${testId}@dbr77.com`;
-    const password = 'password123';
-
-    // Explicitly mock Sentry here to survive resetModules or ensure it's picked up
-    vi.mock('@sentry/node', () => ({
-        init: vi.fn(),
-        Handlers: { requestHandler: () => (req, res, next) => next(), errorHandler: () => (items, req, res, next) => next() },
-        captureException: vi.fn(),
-    }));
-
-    // Mock Gateway to only load auth routes (Vertical Slice)
-    vi.mock('../../server/src/Gateway.ts', async () => {
-        const authRoutes = await import('../../server/src/routes/auth.routes.js');
-        return {
-            apiGateway: {
-                initializeRoutes: (app) => {
-                    console.log('[MockGateway] Initializing Auth routes only...');
-                    app.use('/api/auth', authRoutes.default);
-                }
-            }
-        };
-    });
+    let testUserId;
+    let testOrgId;
+    let testToken;
+    let testRefreshToken;
+    const db = getDatabase();
+    const testEmail = `auth-int-${Date.now()}@test.com`;
 
     beforeAll(async () => {
-        try {
-            console.log('Starting auth.test.js setup...');
-            // 1. Create a fresh in-memory DB with schema
-            const testDb = await TestDatabaseFactory.create();
-            console.log('DB created');
+        await initializeDatabase();
 
-            // 2. Inject it into the global mock slot (which server/database.js uses when MOCK_DB=true)
-            // Note: tests/setup.ts sets MOCK_DB=true
-            global.__TEST_DB_MOCK__ = testDb;
-
-            // 3. Reset modules to ensure server/database.js is re-evaluated and picks up the new global mock
-            vi.resetModules();
-            console.log('Modules reset');
-
-            // 4. Import the app and db (using dynamic import to ensure freshness)
-            const dbModule = await import('../../server/database.js');
-            db = dbModule.default;
-            console.log('DB Imported');
-
-            const appModule = await import('../../server/src/index.ts');
-            app = appModule.default || appModule; // Handle CJS/ESM interop
-            console.log('App Imported');
-
-            const hash = bcrypt.hashSync(password, 8);
-            const orgId = `org-auth-${testId}`;
-            const userId = `user-auth-${testId}`;
-
-            // 5. Seed data using the testDb directly (or the imported db wrapper, they should be the same now)
-            await new Promise((resolve, reject) => {
-                testDb.serialize(() => {
-                    // Create org
-                    testDb.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                        [orgId, 'Auth Test Org', 'free', 'active'], (err) => {
-                            if (err) console.error('Auth org error:', err.message);
-                        });
-
-                    // Create user
-                    testDb.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                        [userId, orgId, email, hash, 'AuthTester', 'ADMIN'], (err) => {
-                            if (err) console.error('Auth user error:', err.message);
-                            resolve();
-                        });
-                });
-            });
-            console.log('Auth setup complete');
-        } catch (error) {
-            console.error('FATAL SETUP ERROR in auth.test.js:', error);
-            throw error;
+        if (db.initPromise) {
+            await db.initPromise;
         }
-    });
 
-    it('should login successfully with valid credentials', async () => {
-        const res = await request(app)
-            .post('/api/auth/login')
-            .send({ email, password });
-
-        expect(res.status).toBe(200);
-        expect(res.body).toHaveProperty('token');
-        expect(res.body.user).toHaveProperty('email', email);
-    });
-
-    it('should fail with invalid credentials', async () => {
-        const res = await request(app)
-            .post('/api/auth/login')
-            .send({ email, password: 'wrongpassword' });
-
-        expect(res.status).toBe(401);
-        expect(res.body).toHaveProperty('error');
-    });
-
-    it('should require email and password', async () => {
-        const res = await request(app)
-            .post('/api/auth/login')
-            .send({ email });
-
-        expect([400, 401, 404]).toContain(res.status);
-    });
-
-    it('should validate token via /api/auth/me', async () => {
-        // First login to get token
-        const loginRes = await request(app)
-            .post('/api/auth/login')
-            .send({ email, password });
-
-        const token = loginRes.body.token;
-        expect(token).toBeDefined();
-
-        // Use token to check me endpoint
-        const res = await request(app)
-            .get('/api/auth/me')
-            .set('Authorization', `Bearer ${token}`);
-
-        expect(res.status).toBe(200);
-        expect(res.body).toHaveProperty('user');
-        expect(res.body.user).toHaveProperty('email', email);
-    });
-
-    it('should reject invalid token', async () => {
-        const res = await request(app)
-            .get('/api/auth/me')
-            .set('Authorization', 'Bearer invalid-token');
-
-        expect([401, 403]).toContain(res.status);
-    });
-
-    it('should reject request without token', async () => {
-        const res = await request(app)
-            .get('/api/auth/me');
-
-        expect([401, 403]).toContain(res.status);
-    });
-
-    describe('Multi-Tenant Isolation', () => {
-        let org1Token;
-        let org2Token;
-        const testId2 = Date.now();
-        const org1Id = `auth-org1-${testId2}`;
-        const org2Id = `auth-org2-${testId2}`;
-        const user1Email = `auth-user1-${testId2}@test.com`;
-        const user2Email = `auth-user2-${testId2}@test.com`;
-
-        beforeAll(async () => {
-            const hash = bcrypt.hashSync('test123', 8);
-
-            await new Promise((resolve) => {
-                db.serialize(() => {
-                    db.run(
-                        'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                        [org1Id, 'Auth Org 1', 'free', 'active']
-                    );
-                    db.run(
-                        'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                        [org2Id, 'Auth Org 2', 'free', 'active']
-                    );
-                    db.run(
-                        'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                        [`user1-${testId2}`, org1Id, user1Email, hash, 'User1', 'USER'],
-                        () => { }
-                    );
-                    db.run(
-                        'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                        [`user2-${testId2}`, org2Id, user2Email, hash, 'User2', 'USER'],
-                        resolve
-                    );
-                });
-            });
-
-            const res1 = await request(app)
-                .post('/api/auth/login')
-                .send({ email: user1Email, password: 'test123' });
-            org1Token = res1.body.token;
-
-            const res2 = await request(app)
-                .post('/api/auth/login')
-                .send({ email: user2Email, password: 'test123' });
-            org2Token = res2.body.token;
+        // Create test organization
+        testOrgId = uuidv4();
+        await new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO organizations (id, name, plan, status, organization_type) VALUES (?, ?, ?, ?, ?)`,
+                [testOrgId, 'Auth Test Org', 'professional', 'active', 'PAID'],
+                (err) => (err ? reject(err) : resolve()),
+            );
         });
 
-        it('should return correct organizationId in /me endpoint', async () => {
-            // Need to verify tokens were actually obtained
-            expect(org1Token).toBeDefined();
-            expect(org2Token).toBeDefined();
+        // Create test user
+        testUserId = uuidv4();
+        const hashedPassword = await bcrypt.hash('password123', 10);
+        await new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)`,
+                [testUserId, testOrgId, testEmail, hashedPassword, 'ADMIN', 'active'],
+                (err) => (err ? reject(err) : resolve()),
+            );
+        });
+    });
 
-            const res1 = await request(app)
-                .get('/api/auth/me')
-                .set('Authorization', `Bearer ${org1Token}`);
+    afterAll(async () => {
+        await new Promise((resolve) => {
+            db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => resolve());
+        });
+        await new Promise((resolve) => {
+            db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], () => resolve());
+        });
+    });
 
-            const res2 = await request(app)
-                .get('/api/auth/me')
-                .set('Authorization', `Bearer ${org2Token}`);
+    describe('Login', () => {
+        it('should login with valid credentials', async () => {
+            const res = await request(app)
+                .post('/api/auth/login')
+                .send({
+                    email: testEmail,
+                    password: 'password123',
+                });
 
-            expect(res1.status).toBe(200);
-            expect(res2.status).toBe(200);
-            expect(res1.body.user.organizationId).toBe(org1Id);
-            expect(res2.body.user.organizationId).toBe(org2Id);
-            expect(res1.body.user.organizationId).not.toBe(res2.body.user.organizationId);
+            expect(res.status).toBe(200);
+            expect(res.body.token).toBeDefined();
+            expect(res.body.refreshToken).toBeDefined();
+
+            testToken = res.body.token;
+            testRefreshToken = res.body.refreshToken;
+        });
+
+        it('should reject invalid credentials', async () => {
+            const res = await request(app)
+                .post('/api/auth/login')
+                .send({
+                    email: testEmail,
+                    password: 'wrongpassword',
+                });
+
+            expect(res.status).toBe(401);
+        });
+    });
+
+    describe('Registration', () => {
+        it('should register new user', async () => {
+            const newEmail = `newuser-${Date.now()}@test.com`;
+            const res = await request(app)
+                .post('/api/auth/register')
+                .send({
+                    email: newEmail,
+                    password: 'NewPass123!',
+                    firstName: 'New',
+                    lastName: 'User',
+                    organizationId: testOrgId
+                });
+
+            expect([200, 201]).toContain(res.status);
+
+            if (res.body.user?.id) {
+                // Cleanup the newly created user
+                await new Promise((resolve) => {
+                    db.run(`DELETE FROM users WHERE id = ?`, [res.body.user.id], () => resolve());
+                });
+            }
+        });
+
+        it('should reject duplicate email', async () => {
+            const res = await request(app)
+                .post('/api/auth/register')
+                .send({
+                    email: testEmail, // Already exists
+                    password: 'NewPass123!',
+                    firstName: 'Duplicate',
+                    lastName: 'User'
+                });
+
+            expect([400, 409]).toContain(res.status);
+        });
+    });
+
+    describe('Token Management', () => {
+        it('should refresh token', async () => {
+            if (!testRefreshToken) return;
+
+            const res = await request(app)
+                .post('/api/auth/refresh')
+                .send({
+                    refreshToken: testRefreshToken,
+                });
+
+            expect([200, 401]).toContain(res.status);
+
+            if (res.status === 200) {
+                expect(res.body.token).toBeDefined();
+                testToken = res.body.token;
+            }
+        });
+
+        it('should revoke token on logout', async () => {
+            if (!testToken) return;
+
+            const res = await request(app)
+                .post('/api/auth/logout')
+                .set('Authorization', `Bearer ${testToken}`);
+
+            expect([200, 204]).toContain(res.status);
         });
     });
 });

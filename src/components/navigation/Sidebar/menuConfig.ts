@@ -67,6 +67,7 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
             label: t('sidebar.projectIntelligence', 'Project Intelligence'),
             icon: React.createElement(Brain, { size: 20 }),
             viewId: AppView.PROJECT_INTELLIGENCE,
+            badge: 'beta',
         },
         // Ecosystem affiliate dashboard (Phase G)
         ...(journeyState === 'ECOSYSTEM_NODE'
@@ -150,11 +151,13 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
             icon: React.createElement(BookOpen, { size: 20 }),
             viewId: AppView.FULL_STEP6_REPORTS,
             requiresView: AppView.FULL_STEP5_EXECUTION,
+            badge: 'beta',
         },
         {
             id: 'MODULE_TOOLS',
             label: t('sidebar.tools'),
             icon: React.createElement(Wrench, { size: 20 }),
+            badge: 'beta',
             subItems: [
                 {
                     id: 'TOOLS_AI_ADVISOR',
@@ -187,56 +190,8 @@ export function getAdminMenuItem(t: TranslationFn): MenuItem {
         id: 'ADMIN',
         label: t('sidebar.adminPanel'),
         icon: React.createElement(Shield, { size: 20 }),
-        subItems: [
-            {
-                id: 'ADMIN_OVERVIEW',
-                label: t('admin.modules.overview', 'Overview'),
-                viewId: AppView.ADMIN_OVERVIEW,
-                icon: React.createElement(LayoutDashboard, { size: 16 }),
-            },
-            {
-                id: 'ADMIN_ORGANIZATION',
-                label: t('admin.modules.organization', 'Organization'),
-                viewId: AppView.ADMIN_ORGANIZATION,
-                icon: React.createElement(Building2, { size: 16 }),
-            },
-            {
-                id: 'ADMIN_TEAM',
-                label: t('admin.modules.team', 'Team'),
-                viewId: AppView.ADMIN_TEAM,
-                icon: React.createElement(Users, { size: 16 }),
-            },
-            {
-                id: 'ADMIN_WORKSPACE',
-                label: t('admin.modules.workspace', 'Workspace'),
-                viewId: AppView.ADMIN_WORKSPACE,
-                icon: React.createElement(Briefcase, { size: 16 }),
-            },
-            {
-                id: 'ADMIN_AI',
-                label: t('admin.modules.ai', 'AI'),
-                viewId: AppView.ADMIN_AI,
-                icon: React.createElement(Brain, { size: 16 }),
-            },
-            {
-                id: 'ADMIN_BILLING',
-                label: t('admin.modules.billing', 'Billing'),
-                viewId: AppView.ADMIN_BILLING,
-                icon: React.createElement(CreditCard, { size: 16 }),
-            },
-            {
-                id: 'APP_PRICING',
-                label: t('admin.modules.pricing', 'Cennik'),
-                viewId: AppView.APP_PRICING,
-                icon: React.createElement(Sparkles, { size: 16 }),
-            },
-            {
-                id: 'ADMIN_SECURITY',
-                label: t('admin.modules.security', 'Security'),
-                viewId: AppView.ADMIN_SECURITY,
-                icon: React.createElement(Lock, { size: 16 }),
-            },
-        ],
+        viewId: AppView.ADMIN_DASHBOARD,
+        // No subItems - admin panel has its own internal navigation
     };
 }
 
@@ -285,44 +240,8 @@ export function getSettingsMenuItem(t: TranslationFn): MenuItem {
         id: 'SETTINGS',
         label: t('sidebar.settings'),
         icon: React.createElement(Settings, { size: 20 }),
-        subItems: [
-            {
-                id: 'SETTINGS_PROFILE_MODULE',
-                label: t('settings.modules.profile', 'Profile'),
-                viewId: AppView.SETTINGS_PROFILE_MODULE,
-                icon: React.createElement(UserCircle, { size: 16 }),
-            },
-            {
-                id: 'SETTINGS_AI_MODULE',
-                label: t('settings.modules.aiPreferences', 'AI Preferences'),
-                viewId: AppView.SETTINGS_AI_MODULE,
-                icon: React.createElement(Brain, { size: 16 }),
-            },
-            {
-                id: 'SETTINGS_NOTIFICATIONS_MODULE',
-                label: t('settings.modules.notifications', 'Notifications'),
-                viewId: AppView.SETTINGS_NOTIFICATIONS_MODULE,
-                icon: React.createElement(Bell, { size: 16 }),
-            },
-            {
-                id: 'SETTINGS_SECURITY_MODULE',
-                label: t('settings.modules.security', 'Security'),
-                viewId: AppView.SETTINGS_SECURITY_MODULE,
-                icon: React.createElement(Shield, { size: 16 }),
-            },
-            {
-                id: 'SETTINGS_INTEGRATIONS_MODULE',
-                label: t('settings.modules.integrations', 'Integrations'),
-                viewId: AppView.SETTINGS_INTEGRATIONS_MODULE,
-                icon: React.createElement(Link, { size: 16 }),
-            },
-            {
-                id: 'SETTINGS_APPEARANCE_MODULE',
-                label: t('settings.modules.appearance', 'Appearance'),
-                viewId: AppView.SETTINGS_APPEARANCE_MODULE,
-                icon: React.createElement(Globe, { size: 16 }),
-            },
-        ],
+        viewId: AppView.SETTINGS_PROFILE_MODULE,
+        // No subItems - settings panel has its own internal navigation
     };
 }
 
@@ -332,6 +251,46 @@ export function getPartnerMenuItem(t: TranslationFn): MenuItem {
         label: t('sidebar.partnerPortal', 'Partner Portal'),
         icon: React.createElement(Users, { size: 20 }),
         viewId: AppView.PARTNER_LANDING,
+    };
+}
+
+export function getSuperAdminMenuItem(t: TranslationFn): MenuItem {
+    return {
+        id: 'SUPERADMIN',
+        label: t('sidebar.superAdmin', 'SuperAdmin'),
+        icon: React.createElement(Shield, { size: 20 }),
+        subItems: [
+            {
+                id: 'SUPERADMIN_OVERVIEW',
+                label: t('superadmin.overview', 'Overview'),
+                viewId: AppView.SUPERADMIN_OVERVIEW,
+                icon: React.createElement(LayoutDashboard, { size: 16 }),
+            },
+            {
+                id: 'SUPERADMIN_CUSTOMERS',
+                label: t('superadmin.customers', 'Customers'),
+                viewId: AppView.SUPERADMIN_CUSTOMERS,
+                icon: React.createElement(Users, { size: 16 }),
+            },
+            {
+                id: 'SUPERADMIN_AI_PLATFORM',
+                label: t('superadmin.aiPlatform', 'AI Platform'),
+                viewId: AppView.SUPERADMIN_AI_PLATFORM,
+                icon: React.createElement(Brain, { size: 16 }),
+            },
+            {
+                id: 'SUPERADMIN_REVENUE',
+                label: t('superadmin.revenue', 'Revenue'),
+                viewId: AppView.SUPERADMIN_REVENUE,
+                icon: React.createElement(CreditCard, { size: 16 }),
+            },
+            {
+                id: 'SUPERADMIN_SYSTEM',
+                label: t('superadmin.system', 'System'),
+                viewId: AppView.SUPERADMIN_SYSTEM,
+                icon: React.createElement(Settings, { size: 16 }),
+            },
+        ],
     };
 }
 

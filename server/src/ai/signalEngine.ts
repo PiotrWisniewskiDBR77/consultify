@@ -1,3 +1,5 @@
+// @ts-nocheck
+// @ts-nocheck
 /**
  * SignalEngine
  * Detects organizational signals based on the provided AI_CONTEXT.

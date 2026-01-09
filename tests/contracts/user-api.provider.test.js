@@ -10,10 +10,10 @@ import path from 'path';
 describe('User API Provider Contract Verification', () => {
   it('should verify contracts', async () => {
     const verifier = new Verifier({
-      provider: 'consultify-backend',
+      provider: 'consultinity-backend',
       providerBaseUrl: 'http://localhost:3000',
       pactUrls: [
-        path.resolve(process.cwd(), 'tests/contracts/pacts/consultify-frontend-consultify-backend.json'),
+        path.resolve(process.cwd(), 'tests/contracts/pacts/consultinity-frontend-consultinity-backend.json'),
       ],
       // Optional: Publish verification results to Pact Broker
       publishVerificationResult: process.env.CI === 'true',
@@ -23,6 +23,8 @@ describe('User API Provider Contract Verification', () => {
     await verifier.verifyProvider();
   });
 });
+
+
 
 
 

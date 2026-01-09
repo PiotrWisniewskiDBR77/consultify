@@ -47,8 +47,8 @@
 | Environment | Branch | URL | Auto-deploy |
 |-------------|--------|-----|-------------|
 | Development | `develop` | localhost:3000 | No |
-| Staging | `develop` | staging.consultify.app | Yes (on merge) |
-| Production | `main` | consultify.app | Manual approval |
+| Staging | `develop` | staging.consultinity.app | Yes (on merge) |
+| Production | `main` | consultinity.app | Manual approval |
 
 ---
 
@@ -104,7 +104,7 @@ git push origin develop
 
 # Option 2: CLI
 gh workflow run blue-green-deploy.yml \
-  -f app=consultify \
+  -f app=consultinity \
   -f environment=production \
   -f strategy=blue-green
 ```
@@ -132,17 +132,17 @@ gh workflow run blue-green-deploy.yml \
 kubectl apply -k infrastructure/kubernetes/overlays/production-green
 
 # 2. Wait for rollout
-kubectl rollout status deployment/consultify-api -n production-green
+kubectl rollout status deployment/consultinity-api -n production-green
 
 # 3. Run smoke tests
-./scripts/smoke-test.sh https://green.consultify.app
+./scripts/smoke-test.sh https://green.consultinity.app
 
 # 4. Switch traffic
-kubectl patch ingress consultify-ingress -n production \
-  --patch '{"spec":{"rules":[{"host":"consultify.app","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"consultify-api-green","port":{"number":3001}}}}]}}]}}'
+kubectl patch ingress consultinity-ingress -n production \
+  --patch '{"spec":{"rules":[{"host":"consultinity.app","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"consultinity-api-green","port":{"number":3001}}}}]}}]}}'
 
 # 5. Monitor
-kubectl logs -f deployment/consultify-api -n production-green --tail=100
+kubectl logs -f deployment/consultinity-api -n production-green --tail=100
 ```
 
 ### Canary Deployment
@@ -163,12 +163,12 @@ kubectl apply -f infrastructure/kubernetes/canary/traffic-split.yaml
 watch kubectl get --raw '/apis/metrics.k8s.io/v1beta1/pods' | jq
 
 # 3. Increase to 50%
-kubectl patch trafficsplit consultify-split \
-  --patch '{"spec":{"backends":[{"service":"consultify-api","weight":50},{"service":"consultify-api-canary","weight":50}]}}'
+kubectl patch trafficsplit consultinity-split \
+  --patch '{"spec":{"backends":[{"service":"consultinity-api","weight":50},{"service":"consultinity-api-canary","weight":50}]}}'
 
 # 4. Full rollout
-kubectl patch trafficsplit consultify-split \
-  --patch '{"spec":{"backends":[{"service":"consultify-api-canary","weight":100}]}}'
+kubectl patch trafficsplit consultinity-split \
+  --patch '{"spec":{"backends":[{"service":"consultinity-api-canary","weight":100}]}}'
 ```
 
 ### Zero-Downtime Deployment
@@ -196,23 +196,23 @@ Rollback triggers automatically if:
 #### Kubernetes Rollback
 ```bash
 # List deployment history
-kubectl rollout history deployment/consultify-api -n production
+kubectl rollout history deployment/consultinity-api -n production
 
 # Rollback to previous version
-kubectl rollout undo deployment/consultify-api -n production
+kubectl rollout undo deployment/consultinity-api -n production
 
 # Rollback to specific revision
-kubectl rollout undo deployment/consultify-api -n production --to-revision=3
+kubectl rollout undo deployment/consultinity-api -n production --to-revision=3
 
 # Verify rollback
-kubectl rollout status deployment/consultify-api -n production
+kubectl rollout status deployment/consultinity-api -n production
 ```
 
 #### Blue-Green Rollback
 ```bash
 # Switch traffic back to blue
-kubectl patch ingress consultify-ingress -n production \
-  --patch '{"spec":{"rules":[{"host":"consultify.app","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"consultify-api-blue","port":{"number":3001}}}}]}}]}}'
+kubectl patch ingress consultinity-ingress -n production \
+  --patch '{"spec":{"rules":[{"host":"consultinity.app","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"consultinity-api-blue","port":{"number":3001}}}}]}}]}}'
 ```
 
 #### Database Rollback
@@ -221,7 +221,7 @@ kubectl patch ingress consultify-ingress -n production \
 npm run migrate:down
 
 # Restore from backup (if needed)
-pg_restore -h $DB_HOST -U $DB_USER -d consultify backup_20260104.dump
+pg_restore -h $DB_HOST -U $DB_USER -d consultinity backup_20260104.dump
 ```
 
 ### Rollback Checklist
@@ -271,7 +271,7 @@ pg_restore -h $DB_HOST -U $DB_USER -d consultify backup_20260104.dump
 
 ```bash
 # 1. Promote RDS replica to primary
-aws rds promote-read-replica --db-instance-identifier consultify-replica-eu-west-1
+aws rds promote-read-replica --db-instance-identifier consultinity-replica-eu-west-1
 
 # 2. Update DNS (Route 53 does this automatically with health checks)
 # Or manually:
@@ -280,10 +280,10 @@ aws route53 change-resource-record-sets --hosted-zone-id Z123456 \
 
 # 3. Scale up standby EKS cluster
 kubectl config use-context eu-west-1
-kubectl scale deployment consultify-api --replicas=3
+kubectl scale deployment consultinity-api --replicas=3
 
 # 4. Verify services
-curl https://consultify.app/api/health
+curl https://consultinity.app/api/health
 ```
 
 ---
@@ -341,7 +341,7 @@ SENTRY_DSN
 
 **Manual scaling:**
 ```bash
-kubectl scale deployment consultify-api --replicas=5 -n production
+kubectl scale deployment consultinity-api --replicas=5 -n production
 ```
 
 ---
@@ -358,13 +358,13 @@ kubectl get deployments -n production
 kubectl get pods -n production -o wide
 
 # View logs
-kubectl logs -f deployment/consultify-api -n production
+kubectl logs -f deployment/consultinity-api -n production
 
 # Execute into pod
-kubectl exec -it deployment/consultify-api -n production -- /bin/sh
+kubectl exec -it deployment/consultinity-api -n production -- /bin/sh
 
 # Port forward for debugging
-kubectl port-forward svc/consultify-api 3001:3001 -n production
+kubectl port-forward svc/consultinity-api 3001:3001 -n production
 
 # View metrics
 kubectl top pods -n production
@@ -378,12 +378,14 @@ kubectl get hpa -n production
 | Role | Contact |
 |------|---------|
 | On-call Engineer | PagerDuty |
-| Infrastructure Lead | infra@consultify.com |
-| Security Team | security@consultify.com |
+| Infrastructure Lead | infra@consultinity.com |
+| Security Team | security@consultinity.com |
 
 ---
 
 *This guide should be reviewed and updated after each major infrastructure change.*
+
+
 
 
 

@@ -31,7 +31,7 @@ class NotificationService {
 
         try {
             const sql = `INSERT INTO notifications (
-                        id, user_id, type, title, message, data, read, created_at
+                        id, user_id, type, title, message, data, is_read, created_at
                     ) VALUES (?, ?, ?, ?, ?, ?, 0, ?)`;
             
             const result = await dbRun(sql, [
@@ -67,7 +67,7 @@ class NotificationService {
             const params: any[] = [userId];
 
             if (unreadOnly) {
-                sql += ` AND read = 0`;
+                sql += ` AND is_read = 0`;
             }
 
             sql += ` ORDER BY created_at DESC LIMIT ?`;
@@ -95,7 +95,7 @@ class NotificationService {
         try {
             const sql = `SELECT 
                         COUNT(*) as total,
-                        SUM(CASE WHEN read = 0 AND is_read = 0 THEN 1 ELSE 0 END) as unread
+                        SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread
                     FROM notifications 
                     WHERE user_id = ?`;
             
@@ -114,7 +114,7 @@ class NotificationService {
 
     async markRead(notificationId: string, userId: string): Promise<{ success: boolean }> {
         try {
-            const sql = `UPDATE notifications SET read = 1, is_read = 1 WHERE id = ? AND user_id = ?`;
+            const sql = `UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?`;
             const result = await dbRun(sql, [notificationId, userId]);
             return { success: result.success && (result as any).changes > 0 };
         } catch (error: any) {
@@ -125,7 +125,7 @@ class NotificationService {
 
     async markAllRead(userId: string): Promise<{ success: boolean; count: number }> {
         try {
-            const sql = `UPDATE notifications SET read = 1, is_read = 1 WHERE user_id = ? AND (read = 0 OR is_read = 0)`;
+            const sql = `UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0`;
             const result = await dbRun(sql, [userId]);
             return {
                 success: result.success,

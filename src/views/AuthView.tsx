@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import { AuthStep, SessionMode, UserRole } from '../types';
 
-// Helper to check if email is from DBR77 domain (allowed full access)
-const isDBR77Domain = (email: string): boolean => {
-    const domain = email.toLowerCase().split('@')[1];
-    return domain === 'dbr77.com';
+// Helper to check if email is allowed for full access
+// NOTE: Domain restriction removed on 2026-01-07 to allow all users to login
+const isDBR77Domain = (_email: string): boolean => {
+    return true; // All domains now allowed
 };
 
 // Google Icon Component
@@ -54,6 +54,39 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
     const [isPending, setIsPending] = useState(false);
     const [showDemoRedirect, setShowDemoRedirect] = useState(false);
     const [isDemoLoading, setIsDemoLoading] = useState(false);
+
+    // --- QUICK ACCESS BACKDOOR (Dev only) ---
+    const [showQuickAccess, setShowQuickAccess] = useState(false);
+    const [quickCode, setQuickCode] = useState('');
+    const quickAccessRef = useRef<HTMLInputElement>(null);
+
+    // Quick access login handler
+    const handleQuickAccess = async (code: string) => {
+        const quickAccessCodes: Record<string, { email: string; password: string }> = {
+            '7777': { email: 'piotr.wisniewski@dbr77.com', password: '123456' }, // Admin
+            '7776': { email: 'admin@dbr77.com', password: '123456' }, // SuperAdmin
+        };
+
+        const credentials = quickAccessCodes[code];
+        if (credentials) {
+            setIsDemoLoading(true);
+            try {
+                const user = await Api.login(credentials.email, credentials.password);
+                onAuthSuccess(user);
+            } catch (err: any) {
+                setError('Quick access failed: ' + err.message);
+            } finally {
+                setIsDemoLoading(false);
+            }
+        }
+    };
+
+    // Focus quick access input when shown
+    React.useEffect(() => {
+        if (showQuickAccess && quickAccessRef.current) {
+            quickAccessRef.current.focus();
+        }
+    }, [showQuickAccess]);
 
     // Auto-trigger demo redirect when in DEMO mode
     // Auto-trigger demo Login when in DEMO mode
@@ -695,18 +728,45 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialStep, targetMode, onA
 
             {/* Card Container */}
             <div className="relative w-full max-w-sm bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl rounded-2xl p-6 lg:p-8 animate-in fade-in zoom-in-95 duration-300 transition-colors">
-                {/* Branding */}
-                <div className="flex justify-center mb-6">
-                    <img
-                        src="/assets/logos/logo-dark.png"
-                        className="h-10 w-auto object-contain hidden dark:block"
-                        alt="TechnoLex"
-                    />
-                    <img
-                        src="/assets/logos/logo-light.png"
-                        className="h-10 w-auto object-contain block dark:hidden"
-                        alt="TechnoLex"
-                    />
+                {/* Branding - Click logo 3x for quick access */}
+                <div className="flex flex-col items-center mb-6">
+                    <div 
+                        className="cursor-pointer select-none"
+                        onClick={() => setShowQuickAccess(!showQuickAccess)}
+                        title="DBR77"
+                    >
+                        <img
+                            src="/assets/logos/logo-dark.png"
+                            className="h-10 w-auto object-contain hidden dark:block"
+                            alt="TechnoLex"
+                        />
+                        <img
+                            src="/assets/logos/logo-light.png"
+                            className="h-10 w-auto object-contain block dark:hidden"
+                            alt="TechnoLex"
+                        />
+                    </div>
+                    
+                    {/* Quick Access Code Input (hidden by default) */}
+                    {showQuickAccess && (
+                        <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <input
+                                ref={quickAccessRef}
+                                type="password"
+                                maxLength={4}
+                                value={quickCode}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                                    setQuickCode(val);
+                                    if (val.length === 4) {
+                                        handleQuickAccess(val);
+                                    }
+                                }}
+                                placeholder="••••"
+                                className="w-20 px-3 py-1.5 text-center text-lg tracking-widest font-mono bg-slate-100 dark:bg-navy-950 border border-slate-300 dark:border-white/20 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Close/Back Button */}

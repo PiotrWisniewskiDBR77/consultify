@@ -73,6 +73,7 @@ export const ROUTES = {
         AI: '/admin/ai',
         BILLING: '/admin/billing',
         SECURITY: '/admin/security',
+        COMPLIANCE: '/admin/compliance',
     },
 
     // Settings
@@ -125,6 +126,25 @@ export const ROUTES = {
 
     // AI Actions
     AI_ACTIONS: '/ai-actions',
+
+    // Legal
+    LEGAL: {
+        ABOUT: '/about',
+        CONTACT: '/contact',
+        TERMS: '/terms',
+        PRIVACY: '/privacy',
+        COOKIES: '/cookies',
+        SECURITY: '/security',
+    },
+
+    // Status & Changelog
+    STATUS: '/status',
+    CHANGELOG: '/changelog',
+
+    // Knowledge & Pricing
+    KNOWLEDGE_BASE: '/knowledge',
+    PRICING: '/pricing',
+    EXECUTIVE: '/executive',
 } as const;
 
 /**
@@ -303,7 +323,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
     // Partner
     [AppView.PARTNER_LANDING]: ROUTES.PARTNER.LANDING,
     [AppView.PARTNER_PRICING]: ROUTES.PARTNER.PRICING,
-    [AppView.APP_PRICING]: ROUTES.PARTNER.PRICING,
+    [AppView.APP_PRICING]: ROUTES.PRICING,
     [AppView.PARTNER_PROVIDER_HOME]: ROUTES.PARTNER.DASHBOARD,
     [AppView.PARTNER_DASHBOARD]: ROUTES.PARTNER.DASHBOARD,
     [AppView.PARTNER_CLIENT_ACCESS]: ROUTES.PARTNER.CLIENTS,
@@ -336,9 +356,9 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
     [AppView.FULL_TRANSFORMATION_CHAT]: ROUTES.AI_CHAT,
     [AppView.MASTERCLASS]: ROUTES.DASHBOARD,
     [AppView.RESOURCES]: ROUTES.DASHBOARD,
-    [AppView.EXECUTIVE_VIEW]: ROUTES.DASHBOARD,
-    [AppView.KNOWLEDGE_BASE]: ROUTES.DASHBOARD,
-    [AppView.KNOWLEDGE_BASE_ARTICLE]: ROUTES.DASHBOARD,
+    [AppView.EXECUTIVE_VIEW]: ROUTES.EXECUTIVE,
+    [AppView.KNOWLEDGE_BASE]: ROUTES.KNOWLEDGE_BASE,
+    [AppView.KNOWLEDGE_BASE_ARTICLE]: ROUTES.KNOWLEDGE_BASE,
     [AppView.STATUS_PAGE]: ROUTES.DASHBOARD,
     [AppView.CHANGELOG]: ROUTES.DASHBOARD,
     [AppView.HELP_ANALYTICS]: ROUTES.DASHBOARD,

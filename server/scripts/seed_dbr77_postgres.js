@@ -88,7 +88,7 @@ async function seedDBR77() {
             `INSERT INTO organizations (id, name, plan, status, created_at)
              VALUES ($1, $2, $3, $4, NOW())
              ON CONFLICT (id) DO NOTHING`,
-            [DBR77_ORG_ID, 'Consultify / DBR77', 'enterprise', 'active']
+            [DBR77_ORG_ID, 'Consultinity / DBR77', 'enterprise', 'active']
         );
         console.log(`✅ Created DBR77 Organization: ${DBR77_ORG_ID}`);
 
@@ -164,7 +164,7 @@ async function seedDBR77() {
         await client.query('COMMIT');
         console.log('\n✅ DBR77 seed completed successfully!');
         console.log('\n📋 Summary:');
-        console.log(`   - Organization: Consultify / DBR77 (${DBR77_ORG_ID})`);
+        console.log(`   - Organization: Consultinity / DBR77 (${DBR77_ORG_ID})`);
         console.log(`   - Users: admin@dbr77.com, piotr.wisniewski@dbr77.com, justyna.laskowska@dbr77.com`);
         console.log(`   - Default password: 123456`);
         console.log(`   - Project: Digital Transformation 2025`);

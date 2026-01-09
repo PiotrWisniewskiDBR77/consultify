@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Database Factory
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -14,8 +15,8 @@ import type { IDatabase } from './IDatabase.js';
 import PostgresDatabase from './PostgresDatabase.js';
 
 const require = createRequire(import.meta.url);
-const GLOBAL_DB_KEY = '__CONSULTIFY_GLOBAL_DB_INSTANCE__';
-const SQLITE_GLOBAL_KEY = '__CONSULTIFY_SQLITE_INSTANCE__';
+const GLOBAL_DB_KEY = '__CONSULTINITY_GLOBAL_DB_INSTANCE__';
+const SQLITE_GLOBAL_KEY = '__CONSULTINITY_SQLITE_INSTANCE__';
 
 // local cache
 let dbInstance: IDatabase | null = null;

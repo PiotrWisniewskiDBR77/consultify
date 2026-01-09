@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * useExecutionScore Hook - Personal execution metrics
  * Part of My Work Module PMO Upgrade

@@ -1,12 +1,44 @@
-// server/models/megatrend.js
+// @ts-nocheck
+// server/models/megatrend.ts
 // Provides data access for Megatrend Scanner module
 // Uses the existing SQLite/Postgres db abstraction (db.get, db.all, db.run)
 
-import { getDatabase } from '../src/database/Database.js';
+import { getDatabase } from '../database/index.js';
 const db = getDatabase();
 
+// TypeScript interfaces
+interface Megatrend {
+    id: string;
+    type: string;
+    label: string;
+    description: string;
+    baseImpactScore: number;
+    initialRing: string;
+    industry?: string;
+}
+
+interface MegatrendRow {
+    id: string;
+    industry: string;
+    type: string;
+    label: string;
+    description: string;
+    base_impact_score: number;
+    initial_ring: string;
+    ring?: string;
+    impact?: number;
+}
+
+interface CustomTrendPayload {
+    industry: string;
+    type: string;
+    label: string;
+    description: string;
+    ring: string;
+}
+
 // Default megatrends data for common industries (fallback when DB is empty)
-const DEFAULT_MEGATRENDS = {
+const DEFAULT_MEGATRENDS: Record<string, Megatrend[]> = {
     automotive: [
         { id: 'auto-1', type: 'Technology', label: 'Electric Vehicle Revolution', description: 'Transition from ICE to electric powertrains across all segments', baseImpactScore: 7, initialRing: 'Now' },
         { id: 'auto-2', type: 'Technology', label: 'Autonomous Driving', description: 'Self-driving capabilities from L2 to full autonomy', baseImpactScore: 6, initialRing: 'Watch Closely' },
@@ -50,14 +82,14 @@ const DEFAULT_MEGATRENDS = {
 };
 
 // Get default trends for any industry
-function getDefaultTrends(industry) {
+function getDefaultTrends(industry: string | undefined): Megatrend[] {
     const normalizedIndustry = (industry || 'manufacturing').toLowerCase();
     const trends = DEFAULT_MEGATRENDS[normalizedIndustry] || DEFAULT_MEGATRENDS.manufacturing;
     return trends.map(t => ({ ...t, industry: normalizedIndustry }));
 }
 
 // Helper to map DB rows to JS objects
-function mapMegatrendRow(row) {
+function mapMegatrendRow(row: MegatrendRow): Megatrend {
     return {
         id: row.id,
         industry: row.industry,

@@ -8,8 +8,8 @@ import { Pact } from '@pact-foundation/pact';
 import path from 'path';
 
 const provider = new Pact({
-  consumer: 'consultify-frontend',
-  provider: 'consultify-backend',
+  consumer: 'consultinity-frontend',
+  provider: 'consultinity-backend',
   port: 1234,
   log: path.resolve(process.cwd(), 'tests/contracts/logs', 'pact.log'),
   dir: path.resolve(process.cwd(), 'tests/contracts/pacts'),
@@ -106,6 +106,8 @@ describe('User API Contract', () => {
     });
   });
 });
+
+
 
 
 

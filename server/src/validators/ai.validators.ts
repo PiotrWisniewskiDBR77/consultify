@@ -35,7 +35,13 @@ export const ChatStreamRequestSchema = z.object({
     systemInstruction: z.string().optional(),
     context: z.record(z.string(), z.unknown()).optional(),
     roleName: z.string().optional(),
-    language: z.enum(['pl', 'en', 'de', 'es', 'ja', 'ar']).optional(),
+    language: z.string().transform(lang => {
+        // Accept locale variants like 'en-GB', 'en-US', etc. and convert to base code
+        if (!lang) return 'en';
+        const base = lang.split('-')[0].toLowerCase();
+        const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+        return validLangs.includes(base) ? base : 'en';
+    }).optional(),
     conversationId: z.string().optional(),
     resumeFromPartial: z.boolean().optional(),
 });

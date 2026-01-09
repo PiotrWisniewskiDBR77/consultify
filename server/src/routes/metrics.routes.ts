@@ -72,32 +72,38 @@ router.get('/conversion-intelligence', async (_req, res) => {
 
 /**
  * GET /api/metrics/funnels
- * Conversion funnel metrics
+ * Conversion funnel metrics - format matching frontend SuperAdminMetricsView
  */
 router.get('/funnels', async (_req, res) => {
     try {
-        // Mock data for funnels
+        // Data structure matching frontend expectations
         const data = {
-            funnels: [
-                {
-                    name: 'Trial to Paid',
-                    stages: [
-                        { name: 'Trial Started', count: 1000, percentage: 100 },
-                        { name: 'Activated', count: 750, percentage: 75 },
-                        { name: 'Engaged', count: 500, percentage: 50 },
-                        { name: 'Converted', count: 125, percentage: 12.5 },
-                    ],
+            funnels: {
+                trialToPaid: {
+                    name: 'Trial → Paid',
+                    conversionRate: 12.5,
+                    startCount: 1000,
+                    endCount: 125,
                 },
-                {
-                    name: 'Lead to Trial',
-                    stages: [
-                        { name: 'Lead Captured', count: 2000, percentage: 100 },
-                        { name: 'Qualified', count: 1200, percentage: 60 },
-                        { name: 'Demo Scheduled', count: 800, percentage: 40 },
-                        { name: 'Trial Started', count: 400, percentage: 20 },
-                    ],
+                leadToTrial: {
+                    name: 'Lead → Trial',
+                    conversionRate: 45.2,
+                    startCount: 2000,
+                    endCount: 904,
                 },
-            ],
+                demoToTrial: {
+                    name: 'Demo → Trial',
+                    conversionRate: 68.0,
+                    startCount: 500,
+                    endCount: 340,
+                },
+                visitToLead: {
+                    name: 'Visit → Lead',
+                    conversionRate: 8.5,
+                    startCount: 10000,
+                    endCount: 850,
+                },
+            },
         };
         return res.json(data);
     } catch (error: unknown) {
@@ -109,18 +115,18 @@ router.get('/funnels', async (_req, res) => {
 
 /**
  * GET /api/metrics/attribution
- * Attribution channel metrics
+ * Attribution channel metrics - format matching frontend SuperAdminMetricsView
  */
 router.get('/attribution', async (_req, res) => {
     try {
-        // Mock data for attribution
+        // Data structure matching frontend expectations
         const data = {
             channels: [
-                { channel: 'Direct', trials: 450, paid: 85, conversionRate: 18.9 },
-                { channel: 'Organic Search', trials: 320, paid: 45, conversionRate: 14.1 },
-                { channel: 'Referral', trials: 180, paid: 32, conversionRate: 17.8 },
-                { channel: 'Paid Search', trials: 150, paid: 18, conversionRate: 12.0 },
-                { channel: 'Social', trials: 95, paid: 8, conversionRate: 8.4 },
+                { source: 'Direct', trials: 450, conversions: 85, conversionRate: 18.9 },
+                { source: 'Organic Search', trials: 320, conversions: 45, conversionRate: 14.1 },
+                { source: 'Referral', trials: 180, conversions: 32, conversionRate: 17.8 },
+                { source: 'Paid Search', trials: 150, conversions: 18, conversionRate: 12.0 },
+                { source: 'Social Media', trials: 95, conversions: 8, conversionRate: 8.4 },
             ],
             totalTrials: 1195,
             totalPaid: 188,
@@ -130,6 +136,74 @@ router.get('/attribution', async (_req, res) => {
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         logger.error('[MetricsRoutes] Error fetching attribution:', err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * GET /api/metrics/warnings
+ * Early warning signals for churn risk
+ */
+router.get('/warnings', async (_req, res) => {
+    try {
+        // TODO: In production, query from database for real warnings
+        const data = {
+            warnings: [
+                // Example warnings - in production these would come from real analytics
+                // { organizationName: 'Acme Corp', type: 'USAGE_DROP', severity: 'HIGH', message: 'Usage dropped 50% this week' },
+            ],
+        };
+        return res.json(data);
+    } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('[MetricsRoutes] Error fetching warnings:', err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * GET /api/metrics/partners
+ * Partner/affiliate leaderboard metrics
+ */
+router.get('/partners', async (_req, res) => {
+    try {
+        // TODO: In production, query from partner_referrals table
+        const data = {
+            leaderboard: [
+                // Example data - in production these would come from real partner data
+                // { partnerName: 'TechPartner Inc', partnerType: 'RESELLER', totalRevenue: 15000, orgCount: 12 },
+            ],
+        };
+        return res.json(data);
+    } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('[MetricsRoutes] Error fetching partners:', err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * GET /api/metrics/help
+ * Help system effectiveness metrics (playbook completion)
+ */
+router.get('/help', async (_req, res) => {
+    try {
+        // TODO: In production, query from help_progress table
+        const data = {
+            byPlaybook: [
+                { playbookKey: 'getting_started', started: 500, completed: 425, completionRate: 85 },
+                { playbookKey: 'first_project', started: 400, completed: 280, completionRate: 70 },
+                { playbookKey: 'team_setup', started: 200, completed: 140, completionRate: 70 },
+                { playbookKey: 'integrations', started: 150, completed: 90, completionRate: 60 },
+            ],
+            totalStarted: 1250,
+            totalCompleted: 935,
+            overallCompletionRate: 74.8,
+        };
+        return res.json(data);
+    } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('[MetricsRoutes] Error fetching help metrics:', err);
         return res.status(500).json({ error: err.message });
     }
 });

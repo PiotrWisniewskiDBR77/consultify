@@ -77,7 +77,7 @@ Required for production:
 DB_TYPE=postgres  # or sqlite
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=consultify
+DB_NAME=consultinity
 DB_USER=postgres
 DB_PASSWORD=your_password
 

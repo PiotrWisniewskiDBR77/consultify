@@ -204,7 +204,9 @@
 
 ---
 
-*Szablon zgodny z Meta-PMO Framework - Consultify Professional Services*
+*Szablon zgodny z Meta-PMO Framework - Consultinity Professional Services*
+
+
 
 
 

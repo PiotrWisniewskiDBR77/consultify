@@ -37,9 +37,9 @@ vi.mock('../../../server/database', () => ({
 describe('WebAuthn Service', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        process.env.WEBAUTHN_RP_ID = 'consultify.app';
-        process.env.WEBAUTHN_RP_NAME = 'Consultify';
-        process.env.WEBAUTHN_RP_ORIGIN = 'https://consultify.app';
+        process.env.WEBAUTHN_RP_ID = 'consultinity.app';
+        process.env.WEBAUTHN_RP_NAME = 'Consultinity';
+        process.env.WEBAUTHN_RP_ORIGIN = 'https://consultinity.app';
     });
 
     describe('Challenge Generation', () => {
@@ -61,7 +61,7 @@ describe('WebAuthn Service', () => {
 
     describe('Relying Party Configuration', () => {
         it('should have valid RP ID from environment', () => {
-            const rpId = process.env.WEBAUTHN_RP_ID || 'consultify.app';
+            const rpId = process.env.WEBAUTHN_RP_ID || 'consultinity.app';
             
             expect(rpId).toBeDefined();
             expect(typeof rpId).toBe('string');
@@ -69,14 +69,14 @@ describe('WebAuthn Service', () => {
         });
 
         it('should have valid RP name from environment', () => {
-            const rpName = process.env.WEBAUTHN_RP_NAME || 'Consultify';
+            const rpName = process.env.WEBAUTHN_RP_NAME || 'Consultinity';
             
             expect(rpName).toBeDefined();
             expect(typeof rpName).toBe('string');
         });
 
         it('should have valid RP origin from environment', () => {
-            const rpOrigin = process.env.WEBAUTHN_RP_ORIGIN || 'https://consultify.app';
+            const rpOrigin = process.env.WEBAUTHN_RP_ORIGIN || 'https://consultinity.app';
             
             expect(rpOrigin).toBeDefined();
             expect(rpOrigin.startsWith('https://')).toBe(true);

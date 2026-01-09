@@ -1,4 +1,4 @@
-# Enterprise Readiness Scorecard - Consultify AI System
+# Enterprise Readiness Scorecard - Consultinity AI System
 
 **Data audytu:** 2026-01-03  
 **Wersja:** 2.0  
@@ -273,9 +273,9 @@
 **Certification Level:** 🟢 **Full Enterprise Certification**
 
 **Comparison to Industry Standards:**
-- **Salesforce:** 85/100 - Consultify: **94.5/100** ✅ +9.5
-- **ServiceNow:** 88/100 - Consultify: **94.5/100** ✅ +6.5
-- **Microsoft Dynamics:** 82/100 - Consultify: **94.5/100** ✅ +12.5
+- **Salesforce:** 85/100 - Consultinity: **94.5/100** ✅ +9.5
+- **ServiceNow:** 88/100 - Consultinity: **94.5/100** ✅ +6.5
+- **Microsoft Dynamics:** 82/100 - Consultinity: **94.5/100** ✅ +12.5
 
 **Gap Analysis:**
 - ✅ **Exceeds Salesforce** by +9.5 points
@@ -408,7 +408,7 @@
 
 ```
 ═══════════════════════════════════════════════════════════════
-         CONSULTIFY AI ENTERPRISE CERTIFICATION
+         CONSULTINITY AI ENTERPRISE CERTIFICATION
 ═══════════════════════════════════════════════════════════════
 
 Certificate ID: CERT-2026-01-03-AI-001
@@ -419,7 +419,7 @@ CERTIFICATION: ✅ ENTERPRISE DEPLOYMENT READY
 
 Score: 94.5/100
 
-This certifies that the Consultify AI System has met all
+This certifies that the Consultinity AI System has met all
 enterprise readiness requirements for production deployment.
 
 All P0, P1, P2, and P3 conditions have been satisfied.

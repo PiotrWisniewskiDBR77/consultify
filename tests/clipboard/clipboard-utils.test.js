@@ -66,40 +66,39 @@ const createCopyHelper = (clipboard) => {
     const history = [];
     const maxHistory = 10;
 
+    const copy = async (text, options = {}) => {
+        await clipboard.writeText(text);
+
+        history.unshift({
+            text: text.slice(0, 100), // Store first 100 chars
+            timestamp: Date.now(),
+            type: options.type || 'text',
+        });
+
+        if (history.length > maxHistory) {
+            history.pop();
+        }
+
+        return true;
+    };
+
+    const copyRich = async (html, fallbackText) => {
+        await clipboard.writeHTML(html);
+        await clipboard.writeText(fallbackText);
+        return true;
+    };
+
+    const copyJSON = async (data) => {
+        const text = JSON.stringify(data, null, 2);
+        return copy(text, { type: 'json' });
+    };
+
     return {
-        copy: async (text, options = {}) => {
-            await clipboard.writeText(text);
-
-            history.unshift({
-                text: text.slice(0, 100), // Store first 100 chars
-                timestamp: Date.now(),
-                type: options.type || 'text',
-            });
-
-            if (history.length > maxHistory) {
-                history.pop();
-            }
-
-            return true;
-        },
-
-        copyRich: async (html, fallbackText) => {
-            await clipboard.writeHTML(html);
-            await clipboard.writeText(fallbackText);
-            return true;
-        },
-
-        copyJSON: async (data) => {
-            const text = JSON.stringify(data, null, 2);
-            return this.copy(text, { type: 'json' });
-        },
-
+        copy,
+        copyRich,
+        copyJSON,
         getHistory: () => [...history],
-
-        clearHistory: () => {
-            history.length = 0;
-        },
-
+        clearHistory: () => { history.length = 0; },
         getLastCopied: () => history[0] || null,
     };
 };

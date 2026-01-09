@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide describes the migration process for implementing the System Module in an existing Consultify installation.
+This guide describes the migration process for implementing the System Module in an existing Consultinity installation.
 
 ## Pre-Migration Checklist
 
@@ -81,7 +81,7 @@ Run the following checks:
 
 ```bash
 # Check database tables
-sqlite3 consultify.db ".tables" | grep -E "(audit_logs|feature_flags|webhook_deliveries)"
+sqlite3 consultinity.db ".tables" | grep -E "(audit_logs|feature_flags|webhook_deliveries)"
 
 # Test API endpoints
 curl -H "Authorization: Bearer TOKEN" http://localhost:3000/api/system-health

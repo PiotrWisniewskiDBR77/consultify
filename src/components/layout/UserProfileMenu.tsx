@@ -1,9 +1,10 @@
-import { ChevronDown, Cpu, CreditCard, Languages, LogOut, Monitor, Moon, Sun, UserCircle } from 'lucide-react';
+import { ChevronDown, Cpu, CreditCard, Eye, FlaskConical, Languages, LogOut, Monitor, Moon, Sun, UserCircle } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useDemo } from '../../hooks/useDemo';
 import { useAppStore } from '../../store/useAppStore';
-import { AppView } from '../../types';
+import { AppView, SessionMode } from '../../types';
 
 interface UserProfileMenuProps {
     className?: string;
@@ -11,7 +12,8 @@ interface UserProfileMenuProps {
 }
 
 export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ className = '', showName = true }) => {
-    const { currentUser, setCurrentView, logout, theme, toggleTheme } = useAppStore();
+    const { currentUser, setCurrentView, logout, theme, toggleTheme, sessionMode, setSessionMode } = useAppStore();
+    const { isDemoMode, demoOrganization, isDemoLoading, toggleDemoMode } = useDemo();
 
     const { t, i18n } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
@@ -165,6 +167,56 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ className = ''
                                 ))}
                             </div>
                         </div>
+
+                        {/* Demo Mode Toggle - Only for regular users, NOT for SuperAdmin */}
+                        {currentUser.role?.toUpperCase() !== 'SUPERADMIN' && (
+                            <div className={`rounded-lg transition-colors ${isDemoMode ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}>
+                                <div className="flex items-center justify-between px-2 py-1.5">
+                                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                        <FlaskConical size={16} className={isDemoMode ? 'text-indigo-500' : ''} />
+                                        <div>
+                                            <span className="font-medium">{t('settings.menu.demoMode', 'Tryb Demo')}</span>
+                                            {isDemoMode && demoOrganization && (
+                                                <div className="text-[10px] text-indigo-500 dark:text-indigo-400 truncate max-w-[120px]">
+                                                    {demoOrganization.name}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleDemoMode();
+                                        }}
+                                        disabled={isDemoLoading}
+                                        className={`relative w-10 h-5 rounded-full transition-colors disabled:opacity-50 ${
+                                            isDemoMode
+                                                ? 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                                                : 'bg-slate-300 dark:bg-navy-700'
+                                        }`}
+                                        title={isDemoMode 
+                                            ? t('settings.menu.demoModeOn', 'Demo Mode włączony - przeglądasz dane Acme Digital Corp')
+                                            : t('settings.menu.demoModeOff', 'Włącz Demo Mode aby zobaczyć przykładowe dane')
+                                        }
+                                    >
+                                        {isDemoLoading ? (
+                                            <span className="absolute top-0.5 left-0.5 w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <span
+                                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                                    isDemoMode ? 'translate-x-5' : ''
+                                                }`}
+                                            />
+                                        )}
+                                    </button>
+                                </div>
+                                {isDemoMode && (
+                                    <div className="px-2 pb-1.5 text-[10px] text-indigo-600 dark:text-indigo-400">
+                                        ⚡ Dane demo - tylko do odczytu
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Navigation Links */}

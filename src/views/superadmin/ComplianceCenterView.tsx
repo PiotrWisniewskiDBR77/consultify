@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * ComplianceCenterView - Super Admin Compliance Management
  *

@@ -2,7 +2,7 @@
  * ADMA 2.0 (Advanced Digital Maturity Assessment) Structure
  *
  * ADMA jest narzędziem opracowanym przez European Commission w ramach
- * programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.
+ * programu Digital Innovation Hubs. Wykorzystanie w Consultinity służy celom edukacyjnym.
  *
  * Structure:
  * - 5 Pillars (Strategy, Smart Products, Smart Operations, Smart Supply Chain, Data-Driven)

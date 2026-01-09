@@ -55,7 +55,7 @@ if (isPostgres) {
     const sqlite3Module = await import('sqlite3');
     const sqlite3 = sqlite3Module.default.verbose();
     const __dirname = path.dirname(new URL(import.meta.url).pathname);
-    const dbPath = path.resolve(__dirname, '../consultify.db');
+    const dbPath = path.resolve(__dirname, '../consultinity.db');
     db = new sqlite3.Database(dbPath, (err) => {
         if (err) {
             console.error('❌ Error opening database:', err.message);
@@ -1015,7 +1015,7 @@ async function seedNotifications() {
         {
             userId: IDS.USER_ADMIN,
             type: 'system',
-            title: 'Welcome to Consultify',
+            title: 'Welcome to Consultinity',
             message: 'Your enterprise transformation platform is ready. Start with your first assessment.',
             isRead: 1
         },

@@ -97,7 +97,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     const filters: any = {};
                     if (ideaCategoryFilter) filters.category = ideaCategoryFilter;
                     const data = await Api.getApprovedIdeas(filters);
-                    setCandidates(data);
+                    setCandidates(Array.isArray(data) ? data : []);
                 } else if (candidateFilter === 'all') {
                     // Load all statuses
                     const [pending, approved, rejected, implemented] = await Promise.all([
@@ -109,14 +109,14 @@ export const AdminKnowledgeView: React.FC = () => {
                     setCandidates([...pending, ...approved, ...rejected, ...implemented]);
                 } else {
                     const data = await Api.getKnowledgeCandidates(candidateFilter);
-                    setCandidates(data);
+                    setCandidates(Array.isArray(data) ? data : []);
                 }
             } else if (activeTab === 'strategies') {
                 const data = await Api.getAllGlobalStrategies();
-                setStrategies(data);
+                setStrategies(Array.isArray(data) ? data : []);
             } else {
                 const data = await Api.getKnowledgeDocuments();
-                setDocuments(data);
+                setDocuments(Array.isArray(data) ? data : []);
             }
         } catch (err) {
             toast.error('Failed to load data');

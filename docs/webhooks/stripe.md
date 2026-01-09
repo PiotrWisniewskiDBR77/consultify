@@ -1,6 +1,6 @@
 # Stripe Webhook Documentation
 
-This document details the Stripe webhook implementation for the Consultify billing system.
+This document details the Stripe webhook implementation for the Consultinity billing system.
 
 ## Overview
 

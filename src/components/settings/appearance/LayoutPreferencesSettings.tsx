@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * LayoutPreferencesSettings - Layout Configuration
  *

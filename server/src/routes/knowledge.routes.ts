@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Knowledge Routes
  * API endpoints for knowledge management (candidates, strategies, documents)

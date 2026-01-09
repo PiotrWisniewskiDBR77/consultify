@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the comprehensive test suite for the Consultify application, including error handling, resilience, and recovery tests.
+This document describes the comprehensive test suite for the Consultinity application, including error handling, resilience, and recovery tests.
 
 ## Test Structure
 

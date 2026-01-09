@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Admin Panel provides organization administrators with comprehensive tools to manage their Consultify instance. Following the SuperAdmin pattern, it uses a **5-module structure** with tab-based navigation within each module.
+The Admin Panel provides organization administrators with comprehensive tools to manage their Consultinity instance. Following the SuperAdmin pattern, it uses a **5-module structure** with tab-based navigation within each module.
 
 ## Module Structure
 

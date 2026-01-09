@@ -122,7 +122,7 @@ export enum AppView {
     // AI Action Proposals Review
     AI_ACTION_PROPOSALS = 'AI_ACTION_PROPOSALS',
 
-    // Consultify Studio - Visual AI Workspace
+    // Consultinity Studio - Visual AI Workspace
     STUDIO = 'STUDIO',
 
     // Consultant Views

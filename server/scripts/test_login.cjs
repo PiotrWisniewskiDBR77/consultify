@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
-const dbPath = path.resolve(__dirname, '../consultify.db');
+const dbPath = path.resolve(__dirname, '../consultinity.db');
 const db = new sqlite3.Database(dbPath);
 
 const email = 'piotr.wisniewski@dbr77.com';

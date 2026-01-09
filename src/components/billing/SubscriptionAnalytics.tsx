@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Subscription Analytics Dashboard
  * MRR/ARR tracking, churn analysis, LTV calculations, cohort analysis

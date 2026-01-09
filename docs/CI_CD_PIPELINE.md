@@ -3,7 +3,7 @@
 ## Overview
 
 The monorepo uses a comprehensive CI/CD pipeline that supports:
-- **Multiple Applications**: consultify and new-app
+- **Multiple Applications**: consultinity and new-app
 - **Shared Modules**: packages/shared
 - **Efficient Builds**: Nx affected for incremental builds
 - **Zero-Downtime Deployments**: Blue-green and canary strategies
@@ -22,13 +22,13 @@ The monorepo uses a comprehensive CI/CD pipeline that supports:
 - Runs tests for shared code
 - Publishes to npm if version changed (on main branch with `[release]` commit)
 
-#### Stage 2: Consultify App Pipeline
+#### Stage 2: Consultinity App Pipeline
 - **Lint & Type Check**: ESLint and TypeScript validation
 - **Tests**: Matrix strategy for unit/integration/e2e tests
 - **Build**: Frontend and backend builds
 
 #### Stage 3: New-App Pipeline
-- Same structure as Consultify
+- Same structure as Consultinity
 - Independent testing and building
 
 #### Stage 4: Summary
@@ -68,7 +68,7 @@ The monorepo uses a comprehensive CI/CD pipeline that supports:
 # - Go to Actions tab
 # - Select "Monorepo CI/CD"
 # - Click "Run workflow"
-# - Choose app: all, consultify, or new-app
+# - Choose app: all, consultinity, or new-app
 ```
 
 ### Triggering Deployment
@@ -80,7 +80,7 @@ The monorepo uses a comprehensive CI/CD pipeline that supports:
 # - Select "Blue-Green Deployment"
 # - Click "Run workflow"
 # - Choose:
-#   - App: consultify or new-app
+#   - App: consultinity or new-app
 #   - Environment: staging or production
 #   - Strategy: blue-green, canary, or immediate
 ```
@@ -213,7 +213,7 @@ Post-deployment verification includes:
 
 **For App Deployments:**
 ```
-feat(consultify): Add new feature
+feat(consultinity): Add new feature
 fix(new-app): Fix critical bug
 ```
 
@@ -257,7 +257,7 @@ npm run test:e2e
 ```bash
 # Check build locally
 npm run build
-nx build consultify
+nx build consultinity
 nx build new-app
 ```
 
@@ -286,6 +286,8 @@ nx build new-app
 - [ ] Multi-region deployment support
 - [ ] A/B testing integration
 - [ ] Feature flag deployment
+
+
 
 
 

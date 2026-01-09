@@ -2,7 +2,7 @@
  * New Application Fork - Backend Entry Point
  *
  * This is a skeleton for the new application fork.
- * Use @consultify/shared for common functionality.
+ * Use @consultinity/shared for common functionality.
  */
 
 import express from 'express';

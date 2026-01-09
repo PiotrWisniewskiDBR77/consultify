@@ -1,4 +1,4 @@
-# 📋 Consultify Backlog Management System
+# 📋 Consultinity Backlog Management System
 
 **Zarządzający:** Piotr Wiśniewski (PM)
 **Metodologia:** Meta-PMO Framework (ISO 21500 + PMBOK 7 + PRINCE2)
@@ -9,7 +9,7 @@
 
 ## 🎯 Cel i Zakres
 
-System zarządzania backlogiem Consultify został zaprojektowany zgodnie z najlepszymi praktykami zarządzania projektami i umożliwia:
+System zarządzania backlogiem Consultinity został zaprojektowany zgodnie z najlepszymi praktykami zarządzania projektami i umożliwia:
 
 - **Profesjonalne zarządzanie wymaganiami** zgodnie z Meta-PMO Framework
 - **Śledzenie postępu** w metodyce Kanban
@@ -233,7 +233,7 @@ Raporty są generowane automatycznie i dostępne w katalogu `metrics/`:
 
 ### Dokumentacja
 - [Meta-PMO Framework](../../docs/00_foundation/PMO_STANDARDS_COMPLIANCE.md)
-- [Consultify Architecture](../../docs/)
+- [Consultinity Architecture](../../docs/)
 - [Development Guidelines](../../docs/)
 
 ### Narzędzia
@@ -262,10 +262,12 @@ Raporty są generowane automatycznie i dostępne w katalogu `metrics/`:
 
 ---
 
-*System zgodny z Meta-PMO Framework - Consultify Professional Services*
+*System zgodny z Meta-PMO Framework - Consultinity Professional Services*
 
-**Kontakt:** [piotr@consultify.com](mailto:piotr@consultify.com)
+**Kontakt:** [piotr@consultinity.com](mailto:piotr@consultinity.com)
 **Ostatnia aktualizacja:** 2026-01-05
+
+
 
 
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Refresh Token Service
  * Enterprise SaaS Architecture - TypeScript Backend

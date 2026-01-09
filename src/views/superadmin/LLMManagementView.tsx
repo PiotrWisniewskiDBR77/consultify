@@ -89,6 +89,11 @@ export const LLMManagementView: React.FC = () => {
     // Health status
     const [healthStatus, setHealthStatus] = useState<any>(null);
 
+    // Load initial data on mount
+    useEffect(() => {
+        loadInitialData();
+    }, []);
+
     const loadInitialData = async () => {
         setLoading(true);
         try {

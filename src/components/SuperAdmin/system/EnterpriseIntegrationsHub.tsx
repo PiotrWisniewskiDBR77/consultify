@@ -255,13 +255,13 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                     id: '1',
                     type: 'slack',
                     name: 'Slack - Team Workspace',
-                    description: 'Connected to consultify-team workspace',
+                    description: 'Connected to consultinity-team workspace',
                     enabled: true,
                     status: 'connected',
                     last_sync_at: new Date(Date.now() - 300000).toISOString(),
                     last_sync_status: 'success',
                     sync_frequency: 'real-time',
-                    config: { workspace: 'consultify-team', channel: '#general' },
+                    config: { workspace: 'consultinity-team', channel: '#general' },
                     created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
                 },
                 {
@@ -379,7 +379,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white">Integrations Hub</h2>
-                    <p className="text-slate-400 text-sm">Connect Consultify with your existing tools and workflows</p>
+                    <p className="text-slate-400 text-sm">Connect Consultinity with your existing tools and workflows</p>
                 </div>
             </div>
 

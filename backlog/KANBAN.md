@@ -1,4 +1,4 @@
-# 🎯 Consultify Backlog Kanban Board
+# 🎯 Consultinity Backlog Kanban Board
 
 **Data ostatniej aktualizacji:** 2026-01-06
 **Zarządzający:** Piotr Wiśniewski (PM)
@@ -98,6 +98,36 @@
 *Zadania ukończone w ostatnim cyklu*
 
 <!-- DONE_TASKS_START -->
+
+#### ✅ [AI-INFRA-20260108-001] Kompletna implementacja modułu AI Infrastructure
+
+**Data zakończenia:** 2026-01-08
+**Wykonawca:** AI Agent
+
+**Opis:** Pełna implementacja i naprawa modułu AI Infrastructure w panelu SuperAdmin, obejmująca:
+
+**Zakres wykonanych prac:**
+- ✅ Naprawa ładowania LLM Providers (endpoint `/api/llm/providers`)
+- ✅ Implementacja Health Monitoring (`/api/llm/health/status`, `/api/llm/health/detailed`)
+- ✅ System tier assignments dla modeli (`/api/llm/tiers/assignments`)
+- ✅ Diagnostyka LLM (`/api/llm/diagnose`)
+- ✅ Statystyki użycia i kosztów (`/api/llm/control/usage`, `/api/llm/costs`)
+- ✅ Testowanie capabilities (`/api/llm/health/test/:capabilityId`)
+- ✅ CRUD dla providers z tier management
+- ✅ Migracje bazy danych: `ai_usage_logs`, `llm_tier_assignments`
+
+**Pliki zmodyfikowane:**
+- `server/src/controllers/ai/LLMController.ts` - rozszerzony o 15+ nowych metod
+- `server/src/routes/llm.routes.ts` - pełna implementacja wszystkich endpointów
+- `server/migrations/208_ai_usage_logs.sql` - nowa tabela logów
+- `server/migrations/209_llm_tier_assignments.sql` - system tierów
+- `src/services/api.ts` - aktualizacja metod API
+
+**Szacunkowa złożoność:** L
+**Priorytet:** P0 (Krytyczny)
+
+---
+
 <!-- DONE_TASKS_END -->
 
 ---
