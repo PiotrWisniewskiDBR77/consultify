@@ -3,6 +3,7 @@
 ## 📋 Przegląd Obecnej Implementacji
 
 ### ✅ Co już działa dobrze:
+
 - Nx affected dla efektywnych buildów
 - Matrix strategy dla testów
 - Blue-green deployment strategy
@@ -16,6 +17,7 @@
 **Problem**: Każdy build pobiera wszystkie dependencies od zera
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj do każdego joba:
 - name: Cache node_modules
@@ -46,6 +48,7 @@
 **Problem**: Niektóre joby mogą być równoległe
 
 **Rozwiązanie**:
+
 ```yaml
 # W monorepo-ci.yml, zmień dependencies:
 consultinity-lint:
@@ -64,6 +67,7 @@ consultinity-test:
 **Problem**: E2E tests są drogie i czasochłonne
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj warunki:
 e2e-tests:
@@ -80,6 +84,7 @@ e2e-tests:
 **Problem**: Trudno zobaczyć wszystkie wyniki testów w jednym miejscu
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj job agregujący wyniki:
 aggregate-test-results:
@@ -93,7 +98,7 @@ aggregate-test-results:
       with:
         pattern: '*-test-results-*'
         path: test-results/
-    
+
     - name: Generate Test Report
       uses: dorny/test-reporter@v1
       with:
@@ -107,6 +112,7 @@ aggregate-test-results:
 **Problem**: Brak automatycznego security scanning w pipeline
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj do monorepo-ci.yml:
 security-scan:
@@ -115,14 +121,14 @@ security-scan:
   needs: detect-changes
   steps:
     - uses: actions/checkout@v4
-    
+
     - name: Run Snyk Security Scan
       uses: snyk/actions/node@master
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
         args: --severity-threshold=high
-    
+
     - name: Run Trivy Vulnerability Scanner
       uses: aquasecurity/trivy-action@master
       with:
@@ -130,7 +136,7 @@ security-scan:
         scan-ref: '.'
         format: 'sarif'
         output: 'trivy-results.sarif'
-    
+
     - name: Upload Trivy results
       uses: github/codeql-action/upload-sarif@v2
       with:
@@ -142,6 +148,7 @@ security-scan:
 **Problem**: Brak automatycznego sprawdzania performance budgets
 
 **Rozwiązanie**:
+
 ```yaml
 # Utwórz .github/lighthouse-budget.json:
 {
@@ -181,21 +188,22 @@ performance-budget:
 **Problem**: Zależności nie są automatycznie aktualizowane
 
 **Rozwiązanie**:
+
 ```yaml
 # Utwórz .github/workflows/dependabot.yml lub użyj Dependabot:
 # .github/dependabot.yml
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     open-pull-requests-limit: 10
     reviewers:
-      - "team-leads"
+      - 'team-leads'
     labels:
-      - "dependencies"
-      - "automated"
+      - 'dependencies'
+      - 'automated'
 ```
 
 ### 8. **Build Artifact Optimization** (Średni Priorytet)
@@ -203,6 +211,7 @@ updates:
 **Problem**: Artifacts mogą być zbyt duże
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj kompresję przed upload:
 - name: Compress artifacts
@@ -223,6 +232,7 @@ updates:
 **Problem**: Brak automatycznego zarządzania migracjami w CI/CD
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj do blue-green-deploy.yml:
 database-migration:
@@ -232,20 +242,20 @@ database-migration:
   steps:
     - name: Checkout
       uses: actions/checkout@v4
-    
+
     - name: Download Build Artifacts
       uses: actions/download-artifact@v4
       with:
         name: deployment-${{ github.event.inputs.app }}-${{ github.event.inputs.environment }}
-    
+
     - name: Run Migrations on Green
       run: |
         # Run migrations on green environment before traffic switch
         # Example for Railway:
         # railway run --environment ${{ github.event.inputs.environment }}-green npm run migrate
-        
+
         echo "Running migrations on green environment..."
-    
+
     - name: Verify Migration Success
       run: |
         # Check migration status
@@ -258,6 +268,7 @@ database-migration:
 **Problem**: Brak integracji feature flags z deploymentem
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj do blue-green-deploy.yml:
 feature-flags:
@@ -272,7 +283,7 @@ feature-flags:
         # curl -X POST "https://api.launchdarkly.com/flags/$FLAG_KEY" \
         #   -H "Authorization: $LAUNCHDARKLY_TOKEN" \
         #   -d '{"environments": {"$ENV": {"on": true}}}'
-        
+
         echo "Feature flags updated for new deployment"
 ```
 
@@ -281,6 +292,7 @@ feature-flags:
 **Problem**: Rollback jest manualny
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj workflow dla rollback:
 # .github/workflows/rollback.yml
@@ -317,7 +329,7 @@ jobs:
           # Get previous successful deployment
           PREVIOUS=$(railway deployments list --environment ${{ github.event.inputs.environment }} | grep -v "current" | head -1)
           echo "version=$PREVIOUS" >> $GITHUB_OUTPUT
-      
+
       - name: Rollback Deployment
         run: |
           # Rollback to previous version
@@ -329,6 +341,7 @@ jobs:
 **Problem**: GitHub Actions minutes mogą być drogie
 
 **Rozwiązanie**:
+
 ```yaml
 # Użyj self-hosted runners dla długich testów:
 e2e-tests:
@@ -349,6 +362,7 @@ strategy:
 **Problem**: Brak szczegółowych notyfikacji
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj szczegółowe notyfikacje:
 notify:
@@ -378,6 +392,7 @@ notify:
 **Problem**: Konfiguracja może być różna dla różnych środowisk
 
 **Rozwiązanie**:
+
 ```yaml
 # Utwórz .github/env-configs/staging.yml i production.yml
 # Użyj w workflow:
@@ -385,7 +400,7 @@ notify:
   run: |
     # Load environment-specific config
     cat .github/env-configs/${{ github.event.inputs.environment }}.yml
-    
+
 - name: Set Environment Variables
   run: |
     # Set env vars based on config
@@ -397,6 +412,7 @@ notify:
 **Problem**: Brak automatycznego monitoringu po deployment
 
 **Rozwiązanie**:
+
 ```yaml
 # Dodaj do blue-green-deploy.yml:
 monitor-deployment:
@@ -409,27 +425,27 @@ monitor-deployment:
       run: |
         # Query monitoring API (Datadog, New Relic, etc.)
         ERROR_RATE=$(curl -s "https://api.datadog.com/v1/query?query=error_rate" | jq '.series[0].pointlist[-1][1]')
-        
+
         if (( $(echo "$ERROR_RATE > 0.05" | bc -l) )); then
           echo "⚠️ Error rate is high: $ERROR_RATE"
           exit 1
         fi
-    
+
     - name: Check Response Times
       run: |
         # Check p95 latency
         LATENCY=$(curl -s "https://api.datadog.com/v1/query?query=p95_latency" | jq '.series[0].pointlist[-1][1]')
-        
+
         if (( $(echo "$LATENCY > 500" | bc -l) )); then
           echo "⚠️ Latency is high: ${LATENCY}ms"
           exit 1
         fi
-    
+
     - name: Check Database Connections
       run: |
         # Verify DB connection pool health
         DB_CONNECTIONS=$(curl -s "https://${{ github.event.inputs.environment }}.${{ github.event.inputs.app }}.app/api/health/detailed" | jq '.database.active_connections')
-        
+
         if [ "$DB_CONNECTIONS" -gt 80 ]; then
           echo "⚠️ Database connection pool is high: $DB_CONNECTIONS"
         fi
@@ -438,18 +454,21 @@ monitor-deployment:
 ## 📊 Priorytetyzacja Rekomendacji
 
 ### 🔴 Krytyczne (Zrobić natychmiast):
+
 1. **Caching Strategy** - Oszczędność czasu i kosztów
 2. **Security Scanning Integration** - Bezpieczeństwo
 3. **Database Migration Strategy** - Stabilność deploymentów
 4. **Rollback Automation** - Szybka reakcja na problemy
 
 ### 🟡 Ważne (Zrobić w ciągu tygodnia):
+
 5. **Parallel Job Execution** - Optymalizacja czasu
 6. **Post-Deployment Monitoring** - Jakość deploymentów
 7. **Test Result Aggregation** - Lepsza widoczność
 8. **Build Artifact Optimization** - Oszczędność storage
 
 ### 🟢 Warto mieć (Zrobić gdy czas pozwoli):
+
 9. **Performance Budget Enforcement** - Jakość performance
 10. **Feature Flag Integration** - Elastyczność
 11. **Conditional Test Execution** - Oszczędność czasu
@@ -491,14 +510,3 @@ monitor-deployment:
 5. Zoptymalizuj parallel execution (1h)
 
 **Total**: ~7 godzin pracy dla najważniejszych ulepszeń
-
-
-
-
-
-
-
-
-
-
-

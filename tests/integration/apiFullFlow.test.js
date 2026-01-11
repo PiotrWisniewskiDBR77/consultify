@@ -1,6 +1,6 @@
 /**
  * API Full Flow Integration Tests - Real Implementation
- * 
+ *
  * Tests complete user journeys through the API:
  * 1. User Registration Flow
  * 2. Project Creation Flow
@@ -16,170 +16,173 @@ import { initializeDatabase } from '../../server/src/database/DatabaseInitialize
 import { v4 as uuidv4 } from 'uuid';
 
 vi.hoisted(() => {
-    process.env.MOCK_DB = 'false';
-    const workerId = process.env.VITEST_WORKER_ID || '0';
-    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
 describe('API Full Flow Integration', () => {
-    let testUserId;
-    let testOrgId;
-    let testToken;
-    let testProjectId;
-    const db = getDatabase();
-    const testEmail = `fullflow-${Date.now()}@test.com`;
-    const testPassword = 'TestPass123!';
+  let testUserId;
+  let testOrgId;
+  let testToken;
+  let testProjectId;
+  const db = getDatabase();
+  const testEmail = `fullflow-${Date.now()}@test.com`;
+  const testPassword = 'TestPass123!';
 
-    beforeAll(async () => {
-        await initializeDatabase();
+  beforeAll(async () => {
+    await initializeDatabase();
 
-        if (db.initPromise) {
-            await db.initPromise;
-        }
+    if (db.initPromise) {
+      await db.initPromise;
+    }
 
-        // Create test organization
-        testOrgId = uuidv4();
+    // Create test organization
+    testOrgId = uuidv4();
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO organizations (id, name, plan, status, organization_type) VALUES (?, ?, ?, ?, ?)`,
+        [testOrgId, 'FullFlow Test Org', 'professional', 'active', 'PAID'],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
+  });
+
+  afterAll(async () => {
+    // Cleanup in reverse order
+    if (testProjectId) {
+      await new Promise((resolve) => {
+        db.run(`DELETE FROM projects WHERE id = ?`, [testProjectId], () => resolve());
+      });
+    }
+    if (testUserId) {
+      await new Promise((resolve) => {
+        db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => resolve());
+      });
+    }
+    await new Promise((resolve) => {
+      db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], () => resolve());
+    });
+  });
+
+  describe('User Registration Flow', () => {
+    it('should complete user registration flow', async () => {
+      // Step 1: Register new user
+      const registerRes = await request(app).post('/api/auth/register').send({
+        email: testEmail,
+        password: testPassword,
+        firstName: 'Test',
+        lastName: 'User',
+        organizationId: testOrgId,
+      });
+
+      // Accept 200/201 for success, 400/409 for validation errors, 404/500/501 for missing endpoints
+      expect([200, 201, 400, 404, 409, 500, 501]).toContain(registerRes.status);
+
+      if (registerRes.status === 200 || registerRes.status === 201) {
+        testUserId = registerRes.body.user?.id;
+      }
+
+      // Step 2: Login with registered credentials
+      const loginRes = await request(app).post('/api/auth/login').send({
+        email: testEmail,
+        password: testPassword,
+      });
+
+      expect([200, 401, 403]).toContain(loginRes.status);
+
+      if (loginRes.status === 200) {
+        expect(loginRes.body.token).toBeDefined();
+        testToken = loginRes.body.token;
+      }
+    });
+  });
+
+  describe('Project Creation Flow', () => {
+    it('should complete project creation flow', async () => {
+      // Skip if no token from previous test
+      if (!testToken) {
+        // Create a test user directly for this test
+        testUserId = uuidv4();
+        const hashedPassword = await bcrypt.hash(testPassword, 10);
         await new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO organizations (id, name, plan, status, organization_type) VALUES (?, ?, ?, ?, ?)`,
-                [testOrgId, 'FullFlow Test Org', 'professional', 'active', 'PAID'],
-                (err) => (err ? reject(err) : resolve()),
-            );
+          db.run(
+            `INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+              testUserId,
+              testOrgId,
+              `projtest-${Date.now()}@test.com`,
+              hashedPassword,
+              'ADMIN',
+              'active',
+            ],
+            (err) => (err ? reject(err) : resolve())
+          );
         });
-    });
 
-    afterAll(async () => {
-        // Cleanup in reverse order
-        if (testProjectId) {
-            await new Promise((resolve) => {
-                db.run(`DELETE FROM projects WHERE id = ?`, [testProjectId], () => resolve());
-            });
+        const loginRes = await request(app)
+          .post('/api/auth/login')
+          .send({ email: `projtest-${Date.now()}@test.com`, password: testPassword });
+
+        if (loginRes.body.token) {
+          testToken = loginRes.body.token;
         }
-        if (testUserId) {
-            await new Promise((resolve) => {
-                db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => resolve());
-            });
-        }
-        await new Promise((resolve) => {
-            db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], () => resolve());
+      }
+
+      if (!testToken) return; // Skip if still no token
+
+      // Create project
+      const createRes = await request(app)
+        .post('/api/projects')
+        .set('Authorization', `Bearer ${testToken}`)
+        .send({
+          name: 'Integration Test Project',
+          description: 'Created by full flow test',
+          status: 'active',
         });
+
+      expect([200, 201, 403, 500]).toContain(createRes.status);
+
+      if (createRes.status === 200 || createRes.status === 201) {
+        testProjectId = createRes.body.project?.id || createRes.body.id;
+        expect(testProjectId).toBeDefined();
+      }
     });
+  });
 
-    describe('User Registration Flow', () => {
-        it('should complete user registration flow', async () => {
-            // Step 1: Register new user
-            const registerRes = await request(app)
-                .post('/api/auth/register')
-                .send({
-                    email: testEmail,
-                    password: testPassword,
-                    firstName: 'Test',
-                    lastName: 'User',
-                    organizationId: testOrgId
-                });
+  describe('Assessment Flow', () => {
+    it('should complete assessment flow', async () => {
+      if (!testToken || !testProjectId) return; // Skip if prerequisites not met
 
-            // Accept 200/201 for success, 400/409 for validation errors, 404/500/501 for missing endpoints
-            expect([200, 201, 400, 404, 409, 500, 501]).toContain(registerRes.status);
+      // Get assessment overview
+      const overviewRes = await request(app)
+        .get(`/api/sessions/${testProjectId}/assessment-overview`)
+        .set('Authorization', `Bearer ${testToken}`);
 
-            if (registerRes.status === 200 || registerRes.status === 201) {
-                testUserId = registerRes.body.user?.id;
-            }
+      // Accept various status codes as endpoints may vary
+      expect([200, 404, 500, 501]).toContain(overviewRes.status);
 
-            // Step 2: Login with registered credentials
-            const loginRes = await request(app)
-                .post('/api/auth/login')
-                .send({
-                    email: testEmail,
-                    password: testPassword,
-                });
-
-            expect([200, 401, 403]).toContain(loginRes.status);
-
-            if (loginRes.status === 200) {
-                expect(loginRes.body.token).toBeDefined();
-                testToken = loginRes.body.token;
-            }
-        });
+      if (overviewRes.status === 200) {
+        expect(overviewRes.body).toBeDefined();
+      }
     });
+  });
 
-    describe('Project Creation Flow', () => {
-        it('should complete project creation flow', async () => {
-            // Skip if no token from previous test
-            if (!testToken) {
-                // Create a test user directly for this test
-                testUserId = uuidv4();
-                const hashedPassword = await bcrypt.hash(testPassword, 10);
-                await new Promise((resolve, reject) => {
-                    db.run(
-                        `INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)`,
-                        [testUserId, testOrgId, `projtest-${Date.now()}@test.com`, hashedPassword, 'ADMIN', 'active'],
-                        (err) => (err ? reject(err) : resolve()),
-                    );
-                });
+  describe('Report Generation Flow', () => {
+    it('should complete report generation flow', async () => {
+      if (!testToken || !testProjectId) return; // Skip if prerequisites not met
 
-                const loginRes = await request(app)
-                    .post('/api/auth/login')
-                    .send({ email: `projtest-${Date.now()}@test.com`, password: testPassword });
+      // Get available reports
+      const reportsRes = await request(app)
+        .get(`/api/projects/${testProjectId}/reports`)
+        .set('Authorization', `Bearer ${testToken}`);
 
-                if (loginRes.body.token) {
-                    testToken = loginRes.body.token;
-                }
-            }
+      // Accept various status codes
+      expect([200, 404, 500, 501]).toContain(reportsRes.status);
 
-            if (!testToken) return; // Skip if still no token
-
-            // Create project
-            const createRes = await request(app)
-                .post('/api/projects')
-                .set('Authorization', `Bearer ${testToken}`)
-                .send({
-                    name: 'Integration Test Project',
-                    description: 'Created by full flow test',
-                    status: 'active'
-                });
-
-            expect([200, 201, 403, 500]).toContain(createRes.status);
-
-            if (createRes.status === 200 || createRes.status === 201) {
-                testProjectId = createRes.body.project?.id || createRes.body.id;
-                expect(testProjectId).toBeDefined();
-            }
-        });
+      if (reportsRes.status === 200) {
+        expect(Array.isArray(reportsRes.body) || reportsRes.body.reports).toBeTruthy();
+      }
     });
-
-    describe('Assessment Flow', () => {
-        it('should complete assessment flow', async () => {
-            if (!testToken || !testProjectId) return; // Skip if prerequisites not met
-
-            // Get assessment overview
-            const overviewRes = await request(app)
-                .get(`/api/sessions/${testProjectId}/assessment-overview`)
-                .set('Authorization', `Bearer ${testToken}`);
-
-            // Accept various status codes as endpoints may vary
-            expect([200, 404, 500, 501]).toContain(overviewRes.status);
-
-            if (overviewRes.status === 200) {
-                expect(overviewRes.body).toBeDefined();
-            }
-        });
-    });
-
-    describe('Report Generation Flow', () => {
-        it('should complete report generation flow', async () => {
-            if (!testToken || !testProjectId) return; // Skip if prerequisites not met
-
-            // Get available reports
-            const reportsRes = await request(app)
-                .get(`/api/projects/${testProjectId}/reports`)
-                .set('Authorization', `Bearer ${testToken}`);
-
-            // Accept various status codes
-            expect([200, 404, 500, 501]).toContain(reportsRes.status);
-
-            if (reportsRes.status === 200) {
-                expect(Array.isArray(reportsRes.body) || reportsRes.body.reports).toBeTruthy();
-            }
-        });
-    });
+  });
 });

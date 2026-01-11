@@ -31,13 +31,3 @@ module.exports = {
   // Tags for consumer/provider versions
   tags: [process.env.GIT_BRANCH || 'main'],
 };
-
-
-
-
-
-
-
-
-
-

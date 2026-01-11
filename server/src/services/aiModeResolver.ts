@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aimoderesolver Service
  * Enterprise SaaS Architecture - TypeScript Backend

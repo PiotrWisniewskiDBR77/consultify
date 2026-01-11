@@ -4,34 +4,34 @@ import { getDatabase } from '../../../../database/Database.js';
 import type { IDatabase } from '../../../../database/IDatabase.js';
 
 export class CreateProjectCommand {
-    constructor(
-        public readonly name: string,
-        public readonly organizationId: string,
-        public readonly ownerId: string,
-        public readonly summary?: string | null,
-    ) {}
+  constructor(
+    public readonly name: string,
+    public readonly organizationId: string,
+    public readonly ownerId: string,
+    public readonly summary?: string | null
+  ) {}
 }
 
 export class CreateProjectHandler {
-    constructor(private readonly db: IDatabase = getDatabase()) {}
+  constructor(private readonly db: IDatabase = getDatabase()) {}
 
-    async execute(command: CreateProjectCommand) {
-        const id = `proj-${uuidv4()}`;
-        const now = new Date().toISOString();
+  async execute(command: CreateProjectCommand) {
+    const id = `proj-${uuidv4()}`;
+    const now = new Date().toISOString();
 
-        await this.db.run(
-            `INSERT INTO projects (id, name, organization_id, owner_id, summary, created_at, updated_at)
+    await this.db.run(
+      `INSERT INTO projects (id, name, organization_id, owner_id, summary, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [id, command.name, command.organizationId, command.ownerId, command.summary || '', now, now],
-        );
+      [id, command.name, command.organizationId, command.ownerId, command.summary || '', now, now]
+    );
 
-        return {
-            id,
-            name: command.name,
-            organizationId: command.organizationId,
-            ownerId: command.ownerId,
-            summary: command.summary || '',
-            createdAt: now,
-        };
-    }
+    return {
+      id,
+      name: command.name,
+      organizationId: command.organizationId,
+      ownerId: command.ownerId,
+      summary: command.summary || '',
+      createdAt: now,
+    };
+  }
 }

@@ -16,6 +16,7 @@
 **Opis:** ADMIN konfiguruje ustawienia organizacji bez dostępu do billing.
 
 **Wykonane kroki:**
+
 1. ✅ Zalogowano jako użytkownik ADMIN (piotr.wisniewski@dbr77.com)
 2. ✅ Przejście do Settings → Profile
 3. ✅ Wprowadzenie imienia "Piotr" i nazwiska "Wiśniewski"
@@ -23,12 +24,14 @@
 5. ✅ Weryfikacja zapisu w bazie danych
 
 **Rezultaty:**
+
 - ✅ **PASS**: Ustawienia profilu są dostępne dla ADMIN
 - ✅ **PASS**: Pola formularza działają poprawnie
 - ✅ **PASS**: Dane są zapisywane w bazie danych
 - ✅ **PASS**: Interfejs jest intuicyjny i responsywny
 
 **Dane testowe:**
+
 ```sql
 -- Weryfikacja w bazie danych
 SELECT first_name, last_name FROM users WHERE email = 'piotr.wisniewski@dbr77.com';
@@ -44,6 +47,7 @@ SELECT first_name, last_name FROM users WHERE email = 'piotr.wisniewski@dbr77.co
 **Opis:** USER używa różnych funkcji AI w pracy projektowej.
 
 **Wykonane kroki:**
+
 1. ✅ Zalogowano jako użytkownik ADMIN (który ma dostęp do AI)
 2. ✅ Przejście do AI Chat przez główne menu
 3. ✅ Weryfikacja załadowania interfejsu AI
@@ -51,6 +55,7 @@ SELECT first_name, last_name FROM users WHERE email = 'piotr.wisniewski@dbr77.co
 5. ✅ Weryfikacja wysłania wiadomości i utworzenia rozmowy
 
 **Rezultaty:**
+
 - ✅ **PASS**: AI Chat jest dostępny w głównym menu nawigacji
 - ✅ **PASS**: Interfejs ładuje się poprawnie
 - ✅ **PASS**: Pole tekstowe do wprowadzania wiadomości działa
@@ -59,6 +64,7 @@ SELECT first_name, last_name FROM users WHERE email = 'piotr.wisniewski@dbr77.co
 - ✅ **PASS**: Interfejs pokazuje status systemu ("System Online")
 
 **Dane testowe:**
+
 ```
 Wiadomość wysłana: "Hello AI, can you help me with project management?"
 Status: Wiadomość wysłana, oczekiwanie na odpowiedź AI
@@ -74,18 +80,21 @@ Liczba rozmów: 1
 **Opis:** SUPERADMIN konfiguruje infrastrukturę AI dla platformy.
 
 **Wykonane kroki:**
+
 1. ✅ Próba dostępu do panelu SuperAdmin przez SUPERADMIN (admin@dbr77.com)
 2. ✅ Weryfikacja, że panel SuperAdmin wymaga odpowiednich uprawnień
 3. ✅ Weryfikacja, że ADMIN nie ma dostępu do panelu SuperAdmin
 4. ✅ Sprawdzenie działających endpointów AI przez API
 
 **Rezultaty:**
+
 - ✅ **PASS**: Poziomy dostępu są egzekwowane poprawnie
 - ✅ **PASS**: SUPERADMIN ma dostęp do panelu SuperAdmin
 - ✅ **PASS**: ADMIN ma ograniczone uprawnienia (bez dostępu do SuperAdmin)
 - ✅ **PASS**: Endpointy API działają poprawnie
 
 **Dane testowe:**
+
 ```bash
 # Test endpointów AI
 curl -s http://localhost:3001/api/ai-infrastructure/health/status -H "Authorization: Bearer test"
@@ -103,33 +112,37 @@ curl -s http://localhost:3001/api/health
 
 ### Statystyki Testów
 
-| Status | Liczba Testów | Procent |
-|--------|----------------|---------|
-| ✅ **Przeszło** | 3/3 | 100% |
-| ❌ **Nie przeszło** | 0/3 | 0% |
-| ⏸️ **Pominięte** | 12/15 | - |
+| Status              | Liczba Testów | Procent |
+| ------------------- | ------------- | ------- |
+| ✅ **Przeszło**     | 3/3           | 100%    |
+| ❌ **Nie przeszło** | 0/3           | 0%      |
+| ⏸️ **Pominięte**    | 12/15         | -       |
 
 ### Kluczowe Funkcjonalności Zweryfikowane
 
 #### ✅ **Ustawienia i Konfiguracja**
+
 - Panel ustawień użytkownika dostępny
 - Zapisywanie danych profilu działa
 - Ustawienia regionalne dostępne
 - Preferencje AI konfigurowalne
 
 #### ✅ **Wykorzystanie AI w Pracy**
+
 - AI Chat dostępny w głównym menu
 - Wysyłanie wiadomości działa
 - Historia rozmów zachowywana
 - Interfejs responsywny i intuicyjny
 
 #### ✅ **Poziomy Dostępu i Bezpieczeństwo**
+
 - Role użytkowników działają poprawnie (SUPERADMIN, ADMIN, USER)
 - Uprawnienia są egzekwowane
 - Dostęp do funkcji zgodny z rolami
 - API endpoints zabezpieczone
 
 #### ✅ **Interfejs Użytkownika**
+
 - Responsywny design
 - Intuicyjna nawigacja
 - Polskie tłumaczenia dostępne
@@ -141,11 +154,11 @@ curl -s http://localhost:3001/api/health
 
 ### Tabela Wyników
 
-| Test ID | Nazwa | Status | Czas Wykonania | Kluczowe Znaleziska |
-|---------|-------|--------|----------------|---------------------|
-| **TEST_3** | Konfiguracja Ustawień przez ADMIN | ✅ **PASS** | ~5 min | Ustawienia profilu działają, dane zapisywane w DB |
-| **TEST_6** | Wykorzystanie AI przez USER | ✅ **PASS** | ~3 min | AI Chat funkcjonalny, wiadomości wysyłane |
-| **TEST_9** | Konfiguracja AI przez SUPERADMIN | ✅ **PASS** | ~2 min | Poziomy dostępu egzekwowane poprawnie |
+| Test ID    | Nazwa                             | Status      | Czas Wykonania | Kluczowe Znaleziska                               |
+| ---------- | --------------------------------- | ----------- | -------------- | ------------------------------------------------- |
+| **TEST_3** | Konfiguracja Ustawień przez ADMIN | ✅ **PASS** | ~5 min         | Ustawienia profilu działają, dane zapisywane w DB |
+| **TEST_6** | Wykorzystanie AI przez USER       | ✅ **PASS** | ~3 min         | AI Chat funkcjonalny, wiadomości wysyłane         |
+| **TEST_9** | Konfiguracja AI przez SUPERADMIN  | ✅ **PASS** | ~2 min         | Poziomy dostępu egzekwowane poprawnie             |
 
 ### Metryki Wydajności
 
@@ -213,14 +226,19 @@ Aplikacja jest solidnie zbudowana z dobrym bezpieczeństwem, funkcjonalnym inter
 ## Załączniki
 
 ### Skrypt Testowy dla AI Chat
+
 ```javascript
 // Test wysyłania wiadomości do AI
-await page.fill('[placeholder="Ask anything..."]', 'Hello AI, can you help me with project management?');
+await page.fill(
+  '[placeholder="Ask anything..."]',
+  'Hello AI, can you help me with project management?'
+);
 await page.click('[aria-label="Send"]');
 await page.waitForSelector('.conversation-item'); // Czekaj na odpowiedź
 ```
 
 ### Zapytania SQL do weryfikacji danych
+
 ```sql
 -- Sprawdź użytkowników i ich role
 SELECT email, role, first_name, last_name FROM users ORDER BY role;
@@ -241,21 +259,5 @@ SELECT COUNT(*) as conversation_count FROM ai_conversations;
 **Data raportu:** January 2, 2026
 
 ---
-*Raport wygenerowany automatycznie przez AI Testing Assistant*
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+_Raport wygenerowany automatycznie przez AI Testing Assistant_

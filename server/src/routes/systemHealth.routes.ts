@@ -25,20 +25,20 @@ import logger from '../utils/Logger.js';
  * Basic health check (public)
  */
 router.get(
-    '/',
-    asyncHandler(async (_req, res: Response) => {
-        if (!SystemHealthService?.getDetailedHealth) {
-            return res.status(503).json({ error: 'System health service not available' });
-        }
+  '/',
+  asyncHandler(async (_req, res: Response) => {
+    if (!SystemHealthService?.getDetailedHealth) {
+      return res.status(503).json({ error: 'System health service not available' });
+    }
 
-        try {
-            const health = await SystemHealthService.getDetailedHealth();
-            return res.json(health);
-        } catch (error: unknown) {
-            logger.error('[SystemHealth] Error:', error);
-            return res.status(500).json({ error: 'Health check failed' });
-        }
-    }),
+    try {
+      const health = await SystemHealthService.getDetailedHealth();
+      return res.json(health);
+    } catch (error: unknown) {
+      logger.error('[SystemHealth] Error:', error);
+      return res.status(500).json({ error: 'Health check failed' });
+    }
+  })
 );
 
 /**
@@ -46,21 +46,21 @@ router.get(
  * Detailed health check (SuperAdmin only)
  */
 router.get(
-    '/detailed',
-    verifySuperAdmin,
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        if (!SystemHealthService?.getDetailedHealth) {
-            return res.status(503).json({ error: 'System health service not available' });
-        }
+  '/detailed',
+  verifySuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!SystemHealthService?.getDetailedHealth) {
+      return res.status(503).json({ error: 'System health service not available' });
+    }
 
-        try {
-            const health = await SystemHealthService.getDetailedHealth();
-            return res.json(health);
-        } catch (error: unknown) {
-            logger.error('[SystemHealth] Error:', error);
-            return res.status(500).json({ error: 'Health check failed' });
-        }
-    }),
+    try {
+      const health = await SystemHealthService.getDetailedHealth();
+      return res.json(health);
+    } catch (error: unknown) {
+      logger.error('[SystemHealth] Error:', error);
+      return res.status(500).json({ error: 'Health check failed' });
+    }
+  })
 );
 
 /**
@@ -68,21 +68,21 @@ router.get(
  * Get system metrics (SuperAdmin only)
  */
 router.get(
-    '/metrics',
-    verifySuperAdmin,
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        if (!SystemHealthService?.getMetrics) {
-            return res.status(503).json({ error: 'System health service not available' });
-        }
+  '/metrics',
+  verifySuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!SystemHealthService?.getMetrics) {
+      return res.status(503).json({ error: 'System health service not available' });
+    }
 
-        try {
-            const metrics = await SystemHealthService.getMetrics();
-            return res.json(metrics);
-        } catch (error: unknown) {
-            logger.error('[SystemHealth] Error fetching metrics:', error);
-            return res.status(500).json({ error: 'Failed to fetch system metrics' });
-        }
-    }),
+    try {
+      const metrics = await SystemHealthService.getMetrics();
+      return res.json(metrics);
+    } catch (error: unknown) {
+      logger.error('[SystemHealth] Error fetching metrics:', error);
+      return res.status(500).json({ error: 'Failed to fetch system metrics' });
+    }
+  })
 );
 
 /**
@@ -90,21 +90,21 @@ router.get(
  * Get service status (SuperAdmin only)
  */
 router.get(
-    '/services',
-    verifySuperAdmin,
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        if (!SystemHealthService?.getServiceStatus) {
-            return res.status(503).json({ error: 'System health service not available' });
-        }
+  '/services',
+  verifySuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!SystemHealthService?.getServiceStatus) {
+      return res.status(503).json({ error: 'System health service not available' });
+    }
 
-        try {
-            const status = await SystemHealthService.getServiceStatus();
-            return res.json(status);
-        } catch (error: unknown) {
-            logger.error('[SystemHealth] Error fetching service status:', error);
-            return res.status(500).json({ error: 'Failed to fetch service status' });
-        }
-    }),
+    try {
+      const status = await SystemHealthService.getServiceStatus();
+      return res.json(status);
+    } catch (error: unknown) {
+      logger.error('[SystemHealth] Error fetching service status:', error);
+      return res.status(500).json({ error: 'Failed to fetch service status' });
+    }
+  })
 );
 
 /**
@@ -112,21 +112,21 @@ router.get(
  * Force refresh health data (SuperAdmin only)
  */
 router.post(
-    '/refresh',
-    verifySuperAdmin,
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        if (!SystemHealthService?.getDetailedHealth) {
-            return res.status(503).json({ error: 'System health service not available' });
-        }
+  '/refresh',
+  verifySuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!SystemHealthService?.getDetailedHealth) {
+      return res.status(503).json({ error: 'System health service not available' });
+    }
 
-        try {
-            const health = await SystemHealthService.getDetailedHealth();
-            return res.json(health);
-        } catch (error: unknown) {
-            logger.error('[SystemHealth] Error refreshing:', error);
-            return res.status(500).json({ error: 'Failed to refresh health data' });
-        }
-    }),
+    try {
+      const health = await SystemHealthService.getDetailedHealth();
+      return res.json(health);
+    } catch (error: unknown) {
+      logger.error('[SystemHealth] Error refreshing:', error);
+      return res.status(500).json({ error: 'Failed to refresh health data' });
+    }
+  })
 );
 
 /**
@@ -134,34 +134,34 @@ router.post(
  * Encryption health check (SuperAdmin only)
  */
 router.get(
-    '/encryption',
-    verifySuperAdmin,
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        try {
-            // Dynamic import to avoid circular dependencies
-            const { KeyManagementService, getCurrentKeyVersion } =
-                (await import('../services/encryption/index.js')) as any;
+  '/encryption',
+  verifySuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { KeyManagementService, getCurrentKeyVersion } =
+        (await import('../services/encryption/index.js')) as any;
 
-            const health = KeyManagementService.checkHealth();
-            const keyStatus = KeyManagementService.getKeyStatus();
-            const currentVersion = getCurrentKeyVersion();
+      const health = KeyManagementService.checkHealth();
+      const keyStatus = KeyManagementService.getKeyStatus();
+      const currentVersion = getCurrentKeyVersion();
 
-            return res.json({
-                healthy: health.healthy,
-                currentKeyVersion: currentVersion,
-                keyStatus,
-                issues: health.issues,
-                recommendations: health.recommendations,
-                timestamp: new Date().toISOString(),
-            });
-        } catch (error: unknown) {
-            logger.error('[SystemHealth] Encryption health check error:', error);
-            return res.status(500).json({
-                error: 'Encryption health check failed',
-                healthy: false,
-            });
-        }
-    }),
+      return res.json({
+        healthy: health.healthy,
+        currentKeyVersion: currentVersion,
+        keyStatus,
+        issues: health.issues,
+        recommendations: health.recommendations,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: unknown) {
+      logger.error('[SystemHealth] Encryption health check error:', error);
+      return res.status(500).json({
+        error: 'Encryption health check failed',
+        healthy: false,
+      });
+    }
+  })
 );
 
 export default router;

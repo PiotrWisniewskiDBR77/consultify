@@ -30,14 +30,14 @@ vi.mock('../../../../server/src/utils/Logger.ts', () => ({
 const mockDbPromise = vi.hoisted(() => ({
   get: vi.fn((db, sql, params) => Promise.resolve(null)),
   run: vi.fn((db, sql, params) => Promise.resolve({ lastID: 1, changes: 1 })),
-  all: vi.fn((db, sql, params) => Promise.resolve([]))
+  all: vi.fn((db, sql, params) => Promise.resolve([])),
 }));
 
 vi.mock('../../../../server/src/utils/DbPromise.js', () => ({
   default: mockDbPromise,
   get: mockDbPromise.get,
   run: mockDbPromise.run,
-  all: mockDbPromise.all
+  all: mockDbPromise.all,
 }));
 
 describe('TokenBillingService', () => {
@@ -47,7 +47,7 @@ describe('TokenBillingService', () => {
     vi.clearAllMocks();
     // Service is exported as singleton instance
     service = TokenBillingService;
-    
+
     // Set dependencies for testing
     if (service && typeof (service as any).setDependencies === 'function') {
       (service as any).setDependencies({
@@ -56,8 +56,8 @@ describe('TokenBillingService', () => {
         crypto: require('crypto'),
         sqliteAsync: {
           withTransaction: vi.fn((db, fn) => fn()),
-          runAsync: vi.fn(() => Promise.resolve({ lastID: 1, changes: 1 }))
-        } as any
+          runAsync: vi.fn(() => Promise.resolve({ lastID: 1, changes: 1 })),
+        } as any,
       });
     }
   });
@@ -68,7 +68,7 @@ describe('TokenBillingService', () => {
       const mockBalance = {
         token_balance: 1000,
         billing_status: 'ACTIVE',
-        organization_type: 'PAID'
+        organization_type: 'PAID',
       };
 
       mockDbPromise.get.mockResolvedValue(mockBalance);
@@ -96,7 +96,7 @@ describe('TokenBillingService', () => {
       mockDbPromise.get.mockResolvedValue({
         token_balance: 1000,
         billing_status: 'ACTIVE',
-        organization_type: 'PAID'
+        organization_type: 'PAID',
       });
 
       const result = await service.hasOrgSufficientBalance(orgId, estimatedTokens);
@@ -112,7 +112,7 @@ describe('TokenBillingService', () => {
       mockDbPromise.get.mockResolvedValue({
         token_balance: 100,
         billing_status: 'TRIAL',
-        organization_type: 'TRIAL'
+        organization_type: 'TRIAL',
       });
 
       const result = await service.hasOrgSufficientBalance(orgId, estimatedTokens);
@@ -127,7 +127,7 @@ describe('TokenBillingService', () => {
       const orgId = 'org-123';
       const mockLedger = [
         { id: 'led-1', type: 'CREDIT', amount: 1000 },
-        { id: 'led-2', type: 'DEBIT', amount: 500 }
+        { id: 'led-2', type: 'DEBIT', amount: 500 },
       ];
 
       mockDbPromise.all.mockResolvedValue(mockLedger);

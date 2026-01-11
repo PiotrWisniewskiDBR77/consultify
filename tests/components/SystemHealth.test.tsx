@@ -6,29 +6,29 @@ import { render, screen } from '@testing-library/react';
 import { SystemHealth } from '../../src/components/SystemHealth';
 
 describe('SystemHealth Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders component', () => {
-        render(<SystemHealth />);
-        expect(document.body).toBeDefined();
-    });
+  it('renders component', () => {
+    render(<SystemHealth />);
+    expect(document.body).toBeDefined();
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(<SystemHealth />);
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(<SystemHealth />);
+    expect(container).toBeInTheDocument();
+  });
 
-    it('displays health content', () => {
-        render(<SystemHealth />);
+  it('displays health content', () => {
+    render(<SystemHealth />);
 
-        const healthElements = screen.queryAllByText(/health|system|status/i);
-        expect(healthElements.length).toBeGreaterThanOrEqual(0);
-    });
+    const healthElements = screen.queryAllByText(/health|system|status/i);
+    expect(healthElements.length).toBeGreaterThanOrEqual(0);
+  });
 
-    it('has content', () => {
-        render(<SystemHealth />);
-        expect(document.body.innerHTML.length).toBeGreaterThan(50);
-    });
+  it('has content', () => {
+    render(<SystemHealth />);
+    expect(document.body.innerHTML.length).toBeGreaterThan(50);
+  });
 });

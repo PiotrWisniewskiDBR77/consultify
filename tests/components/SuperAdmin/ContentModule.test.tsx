@@ -8,24 +8,24 @@ import { BrowserRouter } from 'react-router-dom';
 import { Api } from '../../../src/services/api';
 
 const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <BrowserRouter>{children}</BrowserRouter>
+  <BrowserRouter>{children}</BrowserRouter>
 );
 
 const ContentModule = () => <div data-testid="content-module">SuperAdmin Content Module</div>;
 
 describe('SuperAdmin ContentModule', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        (Api.get as any).mockResolvedValue({});
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (Api.get as any).mockResolvedValue({});
+  });
 
-    it('renders content module', () => {
-        render(<ContentModule />, { wrapper: Wrapper });
-        expect(document.body.innerHTML.length).toBeGreaterThan(50);
-    });
+  it('renders content module', () => {
+    render(<ContentModule />, { wrapper: Wrapper });
+    expect(document.body.innerHTML.length).toBeGreaterThan(50);
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(<ContentModule />, { wrapper: Wrapper });
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(<ContentModule />, { wrapper: Wrapper });
+    expect(container).toBeInTheDocument();
+  });
 });

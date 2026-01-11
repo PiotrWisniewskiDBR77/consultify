@@ -6,16 +6,12 @@ import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-    process.env.MOCK_DB = 'false';
-    const workerId = process.env.VITEST_WORKER_ID || '0';
-    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
 // @vitest-environment node
-
-
-
-
 
 /**
  * Level 2: Integration Tests - Stage Gates
@@ -23,84 +19,84 @@ vi.hoisted(() => {
  */
 const db = getDatabase();
 describe('Integration Test: Stage Gate Routes', () => {
-    let authToken;
-    const testId = Date.now();
-    const testOrgId = `gate-org-${testId}`;
-    const testUserId = `gate-user-${testId}`;
-    const testProjectId = `gate-proj-${testId}`;
-    const testEmail = `gate-${testId}@test.com`;
+  let authToken;
+  const testId = Date.now();
+  const testOrgId = `gate-org-${testId}`;
+  const testUserId = `gate-user-${testId}`;
+  const testProjectId = `gate-proj-${testId}`;
+  const testEmail = `gate-${testId}@test.com`;
 
-    beforeAll(async () => {
-        await initializeDatabase();
-        await db.initPromise;
+  beforeAll(async () => {
+    await initializeDatabase();
+    await db.initPromise;
 
-                const hash = bcrypt.hashSync('test123', 8);
+    const hash = bcrypt.hashSync('test123', 8);
 
-        await new Promise((resolve) => {
-            db.serialize(() => {
-                db.run(
-                    'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                    [testOrgId, 'Gate Test Org', 'enterprise', 'active']
-                );
-                db.run(
-                    'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                    [testUserId, testOrgId, testEmail, hash, 'GateUser', 'ADMIN'],
-                    resolve
-                );
-                db.run(
-                    'INSERT INTO projects (id, organization_id, name, status, current_phase) VALUES (?, ?, ?, ?, ?)',
-                    [testProjectId, testOrgId, 'Gate Project', 'active', 'Context']
-                );
-            });
-        });
-
-        const loginRes = await request(app)
-            .post('/api/auth/login')
-            .send({
-                email: testEmail,
-                password: 'test123',
-            });
-
-        if (loginRes.body.token) {
-            authToken = loginRes.body.token;
-        }
+    await new Promise((resolve) => {
+      db.serialize(() => {
+        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+          testOrgId,
+          'Gate Test Org',
+          'enterprise',
+          'active',
+        ]);
+        db.run(
+          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+          [testUserId, testOrgId, testEmail, hash, 'GateUser', 'ADMIN'],
+          resolve
+        );
+        db.run(
+          'INSERT INTO projects (id, organization_id, name, status, current_phase) VALUES (?, ?, ?, ?, ?)',
+          [testProjectId, testOrgId, 'Gate Project', 'active', 'Context']
+        );
+      });
     });
 
-    describe('GET /api/stage-gates/:projectId/evaluate/:gateType', () => {
-        it('should evaluate specific gate', async () => {
-            if (!authToken) return;
-
-            const res = await request(app)
-                .get(`/api/stage-gates/${testProjectId}/evaluate/Context_To_Roadmap`)
-                .set('Authorization', `Bearer ${authToken}`);
-
-            expect([200, 500]).toContain(res.status);
-        });
+    const loginRes = await request(app).post('/api/auth/login').send({
+      email: testEmail,
+      password: 'test123',
     });
 
-    describe('GET /api/stage-gates/:projectId/current', () => {
-        it('should return current gate status', async () => {
-            if (!authToken) return;
+    if (loginRes.body.token) {
+      authToken = loginRes.body.token;
+    }
+  });
 
-            const res = await request(app)
-                .get(`/api/stage-gates/${testProjectId}/current`)
-                .set('Authorization', `Bearer ${authToken}`);
+  describe('GET /api/stage-gates/:projectId/evaluate/:gateType', () => {
+    it('should evaluate specific gate', async () => {
+      if (!authToken) return;
 
-            expect(res.status).toBe(200);
-            expect(res.body.currentPhase).toBe('Context');
-        });
+      const res = await request(app)
+        .get(`/api/stage-gates/${testProjectId}/evaluate/Context_To_Roadmap`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect([200, 500]).toContain(res.status);
     });
+  });
 
-    describe('GET /api/stage-gates/:projectId/history', () => {
-        it('should return gate history', async () => {
-            if (!authToken) return;
+  describe('GET /api/stage-gates/:projectId/current', () => {
+    it('should return current gate status', async () => {
+      if (!authToken) return;
 
-            const res = await request(app)
-                .get(`/api/stage-gates/${testProjectId}/history`)
-                .set('Authorization', `Bearer ${authToken}`);
+      const res = await request(app)
+        .get(`/api/stage-gates/${testProjectId}/current`)
+        .set('Authorization', `Bearer ${authToken}`);
 
-            expect(res.status).toBe(200);
-            expect(Array.isArray(res.body)).toBe(true);
-        });
+      expect(res.status).toBe(200);
+      expect(res.body.currentPhase).toBe('Context');
     });
+  });
+
+  describe('GET /api/stage-gates/:projectId/history', () => {
+    it('should return gate history', async () => {
+      if (!authToken) return;
+
+      const res = await request(app)
+        .get(`/api/stage-gates/${testProjectId}/history`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
 });

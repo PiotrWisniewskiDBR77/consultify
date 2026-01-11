@@ -17,9 +17,9 @@ function loadBaseline() {
       metrics: {
         'bundle-size': {
           main: { threshold: 1536 },
-          'total-js': { threshold: 5120 }
-        }
-      }
+          'total-js': { threshold: 5120 },
+        },
+      },
     };
   }
   return JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
@@ -31,18 +31,18 @@ function getBundleSizes() {
   }
 
   const files = fs.readdirSync(DIST_PATH, { recursive: true });
-  const jsFiles = files.filter(f => f.endsWith('.js'));
-  
+  const jsFiles = files.filter((f) => f.endsWith('.js'));
+
   let mainSize = 0;
   let totalSize = 0;
 
-  jsFiles.forEach(file => {
+  jsFiles.forEach((file) => {
     const filePath = path.join(DIST_PATH, file);
     const stats = fs.statSync(filePath);
     const sizeKB = Math.ceil(stats.size / 1024);
-    
+
     totalSize += sizeKB;
-    
+
     if (file.includes('index') || file.includes('main')) {
       mainSize += sizeKB;
     }
@@ -50,7 +50,7 @@ function getBundleSizes() {
 
   return {
     main: mainSize,
-    total: totalSize
+    total: totalSize,
   };
 }
 
@@ -94,13 +94,3 @@ if (require.main === module) {
 }
 
 module.exports = { checkPerformanceBudget };
-
-
-
-
-
-
-
-
-
-

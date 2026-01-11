@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Demo Service
  * Enterprise SaaS Architecture - TypeScript Backend

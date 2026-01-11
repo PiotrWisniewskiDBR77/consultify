@@ -67,13 +67,3 @@ describe('Project API Contract', () => {
     });
   });
 });
-
-
-
-
-
-
-
-
-
-

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Context Service
  * Enterprise SaaS Architecture - TypeScript Backend

@@ -13,9 +13,9 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
-    AcceptInvitationSchema,
-    CreateInvitationSchema,
-    ResendInvitationSchema,
+  AcceptInvitationSchema,
+  CreateInvitationSchema,
+  ResendInvitationSchema,
 } from '../../validators/invitation.validators.js';
 
 const router = Router();
@@ -41,15 +41,35 @@ router.get('/org', verifyToken, InvitationController.getInvitations);
  * POST /api/invitations
  * Create invitation
  */
-router.post('/', verifyToken, validateBody(CreateInvitationSchema), InvitationController.createInvitation);
-router.post('/org', verifyToken, validateBody(CreateInvitationSchema), InvitationController.createInvitation);
-router.post('/project', verifyToken, validateBody(CreateInvitationSchema), InvitationController.createInvitation);
+router.post(
+  '/',
+  verifyToken,
+  validateBody(CreateInvitationSchema),
+  InvitationController.createInvitation
+);
+router.post(
+  '/org',
+  verifyToken,
+  validateBody(CreateInvitationSchema),
+  InvitationController.createInvitation
+);
+router.post(
+  '/project',
+  verifyToken,
+  validateBody(CreateInvitationSchema),
+  InvitationController.createInvitation
+);
 
 /**
  * POST /api/invitations/resend
  * Resend invitation
  */
-router.post('/resend', verifyToken, validateBody(ResendInvitationSchema), InvitationController.resendInvitation);
+router.post(
+  '/resend',
+  verifyToken,
+  validateBody(ResendInvitationSchema),
+  InvitationController.resendInvitation
+);
 router.post('/:id/resend', verifyToken, InvitationController.resendInvitation);
 
 /**
@@ -62,7 +82,11 @@ router.post('/accept', validateBody(AcceptInvitationSchema), InvitationControlle
  * GET /api/invitations/validate/:token
  * Validate token
  */
-router.get('/validate/:token', InvitationController.validateToken || ((req, res) => res.status(501).json({ error: 'Not implemented' })));
+router.get(
+  '/validate/:token',
+  InvitationController.validateToken ||
+    ((req, res) => res.status(501).json({ error: 'Not implemented' }))
+);
 
 /**
  * DELETE /api/invitations/:id
@@ -75,7 +99,11 @@ router.post('/:id/revoke', verifyToken, InvitationController.cancelInvitation);
  * GET /api/invitations/:id/audit
  * Get audit trail
  */
-router.get('/:id/audit', verifyToken, InvitationController.getInvitationAudit || ((req, res) => res.status(501).json({ error: 'Not implemented' })));
-
+router.get(
+  '/:id/audit',
+  verifyToken,
+  InvitationController.getInvitationAudit ||
+    ((req, res) => res.status(501).json({ error: 'Not implemented' }))
+);
 
 export default router;

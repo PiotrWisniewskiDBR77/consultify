@@ -15,7 +15,11 @@ export { IndustryBenchmark } from './IndustryBenchmark';
 export { KeyTakeaways, QuickStats } from './KeyTakeaways';
 export { ProgressRing, ProgressRingCompact } from './ProgressRing';
 export { RadarChartComponent, RadarChartMini } from './RadarChart';
-export { ReadingModeProvider, ReadingModeSimpleToggle, ReadingModeToggle } from './ReadingModeToggle';
+export {
+  ReadingModeProvider,
+  ReadingModeSimpleToggle,
+  ReadingModeToggle,
+} from './ReadingModeToggle';
 export { RiskMatrix } from './RiskMatrix';
 export { StickyNavigation } from './StickyNavigation';
 

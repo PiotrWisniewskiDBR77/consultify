@@ -1,6 +1,6 @@
 /**
  * Mock Database Helper for Server Tests
- * 
+ *
  * Provides mock database instances for testing server services.
  * Compatible with both callback-style (SQLite3) and Promise-style (Postgres) APIs.
  */
@@ -13,12 +13,12 @@ import { createMockDb } from '../../../tests/helpers/mockDb.js';
  * @returns {Object} Mock database instance
  */
 export function createMockDatabaseWithResults() {
-    return createMockDb({
-        defaultGetResult: null,
-        defaultAllResult: [],
-        defaultRunResult: { lastID: 1, changes: 1 },
-        enableLogging: false
-    });
+  return createMockDb({
+    defaultGetResult: null,
+    defaultAllResult: [],
+    defaultRunResult: { lastID: 1, changes: 1 },
+    enableLogging: false,
+  });
 }
 
 /**
@@ -30,16 +30,15 @@ export function createMockDatabaseWithResults() {
  * @returns {Object} Mock database instance
  */
 export function createMockDatabase(options = {}) {
-    return createMockDb({
-        defaultGetResult: options.defaultGetResult || null,
-        defaultAllResult: options.defaultAllResult || [],
-        defaultRunResult: options.defaultRunResult || { lastID: 1, changes: 1 },
-        enableLogging: options.enableLogging || false
-    });
+  return createMockDb({
+    defaultGetResult: options.defaultGetResult || null,
+    defaultAllResult: options.defaultAllResult || [],
+    defaultRunResult: options.defaultRunResult || { lastID: 1, changes: 1 },
+    enableLogging: options.enableLogging || false,
+  });
 }
 
 export default {
-    createMockDatabaseWithResults,
-    createMockDatabase
+  createMockDatabaseWithResults,
+  createMockDatabase,
 };
-

@@ -12,43 +12,40 @@ import { LoadingScreen } from '../../src/components/ui/LoadingScreen';
  * Tests component accessibility compliance
  */
 describe('Component Test: Accessibility (a11y)', () => {
-    it('Button should be keyboard accessible', () => {
-        const { container } = render(<Button>Click Me</Button>);
-        const button = container.querySelector('button');
-        expect(button).toBeDefined();
-        expect(button?.tagName).toBe('BUTTON');
-        expect(button).not.toHaveAttribute('disabled');
-    });
+  it('Button should be keyboard accessible', () => {
+    const { container } = render(<Button>Click Me</Button>);
+    const button = container.querySelector('button');
+    expect(button).toBeDefined();
+    expect(button?.tagName).toBe('BUTTON');
+    expect(button).not.toHaveAttribute('disabled');
+  });
 
-    it('Button should have proper semantic HTML', () => {
-        const { container } = render(<Button>Click Me</Button>);
-        const button = container.querySelector('button');
-        expect(button).toBeInTheDocument();
-        expect(button?.textContent).toContain('Click Me');
-    });
+  it('Button should have proper semantic HTML', () => {
+    const { container } = render(<Button>Click Me</Button>);
+    const button = container.querySelector('button');
+    expect(button).toBeInTheDocument();
+    expect(button?.textContent).toContain('Click Me');
+  });
 
-    it('ErrorBoundary should have accessible error message', () => {
-        const { container } = render(
-            <ErrorBoundary>
-                <div>Test</div>
-            </ErrorBoundary>
-        );
-        // ErrorBoundary should render children normally when no error
-        expect(container.textContent).toContain('Test');
-    });
+  it('ErrorBoundary should have accessible error message', () => {
+    const { container } = render(
+      <ErrorBoundary>
+        <div>Test</div>
+      </ErrorBoundary>
+    );
+    // ErrorBoundary should render children normally when no error
+    expect(container.textContent).toContain('Test');
+  });
 
-    it('LoadingScreen should have accessible structure', () => {
-        const { container } = render(<LoadingScreen />);
-        // Should have a main container
-        expect(container.firstChild).toBeDefined();
-    });
+  it('LoadingScreen should have accessible structure', () => {
+    const { container } = render(<LoadingScreen />);
+    // Should have a main container
+    expect(container.firstChild).toBeDefined();
+  });
 
-    it('components should have proper ARIA labels when needed', () => {
-        const { container } = render(
-            <Button aria-label="Submit form">Submit</Button>
-        );
-        const button = container.querySelector('button');
-        expect(button).toHaveAttribute('aria-label', 'Submit form');
-    });
+  it('components should have proper ARIA labels when needed', () => {
+    const { container } = render(<Button aria-label="Submit form">Submit</Button>);
+    const button = container.querySelector('button');
+    expect(button).toHaveAttribute('aria-label', 'Submit form');
+  });
 });
-

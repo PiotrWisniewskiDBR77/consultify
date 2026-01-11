@@ -1,0 +1,635 @@
+{
+  "organization": {
+    "id": "demo-technolex-org",
+    "name": "TechnoLex Industries",
+    "legal_name": "TechnoLex Industries Sp. z o.o.",
+    "slug": "technolex",
+    "logo_url": "/assets/demo/technolex-logo.svg",
+    "industry": "Manufacturing",
+    "sub_industry": "Automotive Parts",
+    "nace_code": "C29.32",
+    "size": "2500",
+    "size_category": "mid-market",
+    "website": "https://technolex-demo.consultinity.com",
+    "headquarters": "Warsaw, Poland",
+    "address": {
+      "street": "ul. Przemysłowa 42",
+      "postal_code": "02-232",
+      "city": "Warsaw",
+      "country": "Poland",
+      "country_code": "PL"
+    },
+    "founded": "1995",
+    "legal_form": "Sp. z o.o.",
+    "vat_id": "PL5261234567",
+    "currency": "EUR",
+    "fiscal_year_start": "01",
+    "default_locale": "en",
+    "enabled_locales": ["en", "pl", "de", "es"],
+    "timezone": "Europe/Warsaw",
+    "description": "TechnoLex Industries is a leading European manufacturer of precision automotive components, serving major OEMs across the continent. With 30 years of excellence in engineering and a commitment to innovation, TechnoLex is embarking on an ambitious digital transformation journey to become a Smart Factory leader.",
+    "short_description": "Precision automotive components for European OEMs",
+    "vision": "To become the most digitally advanced automotive component manufacturer in Central Europe by 2027",
+    "mission": "Delivering precision-engineered automotive components through innovation, quality, and sustainable practices",
+    "values": [
+      "Engineering Excellence",
+      "Customer Partnership",
+      "Continuous Innovation",
+      "Sustainable Manufacturing",
+      "Employee Development"
+    ],
+    "certifications": ["ISO 9001:2015", "IATF 16949", "ISO 14001", "ISO 45001", "ISO 27001"],
+    "digital_maturity_current": 2.8,
+    "digital_maturity_target": 4.2,
+    "transformation_budget": 12500000,
+    "transformation_timeline": "2025-2027"
+  },
+  "financials": {
+    "revenue": {
+      "2024": 245000000,
+      "2023": 228000000,
+      "2022": 215000000,
+      "growth_rate": 7.5,
+      "currency": "EUR"
+    },
+    "ebitda": {
+      "2024": 29400000,
+      "margin_percent": 12
+    },
+    "employees": {
+      "total": 2500,
+      "fte": 2380,
+      "contractors": 120,
+      "by_function": {
+        "production": 1600,
+        "engineering": 350,
+        "sales_marketing": 180,
+        "administration": 220,
+        "r&d": 150
+      }
+    },
+    "capex": {
+      "2024": 18500000,
+      "2025_planned": 25000000
+    },
+    "it_budget": {
+      "annual": 8200000,
+      "percent_of_revenue": 3.3,
+      "digital_transformation_allocation": 4500000
+    }
+  },
+  "locations": [
+    {
+      "id": "loc-001",
+      "name": "Warsaw HQ",
+      "country": "Poland",
+      "city": "Warsaw",
+      "address": "ul. Przemysłowa 42, 02-232 Warsaw",
+      "type": "headquarters",
+      "employees": 1200,
+      "area_sqm": 45000,
+      "production_lines": 8,
+      "year_opened": 1995,
+      "capabilities": ["CNC Machining", "Assembly", "Quality Lab", "Warehouse"]
+    },
+    {
+      "id": "loc-002",
+      "name": "Munich Office",
+      "country": "Germany",
+      "city": "Munich",
+      "address": "Leopoldstraße 120, 80802 Munich",
+      "type": "sales",
+      "employees": 150,
+      "area_sqm": 2500,
+      "year_opened": 2008,
+      "capabilities": ["Sales", "Customer Service", "Engineering Support"]
+    },
+    {
+      "id": "loc-003",
+      "name": "Wrocław Plant",
+      "country": "Poland",
+      "city": "Wrocław",
+      "address": "ul. Fabryczna 15, 54-202 Wrocław",
+      "type": "manufacturing",
+      "employees": 800,
+      "area_sqm": 32000,
+      "production_lines": 6,
+      "year_opened": 2012,
+      "capabilities": ["Stamping", "Welding", "Coating", "Assembly"]
+    },
+    {
+      "id": "loc-004",
+      "name": "Barcelona Center",
+      "country": "Spain",
+      "city": "Barcelona",
+      "address": "Carrer de la Marina 150, 08013 Barcelona",
+      "type": "r&d",
+      "employees": 350,
+      "area_sqm": 5000,
+      "year_opened": 2018,
+      "capabilities": ["Product Development", "Prototyping", "Testing Lab", "Simulation"]
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-001",
+      "name": "Precision Brake Components",
+      "category": "Braking Systems",
+      "revenue_share": 35,
+      "description": "High-precision brake calipers, rotors, and brackets for passenger vehicles",
+      "customers": ["Volkswagen Group", "BMW", "Stellantis"],
+      "annual_volume": 2500000
+    },
+    {
+      "id": "prod-002",
+      "name": "Steering System Parts",
+      "category": "Steering & Suspension",
+      "revenue_share": 25,
+      "description": "Steering columns, joints, and linkages for automotive applications",
+      "customers": ["Mercedes-Benz", "Audi", "Volvo"],
+      "annual_volume": 1800000
+    },
+    {
+      "id": "prod-003",
+      "name": "EV Battery Housings",
+      "category": "Electric Vehicles",
+      "revenue_share": 15,
+      "description": "Aluminum battery enclosures and thermal management components for EVs",
+      "customers": ["Volkswagen Group", "BMW", "Rivian"],
+      "annual_volume": 450000,
+      "growth_rate": 45
+    },
+    {
+      "id": "prod-004",
+      "name": "Engine Mounts & Brackets",
+      "category": "Powertrain",
+      "revenue_share": 15,
+      "description": "Engine mounting systems and structural brackets",
+      "customers": ["Stellantis", "Renault", "Toyota"],
+      "annual_volume": 3200000
+    },
+    {
+      "id": "prod-005",
+      "name": "Interior Metal Components",
+      "category": "Interior",
+      "revenue_share": 10,
+      "description": "Seat frames, door hinges, and structural interior parts",
+      "customers": ["BMW", "Mercedes-Benz", "Jaguar Land Rover"],
+      "annual_volume": 1200000
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust-001",
+      "name": "Volkswagen Group",
+      "type": "OEM",
+      "tier": "strategic",
+      "revenue_share": 28,
+      "relationship_since": 1998,
+      "contact_name": "Dr. Klaus Fischer",
+      "contact_title": "Head of Supplier Quality"
+    },
+    {
+      "id": "cust-002",
+      "name": "BMW AG",
+      "type": "OEM",
+      "tier": "strategic",
+      "revenue_share": 22,
+      "relationship_since": 2005,
+      "contact_name": "Maria Schneider",
+      "contact_title": "Purchasing Director"
+    },
+    {
+      "id": "cust-003",
+      "name": "Stellantis",
+      "type": "OEM",
+      "tier": "key",
+      "revenue_share": 18,
+      "relationship_since": 2010,
+      "contact_name": "Jean-Pierre Dubois",
+      "contact_title": "Supplier Development Manager"
+    },
+    {
+      "id": "cust-004",
+      "name": "Mercedes-Benz",
+      "type": "OEM",
+      "tier": "key",
+      "revenue_share": 15,
+      "relationship_since": 2008,
+      "contact_name": "Andreas Weber",
+      "contact_title": "Quality Manager"
+    },
+    {
+      "id": "cust-005",
+      "name": "Volvo Cars",
+      "type": "OEM",
+      "tier": "developing",
+      "revenue_share": 8,
+      "relationship_since": 2019,
+      "contact_name": "Erik Lindqvist",
+      "contact_title": "Procurement Lead"
+    },
+    {
+      "id": "cust-006",
+      "name": "Other OEMs",
+      "type": "OEM",
+      "tier": "various",
+      "revenue_share": 9,
+      "relationship_since": null
+    }
+  ],
+  "kpis": {
+    "operational": {
+      "oee": {
+        "current": 68,
+        "target": 88,
+        "unit": "%"
+      },
+      "scrap_rate": {
+        "current": 2.8,
+        "target": 1.5,
+        "unit": "%"
+      },
+      "on_time_delivery": {
+        "current": 94.5,
+        "target": 99,
+        "unit": "%"
+      },
+      "defect_rate": {
+        "current": 1.2,
+        "target": 0.3,
+        "unit": "%"
+      },
+      "cycle_time": {
+        "current": 45,
+        "target": 35,
+        "unit": "seconds"
+      },
+      "unplanned_downtime": {
+        "current": 8.5,
+        "target": 4,
+        "unit": "%"
+      },
+      "inventory_turns": {
+        "current": 12,
+        "target": 18,
+        "unit": "per year"
+      }
+    },
+    "financial": {
+      "cost_per_unit": {
+        "current": 12.5,
+        "target": 10.5,
+        "unit": "EUR"
+      },
+      "labor_productivity": {
+        "current": 98000,
+        "target": 120000,
+        "unit": "EUR/employee"
+      },
+      "warranty_costs": {
+        "current": 1.8,
+        "target": 0.8,
+        "unit": "% of revenue"
+      }
+    },
+    "sustainability": {
+      "energy_consumption": {
+        "current": 42,
+        "target": 32,
+        "unit": "kWh/unit"
+      },
+      "co2_emissions": {
+        "current": 18500,
+        "target": 12000,
+        "unit": "tonnes/year"
+      },
+      "water_usage": {
+        "current": 125000,
+        "target": 95000,
+        "unit": "m3/year"
+      },
+      "waste_recycling_rate": {
+        "current": 72,
+        "target": 90,
+        "unit": "%"
+      }
+    },
+    "digital": {
+      "machine_connectivity": {
+        "current": 35,
+        "target": 95,
+        "unit": "%"
+      },
+      "data_availability": {
+        "current": 40,
+        "target": 95,
+        "unit": "%"
+      },
+      "automation_level": {
+        "current": 45,
+        "target": 75,
+        "unit": "%"
+      },
+      "digital_skills_index": {
+        "current": 2.5,
+        "target": 4.0,
+        "unit": "1-5 scale"
+      }
+    }
+  },
+  "it_landscape": {
+    "erp": {
+      "system": "SAP ECC 6.0",
+      "version": "EHP8",
+      "go_live": "2010",
+      "status": "legacy",
+      "migration_planned": "SAP S/4HANA Cloud"
+    },
+    "mes": {
+      "system": "Rockwell FactoryTalk",
+      "coverage": "60%",
+      "status": "partial"
+    },
+    "plm": {
+      "system": "Siemens Teamcenter",
+      "version": "14",
+      "status": "current"
+    },
+    "crm": {
+      "system": "Salesforce Sales Cloud",
+      "status": "current"
+    },
+    "hr": {
+      "system": "SAP SuccessFactors",
+      "status": "current"
+    },
+    "bi": {
+      "system": "Microsoft Power BI",
+      "status": "partial",
+      "adoption": "30%"
+    },
+    "issues": [
+      "12+ disconnected systems with no integration layer",
+      "Legacy ERP limiting real-time capabilities",
+      "Manual data entry between systems",
+      "No unified data warehouse",
+      "Limited mobile accessibility"
+    ]
+  },
+  "project": {
+    "id": "demo-technolex-project",
+    "name": "Digital Transformation Program 2027",
+    "code": "DTP-2027",
+    "description": "A comprehensive 3-year digital transformation initiative to modernize TechnoLex's manufacturing operations, leveraging Industry 4.0 technologies to achieve operational excellence and competitive advantage.",
+    "current_phase": "Roadmap",
+    "start_date": "2025-01-15",
+    "target_date": "2027-12-31",
+    "status": "active",
+    "sponsor": "Thomas Weber",
+    "sponsor_title": "Chief Executive Officer",
+    "program_director": "Anna Kowalski",
+    "steering_committee": [
+      {
+        "name": "Thomas Weber",
+        "role": "Executive Sponsor"
+      },
+      {
+        "name": "Martin Schmidt",
+        "role": "Technology Lead"
+      },
+      {
+        "name": "Anna Kowalski",
+        "role": "Program Director"
+      },
+      {
+        "name": "Jan Nowak",
+        "role": "PMO Lead"
+      }
+    ],
+    "strategic_objectives": [
+      "Achieve 30% improvement in Overall Equipment Effectiveness (OEE)",
+      "Reduce unplanned downtime by 50% through predictive maintenance",
+      "Implement real-time visibility across the entire supply chain",
+      "Enable data-driven decision making at all organizational levels",
+      "Develop digital competencies across the workforce"
+    ],
+    "key_technologies": [
+      "Industrial IoT (IIoT)",
+      "Artificial Intelligence & Machine Learning",
+      "Digital Twin Technology",
+      "Cloud ERP (SAP S/4HANA)",
+      "Advanced Analytics & BI",
+      "Robotic Process Automation (RPA)"
+    ],
+    "expected_roi": 2.8,
+    "payback_period_years": 3.5,
+    "risk_profile": "medium",
+    "success_criteria": [
+      "OEE reaches 88% by Q2 2027",
+      "Unplanned downtime reduced to 4%",
+      "100% machine connectivity achieved",
+      "S/4HANA fully operational by end of 2026",
+      "Digital skills index reaches 4.0"
+    ]
+  },
+  "challenges": [
+    {
+      "id": "ch-001",
+      "title": "Aging Production Equipment",
+      "description": "40% of production machinery is over 15 years old and lacks digital connectivity capabilities.",
+      "impact": "high",
+      "category": "technology",
+      "affected_kpis": ["machine_connectivity", "oee", "unplanned_downtime"],
+      "remediation": "IoT retrofit program and phased equipment modernization"
+    },
+    {
+      "id": "ch-002",
+      "title": "Data Silos",
+      "description": "Critical business data scattered across 12+ disconnected systems with no single source of truth.",
+      "impact": "high",
+      "category": "data",
+      "affected_kpis": ["data_availability", "decision_speed"],
+      "remediation": "Data lake implementation and integration platform"
+    },
+    {
+      "id": "ch-003",
+      "title": "Skills Gap",
+      "description": "Limited in-house expertise in advanced analytics, AI/ML, and modern software development.",
+      "impact": "medium",
+      "category": "people",
+      "affected_kpis": ["digital_skills_index", "automation_level"],
+      "remediation": "Digital academy and strategic hiring program"
+    },
+    {
+      "id": "ch-004",
+      "title": "Supply Chain Visibility",
+      "description": "No real-time visibility into supplier performance or inventory levels across the value chain.",
+      "impact": "high",
+      "category": "operations",
+      "affected_kpis": ["on_time_delivery", "inventory_turns"],
+      "remediation": "Supply chain control tower implementation"
+    },
+    {
+      "id": "ch-005",
+      "title": "Quality Traceability",
+      "description": "Manual quality processes make root cause analysis time-consuming and incomplete.",
+      "impact": "medium",
+      "category": "quality",
+      "affected_kpis": ["defect_rate", "warranty_costs"],
+      "remediation": "AI-powered quality inspection and digital traceability"
+    },
+    {
+      "id": "ch-006",
+      "title": "Energy Costs",
+      "description": "Rising energy costs and sustainability requirements demand optimization.",
+      "impact": "medium",
+      "category": "sustainability",
+      "affected_kpis": ["energy_consumption", "co2_emissions"],
+      "remediation": "Smart energy management system"
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-001",
+      "title": "Smart Factory Implementation",
+      "description": "Transform Warsaw and Wrocław plants into fully connected smart factories",
+      "target_date": "2027-06-30",
+      "priority": "high",
+      "kpi": "OEE improvement from 68% to 88%",
+      "owner": "Jan Nowak",
+      "initiatives": ["init-001", "init-002"]
+    },
+    {
+      "id": "goal-002",
+      "title": "Predictive Operations",
+      "description": "Implement AI-driven predictive maintenance across critical equipment",
+      "target_date": "2026-12-31",
+      "priority": "high",
+      "kpi": "Reduce unplanned downtime by 50%",
+      "owner": "Klaus Bauer",
+      "initiatives": ["init-002"]
+    },
+    {
+      "id": "goal-003",
+      "title": "Digital Supply Chain",
+      "description": "Achieve end-to-end supply chain visibility and automated replenishment",
+      "target_date": "2026-06-30",
+      "priority": "medium",
+      "kpi": "Inventory carrying costs reduced by 25%",
+      "owner": "Hans Braun",
+      "initiatives": ["init-006"]
+    },
+    {
+      "id": "goal-004",
+      "title": "Data-Driven Culture",
+      "description": "Enable self-service analytics for all management levels",
+      "target_date": "2026-09-30",
+      "priority": "medium",
+      "kpi": "100% of KPIs available in real-time dashboards",
+      "owner": "Ana Fernández",
+      "initiatives": ["init-004"]
+    },
+    {
+      "id": "goal-005",
+      "title": "Quality Excellence",
+      "description": "Implement AI-powered quality inspection reducing defect rates",
+      "target_date": "2026-03-31",
+      "priority": "high",
+      "kpi": "Defect rate reduced from 1.2% to 0.3%",
+      "owner": "Carlos García",
+      "initiatives": ["init-005"]
+    }
+  ],
+  "megatrends": [
+    {
+      "id": "mt-001",
+      "name": "Industry 4.0 Adoption",
+      "relevance": 95,
+      "impact_description": "Core driver of our transformation - must adopt to remain competitive",
+      "action": "Smart Factory and IoT implementation"
+    },
+    {
+      "id": "mt-002",
+      "name": "Electrification of Mobility",
+      "relevance": 90,
+      "impact_description": "Major shift in component portfolio required - EV parts growing from 15% to 60% by 2030",
+      "action": "Expand EV battery housing and thermal management capabilities"
+    },
+    {
+      "id": "mt-003",
+      "name": "Sustainability & ESG",
+      "relevance": 85,
+      "impact_description": "OEMs demanding carbon-neutral supply chains - must track and reduce emissions",
+      "action": "Energy optimization and carbon tracking implementation"
+    },
+    {
+      "id": "mt-004",
+      "name": "Supply Chain Resilience",
+      "relevance": 80,
+      "impact_description": "Post-pandemic emphasis on visibility and risk management",
+      "action": "Supply chain control tower and multi-sourcing strategy"
+    },
+    {
+      "id": "mt-005",
+      "name": "Skills of the Future",
+      "relevance": 75,
+      "impact_description": "Digital skills gap threatens transformation success - major upskilling required",
+      "action": "Digital Academy and strategic talent acquisition"
+    },
+    {
+      "id": "mt-006",
+      "name": "AI & Automation",
+      "relevance": 88,
+      "impact_description": "AI-driven optimization becoming table stakes for manufacturing competitiveness",
+      "action": "Predictive maintenance and quality AI deployment"
+    }
+  ],
+  "competitors": [
+    {
+      "name": "Borgers Automotive",
+      "country": "Germany",
+      "strength": "Strong OEM relationships, advanced automation",
+      "weakness": "Higher cost structure"
+    },
+    {
+      "name": "Faurecia CZ",
+      "country": "Czech Republic",
+      "strength": "Scale, global footprint",
+      "weakness": "Less agile, slower innovation"
+    },
+    {
+      "name": "Kirchhoff Automotive",
+      "country": "Germany",
+      "strength": "Technology leadership, EV expertise",
+      "weakness": "Limited Eastern European presence"
+    }
+  ],
+  "swot": {
+    "strengths": [
+      "30 years of automotive expertise and OEM relationships",
+      "Strong quality certifications (IATF 16949)",
+      "Competitive cost position in Central Europe",
+      "Growing EV component portfolio",
+      "Committed executive sponsorship for transformation"
+    ],
+    "weaknesses": [
+      "Aging production equipment requiring significant investment",
+      "Fragmented IT landscape with data silos",
+      "Limited digital skills in workforce",
+      "Dependency on traditional ICE components"
+    ],
+    "opportunities": [
+      "Rapid EV market growth requiring new component types",
+      "Industry 4.0 technologies enabling differentiation",
+      "OEM consolidation of supplier base favoring capable partners",
+      "EU reshoring trend bringing manufacturing closer"
+    ],
+    "threats": [
+      "Low-cost competition from Asia",
+      "OEM pricing pressure squeezing margins",
+      "Talent shortage for digital skills",
+      "Disruption from new mobility business models"
+    ]
+  }
+}

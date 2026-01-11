@@ -17,7 +17,3 @@ router.use('/settings', notificationSettingsRoutes);
 router.use('/', notificationsRoutes);
 
 export default router;
-
-
-
-

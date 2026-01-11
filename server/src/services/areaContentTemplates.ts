@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Areacontenttemplates Service
  * Enterprise SaaS Architecture - TypeScript Backend

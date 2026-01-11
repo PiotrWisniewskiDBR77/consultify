@@ -4,4 +4,3 @@
  */
 export * from './src/database/Database.ts';
 export { getDatabase as default, getDatabase, initDatabase } from './src/database/Database.ts';
-

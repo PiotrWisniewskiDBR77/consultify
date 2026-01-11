@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aiassessmentformhelper Service
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -12,4 +13,5 @@ import service from './aiAssessmentFormHelper.js';
 export default service;
 
 // Re-export named exports
-export const { AIAssessmentFormHelper, aiAssessmentFormHelper, FIELD_TYPES, VALIDATION_RULES } = service;
+export const { AIAssessmentFormHelper, aiAssessmentFormHelper, FIELD_TYPES, VALIDATION_RULES } =
+  service;

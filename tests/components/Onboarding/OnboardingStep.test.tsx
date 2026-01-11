@@ -7,17 +7,17 @@ import { render, screen } from '@testing-library/react';
 const OnboardingStep = () => <div data-testid="onboarding-step">Onboarding Step</div>;
 
 describe('OnboardingStep Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders component', () => {
-        render(<OnboardingStep />);
-        expect(screen.getByTestId('onboarding-step')).toBeInTheDocument();
-    });
+  it('renders component', () => {
+    render(<OnboardingStep />);
+    expect(screen.getByTestId('onboarding-step')).toBeInTheDocument();
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(<OnboardingStep />);
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(<OnboardingStep />);
+    expect(container).toBeInTheDocument();
+  });
 });

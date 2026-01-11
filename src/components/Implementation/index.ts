@@ -10,7 +10,12 @@ export type { Decision, DecisionPriority, DecisionStatus } from './DecisionBoard
 // Additional Components
 export { BudgetTrackingView } from './BudgetTrackingView';
 export { CapacityView } from './CapacityView';
-export type { ChangeCategory, ChangeImpact, ChangePriority, ChangeRequest } from './ChangeRequestModal';
+export type {
+  ChangeCategory,
+  ChangeImpact,
+  ChangePriority,
+  ChangeRequest,
+} from './ChangeRequestModal';
 export { ChangeRequestModal } from './ChangeRequestModal';
 export type { ExportFormat, ExportType } from './ExportControls';
 export { ExportControls } from './ExportControls';

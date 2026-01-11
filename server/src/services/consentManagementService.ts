@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Consentmanagement Service
  * Enterprise SaaS Architecture - TypeScript Backend

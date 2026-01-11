@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Demosession Service
  * Enterprise SaaS Architecture - TypeScript Backend

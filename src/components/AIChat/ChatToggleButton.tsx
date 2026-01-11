@@ -29,44 +29,44 @@ const chatAnimationStyle = `
 `;
 
 export const ChatToggleButton: React.FC = () => {
-    const { toggleChat, pmoContext, isChatOpen } = useAIContext();
-    const { i18n } = useTranslation();
-    const lang = i18n.language === 'pl' ? 'pl' : 'en';
+  const { toggleChat, pmoContext, isChatOpen } = useAIContext();
+  const { i18n } = useTranslation();
+  const lang = i18n.language === 'pl' ? 'pl' : 'en';
 
-    // We assume regulatory mode is handled by context or we fetch specific to this component if needed.
-    // For simplicity, we'll keep the context badge.
+  // We assume regulatory mode is handled by context or we fetch specific to this component if needed.
+  // For simplicity, we'll keep the context badge.
 
-    // Note: Regulatory mode state was local in ChatOverlay.
-    // Ideally it should be moved to AIContext, but for now we'll stick to the main badge
-    // or we'd need to duplicate the fetch logic.
-    // Let's implement the refined style first.
+  // Note: Regulatory mode state was local in ChatOverlay.
+  // Ideally it should be moved to AIContext, but for now we'll stick to the main badge
+  // or we'd need to duplicate the fetch logic.
+  // Let's implement the refined style first.
 
-    return (
-        <>
-            <style>{chatAnimationStyle}</style>
-            {!isChatOpen && (
-                <button
-                    onClick={toggleChat}
-                    className="w-12 h-12 flex items-center justify-center text-white rounded-l-2xl rounded-r-none shadow-lg transition-all duration-300 group relative"
-                    style={{
-                        animation: 'chatColorPulse 5s ease-in-out infinite',
-                    }}
-                    title={lang === 'pl' ? 'Asystent AI' : 'AI Assistant'}
-                >
-                    <MessageCircle
-                        size={20}
-                        className="transition-transform"
-                        style={{ animation: 'chatIconGlow 5s ease-in-out infinite' }}
-                    />
+  return (
+    <>
+      <style>{chatAnimationStyle}</style>
+      {!isChatOpen && (
+        <button
+          onClick={toggleChat}
+          className="w-12 h-12 flex items-center justify-center text-white rounded-l-2xl rounded-r-none shadow-lg transition-all duration-300 group relative"
+          style={{
+            animation: 'chatColorPulse 5s ease-in-out infinite',
+          }}
+          title={lang === 'pl' ? 'Asystent AI' : 'AI Assistant'}
+        >
+          <MessageCircle
+            size={20}
+            className="transition-transform"
+            style={{ animation: 'chatIconGlow 5s ease-in-out infinite' }}
+          />
 
-                    {/* Badge indicator when context is loaded */}
-                    {pmoContext.projectId && (
-                        <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-green-400 rounded-full border border-white dark:border-navy-900 animate-pulse" />
-                    )}
+          {/* Badge indicator when context is loaded */}
+          {pmoContext.projectId && (
+            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-green-400 rounded-full border border-white dark:border-navy-900 animate-pulse" />
+          )}
 
-                    {/* Tooltip */}
-                    <div
-                        className={`
+          {/* Tooltip */}
+          <div
+            className={`
                         absolute right-full mr-3 
                         px-3 py-1.5 
                         bg-slate-900 dark:bg-slate-800 
@@ -78,12 +78,12 @@ export const ChatToggleButton: React.FC = () => {
                         pointer-events-none
                         shadow-lg
                     `}
-                    >
-                        {lang === 'pl' ? 'Asystent AI' : 'AI Assistant'}
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-2 h-2 bg-slate-900 dark:bg-slate-800 rotate-45" />
-                    </div>
-                </button>
-            )}
-        </>
-    );
+          >
+            {lang === 'pl' ? 'Asystent AI' : 'AI Assistant'}
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-2 h-2 bg-slate-900 dark:bg-slate-800 rotate-45" />
+          </div>
+        </button>
+      )}
+    </>
+  );
 };

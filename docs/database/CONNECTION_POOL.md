@@ -46,8 +46,8 @@ Add to server shutdown handler:
 import { shutdownConnectionPool } from './database/index.js';
 
 process.on('SIGTERM', async () => {
-    await shutdownConnectionPool();
-    // ... other cleanup
+  await shutdownConnectionPool();
+  // ... other cleanup
 });
 ```
 
@@ -70,7 +70,7 @@ import { getConnectionPool } from './database/index.js';
 
 const pool = getConnectionPool();
 if (pool) {
-    const result = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+  const result = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
 }
 ```
 
@@ -112,21 +112,21 @@ if (pool) {
 
 ```json
 {
-    "pool": {
-        "total": 5,
-        "active": 2,
-        "idle": 3,
-        "waiting": 0,
-        "healthy": 5,
-        "unhealthy": 0
-    },
-    "metrics": {
-        "uptime": "99.50%",
-        "averageResponseTime": "12.34ms",
-        "consecutiveFailures": 0,
-        "totalChecks": 120,
-        "totalFailures": 1
-    }
+  "pool": {
+    "total": 5,
+    "active": 2,
+    "idle": 3,
+    "waiting": 0,
+    "healthy": 5,
+    "unhealthy": 0
+  },
+  "metrics": {
+    "uptime": "99.50%",
+    "averageResponseTime": "12.34ms",
+    "consecutiveFailures": 0,
+    "totalChecks": 120,
+    "totalFailures": 1
+  }
 }
 ```
 

@@ -7,19 +7,19 @@
 import { HelpModuleId } from './viewToModuleMapping';
 export type { HelpModuleId };
 export interface ModuleHelp {
-    id: HelpModuleId;
-    icon: string;
-    targetAudience: ('user' | 'admin' | 'superadmin')[];
-    relatedModules: HelpModuleId[];
-    translationKey: string;
-    name?: {
-        en: string;
-        pl: string;
-    };
-    description?: {
-        en: string;
-        pl: string;
-    };
+  id: HelpModuleId;
+  icon: string;
+  targetAudience: ('user' | 'admin' | 'superadmin')[];
+  relatedModules: HelpModuleId[];
+  translationKey: string;
+  name?: {
+    en: string;
+    pl: string;
+  };
+  description?: {
+    en: string;
+    pl: string;
+  };
 }
 export declare const MODULE_HELP_CONTENT: Record<HelpModuleId, ModuleHelp>;
 /**

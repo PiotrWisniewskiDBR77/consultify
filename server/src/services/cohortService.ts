@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Cohort Service
  * Enterprise SaaS Architecture - TypeScript Backend

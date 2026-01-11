@@ -15,6 +15,7 @@
 ## Pattern Categories
 
 ### Simple (Auto-convertible)
+
 These are just re-exports with no logic. Can be automatically converted.
 
 ```
@@ -32,6 +33,7 @@ These are just re-exports with no logic. Can be automatically converted.
 ```
 
 ### Critical Services
+
 These services are critical for application functionality and should be converted first.
 
 ```

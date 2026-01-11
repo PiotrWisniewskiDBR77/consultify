@@ -16,8 +16,8 @@ import logger from '../utils/Logger.js';
 // ==========================================
 
 interface Dependencies {
-    db: IDatabase;
-    config: typeof config;
+  db: IDatabase;
+  config: typeof config;
 }
 
 // ==========================================
@@ -25,75 +25,80 @@ interface Dependencies {
 // ==========================================
 
 class CleanupRevokedTokensCron {
-    private deps: Dependencies;
-    private cleanupInterval: NodeJS.Timeout | null = null;
+  private deps: Dependencies;
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
-    constructor(deps?: Partial<Dependencies>) {
-        this.deps = {
-            db: deps?.db || getDatabase(),
-            config: deps?.config || config,
-        };
+  constructor(deps?: Partial<Dependencies>) {
+    this.deps = {
+      db: deps?.db || getDatabase(),
+      config: deps?.config || config,
+    };
+  }
+
+  /**
+   * Clean up expired revoked tokens
+   */
+  async cleanupRevokedTokens(): Promise<number> {
+    logger.info('[Cron] Cleaning up expired revoked tokens...');
+
+    try {
+      const runResult = await dbRun(
+        "DELETE FROM revoked_tokens WHERE expires_at < datetime('now')",
+        []
+      );
+
+      if (!runResult.success) {
+        throw new Error(runResult.error || 'Failed to cleanup revoked tokens');
+      }
+
+      const deleted = runResult.changes || 0;
+      if (deleted > 0) {
+        logger.info(`[Cron] Removed ${deleted} expired revoked tokens`);
+      }
+      return deleted;
+    } catch (err: any) {
+      logger.error('[Cron] Error cleaning up revoked tokens:', err);
+      throw err;
     }
+  }
 
-    /**
-     * Clean up expired revoked tokens
-     */
-    async cleanupRevokedTokens(): Promise<number> {
-        logger.info('[Cron] Cleaning up expired revoked tokens...');
+  /**
+   * Start the cleanup job
+   */
+  startCleanupJob(): void {
+    // Delay first run to allow database initialization
+    setTimeout(async () => {
+      try {
+        await this.cleanupRevokedTokens();
+      } catch (err: any) {
+        logger.error('[Cron] Initial token cleanup failed:', err);
+      }
+    }, 5000);
 
-        try {
-            const runResult = await dbRun("DELETE FROM revoked_tokens WHERE expires_at < datetime('now')", []);
+    // Then run periodically
+    this.cleanupInterval = setInterval(async () => {
+      try {
+        await this.cleanupRevokedTokens();
+      } catch (err: any) {
+        logger.error('[Cron] Periodic token cleanup failed:', err);
+      }
+    }, this.deps.config.TOKEN_CLEANUP_INTERVAL);
 
-            if (!runResult.success) {
-                throw new Error(runResult.error || 'Failed to cleanup revoked tokens');
-            }
+    logger.info(
+      `[Cron] Token cleanup job started (interval: ${this.deps.config.TOKEN_CLEANUP_INTERVAL}ms)`
+    );
+  }
 
-            const deleted = runResult.changes || 0;
-            if (deleted > 0) {
-                logger.info(`[Cron] Removed ${deleted} expired revoked tokens`);
-            }
-            return deleted;
-        } catch (err: any) {
-            logger.error('[Cron] Error cleaning up revoked tokens:', err);
-            throw err;
-        }
+  /**
+   * Stop the cleanup job
+   */
+  stopCleanupJob(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+      logger.info('[Cron] Token cleanup job stopped');
     }
-
-    /**
-     * Start the cleanup job
-     */
-    startCleanupJob(): void {
-        // Delay first run to allow database initialization
-        setTimeout(async () => {
-            try {
-                await this.cleanupRevokedTokens();
-            } catch (err: any) {
-                logger.error('[Cron] Initial token cleanup failed:', err);
-            }
-        }, 5000);
-
-        // Then run periodically
-        this.cleanupInterval = setInterval(async () => {
-            try {
-                await this.cleanupRevokedTokens();
-            } catch (err: any) {
-                logger.error('[Cron] Periodic token cleanup failed:', err);
-            }
-        }, this.deps.config.TOKEN_CLEANUP_INTERVAL);
-
-        logger.info(`[Cron] Token cleanup job started (interval: ${this.deps.config.TOKEN_CLEANUP_INTERVAL}ms)`);
-    }
-
-    /**
-     * Stop the cleanup job
-     */
-    stopCleanupJob(): void {
-        if (this.cleanupInterval) {
-            clearInterval(this.cleanupInterval);
-            this.cleanupInterval = null;
-            logger.info('[Cron] Token cleanup job stopped');
-        }
-    }
+  }
 }
 
 // ==========================================
@@ -102,11 +107,13 @@ class CleanupRevokedTokensCron {
 
 let instance: CleanupRevokedTokensCron | null = null;
 
-export function getCleanupRevokedTokensCron(deps?: Partial<Dependencies>): CleanupRevokedTokensCron {
-    if (!instance) {
-        instance = new CleanupRevokedTokensCron(deps);
-    }
-    return instance;
+export function getCleanupRevokedTokensCron(
+  deps?: Partial<Dependencies>
+): CleanupRevokedTokensCron {
+  if (!instance) {
+    instance = new CleanupRevokedTokensCron(deps);
+  }
+  return instance;
 }
 
 // ==========================================
@@ -114,15 +121,15 @@ export function getCleanupRevokedTokensCron(deps?: Partial<Dependencies>): Clean
 // ==========================================
 
 export const startCleanupJob = (deps?: Partial<Dependencies>): void => {
-    getCleanupRevokedTokensCron(deps).startCleanupJob();
+  getCleanupRevokedTokensCron(deps).startCleanupJob();
 };
 
 export const stopCleanupJob = (deps?: Partial<Dependencies>): void => {
-    getCleanupRevokedTokensCron(deps).stopCleanupJob();
+  getCleanupRevokedTokensCron(deps).stopCleanupJob();
 };
 
 export const cleanupRevokedTokens = async (deps?: Partial<Dependencies>): Promise<number> => {
-    return getCleanupRevokedTokensCron(deps).cleanupRevokedTokens();
+  return getCleanupRevokedTokensCron(deps).cleanupRevokedTokens();
 };
 
 export default CleanupRevokedTokensCron;

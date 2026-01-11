@@ -24,16 +24,19 @@ module.exports = {
   rules: {
     // Enterprise strict mode rules
     '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/no-unused-vars': ['error', {
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_'
-    }],
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      },
+    ],
     '@typescript-eslint/strict-boolean-expressions': 'error',
     '@typescript-eslint/no-floating-promises': 'error',
     '@typescript-eslint/no-misused-promises': 'error',
     '@typescript-eslint/explicit-function-return-type': 'warn',
     '@typescript-eslint/no-non-null-assertion': 'warn',
-    
+
     // Node.js specific
     'no-console': 'off', // Allow console in backend
     'no-process-exit': 'off', // Allow process.exit in backend
@@ -45,18 +48,3 @@ module.exports = {
     '*.config.js',
   ],
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

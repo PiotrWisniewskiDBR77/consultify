@@ -37,38 +37,41 @@ const playbookAnimationStyle = `
 `;
 
 interface HelpButtonProps {
-    onClick: () => void;
+  onClick: () => void;
 }
 
 const HelpButton: React.FC<HelpButtonProps> = ({ onClick }) => {
-    const { playbooks, loading } = useHelp();
+  const { playbooks, loading } = useHelp();
 
-    // Count available (not completed/dismissed) playbooks
-    const availableCount = playbooks.filter((p) => p.status === 'AVAILABLE').length;
+  // Count available (not completed/dismissed) playbooks
+  const availableCount = playbooks.filter((p) => p.status === 'AVAILABLE').length;
 
-    return (
-        <>
-            <style>{playbookAnimationStyle}</style>
-            <button
-                onClick={onClick}
-                className="fixed bottom-6 right-6 z-30 flex items-center justify-center w-14 h-14 text-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800"
-                style={{
-                    animation: 'playbookColorPulse 4.5s ease-in-out infinite',
-                }}
-                title="Help & Training"
-                aria-label="Open Help Panel"
-            >
-                <HelpCircle className="w-6 h-6" style={{ animation: 'playbookIconGlow 4.5s ease-in-out infinite' }} />
+  return (
+    <>
+      <style>{playbookAnimationStyle}</style>
+      <button
+        onClick={onClick}
+        className="fixed bottom-6 right-6 z-30 flex items-center justify-center w-14 h-14 text-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800"
+        style={{
+          animation: 'playbookColorPulse 4.5s ease-in-out infinite',
+        }}
+        title="Help & Training"
+        aria-label="Open Help Panel"
+      >
+        <HelpCircle
+          className="w-6 h-6"
+          style={{ animation: 'playbookIconGlow 4.5s ease-in-out infinite' }}
+        />
 
-                {/* Badge */}
-                {availableCount > 0 && !loading && (
-                    <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-white bg-red-500 rounded-full border-2 border-white dark:border-slate-900">
-                        {availableCount > 9 ? '9+' : availableCount}
-                    </span>
-                )}
-            </button>
-        </>
-    );
+        {/* Badge */}
+        {availableCount > 0 && !loading && (
+          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-white bg-red-500 rounded-full border-2 border-white dark:border-slate-900">
+            {availableCount > 9 ? '9+' : availableCount}
+          </span>
+        )}
+      </button>
+    </>
+  );
 };
 
 export default HelpButton;

@@ -8,12 +8,14 @@
 ## Quick Start
 
 ### Development
+
 ```bash
 npm run dev
 # Starts both frontend (Vite) and backend (tsx watch)
 ```
 
 ### Production (Compiled - Recommended)
+
 ```bash
 npm run build:backend
 npm run start
@@ -24,6 +26,7 @@ npm run start
 ```
 
 ### Production (Development Mode - Fallback)
+
 ```bash
 npm run start:dev
 # Uses tsx runtime - handles TypeScript directly
@@ -62,6 +65,7 @@ npm run start:dev
 ### Architecture
 
 The codebase uses a hybrid architecture:
+
 - **TypeScript entry point** (`server/src/index.ts`) - fully migrated
 - **Legacy JS files** still exist in `routes/` and `services/` but are imported via compiled dist
 - **Compiled output** in `server/dist/` - production-ready
@@ -119,6 +123,7 @@ curl http://localhost:3001/api/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -132,6 +137,7 @@ Expected response:
 ### Logs
 
 Server logs include:
+
 - Startup initialization
 - Database connection status
 - AI service health
@@ -161,6 +167,7 @@ kill -9 <PID>
 ### TypeScript Errors
 
 If you see TypeScript compilation errors:
+
 - Development: Errors are shown but don't block execution
 - Production: Check `npm run type-check` before deploying
 
@@ -178,6 +185,7 @@ If you see TypeScript compilation errors:
 ### Development Mode (tsx)
 
 Use `npm run start:dev` only if:
+
 - You need hot reload during development
 - Debugging TypeScript source directly
 - Compiled version has issues (should not happen)
@@ -186,12 +194,12 @@ Use `npm run start:dev` only if:
 
 ## Migration Status
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| TypeScript Entry Point | ✅ Complete | Production entry point migrated |
-| Compiled Production | ✅ Complete | `npm run start` uses compiled version |
-| Legacy JS Files | ⏳ Pending | Still exist but imported via dist |
-| TypeScript Errors | ⚠️ Some | Non-blocking, need cleanup |
+| Component              | Status      | Notes                                 |
+| ---------------------- | ----------- | ------------------------------------- |
+| TypeScript Entry Point | ✅ Complete | Production entry point migrated       |
+| Compiled Production    | ✅ Complete | `npm run start` uses compiled version |
+| Legacy JS Files        | ⏳ Pending  | Still exist but imported via dist     |
+| TypeScript Errors      | ⚠️ Some     | Non-blocking, need cleanup            |
 
 ---
 
@@ -206,11 +214,11 @@ Use `npm run start:dev` only if:
 ## Support
 
 For issues or questions:
+
 1. Check `docs/ENTRY_POINT_MIGRATION_REPORT.md` for detailed migration info
 2. Review server logs for specific errors
 3. Verify environment variables are set correctly
 
 ---
 
-*Documentation generated: January 4, 2026*
-
+_Documentation generated: January 4, 2026_

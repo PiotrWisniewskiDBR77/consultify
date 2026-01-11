@@ -24,120 +24,121 @@ import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
 interface MainLayoutProps {
-    children: React.ReactNode;
-    breadcrumbs?: string[];
+  children: React.ReactNode;
+  breadcrumbs?: string[];
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, breadcrumbs }) => {
-    const { isSidebarCollapsed, setIsSidebarOpen, isChatCollapsed, toggleChatCollapse, currentUser } = useAppStore();
+  const { isSidebarCollapsed, setIsSidebarOpen, isChatCollapsed, toggleChatCollapse, currentUser } =
+    useAppStore();
 
-    // Only show sidebar/header for actual app views, not Welcome/Auth
-    const isSessionView = true; // MainLayout is only used for session views
+  // Only show sidebar/header for actual app views, not Welcome/Auth
+  const isSessionView = true; // MainLayout is only used for session views
 
-    return (
-        <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
-            {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
-            <div className="fixed right-0 top-[60%] z-50 flex flex-col gap-2 items-end pointer-events-none">
-                <div className="pointer-events-auto">
-                    <HelpToggleButton />
-                </div>
-                <div className="pointer-events-auto">
-                    <FeedbackToggleButton />
-                </div>
-                <div className="pointer-events-auto">
-                    <DocumentToggleButton />
-                </div>
-            </div>
-            <HelpSidePanel />
-            <DocumentSidePanel />
-            <FeedbackSidePanel />
+  return (
+    <div className="flex h-screen w-full bg-slate-100 dark:bg-navy-950 text-navy-900 dark:text-white font-sans overflow-hidden">
+      {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
+      <div className="fixed right-0 top-[60%] z-50 flex flex-col gap-2 items-end pointer-events-none">
+        <div className="pointer-events-auto">
+          <HelpToggleButton />
+        </div>
+        <div className="pointer-events-auto">
+          <FeedbackToggleButton />
+        </div>
+        <div className="pointer-events-auto">
+          <DocumentToggleButton />
+        </div>
+      </div>
+      <HelpSidePanel />
+      <DocumentSidePanel />
+      <FeedbackSidePanel />
 
-            {/* Demo Mode Banner */}
-            <DemoModeBanner className="fixed top-0 left-0 right-0 z-50" />
+      {/* Demo Mode Banner */}
+      <DemoModeBanner className="fixed top-0 left-0 right-0 z-50" />
 
-            {/* Impersonation Banner */}
-            {currentUser?.impersonatorId && (
-                <div className="fixed top-0 left-0 right-0 h-10 bg-red-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
-                    <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                        Impersonating Mode
-                    </span>
-                </div>
-            )}
+      {/* Impersonation Banner */}
+      {currentUser?.impersonatorId && (
+        <div className="fixed top-0 left-0 right-0 h-10 bg-red-600 text-white z-50 flex items-center justify-center gap-4 text-sm font-medium shadow-md">
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-white dark:bg-navy-900 rounded-full animate-pulse"></span>
+            Impersonating Mode
+          </span>
+        </div>
+      )}
 
-            <div className={currentUser?.isDemo ? 'pt-10' : ''}>
-                <Sidebar />
-            </div>
+      <div className={currentUser?.isDemo ? 'pt-10' : ''}>
+        <Sidebar />
+      </div>
 
-            <BottomNavigation />
+      <BottomNavigation />
 
-            <main
-                className={`
+      <main
+        className={`
                     flex-1 flex flex-col overflow-hidden relative w-full h-full transition-all duration-300
                     ${isSidebarCollapsed ? 'lg:ltr:pl-16 lg:rtl:pr-16' : 'lg:ltr:pl-64 lg:rtl:pr-64'}
                     ${currentUser?.isDemo ? 'mt-10' : ''}
                     pb-16 md:pb-0
                 `}
-            >
-                {/* Header */}
-                <div className="flex flex-col z-30 shrink-0">
-                    <AIFreezeBanner />
-                    <TrialBanner />
+      >
+        {/* Header */}
+        <div className="flex flex-col z-30 shrink-0">
+          <AIFreezeBanner />
+          <TrialBanner />
 
-                    <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setIsSidebarOpen(true)}
-                                className="lg:hidden text-navy-700 dark:text-white mr-2"
-                            >
-                                <Menu />
-                            </button>
-                            <div className="flex items-center text-sm font-medium text-slate-400">
-                                <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">
-                                    {breadcrumbs?.[0] || ''}
-                                </span>
-                                <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
-                                <span className="text-navy-900 dark:text-white">{breadcrumbs?.[1] || ''}</span>
-                            </div>
-                        </div>
+          <div className="h-12 border-b border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900 shadow-sm dark:shadow-none flex items-center justify-between px-3 transition-colors duration-300">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden text-navy-700 dark:text-white mr-2"
+              >
+                <Menu />
+              </button>
+              <div className="flex items-center text-sm font-medium text-slate-400 dark:text-slate-500">
+                <span className="hover:text-navy-900 dark:hover:text-white cursor-pointer transition-colors">
+                  {breadcrumbs?.[0] || ''}
+                </span>
+                <ChevronRight size={14} className="mx-2 rtl:rotate-180" />
+                <span className="text-navy-900 dark:text-white">{breadcrumbs?.[1] || ''}</span>
+              </div>
+            </div>
 
-                        <div className="flex items-center gap-4">
-                            <SystemHealth />
-                            <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
-                            <LLMSelector />
-                            <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+            <div className="flex items-center gap-4">
+              <SystemHealth />
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+              <LLMSelector />
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
 
-                            <button
-                                onClick={() => toggleChatCollapse()}
-                                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg font-medium text-xs transition-all
+              <button
+                onClick={() => toggleChatCollapse()}
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg font-medium text-xs transition-all
                                     ${
-                                        isChatCollapsed
-                                            ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-500/30'
-                                            : 'text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                                      isChatCollapsed
+                                        ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-500/30'
+                                        : 'text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                                     }`}
-                                title={isChatCollapsed ? 'Show AI Chat' : 'Hide AI Chat'}
-                            >
-                                <Sparkles size={16} />
-                                <span>AI</span>
-                            </button>
-                            <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+                title={isChatCollapsed ? 'Show AI Chat' : 'Hide AI Chat'}
+              >
+                <Sparkles size={16} />
+                <span>AI</span>
+              </button>
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
 
-                            <TaskDropdown />
-                            <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
-                            <NotificationDropdown />
+              <TaskDropdown />
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+              <NotificationDropdown />
 
-                            <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
 
-                            <UserProfileMenu />
-                        </div>
-                    </div>
-                </div>
-
-                <TrialExpiredGate>
-                    <PMOStatusBar />
-                    <div className="flex-1 overflow-hidden relative flex flex-col">{children}</div>
-                </TrialExpiredGate>
-            </main>
+              <UserProfileMenu />
+            </div>
+          </div>
         </div>
-    );
+
+        <TrialExpiredGate>
+          <PMOStatusBar />
+          <div className="flex-1 overflow-hidden relative flex flex-col">{children}</div>
+        </TrialExpiredGate>
+      </main>
+    </div>
+  );
 };

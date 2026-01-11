@@ -13,7 +13,10 @@ describe('User API Provider Contract Verification', () => {
       provider: 'consultinity-backend',
       providerBaseUrl: 'http://localhost:3000',
       pactUrls: [
-        path.resolve(process.cwd(), 'tests/contracts/pacts/consultinity-frontend-consultinity-backend.json'),
+        path.resolve(
+          process.cwd(),
+          'tests/contracts/pacts/consultinity-frontend-consultinity-backend.json'
+        ),
       ],
       // Optional: Publish verification results to Pact Broker
       publishVerificationResult: process.env.CI === 'true',
@@ -23,13 +26,3 @@ describe('User API Provider Contract Verification', () => {
     await verifier.verifyProvider();
   });
 });
-
-
-
-
-
-
-
-
-
-

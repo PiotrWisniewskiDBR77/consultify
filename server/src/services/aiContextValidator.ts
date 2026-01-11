@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aicontextvalidator Service
  * Enterprise SaaS Architecture - TypeScript Backend

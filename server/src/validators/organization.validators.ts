@@ -20,30 +20,30 @@ export const MemberRoleEnum = z.enum(['OWNER', 'ADMIN', 'USER', 'MEMBER', 'VIEWE
 // ==========================================
 
 export const CreateOrganizationSchema = z.object({
-    name: z.string().min(1).max(255),
-    slug: z.string().max(100).optional(),
+  name: z.string().min(1).max(255),
+  slug: z.string().max(100).optional(),
 });
 
 export const UpdateOrganizationSchema = z.object({
-    name: z.string().min(1).max(255).optional(),
-    slug: z.string().max(100).optional(),
-    plan: OrganizationPlanEnum.optional(),
-    status: OrganizationStatusEnum.optional(),
+  name: z.string().min(1).max(255).optional(),
+  slug: z.string().max(100).optional(),
+  plan: OrganizationPlanEnum.optional(),
+  status: OrganizationStatusEnum.optional(),
 });
 
 export const AddMemberSchema = z.object({
-    targetUserId: z.string().uuid(),
-    role: MemberRoleEnum,
+  targetUserId: z.string().uuid(),
+  role: MemberRoleEnum,
 });
 
 export const UpdateMemberRoleSchema = z.object({
-    role: MemberRoleEnum,
+  role: MemberRoleEnum,
 });
 
 export const InviteMemberSchema = z.object({
-    email: z.string().email(),
-    role: MemberRoleEnum,
-    message: z.string().max(500).optional(),
+  email: z.string().email(),
+  role: MemberRoleEnum,
+  message: z.string().max(500).optional(),
 });
 
 // ==========================================

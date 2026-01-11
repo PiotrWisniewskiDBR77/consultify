@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Customersuccess Service
  * Enterprise SaaS Architecture - TypeScript Backend

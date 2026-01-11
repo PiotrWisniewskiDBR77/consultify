@@ -36,7 +36,11 @@ router.get('/user-tiers/:orgId', AdminDataController.getUserTiers);
  * PUT /api/admin-data/user-tiers/:orgId/:userId
  * Update user's AI tier
  */
-router.put('/user-tiers/:orgId/:userId', validateBody(UpdateUserTierSchema), AdminDataController.updateUserTier);
+router.put(
+  '/user-tiers/:orgId/:userId',
+  validateBody(UpdateUserTierSchema),
+  AdminDataController.updateUserTier
+);
 
 /**
  * GET /api/admin-data/cost-attribution/:orgId

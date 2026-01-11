@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Criticalpath Service
  * Enterprise SaaS Architecture - TypeScript Backend

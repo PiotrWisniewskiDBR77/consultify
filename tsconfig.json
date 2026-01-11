@@ -3,11 +3,7 @@
     // Build settings
     "target": "ES2022",
     "module": "ESNext",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     // Module resolution
     "moduleResolution": "bundler",
@@ -19,9 +15,7 @@
     "noEmit": true,
     // Path aliases
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
     // Type checking - STRICT MODE (Enterprise SaaS Standard)
     "strict": true,
@@ -48,22 +42,8 @@
     // Performance
     "skipLibCheck": true,
     // Types
-    "types": [
-      "node",
-      "vite/client",
-      "@testing-library/jest-dom"
-    ]
+    "types": ["node", "vite/client", "@testing-library/jest-dom"]
   },
-  "include": [
-    "src",
-    "*.ts",
-    "*.tsx"
-  ],
-  "exclude": [
-    "node_modules",
-    "node_modules_trash",
-    "dist",
-    "server",
-    "server/**/*"
-  ]
+  "include": ["src", "*.ts", "*.tsx"],
+  "exclude": ["node_modules", "node_modules_trash", "dist", "server", "server/**/*"]
 }

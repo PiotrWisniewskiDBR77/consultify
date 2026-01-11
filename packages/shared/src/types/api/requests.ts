@@ -13,33 +13,33 @@
  * Pagination parameters
  */
 export interface PaginationParams {
-    page?: number;
-    limit?: number;
-    offset?: number;
+  page?: number;
+  limit?: number;
+  offset?: number;
 }
 
 /**
  * Sort parameters
  */
 export interface SortParams {
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 /**
  * Date range filter
  */
 export interface DateRangeParams {
-    startDate?: string;
-    endDate?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 /**
  * Combined list params
  */
 export interface ListParams extends PaginationParams, SortParams, DateRangeParams {
-    search?: string;
-    filter?: Record<string, string | number | boolean>;
+  search?: string;
+  filter?: Record<string, string | number | boolean>;
 }
 
 // ==========================================
@@ -47,37 +47,37 @@ export interface ListParams extends PaginationParams, SortParams, DateRangeParam
 // ==========================================
 
 export interface LoginRequest {
-    email: string;
-    password: string;
-    rememberMe?: boolean;
+  email: string;
+  password: string;
+  rememberMe?: boolean;
 }
 
 export interface RegisterRequest {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    companyName: string;
-    phone?: string;
-    referralCode?: string;
-    acceptTerms: boolean;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  phone?: string;
+  referralCode?: string;
+  acceptTerms: boolean;
 }
 
 export interface ChangePasswordRequest {
-    currentPassword: string;
-    newPassword: string;
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface ResetPasswordRequest {
-    email: string;
+  email: string;
 }
 
 export interface VerifyEmailRequest {
-    token: string;
+  token: string;
 }
 
 export interface RefreshTokenRequest {
-    refreshToken: string;
+  refreshToken: string;
 }
 
 // ==========================================
@@ -85,36 +85,36 @@ export interface RefreshTokenRequest {
 // ==========================================
 
 export interface CreateProjectRequest {
-    name: string;
-    description?: string;
-    startDate?: string;
-    endDate?: string;
-    budget?: number;
-    currency?: string;
-    methodology?: string;
-    templateId?: string;
+  name: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
+  currency?: string;
+  methodology?: string;
+  templateId?: string;
 }
 
 export interface UpdateProjectRequest {
-    name?: string;
-    description?: string;
-    status?: 'draft' | 'active' | 'on_hold' | 'completed' | 'cancelled';
-    startDate?: string;
-    endDate?: string;
-    budget?: number;
-    currency?: string;
-    methodology?: string;
+  name?: string;
+  description?: string;
+  status?: 'draft' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
+  currency?: string;
+  methodology?: string;
 }
 
 export interface AddProjectMemberRequest {
-    userId: string;
-    role?: string;
+  userId: string;
+  role?: string;
 }
 
 export interface ProjectFilterParams extends ListParams {
-    status?: string;
-    ownerId?: string;
-    memberId?: string;
+  status?: string;
+  ownerId?: string;
+  memberId?: string;
 }
 
 // ==========================================
@@ -122,51 +122,51 @@ export interface ProjectFilterParams extends ListParams {
 // ==========================================
 
 export interface CreateTaskRequest {
-    projectId: string;
-    title: string;
-    description?: string;
-    status?: 'todo' | 'in_progress' | 'review' | 'done' | 'blocked';
-    priority?: 'low' | 'medium' | 'high' | 'critical';
-    assigneeId?: string;
-    dueDate?: string;
-    estimatedHours?: number;
-    tags?: string[];
-    initiativeId?: string;
-    parentTaskId?: string;
+  projectId: string;
+  title: string;
+  description?: string;
+  status?: 'todo' | 'in_progress' | 'review' | 'done' | 'blocked';
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  assigneeId?: string;
+  dueDate?: string;
+  estimatedHours?: number;
+  tags?: string[];
+  initiativeId?: string;
+  parentTaskId?: string;
 }
 
 export interface UpdateTaskRequest {
-    title?: string;
-    description?: string;
-    status?: 'todo' | 'in_progress' | 'review' | 'done' | 'blocked';
-    priority?: 'low' | 'medium' | 'high' | 'critical';
-    assigneeId?: string;
-    dueDate?: string;
-    estimatedHours?: number;
-    actualHours?: number;
-    tags?: string[];
-    initiativeId?: string;
+  title?: string;
+  description?: string;
+  status?: 'todo' | 'in_progress' | 'review' | 'done' | 'blocked';
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  assigneeId?: string;
+  dueDate?: string;
+  estimatedHours?: number;
+  actualHours?: number;
+  tags?: string[];
+  initiativeId?: string;
 }
 
 export interface BulkUpdateTaskRequest {
-    taskIds: string[];
-    updates: Partial<UpdateTaskRequest>;
+  taskIds: string[];
+  updates: Partial<UpdateTaskRequest>;
 }
 
 export interface CreateTaskCommentRequest {
-    content: string;
-    mentionedUserIds?: string[];
+  content: string;
+  mentionedUserIds?: string[];
 }
 
 export interface TaskFilterParams extends ListParams {
-    projectId?: string;
-    status?: string;
-    priority?: string;
-    assigneeId?: string;
-    initiativeId?: string;
-    dueBefore?: string;
-    dueAfter?: string;
-    tags?: string[];
+  projectId?: string;
+  status?: string;
+  priority?: string;
+  assigneeId?: string;
+  initiativeId?: string;
+  dueBefore?: string;
+  dueAfter?: string;
+  tags?: string[];
 }
 
 // ==========================================
@@ -174,53 +174,53 @@ export interface TaskFilterParams extends ListParams {
 // ==========================================
 
 export interface CreateInitiativeRequest {
-    projectId: string;
-    title: string;
-    description?: string;
-    priority?: 'low' | 'medium' | 'high' | 'critical';
-    owner?: string;
-    startDate?: string;
-    endDate?: string;
-    budget?: number;
-    category?: string;
-    tags?: string[];
+  projectId: string;
+  title: string;
+  description?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  owner?: string;
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
+  category?: string;
+  tags?: string[];
 }
 
 export interface UpdateInitiativeRequest {
-    title?: string;
-    description?: string;
-    status?: 'draft' | 'planning' | 'active' | 'completed' | 'cancelled';
-    priority?: 'low' | 'medium' | 'high' | 'critical';
-    owner?: string;
-    startDate?: string;
-    endDate?: string;
-    budget?: number;
-    actualCost?: number;
-    category?: string;
-    tags?: string[];
+  title?: string;
+  description?: string;
+  status?: 'draft' | 'planning' | 'active' | 'completed' | 'cancelled';
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  owner?: string;
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
+  actualCost?: number;
+  category?: string;
+  tags?: string[];
 }
 
 export interface CreateInitiativeKPIRequest {
-    name: string;
-    target: number;
-    unit: string;
-    description?: string;
+  name: string;
+  target: number;
+  unit: string;
+  description?: string;
 }
 
 export interface UpdateInitiativeKPIRequest {
-    name?: string;
-    target?: number;
-    current?: number;
-    unit?: string;
+  name?: string;
+  target?: number;
+  current?: number;
+  unit?: string;
 }
 
 export interface InitiativeFilterParams extends ListParams {
-    projectId?: string;
-    status?: string;
-    priority?: string;
-    owner?: string;
-    category?: string;
-    tags?: string[];
+  projectId?: string;
+  status?: string;
+  priority?: string;
+  owner?: string;
+  category?: string;
+  tags?: string[];
 }
 
 // ==========================================
@@ -228,39 +228,39 @@ export interface InitiativeFilterParams extends ListParams {
 // ==========================================
 
 export interface CreateOrganizationRequest {
-    name: string;
-    slug?: string;
+  name: string;
+  slug?: string;
 }
 
 export interface UpdateOrganizationRequest {
-    name?: string;
-    slug?: string;
-    settings?: Partial<OrganizationSettingsRequest>;
-    branding?: Partial<OrganizationBrandingRequest>;
+  name?: string;
+  slug?: string;
+  settings?: Partial<OrganizationSettingsRequest>;
+  branding?: Partial<OrganizationBrandingRequest>;
 }
 
 export interface OrganizationSettingsRequest {
-    timezone: string;
-    locale: string;
-    dateFormat: string;
-    currency: string;
+  timezone: string;
+  locale: string;
+  dateFormat: string;
+  currency: string;
 }
 
 export interface OrganizationBrandingRequest {
-    primaryColor: string;
-    secondaryColor: string;
-    logoUrl?: string;
-    faviconUrl?: string;
+  primaryColor: string;
+  secondaryColor: string;
+  logoUrl?: string;
+  faviconUrl?: string;
 }
 
 export interface InviteMemberRequest {
-    email: string;
-    role?: string;
-    message?: string;
+  email: string;
+  role?: string;
+  message?: string;
 }
 
 export interface UpdateMemberRoleRequest {
-    role: string;
+  role: string;
 }
 
 // ==========================================
@@ -268,20 +268,20 @@ export interface UpdateMemberRoleRequest {
 // ==========================================
 
 export interface CreateTeamRequest {
-    name: string;
-    description?: string;
-    leadId?: string;
+  name: string;
+  description?: string;
+  leadId?: string;
 }
 
 export interface UpdateTeamRequest {
-    name?: string;
-    description?: string;
-    leadId?: string;
+  name?: string;
+  description?: string;
+  leadId?: string;
 }
 
 export interface AddTeamMemberRequest {
-    userId: string;
-    role?: 'lead' | 'member';
+  userId: string;
+  role?: 'lead' | 'member';
 }
 
 // ==========================================
@@ -289,41 +289,41 @@ export interface AddTeamMemberRequest {
 // ==========================================
 
 export interface CreateSubscriptionRequest {
-    planId: string;
-    paymentMethodId?: string;
-    seatCount?: number;
-    promoCode?: string;
+  planId: string;
+  paymentMethodId?: string;
+  seatCount?: number;
+  promoCode?: string;
 }
 
 export interface UpdateSubscriptionRequest {
-    planId?: string;
-    seatCount?: number;
+  planId?: string;
+  seatCount?: number;
 }
 
 export interface AddPaymentMethodRequest {
-    type: 'card';
-    token: string;
-    setAsDefault?: boolean;
+  type: 'card';
+  token: string;
+  setAsDefault?: boolean;
 }
 
 export interface UpdateBillingAddressRequest {
-    line1: string;
-    line2?: string;
-    city: string;
-    state?: string;
-    postalCode: string;
-    country: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  state?: string;
+  postalCode: string;
+  country: string;
 }
 
 export interface PurchaseTokensRequest {
-    packageId: string;
-    paymentMethodId?: string;
+  packageId: string;
+  paymentMethodId?: string;
 }
 
 export interface SetBudgetRequest {
-    amount: number;
-    period: 'daily' | 'weekly' | 'monthly';
-    alertThreshold?: number;
+  amount: number;
+  period: 'daily' | 'weekly' | 'monthly';
+  alertThreshold?: number;
 }
 
 // ==========================================
@@ -331,54 +331,54 @@ export interface SetBudgetRequest {
 // ==========================================
 
 export interface SendAIMessageRequest {
-    message: string;
-    conversationId?: string;
-    projectId?: string;
-    context?: AIMessageContext;
-    model?: string;
-    stream?: boolean;
+  message: string;
+  conversationId?: string;
+  projectId?: string;
+  context?: AIMessageContext;
+  model?: string;
+  stream?: boolean;
 }
 
 export interface AIMessageContext {
-    screenId?: string;
-    selectedText?: string;
-    attachments?: AIAttachment[];
-    persona?: 'consultant' | 'project_manager' | 'architect' | 'analyst' | 'auditor';
-    focusMode?: string;
+  screenId?: string;
+  selectedText?: string;
+  attachments?: AIAttachment[];
+  persona?: 'consultant' | 'project_manager' | 'architect' | 'analyst' | 'auditor';
+  focusMode?: string;
 }
 
 export interface AIAttachment {
-    type: 'file' | 'url' | 'code' | 'document';
-    name: string;
-    content?: string;
-    url?: string;
-    mimeType?: string;
+  type: 'file' | 'url' | 'code' | 'document';
+  name: string;
+  content?: string;
+  url?: string;
+  mimeType?: string;
 }
 
 export interface CreateAIProviderRequest {
-    provider: 'openai' | 'anthropic' | 'google' | 'mistral' | 'ollama';
-    apiKey?: string;
-    model: string;
-    baseUrl?: string;
-    isDefault?: boolean;
-    tier?: 'free' | 'standard' | 'premium';
-    maxTokens?: number;
+  provider: 'openai' | 'anthropic' | 'google' | 'mistral' | 'ollama';
+  apiKey?: string;
+  model: string;
+  baseUrl?: string;
+  isDefault?: boolean;
+  tier?: 'free' | 'standard' | 'premium';
+  maxTokens?: number;
 }
 
 export interface UpdateAIProviderRequest {
-    apiKey?: string;
-    model?: string;
-    baseUrl?: string;
-    isEnabled?: boolean;
-    isDefault?: boolean;
-    tier?: 'free' | 'standard' | 'premium';
-    maxTokens?: number;
+  apiKey?: string;
+  model?: string;
+  baseUrl?: string;
+  isEnabled?: boolean;
+  isDefault?: boolean;
+  tier?: 'free' | 'standard' | 'premium';
+  maxTokens?: number;
 }
 
 export interface AIFeedbackRequest {
-    messageId: string;
-    rating: 'positive' | 'negative';
-    feedback?: string;
+  messageId: string;
+  rating: 'positive' | 'negative';
+  feedback?: string;
 }
 
 // ==========================================
@@ -386,37 +386,37 @@ export interface AIFeedbackRequest {
 // ==========================================
 
 export interface UpdateNotificationPreferencesRequest {
-    categories?: Record<
-        string,
-        {
-            inapp?: boolean;
-            push?: boolean;
-            email?: boolean;
-        }
-    >;
-    quietHours?: {
-        enabled?: boolean;
-        start?: string;
-        end?: string;
-        timezone?: string;
-    };
-    weekendSettings?: {
-        criticalOnly?: boolean;
-        digestOnly?: boolean;
-    };
-    dailyDigest?: {
-        enabled?: boolean;
-        time?: string;
-    };
-    weeklyDigest?: {
-        enabled?: boolean;
-        day?: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday';
-        time?: string;
-    };
+  categories?: Record<
+    string,
+    {
+      inapp?: boolean;
+      push?: boolean;
+      email?: boolean;
+    }
+  >;
+  quietHours?: {
+    enabled?: boolean;
+    start?: string;
+    end?: string;
+    timezone?: string;
+  };
+  weekendSettings?: {
+    criticalOnly?: boolean;
+    digestOnly?: boolean;
+  };
+  dailyDigest?: {
+    enabled?: boolean;
+    time?: string;
+  };
+  weeklyDigest?: {
+    enabled?: boolean;
+    day?: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday';
+    time?: string;
+  };
 }
 
 export interface MarkNotificationsReadRequest {
-    notificationIds: string[];
+  notificationIds: string[];
 }
 
 // ==========================================
@@ -424,66 +424,66 @@ export interface MarkNotificationsReadRequest {
 // ==========================================
 
 export interface CreateDecisionRequest {
-    projectId: string;
-    title: string;
-    description: string;
-    deciderId?: string;
-    pmoDomain: string;
-    dueDate?: string;
+  projectId: string;
+  title: string;
+  description: string;
+  deciderId?: string;
+  pmoDomain: string;
+  dueDate?: string;
 }
 
 export interface UpdateDecisionRequest {
-    title?: string;
-    description?: string;
-    status?: 'pending' | 'approved' | 'rejected' | 'deferred';
-    deciderId?: string;
-    rationale?: string;
-    impact?: string;
+  title?: string;
+  description?: string;
+  status?: 'pending' | 'approved' | 'rejected' | 'deferred';
+  deciderId?: string;
+  rationale?: string;
+  impact?: string;
 }
 
 export interface CreateRAIDItemRequest {
-    projectId: string;
-    type: 'risk' | 'assumption' | 'issue' | 'dependency';
-    title: string;
-    description: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
-    owner?: string;
-    dueDate?: string;
-    probability?: number;
-    impact?: number;
-    mitigationPlan?: string;
+  projectId: string;
+  type: 'risk' | 'assumption' | 'issue' | 'dependency';
+  title: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  owner?: string;
+  dueDate?: string;
+  probability?: number;
+  impact?: number;
+  mitigationPlan?: string;
 }
 
 export interface UpdateRAIDItemRequest {
-    title?: string;
-    description?: string;
-    severity?: 'low' | 'medium' | 'high' | 'critical';
-    status?: 'open' | 'in_progress' | 'mitigated' | 'closed';
-    owner?: string;
-    dueDate?: string;
-    probability?: number;
-    impact?: number;
-    mitigationPlan?: string;
+  title?: string;
+  description?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  status?: 'open' | 'in_progress' | 'mitigated' | 'closed';
+  owner?: string;
+  dueDate?: string;
+  probability?: number;
+  impact?: number;
+  mitigationPlan?: string;
 }
 
 export interface CreateStageGateRequest {
-    projectId: string;
-    name: string;
-    description?: string;
-    phase: number;
-    criteria: { description: string }[];
+  projectId: string;
+  name: string;
+  description?: string;
+  phase: number;
+  criteria: { description: string }[];
 }
 
 export interface UpdateStageGateRequest {
-    name?: string;
-    description?: string;
-    status?: 'not_started' | 'in_progress' | 'passed' | 'failed';
-    criteria?: { id?: string; description: string; isMet?: boolean; evidence?: string }[];
+  name?: string;
+  description?: string;
+  status?: 'not_started' | 'in_progress' | 'passed' | 'failed';
+  criteria?: { id?: string; description: string; isMet?: boolean; evidence?: string }[];
 }
 
 export interface ApproveStageGateRequest {
-    rationale?: string;
-    conditions?: string[];
+  rationale?: string;
+  conditions?: string[];
 }
 
 // ==========================================
@@ -491,32 +491,32 @@ export interface ApproveStageGateRequest {
 // ==========================================
 
 export interface CreateAssessmentRequest {
-    projectId: string;
-    framework: string;
-    title?: string;
+  projectId: string;
+  framework: string;
+  title?: string;
 }
 
 export interface UpdateAssessmentRequest {
-    status?: 'draft' | 'in_progress' | 'completed' | 'archived';
-    title?: string;
+  status?: 'draft' | 'in_progress' | 'completed' | 'archived';
+  title?: string;
 }
 
 export interface SubmitAxisScoreRequest {
-    axisId: string;
-    score: number;
-    level: number;
-    notes?: string;
-    evidence?: string[];
+  axisId: string;
+  score: number;
+  level: number;
+  notes?: string;
+  evidence?: string[];
 }
 
 export interface GenerateAssessmentReportRequest {
-    assessmentId: string;
-    type: 'executive_summary' | 'detailed' | 'gap_analysis' | 'action_plan';
-    options?: {
-        includeCharts?: boolean;
-        includeBenchmarks?: boolean;
-        language?: string;
-    };
+  assessmentId: string;
+  type: 'executive_summary' | 'detailed' | 'gap_analysis' | 'action_plan';
+  options?: {
+    includeCharts?: boolean;
+    includeBenchmarks?: boolean;
+    language?: string;
+  };
 }
 
 // ==========================================
@@ -524,44 +524,44 @@ export interface GenerateAssessmentReportRequest {
 // ==========================================
 
 export interface UpdateProfileRequest {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    timezone?: string;
-    locale?: string;
-    avatarUrl?: string;
-    bio?: string;
-    title?: string;
-    linkedinUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  timezone?: string;
+  locale?: string;
+  avatarUrl?: string;
+  bio?: string;
+  title?: string;
+  linkedinUrl?: string;
 }
 
 export interface CreateIntegrationRequest {
-    type: string;
-    config: Record<string, string | number | boolean>;
+  type: string;
+  config: Record<string, string | number | boolean>;
 }
 
 export interface UpdateIntegrationRequest {
-    config?: Record<string, string | number | boolean>;
-    status?: 'active' | 'inactive';
+  config?: Record<string, string | number | boolean>;
+  status?: 'active' | 'inactive';
 }
 
 export interface CreateWebhookRequest {
-    url: string;
-    events: string[];
-    secret?: string;
+  url: string;
+  events: string[];
+  secret?: string;
 }
 
 export interface UpdateWebhookRequest {
-    url?: string;
-    events?: string[];
-    status?: 'active' | 'inactive';
-    secret?: string;
+  url?: string;
+  events?: string[];
+  status?: 'active' | 'inactive';
+  secret?: string;
 }
 
 export interface CreateApiKeyRequest {
-    name: string;
-    scopes: string[];
-    expiresAt?: string;
+  name: string;
+  scopes: string[];
+  expiresAt?: string;
 }
 
 // ==========================================
@@ -569,31 +569,31 @@ export interface CreateApiKeyRequest {
 // ==========================================
 
 export interface CreateKnowledgeDocumentRequest {
-    title: string;
-    content?: string;
-    type: 'markdown' | 'pdf' | 'url' | 'text';
-    category?: string;
-    tags?: string[];
-    url?: string;
+  title: string;
+  content?: string;
+  type: 'markdown' | 'pdf' | 'url' | 'text';
+  category?: string;
+  tags?: string[];
+  url?: string;
 }
 
 export interface UpdateKnowledgeDocumentRequest {
-    title?: string;
-    content?: string;
-    category?: string;
-    tags?: string[];
+  title?: string;
+  content?: string;
+  category?: string;
+  tags?: string[];
 }
 
 export interface IndexKnowledgeDocumentRequest {
-    documentId: string;
-    forceReindex?: boolean;
+  documentId: string;
+  forceReindex?: boolean;
 }
 
 export interface SearchKnowledgeRequest {
-    query: string;
-    category?: string;
-    tags?: string[];
-    limit?: number;
+  query: string;
+  category?: string;
+  tags?: string[];
+  limit?: number;
 }
 
 // ==========================================
@@ -601,16 +601,16 @@ export interface SearchKnowledgeRequest {
 // ==========================================
 
 export interface CreateFeedbackRequest {
-    type: 'bug' | 'feature' | 'general' | 'complaint';
-    message: string;
-    screenshot?: string;
-    url?: string;
-    metadata?: Record<string, unknown>;
+  type: 'bug' | 'feature' | 'general' | 'complaint';
+  message: string;
+  screenshot?: string;
+  url?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface UpdateFeedbackStatusRequest {
-    status: 'new' | 'reviewed' | 'in_progress' | 'resolved' | 'closed';
-    response?: string;
+  status: 'new' | 'reviewed' | 'in_progress' | 'resolved' | 'closed';
+  response?: string;
 }
 
 // ==========================================
@@ -618,17 +618,17 @@ export interface UpdateFeedbackStatusRequest {
 // ==========================================
 
 export interface ExportDataRequest {
-    format: 'json' | 'csv' | 'xlsx';
-    entities: string[];
-    filters?: Record<string, unknown>;
-    dateRange?: DateRangeParams;
+  format: 'json' | 'csv' | 'xlsx';
+  entities: string[];
+  filters?: Record<string, unknown>;
+  dateRange?: DateRangeParams;
 }
 
 export interface ImportDataRequest {
-    type: 'projects' | 'tasks' | 'initiatives';
-    mappings: Record<string, string>;
-    options?: {
-        skipDuplicates?: boolean;
-        updateExisting?: boolean;
-    };
+  type: 'projects' | 'tasks' | 'initiatives';
+  mappings: Record<string, string>;
+  options?: {
+    skipDuplicates?: boolean;
+    updateExisting?: boolean;
+  };
 }

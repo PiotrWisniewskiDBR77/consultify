@@ -49,7 +49,3 @@ router.use('/orgs', userOrgsRoutes);
 router.use('/', usersRoutes);
 
 export default router;
-
-
-
-

@@ -7,26 +7,24 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 
 const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <BrowserRouter>{children}</BrowserRouter>
+  <BrowserRouter>{children}</BrowserRouter>
 );
 
-const HelpButton = () => (
-    <button data-testid="help-button">?</button>
-);
+const HelpButton = () => <button data-testid="help-button">?</button>;
 
 describe('HelpButton Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders help button', () => {
-        render(<HelpButton />, { wrapper: Wrapper });
-        expect(screen.getByTestId('help-button')).toBeInTheDocument();
-    });
+  it('renders help button', () => {
+    render(<HelpButton />, { wrapper: Wrapper });
+    expect(screen.getByTestId('help-button')).toBeInTheDocument();
+  });
 
-    it('is clickable', () => {
-        render(<HelpButton />, { wrapper: Wrapper });
-        const button = screen.getByTestId('help-button');
-        expect(() => fireEvent.click(button)).not.toThrow();
-    });
+  it('is clickable', () => {
+    render(<HelpButton />, { wrapper: Wrapper });
+    const button = screen.getByTestId('help-button');
+    expect(() => fireEvent.click(button)).not.toThrow();
+  });
 });

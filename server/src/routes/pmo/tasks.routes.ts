@@ -15,13 +15,13 @@ import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import logger from '../../utils/Logger.js';
 import {
-    AddTaskCommentSchema,
-    AssignTaskSchema,
-    CreateTaskSchema,
-    EscalateTaskSchema,
-    ReassignTaskSchema,
-    ResolveEscalationSchema,
-    UpdateTaskSchema,
+  AddTaskCommentSchema,
+  AssignTaskSchema,
+  CreateTaskSchema,
+  EscalateTaskSchema,
+  ReassignTaskSchema,
+  ResolveEscalationSchema,
+  UpdateTaskSchema,
 } from '../../validators/task.validators.js';
 
 const router = Router();
@@ -44,12 +44,12 @@ router.use(demoContextMiddleware);
  * Get all tasks with filters
  */
 router.get(
-    '/',
-    (req, res, next) => {
-        logger.info('[TasksRoute] GET / matched');
-        next();
-    },
-    TaskController.getTasks,
+  '/',
+  (req, res, next) => {
+    logger.info('[TasksRoute] GET / matched');
+    next();
+  },
+  TaskController.getTasks
 );
 
 /**
@@ -131,9 +131,9 @@ router.post('/:id/escalate', validateBody(EscalateTaskSchema), TaskController.es
  * Resolve escalation
  */
 router.post(
-    '/:taskId/escalations/:escalationId/resolve',
-    validateBody(ResolveEscalationSchema),
-    TaskController.resolveEscalation,
+  '/:taskId/escalations/:escalationId/resolve',
+  validateBody(ResolveEscalationSchema),
+  TaskController.resolveEscalation
 );
 
 /**
@@ -169,5 +169,33 @@ router.get('/workload/:userId', TaskController.getUserWorkload);
  * Get current user workload
  */
 router.get('/my-workload', TaskController.getMyWorkload);
+
+// ==========================================
+// FLOW-TASK-001: DECISION INTEGRATION
+// ==========================================
+
+/**
+ * POST /api/tasks/:id/block
+ * Block task (manual or by decision)
+ */
+router.post('/:id/block', TaskController.blockTask);
+
+/**
+ * POST /api/tasks/:id/unblock
+ * Unblock task
+ */
+router.post('/:id/unblock', TaskController.unblockTask);
+
+/**
+ * POST /api/tasks/:id/move
+ * Move task to different initiative
+ */
+router.post('/:id/move', TaskController.moveTask);
+
+/**
+ * GET /api/tasks/:id/blocking-decision
+ * Get blocking decision details
+ */
+router.get('/:id/blocking-decision', TaskController.getBlockingDecision);
 
 export default router;

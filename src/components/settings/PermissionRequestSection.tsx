@@ -9,489 +9,529 @@
  */
 
 import {
-    AlertCircle,
-    CheckCircle,
-    ChevronDown,
-    Clock,
-    Database,
-    FileText,
-    Loader2,
-    RefreshCw,
-    Send,
-    Shield,
-    X,
-    XCircle,
-    Zap,
+  AlertCircle,
+  CheckCircle,
+  ChevronDown,
+  Clock,
+  Database,
+  FileText,
+  Loader2,
+  RefreshCw,
+  Send,
+  Shield,
+  X,
+  XCircle,
+  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import { PermissionRequest, PermissionRequestPriority, PermissionRequestType, User } from '../../types';
+import {
+  PermissionRequest,
+  PermissionRequestPriority,
+  PermissionRequestType,
+  User,
+} from '../../types';
 
 interface PermissionRequestSectionProps {
-    currentUser: User;
+  currentUser: User;
 }
 
-const REQUEST_TYPES: { value: PermissionRequestType; label: string; icon: React.ElementType; description: string }[] = [
-    {
-        value: 'ROLE_CHANGE',
-        label: 'Role Change',
-        icon: Shield,
-        description: 'Request upgrade from User to Admin role',
-    },
-    {
-        value: 'TOKEN_LIMIT',
-        label: 'AI Token Limit',
-        icon: Zap,
-        description: 'Request increase in AI token allocation',
-    },
-    {
-        value: 'STORAGE_LIMIT',
-        label: 'Storage Limit',
-        icon: Database,
-        description: 'Request additional storage space',
-    },
-    {
-        value: 'FEATURE_ACCESS',
-        label: 'Feature Access',
-        icon: FileText,
-        description: 'Request access to premium features',
-    },
+const REQUEST_TYPES: {
+  value: PermissionRequestType;
+  label: string;
+  icon: React.ElementType;
+  description: string;
+}[] = [
+  {
+    value: 'ROLE_CHANGE',
+    label: 'Role Change',
+    icon: Shield,
+    description: 'Request upgrade from User to Admin role',
+  },
+  {
+    value: 'TOKEN_LIMIT',
+    label: 'AI Token Limit',
+    icon: Zap,
+    description: 'Request increase in AI token allocation',
+  },
+  {
+    value: 'STORAGE_LIMIT',
+    label: 'Storage Limit',
+    icon: Database,
+    description: 'Request additional storage space',
+  },
+  {
+    value: 'FEATURE_ACCESS',
+    label: 'Feature Access',
+    icon: FileText,
+    description: 'Request access to premium features',
+  },
 ];
 
 const PRIORITY_OPTIONS: { value: PermissionRequestPriority; label: string; color: string }[] = [
-    { value: 'LOW', label: 'Low', color: 'text-slate-500' },
-    { value: 'NORMAL', label: 'Normal', color: 'text-blue-500' },
-    { value: 'HIGH', label: 'High', color: 'text-orange-500' },
-    { value: 'URGENT', label: 'Urgent', color: 'text-red-500' },
+  { value: 'LOW', label: 'Low', color: 'text-slate-500 dark:text-slate-400' },
+  { value: 'NORMAL', label: 'Normal', color: 'text-blue-500' },
+  { value: 'HIGH', label: 'High', color: 'text-orange-500' },
+  { value: 'URGENT', label: 'Urgent', color: 'text-red-500' },
 ];
 
 const STATUS_CONFIG = {
-    PENDING: { icon: Clock, color: 'text-yellow-500 bg-yellow-50 dark:bg-yellow-500/10', label: 'Pending' },
-    APPROVED: { icon: CheckCircle, color: 'text-green-500 bg-green-50 dark:bg-green-500/10', label: 'Approved' },
-    REJECTED: { icon: XCircle, color: 'text-red-500 bg-red-50 dark:bg-red-500/10', label: 'Rejected' },
-    CANCELLED: { icon: X, color: 'text-slate-400 bg-slate-50 dark:bg-slate-500/10', label: 'Cancelled' },
+  PENDING: {
+    icon: Clock,
+    color: 'text-yellow-500 bg-yellow-50 dark:bg-yellow-500/10',
+    label: 'Pending',
+  },
+  APPROVED: {
+    icon: CheckCircle,
+    color: 'text-green-500 bg-green-50 dark:bg-green-500/10',
+    label: 'Approved',
+  },
+  REJECTED: {
+    icon: XCircle,
+    color: 'text-red-500 bg-red-50 dark:bg-red-500/10',
+    label: 'Rejected',
+  },
+  CANCELLED: {
+    icon: X,
+    color: 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-500/10',
+    label: 'Cancelled',
+  },
 };
 
-export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> = ({ currentUser }) => {
-    const { t } = useTranslation();
-    const [requests, setRequests] = useState<PermissionRequest[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
-    const [showForm, setShowForm] = useState(false);
+export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> = ({
+  currentUser,
+}) => {
+  const { t } = useTranslation();
+  const [requests, setRequests] = useState<PermissionRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
-    // Form state
-    const [formData, setFormData] = useState({
-        requestType: '' as PermissionRequestType | '',
+  // Form state
+  const [formData, setFormData] = useState({
+    requestType: '' as PermissionRequestType | '',
+    currentValue: '',
+    requestedValue: '',
+    justification: '',
+    priority: 'NORMAL' as PermissionRequestPriority,
+  });
+
+  // Fetch user's requests
+  const fetchRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await Api.getPermissionRequests();
+      setRequests(data);
+    } catch (error) {
+      console.error('Failed to fetch permission requests:', error);
+      toast.error(t('settings.permissions.fetchError', 'Failed to load requests'));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.requestType) {
+      toast.error(t('settings.permissions.selectType', 'Please select a request type'));
+      return;
+    }
+
+    if (!formData.justification.trim()) {
+      toast.error(t('settings.permissions.provideJustification', 'Please provide a justification'));
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await Api.createPermissionRequest({
+        requestType: formData.requestType,
+        currentValue: formData.currentValue || getCurrentValue(formData.requestType),
+        requestedValue: formData.requestedValue,
+        justification: formData.justification,
+        priority: formData.priority,
+      });
+
+      toast.success(t('settings.permissions.submitted', 'Request submitted successfully'));
+      setShowForm(false);
+      setFormData({
+        requestType: '',
         currentValue: '',
         requestedValue: '',
         justification: '',
-        priority: 'NORMAL' as PermissionRequestPriority,
-    });
+        priority: 'NORMAL',
+      });
+      fetchRequests();
+    } catch (error: any) {
+      toast.error(
+        error.message || t('settings.permissions.submitError', 'Failed to submit request')
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    // Fetch user's requests
-    const fetchRequests = useCallback(async () => {
-        try {
-            setLoading(true);
-            const data = await Api.getPermissionRequests();
-            setRequests(data);
-        } catch (error) {
-            console.error('Failed to fetch permission requests:', error);
-            toast.error(t('settings.permissions.fetchError', 'Failed to load requests'));
-        } finally {
-            setLoading(false);
-        }
-    }, [t]);
+  // Get current value based on request type
+  const getCurrentValue = (type: PermissionRequestType): string => {
+    switch (type) {
+      case 'ROLE_CHANGE':
+        return currentUser.role || 'USER';
+      case 'TOKEN_LIMIT':
+        return currentUser.tokenLimit?.toString() || '100000';
+      case 'STORAGE_LIMIT':
+        return '5GB'; // Default, should come from org limits
+      case 'FEATURE_ACCESS':
+        return 'Standard';
+      default:
+        return '';
+    }
+  };
 
-    useEffect(() => {
-        fetchRequests();
-    }, [fetchRequests]);
+  // Cancel a pending request
+  const handleCancel = async (requestId: string) => {
+    try {
+      await Api.cancelPermissionRequest(requestId);
+      toast.success(t('settings.permissions.cancelled', 'Request cancelled'));
+      fetchRequests();
+    } catch (error) {
+      toast.error(t('settings.permissions.cancelError', 'Failed to cancel request'));
+    }
+  };
 
-    // Handle form submission
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+  // Get pending request count
+  const pendingCount = requests.filter((r) => r.status === 'PENDING').length;
 
-        if (!formData.requestType) {
-            toast.error(t('settings.permissions.selectType', 'Please select a request type'));
-            return;
-        }
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('settings.permissions.title', 'Permission Requests')}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {t(
+              'settings.permissions.subtitle',
+              'Request changes to your role, limits, or feature access'
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={fetchRequests}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw
+              size={18}
+              className={`text-slate-500 dark:text-slate-400 ${loading ? 'animate-spin' : ''}`}
+            />
+          </button>
+          {!showForm && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            >
+              <Send size={16} />
+              {t('settings.permissions.newRequest', 'New Request')}
+            </button>
+          )}
+        </div>
+      </div>
 
-        if (!formData.justification.trim()) {
-            toast.error(t('settings.permissions.provideJustification', 'Please provide a justification'));
-            return;
-        }
+      {/* New Request Form */}
+      {showForm && (
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider">
+              {t('settings.permissions.createRequest', 'Create New Request')}
+            </h4>
+            <button
+              onClick={() => setShowForm(false)}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            >
+              <X size={18} className="text-slate-500 dark:text-slate-400" />
+            </button>
+          </div>
 
-        try {
-            setSubmitting(true);
-            await Api.createPermissionRequest({
-                requestType: formData.requestType,
-                currentValue: formData.currentValue || getCurrentValue(formData.requestType),
-                requestedValue: formData.requestedValue,
-                justification: formData.justification,
-                priority: formData.priority,
-            });
-
-            toast.success(t('settings.permissions.submitted', 'Request submitted successfully'));
-            setShowForm(false);
-            setFormData({
-                requestType: '',
-                currentValue: '',
-                requestedValue: '',
-                justification: '',
-                priority: 'NORMAL',
-            });
-            fetchRequests();
-        } catch (error: any) {
-            toast.error(error.message || t('settings.permissions.submitError', 'Failed to submit request'));
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    // Get current value based on request type
-    const getCurrentValue = (type: PermissionRequestType): string => {
-        switch (type) {
-            case 'ROLE_CHANGE':
-                return currentUser.role || 'USER';
-            case 'TOKEN_LIMIT':
-                return currentUser.tokenLimit?.toString() || '100000';
-            case 'STORAGE_LIMIT':
-                return '5GB'; // Default, should come from org limits
-            case 'FEATURE_ACCESS':
-                return 'Standard';
-            default:
-                return '';
-        }
-    };
-
-    // Cancel a pending request
-    const handleCancel = async (requestId: string) => {
-        try {
-            await Api.cancelPermissionRequest(requestId);
-            toast.success(t('settings.permissions.cancelled', 'Request cancelled'));
-            fetchRequests();
-        } catch (error) {
-            toast.error(t('settings.permissions.cancelError', 'Failed to cancel request'));
-        }
-    };
-
-    // Get pending request count
-    const pendingCount = requests.filter((r) => r.status === 'PENDING').length;
-
-    return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                        {t('settings.permissions.title', 'Permission Requests')}
-                    </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {t('settings.permissions.subtitle', 'Request changes to your role, limits, or feature access')}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Request Type Selection */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('settings.permissions.requestType', 'Request Type')}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {REQUEST_TYPES.map((type) => {
+                  const Icon = type.icon;
+                  const isSelected = formData.requestType === type.value;
+                  return (
                     <button
-                        onClick={fetchRequests}
-                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                        title="Refresh"
-                    >
-                        <RefreshCw size={18} className={`text-slate-500 ${loading ? 'animate-spin' : ''}`} />
-                    </button>
-                    {!showForm && (
-                        <button
-                            onClick={() => setShowForm(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                        >
-                            <Send size={16} />
-                            {t('settings.permissions.newRequest', 'New Request')}
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* New Request Form */}
-            {showForm && (
-                <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl p-6 animate-in fade-in slide-in-from-top-2">
-                    <div className="flex items-center justify-between mb-6">
-                        <h4 className="text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider">
-                            {t('settings.permissions.createRequest', 'Create New Request')}
-                        </h4>
-                        <button
-                            onClick={() => setShowForm(false)}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                        >
-                            <X size={18} className="text-slate-500" />
-                        </button>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Request Type Selection */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {t('settings.permissions.requestType', 'Request Type')}
-                            </label>
-                            <div className="grid grid-cols-2 gap-3">
-                                {REQUEST_TYPES.map((type) => {
-                                    const Icon = type.icon;
-                                    const isSelected = formData.requestType === type.value;
-                                    return (
-                                        <button
-                                            key={type.value}
-                                            type="button"
-                                            onClick={() =>
-                                                setFormData({
-                                                    ...formData,
-                                                    requestType: type.value,
-                                                    currentValue: getCurrentValue(type.value),
-                                                })
-                                            }
-                                            className={`
+                      key={type.value}
+                      type="button"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          requestType: type.value,
+                          currentValue: getCurrentValue(type.value),
+                        })
+                      }
+                      className={`
                                                 p-4 rounded-lg border-2 text-left transition-all
                                                 ${
-                                                    isSelected
-                                                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                                                        : 'border-slate-200 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-500/50'
+                                                  isSelected
+                                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                                                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300 dark:hover:border-purple-500/50'
                                                 }
                                             `}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div
-                                                    className={`p-2 rounded-lg ${isSelected ? 'bg-purple-100 dark:bg-purple-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
-                                                >
-                                                    <Icon
-                                                        size={18}
-                                                        className={isSelected ? 'text-purple-600' : 'text-slate-500'}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <p
-                                                        className={`font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-200'}`}
-                                                    >
-                                                        {type.label}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                        {type.description}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-2 rounded-lg ${isSelected ? 'bg-purple-100 dark:bg-purple-500/20' : 'bg-slate-100 dark:bg-white/10'}`}
+                        >
+                          <Icon
+                            size={18}
+                            className={
+                              isSelected ? 'text-purple-600' : 'text-slate-500 dark:text-slate-400'
+                            }
+                          />
                         </div>
-
-                        {/* Current & Requested Values */}
-                        {formData.requestType && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        {t('settings.permissions.currentValue', 'Current Value')}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.currentValue}
-                                        disabled
-                                        className="w-full px-3 py-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-600 dark:text-slate-400"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        {t('settings.permissions.requestedValue', 'Requested Value')}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.requestedValue}
-                                        onChange={(e) => setFormData({ ...formData, requestedValue: e.target.value })}
-                                        placeholder={
-                                            formData.requestType === 'ROLE_CHANGE' ? 'ADMIN' : 'Enter value...'
-                                        }
-                                        className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Priority */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {t('settings.permissions.priority', 'Priority')}
-                            </label>
-                            <div className="flex gap-2">
-                                {PRIORITY_OPTIONS.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, priority: option.value })}
-                                        className={`
-                                            px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                                            ${
-                                                formData.priority === option.value
-                                                    ? `${option.color} bg-current/10 ring-2 ring-current/30`
-                                                    : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10'
-                                            }
-                                        `}
-                                    >
-                                        {option.label}
-                                    </button>
-                                ))}
-                            </div>
+                        <div>
+                          <p
+                            className={`font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-200'}`}
+                          >
+                            {type.label}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {type.description}
+                          </p>
                         </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-                        {/* Justification */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {t('settings.permissions.justification', 'Justification')} *
-                            </label>
-                            <textarea
-                                value={formData.justification}
-                                onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
-                                placeholder={t(
-                                    'settings.permissions.justificationPlaceholder',
-                                    'Explain why you need this change...',
-                                )}
-                                rows={4}
-                                className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none resize-none"
-                            />
-                        </div>
-
-                        {/* Submit Buttons */}
-                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
-                            <button
-                                type="button"
-                                onClick={() => setShowForm(false)}
-                                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                            >
-                                {t('common.cancel', 'Cancel')}
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={submitting || !formData.requestType}
-                                className="flex items-center gap-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                                {t('settings.permissions.submit', 'Submit Request')}
-                            </button>
-                        </div>
-                    </form>
+            {/* Current & Requested Values */}
+            {formData.requestType && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {t('settings.permissions.currentValue', 'Current Value')}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.currentValue}
+                    disabled
+                    className="w-full px-3 py-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-600 dark:text-slate-400"
+                  />
                 </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {t('settings.permissions.requestedValue', 'Requested Value')}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.requestedValue}
+                    onChange={(e) => setFormData({ ...formData, requestedValue: e.target.value })}
+                    placeholder={
+                      formData.requestType === 'ROLE_CHANGE' ? 'ADMIN' : 'Enter value...'
+                    }
+                    className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none"
+                  />
+                </div>
+              </div>
             )}
 
-            {/* Request History */}
-            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-                    <h4 className="text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider">
-                        {t('settings.permissions.history', 'Request History')}
-                    </h4>
-                    {pendingCount > 0 && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 rounded-full">
-                            {pendingCount} pending
-                        </span>
-                    )}
-                </div>
+            {/* Priority */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('settings.permissions.priority', 'Priority')}
+              </label>
+              <div className="flex gap-2">
+                {PRIORITY_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, priority: option.value })}
+                    className={`
+                                            px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+                                            ${
+                                              formData.priority === option.value
+                                                ? `${option.color} bg-current/10 ring-2 ring-current/30`
+                                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
+                                            }
+                                        `}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
-                    </div>
-                ) : requests.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                        <FileText size={40} className="mb-3 opacity-30" />
-                        <p className="text-sm">{t('settings.permissions.noRequests', 'No permission requests yet')}</p>
-                        <button
-                            onClick={() => setShowForm(true)}
-                            className="mt-3 text-sm text-purple-600 hover:text-purple-700 font-medium"
-                        >
-                            {t('settings.permissions.createFirst', 'Create your first request')}
-                        </button>
-                    </div>
-                ) : (
-                    <div className="divide-y divide-slate-100 dark:divide-white/5">
-                        {requests.map((request) => {
-                            const status = STATUS_CONFIG[request.status] || STATUS_CONFIG.PENDING;
-                            const StatusIcon = status.icon;
-                            const typeConfig = REQUEST_TYPES.find((t) => t.value === request.requestType);
-                            const TypeIcon = typeConfig?.icon || FileText;
-
-                            return (
-                                <div
-                                    key={request.id}
-                                    className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
-                                >
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex items-start gap-4">
-                                            <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/10">
-                                                <TypeIcon size={18} className="text-slate-600 dark:text-slate-400" />
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-medium text-slate-900 dark:text-white">
-                                                        {typeConfig?.label || request.requestType}
-                                                    </p>
-                                                    <span
-                                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}
-                                                    >
-                                                        <StatusIcon size={12} />
-                                                        {status.label}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                                    {request.currentValue} → {request.requestedValue || 'N/A'}
-                                                </p>
-                                                {request.justification && (
-                                                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 line-clamp-2">
-                                                        {request.justification}
-                                                    </p>
-                                                )}
-                                                {request.adminNotes && request.status !== 'PENDING' && (
-                                                    <div className="mt-2 p-2 bg-slate-50 dark:bg-white/5 rounded text-sm text-slate-600 dark:text-slate-400">
-                                                        <span className="font-medium">Admin notes:</span>{' '}
-                                                        {request.adminNotes}
-                                                    </div>
-                                                )}
-                                                <p className="text-xs text-slate-400 mt-2">
-                                                    {new Date(request.createdAt).toLocaleDateString()} at{' '}
-                                                    {new Date(request.createdAt).toLocaleTimeString()}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {request.status === 'PENDING' && (
-                                            <button
-                                                onClick={() => handleCancel(request.id)}
-                                                className="text-sm text-red-500 hover:text-red-600 font-medium transition-colors"
-                                            >
-                                                Cancel
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+            {/* Justification */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('settings.permissions.justification', 'Justification')} *
+              </label>
+              <textarea
+                value={formData.justification}
+                onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
+                placeholder={t(
+                  'settings.permissions.justificationPlaceholder',
+                  'Explain why you need this change...'
                 )}
+                rows={4}
+                className="w-full px-3 py-2 bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 outline-none resize-none"
+              />
             </div>
 
-            {/* Info Box */}
-            <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
-                <div className="flex items-start gap-3">
-                    <AlertCircle size={18} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-700 dark:text-blue-300">
-                        <p className="font-medium mb-1">{t('settings.permissions.infoTitle', 'How does this work?')}</p>
-                        <p className="text-blue-600 dark:text-blue-400">
-                            {t(
-                                'settings.permissions.infoText',
-                                'Your request will be reviewed by an administrator. You will receive a notification once a decision is made. Typical review time is 1-2 business days.',
-                            )}
-                        </p>
-                    </div>
-                </div>
+            {/* Submit Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-navy-700">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={submitting || !formData.requestType}
+                className="flex items-center gap-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                {t('settings.permissions.submit', 'Submit Request')}
+              </button>
             </div>
+          </form>
         </div>
-    );
+      )}
+
+      {/* Request History */}
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between">
+          <h4 className="text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider">
+            {t('settings.permissions.history', 'Request History')}
+          </h4>
+          {pendingCount > 0 && (
+            <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 rounded-full">
+              {pendingCount} pending
+            </span>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-slate-400">
+            <FileText size={40} className="mb-3 opacity-30" />
+            <p className="text-sm">
+              {t('settings.permissions.noRequests', 'No permission requests yet')}
+            </p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="mt-3 text-sm text-purple-600 hover:text-purple-700 font-medium"
+            >
+              {t('settings.permissions.createFirst', 'Create your first request')}
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-white/5">
+            {requests.map((request) => {
+              const status = STATUS_CONFIG[request.status] || STATUS_CONFIG.PENDING;
+              const StatusIcon = status.icon;
+              const typeConfig = REQUEST_TYPES.find((t) => t.value === request.requestType);
+              const TypeIcon = typeConfig?.icon || FileText;
+
+              return (
+                <div
+                  key={request.id}
+                  className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/10">
+                        <TypeIcon size={18} className="text-slate-600 dark:text-slate-400" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-slate-900 dark:text-white">
+                            {typeConfig?.label || request.requestType}
+                          </p>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}
+                          >
+                            <StatusIcon size={12} />
+                            {status.label}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                          {request.currentValue} → {request.requestedValue || 'N/A'}
+                        </p>
+                        {request.justification && (
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 line-clamp-2">
+                            {request.justification}
+                          </p>
+                        )}
+                        {request.adminNotes && request.status !== 'PENDING' && (
+                          <div className="mt-2 p-2 bg-slate-50 dark:bg-white/5 rounded text-sm text-slate-600 dark:text-slate-400">
+                            <span className="font-medium">Admin notes:</span> {request.adminNotes}
+                          </div>
+                        )}
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                          {new Date(request.createdAt).toLocaleDateString()} at{' '}
+                          {new Date(request.createdAt).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {request.status === 'PENDING' && (
+                      <button
+                        onClick={() => handleCancel(request.id)}
+                        className="text-sm text-red-500 hover:text-red-600 font-medium transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Info Box */}
+      <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
+        <div className="flex items-start gap-3">
+          <AlertCircle size={18} className="text-blue-500 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-blue-700 dark:text-blue-300">
+            <p className="font-medium mb-1">
+              {t('settings.permissions.infoTitle', 'How does this work?')}
+            </p>
+            <p className="text-blue-600 dark:text-blue-400">
+              {t(
+                'settings.permissions.infoText',
+                'Your request will be reviewed by an administrator. You will receive a notification once a decision is made. Typical review time is 1-2 business days.'
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default PermissionRequestSection;
-

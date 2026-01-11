@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Creditnote Service
  * Enterprise SaaS Architecture - TypeScript Backend

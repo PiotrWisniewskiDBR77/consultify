@@ -57,13 +57,3 @@ export class UserFactory {
     return this.create({ organizationId, ...overrides });
   }
 }
-
-
-
-
-
-
-
-
-
-

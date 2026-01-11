@@ -17,5 +17,9 @@ export { MetricCard } from './shared/MetricCard';
 export { RAGIndicator } from './shared/RAGIndicator';
 export { ReportFooter } from './shared/ReportFooter';
 export { ReportHeader } from './shared/ReportHeader';
-export { ReportHistoryRowSkeleton, ReportSkeleton, ReportSkeletonCompact } from './shared/ReportSkeleton';
+export {
+  ReportHistoryRowSkeleton,
+  ReportSkeleton,
+  ReportSkeletonCompact,
+} from './shared/ReportSkeleton';
 export { TaskListSection } from './shared/TaskListSection';

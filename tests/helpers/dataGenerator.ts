@@ -158,13 +158,3 @@ export class DataGenerator {
     faker.seed();
   }
 }
-
-
-
-
-
-
-
-
-
-

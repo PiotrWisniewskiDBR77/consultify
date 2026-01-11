@@ -7,9 +7,17 @@ describe('ProjectMemberService', () => {
   describe('PROJECT_ROLES', () => {
     it('should define all 11 project roles', () => {
       const roles = [
-        'SPONSOR', 'OWNER', 'MANAGER', 'LEAD',
-        'MEMBER', 'CONTRIBUTOR', 'OBSERVER', 'CONSULTANT',
-        'STAKEHOLDER', 'APPROVER', 'AUDITOR'
+        'SPONSOR',
+        'OWNER',
+        'MANAGER',
+        'LEAD',
+        'MEMBER',
+        'CONTRIBUTOR',
+        'OBSERVER',
+        'CONSULTANT',
+        'STAKEHOLDER',
+        'APPROVER',
+        'AUDITOR',
       ];
       expect(roles.length).toBe(11);
     });

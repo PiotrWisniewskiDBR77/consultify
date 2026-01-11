@@ -4,18 +4,15 @@
 import { Request, Response, NextFunction } from 'express';
 
 export const verifyAdmin = (req: Request, res: Response, next: NextFunction) => {
-    next();
+  next();
 };
 
 export const checkPermission = (permission: string) => {
-    return (req: Request, res: Response, next: NextFunction) => {
-        next();
-    };
+  return (req: Request, res: Response, next: NextFunction) => {
+    next();
+  };
 };
 
 export const setDependencies = (deps: any) => {
-    // No-op for mock
+  // No-op for mock
 };
-
-
-

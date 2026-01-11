@@ -11,157 +11,158 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 
 vi.hoisted(() => {
-    process.env.MOCK_DB = 'false';
-    const workerId = process.env.VITEST_WORKER_ID || '0';
-    process.env.SQLITE_PATH = `./test-ai-routes-${workerId}.db`;
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-ai-routes-${workerId}.db`;
 });
 
 describe('AI Routes Integration Tests', () => {
-    const db = getDatabase();
-    let testOrgId;
-    let testUserId;
-    let testProjectId;
-    let testToken;
-    const testEmail = `ai-routes-${Date.now()}@test.com`;
+  const db = getDatabase();
+  let testOrgId;
+  let testUserId;
+  let testProjectId;
+  let testToken;
+  const testEmail = `ai-routes-${Date.now()}@test.com`;
 
-    beforeAll(async () => {
-        await initializeDatabase();
-        if (db.initPromise) await db.initPromise;
+  beforeAll(async () => {
+    await initializeDatabase();
+    if (db.initPromise) await db.initPromise;
 
-        // Create organization
-        testOrgId = uuidv4();
-        await new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
-                [testOrgId, 'AI Test Org', 'professional', 'active'],
-                (err) => err ? reject(err) : resolve()
-            );
-        });
-
-        // Create user
-        testUserId = uuidv4();
-        const hashedPassword = await bcrypt.hash('TestPass123!', 10);
-        await new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)`,
-                [testUserId, testOrgId, testEmail, hashedPassword, 'ADMIN', 'active'],
-                (err) => err ? reject(err) : resolve()
-            );
-        });
-
-        // Create project
-        testProjectId = uuidv4();
-        await new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO projects (id, organization_id, name, owner_id, status) VALUES (?, ?, ?, ?, ?)`,
-                [testProjectId, testOrgId, 'AI Test Project', testUserId, 'active'],
-                (err) => err ? reject(err) : resolve()
-            );
-        });
-
-        // Login to get token
-        const loginRes = await request(app)
-            .post('/api/auth/login')
-            .send({ email: testEmail, password: 'TestPass123!' });
-        testToken = loginRes.body.token;
+    // Create organization
+    testOrgId = uuidv4();
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
+        [testOrgId, 'AI Test Org', 'professional', 'active'],
+        (err) => (err ? reject(err) : resolve())
+      );
     });
 
-    afterAll(async () => {
-        await new Promise(r => db.run(`DELETE FROM projects WHERE id = ?`, [testProjectId], () => r()));
-        await new Promise(r => db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => r()));
-        await new Promise(r => db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], () => r()));
+    // Create user
+    testUserId = uuidv4();
+    const hashedPassword = await bcrypt.hash('TestPass123!', 10);
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)`,
+        [testUserId, testOrgId, testEmail, hashedPassword, 'ADMIN', 'active'],
+        (err) => (err ? reject(err) : resolve())
+      );
     });
 
-    describe('GET /api/ai/context', () => {
-        it('should return AI context for authenticated user', async () => {
-            const res = await request(app)
-                .get('/api/ai/context')
-                .set('Authorization', `Bearer ${testToken}`);
-
-            // Accept various valid status codes
-            expect([200, 404, 501]).toContain(res.status);
-            if (res.status === 200 && res.body) {
-                expect(res.body.platform || res.body.context).toBeDefined();
-            }
-        });
-
-        it('should return 401 without authentication', async () => {
-            const res = await request(app)
-                .get('/api/ai/context');
-
-            expect([401, 403]).toContain(res.status);
-        });
+    // Create project
+    testProjectId = uuidv4();
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO projects (id, organization_id, name, owner_id, status) VALUES (?, ?, ?, ?, ?)`,
+        [testProjectId, testOrgId, 'AI Test Project', testUserId, 'active'],
+        (err) => (err ? reject(err) : resolve())
+      );
     });
 
-    describe('GET /api/ai/context/:projectId', () => {
-        it('should build AI context for specific project', async () => {
-            const res = await request(app)
-                .get(`/api/ai/context/${testProjectId}`)
-                .set('Authorization', `Bearer ${testToken}`);
+    // Login to get token
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .send({ email: testEmail, password: 'TestPass123!' });
+    testToken = loginRes.body.token;
+  });
 
-            expect([200, 404, 501]).toContain(res.status);
-        });
+  afterAll(async () => {
+    await new Promise((r) =>
+      db.run(`DELETE FROM projects WHERE id = ?`, [testProjectId], () => r())
+    );
+    await new Promise((r) => db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => r()));
+    await new Promise((r) =>
+      db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], () => r())
+    );
+  });
 
-        it('should handle non-existent project', async () => {
-            const res = await request(app)
-                .get('/api/ai/context/non-existent-project-id')
-                .set('Authorization', `Bearer ${testToken}`);
+  describe('GET /api/ai/context', () => {
+    it('should return AI context for authenticated user', async () => {
+      const res = await request(app)
+        .get('/api/ai/context')
+        .set('Authorization', `Bearer ${testToken}`);
 
-            expect([200, 400, 404]).toContain(res.status);
-        });
+      // Accept various valid status codes
+      expect([200, 404, 501]).toContain(res.status);
+      if (res.status === 200 && res.body) {
+        expect(res.body.platform || res.body.context).toBeDefined();
+      }
     });
 
-    describe('POST /api/ai/chat', () => {
-        it('should handle chat request', async () => {
-            const res = await request(app)
-                .post('/api/ai/chat')
-                .set('Authorization', `Bearer ${testToken}`)
-                .send({
-                    message: 'Hello AI',
-                    projectId: testProjectId
-                });
+    it('should return 401 without authentication', async () => {
+      const res = await request(app).get('/api/ai/context');
 
-            // Accept various status codes
-            expect([200, 400, 404, 500, 501, 503]).toContain(res.status);
-        });
+      expect([401, 403]).toContain(res.status);
+    });
+  });
+
+  describe('GET /api/ai/context/:projectId', () => {
+    it('should build AI context for specific project', async () => {
+      const res = await request(app)
+        .get(`/api/ai/context/${testProjectId}`)
+        .set('Authorization', `Bearer ${testToken}`);
+
+      expect([200, 404, 501]).toContain(res.status);
     });
 
-    describe('GET /api/ai/policy', () => {
-        it('should return AI policy configuration', async () => {
-            const res = await request(app)
-                .get('/api/ai/policy')
-                .set('Authorization', `Bearer ${testToken}`);
+    it('should handle non-existent project', async () => {
+      const res = await request(app)
+        .get('/api/ai/context/non-existent-project-id')
+        .set('Authorization', `Bearer ${testToken}`);
 
-            expect([200, 404, 501]).toContain(res.status);
+      expect([200, 400, 404]).toContain(res.status);
+    });
+  });
+
+  describe('POST /api/ai/chat', () => {
+    it('should handle chat request', async () => {
+      const res = await request(app)
+        .post('/api/ai/chat')
+        .set('Authorization', `Bearer ${testToken}`)
+        .send({
+          message: 'Hello AI',
+          projectId: testProjectId,
         });
+
+      // Accept various status codes
+      expect([200, 400, 404, 500, 501, 503]).toContain(res.status);
+    });
+  });
+
+  describe('GET /api/ai/policy', () => {
+    it('should return AI policy configuration', async () => {
+      const res = await request(app)
+        .get('/api/ai/policy')
+        .set('Authorization', `Bearer ${testToken}`);
+
+      expect([200, 404, 501]).toContain(res.status);
+    });
+  });
+
+  describe('GET /api/ai/memory/project/:projectId', () => {
+    it('should retrieve project memory', async () => {
+      const res = await request(app)
+        .get(`/api/ai/memory/project/${testProjectId}`)
+        .set('Authorization', `Bearer ${testToken}`);
+
+      expect([200, 404, 501]).toContain(res.status);
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle invalid project IDs gracefully', async () => {
+      const res = await request(app)
+        .get('/api/ai/context/invalid-id-!@#$%')
+        .set('Authorization', `Bearer ${testToken}`);
+
+      // Should return error status, not crash
+      expect([200, 400, 404, 500]).toContain(res.status);
     });
 
-    describe('GET /api/ai/memory/project/:projectId', () => {
-        it('should retrieve project memory', async () => {
-            const res = await request(app)
-                .get(`/api/ai/memory/project/${testProjectId}`)
-                .set('Authorization', `Bearer ${testToken}`);
+    it('should reject requests without token', async () => {
+      const res = await request(app).post('/api/ai/chat').send({ message: 'Test' });
 
-            expect([200, 404, 501]).toContain(res.status);
-        });
+      expect([401, 403]).toContain(res.status);
     });
-
-    describe('Error Handling', () => {
-        it('should handle invalid project IDs gracefully', async () => {
-            const res = await request(app)
-                .get('/api/ai/context/invalid-id-!@#$%')
-                .set('Authorization', `Bearer ${testToken}`);
-
-            // Should return error status, not crash
-            expect([200, 400, 404, 500]).toContain(res.status);
-        });
-
-        it('should reject requests without token', async () => {
-            const res = await request(app)
-                .post('/api/ai/chat')
-                .send({ message: 'Test' });
-
-            expect([401, 403]).toContain(res.status);
-        });
-    });
+  });
 });

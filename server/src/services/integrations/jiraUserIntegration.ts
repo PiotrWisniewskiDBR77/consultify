@@ -8,7 +8,9 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadJirauserintegration = createCachedLazyService<any>('./integrations/jiraUserIntegration.js');
+const loadJirauserintegration = createCachedLazyService<any>(
+  './integrations/jiraUserIntegration.js'
+);
 
 // Export default instance (for backward compatibility)
 export default loadJirauserintegration();

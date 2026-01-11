@@ -7,17 +7,17 @@ import { render, screen } from '@testing-library/react';
 const FullROIWorkspace = () => <div data-testid="roi-workspace">ROI Workspace</div>;
 
 describe('FullROIWorkspace Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders component', () => {
-        render(<FullROIWorkspace />);
-        expect(screen.getByTestId('roi-workspace')).toBeInTheDocument();
-    });
+  it('renders component', () => {
+    render(<FullROIWorkspace />);
+    expect(screen.getByTestId('roi-workspace')).toBeInTheDocument();
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(<FullROIWorkspace />);
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(<FullROIWorkspace />);
+    expect(container).toBeInTheDocument();
+  });
 });

@@ -9,213 +9,227 @@ import type { Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Organizations Routes', () => {
-    let mockReq: Partial<Request>;
-    let mockRes: Partial<Response>;
-    let mockOrgController: {
-        getCurrentOrganizations: ReturnType<typeof vi.fn>;
-        createOrganization: ReturnType<typeof vi.fn>;
-        getOrganizationById: ReturnType<typeof vi.fn>;
-        updateOrganization: ReturnType<typeof vi.fn>;
-        getMembers: ReturnType<typeof vi.fn>;
-        addMember: ReturnType<typeof vi.fn>;
-        updateMemberRole: ReturnType<typeof vi.fn>;
-        removeMember: ReturnType<typeof vi.fn>;
-        inviteMember: ReturnType<typeof vi.fn>;
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+  let mockOrgController: {
+    getCurrentOrganizations: ReturnType<typeof vi.fn>;
+    createOrganization: ReturnType<typeof vi.fn>;
+    getOrganizationById: ReturnType<typeof vi.fn>;
+    updateOrganization: ReturnType<typeof vi.fn>;
+    getMembers: ReturnType<typeof vi.fn>;
+    addMember: ReturnType<typeof vi.fn>;
+    updateMemberRole: ReturnType<typeof vi.fn>;
+    removeMember: ReturnType<typeof vi.fn>;
+    inviteMember: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockOrgController = {
+      getCurrentOrganizations: vi.fn(),
+      createOrganization: vi.fn(),
+      getOrganizationById: vi.fn(),
+      updateOrganization: vi.fn(),
+      getMembers: vi.fn(),
+      addMember: vi.fn(),
+      updateMemberRole: vi.fn(),
+      removeMember: vi.fn(),
+      inviteMember: vi.fn(),
     };
 
-    beforeEach(() => {
-        vi.clearAllMocks();
+    mockReq = {
+      user: {
+        id: 'user-123',
+        organizationId: 'org-123',
+        role: 'ADMIN',
+      },
+      query: {},
+      body: {},
+      params: {},
+    };
 
-        mockOrgController = {
-            getCurrentOrganizations: vi.fn(),
-            createOrganization: vi.fn(),
-            getOrganizationById: vi.fn(),
-            updateOrganization: vi.fn(),
-            getMembers: vi.fn(),
-            addMember: vi.fn(),
-            updateMemberRole: vi.fn(),
-            removeMember: vi.fn(),
-            inviteMember: vi.fn(),
-        };
+    mockRes = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+  });
 
-        mockReq = {
-            user: {
-                id: 'user-123',
-                organizationId: 'org-123',
-                role: 'ADMIN',
-            },
-            query: {},
-            body: {},
-            params: {},
-        };
+  describe('GET /api/organizations/current', () => {
+    it('should return current user organizations', () => {
+      mockOrgController.getCurrentOrganizations.mockImplementation(
+        (req: Partial<Request>, res: Partial<Response>) => {
+          res.json?.([{ id: 'org-123', name: 'Organization 1' }]);
+        }
+      );
 
-        mockRes = {
-            status: vi.fn().mockReturnThis(),
-            json: vi.fn().mockReturnThis(),
-        };
+      expect(mockOrgController.getCurrentOrganizations).toBeDefined();
+    });
+  });
+
+  describe('POST /api/organizations', () => {
+    it('should create organization with valid data', () => {
+      mockReq.body = {
+        name: 'New Organization',
+        domain: 'example.com',
+      };
+
+      mockOrgController.createOrganization.mockImplementation(
+        (req: Partial<Request>, res: Partial<Response>) => {
+          res.status?.(201).json?.({ id: 'org-456', name: 'New Organization' });
+        }
+      );
+
+      expect(mockOrgController.createOrganization).toBeDefined();
     });
 
-    describe('GET /api/organizations/current', () => {
-        it('should return current user organizations', () => {
-            mockOrgController.getCurrentOrganizations.mockImplementation(
-                (req: Partial<Request>, res: Partial<Response>) => {
-                    res.json?.([{ id: 'org-123', name: 'Organization 1' }]);
-                },
-            );
+    it('should validate organization data', () => {
+      mockReq.body = {
+        name: '', // Invalid: empty name
+      };
 
-            expect(mockOrgController.getCurrentOrganizations).toBeDefined();
-        });
+      expect(true).toBe(true);
+    });
+  });
+
+  describe('GET /api/organizations/:orgId', () => {
+    it('should return organization by ID', () => {
+      mockReq.params = { orgId: 'org-123' };
+
+      mockOrgController.getOrganizationById.mockImplementation(
+        (req: Partial<Request>, res: Partial<Response>) => {
+          res.json?.({ id: 'org-123', name: 'Organization 1' });
+        }
+      );
+
+      expect(mockOrgController.getOrganizationById).toBeDefined();
     });
 
-    describe('POST /api/organizations', () => {
-        it('should create organization with valid data', () => {
-            mockReq.body = {
-                name: 'New Organization',
-                domain: 'example.com',
-            };
+    it('should return 404 for non-existent organization', () => {
+      mockReq.params = { orgId: 'non-existent' };
+      expect(true).toBe(true);
+    });
+  });
 
-            mockOrgController.createOrganization.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.status?.(201).json?.({ id: 'org-456', name: 'New Organization' });
-            });
+  describe('PUT /api/organizations/:orgId', () => {
+    it('should update organization with valid data', () => {
+      mockReq.params = { orgId: 'org-123' };
+      mockReq.body = {
+        name: 'Updated Organization',
+      };
 
-            expect(mockOrgController.createOrganization).toBeDefined();
-        });
+      mockOrgController.updateOrganization.mockImplementation(
+        (req: Partial<Request>, res: Partial<Response>) => {
+          res.json?.({ id: 'org-123', name: 'Updated Organization' });
+        }
+      );
 
-        it('should validate organization data', () => {
-            mockReq.body = {
-                name: '', // Invalid: empty name
-            };
+      expect(mockOrgController.updateOrganization).toBeDefined();
+    });
+  });
 
-            expect(true).toBe(true);
-        });
+  describe('GET /api/organizations/:orgId/members', () => {
+    it('should return organization members', () => {
+      mockReq.params = { orgId: 'org-123' };
+
+      mockOrgController.getMembers.mockImplementation(
+        (req: Partial<Request>, res: Partial<Response>) => {
+          res.json?.([{ id: 'user-1', email: 'user1@example.com', role: 'MEMBER' }]);
+        }
+      );
+
+      expect(mockOrgController.getMembers).toBeDefined();
+    });
+  });
+
+  describe('POST /api/organizations/:orgId/members', () => {
+    it('should add member to organization', () => {
+      mockReq.params = { orgId: 'org-123' };
+      mockReq.body = {
+        user_id: 'user-456',
+        role: 'MEMBER',
+      };
+
+      mockOrgController.addMember.mockImplementation(
+        (req: Partial<Request>, res: Partial<Response>) => {
+          res.status?.(201).json?.({ id: 'user-456', role: 'MEMBER' });
+        }
+      );
+
+      expect(mockOrgController.addMember).toBeDefined();
     });
 
-    describe('GET /api/organizations/:orgId', () => {
-        it('should return organization by ID', () => {
-            mockReq.params = { orgId: 'org-123' };
+    it('should validate member data', () => {
+      mockReq.params = { orgId: 'org-123' };
+      mockReq.body = {
+        // Missing user_id
+      };
 
-            mockOrgController.getOrganizationById.mockImplementation(
-                (req: Partial<Request>, res: Partial<Response>) => {
-                    res.json?.({ id: 'org-123', name: 'Organization 1' });
-                },
-            );
+      expect(true).toBe(true);
+    });
+  });
 
-            expect(mockOrgController.getOrganizationById).toBeDefined();
-        });
+  describe('PATCH /api/organizations/:orgId/members/:userId/role', () => {
+    it('should update member role', () => {
+      mockReq.params = {
+        orgId: 'org-123',
+        userId: 'user-456',
+      };
+      mockReq.body = {
+        role: 'ADMIN',
+      };
 
-        it('should return 404 for non-existent organization', () => {
-            mockReq.params = { orgId: 'non-existent' };
-            expect(true).toBe(true);
-        });
+      mockOrgController.updateMemberRole.mockImplementation(
+        (req: Partial<Request>, res: Partial<Response>) => {
+          res.json?.({ id: 'user-456', role: 'ADMIN' });
+        }
+      );
+
+      expect(mockOrgController.updateMemberRole).toBeDefined();
+    });
+  });
+
+  describe('DELETE /api/organizations/:orgId/members/:userId', () => {
+    it('should remove member from organization', () => {
+      mockReq.params = {
+        orgId: 'org-123',
+        userId: 'user-456',
+      };
+
+      mockOrgController.removeMember.mockImplementation(
+        (req: Partial<Request>, res: Partial<Response>) => {
+          res.status?.(204).json?.({});
+        }
+      );
+
+      expect(mockOrgController.removeMember).toBeDefined();
+    });
+  });
+
+  describe('POST /api/organizations/:orgId/invitations', () => {
+    it('should invite member to organization', () => {
+      mockReq.params = { orgId: 'org-123' };
+      mockReq.body = {
+        email: 'newuser@example.com',
+        role: 'MEMBER',
+      };
+
+      mockOrgController.inviteMember.mockImplementation(
+        (req: Partial<Request>, res: Partial<Response>) => {
+          res.status?.(201).json?.({ invitation_id: 'inv-123' });
+        }
+      );
+
+      expect(mockOrgController.inviteMember).toBeDefined();
     });
 
-    describe('PUT /api/organizations/:orgId', () => {
-        it('should update organization with valid data', () => {
-            mockReq.params = { orgId: 'org-123' };
-            mockReq.body = {
-                name: 'Updated Organization',
-            };
+    it('should validate invitation data', () => {
+      mockReq.params = { orgId: 'org-123' };
+      mockReq.body = {
+        email: 'invalid-email',
+      };
 
-            mockOrgController.updateOrganization.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.({ id: 'org-123', name: 'Updated Organization' });
-            });
-
-            expect(mockOrgController.updateOrganization).toBeDefined();
-        });
+      expect(true).toBe(true);
     });
-
-    describe('GET /api/organizations/:orgId/members', () => {
-        it('should return organization members', () => {
-            mockReq.params = { orgId: 'org-123' };
-
-            mockOrgController.getMembers.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.([{ id: 'user-1', email: 'user1@example.com', role: 'MEMBER' }]);
-            });
-
-            expect(mockOrgController.getMembers).toBeDefined();
-        });
-    });
-
-    describe('POST /api/organizations/:orgId/members', () => {
-        it('should add member to organization', () => {
-            mockReq.params = { orgId: 'org-123' };
-            mockReq.body = {
-                user_id: 'user-456',
-                role: 'MEMBER',
-            };
-
-            mockOrgController.addMember.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.status?.(201).json?.({ id: 'user-456', role: 'MEMBER' });
-            });
-
-            expect(mockOrgController.addMember).toBeDefined();
-        });
-
-        it('should validate member data', () => {
-            mockReq.params = { orgId: 'org-123' };
-            mockReq.body = {
-                // Missing user_id
-            };
-
-            expect(true).toBe(true);
-        });
-    });
-
-    describe('PATCH /api/organizations/:orgId/members/:userId/role', () => {
-        it('should update member role', () => {
-            mockReq.params = {
-                orgId: 'org-123',
-                userId: 'user-456',
-            };
-            mockReq.body = {
-                role: 'ADMIN',
-            };
-
-            mockOrgController.updateMemberRole.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.json?.({ id: 'user-456', role: 'ADMIN' });
-            });
-
-            expect(mockOrgController.updateMemberRole).toBeDefined();
-        });
-    });
-
-    describe('DELETE /api/organizations/:orgId/members/:userId', () => {
-        it('should remove member from organization', () => {
-            mockReq.params = {
-                orgId: 'org-123',
-                userId: 'user-456',
-            };
-
-            mockOrgController.removeMember.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.status?.(204).json?.({});
-            });
-
-            expect(mockOrgController.removeMember).toBeDefined();
-        });
-    });
-
-    describe('POST /api/organizations/:orgId/invitations', () => {
-        it('should invite member to organization', () => {
-            mockReq.params = { orgId: 'org-123' };
-            mockReq.body = {
-                email: 'newuser@example.com',
-                role: 'MEMBER',
-            };
-
-            mockOrgController.inviteMember.mockImplementation((req: Partial<Request>, res: Partial<Response>) => {
-                res.status?.(201).json?.({ invitation_id: 'inv-123' });
-            });
-
-            expect(mockOrgController.inviteMember).toBeDefined();
-        });
-
-        it('should validate invitation data', () => {
-            mockReq.params = { orgId: 'org-123' };
-            mockReq.body = {
-                email: 'invalid-email',
-            };
-
-            expect(true).toBe(true);
-        });
-    });
+  });
 });

@@ -19,21 +19,21 @@
  */
 
 import {
-    Bot,
-    Check,
-    ChevronLeft,
-    Copy,
-    FileCode,
-    History,
-    Maximize2,
-    MessageSquare,
-    Minimize2,
-    RefreshCw,
-    Sparkles,
-    ThumbsDown,
-    ThumbsUp,
-    User,
-    Volume2,
+  Bot,
+  Check,
+  ChevronLeft,
+  Copy,
+  FileCode,
+  History,
+  Maximize2,
+  MessageSquare,
+  Minimize2,
+  RefreshCw,
+  Sparkles,
+  ThumbsDown,
+  ThumbsUp,
+  User,
+  Volume2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,10 +46,18 @@ import { submitAIFeedback } from '../../services/api-extensions';
 import { useAppStore } from '../../store/useAppStore';
 import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { ConversationMessage, useConversationStore } from '../../store/useConversationStore';
-import { AppView, Artifact, ChatMessage, FocusMode, ResponseFeedback, ThinkingStep } from '../../types';
+import {
+  AppView,
+  Artifact,
+  ChatMessage,
+  FocusMode,
+  ResponseFeedback,
+  ThinkingStep,
+} from '../../types';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { CitationList } from './CitationList';
+import { ContextBadge, InputContextBadge } from './ContextBadge';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { FocusModeSelector } from './Input/FocusModeSelector';
@@ -61,44 +69,44 @@ import { PendingActionsIndicator } from './PendingActionsIndicator';
 // ============================================================================
 
 interface UnifiedChatPanelProps {
-    /** Display mode: full-screen or split-screen */
-    mode?: ChatDisplayMode;
+  /** Display mode: full-screen or split-screen */
+  mode?: ChatDisplayMode;
 
-    /** Custom class name */
-    className?: string;
+  /** Custom class name */
+  className?: string;
 
-    /** Whether to show expand/collapse button */
-    showModeToggle?: boolean;
+  /** Whether to show expand/collapse button */
+  showModeToggle?: boolean;
 
-    /** Callback when mode toggle is clicked */
-    onModeToggle?: () => void;
+  /** Callback when mode toggle is clicked */
+  onModeToggle?: () => void;
 
-    /** Callback for "back" button in split mode */
-    onBack?: () => void;
+  /** Callback for "back" button in split mode */
+  onBack?: () => void;
 
-    /** Whether to show the sliding history panel trigger */
-    showHistoryTrigger?: boolean;
+  /** Whether to show the sliding history panel trigger */
+  showHistoryTrigger?: boolean;
 
-    /** Optional title override */
-    title?: string;
+  /** Optional title override */
+  title?: string;
 
-    /** Whether to show focus mode selector */
-    showFocusMode?: boolean;
+  /** Whether to show focus mode selector */
+  showFocusMode?: boolean;
 
-    /** Current workspace context (for AI awareness) */
-    workspaceContext?: WorkspaceContext | null;
+  /** Current workspace context (for AI awareness) */
+  workspaceContext?: WorkspaceContext | null;
 
-    /** Whether the panel is disabled */
-    disabled?: boolean;
+  /** Whether the panel is disabled */
+  disabled?: boolean;
 
-    /** Max height for the panel (useful in split mode) */
-    maxHeight?: string;
+  /** Max height for the panel (useful in split mode) */
+  maxHeight?: string;
 
-    /** Callback when user sends a message */
-    onMessageSent?: (content: string) => void;
+  /** Callback when user sends a message */
+  onMessageSent?: (content: string) => void;
 
-    /** Callback when user clicks "View All Actions" */
-    onNavigateToActions?: () => void;
+  /** Callback when user clicks "View All Actions" */
+  onNavigateToActions?: () => void;
 }
 
 // ============================================================================
@@ -106,713 +114,719 @@ interface UnifiedChatPanelProps {
 // ============================================================================
 
 export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
-    mode = 'full',
-    className = '',
-    showModeToggle = true,
-    onModeToggle,
-    onBack,
-    showHistoryTrigger = true,
-    title,
-    showFocusMode = true,
-    workspaceContext,
-    disabled = false,
-    maxHeight,
-    onMessageSent,
-    onNavigateToActions,
+  mode = 'full',
+  className = '',
+  showModeToggle = true,
+  onModeToggle,
+  onBack,
+  showHistoryTrigger = true,
+  title,
+  showFocusMode = true,
+  workspaceContext,
+  disabled = false,
+  maxHeight,
+  onMessageSent,
+  onNavigateToActions,
 }) => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
 
-    // ========================================================================
-    // Store hooks
-    // ========================================================================
+  // ========================================================================
+  // Store hooks
+  // ========================================================================
 
-    const {
-        isChatSlidingPanelOpen,
-        setChatSlidingPanelOpen,
-        currentStreamContent,
-        isBotTyping,
-        addChatMessage,
-        setIsBotTyping,
-        aiFreezeStatus,
-    } = useAppStore();
+  const {
+    isChatSlidingPanelOpen,
+    setChatSlidingPanelOpen,
+    currentStreamContent,
+    isBotTyping,
+    addChatMessage,
+    setIsBotTyping,
+    aiFreezeStatus,
+  } = useAppStore();
 
-    const {
-        activeConversationId,
-        activeMessages,
-        displayMode,
-        createConversation,
-        addMessage: addMessageToConversation,
-        setActiveConversation,
-        fetchConversation,
-        clearActiveChat,
-        setDisplayMode,
-        expandToFullScreen,
-        collapseToSplit,
-    } = useConversationStore();
+  const {
+    activeConversationId,
+    activeMessages,
+    displayMode,
+    createConversation,
+    addMessage: addMessageToConversation,
+    setActiveConversation,
+    fetchConversation,
+    clearActiveChat,
+    setDisplayMode,
+    expandToFullScreen,
+    collapseToSplit,
+  } = useConversationStore();
 
-    const { addArtifact, togglePanel: toggleArtifactsPanel } = useArtifactsStore();
-    const { speak, stopSpeaking, isSpeaking, voiceEnabled, ttsSupported } = useVoiceChat();
+  const { addArtifact, togglePanel: toggleArtifactsPanel } = useArtifactsStore();
+  const { speak, stopSpeaking, isSpeaking, voiceEnabled, ttsSupported } = useVoiceChat();
 
-    // ========================================================================
-    // Local state
-    // ========================================================================
+  // ========================================================================
+  // Local state
+  // ========================================================================
 
-    const [focusMode, setFocusMode] = useState<FocusMode>('all');
-    const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
-    const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
-    const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-    const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [focusMode, setFocusMode] = useState<FocusMode>('all');
+  const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
+  const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
-    // Refs
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const messagesContainerRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Refs
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    // Computed values
-    const isSplitMode = mode === 'split' || displayMode === 'split';
-    const isCompact = isSplitMode;
-    const isDisabled = disabled || aiFreezeStatus.isFrozen;
+  // Computed values
+  const isSplitMode = mode === 'split' || displayMode === 'split';
+  const isCompact = isSplitMode;
+  const isDisabled = disabled || aiFreezeStatus.isFrozen;
 
-    // ========================================================================
-    // AI Stream hook
-    // ========================================================================
+  // ========================================================================
+  // AI Stream hook
+  // ========================================================================
 
-    const { startStream, isStreaming, streamedContent } = useAIStream({
-        onStreamDone: async (fullText, thinking, artifacts) => {
-            // Save AI response to conversation store
-            if (activeConversationId) {
-                try {
-                    await addMessageToConversation({
-                        conversationId: activeConversationId,
-                        role: 'ai',
-                        content: fullText,
-                        messageType: 'text',
-                        metadata: {
-                            thinkingSteps: thinking as any,
-                            artifacts,
-                        },
-                    });
-                } catch (err) {
-                    console.error('[UnifiedChatPanel] Failed to save AI message:', err);
-                }
-            }
-
-            // Also update useAppStore for backward compatibility
-            addChatMessage({
-                id: `ai-${Date.now()}`,
-                role: 'ai',
-                content: fullText,
-                timestamp: new Date(),
-                thinkingSteps: thinking,
-                artifacts,
-            });
-
-            setThinkingSteps([]);
-        },
-        onThinkingUpdate: (steps) => {
-            setThinkingSteps(steps);
-        },
-        onArtifactDetected: (artifact) => {
-            addArtifact(artifact);
-        },
-    });
-
-    // ========================================================================
-    // Convert conversation messages to ChatMessage format
-    // ========================================================================
-
-    const messages: ChatMessage[] = useMemo(() => {
-        return activeMessages.map((msg) => ({
-            id: msg.id,
-            role: msg.role === 'ai' ? 'ai' : 'user',
-            content: msg.content,
-            timestamp: msg.createdAt,
-            thinkingSteps: msg.metadata?.thinkingSteps as any,
-            artifacts: msg.metadata?.artifacts,
-            citations: msg.metadata?.citations,
-            isStreaming: false,
-        })) as ChatMessage[];
-    }, [activeMessages]);
-
-    // Add streaming message if actively streaming
-    const displayMessages = useMemo(() => {
-        if (isStreaming && streamedContent) {
-            return [
-                ...messages,
-                {
-                    id: 'stream',
-                    role: 'ai' as const,
-                    content: streamedContent,
-                    timestamp: new Date(),
-                    isStreaming: true,
-                    thinkingSteps: thinkingSteps.length > 0 ? thinkingSteps : undefined,
-                },
-            ];
-        }
-        return messages;
-    }, [messages, isStreaming, streamedContent, thinkingSteps]);
-
-    // ========================================================================
-    // Scroll to bottom on new messages
-    // ========================================================================
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [displayMessages, isStreaming]);
-
-    // ========================================================================
-    // Handlers
-    // ========================================================================
-
-    const handleSendMessage = useCallback(
-        async (content: string, attachments?: any[]) => {
-            if (!content.trim() || isDisabled) return;
-
-            // Create conversation if none exists
-            let conversationId = activeConversationId;
-            if (!conversationId) {
-                try {
-                    const conv = await createConversation();
-                    conversationId = conv.id;
-                } catch (err) {
-                    console.error('[UnifiedChatPanel] Failed to create conversation:', err);
-                }
-            }
-
-            // Save user message to conversation store
-            if (conversationId) {
-                try {
-                    await addMessageToConversation({
-                        conversationId,
-                        role: 'user',
-                        content,
-                        messageType: 'text',
-                    });
-                } catch (err) {
-                    console.error('[UnifiedChatPanel] Failed to save user message:', err);
-                }
-            }
-
-            // Also add to useAppStore for backward compatibility
-            const userMessage: ChatMessage = {
-                id: `user-${Date.now()}`,
-                role: 'user',
-                content,
-                timestamp: new Date(),
-            };
-            addChatMessage(userMessage);
-
-            // Build context for AI
-            const context = {
-                focusMode,
-                attachments,
-                workspaceContext,
-                conversationId,
-            };
-
-            // Add placeholder for AI response in useAppStore
-            const aiPlaceholder: ChatMessage = {
-                id: `ai-${Date.now()}`,
-                role: 'ai',
-                content: '',
-                timestamp: new Date(),
-                isStreaming: true,
-            };
-            addChatMessage(aiPlaceholder);
-
-            // Start streaming
-            const history = displayMessages.map((m) => ({
-                role: m.role,
-                content: m.content,
-            }));
-
-            await startStream(content, history, undefined, context, focusMode);
-
-            // Callback
-            onMessageSent?.(content);
-        },
-        [
-            activeConversationId,
-            createConversation,
-            addMessageToConversation,
-            addChatMessage,
-            displayMessages,
-            focusMode,
-            workspaceContext,
-            startStream,
-            isDisabled,
-            onMessageSent,
-        ],
-    );
-
-    const handleNewChat = useCallback(async () => {
-        clearActiveChat();
+  const { startStream, isStreaming, streamedContent } = useAIStream({
+    onStreamDone: async (fullText, thinking, artifacts) => {
+      // Save AI response to conversation store
+      if (activeConversationId) {
         try {
-            const conv = await createConversation();
-            setActiveConversation(conv.id);
+          await addMessageToConversation({
+            conversationId: activeConversationId,
+            role: 'ai',
+            content: fullText,
+            messageType: 'text',
+            metadata: {
+              thinkingSteps: thinking as any,
+              artifacts,
+            },
+          });
         } catch (err) {
-            console.error('[UnifiedChatPanel] Failed to create new chat:', err);
+          console.error('[UnifiedChatPanel] Failed to save AI message:', err);
         }
-    }, [clearActiveChat, createConversation, setActiveConversation]);
+      }
 
-    const handleSelectConversation = useCallback(
-        (id: string) => {
-            setActiveConversation(id);
+      // Also update useAppStore for backward compatibility
+      addChatMessage({
+        id: `ai-${Date.now()}`,
+        role: 'ai',
+        content: fullText,
+        timestamp: new Date(),
+        thinkingSteps: thinking,
+        artifacts,
+      });
+
+      setThinkingSteps([]);
+    },
+    onThinkingUpdate: (steps) => {
+      setThinkingSteps(steps);
+    },
+    onArtifactDetected: (artifact) => {
+      addArtifact(artifact);
+    },
+  });
+
+  // ========================================================================
+  // Convert conversation messages to ChatMessage format
+  // ========================================================================
+
+  const messages: ChatMessage[] = useMemo(() => {
+    return activeMessages.map((msg) => ({
+      id: msg.id,
+      role: msg.role === 'ai' ? 'ai' : 'user',
+      content: msg.content,
+      timestamp: msg.createdAt,
+      thinkingSteps: msg.metadata?.thinkingSteps as any,
+      artifacts: msg.metadata?.artifacts,
+      citations: msg.metadata?.citations,
+      isStreaming: false,
+    })) as ChatMessage[];
+  }, [activeMessages]);
+
+  // Add streaming message if actively streaming
+  const displayMessages = useMemo(() => {
+    if (isStreaming && streamedContent) {
+      return [
+        ...messages,
+        {
+          id: 'stream',
+          role: 'ai' as const,
+          content: streamedContent,
+          timestamp: new Date(),
+          isStreaming: true,
+          thinkingSteps: thinkingSteps.length > 0 ? thinkingSteps : undefined,
         },
-        [setActiveConversation],
-    );
+      ];
+    }
+    return messages;
+  }, [messages, isStreaming, streamedContent, thinkingSteps]);
 
-    const handleCopyMessage = useCallback(async (content: string, messageId: string) => {
+  // ========================================================================
+  // Scroll to bottom on new messages
+  // ========================================================================
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [displayMessages, isStreaming]);
+
+  // ========================================================================
+  // Handlers
+  // ========================================================================
+
+  const handleSendMessage = useCallback(
+    async (content: string, attachments?: any[]) => {
+      if (!content.trim() || isDisabled) return;
+
+      // Create conversation if none exists
+      let conversationId = activeConversationId;
+      if (!conversationId) {
         try {
-            await navigator.clipboard.writeText(content);
-            setCopiedMessageId(messageId);
-            setTimeout(() => setCopiedMessageId(null), 2000);
+          const conv = await createConversation();
+          conversationId = conv.id;
         } catch (err) {
-            console.error('Failed to copy message:', err);
+          console.error('[UnifiedChatPanel] Failed to create conversation:', err);
         }
-    }, []);
+      }
 
-    const handleModeToggle = useCallback(() => {
-        if (isSplitMode) {
-            expandToFullScreen();
-        } else {
-            collapseToSplit();
+      // Save user message to conversation store
+      if (conversationId) {
+        try {
+          await addMessageToConversation({
+            conversationId,
+            role: 'user',
+            content,
+            messageType: 'text',
+          });
+        } catch (err) {
+          console.error('[UnifiedChatPanel] Failed to save user message:', err);
         }
-        onModeToggle?.();
-    }, [isSplitMode, expandToFullScreen, collapseToSplit, onModeToggle]);
+      }
 
-    const handleViewArtifacts = useCallback(
-        (artifacts: Artifact[]) => {
-            artifacts.forEach((artifact) => addArtifact(artifact));
-            toggleArtifactsPanel(true);
-        },
-        [addArtifact, toggleArtifactsPanel],
-    );
+      // Also add to useAppStore for backward compatibility
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content,
+        timestamp: new Date(),
+      };
+      addChatMessage(userMessage);
 
-    /**
-     * Handle feedback submission for AI responses
-     * Integrated with FeedbackService for learning system
-     */
-    const handleFeedback = useCallback(
-        async (messageId: string, messageContent: string, feedback: ResponseFeedback) => {
-            try {
-                // Find the user message that triggered this AI response
-                const messageIndex = displayMessages.findIndex((m) => m.id === messageId);
-                const userMessage = messageIndex > 0 ? displayMessages[messageIndex - 1]?.content : '';
+      // Build context for AI
+      const context = {
+        focusMode,
+        attachments,
+        workspaceContext,
+        conversationId,
+      };
 
-                // Convert ResponseFeedback to API format
-                const apiPayload = {
-                    context: workspaceContext?.type || 'general',
-                    prompt: userMessage,
-                    response: messageContent,
-                    helpful: feedback.rating === 'positive',
-                    comment:
-                        [
-                            feedback.lengthFeedback ? `Length: ${feedback.lengthFeedback}` : '',
-                            feedback.detailFeedback ? `Detail: ${feedback.detailFeedback}` : '',
-                            feedback.wantedMode ? `Wanted: ${feedback.wantedMode}` : '',
-                            feedback.customFeedback || '',
-                        ]
-                            .filter(Boolean)
-                            .join('; ') || undefined,
-                };
+      // Add placeholder for AI response in useAppStore
+      const aiPlaceholder: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        role: 'ai',
+        content: '',
+        timestamp: new Date(),
+        isStreaming: true,
+      };
+      addChatMessage(aiPlaceholder);
 
-                await submitAIFeedback(apiPayload);
+      // Start streaming
+      const history = displayMessages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
-                console.log('[UnifiedChatPanel] Feedback submitted:', {
-                    messageId,
-                    conversationId: activeConversationId,
-                    rating: feedback.rating,
-                    hasDetailedFeedback: !!(feedback.lengthFeedback || feedback.detailFeedback || feedback.wantedMode),
-                });
-            } catch (err) {
-                console.error('[UnifiedChatPanel] Failed to submit feedback:', err);
-            }
-        },
-        [displayMessages, workspaceContext, activeConversationId],
-    );
+      await startStream(content, history, undefined, context, focusMode);
 
-    // ========================================================================
-    // Render helpers
-    // ========================================================================
+      // Callback
+      onMessageSent?.(content);
+    },
+    [
+      activeConversationId,
+      createConversation,
+      addMessageToConversation,
+      addChatMessage,
+      displayMessages,
+      focusMode,
+      workspaceContext,
+      startStream,
+      isDisabled,
+      onMessageSent,
+    ]
+  );
 
-    const renderMessage = (msg: ChatMessage, index: number) => {
-        const isLastMessage = index === displayMessages.length - 1;
-        const isHovered = hoveredMessageId === msg.id;
-        const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
-        const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
-        const hasCitations = msg.citations && msg.citations.length > 0;
-        const isCopied = copiedMessageId === msg.id;
+  const handleNewChat = useCallback(async () => {
+    clearActiveChat();
+    try {
+      const conv = await createConversation();
+      setActiveConversation(conv.id);
+    } catch (err) {
+      console.error('[UnifiedChatPanel] Failed to create new chat:', err);
+    }
+  }, [clearActiveChat, createConversation, setActiveConversation]);
 
-        return (
-            <div
-                key={msg.id}
-                className={`flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
-                onMouseEnter={() => setHoveredMessageId(msg.id)}
-                onMouseLeave={() => setHoveredMessageId(null)}
-            >
-                {/* Thinking Steps (for AI messages) */}
-                {msg.role === 'ai' && hasThinkingSteps && (
-                    <div className={`w-full ${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-                        <ThinkingBlock steps={msg.thinkingSteps!} isStreaming={msg.isStreaming} />
-                    </div>
-                )}
+  const handleSelectConversation = useCallback(
+    (id: string) => {
+      setActiveConversation(id);
+    },
+    [setActiveConversation]
+  );
 
-                <div
-                    className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'} ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                >
-                    {/* Avatar */}
-                    <div
-                        className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full flex items-center justify-center shrink-0 mt-0.5 border ${
-                            msg.role === 'ai'
-                                ? 'bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700'
-                                : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
-                        }`}
-                    >
-                        {msg.role === 'ai' ? (
-                            <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
-                        ) : (
-                            <User size={isCompact ? 12 : 14} className="text-slate-400 dark:text-slate-300" />
-                        )}
-                    </div>
+  const handleCopyMessage = useCallback(async (content: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy message:', err);
+    }
+  }, []);
 
-                    {/* Message Bubble */}
-                    <div
-                        className={`relative max-w-[85%] rounded-2xl px-3 py-2 ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed shadow-sm ${
-                            msg.role === 'user'
-                                ? 'bg-primary-600 text-white rounded-tr-none'
-                                : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
-                        }`}
-                    >
-                        {/* AI Message Content */}
-                        {msg.role === 'ai' ? (
-                            <div
-                                className={`prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert max-w-none`}
-                            >
-                                <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
-                                    components={{
-                                        code: ({ inline, className: codeClassName, children }: any) => {
-                                            if (inline) {
-                                                return (
-                                                    <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-primary-600 dark:text-primary-400 text-xs font-mono">
-                                                        {children}
-                                                    </code>
-                                                );
-                                            }
-                                            return (
-                                                <pre className="bg-slate-900 dark:bg-navy-950 text-slate-100 p-2 rounded-lg overflow-x-auto text-xs my-2">
-                                                    <code className={codeClassName}>{children}</code>
-                                                </pre>
-                                            );
-                                        },
-                                        a: ({ href, children }: any) => (
-                                            <a
-                                                href={href}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-primary-600 hover:text-primary-700 underline"
-                                            >
-                                                {children}
-                                            </a>
-                                        ),
-                                    }}
-                                >
-                                    {msg.content}
-                                </ReactMarkdown>
-                            </div>
-                        ) : (
-                            <span>{msg.content}</span>
-                        )}
+  const handleModeToggle = useCallback(() => {
+    if (isSplitMode) {
+      expandToFullScreen();
+    } else {
+      collapseToSplit();
+    }
+    onModeToggle?.();
+  }, [isSplitMode, expandToFullScreen, collapseToSplit, onModeToggle]);
 
-                        {/* Streaming indicator */}
-                        {msg.isStreaming && (
-                            <span className="inline-flex items-center gap-1 ml-2">
-                                <span
-                                    className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
-                                    style={{ animationDelay: '0ms' }}
-                                />
-                                <span
-                                    className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
-                                    style={{ animationDelay: '150ms' }}
-                                />
-                                <span
-                                    className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
-                                    style={{ animationDelay: '300ms' }}
-                                />
-                            </span>
-                        )}
+  const handleViewArtifacts = useCallback(
+    (artifacts: Artifact[]) => {
+      artifacts.forEach((artifact) => addArtifact(artifact));
+      toggleArtifactsPanel(true);
+    },
+    [addArtifact, toggleArtifactsPanel]
+  );
 
-                        {/* Hover Actions */}
-                        {isHovered && !msg.isStreaming && (
-                            <div
-                                className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
-                            >
-                                {/* Copy */}
-                                <button
-                                    onClick={() => handleCopyMessage(msg.content, msg.id)}
-                                    className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
-                                    title={t('chat.actions.copy', 'Copy')}
-                                >
-                                    {isCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
-                                </button>
+  /**
+   * Handle feedback submission for AI responses
+   * Integrated with FeedbackService for learning system
+   */
+  const handleFeedback = useCallback(
+    async (messageId: string, messageContent: string, feedback: ResponseFeedback) => {
+      try {
+        // Find the user message that triggered this AI response
+        const messageIndex = displayMessages.findIndex((m) => m.id === messageId);
+        const userMessage = messageIndex > 0 ? displayMessages[messageIndex - 1]?.content : '';
 
-                                {/* Quick Feedback (AI only) */}
-                                {msg.role === 'ai' && (
-                                    <>
-                                        <button
-                                            className="p-1 rounded-md text-slate-500 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-                                            title={t('chat.actions.helpful', 'Helpful')}
-                                        >
-                                            <ThumbsUp size={12} />
-                                        </button>
-                                        <button
-                                            className="p-1 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                            title={t('chat.actions.notHelpful', 'Not helpful')}
-                                        >
-                                            <ThumbsDown size={12} />
-                                        </button>
-                                    </>
-                                )}
+        // Convert ResponseFeedback to API format
+        const apiPayload = {
+          context: workspaceContext?.type || 'general',
+          prompt: userMessage,
+          response: messageContent,
+          helpful: feedback.rating === 'positive',
+          comment:
+            [
+              feedback.lengthFeedback ? `Length: ${feedback.lengthFeedback}` : '',
+              feedback.detailFeedback ? `Detail: ${feedback.detailFeedback}` : '',
+              feedback.wantedMode ? `Wanted: ${feedback.wantedMode}` : '',
+              feedback.customFeedback || '',
+            ]
+              .filter(Boolean)
+              .join('; ') || undefined,
+        };
 
-                                {/* View Artifacts */}
-                                {msg.role === 'ai' && hasArtifacts && (
-                                    <button
-                                        onClick={() => handleViewArtifacts(msg.artifacts!)}
-                                        className="p-1 rounded-md text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-                                        title={t('chat.actions.viewArtifacts', 'View Artifacts')}
-                                    >
-                                        <FileCode size={12} />
-                                    </button>
-                                )}
+        await submitAIFeedback(apiPayload);
 
-                                {/* Speak */}
-                                {ttsSupported && msg.role === 'ai' && (
-                                    <button
-                                        onClick={() => (isSpeaking ? stopSpeaking() : speak(msg.content))}
-                                        className={`p-1 rounded-md ${isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
-                                        title={
-                                            isSpeaking
-                                                ? t('chat.actions.stop', 'Stop')
-                                                : t('chat.actions.speak', 'Speak')
-                                        }
-                                    >
-                                        <Volume2 size={12} />
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
+        console.log('[UnifiedChatPanel] Feedback submitted:', {
+          messageId,
+          conversationId: activeConversationId,
+          rating: feedback.rating,
+          hasDetailedFeedback: !!(
+            feedback.lengthFeedback ||
+            feedback.detailFeedback ||
+            feedback.wantedMode
+          ),
+        });
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to submit feedback:', err);
+      }
+    },
+    [displayMessages, workspaceContext, activeConversationId]
+  );
 
-                {/* Artifacts Badge */}
-                {msg.role === 'ai' && hasArtifacts && (
-                    <button
-                        onClick={() => handleViewArtifacts(msg.artifacts!)}
-                        className={`${isCompact ? 'ml-7' : 'ml-9'} flex items-center gap-1 px-2 py-1 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors`}
-                    >
-                        <FileCode size={12} />
-                        {msg.artifacts!.length}{' '}
-                        {msg.artifacts!.length === 1
-                            ? t('chat.artifact', 'artifact')
-                            : t('chat.artifacts', 'artifacts')}
-                    </button>
-                )}
+  // ========================================================================
+  // Render helpers
+  // ========================================================================
 
-                {/* Citations */}
-                {msg.role === 'ai' && hasCitations && (
-                    <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
-                        <CitationList citations={msg.citations!} />
-                    </div>
-                )}
-
-                {/* Inline Feedback (AI messages only, not streaming) */}
-                {msg.role === 'ai' && !msg.isStreaming && (
-                    <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
-                        <InlineResponseFeedback
-                            messageId={msg.id}
-                            conversationId={activeConversationId || undefined}
-                            responseLength={msg.content.length}
-                            onFeedback={(feedback) => handleFeedback(msg.id, msg.content, feedback)}
-                            compact={isCompact}
-                        />
-                    </div>
-                )}
-            </div>
-        );
-    };
-
-    // ========================================================================
-    // Render
-    // ========================================================================
+  const renderMessage = (msg: ChatMessage, index: number) => {
+    const isLastMessage = index === displayMessages.length - 1;
+    const isHovered = hoveredMessageId === msg.id;
+    const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
+    const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
+    const hasCitations = msg.citations && msg.citations.length > 0;
+    const isCopied = copiedMessageId === msg.id;
 
     return (
+      <div
+        key={msg.id}
+        className={`flex flex-col space-y-1.5 group ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+        onMouseEnter={() => setHoveredMessageId(msg.id)}
+        onMouseLeave={() => setHoveredMessageId(null)}
+      >
+        {/* Thinking Steps (for AI messages) */}
+        {msg.role === 'ai' && hasThinkingSteps && (
+          <div className={`w-full ${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
+            <ThinkingBlock steps={msg.thinkingSteps!} isStreaming={msg.isStreaming} />
+          </div>
+        )}
+
         <div
-            className={`flex flex-col h-full bg-white dark:bg-navy-950 ${className}`}
-            style={{ maxHeight: maxHeight || '100%' }}
+          className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'} ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
         >
-            {/* Skip links for keyboard users */}
-            <a
-                href="#chat-input"
-                className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg"
-            >
-                {t('wcag.skipToInput', 'Skip to chat input')}
-            </a>
+          {/* Avatar */}
+          <div
+            className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full flex items-center justify-center shrink-0 mt-0.5 border ${
+              msg.role === 'ai'
+                ? 'bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700'
+                : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
+            }`}
+          >
+            {msg.role === 'ai' ? (
+              <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
+            ) : (
+              <User size={isCompact ? 12 : 14} className="text-slate-400 dark:text-slate-300" />
+            )}
+          </div>
 
-            {/* Header */}
-            <div
-                className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-200 dark:border-navy-800 bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm`}
-            >
-                <div className="flex items-center gap-2">
-                    {/* Back button (split mode) */}
-                    {isSplitMode && onBack && (
-                        <button
-                            onClick={onBack}
-                            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-                            title={t('common.back', 'Back')}
-                        >
-                            <ChevronLeft size={18} />
-                        </button>
-                    )}
+          {/* Message Bubble */}
+          <div
+            className={`relative max-w-[85%] rounded-xl px-3 py-2 ${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed shadow-sm ${
+              msg.role === 'user'
+                ? 'bg-primary-600 text-white rounded-tr-none'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700 rounded-tl-none'
+            }`}
+          >
+            {/* AI Message Content */}
+            {msg.role === 'ai' ? (
+              <div
+                className={`prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert max-w-none`}
+              >
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code: ({ inline, className: codeClassName, children }: any) => {
+                      if (inline) {
+                        return (
+                          <code className="px-1 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-primary-600 dark:text-primary-400 text-xs font-mono">
+                            {children}
+                          </code>
+                        );
+                      }
+                      return (
+                        <pre className="bg-slate-900 dark:bg-navy-950 text-slate-100 p-2 rounded-lg overflow-x-auto text-xs my-2">
+                          <code className={codeClassName}>{children}</code>
+                        </pre>
+                      );
+                    },
+                    a: ({ href, children }: any) => (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:text-primary-700 underline"
+                      >
+                        {children}
+                      </a>
+                    ),
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <span>{msg.content}</span>
+            )}
 
-                    {/* History toggle */}
-                    {showHistoryTrigger && (
-                        <button
-                            onClick={() => setChatSlidingPanelOpen(!isChatSlidingPanelOpen)}
-                            data-chat-toggle
-                            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-                            title={t('aiChat.history', 'History')}
-                        >
-                            <History size={18} />
-                        </button>
-                    )}
-
-                    {/* Title */}
-                    <div>
-                        <h2
-                            className={`${isCompact ? 'text-xs' : 'text-sm'} font-semibold text-navy-900 dark:text-white flex items-center gap-1.5`}
-                        >
-                            <Sparkles size={isCompact ? 12 : 14} className="text-primary-500" />
-                            {title || t('aiChat.title', 'AI Assistant')}
-                        </h2>
-                        {workspaceContext && (
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                {t('aiChat.contextAware', 'Context-aware')} • {workspaceContext.type}
-                            </p>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-1">
-                    {/* Focus Mode (compact in split mode) */}
-                    {showFocusMode && (
-                        <FocusModeSelector
-                            value={focusMode}
-                            onChange={setFocusMode}
-                            compact={isCompact}
-                            disabled={isDisabled}
-                            className={isCompact ? '' : 'mr-2'}
-                        />
-                    )}
-
-                    {/* Mode toggle */}
-                    {showModeToggle && (
-                        <button
-                            onClick={handleModeToggle}
-                            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
-                            title={isSplitMode ? t('aiChat.expand', 'Expand') : t('aiChat.collapse', 'Collapse')}
-                        >
-                            {isSplitMode ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Pending Actions Indicator - Inline visibility for AI actions */}
-            <div className={`${isCompact ? 'px-2 pt-2' : 'px-3 pt-3'}`}>
-                <PendingActionsIndicator
-                    projectId={workspaceContext?.projectId}
-                    compact={isCompact}
-                    onViewAll={onNavigateToActions}
-                    onActionDecided={(actionId, decision) => {
-                        console.log(`[UnifiedChatPanel] Action ${actionId} ${decision}`);
-                    }}
-                    maxPreview={isCompact ? 2 : 3}
+            {/* Streaming indicator */}
+            {msg.isStreaming && (
+              <span className="inline-flex items-center gap-1 ml-2">
+                <span
+                  className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
+                  style={{ animationDelay: '0ms' }}
                 />
-            </div>
+                <span
+                  className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
+                  style={{ animationDelay: '150ms' }}
+                />
+                <span
+                  className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"
+                  style={{ animationDelay: '300ms' }}
+                />
+              </span>
+            )}
 
-            {/* Messages Area */}
-            <div
-                ref={messagesContainerRef}
-                className={`flex-1 overflow-y-auto ${isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}
-            >
-                {displayMessages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                        <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4">
-                            <MessageSquare size={24} className="text-primary-500" />
-                        </div>
-                        <h3
-                            className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-navy-900 dark:text-white mb-1`}
-                        >
-                            {t('aiChat.welcome', 'Start a conversation')}
-                        </h3>
-                        <p
-                            className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-500 dark:text-slate-400 max-w-xs`}
-                        >
-                            {t('aiChat.welcomeSubtitle', 'Ask questions, get insights, and collaborate with AI')}
-                        </p>
-                    </div>
-                ) : (
-                    displayMessages.map((msg, index) => renderMessage(msg, index))
+            {/* Hover Actions */}
+            {isHovered && !msg.isStreaming && (
+              <div
+                className={`absolute ${msg.role === 'user' ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'} top-0 flex items-center gap-0.5 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 p-1`}
+              >
+                {/* Copy */}
+                <button
+                  onClick={() => handleCopyMessage(msg.content, msg.id)}
+                  className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
+                  title={t('chat.actions.copy', 'Copy')}
+                >
+                  {isCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                </button>
+
+                {/* Quick Feedback (AI only) */}
+                {msg.role === 'ai' && (
+                  <>
+                    <button
+                      className="p-1 rounded-md text-slate-500 hover:text-green-600 dark:text-slate-400 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      title={t('chat.actions.helpful', 'Helpful')}
+                    >
+                      <ThumbsUp size={12} />
+                    </button>
+                    <button
+                      className="p-1 rounded-md text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title={t('chat.actions.notHelpful', 'Not helpful')}
+                    >
+                      <ThumbsDown size={12} />
+                    </button>
+                  </>
                 )}
 
-                {/* Typing indicator */}
-                {isBotTyping && !streamedContent && (
-                    <div className="flex gap-2 justify-start">
-                        <div
-                            className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
-                        >
-                            <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
-                        </div>
-                        <div className="bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-2xl rounded-tl-none px-3 py-2 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>
-                            <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-100"></span>
-                            <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-200"></span>
-                        </div>
-                    </div>
+                {/* View Artifacts */}
+                {msg.role === 'ai' && hasArtifacts && (
+                  <button
+                    onClick={() => handleViewArtifacts(msg.artifacts!)}
+                    className="p-1 rounded-md text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                    title={t('chat.actions.viewArtifacts', 'View Artifacts')}
+                  >
+                    <FileCode size={12} />
+                  </button>
                 )}
 
-                <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input Area */}
-            <div
-                id="chat-input"
-                className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950`}
-            >
-                <EnhancedChatInput
-                    onSend={handleSendMessage}
-                    disabled={isDisabled}
-                    placeholder={
-                        workspaceContext
-                            ? t('aiChat.contextPlaceholder', 'Ask about {{context}}...', {
-                                  context: workspaceContext.type,
-                              })
-                            : undefined
+                {/* Speak */}
+                {ttsSupported && msg.role === 'ai' && (
+                  <button
+                    onClick={() => (isSpeaking ? stopSpeaking() : speak(msg.content))}
+                    className={`p-1 rounded-md ${isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
+                    title={
+                      isSpeaking ? t('chat.actions.stop', 'Stop') : t('chat.actions.speak', 'Speak')
                     }
-                    voiceModeEnabled={voiceModeEnabled}
-                    onVoiceModeChange={setVoiceModeEnabled}
-                />
-            </div>
-
-            {/* Sliding History Panel */}
-            <ChatSlidingPanel
-                onNewChat={handleNewChat}
-                onSelectConversation={handleSelectConversation}
-                activeConversationId={activeConversationId}
-            />
+                  >
+                    <Volume2 size={12} />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Artifacts Badge */}
+        {msg.role === 'ai' && hasArtifacts && (
+          <button
+            onClick={() => handleViewArtifacts(msg.artifacts!)}
+            className={`${isCompact ? 'ml-7' : 'ml-9'} flex items-center gap-1 px-2 py-1 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors`}
+          >
+            <FileCode size={12} />
+            {msg.artifacts!.length}{' '}
+            {msg.artifacts!.length === 1
+              ? t('chat.artifact', 'artifact')
+              : t('chat.artifacts', 'artifacts')}
+          </button>
+        )}
+
+        {/* Citations */}
+        {msg.role === 'ai' && hasCitations && (
+          <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
+            <CitationList citations={msg.citations!} />
+          </div>
+        )}
+
+        {/* Inline Feedback (AI messages only, not streaming) */}
+        {msg.role === 'ai' && !msg.isStreaming && (
+          <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
+            <InlineResponseFeedback
+              messageId={msg.id}
+              conversationId={activeConversationId || undefined}
+              responseLength={msg.content.length}
+              onFeedback={(feedback) => handleFeedback(msg.id, msg.content, feedback)}
+              compact={isCompact}
+            />
+          </div>
+        )}
+      </div>
     );
+  };
+
+  // ========================================================================
+  // Render
+  // ========================================================================
+
+  return (
+    <div
+      className={`flex flex-col h-full bg-white dark:bg-navy-950 ${className}`}
+      style={{ maxHeight: maxHeight || '100%' }}
+    >
+      {/* Skip links for keyboard users */}
+      <a
+        href="#chat-input"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg"
+      >
+        {t('wcag.skipToInput', 'Skip to chat input')}
+      </a>
+
+      {/* Header */}
+      <div
+        className={`flex items-center justify-between ${isCompact ? 'px-3 py-2' : 'px-4 py-3'} border-b border-slate-200 dark:border-navy-800 bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm`}
+      >
+        <div className="flex items-center gap-2">
+          {/* Back button (split mode) */}
+          {isSplitMode && onBack && (
+            <button
+              onClick={onBack}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+              title={t('common.back', 'Back')}
+            >
+              <ChevronLeft size={18} />
+            </button>
+          )}
+
+          {/* History toggle */}
+          {showHistoryTrigger && (
+            <button
+              onClick={() => setChatSlidingPanelOpen(!isChatSlidingPanelOpen)}
+              data-chat-toggle
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+              title={t('aiChat.history', 'History')}
+            >
+              <History size={18} />
+            </button>
+          )}
+
+          {/* Title and Context Badge */}
+          <div className="flex items-center gap-2">
+            <div>
+              <h2
+                className={`${isCompact ? 'text-xs' : 'text-sm'} font-semibold text-navy-900 dark:text-white flex items-center gap-1.5`}
+              >
+                <Sparkles size={isCompact ? 12 : 14} className="text-primary-500" />
+                {title || t('aiChat.title', 'AI Assistant')}
+              </h2>
+            </div>
+            {/* Context Badge - shows what AI sees */}
+            {workspaceContext && workspaceContext.type !== 'empty' && (
+              <ContextBadge context={workspaceContext} variant="compact" />
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1">
+          {/* Focus Mode (compact in split mode) */}
+          {showFocusMode && (
+            <FocusModeSelector
+              value={focusMode}
+              onChange={setFocusMode}
+              compact={isCompact}
+              disabled={isDisabled}
+              className={isCompact ? '' : 'mr-2'}
+            />
+          )}
+
+          {/* Mode toggle */}
+          {showModeToggle && (
+            <button
+              onClick={handleModeToggle}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+              title={isSplitMode ? t('aiChat.expand', 'Expand') : t('aiChat.collapse', 'Collapse')}
+            >
+              {isSplitMode ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Pending Actions Indicator - Inline visibility for AI actions */}
+      <div className={`${isCompact ? 'px-2 pt-2' : 'px-3 pt-3'}`}>
+        <PendingActionsIndicator
+          projectId={workspaceContext?.projectId}
+          compact={isCompact}
+          onViewAll={onNavigateToActions}
+          onActionDecided={(actionId, decision) => {
+            console.log(`[UnifiedChatPanel] Action ${actionId} ${decision}`);
+          }}
+          maxPreview={isCompact ? 2 : 3}
+        />
+      </div>
+
+      {/* Messages Area */}
+      <div
+        ref={messagesContainerRef}
+        className={`flex-1 overflow-y-auto ${isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}
+      >
+        {displayMessages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center py-12">
+            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4">
+              <MessageSquare size={24} className="text-primary-500" />
+            </div>
+            <h3
+              className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-navy-900 dark:text-white mb-1`}
+            >
+              {t('aiChat.welcome', 'Start a conversation')}
+            </h3>
+            <p
+              className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-500 dark:text-slate-400 max-w-xs`}
+            >
+              {t('aiChat.welcomeSubtitle', 'Ask questions, get insights, and collaborate with AI')}
+            </p>
+          </div>
+        ) : (
+          displayMessages.map((msg, index) => renderMessage(msg, index))
+        )}
+
+        {/* Typing indicator */}
+        {isBotTyping && !streamedContent && (
+          <div className="flex gap-2 justify-start">
+            <div
+              className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
+            >
+              <Bot size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
+            </div>
+            <div className="bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl rounded-tl-none px-3 py-2 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>
+              <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-100"></span>
+              <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce delay-200"></span>
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Area */}
+      <div
+        id="chat-input"
+        className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-950`}
+      >
+        {/* Context indicator above input */}
+        <InputContextBadge context={workspaceContext || null} />
+
+        <EnhancedChatInput
+          onSend={handleSendMessage}
+          disabled={isDisabled}
+          placeholder={
+            workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
+              ? t('aiChat.contextPlaceholder', 'Jak mogę pomóc z {{context}}?', {
+                  context: workspaceContext.entityName,
+                })
+              : t('aiChat.placeholder', 'Jak mogę Ci pomóc?')
+          }
+          voiceModeEnabled={voiceModeEnabled}
+          onVoiceModeChange={setVoiceModeEnabled}
+        />
+      </div>
+
+      {/* Sliding History Panel */}
+      <ChatSlidingPanel
+        onNewChat={handleNewChat}
+        onSelectConversation={handleSelectConversation}
+        activeConversationId={activeConversationId}
+      />
+    </div>
+  );
 };
 
 export default UnifiedChatPanel;

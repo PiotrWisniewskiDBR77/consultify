@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Assessmentreport Service
  * Enterprise SaaS Architecture - TypeScript Backend

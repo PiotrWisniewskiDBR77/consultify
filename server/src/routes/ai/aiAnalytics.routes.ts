@@ -6,8 +6,8 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 const router = Router();
 
 router.use((req, res, next) => {
-    console.log(`[aiAnalytics.routes] Request: ${req.method} ${req.url}`);
-    next();
+  console.log(`[aiAnalytics.routes] Request: ${req.method} ${req.url}`);
+  next();
 });
 
 router.use(verifyToken);

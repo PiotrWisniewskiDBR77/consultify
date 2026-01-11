@@ -42,7 +42,11 @@ router.get('/:projectId/current', StageGateController.getCurrentGate);
  * POST /api/stage-gates/:projectId/pass/:gateType
  * Pass gate (requires manage_stage_gates permission)
  */
-router.post('/:projectId/pass/:gateType', validateBody(PassGateSchema), StageGateController.passGate);
+router.post(
+  '/:projectId/pass/:gateType',
+  validateBody(PassGateSchema),
+  StageGateController.passGate
+);
 
 /**
  * GET /api/stage-gates/:projectId/history

@@ -18,19 +18,19 @@ import { run as dbRun } from '../utils/DbPromise.js';
 // Database interface no longer needed - using DbPromise directly
 
 interface LogParams {
-    userId: string;
-    organizationId: string;
-    action: string;
-    resourceType: string;
-    resourceId: string;
-    details?: Record<string, unknown>;
-    ipAddress?: string;
-    userAgent?: string;
+  userId: string;
+  organizationId: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  details?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
 }
 
 interface Dependencies {
-    dbRun: typeof dbRun;
-    uuidv4: () => string;
+  dbRun: typeof dbRun;
+  uuidv4: () => string;
 }
 
 // ==========================================
@@ -40,13 +40,13 @@ interface Dependencies {
 let deps: Dependencies;
 
 const getDeps = (): Dependencies => {
-    if (!deps) {
-        deps = {
-            dbRun,
-            uuidv4,
-        };
-    }
-    return deps;
+  if (!deps) {
+    deps = {
+      dbRun,
+      uuidv4,
+    };
+  }
+  return deps;
 };
 
 // ==========================================
@@ -54,23 +54,23 @@ const getDeps = (): Dependencies => {
 // ==========================================
 
 export class AssessmentAuditLogger {
-    /**
-     * Set dependencies (for testing)
-     */
-    setDependencies(newDeps: Partial<Dependencies>): void {
-        deps = { ...getDeps(), ...newDeps };
-    }
+  /**
+   * Set dependencies (for testing)
+   */
+  setDependencies(newDeps: Partial<Dependencies>): void {
+    deps = { ...getDeps(), ...newDeps };
+  }
 
-    /**
-     * Log assessment action
-     */
-    async log(params: LogParams): Promise<string | undefined> {
-        const { uuidv4: uuid, dbRun: run } = getDeps();
+  /**
+   * Log assessment action
+   */
+  async log(params: LogParams): Promise<string | undefined> {
+    const { uuidv4: uuid, dbRun: run } = getDeps();
 
-        try {
-            const auditId = uuid();
+    try {
+      const auditId = uuid();
 
-            const sql = `
+      const sql = `
                 INSERT INTO audit_logs (
                     id, user_id, organization_id,
                     action, resource_type, resource_id,
@@ -79,108 +79,116 @@ export class AssessmentAuditLogger {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             `;
 
-            const runResult = await run(sql, [
-                auditId,
-                params.userId,
-                params.organizationId,
-                params.action,
-                params.resourceType,
-                params.resourceId,
-                JSON.stringify(params.details || {}),
-                params.ipAddress || null,
-                params.userAgent || null,
-            ]);
+      const runResult = await run(sql, [
+        auditId,
+        params.userId,
+        params.organizationId,
+        params.action,
+        params.resourceType,
+        params.resourceId,
+        JSON.stringify(params.details || {}),
+        params.ipAddress || null,
+        params.userAgent || null,
+      ]);
 
-            if (!runResult.success) {
-                throw new Error(runResult.error || 'Failed to log audit');
-            }
+      if (!runResult.success) {
+        throw new Error(runResult.error || 'Failed to log audit');
+      }
 
-            return auditId;
-        } catch (error: unknown) {
-            console.error('[AuditLog] Error logging assessment action:', error);
-            // Re-throw in test environment so tests can verify error handling
-            if (process.env.NODE_ENV === 'test') {
-                throw error;
-            }
-            // Non-blocking in production - don't fail the request if audit fails
-            return undefined;
-        }
+      return auditId;
+    } catch (error: unknown) {
+      console.error('[AuditLog] Error logging assessment action:', error);
+      // Re-throw in test environment so tests can verify error handling
+      if (process.env.NODE_ENV === 'test') {
+        throw error;
+      }
+      // Non-blocking in production - don't fail the request if audit fails
+      return undefined;
     }
+  }
 
-    /**
-     * Log from request object (for backward compatibility)
-     */
-    async logFromRequest(
-        req: Request & { user?: { id?: string; organizationId?: string } },
-        action: string,
-        resourceType: string,
-        resourceId: string,
-        details?: Record<string, unknown>,
-    ): Promise<string | undefined> {
-        return this.log({
-            userId: req.user?.id || '',
-            organizationId: req.user?.organizationId || '',
-            action,
-            resourceType,
-            resourceId,
-            details,
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent') || undefined,
-        });
-    }
+  /**
+   * Log from request object (for backward compatibility)
+   */
+  async logFromRequest(
+    req: Request & { user?: { id?: string; organizationId?: string } },
+    action: string,
+    resourceType: string,
+    resourceId: string,
+    details?: Record<string, unknown>
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action,
+      resourceType,
+      resourceId,
+      details,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
 
-    /**
-     * Log assessment creation
-     */
-    async logCreation(req: AuthRequest, assessmentId: string, assessmentType: string): Promise<string | undefined> {
-        return this.log({
-            userId: req.user?.id || '',
-            organizationId: req.user?.organizationId || '',
-            action: 'ASSESSMENT_CREATED',
-            resourceType: assessmentType,
-            resourceId: assessmentId,
-            details: { assessmentType },
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent') || undefined,
-        });
-    }
+  /**
+   * Log assessment creation
+   */
+  async logCreation(
+    req: AuthRequest,
+    assessmentId: string,
+    assessmentType: string
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'ASSESSMENT_CREATED',
+      resourceType: assessmentType,
+      resourceId: assessmentId,
+      details: { assessmentType },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
 
-    /**
-     * Log file upload
-     */
-    async logFileUpload(
-        req: Request & { user?: { id?: string; organizationId?: string } },
-        fileId: string,
-        fileName: string,
-        fileSize: number,
-    ): Promise<string | undefined> {
-        return this.log({
-            userId: req.user?.id || '',
-            organizationId: req.user?.organizationId || '',
-            action: 'FILE_UPLOADED',
-            resourceType: 'ASSESSMENT_FILE',
-            resourceId: fileId,
-            details: { fileName, fileSize },
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent') || undefined,
-        });
-    }
+  /**
+   * Log file upload
+   */
+  async logFileUpload(
+    req: Request & { user?: { id?: string; organizationId?: string } },
+    fileId: string,
+    fileName: string,
+    fileSize: number
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'FILE_UPLOADED',
+      resourceType: 'ASSESSMENT_FILE',
+      resourceId: fileId,
+      details: { fileName, fileSize },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
 
-    /**
-     * Log assessment deletion
-     */
-    async logDeletion(req: AuthRequest, assessmentId: string, assessmentType: string): Promise<string | undefined> {
-        return this.log({
-            userId: req.user?.id || '',
-            organizationId: req.user?.organizationId || '',
-            action: 'ASSESSMENT_DELETED',
-            resourceType: assessmentType,
-            resourceId: assessmentId,
-            details: { assessmentType },
-            ipAddress: req.ip,
-            userAgent: req.get('user-agent') || undefined,
-        });
-    }
+  /**
+   * Log assessment deletion
+   */
+  async logDeletion(
+    req: AuthRequest,
+    assessmentId: string,
+    assessmentType: string
+  ): Promise<string | undefined> {
+    return this.log({
+      userId: req.user?.id || '',
+      organizationId: req.user?.organizationId || '',
+      action: 'ASSESSMENT_DELETED',
+      resourceType: assessmentType,
+      resourceId: assessmentId,
+      details: { assessmentType },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || undefined,
+    });
+  }
 }
 
 // Export singleton instance

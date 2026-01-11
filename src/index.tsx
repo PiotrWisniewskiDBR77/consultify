@@ -8,21 +8,21 @@ import App from './App';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
-    throw new Error('Root element not found');
+  throw new Error('Root element not found');
 }
 
 const root = createRoot(rootElement);
 
 // Add error boundary for render errors
 try {
-    root.render(
-        <React.StrictMode>
-            <App />
-        </React.StrictMode>,
-    );
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
 } catch (error) {
-    console.error('[index.tsx] Failed to render app:', error);
-    rootElement.innerHTML = `
+  console.error('[index.tsx] Failed to render app:', error);
+  rootElement.innerHTML = `
         <div style="padding: 20px; font-family: sans-serif;">
             <h1>Application Error</h1>
             <p>Failed to start the application. Please check the console for details.</p>
@@ -33,14 +33,14 @@ try {
 
 // Register Service Worker
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(
-            (registration) => {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            },
-            (err) => {
-                console.log('ServiceWorker registration failed: ', err);
-            },
-        );
-    });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(
+      (registration) => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      },
+      (err) => {
+        console.log('ServiceWorker registration failed: ', err);
+      }
+    );
+  });
 }

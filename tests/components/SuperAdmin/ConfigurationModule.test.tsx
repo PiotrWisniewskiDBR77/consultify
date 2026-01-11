@@ -8,24 +8,26 @@ import { BrowserRouter } from 'react-router-dom';
 import { Api } from '../../../src/services/api';
 
 const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <BrowserRouter>{children}</BrowserRouter>
+  <BrowserRouter>{children}</BrowserRouter>
 );
 
-const ConfigurationModule = () => <div data-testid="config-module">SuperAdmin Configuration Module</div>;
+const ConfigurationModule = () => (
+  <div data-testid="config-module">SuperAdmin Configuration Module</div>
+);
 
 describe('SuperAdmin ConfigurationModule', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        (Api.get as any).mockResolvedValue({});
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (Api.get as any).mockResolvedValue({});
+  });
 
-    it('renders configuration module', () => {
-        render(<ConfigurationModule />, { wrapper: Wrapper });
-        expect(document.body.innerHTML.length).toBeGreaterThan(50);
-    });
+  it('renders configuration module', () => {
+    render(<ConfigurationModule />, { wrapper: Wrapper });
+    expect(document.body.innerHTML.length).toBeGreaterThan(50);
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(<ConfigurationModule />, { wrapper: Wrapper });
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(<ConfigurationModule />, { wrapper: Wrapper });
+    expect(container).toBeInTheDocument();
+  });
 });

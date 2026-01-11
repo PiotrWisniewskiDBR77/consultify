@@ -14,93 +14,93 @@ import { WorkCenter } from '../components/MyWork/WorkCenter';
 import { AppView } from '../types';
 
 interface MyWorkViewProps {
-    currentUser?: {
-        id: string;
-        name?: string;
-        email?: string;
-    };
-    onNavigate?: (view: string) => void;
+  currentUser?: {
+    id: string;
+    name?: string;
+    email?: string;
+  };
+  onNavigate?: (view: string) => void;
 }
 
 export const MyWorkView: React.FC<MyWorkViewProps> = ({ currentUser, onNavigate }) => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
 
-    // Task modal state
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  // Task modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-    // Handlers
-    const handleCreateTask = useCallback(() => {
-        setSelectedTaskId(null);
-        setIsCreateModalOpen(true);
-    }, []);
+  // Handlers
+  const handleCreateTask = useCallback(() => {
+    setSelectedTaskId(null);
+    setIsCreateModalOpen(true);
+  }, []);
 
-    const handleTaskClick = useCallback((taskId: string) => {
-        setSelectedTaskId(taskId);
-        setIsCreateModalOpen(true);
-    }, []);
+  const handleTaskClick = useCallback((taskId: string) => {
+    setSelectedTaskId(taskId);
+    setIsCreateModalOpen(true);
+  }, []);
 
-    const handleDecisionClick = useCallback((decisionId: string) => {
-        // Could open decision detail modal or navigate
-        console.log('Decision clicked:', decisionId);
-    }, []);
+  const handleDecisionClick = useCallback((decisionId: string) => {
+    // Could open decision detail modal or navigate
+    console.log('Decision clicked:', decisionId);
+  }, []);
 
-    const handleCreateDecision = useCallback(() => {
-        // Could open decision creation modal
-        console.log('Create decision');
-    }, []);
+  const handleCreateDecision = useCallback(() => {
+    // Could open decision creation modal
+    console.log('Create decision');
+  }, []);
 
-    const handleCloseModal = useCallback(() => {
-        setIsCreateModalOpen(false);
-        setSelectedTaskId(null);
-    }, []);
+  const handleCloseModal = useCallback(() => {
+    setIsCreateModalOpen(false);
+    setSelectedTaskId(null);
+  }, []);
 
-    const handleTaskSaved = useCallback(() => {
-        setIsCreateModalOpen(false);
-        setSelectedTaskId(null);
-        // TasksList will auto-refresh via its own useEffect
-    }, []);
+  const handleTaskSaved = useCallback(() => {
+    setIsCreateModalOpen(false);
+    setSelectedTaskId(null);
+    // TasksList will auto-refresh via its own useEffect
+  }, []);
 
-    return (
-        <>
-            <SplitLayout
-                title={
-                    <div className="flex items-center gap-2">
-                        <Brain className="text-purple-600 dark:text-purple-400" size={20} />
-                        <span className="text-purple-600 dark:text-purple-400">AI</span>
-                    </div>
-                }
-                subtitle={t('myWork.chatSubtitle', 'Help with tasks & planning')}
-            >
-                <div className="flex h-full bg-slate-100 dark:bg-navy-950 gap-0.5 overflow-hidden">
-                    {/* Work Center - 65% */}
-                    <div className="w-[65%] flex flex-col bg-white dark:bg-navy-900 shadow-sm">
-                        <WorkCenter
-                            onTaskClick={handleTaskClick}
-                            onDecisionClick={handleDecisionClick}
-                            onCreateTask={handleCreateTask}
-                            onCreateDecision={handleCreateDecision}
-                        />
-                    </div>
+  return (
+    <>
+      <SplitLayout
+        title={
+          <div className="flex items-center gap-2">
+            <Brain className="text-purple-600 dark:text-purple-400" size={20} />
+            <span className="text-purple-600 dark:text-purple-400">AI</span>
+          </div>
+        }
+        subtitle={t('myWork.chatSubtitle', 'Help with tasks & planning')}
+      >
+        <div className="flex h-full bg-slate-100 dark:bg-navy-950 gap-0.5 overflow-hidden">
+          {/* Work Center - 65% */}
+          <div className="w-[65%] flex flex-col bg-white dark:bg-navy-900 shadow-sm">
+            <WorkCenter
+              onTaskClick={handleTaskClick}
+              onDecisionClick={handleDecisionClick}
+              onCreateTask={handleCreateTask}
+              onCreateDecision={handleCreateDecision}
+            />
+          </div>
 
-                    {/* Notifications Hub - 35% */}
-                    <div className="w-[35%] flex flex-col bg-white dark:bg-navy-900 shadow-sm">
-                        <NotificationsHub onOpenTask={handleTaskClick} onOpenDecision={handleDecisionClick} />
-                    </div>
-                </div>
+          {/* Notifications Hub - 35% */}
+          <div className="w-[35%] flex flex-col bg-white dark:bg-navy-900 shadow-sm">
+            <NotificationsHub onOpenTask={handleTaskClick} onOpenDecision={handleDecisionClick} />
+          </div>
+        </div>
 
-                {/* Task Create/Edit Modal */}
-                {isCreateModalOpen && (
-                    <TaskDetailModal
-                        taskId={selectedTaskId}
-                        isOpen={isCreateModalOpen}
-                        onClose={handleCloseModal}
-                        onTaskSaved={handleTaskSaved}
-                    />
-                )}
-            </SplitLayout>
-        </>
-    );
+        {/* Task Create/Edit Modal */}
+        {isCreateModalOpen && (
+          <TaskDetailModal
+            taskId={selectedTaskId}
+            isOpen={isCreateModalOpen}
+            onClose={handleCloseModal}
+            onTaskSaved={handleTaskSaved}
+          />
+        )}
+      </SplitLayout>
+    </>
+  );
 };
 
 export default MyWorkView;

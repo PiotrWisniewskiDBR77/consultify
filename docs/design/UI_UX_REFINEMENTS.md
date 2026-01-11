@@ -11,12 +11,12 @@ This document outlines the design refinements implemented to elevate the Consult
 
 ### 1.1. Core Principles (Based on ClickUp, Slack, Linear)
 
-| Principle | Description | Implementation |
-|-----------|-------------|----------------|
-| **Compact & Tight** | Professional B2B SaaS uses tighter spacing than consumer apps | `p-5` (20px) as base, not `p-8` (32px) |
-| **Subtle Over Bold** | Indicators should guide, not dominate | Left-border + subtle bg, not full pill |
-| **Consistent Rounding** | One rounding system across all components | `rounded-lg` (8px) for nested, `rounded-xl` (12px) for containers |
-| **Dark Mode Parity** | Equal visual weight in both themes | Standardized color pairs |
+| Principle               | Description                                                   | Implementation                                                    |
+| ----------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Compact & Tight**     | Professional B2B SaaS uses tighter spacing than consumer apps | `p-5` (20px) as base, not `p-8` (32px)                            |
+| **Subtle Over Bold**    | Indicators should guide, not dominate                         | Left-border + subtle bg, not full pill                            |
+| **Consistent Rounding** | One rounding system across all components                     | `rounded-lg` (8px) for nested, `rounded-xl` (12px) for containers |
+| **Dark Mode Parity**    | Equal visual weight in both themes                            | Standardized color pairs                                          |
 
 ### 1.2. Floating Panels Pattern (ClickUp-style)
 
@@ -36,26 +36,27 @@ This document outlines the design refinements implemented to elevate the Consult
 ```
 
 **Why this matters:**
+
 - ❌ **Before:** `border-r` creates a 1px line - feels flat
 - ✅ **After:** `gap-0.5` creates depth - panels feel "floating"
 
 **Implementation:**
+
 ```tsx
 // Layout wrapper
 <div className="flex h-full bg-slate-100 dark:bg-navy-950 gap-0.5">
-    {/* Sidebar panel */}
-    <aside className="bg-white dark:bg-navy-900 shadow-sm">
-        {/* content */}
-    </aside>
-    
-    {/* Main content panel */}
-    <main className="flex-1 bg-white dark:bg-navy-900 lg:rounded-l-lg shadow-sm">
-        {/* content */}
-    </main>
+  {/* Sidebar panel */}
+  <aside className="bg-white dark:bg-navy-900 shadow-sm">{/* content */}</aside>
+
+  {/* Main content panel */}
+  <main className="flex-1 bg-white dark:bg-navy-900 lg:rounded-l-lg shadow-sm">
+    {/* content */}
+  </main>
 </div>
 ```
 
 **Rules:**
+
 1. Remove `border-r` from sidebars
 2. Use `gap-0.5` (2px) between panels
 3. Page background: `bg-slate-100 dark:bg-navy-950`
@@ -82,14 +83,14 @@ All spacing should follow the 8px grid:
 
 ### 2.1. Component Sizing
 
-| Component Type | Tailwind Class | Pixels | Example Use |
-|----------------|----------------|--------|-------------|
-| **Buttons** | `rounded-md` | 6px | All buttons |
-| **Inputs** | `rounded-lg` | 8px | Text inputs, selects |
-| **Inner Cards** | `rounded-lg` | 8px | Nested cards, list items |
-| **Main Cards** | `rounded-xl` | 12px | Content containers, panels |
-| **Modals** | `rounded-xl` | 12px | Dialog boxes |
-| **Badges** | `rounded-full` | 9999px | Status pills, counts |
+| Component Type  | Tailwind Class | Pixels | Example Use                |
+| --------------- | -------------- | ------ | -------------------------- |
+| **Buttons**     | `rounded-md`   | 6px    | All buttons                |
+| **Inputs**      | `rounded-lg`   | 8px    | Text inputs, selects       |
+| **Inner Cards** | `rounded-lg`   | 8px    | Nested cards, list items   |
+| **Main Cards**  | `rounded-xl`   | 12px   | Content containers, panels |
+| **Modals**      | `rounded-xl`   | 12px   | Dialog boxes               |
+| **Badges**      | `rounded-full` | 9999px | Status pills, counts       |
 
 ### 2.2. Migration Notes
 
@@ -107,34 +108,36 @@ All spacing should follow the 8px grid:
 ### 3.1. Active State (ClickUp-style)
 
 **Before (Pill style - TOO HEAVY):**
+
 ```tsx
 isActive
   ? 'bg-violet-600 text-white font-medium shadow-sm'
-  : 'text-slate-600 hover:bg-slate-200/50'
+  : 'text-slate-600 hover:bg-slate-200/50';
 ```
 
 **After (Left-border style - SUBTLE & PROFESSIONAL):**
+
 ```tsx
 isActive
   ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-medium border-l-2 border-violet-600 -ml-px'
-  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white'
+  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white';
 ```
 
 ### 3.2. Item Height
 
 ```tsx
 // Compact (ClickUp-style): 32px total height
-className="px-3 py-1.5"
+className = 'px-3 py-1.5';
 
 // Previously: 36px total height
-className="px-3 py-2"
+className = 'px-3 py-2';
 ```
 
 ### 3.3. Icon Styling
 
 ```tsx
 // Active state - themed icon
-isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500'
+isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-slate-500';
 ```
 
 ---
@@ -143,16 +146,16 @@ isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400 dark:text-sl
 
 ### 4.1. Color Mapping Standards
 
-| Light Mode | Dark Mode | Usage |
-|------------|-----------|-------|
-| `bg-white` | `dark:bg-navy-900` | Main panel backgrounds |
-| `bg-slate-50` | `dark:bg-navy-800` | Nested backgrounds, inputs |
-| `border-slate-200` | `dark:border-navy-700` | All borders (STANDARD) |
+| Light Mode         | Dark Mode              | Usage                      |
+| ------------------ | ---------------------- | -------------------------- |
+| `bg-white`         | `dark:bg-navy-900`     | Main panel backgrounds     |
+| `bg-slate-50`      | `dark:bg-navy-800`     | Nested backgrounds, inputs |
+| `border-slate-200` | `dark:border-navy-700` | All borders (STANDARD)     |
 | `border-slate-100` | `dark:border-navy-800` | Subtle/internal separators |
-| `text-slate-900` | `dark:text-white` | Primary text |
-| `text-slate-600` | `dark:text-slate-400` | Secondary text |
-| `text-slate-500` | `dark:text-slate-400` | Muted/placeholder text |
-| `text-slate-400` | `dark:text-slate-500` | Labels, captions |
+| `text-slate-900`   | `dark:text-white`      | Primary text               |
+| `text-slate-600`   | `dark:text-slate-400`  | Secondary text             |
+| `text-slate-500`   | `dark:text-slate-400`  | Muted/placeholder text     |
+| `text-slate-400`   | `dark:text-slate-500`  | Labels, captions           |
 
 ### 4.2. Border Consistency Rules
 
@@ -185,10 +188,10 @@ For borders **inside** panels (separating sections within a floating panel):
 
 ```tsx
 // Subtle internal separators (within panels)
-className="border-b border-slate-100 dark:border-navy-800"
+className = 'border-b border-slate-100 dark:border-navy-800';
 
 // Container borders on cards within content
-className="border border-slate-200/60 dark:border-navy-800"
+className = 'border border-slate-200/60 dark:border-navy-800';
 ```
 
 **DO NOT** use `border-r` to separate panels - use `gap-0.5` instead.
@@ -199,21 +202,21 @@ className="border border-slate-200/60 dark:border-navy-800"
 
 ### 5.1. Card Padding
 
-| Card Type | Padding | Tailwind |
-|-----------|---------|----------|
-| **Main Content Card** | 24px | `p-6` |
-| **Section Card** | 20px | `p-5` |
-| **Nested Card** | 16px | `p-4` |
-| **Compact Item** | 12px | `p-3` |
+| Card Type             | Padding | Tailwind |
+| --------------------- | ------- | -------- |
+| **Main Content Card** | 24px    | `p-6`    |
+| **Section Card**      | 20px    | `p-5`    |
+| **Nested Card**       | 16px    | `p-4`    |
+| **Compact Item**      | 12px    | `p-3`    |
 
 ### 5.2. Grid Gaps
 
-| Context | Gap | Tailwind |
-|---------|-----|----------|
-| **Page-level sections** | 24px | `gap-6` |
-| **Card grid** | 16px | `gap-4` |
-| **Item list** | 8px | `gap-2` or `space-y-2` |
-| **Compact list** | 4px | `space-y-1` |
+| Context                 | Gap  | Tailwind               |
+| ----------------------- | ---- | ---------------------- |
+| **Page-level sections** | 24px | `gap-6`                |
+| **Card grid**           | 16px | `gap-4`                |
+| **Item list**           | 8px  | `gap-2` or `space-y-2` |
+| **Compact list**        | 4px  | `space-y-1`            |
 
 ---
 
@@ -221,23 +224,26 @@ className="border border-slate-200/60 dark:border-navy-800"
 
 ### 6.1. State Transitions
 
-| State | Style | Timing |
-|-------|-------|--------|
-| **Hover** | `hover:bg-slate-100 dark:hover:bg-navy-800/40` | `duration-150` |
-| **Active/Press** | `active:scale-[0.98]` | `duration-100` |
-| **Focus** | `focus:ring-2 focus:ring-violet-500/20` | immediate |
+| State            | Style                                          | Timing         |
+| ---------------- | ---------------------------------------------- | -------------- |
+| **Hover**        | `hover:bg-slate-100 dark:hover:bg-navy-800/40` | `duration-150` |
+| **Active/Press** | `active:scale-[0.98]`                          | `duration-100` |
+| **Focus**        | `focus:ring-2 focus:ring-violet-500/20`        | immediate      |
 
 ### 6.2. Button Standards
 
 ```tsx
 // Primary Button
-className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98] shadow-sm"
+className =
+  'rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 active:scale-[0.98] shadow-sm';
 
 // Secondary Button
-className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 dark:border-navy-600 dark:text-slate-300 dark:hover:border-violet-500/50 active:scale-[0.98]"
+className =
+  'rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-violet-300 dark:border-navy-600 dark:text-slate-300 dark:hover:border-violet-500/50 active:scale-[0.98]';
 
 // Ghost Button
-className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-navy-800 active:scale-[0.98]"
+className =
+  'rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-navy-800 active:scale-[0.98]';
 ```
 
 ---
@@ -247,18 +253,21 @@ className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition 
 When creating new components, verify:
 
 ### Layout & Spacing
+
 - [ ] Uses `rounded-xl` for main containers, `rounded-lg` for nested
 - [ ] Card padding is `p-5` or `p-6`, not `p-8`
 - [ ] Grid gaps follow the 8px system
 - [ ] Item spacing uses `space-y-2` or `gap-2`
 
 ### Colors & Theme
+
 - [ ] All `bg-white` have corresponding `dark:bg-navy-900`
 - [ ] All `border-slate-*` have corresponding `dark:border-navy-700`
 - [ ] All text colors have dark mode equivalents
 - [ ] No orphan `dark:border-white/*` patterns
 
 ### Interactions
+
 - [ ] Buttons use `active:scale-[0.98]`
 - [ ] Hover states use `duration-150`
 - [ ] Focus rings use `ring-2 ring-violet-500/20`
@@ -291,10 +300,12 @@ When creating new components, verify:
     'w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-150 active:scale-[0.98]',
     isActive
       ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 font-medium border-l-2 border-violet-600 -ml-px'
-      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white',
+      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white'
   )}
 >
-  <Icon className={cn('w-4 h-4', isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400')} />
+  <Icon
+    className={cn('w-4 h-4', isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400')}
+  />
   <span>{label}</span>
 </button>
 ```
@@ -339,9 +350,9 @@ When creating new components, verify:
 
 **DEPRECATED patterns still in codebase (migration pending):**
 
-| Pattern | Count | Replacement |
-|---------|-------|-------------|
-| `dark:border-white/5` | ~228 files | `dark:border-navy-800` |
+| Pattern                | Count      | Replacement            |
+| ---------------------- | ---------- | ---------------------- |
+| `dark:border-white/5`  | ~228 files | `dark:border-navy-800` |
 | `dark:border-white/10` | ~405 files | `dark:border-navy-800` |
 
 These are primarily in content components, modals, and cards. The high count is due to legacy code.
@@ -352,6 +363,7 @@ Priority migration: Focus on sidebars and layouts first (completed), then cards,
 ## 10. Changelog
 
 ### v3.0 (January 2026)
+
 - **NEW:** Introduced "Floating Panels" pattern (ClickUp-style)
   - Replaced `border-r` lines with `gap-0.5` (2px) gap-based separation
   - Page background changed to `bg-slate-100 dark:bg-navy-950`
@@ -362,6 +374,7 @@ Priority migration: Focus on sidebars and layouts first (completed), then cards,
 - Standardized across: AdminLayout, AdminSidebar, SettingsView, SettingsSidebar, PartnerPortalView, WorkSidebar, LevelNavigator, MainLayout, MyWorkView, SuperAdminView
 
 ### v2.0 (January 2026)
+
 - **BREAKING:** Reduced border radius from `rounded-2xl` to `rounded-xl`
 - **BREAKING:** Changed navigation active state from pill to left-border
 - Standardized dark mode border color to `dark:border-navy-700`
@@ -371,6 +384,7 @@ Priority migration: Focus on sidebars and layouts first (completed), then cards,
 - Documented 8px grid system
 
 ### v1.0 (Initial)
+
 - Initial design system based on pill-style navigation
 - Used `rounded-2xl` as primary border radius
 - Used `p-8` for card padding

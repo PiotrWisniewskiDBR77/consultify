@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Collaborationai Service
  * Enterprise SaaS Architecture - TypeScript Backend

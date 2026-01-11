@@ -11,15 +11,15 @@ const router = Router();
 // Use specific paths, NOT catch-all middleware
 
 router.get('/workstreams', (req, res) => {
-    res.json([]);
+  res.json([]);
 });
 
 router.get('/workstreams/:id', (req, res) => {
-    res.status(404).json({ error: 'Workstream not found' });
+  res.status(404).json({ error: 'Workstream not found' });
 });
 
 router.post('/workstreams', (req, res) => {
-    res.status(201).json({ id: 'new-workstream', ...req.body });
+  res.status(201).json({ id: 'new-workstream', ...req.body });
 });
 
 export default router;

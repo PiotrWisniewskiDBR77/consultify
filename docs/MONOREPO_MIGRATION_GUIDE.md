@@ -9,6 +9,7 @@
 ## Executive Summary
 
 This guide provides a step-by-step approach to restructure Consultinity into a monorepo using **Nx** (recommended) or Lerna, enabling:
+
 - Code sharing between Consultinity and future application forks
 - Independent deployment of shared packages
 - Improved build caching and dependency management
@@ -20,15 +21,15 @@ This guide provides a step-by-step approach to restructure Consultinity into a m
 
 ### Recommendation: **Nx**
 
-| Feature | Nx | Lerna |
-|---------|-----|-------|
-| Build Caching | ✅ Excellent (distributed) | ⚠️ Basic |
-| Dependency Graph | ✅ Visual + Automated | ❌ Manual |
-| TypeScript Support | ✅ First-class | ⚠️ Limited |
-| Plugin Ecosystem | ✅ Rich (React, Node, etc.) | ❌ None |
-| CI/CD Integration | ✅ Nx Cloud | ⚠️ Manual |
-| Learning Curve | Medium | Low |
-| Community | Active | Declining |
+| Feature            | Nx                          | Lerna      |
+| ------------------ | --------------------------- | ---------- |
+| Build Caching      | ✅ Excellent (distributed)  | ⚠️ Basic   |
+| Dependency Graph   | ✅ Visual + Automated       | ❌ Manual  |
+| TypeScript Support | ✅ First-class              | ⚠️ Limited |
+| Plugin Ecosystem   | ✅ Rich (React, Node, etc.) | ❌ None    |
+| CI/CD Integration  | ✅ Nx Cloud                 | ⚠️ Manual  |
+| Learning Curve     | Medium                      | Low        |
+| Community          | Active                      | Declining  |
 
 **Decision:** Use **Nx** for superior build performance and TypeScript tooling.
 
@@ -124,6 +125,7 @@ npx nx@latest init
 #### 1.2 Create Root Configuration
 
 **nx.json:**
+
 ```json
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
@@ -152,14 +154,12 @@ npx nx@latest init
     ],
     "sharedGlobals": []
   },
-  "plugins": [
-    "@nx/vite/plugin",
-    "@nx/node/plugin"
-  ]
+  "plugins": ["@nx/vite/plugin", "@nx/node/plugin"]
 }
 ```
 
 **tsconfig.base.json:**
+
 ```json
 {
   "compilerOptions": {
@@ -198,6 +198,7 @@ mkdir -p packages/shared-types/src/{api,domain,ui}
 ```
 
 **packages/shared-types/package.json:**
+
 ```json
 {
   "name": "@consultinity/types",
@@ -223,6 +224,7 @@ mkdir -p packages/shared-types/src/{api,domain,ui}
 ```
 
 **packages/shared-types/tsconfig.json:**
+
 ```json
 {
   "extends": "../../tsconfig.base.json",
@@ -249,6 +251,7 @@ cp server/src/types/* packages/shared-types/src/backend/
 #### 2.3 Create shared-core Package
 
 **packages/shared-core/package.json:**
+
 ```json
 {
   "name": "@consultinity/core",
@@ -297,6 +300,7 @@ mkdir -p apps/consultinity/{frontend,backend}/src
 ```
 
 **apps/consultinity/backend/package.json:**
+
 ```json
 {
   "name": "@consultinity/app-backend",
@@ -323,12 +327,14 @@ mkdir -p apps/consultinity/{frontend,backend}/src
 #### 4.1 Update Imports in Existing Code
 
 **Before:**
+
 ```typescript
 import { User } from '../../../types/domain/user';
 import { getDatabase } from '../database/Database';
 ```
 
 **After:**
+
 ```typescript
 import { User } from '@consultinity/types';
 import { getDatabase } from '@consultinity/core/database';
@@ -341,7 +347,7 @@ import { getDatabase } from '@consultinity/core/database';
 import { Project, SourceFile } from 'ts-morph';
 
 const project = new Project({
-  tsConfigFilePath: 'tsconfig.json'
+  tsConfigFilePath: 'tsconfig.json',
 });
 
 const importMappings = {
@@ -353,14 +359,12 @@ const importMappings = {
 };
 
 function migrateFile(file: SourceFile) {
-  file.getImportDeclarations().forEach(decl => {
+  file.getImportDeclarations().forEach((decl) => {
     const moduleSpecifier = decl.getModuleSpecifierValue();
-    
+
     for (const [oldPath, newPath] of Object.entries(importMappings)) {
       if (moduleSpecifier.startsWith(oldPath)) {
-        decl.setModuleSpecifier(
-          moduleSpecifier.replace(oldPath, newPath)
-        );
+        decl.setModuleSpecifier(moduleSpecifier.replace(oldPath, newPath));
       }
     }
   });
@@ -449,20 +453,20 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
-      
+
       - run: npm ci
-      
+
       # Set up Nx Cloud connection
       - run: npx nx-cloud start-ci-run --distribute-on="3 linux-medium-js"
-      
+
       # Run affected targets
       - run: npx nx affected -t lint test build --configuration=ci
-      
+
       # E2E tests
       - run: npx nx affected -t e2e --configuration=ci
 ```
@@ -502,6 +506,7 @@ npx nx release publish
 ```
 
 **nx.json (release config):**
+
 ```json
 {
   "release": {
@@ -551,18 +556,21 @@ export function getTenantDb(config: TenantConfig): IDatabase {
 ## 8. Migration Checklist
 
 ### Pre-Migration
+
 - [ ] Document all circular dependencies
 - [ ] Identify external package usage
 - [ ] Backup current codebase
 - [ ] Set up staging environment
 
 ### Phase 1: Setup
+
 - [ ] Install Nx
 - [ ] Create workspace configuration
 - [ ] Set up TypeScript path aliases
 - [ ] Configure ESLint
 
 ### Phase 2: Packages
+
 - [ ] Extract shared-types
 - [ ] Extract shared-core
 - [ ] Extract shared-ai
@@ -570,18 +578,21 @@ export function getTenantDb(config: TenantConfig): IDatabase {
 - [ ] Extract shared-ui
 
 ### Phase 3: Apps
+
 - [ ] Create consultinity app structure
 - [ ] Move PMO-specific code
 - [ ] Update all imports
 - [ ] Run tests
 
 ### Phase 4: CI/CD
+
 - [ ] Update GitHub Actions
 - [ ] Set up Nx Cloud
 - [ ] Configure deployment pipelines
 - [ ] Set up npm publishing
 
 ### Post-Migration
+
 - [ ] Update documentation
 - [ ] Train team on Nx commands
 - [ ] Set up monitoring
@@ -592,6 +603,7 @@ export function getTenantDb(config: TenantConfig): IDatabase {
 ## 9. Risk Mitigation
 
 ### Circular Dependencies
+
 ```bash
 # Detect circular dependencies
 nx graph --groupByFolder
@@ -601,11 +613,13 @@ npx madge --circular --extensions ts src/
 ```
 
 ### Build Performance
+
 - Enable Nx Cloud for distributed caching
 - Use `affected` commands for incremental builds
 - Configure proper `inputs` for caching
 
 ### Team Onboarding
+
 - Create Nx cheatsheet
 - Document package responsibilities
 - Set up PR templates with Nx commands
@@ -614,16 +628,16 @@ npx madge --circular --extensions ts src/
 
 ## 10. Timeline Estimate
 
-| Phase | Duration | Tasks |
-|-------|----------|-------|
-| Phase 1: Setup | 2-3 days | Nx init, configs |
-| Phase 2: Types | 2-3 days | Extract shared-types |
-| Phase 3: Core | 3-5 days | Extract shared-core |
-| Phase 4: AI | 3-5 days | Extract shared-ai |
+| Phase            | Duration | Tasks                  |
+| ---------------- | -------- | ---------------------- |
+| Phase 1: Setup   | 2-3 days | Nx init, configs       |
+| Phase 2: Types   | 2-3 days | Extract shared-types   |
+| Phase 3: Core    | 3-5 days | Extract shared-core    |
+| Phase 4: AI      | 3-5 days | Extract shared-ai      |
 | Phase 5: Billing | 2-3 days | Extract shared-billing |
-| Phase 6: Apps | 5-7 days | App restructure |
-| Phase 7: CI/CD | 2-3 days | Pipeline updates |
-| Phase 8: Testing | 3-5 days | Verification |
+| Phase 6: Apps    | 5-7 days | App restructure        |
+| Phase 7: CI/CD   | 2-3 days | Pipeline updates       |
+| Phase 8: Testing | 3-5 days | Verification           |
 
 **Total: 3-4 weeks**
 
@@ -631,12 +645,10 @@ npx madge --circular --extensions ts src/
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0.0 | 2026-01-04 | AI Assistant | Initial monorepo guide |
+| Version | Date       | Author       | Changes                |
+| ------- | ---------- | ------------ | ---------------------- |
+| 1.0.0   | 2026-01-04 | AI Assistant | Initial monorepo guide |
 
 ---
 
-*This document is part of the Phase 1 Architectural Modernization deliverables.*
-
-
+_This document is part of the Phase 1 Architectural Modernization deliverables._

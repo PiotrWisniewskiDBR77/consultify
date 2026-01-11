@@ -48,7 +48,12 @@ export { TaskDetailModal } from './TaskDetailModal';
 // ============================================================================
 export { DueDateIndicator, DueDateText } from './shared/DueDateIndicator';
 export { EmptyState, EmptyStateInline } from './shared/EmptyState';
-export { getPMOCategory, PMO_CATEGORY_CONFIG, PMOCategoryDot, PMOPriorityBadge } from './shared/PMOPriorityBadge';
+export {
+  getPMOCategory,
+  PMO_CATEGORY_CONFIG,
+  PMOCategoryDot,
+  PMOPriorityBadge,
+} from './shared/PMOPriorityBadge';
 export type { QuickActionType } from './shared/QuickActions';
 export { MoreActionsButton, QuickActionButton, QuickActions } from './shared/QuickActions';
 

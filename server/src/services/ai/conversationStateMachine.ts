@@ -8,7 +8,9 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadConversationstatemachine = createCachedLazyService('../../ai/conversationStateMachine.js');
+const loadConversationstatemachine = createCachedLazyService(
+  '../../ai/conversationStateMachine.js'
+);
 
 // Export default instance (for backward compatibility)
 export default loadConversationstatemachine();

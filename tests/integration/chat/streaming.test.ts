@@ -33,7 +33,7 @@ describe('Chat Streaming Integration', () => {
       db.run(
         `INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)`,
         [testOrgId, 'Chat Stream Test Org', 'professional', 'active'],
-        (err: Error | null) => err ? reject(err) : resolve()
+        (err: Error | null) => (err ? reject(err) : resolve())
       );
     });
 
@@ -44,7 +44,7 @@ describe('Chat Streaming Integration', () => {
       db.run(
         `INSERT INTO users (id, organization_id, email, password, role, status) VALUES (?, ?, ?, ?, ?, ?)`,
         [testUserId, testOrgId, testEmail, hashedPassword, 'ADMIN', 'active'],
-        (err: Error | null) => err ? reject(err) : resolve()
+        (err: Error | null) => (err ? reject(err) : resolve())
       );
     });
 
@@ -56,8 +56,12 @@ describe('Chat Streaming Integration', () => {
   });
 
   afterAll(async () => {
-    await new Promise<void>(r => db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => r()));
-    await new Promise<void>(r => db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], () => r()));
+    await new Promise<void>((r) =>
+      db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => r())
+    );
+    await new Promise<void>((r) =>
+      db.run(`DELETE FROM organizations WHERE id = ?`, [testOrgId], () => r())
+    );
   });
 
   describe('POST /api/ai/chat/stream', () => {
@@ -67,7 +71,7 @@ describe('Chat Streaming Integration', () => {
         .set('Authorization', `Bearer ${testToken}`)
         .send({
           message: 'Hello AI',
-          stream: true
+          stream: true,
         });
 
       // Can return streaming response or error if AI not configured
@@ -96,7 +100,7 @@ describe('Chat Streaming Integration', () => {
         .set('Authorization', `Bearer ${testToken}`)
         .send({
           message: 'Hello',
-          stream: false
+          stream: false,
         });
 
       expect([200, 400, 404, 500, 501, 503]).toContain(res.status);
@@ -105,17 +109,13 @@ describe('Chat Streaming Integration', () => {
 
   describe('Authorization', () => {
     it('should reject streaming without auth', async () => {
-      const res = await request(app)
-        .post('/api/ai/chat/stream')
-        .send({ message: 'Test' });
+      const res = await request(app).post('/api/ai/chat/stream').send({ message: 'Test' });
 
       expect([401, 403]).toContain(res.status);
     });
 
     it('should reject non-streaming without auth', async () => {
-      const res = await request(app)
-        .post('/api/ai/chat')
-        .send({ message: 'Test' });
+      const res = await request(app).post('/api/ai/chat').send({ message: 'Test' });
 
       expect([401, 403]).toContain(res.status);
     });

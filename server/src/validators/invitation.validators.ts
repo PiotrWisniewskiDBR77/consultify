@@ -14,25 +14,25 @@ import { MemberRoleEnum } from './organization.validators.js';
 // ==========================================
 
 export const CreateInvitationSchema = z.object({
-    email: z.string().email(),
-    role: MemberRoleEnum.optional(),
-    organizationId: z.string().uuid().optional(),
-    message: z.string().max(500).optional(),
-    projectId: z.string().uuid().optional(),
-    projectRole: z.string().optional(),
-    orgRole: MemberRoleEnum.optional(),
+  email: z.string().email(),
+  role: MemberRoleEnum.optional(),
+  organizationId: z.string().uuid().optional(),
+  message: z.string().max(500).optional(),
+  projectId: z.string().uuid().optional(),
+  projectRole: z.string().optional(),
+  orgRole: MemberRoleEnum.optional(),
 });
 
 export const ResendInvitationSchema = z.object({
-    invitationId: z.string().uuid(),
+  invitationId: z.string().uuid(),
 });
 
 export const AcceptInvitationSchema = z.object({
-    token: z.string().min(1),
-    email: z.string().email(),
-    firstName: z.string().min(1).max(100),
-    lastName: z.string().min(1).max(100),
-    password: z.string().min(8),
+  token: z.string().min(1),
+  email: z.string().email(),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  password: z.string().min(8),
 });
 
 // ==========================================
@@ -42,5 +42,3 @@ export const AcceptInvitationSchema = z.object({
 export type CreateInvitationRequest = z.infer<typeof CreateInvitationSchema>;
 export type ResendInvitationRequest = z.infer<typeof ResendInvitationSchema>;
 export type AcceptInvitationRequest = z.infer<typeof AcceptInvitationSchema>;
-
-

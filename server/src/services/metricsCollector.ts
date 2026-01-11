@@ -24,112 +24,112 @@ import logger from '../utils/Logger.js';
 // ==========================================
 
 export const EVENT_TYPES = {
-    // Trial lifecycle events
-    TRIAL_STARTED: 'trial_started',
-    TRIAL_EXTENDED: 'trial_extended',
-    TRIAL_EXPIRED: 'trial_expired',
-    UPGRADED_TO_PAID: 'upgraded_to_paid',
+  // Trial lifecycle events
+  TRIAL_STARTED: 'trial_started',
+  TRIAL_EXTENDED: 'trial_extended',
+  TRIAL_EXPIRED: 'trial_expired',
+  UPGRADED_TO_PAID: 'upgraded_to_paid',
 
-    // Demo events
-    DEMO_STARTED: 'demo_started',
+  // Demo events
+  DEMO_STARTED: 'demo_started',
 
-    // Invitation events
-    INVITE_SENT: 'invite_sent',
-    INVITE_ACCEPTED: 'invite_accepted',
+  // Invitation events
+  INVITE_SENT: 'invite_sent',
+  INVITE_ACCEPTED: 'invite_accepted',
 
-    // Help/Playbook events
-    HELP_STARTED: 'help_started',
-    HELP_COMPLETED: 'help_completed',
+  // Help/Playbook events
+  HELP_STARTED: 'help_started',
+  HELP_COMPLETED: 'help_completed',
 
-    // Settlement events
-    SETTLEMENT_GENERATED: 'settlement_generated',
+  // Settlement events
+  SETTLEMENT_GENERATED: 'settlement_generated',
 } as const;
 
 export type EventType = (typeof EVENT_TYPES)[keyof typeof EVENT_TYPES];
 
 export const SOURCE_TYPES = {
-    DEMO: 'DEMO',
-    TRIAL: 'TRIAL',
-    INVITATION: 'INVITATION',
-    PROMO: 'PROMO',
-    PARTNER: 'PARTNER',
-    SELF_SERVE: 'SELF_SERVE',
-    HELP: 'HELP',
+  DEMO: 'DEMO',
+  TRIAL: 'TRIAL',
+  INVITATION: 'INVITATION',
+  PROMO: 'PROMO',
+  PARTNER: 'PARTNER',
+  SELF_SERVE: 'SELF_SERVE',
+  HELP: 'HELP',
 } as const;
 
 export type SourceType = (typeof SOURCE_TYPES)[keyof typeof SOURCE_TYPES];
 
 interface RecordEventPayload {
-    userId?: string | null;
-    organizationId?: string | null;
-    source?: SourceType | null;
-    context?: Record<string, unknown>;
+  userId?: string | null;
+  organizationId?: string | null;
+  source?: SourceType | null;
+  context?: Record<string, unknown>;
 }
 
 interface RecordEventResult {
-    eventId: string;
-    success: boolean;
+  eventId: string;
+  success: boolean;
 }
 
 interface GetEventsFilters {
-    startDate?: string;
-    endDate?: string;
-    organizationId?: string;
-    source?: SourceType;
-    limit?: number;
-    offset?: number;
+  startDate?: string;
+  endDate?: string;
+  organizationId?: string;
+  source?: SourceType;
+  limit?: number;
+  offset?: number;
 }
 
 interface GetOrganizationEventsOptions {
-    eventTypes?: EventType[];
-    startDate?: string;
-    endDate?: string;
-    limit?: number;
+  eventTypes?: EventType[];
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
 }
 
 interface GetEventCountFilters {
-    startDate?: string;
-    endDate?: string;
-    organizationId?: string;
-    source?: SourceType;
+  startDate?: string;
+  endDate?: string;
+  organizationId?: string;
+  source?: SourceType;
 }
 
 interface GetEventTimeSeriesOptions {
-    days?: number;
+  days?: number;
 }
 
 interface GetEventsBySourceOptions {
-    startDate?: string;
-    endDate?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface MetricsEventRow {
-    id: string;
-    event_type: string;
-    user_id?: string | null;
-    organization_id?: string | null;
-    source?: string | null;
-    context?: string;
-    created_at: string;
+  id: string;
+  event_type: string;
+  user_id?: string | null;
+  organization_id?: string | null;
+  source?: string | null;
+  context?: string;
+  created_at: string;
 }
 
 interface EventCountRow {
-    count: number;
+  count: number;
 }
 
 interface TimeSeriesRow {
-    date: string;
-    count: number;
+  date: string;
+  count: number;
 }
 
 interface EventsBySourceRow {
-    source: string;
-    count: number;
-    unique_orgs: number;
+  source: string;
+  count: number;
+  unique_orgs: number;
 }
 
 interface UniqueOrgCountRow {
-    count: number;
+  count: number;
 }
 
 // ==========================================
@@ -142,159 +142,168 @@ let db: IDatabase = getDatabase();
  * Set database instance (for testing)
  */
 export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
-    if (newDeps.db) {
-        db = newDeps.db;
-    }
+  if (newDeps.db) {
+    db = newDeps.db;
+  }
 }
 
 /**
  * Record a metric event (APPEND-ONLY - no updates or deletes)
  */
-export async function recordEvent(eventType: EventType, payload: RecordEventPayload = {}): Promise<RecordEventResult> {
-    // Validate event type
-    if (!Object.values(EVENT_TYPES).includes(eventType)) {
-        logger.warn(`[MetricsCollector] Unknown event type: ${eventType}`);
-    }
+export async function recordEvent(
+  eventType: EventType,
+  payload: RecordEventPayload = {}
+): Promise<RecordEventResult> {
+  // Validate event type
+  if (!Object.values(EVENT_TYPES).includes(eventType)) {
+    logger.warn(`[MetricsCollector] Unknown event type: ${eventType}`);
+  }
 
-    const eventId = uuidv4();
-    const { userId = null, organizationId = null, source = null, context = {} } = payload;
+  const eventId = uuidv4();
+  const { userId = null, organizationId = null, source = null, context = {} } = payload;
 
-    await DbPromise.run(
-        db,
-        `INSERT INTO metrics_events (id, event_type, user_id, organization_id, source, context, created_at)
+  await DbPromise.run(
+    db,
+    `INSERT INTO metrics_events (id, event_type, user_id, organization_id, source, context, created_at)
          VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
-        [eventId, eventType, userId, organizationId, source, JSON.stringify(context)],
-    );
+    [eventId, eventType, userId, organizationId, source, JSON.stringify(context)]
+  );
 
-    logger.info(`[MetricsCollector] Recorded event: ${eventType} (${eventId})`);
+  logger.info(`[MetricsCollector] Recorded event: ${eventType} (${eventId})`);
 
-    return { eventId, success: true };
+  return { eventId, success: true };
 }
 
 /**
  * Get events by type with optional filters
  */
-export async function getEvents(eventType: EventType, filters: GetEventsFilters = {}): Promise<MetricsEventRow[]> {
-    const { startDate, endDate, organizationId, source, limit = 100, offset = 0 } = filters;
+export async function getEvents(
+  eventType: EventType,
+  filters: GetEventsFilters = {}
+): Promise<MetricsEventRow[]> {
+  const { startDate, endDate, organizationId, source, limit = 100, offset = 0 } = filters;
 
-    let sql = `SELECT * FROM metrics_events WHERE event_type = ?`;
-    const params: unknown[] = [eventType];
+  let sql = `SELECT * FROM metrics_events WHERE event_type = ?`;
+  const params: unknown[] = [eventType];
 
-    if (startDate) {
-        sql += ` AND created_at >= ?`;
-        params.push(startDate);
-    }
+  if (startDate) {
+    sql += ` AND created_at >= ?`;
+    params.push(startDate);
+  }
 
-    if (endDate) {
-        sql += ` AND created_at <= ?`;
-        params.push(endDate);
-    }
+  if (endDate) {
+    sql += ` AND created_at <= ?`;
+    params.push(endDate);
+  }
 
-    if (organizationId) {
-        sql += ` AND organization_id = ?`;
-        params.push(organizationId);
-    }
+  if (organizationId) {
+    sql += ` AND organization_id = ?`;
+    params.push(organizationId);
+  }
 
-    if (source) {
-        sql += ` AND source = ?`;
-        params.push(source);
-    }
+  if (source) {
+    sql += ` AND source = ?`;
+    params.push(source);
+  }
 
-    sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-    params.push(limit, offset);
+  sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
 
-    const rows = await DbPromise.all<MetricsEventRow>(db, sql, params);
+  const rows = await DbPromise.all<MetricsEventRow>(db, sql, params);
 
-    return rows.map((row) => ({
-        ...row,
-        context: row.context ? JSON.parse(row.context) : {},
-    }));
+  return rows.map((row) => ({
+    ...row,
+    context: row.context ? JSON.parse(row.context) : {},
+  }));
 }
 
 /**
  * Get all events for a specific organization
  */
 export async function getOrganizationEvents(
-    organizationId: string,
-    options: GetOrganizationEventsOptions = {},
+  organizationId: string,
+  options: GetOrganizationEventsOptions = {}
 ): Promise<MetricsEventRow[]> {
-    const { eventTypes, startDate, endDate, limit = 100 } = options;
+  const { eventTypes, startDate, endDate, limit = 100 } = options;
 
-    let sql = `SELECT * FROM metrics_events WHERE organization_id = ?`;
-    const params: unknown[] = [organizationId];
+  let sql = `SELECT * FROM metrics_events WHERE organization_id = ?`;
+  const params: unknown[] = [organizationId];
 
-    if (eventTypes && eventTypes.length > 0) {
-        sql += ` AND event_type IN (${eventTypes.map(() => '?').join(',')})`;
-        params.push(...eventTypes);
-    }
+  if (eventTypes && eventTypes.length > 0) {
+    sql += ` AND event_type IN (${eventTypes.map(() => '?').join(',')})`;
+    params.push(...eventTypes);
+  }
 
-    if (startDate) {
-        sql += ` AND created_at >= ?`;
-        params.push(startDate);
-    }
+  if (startDate) {
+    sql += ` AND created_at >= ?`;
+    params.push(startDate);
+  }
 
-    if (endDate) {
-        sql += ` AND created_at <= ?`;
-        params.push(endDate);
-    }
+  if (endDate) {
+    sql += ` AND created_at <= ?`;
+    params.push(endDate);
+  }
 
-    sql += ` ORDER BY created_at DESC LIMIT ?`;
-    params.push(limit);
+  sql += ` ORDER BY created_at DESC LIMIT ?`;
+  params.push(limit);
 
-    const rows = await DbPromise.all<MetricsEventRow>(db, sql, params);
+  const rows = await DbPromise.all<MetricsEventRow>(db, sql, params);
 
-    return rows.map((row) => ({
-        ...row,
-        context: row.context ? JSON.parse(row.context) : {},
-    }));
+  return rows.map((row) => ({
+    ...row,
+    context: row.context ? JSON.parse(row.context) : {},
+  }));
 }
 
 /**
  * Get event count by type
  */
-export async function getEventCount(eventType: EventType, filters: GetEventCountFilters = {}): Promise<number> {
-    const { startDate, endDate, organizationId, source } = filters;
+export async function getEventCount(
+  eventType: EventType,
+  filters: GetEventCountFilters = {}
+): Promise<number> {
+  const { startDate, endDate, organizationId, source } = filters;
 
-    let sql = `SELECT COUNT(*) as count FROM metrics_events WHERE event_type = ?`;
-    const params: unknown[] = [eventType];
+  let sql = `SELECT COUNT(*) as count FROM metrics_events WHERE event_type = ?`;
+  const params: unknown[] = [eventType];
 
-    if (startDate) {
-        sql += ` AND created_at >= ?`;
-        params.push(startDate);
-    }
+  if (startDate) {
+    sql += ` AND created_at >= ?`;
+    params.push(startDate);
+  }
 
-    if (endDate) {
-        sql += ` AND created_at <= ?`;
-        params.push(endDate);
-    }
+  if (endDate) {
+    sql += ` AND created_at <= ?`;
+    params.push(endDate);
+  }
 
-    if (organizationId) {
-        sql += ` AND organization_id = ?`;
-        params.push(organizationId);
-    }
+  if (organizationId) {
+    sql += ` AND organization_id = ?`;
+    params.push(organizationId);
+  }
 
-    if (source) {
-        sql += ` AND source = ?`;
-        params.push(source);
-    }
+  if (source) {
+    sql += ` AND source = ?`;
+    params.push(source);
+  }
 
-    const row = await DbPromise.get<EventCountRow>(db, sql, params);
+  const row = await DbPromise.get<EventCountRow>(db, sql, params);
 
-    return row?.count || 0;
+  return row?.count || 0;
 }
 
 /**
  * Get events grouped by date (for time series)
  */
 export async function getEventTimeSeries(
-    eventType: EventType,
-    options: GetEventTimeSeriesOptions = {},
+  eventType: EventType,
+  options: GetEventTimeSeriesOptions = {}
 ): Promise<TimeSeriesRow[]> {
-    const { days = 30 } = options;
+  const { days = 30 } = options;
 
-    const rows = await DbPromise.all<TimeSeriesRow>(
-        db,
-        `SELECT 
+  const rows = await DbPromise.all<TimeSeriesRow>(
+    db,
+    `SELECT 
             date(created_at) as date,
             COUNT(*) as count
         FROM metrics_events
@@ -302,56 +311,59 @@ export async function getEventTimeSeries(
           AND created_at >= datetime('now', ?)
         GROUP BY date(created_at)
         ORDER BY date ASC`,
-        [eventType, `-${days} days`],
-    );
+    [eventType, `-${days} days`]
+  );
 
-    return rows;
+  return rows;
 }
 
 /**
  * Get unique organization count by event type
  * Used for funnel calculations
  */
-export async function getUniqueOrgCount(eventType: EventType, filters: GetEventCountFilters = {}): Promise<number> {
-    const { startDate, endDate, source } = filters;
+export async function getUniqueOrgCount(
+  eventType: EventType,
+  filters: GetEventCountFilters = {}
+): Promise<number> {
+  const { startDate, endDate, source } = filters;
 
-    let sql = `
+  let sql = `
         SELECT COUNT(DISTINCT organization_id) as count 
         FROM metrics_events 
         WHERE event_type = ?
     `;
-    const params: unknown[] = [eventType];
+  const params: unknown[] = [eventType];
 
-    if (startDate) {
-        sql += ` AND created_at >= ?`;
-        params.push(startDate);
-    }
+  if (startDate) {
+    sql += ` AND created_at >= ?`;
+    params.push(startDate);
+  }
 
-    if (endDate) {
-        sql += ` AND created_at <= ?`;
-        params.push(endDate);
-    }
+  if (endDate) {
+    sql += ` AND created_at <= ?`;
+    params.push(endDate);
+  }
 
-    if (source) {
-        sql += ` AND source = ?`;
-        params.push(source);
-    }
+  if (source) {
+    sql += ` AND source = ?`;
+    params.push(source);
+  }
 
-    const row = await DbPromise.get<UniqueOrgCountRow>(db, sql, params);
+  const row = await DbPromise.get<UniqueOrgCountRow>(db, sql, params);
 
-    return row?.count || 0;
+  return row?.count || 0;
 }
 
 /**
  * Get events grouped by source (for attribution analysis)
  */
 export async function getEventsBySource(
-    eventType: EventType,
-    options: GetEventsBySourceOptions = {},
+  eventType: EventType,
+  options: GetEventsBySourceOptions = {}
 ): Promise<EventsBySourceRow[]> {
-    const { startDate, endDate } = options;
+  const { startDate, endDate } = options;
 
-    let sql = `
+  let sql = `
         SELECT 
             source,
             COUNT(*) as count,
@@ -359,37 +371,37 @@ export async function getEventsBySource(
         FROM metrics_events
         WHERE event_type = ?
     `;
-    const params: unknown[] = [eventType];
+  const params: unknown[] = [eventType];
 
-    if (startDate) {
-        sql += ` AND created_at >= ?`;
-        params.push(startDate);
-    }
+  if (startDate) {
+    sql += ` AND created_at >= ?`;
+    params.push(startDate);
+  }
 
-    if (endDate) {
-        sql += ` AND created_at <= ?`;
-        params.push(endDate);
-    }
+  if (endDate) {
+    sql += ` AND created_at <= ?`;
+    params.push(endDate);
+  }
 
-    sql += ` GROUP BY source ORDER BY count DESC`;
+  sql += ` GROUP BY source ORDER BY count DESC`;
 
-    const rows = await DbPromise.all<EventsBySourceRow>(db, sql, params);
+  const rows = await DbPromise.all<EventsBySourceRow>(db, sql, params);
 
-    return rows;
+  return rows;
 }
 
 // Default export for backward compatibility
 const MetricsCollector = {
-    EVENT_TYPES,
-    SOURCE_TYPES,
-    setDependencies,
-    recordEvent,
-    getEvents,
-    getOrganizationEvents,
-    getEventCount,
-    getEventTimeSeries,
-    getUniqueOrgCount,
-    getEventsBySource,
+  EVENT_TYPES,
+  SOURCE_TYPES,
+  setDependencies,
+  recordEvent,
+  getEvents,
+  getOrganizationEvents,
+  getEventCount,
+  getEventTimeSeries,
+  getUniqueOrgCount,
+  getEventsBySource,
 };
 
 export default MetricsCollector;

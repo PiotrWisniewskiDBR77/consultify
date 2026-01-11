@@ -5,7 +5,7 @@ export const sign = vi.fn();
 export const decode = vi.fn();
 
 export default {
-    verify,
-    sign,
-    decode
+  verify,
+  sign,
+  decode,
 };

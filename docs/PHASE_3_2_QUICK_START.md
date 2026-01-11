@@ -19,8 +19,9 @@ node scripts/categorize-wrappers.cjs
 Zobacz `wrapper-categorization.json` dla listy serwisów pogrupowanych według priorytetów.
 
 **Rekomendowane kolejność:**
+
 1. P1 (Critical + Complex) - 1 serwis
-2. P3 (High + Medium/Complex) - 2 serwisy  
+2. P3 (High + Medium/Complex) - 2 serwisy
 3. P4 (Medium + Simple) - 12 serwisów
 4. P5 (Medium + Medium/Complex) - 43 serwisy
 5. P6 (Low priority) - 207 serwisów
@@ -76,18 +77,3 @@ Zobacz sekcję 3 w `docs/PHASE_3_2_IMPLEMENTATION_PLAN.md` dla pełnego template
 - Status: `node scripts/batch-status.cjs`
 - Kategoryzacja: `node scripts/categorize-wrappers.cjs`
 - Weryfikacja: `node scripts/verify-migration.cjs <file>`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -50,4 +50,10 @@ router.put('/:id', validateBody(UpdateUserSchema), UserController.updateUser);
  */
 router.patch('/:id/role', validateBody(UpdateUserRoleSchema), UserController.updateUserRole);
 
+/**
+ * DELETE /api/users/:id
+ * Delete user (Admin only)
+ */
+router.delete('/:id', UserController.deleteUser);
+
 export default router;

@@ -5,16 +5,16 @@ import type { IDatabase } from '../../../../../src/database/IDatabase.js';
 import { TagService } from '../../../../../src/services/content/TagService.js';
 
 describe('TagService', () => {
-    let service: TagService;
-    let db: any;
+  let service: TagService;
+  let db: any;
 
-    beforeEach(async () => {
-        // Create in-memory test database using the factory
-        const testDb = await TestDatabaseFactory.create();
+  beforeEach(async () => {
+    // Create in-memory test database using the factory
+    const testDb = await TestDatabaseFactory.create();
 
-        // Initialize schema for content_tags and content_tag_mappings
-        // Using exec ensures all statements run (including indexes)
-        await testDb.exec(`
+    // Initialize schema for content_tags and content_tag_mappings
+    // Using exec ensures all statements run (including indexes)
+    await testDb.exec(`
             CREATE TABLE IF NOT EXISTS content_tags (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -44,155 +44,155 @@ describe('TagService', () => {
             );
         `);
 
-        // Create a proxy that maps IDatabase interface to the async methods provided by TestDatabaseFactory
-        db = {
-            ...testDb,
-            run: testDb.runAsync.bind(testDb),
-            get: testDb.getAsync.bind(testDb),
-            all: testDb.allAsync.bind(testDb),
-            exec: (sql: string, cb?: any) => testDb.exec(sql, cb),
-            close: () => testDb.close(),
-        };
+    // Create a proxy that maps IDatabase interface to the async methods provided by TestDatabaseFactory
+    db = {
+      ...testDb,
+      run: testDb.runAsync.bind(testDb),
+      get: testDb.getAsync.bind(testDb),
+      all: testDb.allAsync.bind(testDb),
+      exec: (sql: string, cb?: any) => testDb.exec(sql, cb),
+      close: () => testDb.close(),
+    };
 
-        service = new TagService({ db: db as IDatabase });
+    service = new TagService({ db: db as IDatabase });
+  });
+
+  afterEach(async () => {
+    if (db) {
+      await db.close();
+    }
+  });
+
+  describe('createTag', () => {
+    it('should create a tag successfully', async () => {
+      const data = {
+        name: 'Test Tag',
+        description: 'A test tag',
+        contentType: 'PLAYBOOK',
+        createdBy: 'user-1',
+      };
+
+      const tag = await service.createTag(data);
+
+      expect(tag).toBeDefined();
+      expect(tag.id).toMatch(/^tag-/);
+      expect(tag.name).toBe(data.name);
+      expect(tag.slug).toBe('test-tag');
+      expect(tag.contentType).toBe(data.contentType);
+      expect(tag.usageCount).toBe(0);
+      expect(tag.organizationId).toBeNull();
+      expect(tag.createdBy).toBe(data.createdBy);
+
+      // Verify persistence
+      const saved = await service.getTagById(tag.id);
+      expect(saved).toEqual(tag);
     });
 
-    afterEach(async () => {
-        if (db) {
-            await db.close();
-        }
+    it('should fail on duplicate slug', async () => {
+      await service.createTag({
+        name: 'Duplicate',
+        slug: 'duplicate',
+      });
+
+      await expect(
+        service.createTag({
+          name: 'Duplicate 2',
+          slug: 'duplicate',
+        })
+      ).rejects.toThrow("Tag with slug 'duplicate' already exists");
+    });
+  });
+
+  describe('listTags', () => {
+    it('should list all tags', async () => {
+      await service.createTag({ name: 'Tag 1' });
+      await service.createTag({ name: 'Tag 2' });
+
+      const results = await service.listTags();
+      expect(results).toHaveLength(2);
     });
 
-    describe('createTag', () => {
-        it('should create a tag successfully', async () => {
-            const data = {
-                name: 'Test Tag',
-                description: 'A test tag',
-                contentType: 'PLAYBOOK',
-                createdBy: 'user-1',
-            };
+    it('should filter by contentType', async () => {
+      await service.createTag({ name: 'General Tag', contentType: 'ALL' });
+      await service.createTag({ name: 'Playbook Tag', contentType: 'PLAYBOOK' });
+      await service.createTag({ name: 'Email Tag', contentType: 'EMAIL' });
 
-            const tag = await service.createTag(data);
+      const results = await service.listTags({ contentType: 'PLAYBOOK' });
 
-            expect(tag).toBeDefined();
-            expect(tag.id).toMatch(/^tag-/);
-            expect(tag.name).toBe(data.name);
-            expect(tag.slug).toBe('test-tag');
-            expect(tag.contentType).toBe(data.contentType);
-            expect(tag.usageCount).toBe(0);
-            expect(tag.organizationId).toBeNull();
-            expect(tag.createdBy).toBe(data.createdBy);
-
-            // Verify persistence
-            const saved = await service.getTagById(tag.id);
-            expect(saved).toEqual(tag);
-        });
-
-        it('should fail on duplicate slug', async () => {
-            await service.createTag({
-                name: 'Duplicate',
-                slug: 'duplicate',
-            });
-
-            await expect(
-                service.createTag({
-                    name: 'Duplicate 2',
-                    slug: 'duplicate',
-                }),
-            ).rejects.toThrow("Tag with slug 'duplicate' already exists");
-        });
+      // Should include ALL and PLAYBOOK, but NOT EMAIL
+      const names = results.map((t) => t.name);
+      expect(names).toContain('General Tag');
+      expect(names).toContain('Playbook Tag');
+      expect(names).not.toContain('Email Tag');
     });
 
-    describe('listTags', () => {
-        it('should list all tags', async () => {
-            await service.createTag({ name: 'Tag 1' });
-            await service.createTag({ name: 'Tag 2' });
+    it('should filter by search term', async () => {
+      await service.createTag({ name: 'Apple' });
+      await service.createTag({ name: 'Banana' });
 
-            const results = await service.listTags();
-            expect(results).toHaveLength(2);
-        });
+      const results = await service.listTags({ search: 'ppl' });
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe('Apple');
+    });
+  });
 
-        it('should filter by contentType', async () => {
-            await service.createTag({ name: 'General Tag', contentType: 'ALL' });
-            await service.createTag({ name: 'Playbook Tag', contentType: 'PLAYBOOK' });
-            await service.createTag({ name: 'Email Tag', contentType: 'EMAIL' });
+  describe('updateTag', () => {
+    it('should update allowed fields', async () => {
+      const created = await service.createTag({ name: 'Original' });
+      const updated = await service.updateTag(created.id, { name: 'Updated', color: '#000000' });
 
-            const results = await service.listTags({ contentType: 'PLAYBOOK' });
-
-            // Should include ALL and PLAYBOOK, but NOT EMAIL
-            const names = results.map((t) => t.name);
-            expect(names).toContain('General Tag');
-            expect(names).toContain('Playbook Tag');
-            expect(names).not.toContain('Email Tag');
-        });
-
-        it('should filter by search term', async () => {
-            await service.createTag({ name: 'Apple' });
-            await service.createTag({ name: 'Banana' });
-
-            const results = await service.listTags({ search: 'ppl' });
-            expect(results).toHaveLength(1);
-            expect(results[0].name).toBe('Apple');
-        });
+      expect(updated.name).toBe('Updated');
+      expect(updated.color).toBe('#000000');
+      expect(updated.slug).toBe('original'); // Should not change automatically
     });
 
-    describe('updateTag', () => {
-        it('should update allowed fields', async () => {
-            const created = await service.createTag({ name: 'Original' });
-            const updated = await service.updateTag(created.id, { name: 'Updated', color: '#000000' });
+    it('should throw if tag not found', async () => {
+      await expect(service.updateTag('fake', { name: 'New' })).rejects.toThrow('Tag not found');
+    });
+  });
 
-            expect(updated.name).toBe('Updated');
-            expect(updated.color).toBe('#000000');
-            expect(updated.slug).toBe('original'); // Should not change automatically
-        });
+  describe('deleteTag', () => {
+    it('should delete existing tag', async () => {
+      const created = await service.createTag({ name: 'Delete Me' });
+      const result = await service.deleteTag(created.id);
+      expect(result).toBe(true);
 
-        it('should throw if tag not found', async () => {
-            await expect(service.updateTag('fake', { name: 'New' })).rejects.toThrow('Tag not found');
-        });
+      const fetched = await service.getTagById(created.id);
+      expect(fetched).toBeNull();
+    });
+  });
+
+  describe('content mappings', () => {
+    it('should add tag to content and increment usage count', async () => {
+      const tag = await service.createTag({ name: 'Usage Tag' });
+
+      const added = await service.addTagToContent('playbook-1', 'PLAYBOOK', tag.id, 'user-1');
+      expect(added).toBe(true);
+
+      // Verify mapping exists via getContentTags
+      const tags = await service.getContentTags('playbook-1', 'PLAYBOOK');
+      expect(tags).toHaveLength(1);
+      expect(tags[0].id).toBe(tag.id);
+
+      // Verify usage count increment
+      const updatedTag = await service.getTagById(tag.id);
+      expect(updatedTag?.usageCount).toBe(1);
     });
 
-    describe('deleteTag', () => {
-        it('should delete existing tag', async () => {
-            const created = await service.createTag({ name: 'Delete Me' });
-            const result = await service.deleteTag(created.id);
-            expect(result).toBe(true);
+    it('should remove tag from content and decrement usage count', async () => {
+      const tag = await service.createTag({ name: 'Remove Tag' });
+      await service.addTagToContent('playbook-1', 'PLAYBOOK', tag.id);
 
-            const fetched = await service.getTagById(created.id);
-            expect(fetched).toBeNull();
-        });
+      const removed = await service.removeTagFromContent('playbook-1', 'PLAYBOOK', tag.id);
+      expect(removed).toBe(true);
+
+      // Verify mapping removal
+      const tags = await service.getContentTags('playbook-1', 'PLAYBOOK');
+      expect(tags).toHaveLength(0);
+
+      // Verify usage count decrement
+      const updatedTag = await service.getTagById(tag.id);
+      expect(updatedTag?.usageCount).toBe(0);
     });
-
-    describe('content mappings', () => {
-        it('should add tag to content and increment usage count', async () => {
-            const tag = await service.createTag({ name: 'Usage Tag' });
-
-            const added = await service.addTagToContent('playbook-1', 'PLAYBOOK', tag.id, 'user-1');
-            expect(added).toBe(true);
-
-            // Verify mapping exists via getContentTags
-            const tags = await service.getContentTags('playbook-1', 'PLAYBOOK');
-            expect(tags).toHaveLength(1);
-            expect(tags[0].id).toBe(tag.id);
-
-            // Verify usage count increment
-            const updatedTag = await service.getTagById(tag.id);
-            expect(updatedTag?.usageCount).toBe(1);
-        });
-
-        it('should remove tag from content and decrement usage count', async () => {
-            const tag = await service.createTag({ name: 'Remove Tag' });
-            await service.addTagToContent('playbook-1', 'PLAYBOOK', tag.id);
-
-            const removed = await service.removeTagFromContent('playbook-1', 'PLAYBOOK', tag.id);
-            expect(removed).toBe(true);
-
-            // Verify mapping removal
-            const tags = await service.getContentTags('playbook-1', 'PLAYBOOK');
-            expect(tags).toHaveLength(0);
-
-            // Verify usage count decrement
-            const updatedTag = await service.getTagById(tag.id);
-            expect(updatedTag?.usageCount).toBe(0);
-        });
-    });
+  });
 });

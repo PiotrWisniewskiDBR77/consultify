@@ -1,15 +1,6 @@
 {
-    "*.{js,jsx,ts,tsx}": [
-        "eslint --fix",
-        "prettier --write"
-    ],
-    "*.{json,md,yml,yaml}": [
-        "prettier --write"
-    ],
-    "*.{js,ts,tsx,json,env,yml,yaml}": [
-        "node scripts/check-secrets.js"
-    ],
-    "**/*": [
-        "node scripts/check-secrets.js"
-    ]
+  "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
+  "*.{json,md,yml,yaml}": ["prettier --write"],
+  "*.{js,ts,tsx,json,env,yml,yaml}": ["node scripts/check-secrets.js"],
+  "**/*": ["node scripts/check-secrets.js"]
 }

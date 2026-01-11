@@ -8,13 +8,13 @@ const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
 
 const DEFAULT_EMAIL_TEMPLATES = [
-    {
-        id: 'etpl-welcome-user',
-        templateKey: 'welcome-user',
-        name: 'Welcome New User',
-        description: 'Sent when a new user registers or is invited to the platform',
-        subject: 'Welcome to Consultinity, {{firstName}}!',
-        htmlContent: `
+  {
+    id: 'etpl-welcome-user',
+    templateKey: 'welcome-user',
+    name: 'Welcome New User',
+    description: 'Sent when a new user registers or is invited to the platform',
+    subject: 'Welcome to Consultinity, {{firstName}}!',
+    htmlContent: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -48,7 +48,7 @@ const DEFAULT_EMAIL_TEMPLATES = [
     </div>
 </body>
 </html>`,
-        textContent: `Welcome to Consultinity, {{firstName}}!
+    textContent: `Welcome to Consultinity, {{firstName}}!
 
 Hi {{firstName}},
 
@@ -66,18 +66,18 @@ If you have any questions, our support team is here to help.
 
 Best regards,
 The Consultinity Team`,
-        availableVariables: ['firstName', 'lastName', 'email', 'organizationName', 'loginUrl'],
-        categoryId: 'cat_email_welcome',
-        languageCode: 'en',
-        status: 'PUBLISHED'
-    },
-    {
-        id: 'etpl-password-reset',
-        templateKey: 'password-reset',
-        name: 'Password Reset Request',
-        description: 'Sent when a user requests a password reset',
-        subject: 'Reset Your Consultinity Password',
-        htmlContent: `
+    availableVariables: ['firstName', 'lastName', 'email', 'organizationName', 'loginUrl'],
+    categoryId: 'cat_email_welcome',
+    languageCode: 'en',
+    status: 'PUBLISHED',
+  },
+  {
+    id: 'etpl-password-reset',
+    templateKey: 'password-reset',
+    name: 'Password Reset Request',
+    description: 'Sent when a user requests a password reset',
+    subject: 'Reset Your Consultinity Password',
+    htmlContent: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -106,7 +106,7 @@ The Consultinity Team`,
     </div>
 </body>
 </html>`,
-        textContent: `Password Reset Request
+    textContent: `Password Reset Request
 
 Hi {{firstName}},
 
@@ -121,18 +121,25 @@ If you didn't request this password reset, you can safely ignore this email. You
 For security, this request was received from IP: {{ipAddress}}
 
 The Consultinity Team`,
-        availableVariables: ['firstName', 'lastName', 'email', 'resetUrl', 'ipAddress', 'expirationTime'],
-        categoryId: 'cat_email_security',
-        languageCode: 'en',
-        status: 'PUBLISHED'
-    },
-    {
-        id: 'etpl-task-assigned',
-        templateKey: 'task-assigned',
-        name: 'Task Assignment Notification',
-        description: 'Sent when a task is assigned to a user',
-        subject: '📋 New Task Assigned: {{taskTitle}}',
-        htmlContent: `
+    availableVariables: [
+      'firstName',
+      'lastName',
+      'email',
+      'resetUrl',
+      'ipAddress',
+      'expirationTime',
+    ],
+    categoryId: 'cat_email_security',
+    languageCode: 'en',
+    status: 'PUBLISHED',
+  },
+  {
+    id: 'etpl-task-assigned',
+    templateKey: 'task-assigned',
+    name: 'Task Assignment Notification',
+    description: 'Sent when a task is assigned to a user',
+    subject: '📋 New Task Assigned: {{taskTitle}}',
+    htmlContent: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -175,7 +182,7 @@ The Consultinity Team`,
     </div>
 </body>
 </html>`,
-        textContent: `New Task Assigned: {{taskTitle}}
+    textContent: `New Task Assigned: {{taskTitle}}
 
 Hi {{assigneeName}},
 
@@ -190,18 +197,27 @@ Assigned By: {{assignerName}}
 View task at: {{taskUrl}}
 
 The Consultinity Team`,
-        availableVariables: ['assigneeName', 'assignerName', 'projectName', 'taskTitle', 'taskDescription', 'priority', 'dueDate', 'taskUrl'],
-        categoryId: 'cat_email_notifications',
-        languageCode: 'en',
-        status: 'PUBLISHED'
-    },
-    {
-        id: 'etpl-report-ready',
-        templateKey: 'report-ready',
-        name: 'Report Ready for Review',
-        description: 'Sent when a report is generated and ready for review',
-        subject: '📊 Your Report is Ready: {{reportTitle}}',
-        htmlContent: `
+    availableVariables: [
+      'assigneeName',
+      'assignerName',
+      'projectName',
+      'taskTitle',
+      'taskDescription',
+      'priority',
+      'dueDate',
+      'taskUrl',
+    ],
+    categoryId: 'cat_email_notifications',
+    languageCode: 'en',
+    status: 'PUBLISHED',
+  },
+  {
+    id: 'etpl-report-ready',
+    templateKey: 'report-ready',
+    name: 'Report Ready for Review',
+    description: 'Sent when a report is generated and ready for review',
+    subject: '📊 Your Report is Ready: {{reportTitle}}',
+    htmlContent: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -230,7 +246,7 @@ The Consultinity Team`,
     </div>
 </body>
 </html>`,
-        textContent: `Your Report is Ready: {{reportTitle}}
+    textContent: `Your Report is Ready: {{reportTitle}}
 
 Hi {{recipientName}},
 
@@ -242,18 +258,18 @@ Generated: {{generatedAt}}
 View report at: {{reportUrl}}
 
 The Consultinity Team`,
-        availableVariables: ['recipientName', 'reportTitle', 'reportType', 'generatedAt', 'reportUrl'],
-        categoryId: 'cat_email_reports',
-        languageCode: 'en',
-        status: 'PUBLISHED'
-    },
-    {
-        id: 'etpl-invitation',
-        templateKey: 'invitation',
-        name: 'Team Invitation',
-        description: 'Sent when a user is invited to join an organization',
-        subject: '🎉 You\'ve been invited to join {{organizationName}}',
-        htmlContent: `
+    availableVariables: ['recipientName', 'reportTitle', 'reportType', 'generatedAt', 'reportUrl'],
+    categoryId: 'cat_email_reports',
+    languageCode: 'en',
+    status: 'PUBLISHED',
+  },
+  {
+    id: 'etpl-invitation',
+    templateKey: 'invitation',
+    name: 'Team Invitation',
+    description: 'Sent when a user is invited to join an organization',
+    subject: "🎉 You've been invited to join {{organizationName}}",
+    htmlContent: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -283,7 +299,7 @@ The Consultinity Team`,
     </div>
 </body>
 </html>`,
-        textContent: `You've been invited to join {{organizationName}}!
+    textContent: `You've been invited to join {{organizationName}}!
 
 Hi there,
 
@@ -297,90 +313,72 @@ Accept your invitation: {{inviteUrl}}
 If you don't want to join, you can simply ignore this email.
 
 The Consultinity Team`,
-        availableVariables: ['inviterName', 'organizationName', 'role', 'inviteUrl', 'expirationDate'],
-        categoryId: 'cat_email_welcome',
-        languageCode: 'en',
-        status: 'PUBLISHED'
-    }
+    availableVariables: ['inviterName', 'organizationName', 'role', 'inviteUrl', 'expirationDate'],
+    categoryId: 'cat_email_welcome',
+    languageCode: 'en',
+    status: 'PUBLISHED',
+  },
 ];
 
 async function seedEmailTemplates() {
-    console.log('[Seed] Starting Email Templates seed...');
+  console.log('[Seed] Starting Email Templates seed...');
 
-    const now = new Date().toISOString();
+  const now = new Date().toISOString();
 
-    for (const template of DEFAULT_EMAIL_TEMPLATES) {
-        try {
-            await new Promise((resolve, reject) => {
-                db.run(
-                    `INSERT OR REPLACE INTO email_templates (
+  for (const template of DEFAULT_EMAIL_TEMPLATES) {
+    try {
+      await new Promise((resolve, reject) => {
+        db.run(
+          `INSERT OR REPLACE INTO email_templates (
                         id, organization_id, template_key, name, description, subject,
                         html_content, text_content, available_variables, variables_schema,
                         version, status, category_id, language_code, is_active,
                         published_at, published_by, usage_count, created_at, updated_at
                     ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, '{}', 1, ?, ?, ?, 1, ?, NULL, 0, ?, ?)`,
-                    [
-                        template.id,
-                        template.templateKey,
-                        template.name,
-                        template.description,
-                        template.subject,
-                        template.htmlContent,
-                        template.textContent,
-                        JSON.stringify(template.availableVariables),
-                        template.status,
-                        template.categoryId,
-                        template.languageCode,
-                        template.status === 'PUBLISHED' ? now : null,
-                        now,
-                        now
-                    ],
-                    function(err) {
-                        if (err) return reject(err);
-                        console.log(`[Seed] Created/Updated email template: ${template.name}`);
-                        resolve();
-                    }
-                );
-            });
-        } catch (err) {
-            console.error(`[Seed] Error creating template ${template.name}:`, err.message);
-        }
+          [
+            template.id,
+            template.templateKey,
+            template.name,
+            template.description,
+            template.subject,
+            template.htmlContent,
+            template.textContent,
+            JSON.stringify(template.availableVariables),
+            template.status,
+            template.categoryId,
+            template.languageCode,
+            template.status === 'PUBLISHED' ? now : null,
+            now,
+            now,
+          ],
+          function (err) {
+            if (err) return reject(err);
+            console.log(`[Seed] Created/Updated email template: ${template.name}`);
+            resolve();
+          }
+        );
+      });
+    } catch (err) {
+      console.error(`[Seed] Error creating template ${template.name}:`, err.message);
     }
+  }
 
-    console.log('[Seed] Email Templates seed completed.');
+  console.log('[Seed] Email Templates seed completed.');
 }
 
 // Run if executed directly
 if (require.main === module) {
-    seedEmailTemplates().then(() => {
-        console.log('[Seed] Done.');
-        process.exit(0);
-    }).catch(err => {
-        console.error('[Seed] Error:', err);
-        process.exit(1);
+  seedEmailTemplates()
+    .then(() => {
+      console.log('[Seed] Done.');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('[Seed] Error:', err);
+      process.exit(1);
     });
 }
 
-export {
-seedEmailTemplates, DEFAULT_EMAIL_TEMPLATES
-};
+export { seedEmailTemplates, DEFAULT_EMAIL_TEMPLATES };
 
 export default { seedEmailTemplates, DEFAULT_EMAIL_TEMPLATES };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

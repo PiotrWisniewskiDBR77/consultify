@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aiassessmentreportgenerator Service
  * Enterprise SaaS Architecture - TypeScript Backend

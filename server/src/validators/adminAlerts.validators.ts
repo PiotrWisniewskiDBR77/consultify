@@ -10,7 +10,7 @@ import { z } from 'zod';
 // ==========================================
 
 export const AlertIdParamSchema = z.object({
-    id: z.string().min(1),
+  id: z.string().min(1),
 });
 
 // ==========================================
@@ -18,11 +18,11 @@ export const AlertIdParamSchema = z.object({
 // ==========================================
 
 export const GetAlertsQuerySchema = z.object({
-    limit: z.coerce.number().int().min(1).max(1000).optional().default(50),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(50),
 });
 
 export const GetAlertHistoryQuerySchema = z.object({
-    limit: z.coerce.number().int().min(1).max(1000).optional().default(50),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(50),
 });
 
 // ==========================================
@@ -30,23 +30,25 @@ export const GetAlertHistoryQuerySchema = z.object({
 // ==========================================
 
 export const CreateAdminAlertBodySchema = z.object({
-    name: z.string().min(1).max(255),
-    type: z.enum(['usage', 'cost', 'security', 'performance', 'compliance']),
-    alertType: z.enum(['cost_spike', 'usage_anomaly', 'budget_exceeded', 'seat_limit_reached']).optional(),
-    severity: z.enum(['low', 'medium', 'high', 'critical']).optional().default('medium'),
-    costThresholdUsd: z.number().positive().optional(),
-    usageThresholdPercent: z.number().int().min(0).max(1000).optional(),
-    seatThresholdPercent: z.number().int().min(0).max(100).optional(),
-    notifyAdmins: z.boolean().optional().default(true),
-    notifyBillingContact: z.boolean().optional().default(true),
-    notifySuperadmin: z.boolean().optional().default(false),
-    emailEnabled: z.boolean().optional().default(true),
-    slackWebhookUrl: z.string().url().optional(),
-    webhookUrl: z.string().url().optional(),
-    alertFrequency: z.enum(['once', 'daily', 'weekly']).optional().default('once'),
-    cooldownHours: z.number().int().min(1).max(168).optional().default(24),
-    isActive: z.boolean().optional().default(true),
-    config: z.record(z.string(), z.unknown()).optional(),
+  name: z.string().min(1).max(255),
+  type: z.enum(['usage', 'cost', 'security', 'performance', 'compliance']),
+  alertType: z
+    .enum(['cost_spike', 'usage_anomaly', 'budget_exceeded', 'seat_limit_reached'])
+    .optional(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']).optional().default('medium'),
+  costThresholdUsd: z.number().positive().optional(),
+  usageThresholdPercent: z.number().int().min(0).max(1000).optional(),
+  seatThresholdPercent: z.number().int().min(0).max(100).optional(),
+  notifyAdmins: z.boolean().optional().default(true),
+  notifyBillingContact: z.boolean().optional().default(true),
+  notifySuperadmin: z.boolean().optional().default(false),
+  emailEnabled: z.boolean().optional().default(true),
+  slackWebhookUrl: z.string().url().optional(),
+  webhookUrl: z.string().url().optional(),
+  alertFrequency: z.enum(['once', 'daily', 'weekly']).optional().default('once'),
+  cooldownHours: z.number().int().min(1).max(168).optional().default(24),
+  isActive: z.boolean().optional().default(true),
+  config: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const UpdateAdminAlertBodySchema = CreateAdminAlertBodySchema.partial();

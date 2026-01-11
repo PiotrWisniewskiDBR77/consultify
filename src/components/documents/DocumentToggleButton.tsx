@@ -12,16 +12,16 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/useAppStore';
 
 export const DocumentToggleButton: React.FC = () => {
-    const { toggleSidePanel, activeSidePanel } = useAppStore();
-    const { t } = useTranslation();
+  const { toggleSidePanel, activeSidePanel } = useAppStore();
+  const { t } = useTranslation();
 
-    // Don't show button if ANY panel is open
-    if (activeSidePanel !== null) return null;
+  // Don't show button if ANY panel is open
+  if (activeSidePanel !== null) return null;
 
-    return (
-        <button
-            onClick={() => toggleSidePanel('DOCUMENTS')}
-            className="
+  return (
+    <button
+      onClick={() => toggleSidePanel('DOCUMENTS')}
+      className="
                 group relative
                 w-11 h-11 
                 flex items-center justify-center 
@@ -37,16 +37,20 @@ export const DocumentToggleButton: React.FC = () => {
                 border border-white/20
                 backdrop-blur-sm
             "
-            title={t('widgets.documents.title', 'Document Library')}
-            aria-label={t('widgets.documents.title', 'Documents')}
-        >
-            {/* Glow effect */}
-            <div className="absolute inset-0 rounded-l-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-            
-            <FileText size={20} className="relative z-10 transition-transform duration-200 group-hover:scale-110" />
+      title={t('widgets.documents.title', 'Document Library')}
+      aria-label={t('widgets.documents.title', 'Documents')}
+    >
+      {/* Glow effect */}
+      <div className="absolute inset-0 rounded-l-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
-            {/* Tooltip */}
-            <div className="
+      <FileText
+        size={20}
+        className="relative z-10 transition-transform duration-200 group-hover:scale-110"
+      />
+
+      {/* Tooltip */}
+      <div
+        className="
                 absolute right-full mr-3 
                 px-3 py-2 
                 bg-navy-900/95 dark:bg-slate-800/95
@@ -60,12 +64,13 @@ export const DocumentToggleButton: React.FC = () => {
                 pointer-events-none
                 shadow-xl
                 border border-white/10
-            ">
-                {t('widgets.documents.tooltip', 'Documents')}
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[5px] w-2 h-2 bg-navy-900/95 dark:bg-slate-800/95 rotate-45 border-r border-t border-white/10" />
-            </div>
-        </button>
-    );
+            "
+      >
+        {t('widgets.documents.tooltip', 'Documents')}
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[5px] w-2 h-2 bg-navy-900/95 dark:bg-slate-800/95 rotate-45 border-r border-t border-white/10" />
+      </div>
+    </button>
+  );
 };
 
 export default DocumentToggleButton;

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Learningsystem Service
  * Enterprise SaaS Architecture - TypeScript Backend

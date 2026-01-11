@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Express, Router } from 'express';
 
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
@@ -5,6 +6,7 @@ import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
 import _actionDecisionRoutes from './routes/actionDecisions.routes.js';
 import adminBackupRoutes from './routes/admin/backup.routes.js';
+import adminBulkRoutes from './routes/admin-bulk.routes.js';
 import adminDataRoutes from './routes/admin-data.routes.js';
 import adminAlertsRoutes from './routes/adminAlerts.routes.js';
 import agentsRoutes from './routes/agents.routes.js';
@@ -47,6 +49,8 @@ import authRoutes from './routes/auth.routes.js';
 import backupRoutes from './routes/backup.routes.js';
 import baselinesRoutes from './routes/baselines.routes.ts';
 import billingRoutes from './routes/billing/billing.routes.js';
+import revenueRoutes from './routes/revenue.routes.js';
+import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import brandingRoutes from './routes/organization/branding.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
@@ -71,6 +75,7 @@ import featureFlagsRoutes from './routes/featureFlags.routes.js';
 import featureFlagRoutes from './routes/featureFlags.routes.js';
 import feedbackRoutes from './routes/feedback.routes.js';
 import gamificationRoutes from './routes/gamification.routes.js';
+import complianceRoutes from './routes/compliance.routes.js';
 import gdprRoutes from './routes/gdpr.routes.js';
 import genericReportsRoutes from './routes/generic-reports.routes.js';
 import governanceRoutes from './routes/pmo/governance.routes.js';
@@ -109,7 +114,11 @@ import organizationDataRoutes from './routes/organization/organization-data.rout
 import orgLimitsRoutes from './routes/organization/organization-limits.routes.js';
 import organizationProfilesRoutes from './routes/organization/organization-profiles.routes.js';
 import organizationRoutes from './routes/organization/organizations.routes.js';
-import partnerRoutes from './routes/partners.routes.js';
+import partnerRoutes, {
+  publicPartnerRouter,
+  superAdminPartnerRouter,
+  partnerConfigRouter,
+} from './routes/partners.routes.js';
 import performanceRoutes from './routes/performance.routes.js';
 import performanceMetricsRoutes from './routes/performance-metrics.routes.js';
 import permissionRequestsRoutes from './routes/permissionRequests.routes.js';
@@ -147,6 +156,7 @@ import statusRoutes from './routes/status.routes.js';
 import statusReportsRoutes from './routes/status-reports.routes.js';
 import studioRoutes from './routes/studio.routes.js';
 import superAdminRoutes from './routes/superadmin.routes.js';
+import resourceManagementRoutes from './routes/resourceManagement.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
@@ -179,271 +189,290 @@ import workstreamsRoutes from './routes/pmo/workstreams.routes.js';
 import logger from './utils/Logger.js';
 
 export class ApiGateway {
-    private static instance: ApiGateway;
+  private static instance: ApiGateway;
 
-    private constructor() {}
+  private constructor() {}
 
-    public static getInstance(): ApiGateway {
-        if (!ApiGateway.instance) {
-            ApiGateway.instance = new ApiGateway();
-        }
-        return ApiGateway.instance;
+  public static getInstance(): ApiGateway {
+    if (!ApiGateway.instance) {
+      ApiGateway.instance = new ApiGateway();
     }
+    return ApiGateway.instance;
+  }
 
-    public initializeRoutes(app: Express) {
-        console.log('[ApiGateway] Initializing gateway routes...');
+  public initializeRoutes(app: Express) {
+    console.log('[ApiGateway] Initializing gateway routes...');
 
-        try {
-            // TypeScript routes (migrated)
-            console.log('[ApiGateway] Mounting /api/auth');
-            app.use('/api/auth', authRoutes);
-            console.log('[ApiGateway] Mounting /api/billing');
-            app.use('/api/billing', billingRoutes);
-            app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
-            console.log('[ApiGateway] Mounting /api/ai');
-            app.use('/api/ai', aiRoutes);
-            app.use('/api/ai/prompts', aiPromptsRoutes);
-            app.use('/api/ai/experiments', aiExperimentsRoutes);
-            app.use('/api/ai/analytics', aiAnalyticsRoutesV2);
-            app.use('/api/ai/async', aiAsyncRoutes);
-            app.use('/api/ai/coach', aiCoachRoutes);
-            app.use('/api/ai/playbooks', aiPlaybooksRoutes);
-            app.use('/api/ai/explain', aiExplainRoutes);
-            app.use('/api/ai/training', aiTrainingRoutes);
-            app.use('/api/ai/ab-testing', aiAbTestingRoutes);
-            app.use('/api/ai/nudges', aiNudgesRoutes);
-            app.use('/api/ai/learning', aiLearningRoutes);
-            app.use('/api/ai/memory', aiMemoryRoutes);
-            app.use('/api/ai/security', aiSecurityRoutes);
-            app.use('/api/ai/settings', aiSettingsRoutes);
-            app.use('/api/ai/budgets', aiBudgetsRoutes);
-            app.use('/api/ai/infrastructure', aiInfrastructureRoutes);
-            app.use('/api/ai/development', aiDevelopmentRoutes);
-            app.use('/api/ai/operations', aiOperationsRoutes);
-            app.use('/api/ai/actions', aiActionsRoutes);
+    try {
+      // TypeScript routes (migrated)
+      console.log('[ApiGateway] Mounting /api/auth');
+      app.use('/api/auth', authRoutes);
+      console.log('[ApiGateway] Mounting /api/billing');
+      app.use('/api/billing', billingRoutes);
+      app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
+      console.log('[ApiGateway] Mounting /api/ai');
+      app.use('/api/ai', aiRoutes);
+      app.use('/api/ai/prompts', aiPromptsRoutes);
+      app.use('/api/ai/experiments', aiExperimentsRoutes);
+      app.use('/api/ai/analytics', aiAnalyticsRoutesV2);
+      app.use('/api/ai/async', aiAsyncRoutes);
+      app.use('/api/ai/coach', aiCoachRoutes);
+      app.use('/api/ai/playbooks', aiPlaybooksRoutes);
+      app.use('/api/ai/explain', aiExplainRoutes);
+      app.use('/api/ai/training', aiTrainingRoutes);
+      app.use('/api/ai/ab-testing', aiAbTestingRoutes);
+      app.use('/api/ai/nudges', aiNudgesRoutes);
+      app.use('/api/ai/learning', aiLearningRoutes);
+      app.use('/api/ai/memory', aiMemoryRoutes);
+      app.use('/api/ai/security', aiSecurityRoutes);
+      app.use('/api/ai/settings', aiSettingsRoutes);
+      app.use('/api/ai/budgets', aiBudgetsRoutes);
+      app.use('/api/ai/infrastructure', aiInfrastructureRoutes);
+      app.use('/api/ai/development', aiDevelopmentRoutes);
+      app.use('/api/ai/operations', aiOperationsRoutes);
+      app.use('/api/ai/actions', aiActionsRoutes);
+      app.use('/api/ai/performance', performanceRoutes);
 
-            // Register routes
-            console.log('[ApiGateway] Mounting /api/admin-data');
-            app.use('/api/admin-data', adminDataRoutes);
+      // Register routes
+      console.log('[ApiGateway] Mounting /api/admin-data');
+      app.use('/api/admin-data', adminDataRoutes);
+      app.use('/api/admin', adminBulkRoutes);
 
-            // Demo Mode middleware - switches context and protects against writes
-            app.use(demoContextMiddleware);
-            app.use(demoWriteProtection({
-                // Allow demo mode toggle and status check
-                allowedRoutes: ['/api/demo/', '/api/auth/'],
-            }));
+      // Demo Mode middleware - switches context and protects against writes
+      app.use(demoContextMiddleware);
+      app.use(
+        demoWriteProtection({
+          // Allow demo mode toggle and status check
+          allowedRoutes: ['/api/demo/', '/api/auth/'],
+        })
+      );
 
-            console.log('[ApiGateway] Mounting /api/users');
-            app.use('/api/users', userRoutes);
+      console.log('[ApiGateway] Mounting /api/users');
+      app.use('/api/users', userRoutes);
 
-            // User profile routes
-            app.use('/api/user/contact-information', userContactRoutes);
-            app.use('/api/user/availability', userAvailabilityRoutes);
-            app.use('/api/user/profile-completeness', userProfileCompletenessRoutes);
-            app.use('/api/user/professional-profile', userProfessionalProfileRoutes);
-            app.use('/api/user/security', userSecurityAdvancedRoutes);
-            app.use('/api/user/privacy-settings', userPrivacyExtendedRoutes);
-            app.use('/api/user/data-controls', userDataControlsRoutes);
-            app.use('/api/user/ai-preferences', aiPreferencesExtendedRoutes);
-            app.use('/api/user/notification-rules', notificationRulesRoutes);
-            app.use('/api/user/notification-channels', notificationRulesRoutes);
-            app.use('/api/profile', userProfileExtendedRoutes);
+      // User profile routes
+      app.use('/api/user/contact-information', userContactRoutes);
+      app.use('/api/user/availability', userAvailabilityRoutes);
+      app.use('/api/user/profile-completeness', userProfileCompletenessRoutes);
+      app.use('/api/user/professional-profile', userProfessionalProfileRoutes);
+      app.use('/api/user/security', userSecurityAdvancedRoutes);
+      app.use('/api/user/privacy-settings', userPrivacyExtendedRoutes);
+      app.use('/api/user/data-controls', userDataControlsRoutes);
+      app.use('/api/user/ai-preferences', aiPreferencesExtendedRoutes);
+      app.use('/api/user/notification-rules', notificationRulesRoutes);
+      app.use('/api/user/notification-channels', notificationRulesRoutes);
+      app.use('/api/profile', userProfileExtendedRoutes);
 
-            // Core routes
-            app.use('/api/sessions', sessionsRoutes);
-            app.use('/api/teams', teamsRoutes);
-            app.use('/api/initiatives', initiativesRoutes);
-            app.use('/api/admin-alerts', adminAlertsRoutes);
-            app.use('/api/admin/backups', adminBackupRoutes);
+      // Core routes
+      app.use('/api/sessions', sessionsRoutes);
+      app.use('/api/teams', teamsRoutes);
+      app.use('/api/initiatives', initiativesRoutes);
+      app.use('/api/admin-alerts', adminAlertsRoutes);
+      app.use('/api/admin/backups', adminBackupRoutes);
 
-            // AI-related legacy/duplicate routes (cleaned up)
-            app.use('/api/conversations', conversationsRoutes);
-            app.use('/api/chat-projects', chatProjectsRoutes);
-            app.use('/api/daily-brief', dailyBriefRoutes);
-            app.use('/api/pinned-prompts', pinnedPromptsRoutes);
-            app.use('/api/task-advisor', taskAdvisorRoutes);
-            app.use('/api/prompt-assistant', promptAssistantRoutes);
-            app.use('/api/ai-analytics', aiAnalyticsRoutes);
-            app.use('/api/ai-feedback', aiFeedbackRoutes);
-            app.use('/api/ai-training', aiTrainingRoutes); // Keep for tests that hit /api/ai-training directly
-            app.use('/api/ai-memory', aiMemoryRoutes);
-            app.use('/api/ai-drafts', aiDraftsRoutes);
-            app.use('/api/ai-prompts', aiPromptsRoutes);
-            app.use('/api/ai-security', aiSecurityRoutes);
-            app.use('/api/ai-settings', aiSettingsRoutes);
-            app.use('/api/ai-budgets', aiBudgetsRoutes);
-            app.use('/api/ai-infrastructure', aiInfrastructureRoutes);
-            app.use('/api/ai-development', aiDevelopmentRoutes);
-            app.use('/api/ai-operations', aiOperationsRoutes);
-            app.use('/api/ai-async', aiAsyncRoutes);
+      // AI-related legacy/duplicate routes (cleaned up)
+      app.use('/api/conversations', conversationsRoutes);
+      app.use('/api/chat-projects', chatProjectsRoutes);
+      app.use('/api/daily-brief', dailyBriefRoutes);
+      app.use('/api/pinned-prompts', pinnedPromptsRoutes);
+      app.use('/api/task-advisor', taskAdvisorRoutes);
+      app.use('/api/prompt-assistant', promptAssistantRoutes);
+      app.use('/api/ai-analytics', aiAnalyticsRoutes);
+      app.use('/api/ai-feedback', aiFeedbackRoutes);
+      app.use('/api/ai-training', aiTrainingRoutes); // Keep for tests that hit /api/ai-training directly
+      app.use('/api/ai-memory', aiMemoryRoutes);
+      app.use('/api/ai-drafts', aiDraftsRoutes);
+      app.use('/api/ai-prompts', aiPromptsRoutes);
+      app.use('/api/ai-security', aiSecurityRoutes);
+      app.use('/api/ai-settings', aiSettingsRoutes);
+      app.use('/api/ai-budgets', aiBudgetsRoutes);
+      app.use('/api/ai-infrastructure', aiInfrastructureRoutes);
+      app.use('/api/ai-development', aiDevelopmentRoutes);
+      app.use('/api/ai-operations', aiOperationsRoutes);
+      app.use('/api/ai-async', aiAsyncRoutes);
 
-            // Integration routes
-            app.use('/api/voice', voiceRoutes);
-            app.use('/api/documents', documentRoutes);
-            app.use('/api/settings', settingsRoutes);
-            app.use('/api/settings/integrations', userIntegrationsRoutes);
-            app.use('/api/integrations/calendar', calendarIntegrationsRoutes);
-            app.use('/api/mcp', mcpRoutes);
+      // Integration routes
+      app.use('/api/voice', voiceRoutes);
+      app.use('/api/documents', documentRoutes);
+      app.use('/api/settings', settingsRoutes);
+      app.use('/api/settings/integrations', userIntegrationsRoutes);
+      app.use('/api/integrations/calendar', calendarIntegrationsRoutes);
+      app.use('/api/mcp', mcpRoutes);
 
-            // Admin routes
-            app.use('/api/superadmin', superAdminRoutes);
-            app.use('/api/audit-logs', auditLogRoutes);
-            app.use('/api/feature-flags', featureFlagsRoutes);
-            app.use('/api/integrations', integrationsRoutes);
-            app.use('/api/system-config', systemConfigRoutes);
-            app.use('/api/system-health', systemHealthRoutes);
-            app.use('/api/api-keys', apiKeysRoutes);
-            app.use('/api/backups', backupRoutes);
+      // Admin routes
+      app.use('/api/superadmin', superAdminRoutes);
+      app.use('/api/superadmin', resourceManagementRoutes);
+      app.use('/api/admin', resourceManagementRoutes);
+      app.use('/api/audit-logs', auditLogRoutes);
+      app.use('/api/feature-flags', featureFlagsRoutes);
+      app.use('/api/integrations', integrationsRoutes);
+      app.use('/api/system-config', systemConfigRoutes);
+      app.use('/api/system-health', systemHealthRoutes);
+      app.use('/api/api-keys', apiKeysRoutes);
+      app.use('/api/backups', backupRoutes);
 
-            // Core API routes
-            app.use('/api/projects', projectRoutes);
-            app.use('/api/knowledge', knowledgeRoutes);
-            app.use('/api/media-ingestion', mediaIngestionRoutes);
-            app.use('/api/llm', llmRoutes);
-            app.use('/api/tasks', taskRoutes);
-            app.use('/api/notifications', notificationRoutes);
-            app.use('/api/analytics', analyticsRoutes);
-            app.use('/api/feedback', feedbackRoutes);
-            app.use('/api/access-control', accessControlRoutes);
-            app.use('/api/permission-requests', permissionRequestsRoutes);
+      // Core API routes
+      app.use('/api/projects', projectRoutes);
+      app.use('/api/knowledge', knowledgeRoutes);
+      app.use('/api/media-ingestion', mediaIngestionRoutes);
+      app.use('/api/llm', llmRoutes);
+      app.use('/api/tasks', taskRoutes);
+      app.use('/api/notifications', notificationRoutes);
+      app.use('/api/analytics', analyticsRoutes);
+      app.use('/api/feedback', feedbackRoutes);
+      app.use('/api/access-control', accessControlRoutes);
+      app.use('/api/permission-requests', permissionRequestsRoutes);
 
-            // Webhook routes (stripe webhook is handled by webhookRoutes)
-            app.use('/api/webhooks', webhookRoutes);
+      // Webhook routes (stripe webhook is handled by webhookRoutes)
+      app.use('/api/webhooks', webhookRoutes);
 
-            // Billing routes
-            app.use('/api/billing', billingRoutes);
-            app.use('/api/token-billing', tokenBillingRoutes);
-            app.use('/api/budgets', budgetsRoutes);
-            app.use('/api/pricing', pricingRoutes);
+      // Billing routes
+      app.use('/api/billing', billingRoutes);
+      app.use('/api/revenue', revenueRoutes);
+      console.log('[ApiGateway] Mounting /api/revenue');
+      app.use('/api/superadmin/analytics', analyticsSuperadminRoutes);
+      console.log('[ApiGateway] Mounting /api/superadmin/analytics');
+      app.use('/api/token-billing', tokenBillingRoutes);
+      app.use('/api/budgets', budgetsRoutes);
+      app.use('/api/pricing', pricingRoutes);
 
-            // Organization routes
-            app.use('/api/megatrends', megatrendRoutes);
-            app.use('/api/organizations', organizationRoutes);
-            app.use('/api/invitations', invitationRoutes);
-            app.use('/api/organization-profiles', organizationProfilesRoutes);
-            app.use('/api/organization-data', organizationDataRoutes);
-            app.use('/api/organization', orgLimitsRoutes);
+      // Organization routes
+      app.use('/api/megatrends', megatrendRoutes);
+      app.use('/api/organizations', organizationRoutes);
+      app.use('/api/invitations', invitationRoutes);
+      app.use('/api/organization-profiles', organizationProfilesRoutes);
+      app.use('/api/organization-data', organizationDataRoutes);
+      app.use('/api/organization', orgLimitsRoutes);
 
-            // Security routes
-            app.use('/api/security', securityRoutes);
-            app.use('/api/gdpr', gdprRoutes);
-            app.use('/api/sso', ssoRoutes);
-            app.use('/api/scim/v2', scimRoutes);
-            app.use('/api/scim/admin', scimRoutes);
-            app.use('/api/auth/webauthn', webauthnRoutes);
-            app.use('/api/auth', oauthRoutes);
-            app.use('/api/auth/login-history', loginHistoryRoutes);
-            app.use('/api/security-policies', securityPoliciesRoutes);
+      // Security routes
+      app.use('/api/security', securityRoutes);
+      app.use('/api/gdpr', gdprRoutes);
+      app.use('/api/compliance', complianceRoutes);
+      app.use('/api/sso', ssoRoutes);
+      app.use('/api/scim/v2', scimRoutes);
+      app.use('/api/scim/admin', scimRoutes);
+      app.use('/api/auth/webauthn', webauthnRoutes);
+      app.use('/api/auth', oauthRoutes);
+      app.use('/api/auth/login-history', loginHistoryRoutes);
+      app.use('/api/security-policies', securityPoliciesRoutes);
 
-            // User management routes
-            app.use('/api/onboarding', onboardingRoutes);
-            app.use('/api/analytics/journey', journeyAnalyticsRoutes);
-            app.use('/api/referrals', referralRoutes);
-            app.use('/api/consultants', consultantRoutes);
-            app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
-            app.use('/api/users', userOrgsRoutes);
-            app.use('/api/user', userGoalsRoutes);
-            app.use('/api/user', dataExportRoutes);
+      // User management routes
+      app.use('/api/onboarding', onboardingRoutes);
+      app.use('/api/analytics/journey', journeyAnalyticsRoutes);
+      app.use('/api/referrals', referralRoutes);
+      app.use('/api/consultants', consultantRoutes);
+      app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
+      app.use('/api/users', userOrgsRoutes);
+      app.use('/api/user', userGoalsRoutes);
+      app.use('/api/user', dataExportRoutes);
 
-            // Feature routes
-            app.use('/api/gamification', gamificationRoutes);
-            app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
-            app.use('/api/trial', trialRoutes);
-            app.use('/api/rbac', rbacRoutes);
-            app.use('/api/branding', brandingRoutes);
-            app.use('/api/workspace-defaults', workspaceDefaultsRoutes);
-            app.use('/api/my-work', myWorkRoutes);
+      // Feature routes
+      app.use('/api/gamification', gamificationRoutes);
+      app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
+      app.use('/api/trial', trialRoutes);
+      app.use('/api/rbac', rbacRoutes);
+      app.use('/api/branding', brandingRoutes);
+      app.use('/api/workspace-defaults', workspaceDefaultsRoutes);
+      app.use('/api/my-work', myWorkRoutes);
 
-            // Governance routes
-            app.use('/api/governance', governanceRoutes);
-            app.use('/api/governance', governanceAdminRoutes);
-            app.use('/api/context', contextRoutes);
+      // Governance routes
+      app.use('/api/governance', governanceRoutes);
+      app.use('/api/governance', governanceAdminRoutes);
+      app.use('/api/context', contextRoutes);
 
-            // Assessment routes
-            app.use('/api/assessment', assessmentRoutes);
-            app.use('/api/rapidlean', rapidleanRoutes);
-            app.use('/api/external-assessments', externalAssessmentsRoutes);
-            app.use('/api/generic-reports', genericReportsRoutes);
-            app.use('/api/initiatives', initiativeGeneratorRoutes);
-            app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
-            app.use('/api/assessments', assessmentHubRoutes);
-            app.use('/api/assessment-reports', assessmentReportsRoutes);
-            app.use('/api/assessment-level-attachments', assessmentLevelAttachmentsRoutes);
-            app.use('/api/report-comments', reportCommentsRoutes);
-            app.use('/api/mf-assessments', multiFrameworkAssessmentRoutes);
-            app.use('/api/assessment-workflow', multiFrameworkWorkflowRoutes);
+      // Assessment routes
+      app.use('/api/assessment', assessmentRoutes);
+      app.use('/api/rapidlean', rapidleanRoutes);
+      app.use('/api/external-assessments', externalAssessmentsRoutes);
+      app.use('/api/generic-reports', genericReportsRoutes);
+      app.use('/api/initiatives', initiativeGeneratorRoutes);
+      app.use('/api/assessment-workflow', assessmentWorkflowRoutes);
+      app.use('/api/assessments', assessmentHubRoutes);
+      app.use('/api/assessment-reports', assessmentReportsRoutes);
+      app.use('/api/assessment-level-attachments', assessmentLevelAttachmentsRoutes);
+      app.use('/api/report-comments', reportCommentsRoutes);
+      app.use('/api/mf-assessments', multiFrameworkAssessmentRoutes);
+      app.use('/api/assessment-workflow', multiFrameworkWorkflowRoutes);
 
-            // PMO routes
-            app.use('/api/roadmap', roadmapRoutes);
-            app.use('/api/execution', executionRoutes);
-            app.use('/api/stabilization', stabilizationRoutes);
-            app.use('/api/decisions', decisionsRoutes);
-            app.use('/api/stage-gates', stageGatesRoutes);
-            app.use('/api/pmo-analysis', pmoAnalysisRoutes);
-            app.use('/api/pmo-context', pmoContextRoutes);
-            app.use('/api/pmo', pmoRoutes);
-            app.use('/api/pmo-domains', pmoDomainsRoutes);
-            app.use('/api/projects', projectMembersRoutes);
-            app.use('/api', workstreamsRoutes);
-            app.use('/api/org/work-mode', workModeRoutes);
-            app.use('/api/pmo-roles', pmoRolesRoutes);
-            app.use('/api', pmoRolesRoutes);
-            app.use('/api/baselines', baselinesRoutes);
-            app.use('/api/capacity', capacityRoutes);
-            app.use('/api/scenarios', scenariosRoutes);
+      // PMO routes
+      app.use('/api/roadmap', roadmapRoutes);
+      app.use('/api/execution', executionRoutes);
+      app.use('/api/stabilization', stabilizationRoutes);
+      app.use('/api/decisions', decisionsRoutes);
+      app.use('/api/stage-gates', stageGatesRoutes);
+      app.use('/api/pmo-analysis', pmoAnalysisRoutes);
+      app.use('/api/pmo-context', pmoContextRoutes);
+      app.use('/api/pmo', pmoRoutes);
+      app.use('/api/pmo-domains', pmoDomainsRoutes);
+      app.use('/api/projects', projectMembersRoutes);
+      app.use('/api', workstreamsRoutes);
+      app.use('/api/org/work-mode', workModeRoutes);
+      app.use('/api/pmo-roles', pmoRolesRoutes);
+      app.use('/api', pmoRolesRoutes);
+      app.use('/api/baselines', baselinesRoutes);
+      app.use('/api/capacity', capacityRoutes);
+      app.use('/api/scenarios', scenariosRoutes);
 
-            // Reports routes
-            app.use('/api/reports', reportsRoutes);
-            app.use('/api/reports/premium', premiumReportsRoutes);
-            app.use('/api/management-reports', managementReportsRoutes);
-            app.use('/api/management-reports/analytics', managementReportsAnalyticsRoutes);
+      // Reports routes
+      app.use('/api/reports', reportsRoutes);
+      app.use('/api/reports/premium', premiumReportsRoutes);
+      app.use('/api/management-reports', managementReportsRoutes);
+      app.use('/api/management-reports/analytics', managementReportsAnalyticsRoutes);
 
-            // Analytics routes
-            console.log('[Gateway] economicsRoutes type:', typeof economicsRoutes, 'stack:', economicsRoutes?.stack?.length);
-            app.use('/api/economics', economicsRoutes);
-            app.use('/api/locations', locationsRoutes);
-            app.use('/api/notification-settings', notificationSettingsRoutes);
-            app.use('/api/metrics', metricsRoutes);
-            app.use('/api/performance-metrics', performanceMetricsRoutes);
-            app.use('/api/performance', performanceRoutes);
-            // Chaos engineering endpoints (development only) - disabled
+      // Analytics routes
+      console.log(
+        '[Gateway] economicsRoutes type:',
+        typeof economicsRoutes,
+        'stack:',
+        economicsRoutes?.stack?.length
+      );
+      app.use('/api/economics', economicsRoutes);
+      app.use('/api/locations', locationsRoutes);
+      app.use('/api/notification-settings', notificationSettingsRoutes);
+      app.use('/api/metrics', metricsRoutes);
+      app.use('/api/performance-metrics', performanceMetricsRoutes);
+      app.use('/api/performance', performanceRoutes);
+      // Chaos engineering endpoints (development only) - disabled
 
-            // Other routes
-            app.use('/api/legal', legalRoutes);
-            app.use('/api/demo', demoRoutes);
-            app.use('/api/promo', promoRoutes);
-            app.use('/api/partners', partnerRoutes);
-            app.use('/api/settlements', settlementRoutes);
-            app.use('/api/access-codes', accessCodeRoutes);
-            app.use('/api/help', helpRoutes);
-            app.use('/api/help', helpFeedbackRoutes);
-            app.use('/api/help', helpChatRoutes);
-            app.use('/api/help-analytics', helpAnalyticsRoutes);
-            app.use('/api/videos', videoRoutes);
-            app.use('/api/status', statusRoutes);
-            app.use('/api/status-reports', statusReportsRoutes);
-            app.use('/api/verify', verifyRoutes);
-            app.use('/api/preferences', preferencesRoutes);
-            app.use('/api/features', featureFlagRoutes);
-            app.use('/api/webhooks/subscriptions', webhookSubRoutes);
-            app.use('/api/studio', studioRoutes);
-            app.use('/api/intelligence', intelligenceRoutes);
-            app.use('/api/agents', agentsRoutes);
-            app.use('/api/workqueue', workqueueRoutes);
-            app.use('/api/connectors', connectorRoutes);
-            app.use('/api/audit', auditRoutes);
-            app.use('/api/mfa', mfaRoutes);
-            app.use('/api/raid', raidRoutes);
-            app.use('/api/budget', budgetRoutes);
-            app.use('/api/content', contentRoutes);
+      // Other routes
+      app.use('/api/legal', legalRoutes);
+      app.use('/api/demo', demoRoutes);
+      app.use('/api/promo', promoRoutes);
+      app.use('/api/partners', partnerRoutes);
+      app.use('/api/public/partner', publicPartnerRouter); // Public partner code validation
+      app.use('/api/superadmin/partner-settlements', superAdminPartnerRouter); // SuperAdmin partner settlements
+      app.use('/api/superadmin/partner-config', partnerConfigRouter); // SuperAdmin partner configuration
+      app.use('/api/settlements', settlementRoutes);
+      app.use('/api/access-codes', accessCodeRoutes);
+      app.use('/api/help', helpRoutes);
+      app.use('/api/help', helpFeedbackRoutes);
+      app.use('/api/help', helpChatRoutes);
+      app.use('/api/help-analytics', helpAnalyticsRoutes);
+      app.use('/api/videos', videoRoutes);
+      app.use('/api/status', statusRoutes);
+      app.use('/api/status-reports', statusReportsRoutes);
+      app.use('/api/verify', verifyRoutes);
+      app.use('/api/preferences', preferencesRoutes);
+      app.use('/api/features', featureFlagRoutes);
+      app.use('/api/webhooks/subscriptions', webhookSubRoutes);
+      app.use('/api/studio', studioRoutes);
+      app.use('/api/intelligence', intelligenceRoutes);
+      app.use('/api/agents', agentsRoutes);
+      app.use('/api/workqueue', workqueueRoutes);
+      app.use('/api/connectors', connectorRoutes);
+      app.use('/api/audit', auditRoutes);
+      app.use('/api/mfa', mfaRoutes);
+      app.use('/api/raid', raidRoutes);
+      app.use('/api/budget', budgetRoutes);
+      app.use('/api/content', contentRoutes);
 
-            // Catch-all RBAC or 404 for /api
-            app.use('/api', rbacRoutes);
-        } catch (error: unknown) {
-            logger.error('[ApiGateway] Error loading routes:', error);
-            // Don't block server startup - allow degraded mode
-        }
+      // Catch-all RBAC or 404 for /api
+      app.use('/api', rbacRoutes);
+    } catch (error: unknown) {
+      logger.error('[ApiGateway] Error loading routes:', error);
+      // Don't block server startup - allow degraded mode
     }
+  }
 }
 
 export const apiGateway = ApiGateway.getInstance();

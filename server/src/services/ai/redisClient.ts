@@ -19,6 +19,6 @@ export const isRedisConnected = () => redisClient.isRedisConnected();
 
 // Default export for generic module loading
 export default {
-    getRedisClient,
-    isRedisConnected,
+  getRedisClient,
+  isRedisConnected,
 };

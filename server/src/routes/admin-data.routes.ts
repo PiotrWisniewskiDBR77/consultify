@@ -13,25 +13,29 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
-import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
-    CreateScheduledEventBodySchema,
-    EventIdParamSchema,
-    LoginHistoryQuerySchema,
-    OrgIdParamSchema,
-    RecentActivityQuerySchema,
-    ResolveSecurityEventBodySchema,
-    ScheduledEventIdParamSchema,
-    ScheduledEventsQuerySchema,
-    SecurityEventsQuerySchema,
-    SessionIdParamSchema,
-    SessionsQuerySchema,
-    UpdateScheduledEventBodySchema,
-    UpdateUserTierBodySchema,
-    UserTierParamsSchema,
-    UserTiersQuerySchema,
+  CreateScheduledEventBodySchema,
+  EventIdParamSchema,
+  LoginHistoryQuerySchema,
+  OrgIdParamSchema,
+  RecentActivityQuerySchema,
+  ResolveSecurityEventBodySchema,
+  ScheduledEventIdParamSchema,
+  ScheduledEventsQuerySchema,
+  SecurityEventsQuerySchema,
+  SessionIdParamSchema,
+  SessionsQuerySchema,
+  UpdateScheduledEventBodySchema,
+  UpdateUserTierBodySchema,
+  UserTierParamsSchema,
+  UserTiersQuerySchema,
 } from '../validators/admin-data.validators.js';
 
 const router = Router();
@@ -48,21 +52,21 @@ router.use(verifyToken);
  * Get user tier assignments with usage stats
  */
 router.get(
-    '/user-tiers/:orgId',
-    validateParams(OrgIdParamSchema),
-    validateQuery(UserTiersQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
+  '/user-tiers/:orgId',
+  validateParams(OrgIdParamSchema),
+  validateQuery(UserTiersQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
 
-        const users = await dbAll<{
-            userId: string;
-            userName: string;
-            email: string;
-            currentTier: string;
-            usage: number;
-            cost: number;
-        }>(
-            `
+    const users = await dbAll<{
+      userId: string;
+      userName: string;
+      email: string;
+      currentTier: string;
+      usage: number;
+      cost: number;
+    }>(
+      `
             SELECT 
                 u.id as userId,
                 u.first_name || ' ' || u.last_name as userName,
@@ -76,11 +80,11 @@ router.get(
             WHERE u.organization_id = ?
             ORDER BY aus.cost_usd DESC NULLS LAST
         `,
-            [orgId],
-        );
+      [orgId]
+    );
 
-        return res.json(users);
-    }),
+    return res.json(users);
+  })
 );
 
 /**
@@ -88,28 +92,28 @@ router.get(
  * Update user's AI tier
  */
 router.put(
-    '/user-tiers/:orgId/:userId',
-    validateParams(UserTierParamsSchema),
-    validateBody(UpdateUserTierBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId, userId } = req.params;
-        const { tier } = req.body;
+  '/user-tiers/:orgId/:userId',
+  validateParams(UserTierParamsSchema),
+  validateBody(UpdateUserTierBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId, userId } = req.params;
+    const { tier } = req.body;
 
-        const runResult = await dbRun(
-            `
+    const runResult = await dbRun(
+      `
             INSERT INTO ai_usage_stats (id, organization_id, user_id, tier, period_start, period_end)
             VALUES (?, ?, ?, ?, date('now', '-7 days'), date('now'))
             ON CONFLICT(user_id, period_start) DO UPDATE SET tier = ?
         `,
-            [uuidv4(), orgId, userId, tier, tier],
-        );
+      [uuidv4(), orgId, userId, tier, tier]
+    );
 
-        if (!runResult.success) {
-            throw new Error(runResult.error || 'Failed to update user tier');
-        }
+    if (!runResult.success) {
+      throw new Error(runResult.error || 'Failed to update user tier');
+    }
 
-        return res.json({ success: true, tier });
-    }),
+    return res.json({ success: true, tier });
+  })
 );
 
 /**
@@ -117,20 +121,20 @@ router.put(
  * Get cost attribution by user and project
  */
 router.get(
-    '/cost-attribution/:orgId',
-    validateParams(OrgIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
+  '/cost-attribution/:orgId',
+  validateParams(OrgIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
 
-        const userCosts = await dbAll<{
-            entityType: string;
-            entityId: string;
-            entityName: string;
-            requests: number;
-            tokens: number;
-            cost: number;
-        }>(
-            `
+    const userCosts = await dbAll<{
+      entityType: string;
+      entityId: string;
+      entityName: string;
+      requests: number;
+      tokens: number;
+      cost: number;
+    }>(
+      `
             SELECT 
                 'user' as entityType,
                 aus.user_id as entityId,
@@ -147,18 +151,18 @@ router.get(
             ORDER BY cost DESC
             LIMIT 10
         `,
-            [orgId],
-        );
+      [orgId]
+    );
 
-        const projectCosts = await dbAll<{
-            entityType: string;
-            entityId: string;
-            entityName: string;
-            requests: number;
-            tokens: number;
-            cost: number;
-        }>(
-            `
+    const projectCosts = await dbAll<{
+      entityType: string;
+      entityId: string;
+      entityName: string;
+      requests: number;
+      tokens: number;
+      cost: number;
+    }>(
+      `
             SELECT 
                 'project' as entityType,
                 aus.project_id as entityId,
@@ -175,21 +179,21 @@ router.get(
             ORDER BY cost DESC
             LIMIT 10
         `,
-            [orgId],
-        );
+      [orgId]
+    );
 
-        const allCosts = [...userCosts, ...projectCosts];
-        const totalCost = allCosts.reduce((sum, item) => sum + (item.cost || 0), 0);
+    const allCosts = [...userCosts, ...projectCosts];
+    const totalCost = allCosts.reduce((sum, item) => sum + (item.cost || 0), 0);
 
-        const costAttribution = allCosts
-            .map((item) => ({
-                ...item,
-                percentage: totalCost > 0 ? Math.round((item.cost / totalCost) * 100) : 0,
-            }))
-            .sort((a, b) => b.cost - a.cost);
+    const costAttribution = allCosts
+      .map((item) => ({
+        ...item,
+        percentage: totalCost > 0 ? Math.round((item.cost / totalCost) * 100) : 0,
+      }))
+      .sort((a, b) => b.cost - a.cost);
 
-        return res.json(costAttribution);
-    }),
+    return res.json(costAttribution);
+  })
 );
 
 // ==========================================
@@ -201,34 +205,34 @@ router.get(
  * Get security events for organization
  */
 router.get(
-    '/security-events/:orgId',
-    validateParams(OrgIdParamSchema),
-    validateQuery(SecurityEventsQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
-        const { limit = 50, resolved } = req.query;
+  '/security-events/:orgId',
+  validateParams(OrgIdParamSchema),
+  validateQuery(SecurityEventsQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const { limit = 50, resolved } = req.query;
 
-        let whereClause = 'WHERE organization_id = ?';
-        const params: unknown[] = [orgId];
+    let whereClause = 'WHERE organization_id = ?';
+    const params: unknown[] = [orgId];
 
-        if (resolved !== undefined) {
-            whereClause += ' AND resolved = ?';
-            params.push(resolved === 'true' ? 1 : 0);
-        }
+    if (resolved !== undefined) {
+      whereClause += ' AND resolved = ?';
+      params.push(resolved === 'true' ? 1 : 0);
+    }
 
-        const events = await dbAll<{
-            id: string;
-            type: string;
-            severity: string;
-            userId: string;
-            userEmail: string;
-            details: string;
-            resolved: number;
-            timestamp: string;
-            resolved_at: string | null;
-            resolved_by: string | null;
-        }>(
-            `
+    const events = await dbAll<{
+      id: string;
+      type: string;
+      severity: string;
+      userId: string;
+      userEmail: string;
+      details: string;
+      resolved: number;
+      timestamp: string;
+      resolved_at: string | null;
+      resolved_by: string | null;
+    }>(
+      `
             SELECT 
                 se.id,
                 se.type,
@@ -246,11 +250,11 @@ router.get(
             ORDER BY se.created_at DESC
             LIMIT ?
         `,
-            [...params, parseInt(limit as string)],
-        );
+      [...params, parseInt(limit as string)]
+    );
 
-        return res.json(events);
-    }),
+    return res.json(events);
+  })
 );
 
 /**
@@ -258,33 +262,33 @@ router.get(
  * Mark security event as resolved
  */
 router.put(
-    '/security-events/:eventId/resolve',
-    validateParams(EventIdParamSchema),
-    validateBody(ResolveSecurityEventBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { eventId } = req.params;
-        const userId = req.user?.id;
+  '/security-events/:eventId/resolve',
+  validateParams(EventIdParamSchema),
+  validateBody(ResolveSecurityEventBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { eventId } = req.params;
+    const userId = req.user?.id;
 
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
 
-        const runResult = await dbRun(
-            `
+    const runResult = await dbRun(
+      `
             UPDATE security_events 
             SET resolved = 1, resolved_at = datetime('now'), resolved_by = ?
             WHERE id = ?
         `,
-            [userId, eventId],
-        );
+      [userId, eventId]
+    );
 
-        if (!runResult.success) {
-            throw new Error(runResult.error || 'Failed to resolve security event');
-        }
+    if (!runResult.success) {
+      throw new Error(runResult.error || 'Failed to resolve security event');
+    }
 
-        return res.json({ success: true });
-    }),
+    return res.json({ success: true });
+  })
 );
 
 // ==========================================
@@ -296,22 +300,22 @@ router.put(
  * Get recent activity for dashboard
  */
 router.get(
-    '/recent-activity/:orgId',
-    validateParams(OrgIdParamSchema),
-    validateQuery(RecentActivityQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
-        const { limit = 10 } = req.query;
+  '/recent-activity/:orgId',
+  validateParams(OrgIdParamSchema),
+  validateQuery(RecentActivityQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const { limit = 10 } = req.query;
 
-        const activity = await dbAll<{
-            id: string;
-            type: string;
-            description: string;
-            timestamp: string;
-            userEmail: string;
-            userName: string;
-        }>(
-            `
+    const activity = await dbAll<{
+      id: string;
+      type: string;
+      description: string;
+      timestamp: string;
+      userEmail: string;
+      userName: string;
+    }>(
+      `
             SELECT 
                 ae.id,
                 ae.action_type as type,
@@ -325,19 +329,19 @@ router.get(
             ORDER BY ae.ts DESC
             LIMIT ?
         `,
-            [orgId, parseInt(limit as string)],
-        );
+      [orgId, parseInt(limit as string)]
+    );
 
-        const formattedActivity = activity.map((a) => ({
-            id: a.id,
-            type: mapEventType(a.type),
-            description: a.description || formatEventDescription(a.type),
-            timestamp: formatTimestamp(a.timestamp),
-            user: a.userEmail,
-        }));
+    const formattedActivity = activity.map((a) => ({
+      id: a.id,
+      type: mapEventType(a.type),
+      description: a.description || formatEventDescription(a.type),
+      timestamp: formatTimestamp(a.timestamp),
+      user: a.userEmail,
+    }));
 
-        return res.json(formattedActivity);
-    }),
+    return res.json(formattedActivity);
+  })
 );
 
 /**
@@ -345,31 +349,31 @@ router.get(
  * Get system health status
  */
 router.get(
-    '/system-health',
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        const dbHealthy = await (async () => {
-            try {
-                await dbGet('SELECT 1 as ok', []);
-                return true;
-            } catch {
-                return false;
-            }
-        })();
+  '/system-health',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const dbHealthy = await (async () => {
+      try {
+        await dbGet('SELECT 1 as ok', []);
+        return true;
+      } catch {
+        return false;
+      }
+    })();
 
-        const health = {
-            status: dbHealthy ? 'healthy' : 'degraded',
-            uptime: '99.9%',
-            lastCheck: 'Just now',
-            services: [
-                { name: 'API', status: 'up' },
-                { name: 'Database', status: dbHealthy ? 'up' : 'down' },
-                { name: 'AI Services', status: 'up' },
-                { name: 'Storage', status: 'up' },
-            ],
-        };
+    const health = {
+      status: dbHealthy ? 'healthy' : 'degraded',
+      uptime: '99.9%',
+      lastCheck: 'Just now',
+      services: [
+        { name: 'API', status: 'up' },
+        { name: 'Database', status: dbHealthy ? 'up' : 'down' },
+        { name: 'AI Services', status: 'up' },
+        { name: 'Storage', status: 'up' },
+      ],
+    };
 
-        return res.json(health);
-    }),
+    return res.json(health);
+  })
 );
 
 // ==========================================
@@ -381,25 +385,25 @@ router.get(
  * Get active sessions for organization users
  */
 router.get(
-    '/sessions/:orgId',
-    validateParams(OrgIdParamSchema),
-    validateQuery(SessionsQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
+  '/sessions/:orgId',
+  validateParams(OrgIdParamSchema),
+  validateQuery(SessionsQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
 
-        const sessions = await dbAll<{
-            id: string;
-            userId: string;
-            userEmail: string;
-            userName: string;
-            deviceName: string;
-            ipAddress: string;
-            location: string;
-            isCurrent: number;
-            lastActivity: string;
-            createdAt: string;
-        }>(
-            `
+    const sessions = await dbAll<{
+      id: string;
+      userId: string;
+      userEmail: string;
+      userName: string;
+      deviceName: string;
+      ipAddress: string;
+      location: string;
+      isCurrent: number;
+      lastActivity: string;
+      createdAt: string;
+    }>(
+      `
             SELECT 
                 us.id,
                 us.user_id as userId,
@@ -417,11 +421,11 @@ router.get(
                 AND (us.expires_at IS NULL OR us.expires_at > datetime('now'))
             ORDER BY us.last_active_at DESC
         `,
-            [orgId],
-        );
+      [orgId]
+    );
 
-        return res.json(sessions);
-    }),
+    return res.json(sessions);
+  })
 );
 
 /**
@@ -429,26 +433,26 @@ router.get(
  * Get login history for organization
  */
 router.get(
-    '/login-history/:orgId',
-    validateParams(OrgIdParamSchema),
-    validateQuery(LoginHistoryQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
-        const { limit = 50 } = req.query;
+  '/login-history/:orgId',
+  validateParams(OrgIdParamSchema),
+  validateQuery(LoginHistoryQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const { limit = 50 } = req.query;
 
-        const history = await dbAll<{
-            id: string;
-            userId: string;
-            userEmail: string;
-            userName: string;
-            ipAddress: string;
-            userAgent: string;
-            location: string;
-            status: string;
-            failureReason: string | null;
-            timestamp: string;
-        }>(
-            `
+    const history = await dbAll<{
+      id: string;
+      userId: string;
+      userEmail: string;
+      userName: string;
+      ipAddress: string;
+      userAgent: string;
+      location: string;
+      status: string;
+      failureReason: string | null;
+      timestamp: string;
+    }>(
+      `
             SELECT 
                 lh.id,
                 lh.user_id as userId,
@@ -466,11 +470,11 @@ router.get(
             ORDER BY lh.created_at DESC
             LIMIT ?
         `,
-            [orgId, parseInt(limit as string)],
-        );
+      [orgId, parseInt(limit as string)]
+    );
 
-        return res.json(history);
-    }),
+    return res.json(history);
+  })
 );
 
 /**
@@ -478,18 +482,18 @@ router.get(
  * Terminate a specific session
  */
 router.delete(
-    '/sessions/:sessionId',
-    validateParams(SessionIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { sessionId } = req.params;
+  '/sessions/:sessionId',
+  validateParams(SessionIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { sessionId } = req.params;
 
-        const result = await dbRun('DELETE FROM user_sessions WHERE id = ?', [sessionId]);
-        if (!result.success) {
-            throw new Error(result.error || 'Failed to delete session');
-        }
+    const result = await dbRun('DELETE FROM user_sessions WHERE id = ?', [sessionId]);
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to delete session');
+    }
 
-        return res.json({ success: true });
-    }),
+    return res.json({ success: true });
+  })
 );
 
 // ==========================================
@@ -501,20 +505,20 @@ router.delete(
  * Get compliance reports for organization
  */
 router.get(
-    '/compliance-reports/:orgId',
-    validateParams(OrgIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
+  '/compliance-reports/:orgId',
+  validateParams(OrgIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
 
-        const reports = await dbAll<{
-            id: string;
-            name: string;
-            standard: string;
-            status: string;
-            findings: number;
-            generatedAt: string;
-        }>(
-            `
+    const reports = await dbAll<{
+      id: string;
+      name: string;
+      standard: string;
+      status: string;
+      findings: number;
+      generatedAt: string;
+    }>(
+      `
             SELECT 
                 id,
                 name,
@@ -526,11 +530,11 @@ router.get(
             WHERE organization_id = ?
             ORDER BY generated_at DESC
         `,
-            [orgId],
-        );
+      [orgId]
+    );
 
-        return res.json(reports);
-    }),
+    return res.json(reports);
+  })
 );
 
 /**
@@ -538,22 +542,22 @@ router.get(
  * Get custom compliance templates
  */
 router.get(
-    '/custom-templates/:orgId',
-    validateParams(OrgIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
+  '/custom-templates/:orgId',
+  validateParams(OrgIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
 
-        const templates = await dbAll<{
-            id: string;
-            name: string;
-            description: string;
-            basedOn: string;
-            sectionsCount: number;
-            checkpointsCount: number;
-            createdAt: string;
-            updatedAt: string;
-        }>(
-            `
+    const templates = await dbAll<{
+      id: string;
+      name: string;
+      description: string;
+      basedOn: string;
+      sectionsCount: number;
+      checkpointsCount: number;
+      createdAt: string;
+      updatedAt: string;
+    }>(
+      `
             SELECT 
                 id,
                 name,
@@ -567,11 +571,11 @@ router.get(
             WHERE organization_id = ?
             ORDER BY updated_at DESC
         `,
-            [orgId],
-        );
+      [orgId]
+    );
 
-        return res.json(templates);
-    }),
+    return res.json(templates);
+  })
 );
 
 // ==========================================
@@ -583,21 +587,21 @@ router.get(
  * Get user groups for organization
  */
 router.get(
-    '/user-groups/:orgId',
-    validateParams(OrgIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
+  '/user-groups/:orgId',
+  validateParams(OrgIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
 
-        const groups = await dbAll<{
-            id: string;
-            name: string;
-            description: string;
-            color: string;
-            membersCount: number;
-            permissions: string;
-            createdAt: string;
-        }>(
-            `
+    const groups = await dbAll<{
+      id: string;
+      name: string;
+      description: string;
+      color: string;
+      membersCount: number;
+      permissions: string;
+      createdAt: string;
+    }>(
+      `
             SELECT 
                 id,
                 name,
@@ -610,11 +614,11 @@ router.get(
             WHERE organization_id = ?
             ORDER BY name ASC
         `,
-            [orgId],
-        );
+      [orgId]
+    );
 
-        return res.json(groups);
-    }),
+    return res.json(groups);
+  })
 );
 
 // ==========================================
@@ -626,36 +630,36 @@ router.get(
  * Get upcoming scheduled events for organization
  */
 router.get(
-    '/scheduled-events/:orgId',
-    validateParams(OrgIdParamSchema),
-    validateQuery(ScheduledEventsQuerySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
-        const { limit = 10, includeCompleted = 'false' } = req.query;
+  '/scheduled-events/:orgId',
+  validateParams(OrgIdParamSchema),
+  validateQuery(ScheduledEventsQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const { limit = 10, includeCompleted = 'false' } = req.query;
 
-        let whereClause = `WHERE se.organization_id = ? AND se.start_time >= datetime('now', '-1 day')`;
-        if (includeCompleted === 'false') {
-            whereClause += ` AND se.status != 'COMPLETED' AND se.status != 'CANCELLED'`;
-        }
+    let whereClause = `WHERE se.organization_id = ? AND se.start_time >= datetime('now', '-1 day')`;
+    if (includeCompleted === 'false') {
+      whereClause += ` AND se.status != 'COMPLETED' AND se.status != 'CANCELLED'`;
+    }
 
-        const events = await dbAll<{
-            id: string;
-            title: string;
-            description: string;
-            eventType: string;
-            startTime: string;
-            endTime: string;
-            location: string;
-            isAllDay: number;
-            status: string;
-            projectId: string | null;
-            projectName: string | null;
-            attendees: string;
-            createdBy: string;
-            creatorEmail: string;
-            creatorName: string;
-        }>(
-            `
+    const events = await dbAll<{
+      id: string;
+      title: string;
+      description: string;
+      eventType: string;
+      startTime: string;
+      endTime: string;
+      location: string;
+      isAllDay: number;
+      status: string;
+      projectId: string | null;
+      projectName: string | null;
+      attendees: string;
+      createdBy: string;
+      creatorEmail: string;
+      creatorName: string;
+    }>(
+      `
             SELECT 
                 se.id,
                 se.title,
@@ -679,16 +683,16 @@ router.get(
             ORDER BY se.start_time ASC
             LIMIT ?
         `,
-            [orgId, parseInt(limit as string)],
-        );
+      [orgId, parseInt(limit as string)]
+    );
 
-        const formattedEvents = events.map((e) => ({
-            ...e,
-            attendees: e.attendees ? JSON.parse(e.attendees) : [],
-        }));
+    const formattedEvents = events.map((e) => ({
+      ...e,
+      attendees: e.attendees ? JSON.parse(e.attendees) : [],
+    }));
 
-        return res.json(formattedEvents);
-    }),
+    return res.json(formattedEvents);
+  })
 );
 
 /**
@@ -696,73 +700,73 @@ router.get(
  * Create a new scheduled event
  */
 router.post(
-    '/scheduled-events/:orgId',
-    validateParams(OrgIdParamSchema),
-    validateBody(CreateScheduledEventBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { orgId } = req.params;
-        const {
-            title,
-            description,
-            eventType = 'meeting',
-            startTime,
-            endTime,
-            location = '',
-            isAllDay = false,
-            projectId = null,
-            attendees = [],
-        } = req.body;
-        const userId = req.user?.id;
+  '/scheduled-events/:orgId',
+  validateParams(OrgIdParamSchema),
+  validateBody(CreateScheduledEventBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { orgId } = req.params;
+    const {
+      title,
+      description,
+      eventType = 'meeting',
+      startTime,
+      endTime,
+      location = '',
+      isAllDay = false,
+      projectId = null,
+      attendees = [],
+    } = req.body;
+    const userId = req.user?.id;
 
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
 
-        const eventId = uuidv4();
+    const eventId = uuidv4();
 
-        const runResult = await dbRun(
-            `
+    const runResult = await dbRun(
+      `
             INSERT INTO scheduled_events (
                 id, organization_id, title, description, event_type, 
                 start_time, end_time, location, is_all_day, status, 
                 project_id, attendees, created_by, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'SCHEDULED', ?, ?, ?, datetime('now'))
         `,
-            [
-                eventId,
-                orgId,
-                title,
-                description,
-                eventType,
-                startTime,
-                endTime,
-                location,
-                isAllDay ? 1 : 0,
-                projectId,
-                JSON.stringify(attendees),
-                userId,
-            ],
-        );
+      [
+        eventId,
+        orgId,
+        title,
+        description,
+        eventType,
+        startTime,
+        endTime,
+        location,
+        isAllDay ? 1 : 0,
+        projectId,
+        JSON.stringify(attendees),
+        userId,
+      ]
+    );
 
-        if (!runResult.success) {
-            throw new Error(runResult.error || 'Failed to create scheduled event');
-        }
+    if (!runResult.success) {
+      throw new Error(runResult.error || 'Failed to create scheduled event');
+    }
 
-        return res.status(201).json({
-            id: eventId,
-            title,
-            description,
-            eventType,
-            startTime,
-            endTime,
-            location,
-            isAllDay,
-            status: 'SCHEDULED',
-            projectId,
-            attendees,
-        });
-    }),
+    return res.status(201).json({
+      id: eventId,
+      title,
+      description,
+      eventType,
+      startTime,
+      endTime,
+      location,
+      isAllDay,
+      status: 'SCHEDULED',
+      projectId,
+      attendees,
+    });
+  })
 );
 
 /**
@@ -770,76 +774,86 @@ router.post(
  * Update a scheduled event
  */
 router.put(
-    '/scheduled-events/:eventId',
-    validateParams(ScheduledEventIdParamSchema),
-    validateBody(UpdateScheduledEventBodySchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { eventId } = req.params;
-        const { title, description, eventType, startTime, endTime, location, isAllDay, status, projectId, attendees } =
-            req.body;
+  '/scheduled-events/:eventId',
+  validateParams(ScheduledEventIdParamSchema),
+  validateBody(UpdateScheduledEventBodySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { eventId } = req.params;
+    const {
+      title,
+      description,
+      eventType,
+      startTime,
+      endTime,
+      location,
+      isAllDay,
+      status,
+      projectId,
+      attendees,
+    } = req.body;
 
-        const updates: string[] = [];
-        const params: unknown[] = [];
+    const updates: string[] = [];
+    const params: unknown[] = [];
 
-        if (title !== undefined) {
-            updates.push('title = ?');
-            params.push(title);
-        }
-        if (description !== undefined) {
-            updates.push('description = ?');
-            params.push(description);
-        }
-        if (eventType !== undefined) {
-            updates.push('event_type = ?');
-            params.push(eventType);
-        }
-        if (startTime !== undefined) {
-            updates.push('start_time = ?');
-            params.push(startTime);
-        }
-        if (endTime !== undefined) {
-            updates.push('end_time = ?');
-            params.push(endTime);
-        }
-        if (location !== undefined) {
-            updates.push('location = ?');
-            params.push(location);
-        }
-        if (isAllDay !== undefined) {
-            updates.push('is_all_day = ?');
-            params.push(isAllDay ? 1 : 0);
-        }
-        if (status !== undefined) {
-            updates.push('status = ?');
-            params.push(status);
-        }
-        if (projectId !== undefined) {
-            updates.push('project_id = ?');
-            params.push(projectId);
-        }
-        if (attendees !== undefined) {
-            updates.push('attendees = ?');
-            params.push(JSON.stringify(attendees));
-        }
+    if (title !== undefined) {
+      updates.push('title = ?');
+      params.push(title);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      params.push(description);
+    }
+    if (eventType !== undefined) {
+      updates.push('event_type = ?');
+      params.push(eventType);
+    }
+    if (startTime !== undefined) {
+      updates.push('start_time = ?');
+      params.push(startTime);
+    }
+    if (endTime !== undefined) {
+      updates.push('end_time = ?');
+      params.push(endTime);
+    }
+    if (location !== undefined) {
+      updates.push('location = ?');
+      params.push(location);
+    }
+    if (isAllDay !== undefined) {
+      updates.push('is_all_day = ?');
+      params.push(isAllDay ? 1 : 0);
+    }
+    if (status !== undefined) {
+      updates.push('status = ?');
+      params.push(status);
+    }
+    if (projectId !== undefined) {
+      updates.push('project_id = ?');
+      params.push(projectId);
+    }
+    if (attendees !== undefined) {
+      updates.push('attendees = ?');
+      params.push(JSON.stringify(attendees));
+    }
 
-        updates.push("updated_at = datetime('now')");
-        params.push(eventId);
+    updates.push("updated_at = datetime('now')");
+    params.push(eventId);
 
-        const runResult = await dbRun(
-            `
+    const runResult = await dbRun(
+      `
             UPDATE scheduled_events 
             SET ${updates.join(', ')}
             WHERE id = ?
         `,
-            params,
-        );
+      params
+    );
 
-        if (!runResult.success) {
-            throw new Error(runResult.error || 'Failed to update scheduled event');
-        }
+    if (!runResult.success) {
+      throw new Error(runResult.error || 'Failed to update scheduled event');
+    }
 
-        return res.json({ success: true });
-    }),
+    return res.json({ success: true });
+  })
 );
 
 /**
@@ -847,18 +861,18 @@ router.put(
  * Delete a scheduled event
  */
 router.delete(
-    '/scheduled-events/:eventId',
-    validateParams(ScheduledEventIdParamSchema),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { eventId } = req.params;
+  '/scheduled-events/:eventId',
+  validateParams(ScheduledEventIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { eventId } = req.params;
 
-        const result = await dbRun('DELETE FROM scheduled_events WHERE id = ?', [eventId]);
-        if (!result.success) {
-            throw new Error(result.error || 'Failed to delete event');
-        }
+    const result = await dbRun('DELETE FROM scheduled_events WHERE id = ?', [eventId]);
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to delete event');
+    }
 
-        return res.json({ success: true });
-    }),
+    return res.json({ success: true });
+  })
 );
 
 // ==========================================
@@ -866,41 +880,41 @@ router.delete(
 // ==========================================
 
 function mapEventType(type: string): string {
-    const typeMap: Record<string, string> = {
-        USER_LOGIN: 'user_joined',
-        PROJECT_CREATE: 'project_created',
-        TASK_COMPLETE: 'task_completed',
-        INVITATION_SEND: 'invitation_sent',
-        SETTINGS_UPDATE: 'settings_changed',
-        USER_ROLE_CHANGE: 'user_role_changed',
-    };
-    return typeMap[type] || 'activity';
+  const typeMap: Record<string, string> = {
+    USER_LOGIN: 'user_joined',
+    PROJECT_CREATE: 'project_created',
+    TASK_COMPLETE: 'task_completed',
+    INVITATION_SEND: 'invitation_sent',
+    SETTINGS_UPDATE: 'settings_changed',
+    USER_ROLE_CHANGE: 'user_role_changed',
+  };
+  return typeMap[type] || 'activity';
 }
 
 function formatEventDescription(type: string): string {
-    const descMap: Record<string, string> = {
-        USER_LOGIN: 'User logged in',
-        PROJECT_CREATE: 'New project created',
-        TASK_COMPLETE: 'Task marked complete',
-        INVITATION_SEND: 'Invitation sent',
-        SETTINGS_UPDATE: 'Settings updated',
-        USER_ROLE_CHANGE: 'User role changed',
-    };
-    return descMap[type] || 'Activity recorded';
+  const descMap: Record<string, string> = {
+    USER_LOGIN: 'User logged in',
+    PROJECT_CREATE: 'New project created',
+    TASK_COMPLETE: 'Task marked complete',
+    INVITATION_SEND: 'Invitation sent',
+    SETTINGS_UPDATE: 'Settings updated',
+    USER_ROLE_CHANGE: 'User role changed',
+  };
+  return descMap[type] || 'Activity recorded';
 }
 
 function formatTimestamp(timestamp: string): string {
-    if (!timestamp) return 'Unknown';
+  if (!timestamp) return 'Unknown';
 
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
-    if (diffHours < 1) return 'Just now';
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    if (diffHours < 48) return 'Yesterday';
-    return `${Math.floor(diffHours / 24)} days ago`;
+  if (diffHours < 1) return 'Just now';
+  if (diffHours < 24) return `${diffHours} hours ago`;
+  if (diffHours < 48) return 'Yesterday';
+  return `${Math.floor(diffHours / 24)} days ago`;
 }
 
 export default router;

@@ -9,89 +9,102 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { useIsDemo, useIsTrial, useIsTrialExpired, usePolicySnapshot } from '../../contexts/AccessPolicyContext';
+import {
+  useIsDemo,
+  useIsTrial,
+  useIsTrialExpired,
+  usePolicySnapshot,
+} from '../../contexts/AccessPolicyContext';
 import DemoBanner from './DemoBanner';
 import TrialBanner from './TrialBanner';
 import TrialExpirationModal from './TrialExpirationModal';
 
 interface GlobalAccessBannersProps {
-    onStartTrial?: () => void;
-    onUpgrade?: () => void;
-    onContactSales?: () => void;
+  onStartTrial?: () => void;
+  onUpgrade?: () => void;
+  onContactSales?: () => void;
 }
 
-const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({ onStartTrial, onUpgrade, onContactSales }) => {
-    const { snapshot, loading } = usePolicySnapshot();
-    const isDemo = useIsDemo();
-    const isTrial = useIsTrial();
-    const isTrialExpired = useIsTrialExpired();
+const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
+  onStartTrial,
+  onUpgrade,
+  onContactSales,
+}) => {
+  const { snapshot, loading } = usePolicySnapshot();
+  const isDemo = useIsDemo();
+  const isTrial = useIsTrial();
+  const isTrialExpired = useIsTrialExpired();
 
-    const [showExpirationModal, setShowExpirationModal] = useState(false);
-    const [modalDismissed, setModalDismissed] = useState(false);
+  const [showExpirationModal, setShowExpirationModal] = useState(false);
+  const [modalDismissed, setModalDismissed] = useState(false);
 
-    // Show expiration modal when trial expires (only once per session)
-    useEffect(() => {
-        if (isTrialExpired && !modalDismissed) {
-            // Defer state update to avoid synchronous setState in effect
-            queueMicrotask(() => setShowExpirationModal(true));
-        }
-    }, [isTrialExpired, modalDismissed]);
-
-    const handleDismissModal = () => {
-        setShowExpirationModal(false);
-        setModalDismissed(true);
-    };
-
-    const handleUpgrade = () => {
-        setShowExpirationModal(false);
-        onUpgrade?.();
-    };
-
-    const handleContactSales = () => {
-        setShowExpirationModal(false);
-        onContactSales?.();
-    };
-
-    if (loading || !snapshot) {
-        return null;
+  // Show expiration modal when trial expires (only once per session)
+  useEffect(() => {
+    if (isTrialExpired && !modalDismissed) {
+      // Defer state update to avoid synchronous setState in effect
+      queueMicrotask(() => setShowExpirationModal(true));
     }
+  }, [isTrialExpired, modalDismissed]);
 
-    // PAID orgs see no banners
-    if (snapshot.isPaid) {
-        return null;
-    }
+  const handleDismissModal = () => {
+    setShowExpirationModal(false);
+    setModalDismissed(true);
+  };
 
-    return (
-        <>
-            {/* Demo Banner */}
-            {isDemo && <DemoBanner onStartTrialClick={onStartTrial || (() => {})} />}
+  const handleUpgrade = () => {
+    setShowExpirationModal(false);
+    onUpgrade?.();
+  };
 
-            {/* Trial Banner */}
-            {isTrial && !isTrialExpired && (
-                <TrialBanner
-                    daysRemaining={snapshot.trialDaysLeft}
-                    warningLevel={snapshot.warningLevel}
-                    onUpgradeClick={onUpgrade || (() => {})}
-                />
-            )}
+  const handleContactSales = () => {
+    setShowExpirationModal(false);
+    onContactSales?.();
+  };
 
-            {/* Expired Trial Banner */}
-            {isTrial && isTrialExpired && (
-                <TrialBanner daysRemaining={0} warningLevel="expired" onUpgradeClick={onUpgrade || (() => {})} />
-            )}
+  if (loading || !snapshot) {
+    return null;
+  }
 
-            {/* Trial Expiration Modal */}
-            {showExpirationModal && (
-                <TrialExpirationModal
-                    isOpen={showExpirationModal}
-                    onDismiss={handleDismissModal}
-                    onUpgradeClick={handleUpgrade}
-                    onContactSalesClick={handleContactSales}
-                    organizationName=""
-                />
-            )}
-        </>
-    );
+  // PAID orgs see no banners
+  if (snapshot.isPaid) {
+    return null;
+  }
+
+  return (
+    <>
+      {/* Demo Banner */}
+      {isDemo && <DemoBanner onStartTrialClick={onStartTrial || (() => {})} />}
+
+      {/* Trial Banner */}
+      {isTrial && !isTrialExpired && (
+        <TrialBanner
+          daysRemaining={snapshot.trialDaysLeft}
+          warningLevel={snapshot.warningLevel}
+          onUpgradeClick={onUpgrade || (() => {})}
+        />
+      )}
+
+      {/* Expired Trial Banner */}
+      {isTrial && isTrialExpired && (
+        <TrialBanner
+          daysRemaining={0}
+          warningLevel="expired"
+          onUpgradeClick={onUpgrade || (() => {})}
+        />
+      )}
+
+      {/* Trial Expiration Modal */}
+      {showExpirationModal && (
+        <TrialExpirationModal
+          isOpen={showExpirationModal}
+          onDismiss={handleDismissModal}
+          onUpgradeClick={handleUpgrade}
+          onContactSalesClick={handleContactSales}
+          organizationName=""
+        />
+      )}
+    </>
+  );
 };
 
 export default GlobalAccessBanners;

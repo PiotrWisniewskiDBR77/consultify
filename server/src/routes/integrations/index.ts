@@ -25,7 +25,3 @@ router.use('/webhook-subscriptions', webhookSubscriptionsRoutes);
 router.use('/', integrationsRoutes);
 
 export default router;
-
-
-
-

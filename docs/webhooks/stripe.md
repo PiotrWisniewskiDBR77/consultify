@@ -21,27 +21,31 @@ The webhook handler processes Stripe events for subscription lifecycle managemen
 Triggered when a new subscription is created.
 
 **Actions:**
+
 - Record subscription in `organization_billing`
 - Create state transition in `subscription_state_history`
 - Queue welcome email
 - Create admin notification
 
 **Payload Example:**
+
 ```json
 {
-    "id": "sub_xxx",
-    "customer": "cus_xxx",
-    "status": "active",
-    "current_period_start": 1704067200,
-    "current_period_end": 1706745600,
-    "items": {
-        "data": [{
-            "price": {
-                "id": "price_xxx",
-                "nickname": "Pro Plan"
-            }
-        }]
-    }
+  "id": "sub_xxx",
+  "customer": "cus_xxx",
+  "status": "active",
+  "current_period_start": 1704067200,
+  "current_period_end": 1706745600,
+  "items": {
+    "data": [
+      {
+        "price": {
+          "id": "price_xxx",
+          "nickname": "Pro Plan"
+        }
+      }
+    ]
+  }
 }
 ```
 
@@ -50,6 +54,7 @@ Triggered when a new subscription is created.
 Triggered when a subscription is modified (plan change, status change).
 
 **Actions:**
+
 - Update `organization_billing` status and period dates
 - Record state transition if status changed
 - Send notification for significant changes
@@ -59,6 +64,7 @@ Triggered when a subscription is modified (plan change, status change).
 Triggered when a subscription is canceled.
 
 **Actions:**
+
 - Set status to "canceled" in `organization_billing`
 - Record state transition
 - Queue cancellation confirmation email
@@ -73,6 +79,7 @@ Triggered when a subscription is canceled.
 Triggered when a new invoice is created (draft).
 
 **Actions:**
+
 - Record invoice in `invoices` table
 - Queue invoice notification email (if enabled)
 
@@ -81,6 +88,7 @@ Triggered when a new invoice is created (draft).
 Triggered when an invoice is successfully paid.
 
 **Actions:**
+
 - Update invoice status to "paid"
 - Record successful payment attempt
 - Update billing status to "active"
@@ -93,6 +101,7 @@ Triggered when an invoice is successfully paid.
 Triggered when payment fails.
 
 **Actions:**
+
 - Record failed payment attempt with failure reason
 - Update billing status to "past_due"
 - Initialize or advance dunning state
@@ -108,25 +117,27 @@ Triggered when payment fails.
 Triggered when a checkout session is successfully completed.
 
 **Actions:**
+
 - Update `checkout_sessions` record
 - Link Stripe customer to organization
 - Queue welcome email
 - Create success notification
 
 **Payload Example:**
+
 ```json
 {
-    "id": "cs_xxx",
-    "customer": "cus_xxx",
-    "mode": "subscription",
-    "subscription": "sub_xxx",
-    "amount_total": 9900,
-    "customer_email": "user@example.com",
-    "metadata": {
-        "organization_id": "org-xxx",
-        "user_id": "user-xxx",
-        "plan_id": "plan-pro"
-    }
+  "id": "cs_xxx",
+  "customer": "cus_xxx",
+  "mode": "subscription",
+  "subscription": "sub_xxx",
+  "amount_total": 9900,
+  "customer_email": "user@example.com",
+  "metadata": {
+    "organization_id": "org-xxx",
+    "user_id": "user-xxx",
+    "plan_id": "plan-pro"
+  }
 }
 ```
 
@@ -139,6 +150,7 @@ Triggered when a checkout session is successfully completed.
 Triggered when a payment intent is confirmed.
 
 **Actions:**
+
 - Record successful payment attempt
 - Clear dunning state if exists
 
@@ -147,6 +159,7 @@ Triggered when a payment intent is confirmed.
 Triggered when a payment intent fails.
 
 **Actions:**
+
 - Record failed payment attempt with error details
 - Log failure code and reason
 
@@ -159,6 +172,7 @@ Triggered when a payment intent fails.
 Triggered when customer information is updated in Stripe.
 
 **Actions:**
+
 - Sync billing email to `organization_billing`
 - Update tax ID if present in `billing_tax_settings`
 
@@ -171,25 +185,29 @@ Triggered when customer information is updated in Stripe.
 Triggered when a charge is refunded.
 
 **Actions:**
+
 - Record refund in `billing_refunds` table
 - Queue credit note email
 - Create refund notification
 
 **Payload Example:**
+
 ```json
 {
-    "id": "ch_xxx",
-    "customer": "cus_xxx",
-    "amount": 9900,
-    "currency": "usd",
-    "refunds": {
-        "data": [{
-            "id": "re_xxx",
-            "amount": 9900,
-            "status": "succeeded",
-            "reason": "requested_by_customer"
-        }]
-    }
+  "id": "ch_xxx",
+  "customer": "cus_xxx",
+  "amount": 9900,
+  "currency": "usd",
+  "refunds": {
+    "data": [
+      {
+        "id": "re_xxx",
+        "amount": 9900,
+        "status": "succeeded",
+        "reason": "requested_by_customer"
+      }
+    ]
+  }
 }
 ```
 
@@ -198,6 +216,7 @@ Triggered when a charge is refunded.
 Triggered when a dispute (chargeback) is created.
 
 **Actions:**
+
 - Record dispute in `billing_disputes` table
 - Create critical-priority notification for admins
 - Optionally freeze account
@@ -211,6 +230,7 @@ Triggered when a dispute (chargeback) is created.
 Triggered when a Stripe price is updated.
 
 **Actions:**
+
 - Sync pricing to `subscription_plans` table
 - Update monthly or yearly price based on interval
 
@@ -222,7 +242,7 @@ All webhook events are logged with their Stripe event ID in the `stripe_events` 
 
 ```javascript
 if (await isEventProcessed(event.id)) {
-    return res.json({ received: true, skipped: true });
+  return res.json({ received: true, skipped: true });
 }
 ```
 
@@ -236,16 +256,16 @@ When `STRIPE_WEBHOOK_SECRET` is set, all incoming webhooks are verified:
 
 ```javascript
 const event = stripe.webhooks.constructEvent(
-    req.body,
-    req.headers['stripe-signature'],
-    process.env.STRIPE_WEBHOOK_SECRET
+  req.body,
+  req.headers['stripe-signature'],
+  process.env.STRIPE_WEBHOOK_SECRET
 );
 ```
 
 **Important:** The endpoint must receive the raw request body for signature verification to work. This is handled by:
 
 ```javascript
-express.raw({ type: 'application/json' })
+express.raw({ type: 'application/json' });
 ```
 
 ---
@@ -259,6 +279,7 @@ Errors during webhook processing are:
 3. Returned as 500 status to trigger Stripe retry
 
 Stripe will retry failed webhooks with exponential backoff:
+
 - 1 hour
 - 6 hours
 - 24 hours
@@ -331,40 +352,46 @@ curl -X POST http://localhost:3001/webhooks/stripe \
 
 ## Database Tables Used
 
-| Table | Purpose |
-|-------|---------|
-| `stripe_events` | Event logging and idempotency |
-| `organization_billing` | Organization billing status |
-| `subscription_state_history` | State transitions audit |
-| `payment_attempts` | Payment attempt tracking |
-| `dunning_states` | Dunning management |
-| `invoices` | Invoice records |
-| `billing_refunds` | Refund records |
-| `billing_disputes` | Dispute records |
-| `checkout_sessions` | Checkout tracking |
-| `billing_email_queue` | Email queue |
-| `notifications` | Admin notifications |
+| Table                        | Purpose                       |
+| ---------------------------- | ----------------------------- |
+| `stripe_events`              | Event logging and idempotency |
+| `organization_billing`       | Organization billing status   |
+| `subscription_state_history` | State transitions audit       |
+| `payment_attempts`           | Payment attempt tracking      |
+| `dunning_states`             | Dunning management            |
+| `invoices`                   | Invoice records               |
+| `billing_refunds`            | Refund records                |
+| `billing_disputes`           | Dispute records               |
+| `checkout_sessions`          | Checkout tracking             |
+| `billing_email_queue`        | Email queue                   |
+| `notifications`              | Admin notifications           |
 
 ---
 
 ## Helper Functions
 
 ### `getOrgIdFromCustomer(customerId)`
+
 Retrieves organization ID from Stripe customer ID.
 
 ### `logStripeEvent(event, orgId, status, errorMessage)`
+
 Logs event for audit and idempotency.
 
 ### `queueBillingEmail(orgId, templateKey, templateData)`
+
 Queues email for asynchronous sending.
 
 ### `createNotification(orgId, type, title, message, priority)`
+
 Creates in-app notification for organization admins.
 
 ### `recordPaymentAttempt(...)`
+
 Records payment attempt for analytics and debugging.
 
 ### `initializeDunning(orgId, subscriptionId, amountDue)`
+
 Starts dunning process for failed payments.
 
 ---
@@ -377,4 +404,3 @@ Starts dunning process for failed payments.
 4. **Log all events** for audit trail
 5. **Never expose webhook secret** in client-side code
 6. **Validate metadata** before using in database queries
-

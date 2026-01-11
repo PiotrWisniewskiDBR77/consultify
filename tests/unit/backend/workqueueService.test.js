@@ -1,9 +1,9 @@
 /**
  * Workqueue Service Unit Tests
- * 
+ *
  * Comprehensive tests for job queue management and processing.
  * Uses inline implementation to avoid import issues.
- * 
+ *
  * @module tests/unit/backend/workqueueService.test.js
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -16,240 +16,239 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
  * Creates a workqueue service
  */
 const createWorkqueueService = () => {
-    const queues = new Map();
-    const jobs = new Map();
-    const workers = new Map();
-    const completedJobs = [];
-    const failedJobs = [];
-    let jobIdCounter = 0;
+  const queues = new Map();
+  const jobs = new Map();
+  const workers = new Map();
+  const completedJobs = [];
+  const failedJobs = [];
+  let jobIdCounter = 0;
 
-    const generateJobId = () => `job-${++jobIdCounter}-${Date.now()}`;
+  const generateJobId = () => `job-${++jobIdCounter}-${Date.now()}`;
 
-    return {
-        createQueue: (name, options = {}) => {
-            if (queues.has(name)) {
-                throw new Error(`Queue ${name} already exists`);
-            }
+  return {
+    createQueue: (name, options = {}) => {
+      if (queues.has(name)) {
+        throw new Error(`Queue ${name} already exists`);
+      }
 
-            queues.set(name, {
-                name,
-                options: {
-                    concurrency: options.concurrency || 1,
-                    retries: options.retries || 3,
-                    backoff: options.backoff || { type: 'exponential', delay: 1000 },
-                    timeout: options.timeout || 30000,
-                    priority: options.priority || 'normal'
-                },
-                jobs: [],
-                processing: [],
-                paused: false
-            });
-
-            return { name, created: true };
+      queues.set(name, {
+        name,
+        options: {
+          concurrency: options.concurrency || 1,
+          retries: options.retries || 3,
+          backoff: options.backoff || { type: 'exponential', delay: 1000 },
+          timeout: options.timeout || 30000,
+          priority: options.priority || 'normal',
         },
+        jobs: [],
+        processing: [],
+        paused: false,
+      });
 
-        getQueue: (name) => {
-            return queues.get(name) || null;
-        },
+      return { name, created: true };
+    },
 
-        deleteQueue: (name) => {
-            return queues.delete(name);
-        },
+    getQueue: (name) => {
+      return queues.get(name) || null;
+    },
 
-        enqueue: (queueName, data, options = {}) => {
-            const queue = queues.get(queueName);
-            if (!queue) throw new Error(`Queue ${queueName} not found`);
+    deleteQueue: (name) => {
+      return queues.delete(name);
+    },
 
-            const jobId = generateJobId();
-            const job = {
-                id: jobId,
-                queue: queueName,
-                data,
-                status: 'pending',
-                priority: options.priority || 0,
-                attempts: 0,
-                maxAttempts: options.retries !== undefined ? options.retries : queue.options.retries,
-                createdAt: new Date().toISOString(),
-                scheduledFor: options.delay ? new Date(Date.now() + options.delay).toISOString() : null,
-                error: null,
-                result: null
-            };
+    enqueue: (queueName, data, options = {}) => {
+      const queue = queues.get(queueName);
+      if (!queue) throw new Error(`Queue ${queueName} not found`);
 
-            jobs.set(jobId, job);
+      const jobId = generateJobId();
+      const job = {
+        id: jobId,
+        queue: queueName,
+        data,
+        status: 'pending',
+        priority: options.priority || 0,
+        attempts: 0,
+        maxAttempts: options.retries !== undefined ? options.retries : queue.options.retries,
+        createdAt: new Date().toISOString(),
+        scheduledFor: options.delay ? new Date(Date.now() + options.delay).toISOString() : null,
+        error: null,
+        result: null,
+      };
 
-            // Insert by priority (higher priority first)
-            const insertIndex = queue.jobs.findIndex(j => (jobs.get(j)?.priority || 0) < job.priority);
-            if (insertIndex === -1) {
-                queue.jobs.push(jobId);
-            } else {
-                queue.jobs.splice(insertIndex, 0, jobId);
-            }
+      jobs.set(jobId, job);
 
-            return job;
-        },
+      // Insert by priority (higher priority first)
+      const insertIndex = queue.jobs.findIndex((j) => (jobs.get(j)?.priority || 0) < job.priority);
+      if (insertIndex === -1) {
+        queue.jobs.push(jobId);
+      } else {
+        queue.jobs.splice(insertIndex, 0, jobId);
+      }
 
-        getJob: (jobId) => {
-            return jobs.get(jobId) || null;
-        },
+      return job;
+    },
 
-        cancelJob: (jobId) => {
-            const job = jobs.get(jobId);
-            if (!job) return { success: false, error: 'Job not found' };
-            if (job.status === 'processing') {
-                return { success: false, error: 'Cannot cancel processing job' };
-            }
+    getJob: (jobId) => {
+      return jobs.get(jobId) || null;
+    },
 
-            job.status = 'cancelled';
-            job.cancelledAt = new Date().toISOString();
+    cancelJob: (jobId) => {
+      const job = jobs.get(jobId);
+      if (!job) return { success: false, error: 'Job not found' };
+      if (job.status === 'processing') {
+        return { success: false, error: 'Cannot cancel processing job' };
+      }
 
-            const queue = queues.get(job.queue);
-            if (queue) {
-                queue.jobs = queue.jobs.filter(id => id !== jobId);
-            }
+      job.status = 'cancelled';
+      job.cancelledAt = new Date().toISOString();
 
-            return { success: true };
-        },
+      const queue = queues.get(job.queue);
+      if (queue) {
+        queue.jobs = queue.jobs.filter((id) => id !== jobId);
+      }
 
-        retryJob: (jobId) => {
-            const job = jobs.get(jobId);
-            if (!job) return { success: false, error: 'Job not found' };
-            if (job.status !== 'failed') {
-                return { success: false, error: 'Only failed jobs can be retried' };
-            }
+      return { success: true };
+    },
 
-            job.status = 'pending';
-            job.attempts = 0;
-            job.error = null;
-            job.retriedAt = new Date().toISOString();
+    retryJob: (jobId) => {
+      const job = jobs.get(jobId);
+      if (!job) return { success: false, error: 'Job not found' };
+      if (job.status !== 'failed') {
+        return { success: false, error: 'Only failed jobs can be retried' };
+      }
 
-            const queue = queues.get(job.queue);
-            if (queue) {
-                queue.jobs.push(jobId);
-            }
+      job.status = 'pending';
+      job.attempts = 0;
+      job.error = null;
+      job.retriedAt = new Date().toISOString();
 
-            return { success: true };
-        },
+      const queue = queues.get(job.queue);
+      if (queue) {
+        queue.jobs.push(jobId);
+      }
 
-        processJob: async (jobId, handler) => {
-            const job = jobs.get(jobId);
-            if (!job) throw new Error('Job not found');
+      return { success: true };
+    },
 
-            job.status = 'processing';
-            job.startedAt = new Date().toISOString();
-            job.attempts++;
+    processJob: async (jobId, handler) => {
+      const job = jobs.get(jobId);
+      if (!job) throw new Error('Job not found');
 
-            try {
-                const result = await handler(job.data);
-                job.status = 'completed';
-                job.result = result;
-                job.completedAt = new Date().toISOString();
-                completedJobs.push(jobId);
-                return { success: true, result };
-            } catch (error) {
-                job.error = error.message;
+      job.status = 'processing';
+      job.startedAt = new Date().toISOString();
+      job.attempts++;
 
-                if (job.attempts < job.maxAttempts) {
-                    job.status = 'pending'; // Will be retried
-                    job.nextAttemptAt = new Date(Date.now() + 1000 * Math.pow(2, job.attempts)).toISOString();
-                } else {
-                    job.status = 'failed';
-                    job.failedAt = new Date().toISOString();
-                    failedJobs.push(jobId);
-                }
+      try {
+        const result = await handler(job.data);
+        job.status = 'completed';
+        job.result = result;
+        job.completedAt = new Date().toISOString();
+        completedJobs.push(jobId);
+        return { success: true, result };
+      } catch (error) {
+        job.error = error.message;
 
-                return { success: false, error: error.message };
-            }
-        },
+        if (job.attempts < job.maxAttempts) {
+          job.status = 'pending'; // Will be retried
+          job.nextAttemptAt = new Date(Date.now() + 1000 * Math.pow(2, job.attempts)).toISOString();
+        } else {
+          job.status = 'failed';
+          job.failedAt = new Date().toISOString();
+          failedJobs.push(jobId);
+        }
 
-        pauseQueue: (queueName) => {
-            const queue = queues.get(queueName);
-            if (!queue) return { success: false, error: 'Queue not found' };
+        return { success: false, error: error.message };
+      }
+    },
 
-            queue.paused = true;
-            return { success: true };
-        },
+    pauseQueue: (queueName) => {
+      const queue = queues.get(queueName);
+      if (!queue) return { success: false, error: 'Queue not found' };
 
-        resumeQueue: (queueName) => {
-            const queue = queues.get(queueName);
-            if (!queue) return { success: false, error: 'Queue not found' };
+      queue.paused = true;
+      return { success: true };
+    },
 
-            queue.paused = false;
-            return { success: true };
-        },
+    resumeQueue: (queueName) => {
+      const queue = queues.get(queueName);
+      if (!queue) return { success: false, error: 'Queue not found' };
 
-        getQueueStats: (queueName) => {
-            const queue = queues.get(queueName);
-            if (!queue) return null;
+      queue.paused = false;
+      return { success: true };
+    },
 
-            const queueJobs = queue.jobs.map(id => jobs.get(id)).filter(Boolean);
+    getQueueStats: (queueName) => {
+      const queue = queues.get(queueName);
+      if (!queue) return null;
 
-            return {
-                name: queueName,
-                paused: queue.paused,
-                waiting: queueJobs.filter(j => j.status === 'pending').length,
-                processing: queue.processing.length,
-                completed: completedJobs.filter(id => jobs.get(id)?.queue === queueName).length,
-                failed: failedJobs.filter(id => jobs.get(id)?.queue === queueName).length,
-                total: queueJobs.length
-            };
-        },
+      const queueJobs = queue.jobs.map((id) => jobs.get(id)).filter(Boolean);
 
-        getNextJob: (queueName) => {
-            const queue = queues.get(queueName);
-            if (!queue || queue.paused) return null;
+      return {
+        name: queueName,
+        paused: queue.paused,
+        waiting: queueJobs.filter((j) => j.status === 'pending').length,
+        processing: queue.processing.length,
+        completed: completedJobs.filter((id) => jobs.get(id)?.queue === queueName).length,
+        failed: failedJobs.filter((id) => jobs.get(id)?.queue === queueName).length,
+        total: queueJobs.length,
+      };
+    },
 
-            const pendingJobId = queue.jobs.find(id => {
-                const job = jobs.get(id);
-                if (!job || job.status !== 'pending') return false;
-                if (job.scheduledFor && new Date(job.scheduledFor) > new Date()) return false;
-                return true;
-            });
+    getNextJob: (queueName) => {
+      const queue = queues.get(queueName);
+      if (!queue || queue.paused) return null;
 
-            return pendingJobId ? jobs.get(pendingJobId) : null;
-        },
+      const pendingJobId = queue.jobs.find((id) => {
+        const job = jobs.get(id);
+        if (!job || job.status !== 'pending') return false;
+        if (job.scheduledFor && new Date(job.scheduledFor) > new Date()) return false;
+        return true;
+      });
 
-        cleanCompleted: (olderThanMs = 3600000) => {
-            const cutoff = Date.now() - olderThanMs;
-            let cleaned = 0;
+      return pendingJobId ? jobs.get(pendingJobId) : null;
+    },
 
-            completedJobs.forEach(jobId => {
-                const job = jobs.get(jobId);
-                if (job && new Date(job.completedAt).getTime() < cutoff) {
-                    jobs.delete(jobId);
-                    cleaned++;
-                }
-            });
+    cleanCompleted: (olderThanMs = 3600000) => {
+      const cutoff = Date.now() - olderThanMs;
+      let cleaned = 0;
 
-            return { cleaned };
-        },
+      completedJobs.forEach((jobId) => {
+        const job = jobs.get(jobId);
+        if (job && new Date(job.completedAt).getTime() < cutoff) {
+          jobs.delete(jobId);
+          cleaned++;
+        }
+      });
 
-        registerWorker: (queueName, handler, options = {}) => {
-            const workerId = `worker-${queueName}-${Date.now()}`;
-            workers.set(workerId, {
-                id: workerId,
-                queue: queueName,
-                handler,
-                options,
-                status: 'idle',
-                processedCount: 0
-            });
-            return workerId;
-        },
+      return { cleaned };
+    },
 
-        unregisterWorker: (workerId) => {
-            return workers.delete(workerId);
-        },
+    registerWorker: (queueName, handler, options = {}) => {
+      const workerId = `worker-${queueName}-${Date.now()}`;
+      workers.set(workerId, {
+        id: workerId,
+        queue: queueName,
+        handler,
+        options,
+        status: 'idle',
+        processedCount: 0,
+      });
+      return workerId;
+    },
 
-        getWorkers: (queueName) => {
-            return Array.from(workers.values())
-                .filter(w => !queueName || w.queue === queueName);
-        },
+    unregisterWorker: (workerId) => {
+      return workers.delete(workerId);
+    },
 
-        getAllQueues: () => Array.from(queues.keys()),
+    getWorkers: (queueName) => {
+      return Array.from(workers.values()).filter((w) => !queueName || w.queue === queueName);
+    },
 
-        getCompletedJobs: () => completedJobs.map(id => jobs.get(id)).filter(Boolean),
-        getFailedJobs: () => failedJobs.map(id => jobs.get(id)).filter(Boolean)
-    };
+    getAllQueues: () => Array.from(queues.keys()),
+
+    getCompletedJobs: () => completedJobs.map((id) => jobs.get(id)).filter(Boolean),
+    getFailedJobs: () => failedJobs.map((id) => jobs.get(id)).filter(Boolean),
+  };
 };
 
 // ============================================
@@ -257,301 +256,307 @@ const createWorkqueueService = () => {
 // ============================================
 
 describe('WorkqueueService', () => {
-    let workqueue;
+  let workqueue;
 
+  beforeEach(() => {
+    workqueue = createWorkqueueService();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe('createQueue()', () => {
+    it('should create new queue', () => {
+      const result = workqueue.createQueue('emails');
+
+      expect(result.name).toBe('emails');
+      expect(result.created).toBe(true);
+    });
+
+    it('should create queue with options', () => {
+      workqueue.createQueue('heavy', {
+        concurrency: 5,
+        retries: 5,
+        timeout: 60000,
+      });
+
+      const queue = workqueue.getQueue('heavy');
+      expect(queue.options.concurrency).toBe(5);
+      expect(queue.options.retries).toBe(5);
+    });
+
+    it('should throw for duplicate queue', () => {
+      workqueue.createQueue('test');
+
+      expect(() => workqueue.createQueue('test')).toThrow('Queue test already exists');
+    });
+  });
+
+  describe('enqueue()', () => {
     beforeEach(() => {
-        workqueue = createWorkqueueService();
-        vi.useFakeTimers();
+      workqueue.createQueue('tasks');
     });
 
-    afterEach(() => {
-        vi.useRealTimers();
+    it('should add job to queue', () => {
+      const job = workqueue.enqueue('tasks', { action: 'send-email' });
+
+      expect(job.id).toBeDefined();
+      expect(job.status).toBe('pending');
+      expect(job.data.action).toBe('send-email');
     });
 
-    describe('createQueue()', () => {
-        it('should create new queue', () => {
-            const result = workqueue.createQueue('emails');
-
-            expect(result.name).toBe('emails');
-            expect(result.created).toBe(true);
-        });
-
-        it('should create queue with options', () => {
-            workqueue.createQueue('heavy', {
-                concurrency: 5,
-                retries: 5,
-                timeout: 60000
-            });
-
-            const queue = workqueue.getQueue('heavy');
-            expect(queue.options.concurrency).toBe(5);
-            expect(queue.options.retries).toBe(5);
-        });
-
-        it('should throw for duplicate queue', () => {
-            workqueue.createQueue('test');
-
-            expect(() => workqueue.createQueue('test'))
-                .toThrow('Queue test already exists');
-        });
+    it('should throw for non-existent queue', () => {
+      expect(() => workqueue.enqueue('nonexistent', {})).toThrow('Queue nonexistent not found');
     });
 
-    describe('enqueue()', () => {
-        beforeEach(() => {
-            workqueue.createQueue('tasks');
-        });
+    it('should order by priority', () => {
+      workqueue.enqueue('tasks', { name: 'low' }, { priority: 1 });
+      workqueue.enqueue('tasks', { name: 'high' }, { priority: 10 });
+      workqueue.enqueue('tasks', { name: 'medium' }, { priority: 5 });
 
-        it('should add job to queue', () => {
-            const job = workqueue.enqueue('tasks', { action: 'send-email' });
-
-            expect(job.id).toBeDefined();
-            expect(job.status).toBe('pending');
-            expect(job.data.action).toBe('send-email');
-        });
-
-        it('should throw for non-existent queue', () => {
-            expect(() => workqueue.enqueue('nonexistent', {}))
-                .toThrow('Queue nonexistent not found');
-        });
-
-        it('should order by priority', () => {
-            workqueue.enqueue('tasks', { name: 'low' }, { priority: 1 });
-            workqueue.enqueue('tasks', { name: 'high' }, { priority: 10 });
-            workqueue.enqueue('tasks', { name: 'medium' }, { priority: 5 });
-
-            const next = workqueue.getNextJob('tasks');
-            expect(next.data.name).toBe('high');
-        });
-
-        it('should schedule delayed jobs', () => {
-            const job = workqueue.enqueue('tasks', { action: 'future' }, { delay: 5000 });
-
-            expect(job.scheduledFor).toBeDefined();
-
-            // Job should not be available yet
-            const next = workqueue.getNextJob('tasks');
-            expect(next).toBeNull();
-
-            // Advance time
-            vi.advanceTimersByTime(6000);
-            const nextAfterDelay = workqueue.getNextJob('tasks');
-            expect(nextAfterDelay.data.action).toBe('future');
-        });
+      const next = workqueue.getNextJob('tasks');
+      expect(next.data.name).toBe('high');
     });
 
-    describe('processJob()', () => {
-        beforeEach(() => {
-            workqueue.createQueue('processing');
-        });
+    it('should schedule delayed jobs', () => {
+      const job = workqueue.enqueue('tasks', { action: 'future' }, { delay: 5000 });
 
-        it('should process job successfully', async () => {
-            const job = workqueue.enqueue('processing', { value: 10 });
+      expect(job.scheduledFor).toBeDefined();
 
-            const result = await workqueue.processJob(job.id, async (data) => {
-                return data.value * 2;
-            });
+      // Job should not be available yet
+      const next = workqueue.getNextJob('tasks');
+      expect(next).toBeNull();
 
-            expect(result.success).toBe(true);
-            expect(result.result).toBe(20);
+      // Advance time
+      vi.advanceTimersByTime(6000);
+      const nextAfterDelay = workqueue.getNextJob('tasks');
+      expect(nextAfterDelay.data.action).toBe('future');
+    });
+  });
 
-            const updatedJob = workqueue.getJob(job.id);
-            expect(updatedJob.status).toBe('completed');
-        });
-
-        it('should handle job failure', async () => {
-            const job = workqueue.enqueue('processing', { willFail: true });
-
-            const result = await workqueue.processJob(job.id, async () => {
-                throw new Error('Process failed');
-            });
-
-            expect(result.success).toBe(false);
-            expect(result.error).toBe('Process failed');
-        });
-
-        it('should retry failed jobs', async () => {
-            const job = workqueue.enqueue('processing', {}, { retries: 2 });
-
-            // First failure
-            await workqueue.processJob(job.id, async () => {
-                throw new Error('Fail 1');
-            });
-
-            const afterFirst = workqueue.getJob(job.id);
-            expect(afterFirst.status).toBe('pending'); // Will retry
-            expect(afterFirst.attempts).toBe(1);
-        });
-
-        it('should mark job as failed after max retries', async () => {
-            const job = workqueue.enqueue('processing', {}, { retries: 1 });
-
-            // First attempt
-            await workqueue.processJob(job.id, async () => { throw new Error('Fail'); });
-
-            // Second attempt (last)
-            await workqueue.processJob(job.id, async () => { throw new Error('Fail again'); });
-
-            const finalJob = workqueue.getJob(job.id);
-            expect(finalJob.status).toBe('failed');
-            expect(finalJob.attempts).toBe(2);
-        });
+  describe('processJob()', () => {
+    beforeEach(() => {
+      workqueue.createQueue('processing');
     });
 
-    describe('cancelJob()', () => {
-        beforeEach(() => {
-            workqueue.createQueue('cancellable');
-        });
+    it('should process job successfully', async () => {
+      const job = workqueue.enqueue('processing', { value: 10 });
 
-        it('should cancel pending job', () => {
-            const job = workqueue.enqueue('cancellable', {});
+      const result = await workqueue.processJob(job.id, async (data) => {
+        return data.value * 2;
+      });
 
-            const result = workqueue.cancelJob(job.id);
+      expect(result.success).toBe(true);
+      expect(result.result).toBe(20);
 
-            expect(result.success).toBe(true);
-            expect(workqueue.getJob(job.id).status).toBe('cancelled');
-        });
-
-        it('should not cancel non-existent job', () => {
-            const result = workqueue.cancelJob('fake-id');
-            expect(result.success).toBe(false);
-        });
+      const updatedJob = workqueue.getJob(job.id);
+      expect(updatedJob.status).toBe('completed');
     });
 
-    describe('retryJob()', () => {
-        beforeEach(() => {
-            workqueue.createQueue('retryable');
-        });
+    it('should handle job failure', async () => {
+      const job = workqueue.enqueue('processing', { willFail: true });
 
-        it('should retry failed job', async () => {
-            const job = workqueue.enqueue('retryable', {}, { retries: 0 });
+      const result = await workqueue.processJob(job.id, async () => {
+        throw new Error('Process failed');
+      });
 
-            await workqueue.processJob(job.id, async () => { throw new Error('Fail'); });
-            expect(workqueue.getJob(job.id).status).toBe('failed');
-
-            const result = workqueue.retryJob(job.id);
-            expect(result.success).toBe(true);
-            expect(workqueue.getJob(job.id).status).toBe('pending');
-        });
-
-        it('should only retry failed jobs', () => {
-            const job = workqueue.enqueue('retryable', {});
-
-            const result = workqueue.retryJob(job.id);
-            expect(result.success).toBe(false);
-        });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Process failed');
     });
 
-    describe('pauseQueue() / resumeQueue()', () => {
-        beforeEach(() => {
-            workqueue.createQueue('pausable');
-        });
+    it('should retry failed jobs', async () => {
+      const job = workqueue.enqueue('processing', {}, { retries: 2 });
 
-        it('should pause and resume queue', () => {
-            workqueue.enqueue('pausable', { data: 1 });
+      // First failure
+      await workqueue.processJob(job.id, async () => {
+        throw new Error('Fail 1');
+      });
 
-            workqueue.pauseQueue('pausable');
-            expect(workqueue.getNextJob('pausable')).toBeNull();
-
-            workqueue.resumeQueue('pausable');
-            expect(workqueue.getNextJob('pausable')).toBeDefined();
-        });
+      const afterFirst = workqueue.getJob(job.id);
+      expect(afterFirst.status).toBe('pending'); // Will retry
+      expect(afterFirst.attempts).toBe(1);
     });
 
-    describe('getQueueStats()', () => {
-        beforeEach(() => {
-            workqueue.createQueue('stats-queue');
-        });
+    it('should mark job as failed after max retries', async () => {
+      const job = workqueue.enqueue('processing', {}, { retries: 1 });
 
-        it('should return queue statistics', async () => {
-            workqueue.enqueue('stats-queue', {});
-            workqueue.enqueue('stats-queue', {});
-            const job3 = workqueue.enqueue('stats-queue', {});
+      // First attempt
+      await workqueue.processJob(job.id, async () => {
+        throw new Error('Fail');
+      });
 
-            await workqueue.processJob(job3.id, async () => 'done');
+      // Second attempt (last)
+      await workqueue.processJob(job.id, async () => {
+        throw new Error('Fail again');
+      });
 
-            const stats = workqueue.getQueueStats('stats-queue');
+      const finalJob = workqueue.getJob(job.id);
+      expect(finalJob.status).toBe('failed');
+      expect(finalJob.attempts).toBe(2);
+    });
+  });
 
-            expect(stats.waiting).toBe(2);
-            expect(stats.completed).toBe(1);
-            expect(stats.total).toBe(3);
-        });
-
-        it('should return null for non-existent queue', () => {
-            expect(workqueue.getQueueStats('fake')).toBeNull();
-        });
+  describe('cancelJob()', () => {
+    beforeEach(() => {
+      workqueue.createQueue('cancellable');
     });
 
-    describe('Workers', () => {
-        beforeEach(() => {
-            workqueue.createQueue('worker-queue');
-        });
+    it('should cancel pending job', () => {
+      const job = workqueue.enqueue('cancellable', {});
 
-        it('should register worker', () => {
-            const workerId = workqueue.registerWorker('worker-queue', async () => { });
+      const result = workqueue.cancelJob(job.id);
 
-            expect(workerId).toBeDefined();
-            expect(workqueue.getWorkers('worker-queue')).toHaveLength(1);
-        });
-
-        it('should unregister worker', () => {
-            const workerId = workqueue.registerWorker('worker-queue', async () => { });
-
-            workqueue.unregisterWorker(workerId);
-            expect(workqueue.getWorkers('worker-queue')).toHaveLength(0);
-        });
+      expect(result.success).toBe(true);
+      expect(workqueue.getJob(job.id).status).toBe('cancelled');
     });
 
-    describe('cleanCompleted()', () => {
-        beforeEach(() => {
-            workqueue.createQueue('cleanable');
-        });
+    it('should not cancel non-existent job', () => {
+      const result = workqueue.cancelJob('fake-id');
+      expect(result.success).toBe(false);
+    });
+  });
 
-        it('should clean old completed jobs', async () => {
-            const job = workqueue.enqueue('cleanable', {});
-            await workqueue.processJob(job.id, async () => 'done');
-
-            vi.advanceTimersByTime(7200000); // 2 hours
-
-            const result = workqueue.cleanCompleted(3600000); // 1 hour
-            expect(result.cleaned).toBe(1);
-        });
+  describe('retryJob()', () => {
+    beforeEach(() => {
+      workqueue.createQueue('retryable');
     });
 
-    describe('getAllQueues()', () => {
-        it('should list all queues', () => {
-            workqueue.createQueue('queue-a');
-            workqueue.createQueue('queue-b');
-            workqueue.createQueue('queue-c');
+    it('should retry failed job', async () => {
+      const job = workqueue.enqueue('retryable', {}, { retries: 0 });
 
-            const queues = workqueue.getAllQueues();
+      await workqueue.processJob(job.id, async () => {
+        throw new Error('Fail');
+      });
+      expect(workqueue.getJob(job.id).status).toBe('failed');
 
-            expect(queues).toContain('queue-a');
-            expect(queues).toContain('queue-b');
-            expect(queues).toContain('queue-c');
-        });
+      const result = workqueue.retryJob(job.id);
+      expect(result.success).toBe(true);
+      expect(workqueue.getJob(job.id).status).toBe('pending');
     });
 
-    describe('getCompletedJobs() / getFailedJobs()', () => {
-        beforeEach(() => {
-            workqueue.createQueue('results');
-        });
+    it('should only retry failed jobs', () => {
+      const job = workqueue.enqueue('retryable', {});
 
-        it('should return completed jobs', async () => {
-            const job = workqueue.enqueue('results', {});
-            await workqueue.processJob(job.id, async () => 'success');
-
-            const completed = workqueue.getCompletedJobs();
-            expect(completed).toHaveLength(1);
-            expect(completed[0].status).toBe('completed');
-        });
-
-        it('should return failed jobs', async () => {
-            const job = workqueue.enqueue('results', {}, { retries: 0 });
-            await workqueue.processJob(job.id, async () => { throw new Error('fail'); });
-
-            const failed = workqueue.getFailedJobs();
-            expect(failed).toHaveLength(1);
-            expect(failed[0].status).toBe('failed');
-        });
+      const result = workqueue.retryJob(job.id);
+      expect(result.success).toBe(false);
     });
+  });
+
+  describe('pauseQueue() / resumeQueue()', () => {
+    beforeEach(() => {
+      workqueue.createQueue('pausable');
+    });
+
+    it('should pause and resume queue', () => {
+      workqueue.enqueue('pausable', { data: 1 });
+
+      workqueue.pauseQueue('pausable');
+      expect(workqueue.getNextJob('pausable')).toBeNull();
+
+      workqueue.resumeQueue('pausable');
+      expect(workqueue.getNextJob('pausable')).toBeDefined();
+    });
+  });
+
+  describe('getQueueStats()', () => {
+    beforeEach(() => {
+      workqueue.createQueue('stats-queue');
+    });
+
+    it('should return queue statistics', async () => {
+      workqueue.enqueue('stats-queue', {});
+      workqueue.enqueue('stats-queue', {});
+      const job3 = workqueue.enqueue('stats-queue', {});
+
+      await workqueue.processJob(job3.id, async () => 'done');
+
+      const stats = workqueue.getQueueStats('stats-queue');
+
+      expect(stats.waiting).toBe(2);
+      expect(stats.completed).toBe(1);
+      expect(stats.total).toBe(3);
+    });
+
+    it('should return null for non-existent queue', () => {
+      expect(workqueue.getQueueStats('fake')).toBeNull();
+    });
+  });
+
+  describe('Workers', () => {
+    beforeEach(() => {
+      workqueue.createQueue('worker-queue');
+    });
+
+    it('should register worker', () => {
+      const workerId = workqueue.registerWorker('worker-queue', async () => {});
+
+      expect(workerId).toBeDefined();
+      expect(workqueue.getWorkers('worker-queue')).toHaveLength(1);
+    });
+
+    it('should unregister worker', () => {
+      const workerId = workqueue.registerWorker('worker-queue', async () => {});
+
+      workqueue.unregisterWorker(workerId);
+      expect(workqueue.getWorkers('worker-queue')).toHaveLength(0);
+    });
+  });
+
+  describe('cleanCompleted()', () => {
+    beforeEach(() => {
+      workqueue.createQueue('cleanable');
+    });
+
+    it('should clean old completed jobs', async () => {
+      const job = workqueue.enqueue('cleanable', {});
+      await workqueue.processJob(job.id, async () => 'done');
+
+      vi.advanceTimersByTime(7200000); // 2 hours
+
+      const result = workqueue.cleanCompleted(3600000); // 1 hour
+      expect(result.cleaned).toBe(1);
+    });
+  });
+
+  describe('getAllQueues()', () => {
+    it('should list all queues', () => {
+      workqueue.createQueue('queue-a');
+      workqueue.createQueue('queue-b');
+      workqueue.createQueue('queue-c');
+
+      const queues = workqueue.getAllQueues();
+
+      expect(queues).toContain('queue-a');
+      expect(queues).toContain('queue-b');
+      expect(queues).toContain('queue-c');
+    });
+  });
+
+  describe('getCompletedJobs() / getFailedJobs()', () => {
+    beforeEach(() => {
+      workqueue.createQueue('results');
+    });
+
+    it('should return completed jobs', async () => {
+      const job = workqueue.enqueue('results', {});
+      await workqueue.processJob(job.id, async () => 'success');
+
+      const completed = workqueue.getCompletedJobs();
+      expect(completed).toHaveLength(1);
+      expect(completed[0].status).toBe('completed');
+    });
+
+    it('should return failed jobs', async () => {
+      const job = workqueue.enqueue('results', {}, { retries: 0 });
+      await workqueue.processJob(job.id, async () => {
+        throw new Error('fail');
+      });
+
+      const failed = workqueue.getFailedJobs();
+      expect(failed).toHaveLength(1);
+      expect(failed[0].status).toBe('failed');
+    });
+  });
 });

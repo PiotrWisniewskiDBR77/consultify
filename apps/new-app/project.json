@@ -19,10 +19,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
-        "commands": [
-          "npm run dev -w apps/new-app/backend",
-          "npm run dev -w apps/new-app/frontend"
-        ],
+        "commands": ["npm run dev -w apps/new-app/backend", "npm run dev -w apps/new-app/frontend"],
         "parallel": true
       }
     },
@@ -38,15 +35,3 @@
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-

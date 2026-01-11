@@ -9,6 +9,7 @@
 ## Executive Summary
 
 This document inventories the Consultinity codebase to prepare for forking into:
+
 1. **Shared Core Library** - Reusable across multiple applications
 2. **Consultinity Application** - PMO/Digital Transformation specific
 3. **New Application** - Future fork with different business domain
@@ -19,13 +20,13 @@ This document inventories the Consultinity codebase to prepare for forking into:
 
 ### Total Codebase Statistics
 
-| Category | Files | Lines (Est.) | Classification |
-|----------|-------|--------------|----------------|
-| Backend TypeScript | 877 | ~150K | Mixed |
-| Frontend Components | 717 | ~100K | Mixed |
-| Types & Schemas | 30 | ~5K | Mostly Shared |
-| SQL Migrations | 138 | ~10K | Split Required |
-| Tests | 765 | ~80K | Split Required |
+| Category            | Files | Lines (Est.) | Classification |
+| ------------------- | ----- | ------------ | -------------- |
+| Backend TypeScript  | 877   | ~150K        | Mixed          |
+| Frontend Components | 717   | ~100K        | Mixed          |
+| Types & Schemas     | 30    | ~5K          | Mostly Shared  |
+| SQL Migrations      | 138   | ~10K         | Split Required |
+| Tests               | 765   | ~80K         | Split Required |
 
 ---
 
@@ -34,6 +35,7 @@ This document inventories the Consultinity codebase to prepare for forking into:
 ### 1.1 Authentication & Authorization
 
 **Services (Shared):**
+
 ```
 server/src/services/
 ├── RefreshTokenService.ts       ✅ Generic JWT refresh
@@ -49,6 +51,7 @@ server/src/services/
 ```
 
 **Middleware (Shared):**
+
 ```
 server/src/middleware/
 ├── auth.middleware.ts           ✅ JWT authentication
@@ -60,6 +63,7 @@ server/src/middleware/
 ```
 
 **Types/Schemas (Shared):**
+
 ```
 schemas/
 ├── auth.schema.ts               ✅ Auth validation
@@ -75,6 +79,7 @@ types/
 ### 1.2 Database Abstraction Layer
 
 **Fully Shared:**
+
 ```
 server/src/database/
 ├── IDatabase.ts                 ✅ Interface contract
@@ -84,6 +89,7 @@ server/src/database/
 ```
 
 **Utilities (Shared):**
+
 ```
 server/src/utils/
 ├── DbPromise.ts                 ✅ Promise wrapper
@@ -95,6 +101,7 @@ server/src/utils/
 ### 1.3 AI Core Infrastructure
 
 **Shared AI Services:**
+
 ```
 server/src/services/ai/
 ├── llmService.ts                ✅ LLM provider abstraction
@@ -112,6 +119,7 @@ server/src/services/ai/
 ```
 
 **AI Types (Shared):**
+
 ```
 server/src/types/ai.types.ts     ✅ AI type definitions
 types/AIContract.ts              ✅ AI contract types
@@ -122,6 +130,7 @@ schemas/ai.schema.ts             ⚠️ Some PMO-specific
 ### 1.4 Billing & Payments
 
 **Services (Shared):**
+
 ```
 server/src/services/
 ├── BillingService.ts            ✅ Core billing
@@ -137,6 +146,7 @@ server/src/services/
 ```
 
 **Types/Schemas (Shared):**
+
 ```
 schemas/billing.schema.ts        ✅ Billing validation
 types/domain/billing.ts          ✅ Billing types
@@ -145,6 +155,7 @@ types/domain/billing.ts          ✅ Billing types
 ### 1.5 Communication Services
 
 **Services (Shared):**
+
 ```
 server/src/services/
 ├── emailService.ts              ✅ Email sending
@@ -161,6 +172,7 @@ server/src/services/
 ### 1.6 Infrastructure & Utilities
 
 **Utils (Shared):**
+
 ```
 server/src/utils/
 ├── Logger.ts                    ✅ Winston logger
@@ -177,6 +189,7 @@ server/src/utils/
 ```
 
 **Cron Infrastructure (Shared):**
+
 ```
 server/src/cron/
 ├── Scheduler.ts                 ⚠️ Needs abstraction
@@ -192,6 +205,7 @@ server/src/cron/
 ### 2.1 PMO Module
 
 **Services (Consultinity Only):**
+
 ```
 server/src/services/
 ├── pmoHealthService.ts          🔵 PMO health dashboard
@@ -208,6 +222,7 @@ server/src/services/
 ```
 
 **AI PMO Extensions:**
+
 ```
 server/src/services/
 ├── aiDecisionGovernance.ts      🔵 AI decision tracking
@@ -220,6 +235,7 @@ server/src/services/
 ```
 
 **Routes (Consultinity Only):**
+
 ```
 server/src/routes/
 ├── pmo.routes.ts
@@ -236,6 +252,7 @@ server/src/routes/
 ### 2.2 Assessment Module (DRD Methodology)
 
 **Services (Consultinity Only):**
+
 ```
 server/src/services/
 ├── assessmentService.ts         🔵 Core assessment
@@ -258,6 +275,7 @@ server/src/services/
 ```
 
 **AI Assessment Extensions:**
+
 ```
 server/src/services/
 ├── aiAssessmentFormHelper.ts    🔵 Form assistance
@@ -267,6 +285,7 @@ server/src/services/
 ```
 
 **Routes (Consultinity Only):**
+
 ```
 server/src/routes/
 ├── assessment.routes.ts
@@ -282,6 +301,7 @@ server/src/routes/
 ### 2.3 Initiative Management
 
 **Services (Consultinity Only):**
+
 ```
 server/src/services/
 ├── initiativeService.ts         🔵 Core initiatives
@@ -298,6 +318,7 @@ server/src/services/
 ```
 
 **Routes (Consultinity Only):**
+
 ```
 server/src/routes/
 ├── initiatives.routes.ts
@@ -313,6 +334,7 @@ server/src/routes/
 ### 2.4 Consulting-Specific Features
 
 **Services (Consultinity Only):**
+
 ```
 server/src/services/
 ├── consultantService.ts         🔵 Consultant management
@@ -334,6 +356,7 @@ server/src/services/
 ### 3.1 Project Management (Abstractable)
 
 **Services (Can Be Shared with Abstraction):**
+
 ```
 server/src/services/
 ├── TaskService.ts               ⚠️ Can be generic
@@ -352,6 +375,7 @@ server/src/services/
 ### 3.2 Reporting Framework (Abstractable)
 
 **Services (Can Be Shared):**
+
 ```
 server/src/services/
 ├── reportService.ts             ⚠️ Can be generic
@@ -370,6 +394,7 @@ server/src/services/
 ### 3.3 Analytics Framework (Abstractable)
 
 **Services (Can Be Shared):**
+
 ```
 server/src/services/
 ├── analyticsService.ts          ⚠️ Can be generic
@@ -384,6 +409,7 @@ server/src/services/
 ### 3.4 Help & Support System (Abstractable)
 
 **Services (Can Be Shared):**
+
 ```
 server/src/services/
 ├── helpService.ts               ⚠️ Can be generic
@@ -663,31 +689,29 @@ graph TB
 
 ### High Risk Areas
 
-| Area | Risk | Mitigation |
-|------|------|------------|
-| Database Schema Split | Data integrity | Careful migration scripts |
-| AI Context | Loss of PMO context | Clear interface definitions |
-| Session Management | Auth conflicts | Shared token service |
-| Feature Flags | Flag naming conflicts | Namespace prefixes |
+| Area                  | Risk                  | Mitigation                  |
+| --------------------- | --------------------- | --------------------------- |
+| Database Schema Split | Data integrity        | Careful migration scripts   |
+| AI Context            | Loss of PMO context   | Clear interface definitions |
+| Session Management    | Auth conflicts        | Shared token service        |
+| Feature Flags         | Flag naming conflicts | Namespace prefixes          |
 
 ### Medium Risk Areas
 
-| Area | Risk | Mitigation |
-|------|------|------------|
-| Test Coverage | Gaps after split | Test both packages and apps |
-| Build Time | Longer builds | Nx caching |
-| Dependency Hell | Version conflicts | Strict versioning |
+| Area            | Risk              | Mitigation                  |
+| --------------- | ----------------- | --------------------------- |
+| Test Coverage   | Gaps after split  | Test both packages and apps |
+| Build Time      | Longer builds     | Nx caching                  |
+| Dependency Hell | Version conflicts | Strict versioning           |
 
 ---
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0.0 | 2026-01-04 | AI Assistant | Initial fork inventory |
+| Version | Date       | Author       | Changes                |
+| ------- | ---------- | ------------ | ---------------------- |
+| 1.0.0   | 2026-01-04 | AI Assistant | Initial fork inventory |
 
 ---
 
-*This document is part of the Phase 1 Architectural Modernization deliverables.*
-
-
+_This document is part of the Phase 1 Architectural Modernization deliverables._

@@ -4,7 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { extractThinkingSteps, enhanceResponse } from '../../../../server/src/services/ai/AIPipeline.js';
+import {
+  extractThinkingSteps,
+  enhanceResponse,
+} from '../../../../server/src/services/ai/AIPipeline.js';
 
 describe('aiPipeline - Thinking Steps', () => {
   describe('extractThinkingSteps', () => {
@@ -18,13 +21,13 @@ describe('aiPipeline - Thinking Steps', () => {
         
         Here's my answer: The solution is X.
       `;
-      
+
       const { cleanContent, thinkingSteps } = extractThinkingSteps(content);
-      
+
       // Should extract multiple steps (at least 1, ideally 3)
       expect(thinkingSteps.length).toBeGreaterThan(0);
       // Check that thinking content is extracted
-      const allContent = thinkingSteps.map(s => s.content).join(' ');
+      const allContent = thinkingSteps.map((s) => s.content).join(' ');
       expect(allContent.toLowerCase()).toContain('analyze');
       expect(thinkingSteps[0].status).toBe('done');
       expect(cleanContent).toContain("Here's my answer");
@@ -40,12 +43,12 @@ describe('aiPipeline - Thinking Steps', () => {
         4. Verifying the solution
         </thinking>
       `;
-      
+
       const { thinkingSteps } = extractThinkingSteps(content);
-      
+
       expect(thinkingSteps.length).toBeGreaterThan(0);
       // Categories should be assigned
-      thinkingSteps.forEach(step => {
+      thinkingSteps.forEach((step) => {
         expect(step.category).toBeDefined();
       });
     });
@@ -57,18 +60,18 @@ describe('aiPipeline - Thinking Steps', () => {
         
         Content here.
       `;
-      
+
       const { thinkingSteps, cleanContent } = extractThinkingSteps(content);
-      
+
       expect(thinkingSteps).toHaveLength(0);
       expect(cleanContent).toBe('Content here.');
     });
 
     it('handles response without thinking blocks', () => {
       const content = 'Just a regular response without thinking.';
-      
+
       const { thinkingSteps, cleanContent } = extractThinkingSteps(content);
-      
+
       expect(thinkingSteps).toHaveLength(0);
       expect(cleanContent).toBe(content);
     });
@@ -81,9 +84,9 @@ describe('aiPipeline - Thinking Steps', () => {
         
         Public answer here.
       `;
-      
+
       const { cleanContent } = extractThinkingSteps(content);
-      
+
       expect(cleanContent).toBe('Public answer here.');
       expect(cleanContent).not.toContain('<thinking>');
     });
@@ -98,11 +101,11 @@ describe('aiPipeline - Thinking Steps', () => {
           </thinking>
           
           Answer here.
-        `
+        `,
       };
-      
+
       const enhanced = enhanceResponse(response);
-      
+
       expect(enhanced.thinkingSteps).toBeDefined();
       expect(enhanced.thinkingSteps.length).toBeGreaterThan(0);
       expect(enhanced.content).not.toContain('<thinking>');
@@ -114,11 +117,11 @@ describe('aiPipeline - Thinking Steps', () => {
           \`\`\`artifact:markdown:Test
           # Content
           \`\`\`
-        `
+        `,
       };
-      
+
       const enhanced = enhanceResponse(response);
-      
+
       expect(enhanced.artifacts).toBeDefined();
       expect(enhanced.artifacts.length).toBeGreaterThan(0);
     });
@@ -133,11 +136,11 @@ describe('aiPipeline - Thinking Steps', () => {
           \`\`\`artifact:code:javascript:Test
           function test() {}
           \`\`\`
-        `
+        `,
       };
-      
+
       const enhanced = enhanceResponse(response);
-      
+
       expect(enhanced.thinkingSteps).toBeDefined();
       expect(enhanced.artifacts).toBeDefined();
       expect(enhanced.thinkingSteps.length).toBeGreaterThan(0);
@@ -148,14 +151,13 @@ describe('aiPipeline - Thinking Steps', () => {
       const response = {
         content: 'Test',
         usage: { tokens: 100 },
-        model: 'gpt-4'
+        model: 'gpt-4',
       };
-      
+
       const enhanced = enhanceResponse(response);
-      
+
       expect(enhanced.usage).toEqual(response.usage);
       expect(enhanced.model).toBe(response.model);
     });
   });
 });
-

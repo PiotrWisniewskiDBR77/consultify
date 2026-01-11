@@ -9,13 +9,13 @@
 export const COMPLIANCE_STANDARDS = ['GDPR', 'SOC2', 'ISO27001', 'HIPAA'];
 
 interface Dependencies {
-    db: any;
-    uuidv4: () => string;
+  db: any;
+  uuidv4: () => string;
 }
 
 let deps: Dependencies = {
-    db: null,
-    uuidv4: () => Math.random().toString(36).substr(2, 9)
+  db: null,
+  uuidv4: () => Math.random().toString(36).substr(2, 9),
 };
 
 /**
@@ -23,16 +23,16 @@ let deps: Dependencies = {
  * @param dependencies - Service dependencies
  */
 function setDependencies(dependencies: Partial<Dependencies>): void {
-    deps = { ...deps, ...dependencies };
+  deps = { ...deps, ...dependencies };
 }
 
 interface ComplianceStatus {
-    isCompliant: boolean;
-    standard: string;
-    organizationId?: string;
-    error?: string;
-    checkedAt?: string;
-    findings?: any[];
+  isCompliant: boolean;
+  standard: string;
+  organizationId?: string;
+  error?: string;
+  checkedAt?: string;
+  findings?: any[];
 }
 
 /**
@@ -42,30 +42,30 @@ interface ComplianceStatus {
  * @returns Compliance status
  */
 function checkCompliance(organizationId: string, standard: string): ComplianceStatus {
-    if (!COMPLIANCE_STANDARDS.includes(standard)) {
-        return {
-            isCompliant: false,
-            standard,
-            error: `Unknown compliance standard: ${standard}`
-        };
-    }
-
+  if (!COMPLIANCE_STANDARDS.includes(standard)) {
     return {
-        isCompliant: true,
-        standard,
-        organizationId,
-        checkedAt: new Date().toISOString(),
-        findings: []
+      isCompliant: false,
+      standard,
+      error: `Unknown compliance standard: ${standard}`,
     };
+  }
+
+  return {
+    isCompliant: true,
+    standard,
+    organizationId,
+    checkedAt: new Date().toISOString(),
+    findings: [],
+  };
 }
 
 interface AuditReport {
-    auditId: string;
-    organizationId: string;
-    generatedAt: string;
-    findings: any[];
-    recommendations: any[];
-    overallScore: number;
+  auditId: string;
+  organizationId: string;
+  generatedAt: string;
+  findings: any[];
+  recommendations: any[];
+  overallScore: number;
 }
 
 /**
@@ -74,14 +74,14 @@ interface AuditReport {
  * @returns Audit report
  */
 function generateAuditReport(organizationId: string): AuditReport {
-    return {
-        auditId: deps.uuidv4(),
-        organizationId,
-        generatedAt: new Date().toISOString(),
-        findings: [],
-        recommendations: [],
-        overallScore: 100
-    };
+  return {
+    auditId: deps.uuidv4(),
+    organizationId,
+    generatedAt: new Date().toISOString(),
+    findings: [],
+    recommendations: [],
+    overallScore: 100,
+  };
 }
 
 /**
@@ -90,16 +90,16 @@ function generateAuditReport(organizationId: string): AuditReport {
  * @returns Whether data handling is valid
  */
 function validateDataHandling(dataType: string): boolean {
-    // For now, always return true (data handling is valid)
-    return true;
+  // For now, always return true (data handling is valid)
+  return true;
 }
 
 const ComplianceService = {
-    COMPLIANCE_STANDARDS,
-    setDependencies,
-    checkCompliance,
-    generateAuditReport,
-    validateDataHandling
+  COMPLIANCE_STANDARDS,
+  setDependencies,
+  checkCompliance,
+  generateAuditReport,
+  validateDataHandling,
 };
 
 export default ComplianceService;

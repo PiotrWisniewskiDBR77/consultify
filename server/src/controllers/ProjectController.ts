@@ -13,11 +13,11 @@ import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
-    CreateProjectRequest,
-    ProjectNotificationSettingsRequest,
-    UpdateAIRoleRequest,
-    UpdateProjectRequest,
-    UpdateRegulatoryModeRequest,
+  CreateProjectRequest,
+  ProjectNotificationSettingsRequest,
+  UpdateAIRoleRequest,
+  UpdateProjectRequest,
+  UpdateRegulatoryModeRequest,
 } from '../validators/project.validators.js';
 
 // ==========================================
@@ -25,77 +25,77 @@ import type {
 // ==========================================
 
 interface ProjectMember {
-    id: string;
-    user_id: string;
-    project_id: string;
-    role: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    avatar_url?: string;
-    account_role: string;
+  id: string;
+  user_id: string;
+  project_id: string;
+  role: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  avatar_url?: string;
+  account_role: string;
 }
 
 interface Workstream {
-    id: string;
-    project_id: string;
-    name: string;
-    description?: string;
-    created_at: string;
-    updated_at: string;
-    [key: string]: unknown; // Allow additional fields from database
+  id: string;
+  project_id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  [key: string]: unknown; // Allow additional fields from database
 }
 
 interface Initiative {
-    id: string;
-    project_id: string;
-    name: string;
-    description?: string;
-    status: string;
-    created_at: string;
-    updated_at: string;
-    [key: string]: unknown; // Allow additional fields from database
+  id: string;
+  project_id: string;
+  name: string;
+  description?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  [key: string]: unknown; // Allow additional fields from database
 }
 
 interface Assessment {
-    id: string;
-    project_id: string;
-    framework: string;
-    status: string;
-    created_at: string;
-    updated_at: string;
-    [key: string]: unknown; // Allow additional fields from database
+  id: string;
+  project_id: string;
+  framework: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  [key: string]: unknown; // Allow additional fields from database
 }
 
 interface Document {
-    id: string;
-    project_id: string;
-    title: string;
-    content?: string;
-    type: string;
-    created_at: string;
-    updated_at: string;
-    deleted_at?: string | null;
-    [key: string]: unknown; // Allow additional fields from database
+  id: string;
+  project_id: string;
+  title: string;
+  content?: string;
+  type: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+  [key: string]: unknown; // Allow additional fields from database
 }
 
 interface ProjectDetails {
-    id: string;
-    organization_id: string;
-    name: string;
-    description?: string;
-    goal?: string;
-    status: string;
-    owner_id: string;
-    owner_first_name?: string;
-    owner_last_name?: string;
-    created_at: string;
-    updated_at: string;
-    team?: ProjectMember[];
-    workstreams?: Workstream[];
-    initiatives?: Initiative[];
-    assessments?: Assessment[];
-    documents?: Document[];
+  id: string;
+  organization_id: string;
+  name: string;
+  description?: string;
+  goal?: string;
+  status: string;
+  owner_id: string;
+  owner_first_name?: string;
+  owner_last_name?: string;
+  created_at: string;
+  updated_at: string;
+  team?: ProjectMember[];
+  workstreams?: Workstream[];
+  initiatives?: Initiative[];
+  assessments?: Assessment[];
+  documents?: Document[];
 }
 
 // ==========================================
@@ -109,25 +109,30 @@ interface ProjectDetails {
  * @returns Translated text or original if not multilingual
  */
 const getMultilingualText = (text: string | null | undefined, userLang: string = 'en'): string => {
-    if (!text) return '';
-    
-    // If it's a plain string (not JSON), return as-is
-    if (!text.startsWith('{') && !text.startsWith('[')) {
-        return text;
+  if (!text) return '';
+
+  // If it's a plain string (not JSON), return as-is
+  if (!text.startsWith('{') && !text.startsWith('[')) {
+    return text;
+  }
+
+  try {
+    const translations = JSON.parse(text);
+    // Check if it's a multilingual object
+    if (typeof translations === 'object' && translations !== null && !Array.isArray(translations)) {
+      // Return translation for user's language, fallback to English, then first available
+      return (
+        translations[userLang] ||
+        translations.en ||
+        translations[Object.keys(translations)[0]] ||
+        text
+      );
     }
-    
-    try {
-        const translations = JSON.parse(text);
-        // Check if it's a multilingual object
-        if (typeof translations === 'object' && translations !== null && !Array.isArray(translations)) {
-            // Return translation for user's language, fallback to English, then first available
-            return translations[userLang] || translations.en || translations[Object.keys(translations)[0]] || text;
-        }
-        return text;
-    } catch {
-        // Not JSON, return as-is
-        return text;
-    }
+    return text;
+  } catch {
+    // Not JSON, return as-is
+    return text;
+  }
 };
 
 // ==========================================
@@ -135,30 +140,31 @@ const getMultilingualText = (text: string | null | undefined, userLang: string =
 // ==========================================
 
 export class ProjectController {
-    /**
-     * Get all projects for organization
-     */
-    static getProjects = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+  /**
+   * Get all projects for organization
+   */
+  static getProjects = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-        // Get user language from Accept-Language header or default to English
-        const acceptLang = req.headers['accept-language'] || req.headers['Accept-Language'] || 'en';
-        const userLang = acceptLang.split(',')[0].split('-')[0].toLowerCase() || 'en';
-        const supportedLangs = ['pl', 'en', 'de', 'es', 'ar', 'ja'];
-        const lang = supportedLangs.includes(userLang) ? userLang : 'en';
+      // Get user language from Accept-Language header or default to English
+      const acceptLang = req.headers['accept-language'] || req.headers['Accept-Language'] || 'en';
+      const userLang = acceptLang.split(',')[0].split('-')[0].toLowerCase() || 'en';
+      const supportedLangs = ['pl', 'en', 'de', 'es', 'ar', 'ja'];
+      const lang = supportedLangs.includes(userLang) ? userLang : 'en';
 
-        // Pagination
-        const query = req.query as unknown as { page?: string; limit?: string };
-        const page = Number(query.page) || 1;
-        const limit = Number(query.limit) || 50; // Default to 50 for projects
-        const offset = (page - 1) * limit;
+      // Pagination
+      const query = req.query as unknown as { page?: string; limit?: string };
+      const page = Number(query.page) || 1;
+      const limit = Number(query.limit) || 50; // Default to 50 for projects
+      const offset = (page - 1) * limit;
 
-        const countSql = `SELECT COUNT(*) as total FROM projects WHERE organization_id = ?`;
-        const sql = `
+      const countSql = `SELECT COUNT(*) as total FROM projects WHERE organization_id = ?`;
+      const sql = `
             SELECT 
                 p.*, 
                 u.first_name as owner_first_name, 
@@ -174,88 +180,101 @@ export class ProjectController {
             LIMIT ? OFFSET ?
         `;
 
-        const [rows, countResult] = await Promise.all([
-            queryHelpers.queryAll(sql, [orgId, limit, offset]),
-            queryHelpers.queryOne<{ total: number }>(countSql, [orgId]),
-        ]);
+      const [rows, countResult] = await Promise.all([
+        queryHelpers.queryAll(sql, [orgId, limit, offset]),
+        queryHelpers.queryOne<{ total: number }>(countSql, [orgId]),
+      ]);
 
-        const total = countResult?.total || 0;
-        const totalPages = Math.ceil(total / limit);
+      const total = countResult?.total || 0;
+      const totalPages = Math.ceil(total / limit);
 
-        // Set Pagination Headers
-        res.setHeader('X-Total-Count', total);
-        res.setHeader('X-Page', page);
-        res.setHeader('X-Limit', limit);
-        res.setHeader('X-Total-Pages', totalPages);
+      // Set Pagination Headers
+      res.setHeader('X-Total-Count', total);
+      res.setHeader('X-Page', page);
+      res.setHeader('X-Limit', limit);
+      res.setHeader('X-Total-Pages', totalPages);
 
-        res.json(
-            rows.map((row) => ({
-                ...row,
-                name: getMultilingualText(row.name as string, lang),
-                description: getMultilingualText(row.description as string, lang),
-                memberCount: row.real_member_count,
-                initiativeCount: row.real_initiative_count,
-                assessmentCount: row.real_assessment_count,
-                documentCount: row.real_document_count,
-            })),
-        );
-    });
+      res.json(
+        rows.map((row) => ({
+          ...row,
+          name: getMultilingualText(row.name as string, lang),
+          description: getMultilingualText(row.description as string, lang),
+          memberCount: row.real_member_count,
+          initiativeCount: row.real_initiative_count,
+          assessmentCount: row.real_assessment_count,
+          documentCount: row.real_document_count,
+        }))
+      );
+    }
+  );
 
-    /**
-     * Create a new project
-     */
-    static createProject = asyncHandler(
-        async (req: AuthenticatedRequest<CreateProjectRequest>, res: Response): Promise<void> => {
-            const orgId = req.user?.organizationId;
-            const userId = req.user?.id;
-            console.error(`[ProjectController] createProject called. Org: ${orgId}, User: ${userId}`);
-            
-            if (!orgId || !userId) {
-                res.status(401).json({ error: 'Unauthorized' });
-                return;
-            }
+  /**
+   * Create a new project
+   */
+  static createProject = asyncHandler(
+    async (req: AuthenticatedRequest<CreateProjectRequest>, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      console.error(`[ProjectController] createProject called. Org: ${orgId}, User: ${userId}`);
 
-            const { name, ownerId, description, goal } = req.body;
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-            if (!name) {
-                res.status(400).json({ error: 'Project name is required' });
-                return;
-            }
+      const { name, ownerId, description, goal } = req.body;
 
-            const id = uuidv4();
-            const owner = ownerId || userId;
+      if (!name) {
+        res.status(400).json({ error: 'Project name is required' });
+        return;
+      }
 
-            const sql = `INSERT INTO projects (id, organization_id, name, description, goal, status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+      const id = uuidv4();
+      const owner = ownerId || userId;
 
-            console.error(`[ProjectController] Executing INSERT for project ${id}`);
-            await queryHelpers.queryRun(sql, [id, orgId, name, description || null, goal || null, 'active', owner]);
-            
-            // Verify immediately
-            const count = await queryHelpers.queryOne<{c: number}>('SELECT COUNT(*) as c FROM projects WHERE organization_id = ?', [orgId]);
-            console.error(`[ProjectController] Immediate verify count for org ${orgId}: ${count?.c}`);
-            
-            res.status(201).json({ id, name, description, goal, status: 'active', ownerId: owner });
-        },
-    );
+      const sql = `INSERT INTO projects (id, organization_id, name, description, goal, status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
-    /**
-     * Get single project details
-     */
-    static getProjectById = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        const { id } = req.params;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+      console.error(`[ProjectController] Executing INSERT for project ${id}`);
+      await queryHelpers.queryRun(sql, [
+        id,
+        orgId,
+        name,
+        description || null,
+        goal || null,
+        'active',
+        owner,
+      ]);
 
-        // Get user language from Accept-Language header or default to English
-        const acceptLang = req.headers['accept-language'] || req.headers['Accept-Language'] || 'en';
-        const userLang = acceptLang.split(',')[0].split('-')[0].toLowerCase() || 'en';
-        const supportedLangs = ['pl', 'en', 'de', 'es', 'ar', 'ja'];
-        const lang = supportedLangs.includes(userLang) ? userLang : 'en';
+      // Verify immediately
+      const count = await queryHelpers.queryOne<{ c: number }>(
+        'SELECT COUNT(*) as c FROM projects WHERE organization_id = ?',
+        [orgId]
+      );
+      console.error(`[ProjectController] Immediate verify count for org ${orgId}: ${count?.c}`);
 
-        const sql = `
+      res.status(201).json({ id, name, description, goal, status: 'active', ownerId: owner });
+    }
+  );
+
+  /**
+   * Get single project details
+   */
+  static getProjectById = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Get user language from Accept-Language header or default to English
+      const acceptLang = req.headers['accept-language'] || req.headers['Accept-Language'] || 'en';
+      const userLang = acceptLang.split(',')[0].split('-')[0].toLowerCase() || 'en';
+      const supportedLangs = ['pl', 'en', 'de', 'es', 'ar', 'ja'];
+      const lang = supportedLangs.includes(userLang) ? userLang : 'en';
+
+      const sql = `
             SELECT 
                 p.*, 
                 u.first_name as owner_first_name, 
@@ -265,66 +284,70 @@ export class ProjectController {
             WHERE p.id = ? AND p.organization_id = ?
         `;
 
-        const project = await queryHelpers.queryOne<ProjectDetails>(sql, [id, orgId]);
-        if (!project) {
-            res.status(404).json({ error: 'Project not found' });
-            return;
-        }
+      const project = await queryHelpers.queryOne<ProjectDetails>(sql, [id, orgId]);
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
 
-        // Parallelize detailed fetches
-        const [members, workstreams, initiatives, assessments, documents] = await Promise.all([
-            queryHelpers.queryAll<ProjectMember>(
-                `
+      // Parallelize detailed fetches
+      const [members, workstreams, initiatives, assessments, documents] = await Promise.all([
+        queryHelpers.queryAll<ProjectMember>(
+          `
                 SELECT pm.*, u.first_name, u.last_name, u.email, u.avatar_url, u.role as account_role
                 FROM project_members pm
                 JOIN users u ON pm.user_id = u.id
                 WHERE pm.project_id = ?
             `,
-                [id],
-            ),
-            queryHelpers.queryAll<Workstream>(`SELECT * FROM workstreams WHERE project_id = ?`, [id]),
-            queryHelpers.queryAll<Initiative>(`SELECT * FROM initiatives WHERE project_id = ?`, [id]),
-            queryHelpers.queryAll<Assessment>(`SELECT * FROM multi_framework_assessments WHERE project_id = ?`, [id]),
-            queryHelpers.queryAll<Document>(
-                `SELECT * FROM knowledge_docs WHERE project_id = ? AND deleted_at IS NULL`,
-                [id],
-            ),
-        ]);
+          [id]
+        ),
+        queryHelpers.queryAll<Workstream>(`SELECT * FROM workstreams WHERE project_id = ?`, [id]),
+        queryHelpers.queryAll<Initiative>(`SELECT * FROM initiatives WHERE project_id = ?`, [id]),
+        queryHelpers.queryAll<Assessment>(
+          `SELECT * FROM multi_framework_assessments WHERE project_id = ?`,
+          [id]
+        ),
+        queryHelpers.queryAll<Document>(
+          `SELECT * FROM knowledge_docs WHERE project_id = ? AND deleted_at IS NULL`,
+          [id]
+        ),
+      ]);
 
-        res.json({
-            ...project,
-            name: getMultilingualText(project.name, lang),
-            description: getMultilingualText(project.description, lang),
-            team: members,
-            workstreams: workstreams.map(w => ({
-                ...w,
-                name: getMultilingualText(w.name, lang),
-                description: getMultilingualText(w.description, lang),
-            })),
-            initiatives: initiatives.map(i => ({
-                ...i,
-                name: getMultilingualText(i.name, lang),
-                description: getMultilingualText(i.description, lang),
-            })),
-            assessments,
-            documents,
-        });
-    });
+      res.json({
+        ...project,
+        name: getMultilingualText(project.name, lang),
+        description: getMultilingualText(project.description, lang),
+        team: members,
+        workstreams: workstreams.map((w) => ({
+          ...w,
+          name: getMultilingualText(w.name, lang),
+          description: getMultilingualText(w.description, lang),
+        })),
+        initiatives: initiatives.map((i) => ({
+          ...i,
+          name: getMultilingualText(i.name, lang),
+          description: getMultilingualText(i.description, lang),
+        })),
+        assessments,
+        documents,
+      });
+    }
+  );
 
-    /**
-     * Update project
-     */
-    static updateProject = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateProjectRequest>, res: Response): Promise<void> => {
-            const orgId = req.user?.organizationId;
-            const { id } = req.params;
-            const { name, description, goal, status } = req.body;
-            if (!orgId) {
-                res.status(401).json({ error: 'Unauthorized' });
-                return;
-            }
+  /**
+   * Update project
+   */
+  static updateProject = asyncHandler(
+    async (req: AuthenticatedRequest<UpdateProjectRequest>, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id } = req.params;
+      const { name, description, goal, status } = req.body;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-            const sql = `
+      const sql = `
             UPDATE projects 
             SET name = COALESCE(?, name), 
                 description = COALESCE(?, description), 
@@ -333,89 +356,97 @@ export class ProjectController {
             WHERE id = ? AND organization_id = ?
         `;
 
-            const result = await queryHelpers.queryRun(sql, [name, description, goal, status, id, orgId]);
-            if (result.changes === 0) {
-                res.status(404).json({ error: 'Project not found or access denied' });
-                return;
-            }
+      const result = await queryHelpers.queryRun(sql, [name, description, goal, status, id, orgId]);
+      if (result.changes === 0) {
+        res.status(404).json({ error: 'Project not found or access denied' });
+        return;
+      }
 
-            res.json({ message: 'Project updated' });
-        },
-    );
+      res.json({ message: 'Project updated' });
+    }
+  );
 
-    /**
-     * Delete project
-     */
-    static deleteProject = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        const { id } = req.params;
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+  /**
+   * Delete project
+   */
+  static deleteProject = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id } = req.params;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-        const sql = `DELETE FROM projects WHERE id = ? AND organization_id = ?`;
+      const sql = `DELETE FROM projects WHERE id = ? AND organization_id = ?`;
 
-        const result = await queryHelpers.queryRun(sql, [id, orgId]);
-        if (result.changes === 0) {
-            res.status(404).json({ error: 'Project not found or access denied' });
-            return;
-        }
-        res.json({ message: 'Project deleted' });
-    });
+      const result = await queryHelpers.queryRun(sql, [id, orgId]);
+      if (result.changes === 0) {
+        res.status(404).json({ error: 'Project not found or access denied' });
+        return;
+      }
+      res.json({ message: 'Project deleted' });
+    }
+  );
 
-    /**
-     * Get notification settings for project
-     */
-    static getNotificationSettings = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
+  /**
+   * Get notification settings for project
+   */
+  static getNotificationSettings = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
 
-        const row = await queryHelpers.queryOne(`SELECT * FROM project_notification_settings WHERE project_id = ?`, [
-            id,
-        ]);
+      const row = await queryHelpers.queryOne(
+        `SELECT * FROM project_notification_settings WHERE project_id = ?`,
+        [id]
+      );
 
-        // Return default settings if none exist
-        if (!row) {
-            res.json({
-                project_id: id,
-                task_overdue_enabled: true,
-                task_due_today_enabled: true,
-                blocker_detected_enabled: true,
-                gate_ready_enabled: true,
-                decision_required_enabled: true,
-                escalation_enabled: true,
-                escalation_days: 3,
-                email_notifications: false,
-                in_app_notifications: true,
-            });
-            return;
-        }
+      // Return default settings if none exist
+      if (!row) {
+        res.json({
+          project_id: id,
+          task_overdue_enabled: true,
+          task_due_today_enabled: true,
+          blocker_detected_enabled: true,
+          gate_ready_enabled: true,
+          decision_required_enabled: true,
+          escalation_enabled: true,
+          escalation_days: 3,
+          email_notifications: false,
+          in_app_notifications: true,
+        });
+        return;
+      }
 
-        res.json(row);
-    });
+      res.json(row);
+    }
+  );
 
-    /**
-     * Update notification settings for project
-     */
-    static updateNotificationSettings = asyncHandler(
-        async (req: AuthenticatedRequest<ProjectNotificationSettingsRequest>, res: Response): Promise<void> => {
-            const { id: projectId } = req.params;
-            const {
-                task_overdue_enabled = true,
-                task_due_today_enabled = true,
-                blocker_detected_enabled = true,
-                gate_ready_enabled = true,
-                decision_required_enabled = true,
-                escalation_enabled = true,
-                escalation_days = 3,
-                email_notifications = false,
-                in_app_notifications = true,
-            } = req.body;
+  /**
+   * Update notification settings for project
+   */
+  static updateNotificationSettings = asyncHandler(
+    async (
+      req: AuthenticatedRequest<ProjectNotificationSettingsRequest>,
+      res: Response
+    ): Promise<void> => {
+      const { id: projectId } = req.params;
+      const {
+        task_overdue_enabled = true,
+        task_due_today_enabled = true,
+        blocker_detected_enabled = true,
+        gate_ready_enabled = true,
+        decision_required_enabled = true,
+        escalation_enabled = true,
+        escalation_days = 3,
+        email_notifications = false,
+        in_app_notifications = true,
+      } = req.body;
 
-            const settingsId = uuidv4();
+      const settingsId = uuidv4();
 
-            // Upsert using REPLACE
-            const sql = `
+      // Upsert using REPLACE
+      const sql = `
             INSERT OR REPLACE INTO project_notification_settings 
             (id, project_id, task_overdue_enabled, task_due_today_enabled, blocker_detected_enabled,
              gate_ready_enabled, decision_required_enabled, escalation_enabled, escalation_days,
@@ -426,205 +457,496 @@ export class ProjectController {
             )
         `;
 
-            await queryHelpers.queryRun(sql, [
-                projectId,
-                settingsId,
-                projectId,
-                task_overdue_enabled ? 1 : 0,
-                task_due_today_enabled ? 1 : 0,
-                blocker_detected_enabled ? 1 : 0,
-                gate_ready_enabled ? 1 : 0,
-                decision_required_enabled ? 1 : 0,
-                escalation_enabled ? 1 : 0,
-                escalation_days,
-                email_notifications ? 1 : 0,
-                in_app_notifications ? 1 : 0,
-            ]);
+      await queryHelpers.queryRun(sql, [
+        projectId,
+        settingsId,
+        projectId,
+        task_overdue_enabled ? 1 : 0,
+        task_due_today_enabled ? 1 : 0,
+        blocker_detected_enabled ? 1 : 0,
+        gate_ready_enabled ? 1 : 0,
+        decision_required_enabled ? 1 : 0,
+        escalation_enabled ? 1 : 0,
+        escalation_days,
+        email_notifications ? 1 : 0,
+        in_app_notifications ? 1 : 0,
+      ]);
 
-            res.json({ success: true, message: 'Notification settings saved' });
-        },
-    );
+      res.json({ success: true, message: 'Notification settings saved' });
+    }
+  );
 
-    /**
-     * Get AI role for project
-     */
-    static getAIRole = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
+  /**
+   * Get AI role for project
+   */
+  static getAIRole = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
 
-// const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
-        const AIRoleGuard = {} as any; // Stubbed missing service
-        const roleConfig = await AIRoleGuard.getRoleConfig(id);
+      // const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
+      const AIRoleGuard = {} as any; // Stubbed missing service
+      const roleConfig = await AIRoleGuard.getRoleConfig(id);
 
-        res.json({
-            projectId: id,
-            aiRole: roleConfig.activeRole,
-            capabilities: roleConfig.capabilities,
-            description: roleConfig.roleDescription,
-            roleHierarchy: roleConfig.roleHierarchy,
+      res.json({
+        projectId: id,
+        aiRole: roleConfig.activeRole,
+        capabilities: roleConfig.capabilities,
+        description: roleConfig.roleDescription,
+        roleHierarchy: roleConfig.roleHierarchy,
+      });
+    }
+  );
+
+  /**
+   * Update AI role for project
+   */
+  static updateAIRole = asyncHandler(
+    async (req: AuthenticatedRequest<UpdateAIRoleRequest>, res: Response): Promise<void> => {
+      const { id: projectId } = req.params;
+      const { aiRole, justification } = req.body;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Validate role
+      const validRoles = ['ADVISOR', 'MANAGER', 'OPERATOR'];
+      if (!validRoles.includes(aiRole)) {
+        res.status(400).json({
+          error: `Invalid AI role: ${aiRole}. Must be one of: ${validRoles.join(', ')}`,
         });
-    });
+        return;
+      }
 
-    /**
-     * Update AI role for project
-     */
-    static updateAIRole = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateAIRoleRequest>, res: Response): Promise<void> => {
-            const { id: projectId } = req.params;
-            const { aiRole, justification } = req.body;
-            const userId = req.user?.id;
-            const orgId = req.user?.organizationId;
-            if (!userId || !orgId) {
-                res.status(401).json({ error: 'Unauthorized' });
-                return;
-            }
-
-            // Validate role
-            const validRoles = ['ADVISOR', 'MANAGER', 'OPERATOR'];
-            if (!validRoles.includes(aiRole)) {
-                res.status(400).json({
-                    error: `Invalid AI role: ${aiRole}. Must be one of: ${validRoles.join(', ')}`,
-                });
-                return;
-            }
-
-            // Check admin permission
-            if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
-                res.status(403).json({
-                    error: 'Only admins can change project AI role',
-                });
-                return;
-            }
-
-// const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
-            const AIRoleGuard = {} as any; // Stubbed missing service
-
-            const AIAuditLogger = await import('../services/aiAuditLogger.js').then((m) => m.default || m);
-
-            // Get current role for audit
-            const currentRole = await AIRoleGuard.getProjectRole(projectId);
-
-            // Update the role
-            await AIRoleGuard.setProjectRole(projectId, aiRole, userId);
-
-            // Audit the change
-            await AIAuditLogger.logInteraction({
-                userId,
-                organizationId: orgId,
-                projectId,
-                actionType: 'AI_ROLE_CHANGE',
-                actionDescription: `AI role changed from ${currentRole} to ${aiRole}`,
-                aiRole: 'SYSTEM',
-                policyLevel: 'ADMIN',
-                aiProjectRole: aiRole,
-                justification: justification || 'Admin action',
-            });
-
-            // Get updated config
-            const roleConfig = await AIRoleGuard.getRoleConfig(projectId);
-
-            res.json({
-                success: true,
-                projectId,
-                previousRole: currentRole,
-                newRole: aiRole,
-                capabilities: roleConfig.capabilities,
-                description: roleConfig.roleDescription,
-            });
-        },
-    );
-
-    /**
-     * Get regulatory mode status for project
-     */
-    static getRegulatoryMode = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
-
-// const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then((m) => m.default || m);
-        const RegulatoryModeGuard = {} as any; // Stubbed missing service
-        const status = await RegulatoryModeGuard.getStatus(id);
-
-        res.json({
-            projectId: id,
-            ...status,
+      // Check admin permission
+      if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
+        res.status(403).json({
+          error: 'Only admins can change project AI role',
         });
-    });
+        return;
+      }
 
-    /**
-     * Update regulatory mode for project
-     */
-    static updateRegulatoryMode = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateRegulatoryModeRequest>, res: Response): Promise<void> => {
-            const { id: projectId } = req.params;
-            const { enabled, justification } = req.body;
-            const userId = req.user?.id;
-            const orgId = req.user?.organizationId;
-            if (!userId || !orgId) {
-                res.status(401).json({ error: 'Unauthorized' });
-                return;
-            }
+      // const AIRoleGuard = await import('../services/aiRoleGuard.js').then((m) => m.default || m);
+      const AIRoleGuard = {} as any; // Stubbed missing service
 
-            // Check admin permission
-            if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
-                res.status(403).json({
-                    error: 'Only admins can change Regulatory Mode settings',
-                });
-                return;
-            }
+      const AIAuditLogger = await import('../services/aiAuditLogger.js').then(
+        (m) => m.default || m
+      );
 
-            // Validate input
-            if (typeof enabled !== 'boolean') {
-                res.status(400).json({
-                    error: 'enabled must be a boolean value',
-                });
-                return;
-            }
+      // Get current role for audit
+      const currentRole = await AIRoleGuard.getProjectRole(projectId);
 
-// const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then((m) => m.default || m);
-            const RegulatoryModeGuard = {} as any; // Stubbed missing service
+      // Update the role
+      await AIRoleGuard.setProjectRole(projectId, aiRole, userId);
 
-            const AIAuditLogger = await import('../services/aiAuditLogger.js').then((m) => m.default || m);
+      // Audit the change
+      await AIAuditLogger.logInteraction({
+        userId,
+        organizationId: orgId,
+        projectId,
+        actionType: 'AI_ROLE_CHANGE',
+        actionDescription: `AI role changed from ${currentRole} to ${aiRole}`,
+        aiRole: 'SYSTEM',
+        policyLevel: 'ADMIN',
+        aiProjectRole: aiRole,
+        justification: justification || 'Admin action',
+      });
 
-            // Get current status for audit
-            const currentStatus = await RegulatoryModeGuard.isEnabled(projectId);
+      // Get updated config
+      const roleConfig = await AIRoleGuard.getRoleConfig(projectId);
 
-            // Update the setting
-            const result = await RegulatoryModeGuard.setEnabled(projectId, enabled);
+      res.json({
+        success: true,
+        projectId,
+        previousRole: currentRole,
+        newRole: aiRole,
+        capabilities: roleConfig.capabilities,
+        description: roleConfig.roleDescription,
+      });
+    }
+  );
 
-            if (!result.success) {
-                res.status(404).json({ error: 'Project not found' });
-                return;
-            }
+  /**
+   * Get regulatory mode status for project
+   */
+  static getRegulatoryMode = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
 
-            // Audit the change
-            await AIAuditLogger.logInteraction({
-                userId,
-                organizationId: orgId,
-                projectId,
-                actionType: 'REGULATORY_MODE_CHANGE',
-                actionDescription: `Regulatory Mode ${enabled ? 'enabled' : 'disabled'}`,
-                contextSnapshot: {
-                    previousValue: currentStatus,
-                    newValue: enabled,
-                    justification: justification || 'Admin action',
-                },
-                aiRole: 'SYSTEM',
-                policyLevel: 'ADMIN',
-            });
+      // const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then((m) => m.default || m);
+      const RegulatoryModeGuard = {} as any; // Stubbed missing service
+      const status = await RegulatoryModeGuard.getStatus(id);
 
-            // Get updated status
-            const newStatus = await RegulatoryModeGuard.getStatus(projectId);
+      res.json({
+        projectId: id,
+        ...status,
+      });
+    }
+  );
 
-            res.json({
-                success: true,
-                projectId,
-                previousEnabled: currentStatus,
-                ...newStatus,
-                message: enabled
-                    ? 'Regulatory Mode enabled. AI is now in advisory-only mode.'
-                    : 'Regulatory Mode disabled. AI can operate with normal permissions.',
-            });
+  /**
+   * Update regulatory mode for project
+   */
+  static updateRegulatoryMode = asyncHandler(
+    async (
+      req: AuthenticatedRequest<UpdateRegulatoryModeRequest>,
+      res: Response
+    ): Promise<void> => {
+      const { id: projectId } = req.params;
+      const { enabled, justification } = req.body;
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Check admin permission
+      if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
+        res.status(403).json({
+          error: 'Only admins can change Regulatory Mode settings',
+        });
+        return;
+      }
+
+      // Validate input
+      if (typeof enabled !== 'boolean') {
+        res.status(400).json({
+          error: 'enabled must be a boolean value',
+        });
+        return;
+      }
+
+      // const RegulatoryModeGuard = await import('../services/regulatoryModeGuard.js').then((m) => m.default || m);
+      const RegulatoryModeGuard = {} as any; // Stubbed missing service
+
+      const AIAuditLogger = await import('../services/aiAuditLogger.js').then(
+        (m) => m.default || m
+      );
+
+      // Get current status for audit
+      const currentStatus = await RegulatoryModeGuard.isEnabled(projectId);
+
+      // Update the setting
+      const result = await RegulatoryModeGuard.setEnabled(projectId, enabled);
+
+      if (!result.success) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      // Audit the change
+      await AIAuditLogger.logInteraction({
+        userId,
+        organizationId: orgId,
+        projectId,
+        actionType: 'REGULATORY_MODE_CHANGE',
+        actionDescription: `Regulatory Mode ${enabled ? 'enabled' : 'disabled'}`,
+        contextSnapshot: {
+          previousValue: currentStatus,
+          newValue: enabled,
+          justification: justification || 'Admin action',
         },
-    );
+        aiRole: 'SYSTEM',
+        policyLevel: 'ADMIN',
+      });
+
+      // Get updated status
+      const newStatus = await RegulatoryModeGuard.getStatus(projectId);
+
+      res.json({
+        success: true,
+        projectId,
+        previousEnabled: currentStatus,
+        ...newStatus,
+        message: enabled
+          ? 'Regulatory Mode enabled. AI is now in advisory-only mode.'
+          : 'Regulatory Mode disabled. AI can operate with normal permissions.',
+      });
+    }
+  );
+
+  // ==========================================
+  // FLOW-PROJECT-001: ARCHIVE MANAGEMENT
+  // ==========================================
+
+  /**
+   * Archive a project
+   */
+  static archiveProject = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const projectId = req.params.id;
+      const { reason } = req.body;
+
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Check project exists and belongs to org
+      const project = await queryHelpers.dbGet<{ id: string; status: string }>(
+        'SELECT id, status FROM projects WHERE id = ? AND organization_id = ?',
+        [projectId, orgId]
+      );
+
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      // Only completed or cancelled projects can be archived
+      if (!['completed', 'cancelled'].includes(project.status)) {
+        res.status(400).json({
+          error: 'Only completed or cancelled projects can be archived',
+          currentStatus: project.status,
+        });
+        return;
+      }
+
+      // Archive the project
+      await queryHelpers.dbRun(
+        `UPDATE projects 
+             SET status = 'archived', 
+                 archived_at = datetime('now'), 
+                 archived_by = ?,
+                 updated_at = datetime('now')
+             WHERE id = ?`,
+        [userId, projectId]
+      );
+
+      res.json({
+        success: true,
+        message: 'Project archived successfully',
+        projectId,
+        archivedAt: new Date().toISOString(),
+      });
+    }
+  );
+
+  /**
+   * Unarchive a project
+   */
+  static unarchiveProject = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const projectId = req.params.id;
+
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Check project is archived
+      const project = await queryHelpers.dbGet<{ id: string; status: string }>(
+        'SELECT id, status FROM projects WHERE id = ? AND organization_id = ? AND status = ?',
+        [projectId, orgId, 'archived']
+      );
+
+      if (!project) {
+        res.status(404).json({ error: 'Archived project not found' });
+        return;
+      }
+
+      // Restore to completed status
+      await queryHelpers.dbRun(
+        `UPDATE projects 
+             SET status = 'completed', 
+                 archived_at = NULL, 
+                 archived_by = NULL,
+                 updated_at = datetime('now')
+             WHERE id = ?`,
+        [projectId]
+      );
+
+      res.json({
+        success: true,
+        message: 'Project restored from archive',
+        projectId,
+      });
+    }
+  );
+
+  // ==========================================
+  // PMO ROLES
+  // ==========================================
+
+  /**
+   * Get PMO role assignments for project
+   */
+  static getPMORoles = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const projectId = req.params.id;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Get project's PMO standard
+      const project = await queryHelpers.dbGet<{ pmo_standard: string }>(
+        'SELECT pmo_standard FROM projects WHERE id = ? AND organization_id = ?',
+        [projectId, orgId]
+      );
+
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      const standard = project.pmo_standard || 'pmbok';
+
+      // Get role definitions for this standard
+      const roleDefinitions = await queryHelpers.dbAll<{
+        role_key: string;
+        display_name: string;
+        description: string;
+        level: number;
+        is_required: number;
+      }>(
+        `SELECT role_key, display_name, description, level, is_required 
+             FROM pmo_role_definitions 
+             WHERE standard_id = ? 
+             ORDER BY level`,
+        [standard]
+      );
+
+      // Get current role assignments
+      const assignments = await queryHelpers.dbAll<{
+        id: string;
+        user_id: string;
+        pmo_role_key: string;
+        assigned_at: string;
+        first_name: string;
+        last_name: string;
+        email: string;
+      }>(
+        `SELECT pra.id, pra.user_id, pra.pmo_role_key, pra.assigned_at,
+                    u.first_name, u.last_name, u.email
+             FROM project_role_assignments pra
+             JOIN users u ON pra.user_id = u.id
+             WHERE pra.project_id = ?`,
+        [projectId]
+      );
+
+      res.json({
+        success: true,
+        projectId,
+        pmoStandard: standard,
+        roleDefinitions: roleDefinitions || [],
+        assignments: assignments || [],
+      });
+    }
+  );
+
+  /**
+   * Assign PMO role to user
+   */
+  static assignPMORole = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const projectId = req.params.id;
+      const { targetUserId, roleKey, notes } = req.body;
+
+      if (!orgId || !userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!targetUserId || !roleKey) {
+        res.status(400).json({ error: 'targetUserId and roleKey are required' });
+        return;
+      }
+
+      const assignmentId = uuidv4();
+
+      await queryHelpers.dbRun(
+        `INSERT INTO project_role_assignments (id, project_id, user_id, pmo_role_key, assigned_by, notes)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT(project_id, user_id, pmo_role_key) DO UPDATE SET
+                assigned_by = excluded.assigned_by,
+                assigned_at = datetime('now'),
+                notes = excluded.notes`,
+        [assignmentId, projectId, targetUserId, roleKey, userId, notes || null]
+      );
+
+      res.json({
+        success: true,
+        message: 'PMO role assigned successfully',
+        assignmentId,
+      });
+    }
+  );
+
+  /**
+   * Remove PMO role assignment
+   */
+  static removePMORole = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const projectId = req.params.id;
+      const assignmentId = req.params.assignmentId;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await queryHelpers.dbRun(
+        'DELETE FROM project_role_assignments WHERE id = ? AND project_id = ?',
+        [assignmentId, projectId]
+      );
+
+      res.json({
+        success: true,
+        message: 'PMO role assignment removed',
+      });
+    }
+  );
+
+  // ==========================================
+  // LOCATIONS
+  // ==========================================
+
+  /**
+   * Get all locations for organization
+   */
+  static getLocations = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const locations = await queryHelpers.dbAll<{
+        id: string;
+        name: string;
+        type: string;
+        description: string;
+        city: string;
+        country: string;
+      }>(
+        `SELECT id, name, type, description, city, country 
+             FROM locations 
+             WHERE organization_id = ? AND is_active = 1
+             ORDER BY name`,
+        [orgId]
+      );
+
+      res.json({
+        success: true,
+        locations: locations || [],
+      });
+    }
+  );
 }
 
 export default ProjectController;

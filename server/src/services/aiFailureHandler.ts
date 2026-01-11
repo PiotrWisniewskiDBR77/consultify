@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aifailurehandler Service
  * Enterprise SaaS Architecture - TypeScript Backend

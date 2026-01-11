@@ -2,50 +2,51 @@ import { AxisId, FullInitiative, FullSession, InitiativeStatus } from '../types'
 import { DRD_STRUCTURE } from './drdStructure';
 
 export const generateInitiatives = (session: FullSession): FullInitiative[] => {
-    const initiatives: FullInitiative[] = [];
-    const axisMap: Record<number, AxisId> = {
-        1: 'processes',
-        2: 'digitalProducts',
-        3: 'businessModels',
-        4: 'dataManagement',
-        5: 'culture',
-        6: 'cybersecurity',
-        7: 'aiMaturity',
-    };
+  const initiatives: FullInitiative[] = [];
+  const axisMap: Record<number, AxisId> = {
+    1: 'processes',
+    2: 'digitalProducts',
+    3: 'businessModels',
+    4: 'dataManagement',
+    5: 'culture',
+    6: 'cybersecurity',
+    7: 'aiMaturity',
+  };
 
-    DRD_STRUCTURE.forEach((axis) => {
-        const axisKey = axisMap[axis.id];
-        if (!axisKey) return;
+  DRD_STRUCTURE.forEach((axis) => {
+    const axisKey = axisMap[axis.id];
+    if (!axisKey) return;
 
-        const axisData = session.assessment[axisKey];
-        if (!axisData || !axisData.actual) return;
+    const axisData = session.assessment[axisKey];
+    if (!axisData || !axisData.actual) return;
 
-        axis.areas.forEach((area) => {
-            const currentLevel = axisData.actual || 0;
+    axis.areas.forEach((area) => {
+      const currentLevel = axisData.actual || 0;
 
-            // Find levels above current
-            const nextLevels = area.levels.filter((l) => l.level > currentLevel);
+      // Find levels above current
+      const nextLevels = area.levels.filter((l) => l.level > currentLevel);
 
-            // Strategy: Suggest the IMMEDIATE next level as the initiative.
-            // We could suggest all gaps, but usually you plan for the next step.
-            if (nextLevels.length > 0) {
-                const nextLevel = nextLevels[0]; // The immediate next step
+      // Strategy: Suggest the IMMEDIATE next level as the initiative.
+      // We could suggest all gaps, but usually you plan for the next step.
+      if (nextLevels.length > 0) {
+        const nextLevel = nextLevels[0]; // The immediate next step
 
-                initiatives.push({
-                    id: `init-${area.id}-${nextLevel.level}-${Date.now()}`,
-                    name: `Advance ${area.name} to Level ${nextLevel.level}`,
-                    description: `${nextLevel.title}. ${nextLevel.description} (Generated based on current level ${currentLevel}.)`,
-                    axis: axisKey,
-                    priority: !currentLevel || currentLevel === 1 ? 'High' : currentLevel < 3 ? 'Medium' : 'Low',
-                    complexity: nextLevel.level > 4 ? 'High' : nextLevel.level > 2 ? 'Medium' : 'Low',
-                    status: InitiativeStatus.DRAFT,
-                    estimatedCost: nextLevel.level * 10000,
-                    estimatedAnnualBenefit: nextLevel.level * 20000,
-                    projectId: '', // Required field
-                } as any);
-            }
-        });
+        initiatives.push({
+          id: `init-${area.id}-${nextLevel.level}-${Date.now()}`,
+          name: `Advance ${area.name} to Level ${nextLevel.level}`,
+          description: `${nextLevel.title}. ${nextLevel.description} (Generated based on current level ${currentLevel}.)`,
+          axis: axisKey,
+          priority:
+            !currentLevel || currentLevel === 1 ? 'High' : currentLevel < 3 ? 'Medium' : 'Low',
+          complexity: nextLevel.level > 4 ? 'High' : nextLevel.level > 2 ? 'Medium' : 'Low',
+          status: InitiativeStatus.DRAFT,
+          estimatedCost: nextLevel.level * 10000,
+          estimatedAnnualBenefit: nextLevel.level * 20000,
+          projectId: '', // Required field
+        } as any);
+      }
     });
+  });
 
-    return initiatives;
+  return initiatives;
 };

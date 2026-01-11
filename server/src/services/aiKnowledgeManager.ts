@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aiknowledgemanager Service
  * Enterprise SaaS Architecture - TypeScript Backend

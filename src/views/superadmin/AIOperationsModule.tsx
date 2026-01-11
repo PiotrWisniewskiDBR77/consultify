@@ -21,95 +21,115 @@ import { AIMissionControl } from '../../components/Admin/AIMissionControl';
 import { AIPerformanceDashboard } from '../../components/Admin/AIPerformanceDashboard';
 import { SLADashboard } from '../../components/Admin/SLADashboard';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { InfoButton } from '../../components/shared/InfoButton';
 
 interface AIOperationsModuleProps {
-    initialTab?: string;
+  initialTab?: string;
 }
 
 export const AIOperationsModule: React.FC<AIOperationsModuleProps> = ({ initialTab }) => {
-    const [activeTab, setActiveTab] = useState(initialTab || 'mission-control');
+  const [activeTab, setActiveTab] = useState(initialTab || 'mission-control');
 
-    const tabs: Tab[] = [
-        {
-            id: 'mission-control',
-            label: 'Mission Control',
-            icon: <Radar size={16} />,
-            description: 'Real-time AI operations dashboard',
-        },
-        {
-            id: 'performance',
-            label: 'Performance',
-            icon: <Activity size={16} />,
-            description: 'AI performance metrics and trends',
-        },
-        {
-            id: 'costs',
-            label: 'Costs',
-            icon: <DollarSign size={16} />,
-            description: 'Token usage and cost management',
-        },
-        {
-            id: 'sla',
-            label: 'SLA',
-            icon: <Shield size={16} />,
-            description: 'Service level agreements monitoring',
-        },
-        {
-            id: 'analytics',
-            label: 'Analytics',
-            icon: <BarChart2 size={16} />,
-            description: 'Usage analytics and insights',
-        },
-    ];
+  const tabs: Tab[] = [
+    {
+      id: 'mission-control',
+      label: 'Mission Control',
+      icon: <Radar size={16} />,
+      description: 'Real-time AI operations dashboard',
+    },
+    {
+      id: 'performance',
+      label: 'Performance',
+      icon: <Activity size={16} />,
+      description: 'AI performance metrics and trends',
+    },
+    {
+      id: 'costs',
+      label: 'Costs',
+      icon: <DollarSign size={16} />,
+      description: 'Token usage and cost management',
+    },
+    {
+      id: 'sla',
+      label: 'SLA',
+      icon: <Shield size={16} />,
+      description: 'Service level agreements monitoring',
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: <BarChart2 size={16} />,
+      description: 'Usage analytics and insights',
+    },
+  ];
 
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'mission-control':
-                return (
-                    <div className="p-6 overflow-y-auto h-full">
-                        <AIMissionControl />
-                    </div>
-                );
-            case 'performance':
-                return (
-                    <div className="p-6 overflow-y-auto h-full">
-                        <AIPerformanceDashboard />
-                    </div>
-                );
-            case 'costs':
-                return (
-                    <div className="p-6 overflow-y-auto h-full">
-                        <AICostDashboard />
-                    </div>
-                );
-            case 'sla':
-                return (
-                    <div className="p-6 overflow-y-auto h-full">
-                        <SLADashboard />
-                    </div>
-                );
-            case 'analytics':
-                return (
-                    <div className="p-6 overflow-y-auto h-full">
-                        <UsageAnalyticsDashboard />
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'mission-control':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <AIMissionControl />
+          </div>
+        );
+      case 'performance':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <AIPerformanceDashboard />
+          </div>
+        );
+      case 'costs':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <AICostDashboard />
+          </div>
+        );
+      case 'sla':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <SLADashboard />
+          </div>
+        );
+      case 'analytics':
+        return (
+          <div className="p-6 overflow-y-auto h-full">
+            <UsageAnalyticsDashboard />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
-    return (
-        <TabLayout
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            title="AI Operations"
-            subtitle="Mission control, performance monitoring, costs, SLA, and analytics"
-        >
-            {renderContent()}
-        </TabLayout>
-    );
+  // Get card ID based on active tab for contextual help
+  const getHelpCardId = () => {
+    switch (activeTab) {
+      case 'mission-control':
+        return 'superadmin-ai-mission-control';
+      case 'performance':
+        return 'superadmin-ai-performance';
+      case 'costs':
+        return 'superadmin-ai-costs';
+      case 'sla':
+        return 'superadmin-ai-sla';
+      case 'analytics':
+        return 'superadmin-ai-analytics';
+      default:
+        return 'superadmin-ai-operations';
+    }
+  };
+
+  return (
+    <TabLayout
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      title="AI Operations"
+      subtitle="Mission control, performance monitoring, costs, SLA, and analytics"
+      actions={<InfoButton cardId={getHelpCardId()} />}
+    >
+      {renderContent()}
+    </TabLayout>
+  );
 };
 
 export default AIOperationsModule;

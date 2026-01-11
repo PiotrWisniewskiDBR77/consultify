@@ -7,20 +7,20 @@
 import logger from '../../utils/Logger.js';
 
 class AdaptiveResponseService {
-    async generateResponse(context: any) {
-        logger.warn('[AdaptiveResponseService] generateResponse called on stub');
-        return "This is a stubbed adaptive response.";
-    }
+  async generateResponse(context: any) {
+    logger.warn('[AdaptiveResponseService] generateResponse called on stub');
+    return 'This is a stubbed adaptive response.';
+  }
 
-    async analyzeFeedback(feedback: any) {
-        logger.warn('[AdaptiveResponseService] analyzeFeedback called on stub');
-        return { analyzed: true };
-    }
+  async analyzeFeedback(feedback: any) {
+    logger.warn('[AdaptiveResponseService] analyzeFeedback called on stub');
+    return { analyzed: true };
+  }
 
-    async adaptTone(content: string, tone: string) {
-        logger.warn('[AdaptiveResponseService] adaptTone called on stub');
-        return content;
-    }
+  async adaptTone(content: string, tone: string) {
+    logger.warn('[AdaptiveResponseService] adaptTone called on stub');
+    return content;
+  }
 }
 
 export const adaptiveResponseService = new AdaptiveResponseService();

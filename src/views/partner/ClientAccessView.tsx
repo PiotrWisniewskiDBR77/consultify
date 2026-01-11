@@ -3,223 +3,423 @@
  *
  * Client and employee access management with PMO compliance
  * Aligned with RESOURCE_RESPONSIBILITY PMO domain
+ *
+ * HubSpot-style: Clients / Employees tabs
  */
 
-import { Link2, MapPin, Plus, Shield, UserCheck, Users, UserX } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import {
+  Check,
+  Copy,
+  Link2,
+  MapPin,
+  Plus,
+  RefreshCw,
+  Shield,
+  UserCheck,
+  UserPlus,
+  Users,
+  UserX,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 
-import { PMODomainBadge } from '../../components/Partner/EcosystemAnalytics';
-import { usePartnerEcosystem } from '../../hooks/usePartnerEcosystem';
-import { useAppStore } from '../../store/useAppStore';
-import { AppView } from '../../types';
-import { PARTNER_PMO_MAPPING } from './types';
+import { Api } from '../../services/api';
+import { cn } from '../../utils/cn';
+
+interface Client {
+  id: string;
+  clientName: string;
+  organizationName?: string;
+  region: string;
+  status: string;
+  accessLevel: string;
+  plan?: string;
+  userCount?: number;
+}
+
+interface Employee {
+  id: string;
+  employeeName: string;
+  email: string;
+  accessType: string;
+  permissionSet?: string;
+  clients: string[];
+  clientCount?: number;
+  status: string;
+  lastActive?: string;
+}
 
 export const ClientAccessView: React.FC = () => {
-    const { setCurrentView } = useAppStore();
-    const { clients, employees, loading, requestClientAccess } = usePartnerEcosystem();
-    const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
-    const [showAccessModal, setShowAccessModal] = useState(false);
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<'clients' | 'employees'>('clients');
+  const [clients, setClients] = useState<Client[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [showAddTeamMember, setShowAddTeamMember] = useState(false);
+  const [accessLink, setAccessLink] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
 
-    const handleNavigate = useCallback((view: AppView) => () => setCurrentView(view), [setCurrentView]);
+  // Fetch data from API
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    const handleRequestAccess = useCallback(
-        async (clientId: string, accessLevel: string) => {
-            await requestClientAccess(clientId, accessLevel);
-            setShowAccessModal(false);
-        },
-        [requestClientAccess],
-    );
+      // Fetch clients
+      const clientsResponse = await Api.get('/api/partners/clients');
+      if (clientsResponse?.data?.success && clientsResponse?.data?.data) {
+        setClients(clientsResponse.data.data);
+      }
 
-    const filteredClients = selectedRegion ? clients.filter((c) => c.region === selectedRegion) : clients;
+      // Fetch employees
+      const employeesResponse = await Api.get('/api/partners/employees');
+      if (employeesResponse?.data?.success && employeesResponse?.data?.data) {
+        setEmployees(employeesResponse.data.data);
+      }
+    } catch (err: any) {
+      console.error('Error fetching client access data:', err);
+      setError(
+        err?.response?.data?.error || t('partner.clientAccess.loadError', 'Failed to load data')
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
 
-    const activeEmployees = employees.filter((e) => e.status === 'ACTIVE');
-    const inactiveEmployees = employees.filter((e) => e.status === 'DEACTIVATED');
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-    const regions = [...new Set(clients.map((c) => c.region))];
+  // Generate access link
+  const handleGetAccessLink = useCallback(async () => {
+    try {
+      setGeneratingLink(true);
+      const response = await Api.post('/api/partners/access-links');
+      if (response?.data?.success && response?.data?.data?.link) {
+        setAccessLink(response.data.data.link);
+        toast.success(t('partner.clientAccess.linkGenerated', 'Access link generated!'));
+      } else {
+        toast.error(
+          response?.data?.error || t('partner.clientAccess.linkFailed', 'Failed to generate link')
+        );
+      }
+    } catch (err: any) {
+      console.error('Error generating access link:', err);
+      toast.error(
+        err?.response?.data?.error ||
+          t('partner.clientAccess.linkFailed', 'Failed to generate link')
+      );
+    } finally {
+      setGeneratingLink(false);
+    }
+  }, [t]);
 
+  // Copy access link
+  const handleCopyLink = useCallback(async () => {
+    if (!accessLink) return;
+    try {
+      await navigator.clipboard.writeText(accessLink);
+      setCopiedLink(true);
+      toast.success(t('common.copied', 'Copied to clipboard!'));
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      toast.error(t('common.copyFailed', 'Failed to copy'));
+    }
+  }, [accessLink, t]);
+
+  const filteredClients = selectedRegion
+    ? clients.filter((c) => c.region === selectedRegion)
+    : clients;
+  const activeEmployees = employees.filter((e) => e.status === 'ACTIVE');
+  const inactiveEmployees = employees.filter((e) => e.status === 'DEACTIVATED');
+  const regions = [...new Set(clients.map((c) => c.region).filter(Boolean))];
+
+  if (loading) {
     return (
-        <div className="h-full overflow-y-auto bg-slate-50 dark:bg-navy-950">
-            <div className="space-y-6 px-6 py-4">
-                {/* Header with PMO Badge */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <PMODomainBadge mapping={PARTNER_PMO_MAPPING.CLIENT_ACCESS_MANAGEMENT} />
-                        <span className="text-xs text-slate-500">
-                            {clients.length} clients · {employees.length} employees
-                        </span>
-                    </div>
-                    <button
-                        onClick={() => setShowAccessModal(true)}
-                        className="flex items-center gap-2 rounded-2xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark"
-                    >
-                        <Plus size={16} />
-                        Request Access
-                    </button>
-                </div>
-
-                {/* Region Filter */}
-                <div className="flex flex-wrap gap-2">
-                    <button
-                        onClick={() => setSelectedRegion(null)}
-                        className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
-                            selectedRegion === null
-                                ? 'bg-brand text-white'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300'
-                        }`}
-                    >
-                        All Regions
-                    </button>
-                    {regions.map((region) => (
-                        <button
-                            key={region}
-                            onClick={() => setSelectedRegion(region)}
-                            className={`flex items-center gap-1 rounded-full px-4 py-1.5 text-xs font-medium transition ${
-                                selectedRegion === region
-                                    ? 'bg-brand text-white'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300'
-                            }`}
-                        >
-                            <MapPin size={12} />
-                            {region}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Clients Section */}
-                <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 dark:border-white/5 dark:bg-navy-900/60">
-                    <div className="mb-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/20">
-                                <Users size={20} className="text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-navy-900 dark:text-white">Clients</h3>
-                                <p className="text-xs text-slate-500">{filteredClients.length} in current view</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        {filteredClients.map((client) => (
-                            <ClientRow key={client.id} client={client} />
-                        ))}
-
-                        {filteredClients.length === 0 && (
-                            <div className="rounded-2xl bg-slate-50 p-4 text-center text-sm text-slate-500 dark:bg-navy-950/40">
-                                No clients found {selectedRegion && `in ${selectedRegion}`}
-                            </div>
-                        )}
-                    </div>
-                </section>
-
-                {/* Employees Section */}
-                <div className="grid gap-6 lg:grid-cols-2">
-                    {/* Active Employees */}
-                    <section className="rounded-3xl border border-slate-200 bg-white/90 p-6 dark:border-white/5 dark:bg-navy-900/60">
-                        <div className="mb-4 flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-500/20">
-                                <UserCheck size={20} className="text-emerald-600 dark:text-emerald-400" />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-navy-900 dark:text-white">Active Employees</h3>
-                                <p className="text-xs text-slate-500">{activeEmployees.length} with access</p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            {activeEmployees.map((employee) => (
-                                <EmployeeRow key={employee.id} employee={employee} />
-                            ))}
-
-                            {activeEmployees.length === 0 && (
-                                <div className="rounded-2xl bg-slate-50 p-4 text-center text-sm text-slate-500 dark:bg-navy-950/40">
-                                    No active employees
-                                </div>
-                            )}
-                        </div>
-                    </section>
-
-                    {/* Inactive Employees */}
-                    <section className="rounded-3xl border border-slate-200 bg-slate-50/80 p-6 dark:border-white/5 dark:bg-navy-900/40">
-                        <div className="mb-4 flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 dark:bg-white/10">
-                                <UserX size={20} className="text-slate-500 dark:text-slate-400" />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-navy-900 dark:text-white">Deactivated</h3>
-                                <p className="text-xs text-slate-500">{inactiveEmployees.length} without access</p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            {inactiveEmployees.map((employee) => (
-                                <EmployeeRow key={employee.id} employee={employee} inactive />
-                            ))}
-
-                            {inactiveEmployees.length === 0 && (
-                                <div className="rounded-2xl bg-white/50 p-4 text-center text-sm text-slate-500 dark:bg-navy-900/40">
-                                    No deactivated employees
-                                </div>
-                            )}
-                        </div>
-                    </section>
-                </div>
-
-                {/* Access Link Generator */}
-                <div className="rounded-3xl border border-brand/20 bg-gradient-to-r from-brand/5 to-purple-500/5 p-6 dark:from-brand/10 dark:to-purple-500/10">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm dark:bg-navy-900">
-                                <Link2 size={24} className="text-brand" />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-navy-900 dark:text-white">Generate Access Link</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-300">
-                                    Create secure links for client or employee onboarding
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => setShowAccessModal(true)}
-                            className="rounded-2xl border border-brand/30 bg-white px-5 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand/5 dark:bg-navy-900"
-                        >
-                            Get Access Link
-                        </button>
-                    </div>
-                </div>
-
-                {/* PMO Compliance Info */}
-                <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 dark:border-white/5 dark:bg-navy-900/60">
-                    <div className="mb-4 flex items-center gap-3">
-                        <Shield size={20} className="text-orange-500" />
-                        <h3 className="font-semibold text-navy-900 dark:text-white">Access Control Compliance</h3>
-                    </div>
-
-                    <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                        <p>
-                            Wszystkie zmiany dostępu są logowane zgodnie z PMO domain{' '}
-                            <strong>RESOURCE_RESPONSIBILITY</strong>i mapowane na ISO 21500 Resource Subject Group
-                            (Clause 4.6).
-                        </p>
-                        <ul className="space-y-2 text-xs">
-                            <li className="flex items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
-                                <span>Filtry ról zgodne z PRINCE2 Organization Theme</span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                                <span>Access requests wymagają approval od PMO_LEAD lub SPONSOR</span>
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                <span>Dezaktywacje z pełnym audit trail dla PMBOK Team Performance Domain</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+      </div>
     );
+  }
+
+  if (error && clients.length === 0 && employees.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <div className="p-4 rounded-full bg-red-500/10 mb-4">
+          <Users className="w-8 h-8 text-red-400" />
+        </div>
+        <p className="text-slate-400 dark:text-slate-500 mb-4">{error}</p>
+        <button
+          onClick={fetchData}
+          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          {t('common.retry', 'Try Again')}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header - HubSpot Style */}
+      <div>
+        <h2 className="text-xl font-semibold text-white">
+          {t('partner.clientAccess.title', 'Client Access Manager')}
+        </h2>
+        <p className="text-slate-400 dark:text-slate-500">
+          {t(
+            'partner.clientAccess.subtitle',
+            "Manage your employees' client account access from one place"
+          )}
+        </p>
+      </div>
+
+      {/* Tabs - HubSpot Style */}
+      <div className="flex items-center justify-between border-b border-white/10 pb-0">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setActiveTab('clients')}
+            className={cn(
+              'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
+              activeTab === 'clients'
+                ? 'text-white border-violet-500'
+                : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-white'
+            )}
+          >
+            {t('partner.clientAccess.clients', 'Clients')}
+          </button>
+          <button
+            onClick={() => setActiveTab('employees')}
+            className={cn(
+              'px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
+              activeTab === 'employees'
+                ? 'text-white border-violet-500'
+                : 'text-slate-400 dark:text-slate-500 border-transparent hover:text-white'
+            )}
+          >
+            {t('partner.clientAccess.employees', 'Employees')}
+          </button>
+        </div>
+        <button
+          onClick={handleGetAccessLink}
+          disabled={generatingLink}
+          className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/50 text-white rounded-lg text-sm font-medium flex items-center gap-2"
+        >
+          {generatingLink ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <Link2 className="w-4 h-4" />
+          )}
+          {t('partner.clientAccess.getAccessLink', 'Get access link')}
+        </button>
+      </div>
+
+      {/* Access Link Display */}
+      {accessLink && (
+        <div className="bg-violet-500/10 border border-violet-500/30 rounded-xl p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-sm text-violet-300 mb-1">
+                {t('partner.clientAccess.generatedLink', 'Your access link is ready:')}
+              </p>
+              <code className="text-sm text-white bg-navy-900/50 px-3 py-1.5 rounded block truncate">
+                {accessLink}
+              </code>
+            </div>
+            <button
+              onClick={handleCopyLink}
+              className="p-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-white"
+            >
+              {copiedLink ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Content */}
+      {activeTab === 'clients' ? (
+        /* Clients Tab */
+        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          {/* Filters */}
+          {regions.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button
+                onClick={() => setSelectedRegion(null)}
+                className={cn(
+                  'rounded-full px-4 py-1.5 text-xs font-medium transition',
+                  selectedRegion === null
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-navy-700 text-slate-400 dark:text-slate-500 hover:text-white'
+                )}
+              >
+                All Regions
+              </button>
+              {regions.map((region) => (
+                <button
+                  key={region}
+                  onClick={() => setSelectedRegion(region)}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full px-4 py-1.5 text-xs font-medium transition',
+                    selectedRegion === region
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-navy-700 text-slate-400 dark:text-slate-500 hover:text-white'
+                  )}
+                >
+                  <MapPin className="w-3 h-3" />
+                  {region}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Clients Table/List */}
+          {filteredClients.length > 0 ? (
+            <div className="space-y-3">
+              {filteredClients.map((client) => (
+                <ClientRow key={client.id} client={client} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
+              <p className="text-slate-400 dark:text-slate-500 font-medium">
+                {t('partner.clientAccess.noClients', 'Nobody here')}
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {t('partner.clientAccess.noClientsDesc', "You don't have any client access.")}
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Employees Tab */
+        <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-slate-400 dark:text-slate-500">
+              {t(
+                'partner.clientAccess.employeesDesc',
+                "Manage your employees' client account access from one place"
+              )}
+            </p>
+            <button
+              onClick={() => setShowAddTeamMember(true)}
+              className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium flex items-center gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              {t('partner.clientAccess.addTeamMember', 'Add new team member')}
+            </button>
+          </div>
+
+          {/* Employees Table */}
+          {employees.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                      {t('partner.clientAccess.employeeName', 'Employee Name')}
+                    </th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                      {t('partner.clientAccess.permissionSet', 'Permission Set')}
+                    </th>
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                      {t('partner.clientAccess.totalClients', 'Total Clients')}
+                    </th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                      {t('partner.clientAccess.lastActive', 'Last Active')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {employees.map((employee) => (
+                    <tr key={employee.id} className="hover:bg-white/5">
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
+                              employee.status === 'ACTIVE'
+                                ? 'bg-violet-500/20 text-violet-400'
+                                : 'bg-slate-700 text-slate-400 dark:text-slate-500'
+                            )}
+                          >
+                            {employee.employeeName.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-white flex items-center gap-2">
+                              {employee.employeeName}
+                              <span
+                                className={cn(
+                                  'w-2 h-2 rounded-full',
+                                  employee.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-amber-400'
+                                )}
+                              />
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {employee.status === 'ACTIVE' ? 'Active' : 'Deactivated'} |{' '}
+                              {employee.email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="text-slate-400 dark:text-slate-500">
+                          {employee.permissionSet || employee.accessType?.replace('_', ' ') || '--'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-center">
+                        <span className="text-white">
+                          {employee.clientCount ?? employee.clients?.length ?? 0}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="text-slate-400 dark:text-slate-500">
+                          {employee.lastActive || '--'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <UserPlus className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
+              <p className="text-slate-400 dark:text-slate-500 font-medium">
+                {t('partner.clientAccess.noEmployees', 'No team members yet')}
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {t(
+                  'partner.clientAccess.noEmployeesDesc',
+                  'Add team members to manage client access.'
+                )}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PMO Compliance Info */}
+      <div className="bg-navy-800/50 rounded-xl border border-white/5 p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <Shield className="w-5 h-5 text-orange-400" />
+          <h3 className="font-semibold text-white">
+            {t('partner.clientAccess.compliance', 'Access Control Compliance')}
+          </h3>
+        </div>
+        <p className="text-sm text-slate-400 dark:text-slate-500">
+          {t(
+            'partner.clientAccess.complianceDesc',
+            'All access changes are logged according to PMO domain RESOURCE_RESPONSIBILITY and mapped to ISO 21500 Resource Subject Group (Clause 4.6).'
+          )}
+        </p>
+      </div>
+    </div>
+  );
 };
 
 // =============================================================================
@@ -227,94 +427,55 @@ export const ClientAccessView: React.FC = () => {
 // =============================================================================
 
 interface ClientRowProps {
-    client: {
-        id: string;
-        clientName: string;
-        region: string;
-        status: string;
-        accessLevel: string;
-    };
+  client: Client;
 }
 
 const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
-    const statusColors: Record<string, string> = {
-        ACTIVE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400',
-        PENDING: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
-        REVOKED: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
-    };
+  const statusColors: Record<string, string> = {
+    ACTIVE: 'bg-emerald-500/20 text-emerald-400',
+    PENDING: 'bg-amber-500/20 text-amber-400',
+    TRIAL: 'bg-blue-500/20 text-blue-400',
+    REVOKED: 'bg-red-500/20 text-red-400',
+  };
 
-    return (
-        <div className="flex items-center justify-between rounded-2xl border border-slate-100 p-4 transition hover:border-brand/30 dark:border-white/5">
-            <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-600 dark:bg-white/10 dark:text-slate-300">
-                    {client.clientName.substring(0, 2).toUpperCase()}
-                </div>
-                <div>
-                    <div className="font-semibold text-navy-900 dark:text-white">{client.clientName}</div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <MapPin size={10} />
-                        {client.region}
-                        <span className="text-slate-300 dark:text-slate-600">·</span>
-                        {client.accessLevel}
-                    </div>
-                </div>
-            </div>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[client.status]}`}>
-                {client.status}
-            </span>
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-navy-900/30 p-4 transition hover:border-violet-500/30">
+      <div className="flex items-center gap-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/20 text-sm font-bold text-violet-400">
+          {(client.clientName || client.organizationName || 'UN').substring(0, 2).toUpperCase()}
         </div>
-    );
-};
-
-interface EmployeeRowProps {
-    employee: {
-        id: string;
-        employeeName: string;
-        email: string;
-        accessType: string;
-        clients: string[];
-    };
-    inactive?: boolean;
-}
-
-const EmployeeRow: React.FC<EmployeeRowProps> = ({ employee, inactive }) => (
-    <div
-        className={`flex items-center justify-between rounded-2xl border p-4 ${
-            inactive
-                ? 'border-slate-100 bg-white/50 dark:border-white/5 dark:bg-navy-900/40'
-                : 'border-slate-100 dark:border-white/5'
-        }`}
-    >
-        <div className="flex items-center gap-4">
-            <div
-                className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold ${
-                    inactive
-                        ? 'bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-500'
-                        : 'bg-brand/10 text-brand'
-                }`}
-            >
-                {employee.employeeName.substring(0, 2).toUpperCase()}
-            </div>
-            <div>
-                <div
-                    className={
-                        inactive ? 'text-slate-400 dark:text-slate-500' : 'font-semibold text-navy-900 dark:text-white'
-                    }
-                >
-                    {employee.employeeName}
-                </div>
-                <div className="text-xs text-slate-500">{employee.email}</div>
-            </div>
+        <div>
+          <div className="font-medium text-white">
+            {client.clientName || client.organizationName}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            {client.region && (
+              <>
+                <MapPin className="w-3 h-3" />
+                {client.region}
+                <span className="text-slate-600 dark:text-slate-400">·</span>
+              </>
+            )}
+            {client.plan && <span>{client.plan}</span>}
+            {client.userCount !== undefined && (
+              <>
+                <span className="text-slate-600 dark:text-slate-400">·</span>
+                <span>{client.userCount} users</span>
+              </>
+            )}
+          </div>
         </div>
-        <div className="text-right">
-            <div
-                className={`text-xs font-medium ${inactive ? 'text-slate-400' : 'text-slate-600 dark:text-slate-300'}`}
-            >
-                {employee.accessType.replace('_', ' ')}
-            </div>
-            <div className="text-xs text-slate-400">{employee.clients.length} clients</div>
-        </div>
+      </div>
+      <span
+        className={cn(
+          'rounded-full px-2.5 py-1 text-xs font-medium',
+          statusColors[client.status] || statusColors.ACTIVE
+        )}
+      >
+        {client.status?.toLowerCase() || 'active'}
+      </span>
     </div>
-);
+  );
+};
 
 export default ClientAccessView;

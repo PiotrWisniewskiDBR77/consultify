@@ -7,17 +7,17 @@ import { render, screen } from '@testing-library/react';
 const BenefitsTracker = () => <div data-testid="benefits-tracker">Benefits Tracker</div>;
 
 describe('BenefitsTracker Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders component', () => {
-        render(<BenefitsTracker />);
-        expect(screen.getByTestId('benefits-tracker')).toBeInTheDocument();
-    });
+  it('renders component', () => {
+    render(<BenefitsTracker />);
+    expect(screen.getByTestId('benefits-tracker')).toBeInTheDocument();
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(<BenefitsTracker />);
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(<BenefitsTracker />);
+    expect(container).toBeInTheDocument();
+  });
 });

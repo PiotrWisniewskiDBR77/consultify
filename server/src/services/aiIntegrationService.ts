@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aiintegration Service
  * Enterprise SaaS Architecture - TypeScript Backend

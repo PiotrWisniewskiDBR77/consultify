@@ -106,13 +106,3 @@ describe('User API Contract', () => {
     });
   });
 });
-
-
-
-
-
-
-
-
-
-

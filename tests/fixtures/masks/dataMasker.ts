@@ -9,9 +9,8 @@ export class DataMasker {
    */
   static maskEmail(email: string): string {
     const [localPart, domain] = email.split('@');
-    const maskedLocal = localPart.length > 2 
-      ? `${localPart[0]}***${localPart[localPart.length - 1]}`
-      : '***';
+    const maskedLocal =
+      localPart.length > 2 ? `${localPart[0]}***${localPart[localPart.length - 1]}` : '***';
     return `${maskedLocal}@${domain}`;
   }
 
@@ -70,7 +69,7 @@ export class DataMasker {
    */
   static maskObject<T extends Record<string, any>>(obj: T, sensitiveFields: string[]): T {
     const masked = { ...obj };
-    sensitiveFields.forEach(field => {
+    sensitiveFields.forEach((field) => {
       if (field in masked) {
         if (field.includes('email')) {
           masked[field] = this.maskEmail(String(masked[field]));
@@ -91,20 +90,7 @@ export class DataMasker {
   /**
    * Mask array of objects
    */
-  static maskArray<T extends Record<string, any>>(
-    arr: T[],
-    sensitiveFields: string[]
-  ): T[] {
-    return arr.map(obj => this.maskObject(obj, sensitiveFields));
+  static maskArray<T extends Record<string, any>>(arr: T[], sensitiveFields: string[]): T[] {
+    return arr.map((obj) => this.maskObject(obj, sensitiveFields));
   }
 }
-
-
-
-
-
-
-
-
-
-

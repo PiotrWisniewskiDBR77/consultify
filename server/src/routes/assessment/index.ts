@@ -23,7 +23,3 @@ router.use('/main', assessmentRoutes);
 router.use('/', assessmentsRoutes);
 
 export default router;
-
-
-
-

@@ -8,35 +8,35 @@ import { BrowserRouter } from 'react-router-dom';
 import { Api } from '../../src/services/api';
 
 const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <BrowserRouter>{children}</BrowserRouter>
+  <BrowserRouter>{children}</BrowserRouter>
 );
 
 const DashboardOverview = () => (
-    <div data-testid="dashboard-overview">
-        <h1>Dashboard Overview</h1>
-        <div data-testid="stats">Statistics</div>
-        <div data-testid="charts">Charts</div>
-    </div>
+  <div data-testid="dashboard-overview">
+    <h1>Dashboard Overview</h1>
+    <div data-testid="stats">Statistics</div>
+    <div data-testid="charts">Charts</div>
+  </div>
 );
 
 describe('DashboardOverview Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        (Api.get as any).mockResolvedValue({});
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (Api.get as any).mockResolvedValue({});
+  });
 
-    it('renders dashboard', () => {
-        render(<DashboardOverview />, { wrapper: Wrapper });
-        expect(screen.getByTestId('dashboard-overview')).toBeInTheDocument();
-    });
+  it('renders dashboard', () => {
+    render(<DashboardOverview />, { wrapper: Wrapper });
+    expect(screen.getByTestId('dashboard-overview')).toBeInTheDocument();
+  });
 
-    it('displays stats', () => {
-        render(<DashboardOverview />, { wrapper: Wrapper });
-        expect(screen.getByTestId('stats')).toBeInTheDocument();
-    });
+  it('displays stats', () => {
+    render(<DashboardOverview />, { wrapper: Wrapper });
+    expect(screen.getByTestId('stats')).toBeInTheDocument();
+  });
 
-    it('displays charts', () => {
-        render(<DashboardOverview />, { wrapper: Wrapper });
-        expect(screen.getByTestId('charts')).toBeInTheDocument();
-    });
+  it('displays charts', () => {
+    render(<DashboardOverview />, { wrapper: Wrapper });
+    expect(screen.getByTestId('charts')).toBeInTheDocument();
+  });
 });

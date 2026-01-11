@@ -15,25 +15,25 @@ import React, { useMemo } from 'react';
 // ============================================================================
 
 export const BUSINESS_AREAS = [
-    { id: 'sales', name: 'Sales', namePl: 'Sprzedaż', icon: '💰' },
-    { id: 'marketing', name: 'Marketing', namePl: 'Marketing', icon: '📣' },
-    { id: 'technology', name: 'Technology (R&D)', namePl: 'Technologia (R&D)', icon: '🔬' },
-    { id: 'purchasing', name: 'Purchasing', namePl: 'Zakupy', icon: '🛒' },
-    { id: 'logistics', name: 'Logistics', namePl: 'Logistyka', icon: '🚚' },
-    { id: 'production', name: 'Production', namePl: 'Produkcja', icon: '🏭' },
-    { id: 'quality', name: 'Quality Control', namePl: 'Kontrola Jakości', icon: '✅' },
-    { id: 'finance', name: 'Finance', namePl: 'Finanse', icon: '💵' },
-    { id: 'hr', name: 'HR & Admin', namePl: 'HR i Administracja', icon: '👥' },
+  { id: 'sales', name: 'Sales', namePl: 'Sprzedaż', icon: '💰' },
+  { id: 'marketing', name: 'Marketing', namePl: 'Marketing', icon: '📣' },
+  { id: 'technology', name: 'Technology (R&D)', namePl: 'Technologia (R&D)', icon: '🔬' },
+  { id: 'purchasing', name: 'Purchasing', namePl: 'Zakupy', icon: '🛒' },
+  { id: 'logistics', name: 'Logistics', namePl: 'Logistyka', icon: '🚚' },
+  { id: 'production', name: 'Production', namePl: 'Produkcja', icon: '🏭' },
+  { id: 'quality', name: 'Quality Control', namePl: 'Kontrola Jakości', icon: '✅' },
+  { id: 'finance', name: 'Finance', namePl: 'Finanse', icon: '💵' },
+  { id: 'hr', name: 'HR & Admin', namePl: 'HR i Administracja', icon: '👥' },
 ] as const;
 
 export const MATURITY_LEVELS = [
-    { level: 7, name: 'Autonomous', namePl: 'Autonomiczny', color: '#ec4899' },
-    { level: 6, name: 'AI-Driven', namePl: 'AI-Driven', color: '#8b5cf6' },
-    { level: 5, name: 'Optimized', namePl: 'Zoptymalizowany', color: '#3b82f6' },
-    { level: 4, name: 'Automated', namePl: 'Zautomatyzowany', color: '#22c55e' },
-    { level: 3, name: 'Integrated', namePl: 'Zintegrowany', color: '#eab308' },
-    { level: 2, name: 'Digitized', namePl: 'Zdigitalizowany', color: '#f97316' },
-    { level: 1, name: 'Basic/Manual', namePl: 'Podstawowy/Ręczny', color: '#ef4444' },
+  { level: 7, name: 'Autonomous', namePl: 'Autonomiczny', color: '#ec4899' },
+  { level: 6, name: 'AI-Driven', namePl: 'AI-Driven', color: '#8b5cf6' },
+  { level: 5, name: 'Optimized', namePl: 'Zoptymalizowany', color: '#3b82f6' },
+  { level: 4, name: 'Automated', namePl: 'Zautomatyzowany', color: '#22c55e' },
+  { level: 3, name: 'Integrated', namePl: 'Zintegrowany', color: '#eab308' },
+  { level: 2, name: 'Digitized', namePl: 'Zdigitalizowany', color: '#f97316' },
+  { level: 1, name: 'Basic/Manual', namePl: 'Podstawowy/Ręczny', color: '#ef4444' },
 ] as const;
 
 // ============================================================================
@@ -41,22 +41,22 @@ export const MATURITY_LEVELS = [
 // ============================================================================
 
 export interface AreaAssessment {
-    areaId: string;
-    currentLevel: number;
-    targetLevel: number;
-    interviewNotes?: string;
-    intervieweeName?: string;
-    intervieweeRole?: string;
+  areaId: string;
+  currentLevel: number;
+  targetLevel: number;
+  interviewNotes?: string;
+  intervieweeName?: string;
+  intervieweeRole?: string;
 }
 
 interface AreaMatrixTableProps {
-    axisId: string;
-    axisName: string;
-    axisIcon?: string;
-    areaAssessments: AreaAssessment[];
-    onAreaClick?: (areaId: string) => void;
-    language?: 'pl' | 'en';
-    showAnimation?: boolean;
+  axisId: string;
+  axisName: string;
+  axisIcon?: string;
+  areaAssessments: AreaAssessment[];
+  onAreaClick?: (areaId: string) => void;
+  language?: 'pl' | 'en';
+  showAnimation?: boolean;
 }
 
 // ============================================================================
@@ -64,263 +64,263 @@ interface AreaMatrixTableProps {
 // ============================================================================
 
 export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
-    axisId,
-    axisName,
-    axisIcon = '📊',
-    areaAssessments,
-    onAreaClick,
-    language = 'pl',
-    showAnimation = true,
+  axisId,
+  axisName,
+  axisIcon = '📊',
+  areaAssessments,
+  onAreaClick,
+  language = 'pl',
+  showAnimation = true,
 }) => {
-    const isPolish = language === 'pl';
+  const isPolish = language === 'pl';
 
-    // Calculate summary statistics
-    const stats = useMemo(() => {
-        const assessments = areaAssessments.filter((a) => a.currentLevel > 0);
-        if (assessments.length === 0) return { avgCurrent: 0, avgTarget: 0, avgGap: 0, maxGap: 0 };
+  // Calculate summary statistics
+  const stats = useMemo(() => {
+    const assessments = areaAssessments.filter((a) => a.currentLevel > 0);
+    if (assessments.length === 0) return { avgCurrent: 0, avgTarget: 0, avgGap: 0, maxGap: 0 };
 
-        const totalCurrent = assessments.reduce((sum, a) => sum + a.currentLevel, 0);
-        const totalTarget = assessments.reduce((sum, a) => sum + a.targetLevel, 0);
-        const gaps = assessments.map((a) => a.targetLevel - a.currentLevel);
+    const totalCurrent = assessments.reduce((sum, a) => sum + a.currentLevel, 0);
+    const totalTarget = assessments.reduce((sum, a) => sum + a.targetLevel, 0);
+    const gaps = assessments.map((a) => a.targetLevel - a.currentLevel);
 
-        return {
-            avgCurrent: (totalCurrent / assessments.length).toFixed(1),
-            avgTarget: (totalTarget / assessments.length).toFixed(1),
-            avgGap: ((totalTarget - totalCurrent) / assessments.length).toFixed(1),
-            maxGap: Math.max(...gaps),
-            assessed: assessments.length,
-        };
-    }, [areaAssessments]);
-
-    // Get assessment for a specific area
-    const getAreaAssessment = (areaId: string): AreaAssessment | undefined => {
-        return areaAssessments.find((a) => a.areaId === areaId);
+    return {
+      avgCurrent: (totalCurrent / assessments.length).toFixed(1),
+      avgTarget: (totalTarget / assessments.length).toFixed(1),
+      avgGap: ((totalTarget - totalCurrent) / assessments.length).toFixed(1),
+      maxGap: Math.max(...gaps),
+      assessed: assessments.length,
     };
+  }, [areaAssessments]);
 
-    // Get gap color based on size
-    const getGapColor = (gap: number): string => {
-        if (gap >= 3) return '#ef4444'; // Critical
-        if (gap >= 2) return '#f59e0b'; // High
-        if (gap >= 1) return '#eab308'; // Medium
-        return '#22c55e'; // Low
-    };
+  // Get assessment for a specific area
+  const getAreaAssessment = (areaId: string): AreaAssessment | undefined => {
+    return areaAssessments.find((a) => a.areaId === areaId);
+  };
 
-    // Get priority label
-    const getPriorityLabel = (gap: number): string => {
-        if (gap >= 3) return isPolish ? 'Krytyczny' : 'Critical';
-        if (gap >= 2) return isPolish ? 'Wysoki' : 'High';
-        if (gap >= 1) return isPolish ? 'Średni' : 'Medium';
-        return isPolish ? 'Niski' : 'Low';
-    };
+  // Get gap color based on size
+  const getGapColor = (gap: number): string => {
+    if (gap >= 3) return '#ef4444'; // Critical
+    if (gap >= 2) return '#f59e0b'; // High
+    if (gap >= 1) return '#eab308'; // Medium
+    return '#22c55e'; // Low
+  };
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.03,
-            },
-        },
-    };
+  // Get priority label
+  const getPriorityLabel = (gap: number): string => {
+    if (gap >= 3) return isPolish ? 'Krytyczny' : 'Critical';
+    if (gap >= 2) return isPolish ? 'Wysoki' : 'High';
+    if (gap >= 1) return isPolish ? 'Średni' : 'Medium';
+    return isPolish ? 'Niski' : 'Low';
+  };
 
-    const cellVariants = {
-        hidden: { opacity: 0, scale: 0.8 },
-        visible: { opacity: 1, scale: 1 },
-    };
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.03,
+      },
+    },
+  };
 
-    return (
-        <motion.div
-            className="area-matrix-container"
-            initial={showAnimation ? 'hidden' : 'visible'}
-            animate="visible"
-            variants={containerVariants}
-        >
-            {/* Header with title and summary */}
-            <div className="matrix-header">
-                <div className="matrix-title">
-                    <span className="axis-icon">{axisIcon}</span>
-                    <h3>
-                        {isPolish ? 'Macierz Dojrzałości Obszarów' : 'Area Maturity Matrix'}: {axisName}
-                    </h3>
-                </div>
-                <div className="matrix-summary">
-                    <div className="summary-card">
-                        <span className="summary-value" style={{ color: '#3b82f6' }}>
-                            {stats.avgCurrent}
-                        </span>
-                        <span className="summary-label">{isPolish ? 'Śr. Aktualny' : 'Avg Current'}</span>
-                    </div>
-                    <div className="summary-card">
-                        <span className="summary-value" style={{ color: '#10b981' }}>
-                            {stats.avgTarget}
-                        </span>
-                        <span className="summary-label">{isPolish ? 'Śr. Docelowy' : 'Avg Target'}</span>
-                    </div>
-                    <div className="summary-card">
-                        <span className="summary-value" style={{ color: getGapColor(Number(stats.avgGap)) }}>
-                            +{stats.avgGap}
-                        </span>
-                        <span className="summary-label">{isPolish ? 'Śr. Luka' : 'Avg Gap'}</span>
-                    </div>
-                    <div className="summary-card">
-                        <span className="summary-value">{stats.assessed}/9</span>
-                        <span className="summary-label">{isPolish ? 'Ocenionych' : 'Assessed'}</span>
-                    </div>
-                </div>
-            </div>
+  const cellVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { opacity: 1, scale: 1 },
+  };
 
-            {/* Matrix Table */}
-            <div className="matrix-table-wrapper">
-                <table className="matrix-table">
-                    <thead>
-                        <tr>
-                            <th className="level-header">{isPolish ? 'Poziom' : 'Level'}</th>
-                            {BUSINESS_AREAS.map((area) => (
-                                <th
-                                    key={area.id}
-                                    className="area-header"
-                                    onClick={() => onAreaClick?.(area.id)}
-                                    style={{ cursor: onAreaClick ? 'pointer' : 'default' }}
-                                >
-                                    <span className="area-icon">{area.icon}</span>
-                                    <span className="area-name">{isPolish ? area.namePl : area.name}</span>
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {/* Level rows (7 to 1) */}
-                        {MATURITY_LEVELS.map((levelInfo) => (
-                            <motion.tr key={levelInfo.level} variants={cellVariants}>
-                                <td
-                                    className="level-cell"
-                                    style={{
-                                        borderLeft: `4px solid ${levelInfo.color}`,
-                                        background: `${levelInfo.color}10`,
-                                    }}
-                                >
-                                    <span className="level-number">{levelInfo.level}.</span>
-                                    <span className="level-name">{isPolish ? levelInfo.namePl : levelInfo.name}</span>
-                                </td>
-                                {BUSINESS_AREAS.map((area) => {
-                                    const assessment = getAreaAssessment(area.id);
-                                    const isCurrent = assessment?.currentLevel === levelInfo.level;
-                                    const isTarget = assessment?.targetLevel === levelInfo.level;
+  return (
+    <motion.div
+      className="area-matrix-container"
+      initial={showAnimation ? 'hidden' : 'visible'}
+      animate="visible"
+      variants={containerVariants}
+    >
+      {/* Header with title and summary */}
+      <div className="matrix-header">
+        <div className="matrix-title">
+          <span className="axis-icon">{axisIcon}</span>
+          <h3>
+            {isPolish ? 'Macierz Dojrzałości Obszarów' : 'Area Maturity Matrix'}: {axisName}
+          </h3>
+        </div>
+        <div className="matrix-summary">
+          <div className="summary-card">
+            <span className="summary-value" style={{ color: '#3b82f6' }}>
+              {stats.avgCurrent}
+            </span>
+            <span className="summary-label">{isPolish ? 'Śr. Aktualny' : 'Avg Current'}</span>
+          </div>
+          <div className="summary-card">
+            <span className="summary-value" style={{ color: '#10b981' }}>
+              {stats.avgTarget}
+            </span>
+            <span className="summary-label">{isPolish ? 'Śr. Docelowy' : 'Avg Target'}</span>
+          </div>
+          <div className="summary-card">
+            <span className="summary-value" style={{ color: getGapColor(Number(stats.avgGap)) }}>
+              +{stats.avgGap}
+            </span>
+            <span className="summary-label">{isPolish ? 'Śr. Luka' : 'Avg Gap'}</span>
+          </div>
+          <div className="summary-card">
+            <span className="summary-value">{stats.assessed}/9</span>
+            <span className="summary-label">{isPolish ? 'Ocenionych' : 'Assessed'}</span>
+          </div>
+        </div>
+      </div>
 
-                                    return (
-                                        <motion.td
-                                            key={`${levelInfo.level}-${area.id}`}
-                                            className={`matrix-cell ${isCurrent ? 'current' : ''} ${isTarget ? 'target' : ''}`}
-                                            variants={cellVariants}
-                                            onClick={() => onAreaClick?.(area.id)}
-                                            style={{ cursor: onAreaClick ? 'pointer' : 'default' }}
-                                        >
-                                            {isCurrent && isTarget && <span className="marker both">●○</span>}
-                                            {isCurrent && !isTarget && <span className="marker current">●</span>}
-                                            {isTarget && !isCurrent && <span className="marker target">○</span>}
-                                        </motion.td>
-                                    );
-                                })}
-                            </motion.tr>
-                        ))}
+      {/* Matrix Table */}
+      <div className="matrix-table-wrapper">
+        <table className="matrix-table">
+          <thead>
+            <tr>
+              <th className="level-header">{isPolish ? 'Poziom' : 'Level'}</th>
+              {BUSINESS_AREAS.map((area) => (
+                <th
+                  key={area.id}
+                  className="area-header"
+                  onClick={() => onAreaClick?.(area.id)}
+                  style={{ cursor: onAreaClick ? 'pointer' : 'default' }}
+                >
+                  <span className="area-icon">{area.icon}</span>
+                  <span className="area-name">{isPolish ? area.namePl : area.name}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {/* Level rows (7 to 1) */}
+            {MATURITY_LEVELS.map((levelInfo) => (
+              <motion.tr key={levelInfo.level} variants={cellVariants}>
+                <td
+                  className="level-cell"
+                  style={{
+                    borderLeft: `4px solid ${levelInfo.color}`,
+                    background: `${levelInfo.color}10`,
+                  }}
+                >
+                  <span className="level-number">{levelInfo.level}.</span>
+                  <span className="level-name">{isPolish ? levelInfo.namePl : levelInfo.name}</span>
+                </td>
+                {BUSINESS_AREAS.map((area) => {
+                  const assessment = getAreaAssessment(area.id);
+                  const isCurrent = assessment?.currentLevel === levelInfo.level;
+                  const isTarget = assessment?.targetLevel === levelInfo.level;
 
-                        {/* Separator */}
-                        <tr className="separator-row">
-                            <td colSpan={10}></td>
-                        </tr>
+                  return (
+                    <motion.td
+                      key={`${levelInfo.level}-${area.id}`}
+                      className={`matrix-cell ${isCurrent ? 'current' : ''} ${isTarget ? 'target' : ''}`}
+                      variants={cellVariants}
+                      onClick={() => onAreaClick?.(area.id)}
+                      style={{ cursor: onAreaClick ? 'pointer' : 'default' }}
+                    >
+                      {isCurrent && isTarget && <span className="marker both">●○</span>}
+                      {isCurrent && !isTarget && <span className="marker current">●</span>}
+                      {isTarget && !isCurrent && <span className="marker target">○</span>}
+                    </motion.td>
+                  );
+                })}
+              </motion.tr>
+            ))}
 
-                        {/* Summary rows */}
-                        <tr className="summary-row current-row">
-                            <td className="summary-label-cell">{isPolish ? 'Aktualny' : 'Current'}</td>
-                            {BUSINESS_AREAS.map((area) => {
-                                const assessment = getAreaAssessment(area.id);
-                                return (
-                                    <td key={`current-${area.id}`} className="summary-value-cell current">
-                                        {assessment?.currentLevel || '-'}
-                                    </td>
-                                );
-                            })}
-                        </tr>
-                        <tr className="summary-row target-row">
-                            <td className="summary-label-cell">{isPolish ? 'Docelowy' : 'Target'}</td>
-                            {BUSINESS_AREAS.map((area) => {
-                                const assessment = getAreaAssessment(area.id);
-                                return (
-                                    <td key={`target-${area.id}`} className="summary-value-cell target">
-                                        {assessment?.targetLevel || '-'}
-                                    </td>
-                                );
-                            })}
-                        </tr>
-                        <tr className="summary-row gap-row">
-                            <td className="summary-label-cell">{isPolish ? 'Luka' : 'Gap'}</td>
-                            {BUSINESS_AREAS.map((area) => {
-                                const assessment = getAreaAssessment(area.id);
-                                const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
-                                return (
-                                    <td
-                                        key={`gap-${area.id}`}
-                                        className="summary-value-cell gap"
-                                        style={{ color: getGapColor(gap) }}
-                                    >
-                                        {assessment ? (gap > 0 ? `+${gap}` : gap) : '-'}
-                                    </td>
-                                );
-                            })}
-                        </tr>
-                        <tr className="summary-row priority-row">
-                            <td className="summary-label-cell">{isPolish ? 'Priorytet' : 'Priority'}</td>
-                            {BUSINESS_AREAS.map((area) => {
-                                const assessment = getAreaAssessment(area.id);
-                                const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
-                                return (
-                                    <td
-                                        key={`priority-${area.id}`}
-                                        className="summary-value-cell priority"
-                                        style={{
-                                            background: `${getGapColor(gap)}15`,
-                                            color: getGapColor(gap),
-                                        }}
-                                    >
-                                        {assessment ? getPriorityLabel(gap) : '-'}
-                                    </td>
-                                );
-                            })}
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            {/* Separator */}
+            <tr className="separator-row">
+              <td colSpan={10}></td>
+            </tr>
 
-            {/* Legend */}
-            <div className="matrix-legend">
-                <div className="legend-item">
-                    <span className="legend-marker current">●</span>
-                    <span>{isPolish ? 'Stan aktualny' : 'Current state'}</span>
-                </div>
-                <div className="legend-item">
-                    <span className="legend-marker target">○</span>
-                    <span>{isPolish ? 'Cel docelowy' : 'Target state'}</span>
-                </div>
-                <div className="legend-separator">|</div>
-                <div className="legend-item">
-                    <span className="priority-dot" style={{ background: '#ef4444' }}></span>
-                    <span>{isPolish ? 'Krytyczny (≥3)' : 'Critical (≥3)'}</span>
-                </div>
-                <div className="legend-item">
-                    <span className="priority-dot" style={{ background: '#f59e0b' }}></span>
-                    <span>{isPolish ? 'Wysoki (2)' : 'High (2)'}</span>
-                </div>
-                <div className="legend-item">
-                    <span className="priority-dot" style={{ background: '#eab308' }}></span>
-                    <span>{isPolish ? 'Średni (1)' : 'Medium (1)'}</span>
-                </div>
-                <div className="legend-item">
-                    <span className="priority-dot" style={{ background: '#22c55e' }}></span>
-                    <span>{isPolish ? 'Niski (0)' : 'Low (0)'}</span>
-                </div>
-            </div>
+            {/* Summary rows */}
+            <tr className="summary-row current-row">
+              <td className="summary-label-cell">{isPolish ? 'Aktualny' : 'Current'}</td>
+              {BUSINESS_AREAS.map((area) => {
+                const assessment = getAreaAssessment(area.id);
+                return (
+                  <td key={`current-${area.id}`} className="summary-value-cell current">
+                    {assessment?.currentLevel || '-'}
+                  </td>
+                );
+              })}
+            </tr>
+            <tr className="summary-row target-row">
+              <td className="summary-label-cell">{isPolish ? 'Docelowy' : 'Target'}</td>
+              {BUSINESS_AREAS.map((area) => {
+                const assessment = getAreaAssessment(area.id);
+                return (
+                  <td key={`target-${area.id}`} className="summary-value-cell target">
+                    {assessment?.targetLevel || '-'}
+                  </td>
+                );
+              })}
+            </tr>
+            <tr className="summary-row gap-row">
+              <td className="summary-label-cell">{isPolish ? 'Luka' : 'Gap'}</td>
+              {BUSINESS_AREAS.map((area) => {
+                const assessment = getAreaAssessment(area.id);
+                const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
+                return (
+                  <td
+                    key={`gap-${area.id}`}
+                    className="summary-value-cell gap"
+                    style={{ color: getGapColor(gap) }}
+                  >
+                    {assessment ? (gap > 0 ? `+${gap}` : gap) : '-'}
+                  </td>
+                );
+              })}
+            </tr>
+            <tr className="summary-row priority-row">
+              <td className="summary-label-cell">{isPolish ? 'Priorytet' : 'Priority'}</td>
+              {BUSINESS_AREAS.map((area) => {
+                const assessment = getAreaAssessment(area.id);
+                const gap = assessment ? assessment.targetLevel - assessment.currentLevel : 0;
+                return (
+                  <td
+                    key={`priority-${area.id}`}
+                    className="summary-value-cell priority"
+                    style={{
+                      background: `${getGapColor(gap)}15`,
+                      color: getGapColor(gap),
+                    }}
+                  >
+                    {assessment ? getPriorityLabel(gap) : '-'}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-            <style>{`
+      {/* Legend */}
+      <div className="matrix-legend">
+        <div className="legend-item">
+          <span className="legend-marker current">●</span>
+          <span>{isPolish ? 'Stan aktualny' : 'Current state'}</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-marker target">○</span>
+          <span>{isPolish ? 'Cel docelowy' : 'Target state'}</span>
+        </div>
+        <div className="legend-separator">|</div>
+        <div className="legend-item">
+          <span className="priority-dot" style={{ background: '#ef4444' }}></span>
+          <span>{isPolish ? 'Krytyczny (≥3)' : 'Critical (≥3)'}</span>
+        </div>
+        <div className="legend-item">
+          <span className="priority-dot" style={{ background: '#f59e0b' }}></span>
+          <span>{isPolish ? 'Wysoki (2)' : 'High (2)'}</span>
+        </div>
+        <div className="legend-item">
+          <span className="priority-dot" style={{ background: '#eab308' }}></span>
+          <span>{isPolish ? 'Średni (1)' : 'Medium (1)'}</span>
+        </div>
+        <div className="legend-item">
+          <span className="priority-dot" style={{ background: '#22c55e' }}></span>
+          <span>{isPolish ? 'Niski (0)' : 'Low (0)'}</span>
+        </div>
+      </div>
+
+      <style>{`
                 .area-matrix-container {
                     background: white;
                     border-radius: 12px;
@@ -584,8 +584,8 @@ export const AreaMatrixTable: React.FC<AreaMatrixTableProps> = ({
                     }
                 }
             `}</style>
-        </motion.div>
-    );
+    </motion.div>
+  );
 };
 
 export default AreaMatrixTable;

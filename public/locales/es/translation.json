@@ -1603,13 +1603,9 @@
             "level3Desc": "ecosystem, connecting suppliers, partners and customers to create added value and synergy. They offer market analysis tools, joint promotions and loyalty programmes. An example might be an e-commerce platform integrating suppliers, partners and customers while also offering market analysis.",
             "level4Desc": "relationships, the owner provides Software- as-a-Service solutions on its platform, enabling access to various online applications and tools. This type of platform organization is referred to as a Software-as-a-Service Enabled Marketplace (SEM). SEM platforms offer diverse applications, from project Digital Pathfinder 488 management to data analysis, with the option for customization and integration. An example might be a project management platform that provides access to various tools tailored to customer needs.",
             "level5Desc": "of SEM platforms with an active user community. This enables participants to interact, collaborate and share knowledge. Companies combine SEM platforms with forums and chats where users can share knowledge and resolve issues. For example, an IT platform might allow IT resource management while also providing a space for collaboration and technical support for users. Piotr Wisniewski, PhD 489",
-            "level1Questions": [
-              "[PL] Czy firma tylko korzysta z platform?"
-            ],
+            "level1Questions": ["[PL] Czy firma tylko korzysta z platform?"],
             "level1Formula": "[PL] Dostęp do rynku",
-            "level2Questions": [
-              "[PL] Czy inni sprzedają na platformie?"
-            ],
+            "level2Questions": ["[PL] Czy inni sprzedają na platformie?"],
             "level2Formula": "[PL] Pośrednictwo",
             "level3Questions": [
               "[PL] Czy istnieje ekosystem?",
@@ -1643,25 +1639,15 @@
             "level3Desc": "use available assets or resources. The service provider focuses on managing and maintaining assets for the customer`s needs, providing greater flexibility . Consider an electronics manufacturer that establishes a long-term partnership with an outsourcing company that manages various sales channels, including online stores, physical retail shops and online marketplaces. The outsourcing company also offers advanced analytical tools for sales monitoring. Digital Pathfinder 490",
             "level4Desc": "to complete specific tasks or achieve precisely defined results. The provider adapts heavily to the customer`s individual needs and delivers personalized solutions. The customer expects a specialized and tailored approach from the provider. An electronics manufacturer might use an omnichannel platform that connects various sales channels, allowing personalized customer service at every stage. The platform integrates online stores, physical stores, mobile apps and real-time delivery.",
             "level5Desc": "the entire customer business process. The customer leverages comprehensive business solutions offered by the provider. This is the highest level of provider involvement in the customer`s business processes and might, for example, entail an electronics manufacturer outsourcing solutions to experts in omnichannel. The collaboration includes comprehensive sales management, delivery, customer service and high-level personalization. Services are fully tailored to the customer`s needs and utilize advanced technologies. In this business model, the level of digital maturity depends on the amount of complexity and risk that is delegated to the service provider. The technological aspect of this assessment indirectly concerns the extent to which the service provider can monitor and manage the risks they undertake. Piotr Wisniewski, PhD 491",
-            "level1Questions": [
-              "[PL] Czy usługa przypomina outsourcing?"
-            ],
+            "level1Questions": ["[PL] Czy usługa przypomina outsourcing?"],
             "level1Formula": "Convenience",
-            "level2Questions": [
-              "[PL] Czy klient płaci abonament?"
-            ],
+            "level2Questions": ["[PL] Czy klient płaci abonament?"],
             "level2Formula": "Availability",
-            "level3Questions": [
-              "[PL] Czy klient płaci za użycie?"
-            ],
+            "level3Questions": ["[PL] Czy klient płaci za użycie?"],
             "level3Formula": "Flexibility",
-            "level4Questions": [
-              "[PL] Czy płatność zależy od wyniku?"
-            ],
+            "level4Questions": ["[PL] Czy płatność zależy od wyniku?"],
             "level4Formula": "Result",
-            "level5Questions": [
-              "[PL] Czy dostawca zarządza procesem klienta?"
-            ],
+            "level5Questions": ["[PL] Czy dostawca zarządza procesem klienta?"],
             "level5Formula": "Delegation"
           },
           "sharing": {
@@ -1680,25 +1666,15 @@
             "level3Desc": "experience or the product of intellectual work. Users can offer their services, conduct training or share educational materials with other platform users. One example might be a platform for marketing professionals on which experts offer their skills in data analysis and marketing strategy to other platform users for an hourly fee.",
             "level4Desc": "provider for the time they use available assets or resources. The service provider focuses on managing and maintaining assets for the customer` s needs in order to increase the customer`s flexibility. Thus, an electronics manufacturer might enter into a long-term partnership with an outsourcing company that manages various sales channels, including online stores, physical retail shops and online marketplaces. The outsourcing company also offers advanced analytical tools for sales monitoring. Digital Pathfinder 492",
             "level5Desc": "solutions such as IT infrastructure, analytical tools, logistics services or project management. Users can use these solutions on a subscription or pay- per-use basis, allowing them to reduce the costs of their investments. An example might be a platform that integrates various services and technologies to provide comprehensive business solutions for project management, data analysis and logistics. Companies can use these solutions on a subscription basis, allowing them to devote the time and resources they save to developing their proprietary solutions. Piotr Wisniewski, PhD 493",
-            "level1Questions": [
-              "[PL] Czy zasoby są cyfrowe?"
-            ],
+            "level1Questions": ["[PL] Czy zasoby są cyfrowe?"],
             "level1Formula": "Sharing",
-            "level2Questions": [
-              "[PL] Czy zasoby są fizyczne?"
-            ],
+            "level2Questions": ["[PL] Czy zasoby są fizyczne?"],
             "level2Formula": "Access",
-            "level3Questions": [
-              "[PL] Czy użytkownicy dzielą się wiedzą?"
-            ],
+            "level3Questions": ["[PL] Czy użytkownicy dzielą się wiedzą?"],
             "level3Formula": "Know-how",
-            "level4Questions": [
-              "[PL] Czy platforma zarządza zasobami?"
-            ],
+            "level4Questions": ["[PL] Czy platforma zarządza zasobami?"],
             "level4Formula": "Flexibility",
-            "level5Questions": [
-              "[PL] Czy rozwiązania są kompleksowe?"
-            ],
+            "level5Questions": ["[PL] Czy rozwiązania są kompleksowe?"],
             "level5Formula": "[PL] Efektywność"
           },
           "monetization": {
@@ -1717,25 +1693,15 @@
             "level3Desc": "offerings to individual customers. This allows it to deliver customized products , services and content that align more closely with individual customer needs and preferences. Spotify, for instance, analyses musical preferences to provide users with personalized playlists and song recommendations.",
             "level4Desc": "data as a valuable resource that can be sold, shared or used to generate additional revenue. This may involve sharing data with business partners, offering paid analytical services, or using data for advertising purposes. Facebook, for instance, sells data to advertisers, enabling them to target specific user groups.",
             "level5Desc": "products, services and innovative solutions. Data serve as the foundation for developing new business models, crafting intelligent algorithms and harnessing artificial intelligence to deliver more advanced solutions to Digital Pathfinder 494 customers. Google, for example , utilizes user data to develop advanced AI algorithms, such as search algorithms, leading to the creation of new services and products. Piotr Wisniewski, PhD 495 Axis 4: Data management: Big Data everywhere In the digital era, data management and the effective use of Big Data have become critical components of organizational success. The fourth axis of digital transformation focuses on how well an organization captures, stores, processes and utilizes vast amounts of data to enhance decision-making, improve operational efficiencies and drive innovation. This axis examines the infrastructure, strategies and competencies that organizations deploy to handle the complexities of Big Data. As we explore this axis, we investigate the various facets of data management that are essential for building a strong digital ecosystem. From collecting data and ensuring their secure storage to conducting advanced analytics and deriving actionable insights, each component is crucial in turning raw data into strategic assets. This axis encompasses not only the technical skills required to handle Big Data but also the cultural transformations needed to cultivate a data-centric approach throughout the organization. A seven-tier maturity model has been proposed to assess each area, reflecting the broad range of technical capabilities present in these fields. --- END OF FILE: 3. digitlane modele .pdf --- --- START OF FILE: 4. Big data.pdf --- Piotr Wisniewski, PhD 495 Axis 4: Data management: Big Data everywhere In the digital era, data management and the effective use of Big Data have become critical components of organizational success. The fourth axis of digital transformation focuses on how well an organization captures, stores, processes and utilizes vast amounts of data to enhance decision-making, improve operational efficiencies and drive innovation. This axis examines the infrastructure, strategies and competencies that organizations deploy to handle the complexities of Big Data. As we explore this axis, we investigate the various facets of data management that are essential for building a strong digital ecosystem. From collecting data and ensuring their secure storage to conducting advanced analytics and deriving actionable insights, each component is crucial in turning raw data into strategic assets. This axis encompasses not only the technical skills required to handle Big Data but also the cultural transformations needed to cultivate a data-centric approach throughout the organization. A seven-tier maturity model has been proposed to assess each area, reflecting the broad range of technical capabilities present in these fields. Digital Pathfinder 496",
-            "level1Questions": [
-              "[PL] Czy dane są wykorzystywane wewnętrznie?"
-            ],
+            "level1Questions": ["[PL] Czy dane są wykorzystywane wewnętrznie?"],
             "level1Formula": "Understanding",
-            "level2Questions": [
-              "[PL] Czy dane wspierają decyzje?"
-            ],
+            "level2Questions": ["[PL] Czy dane wspierają decyzje?"],
             "level2Formula": "Insight",
-            "level3Questions": [
-              "[PL] Czy dane personalizują ofertę?"
-            ],
+            "level3Questions": ["[PL] Czy dane personalizują ofertę?"],
             "level3Formula": "Fit",
-            "level4Questions": [
-              "[PL] Czy dane są sprzedawane?"
-            ],
+            "level4Questions": ["[PL] Czy dane są sprzedawane?"],
             "level4Formula": "Monetization",
-            "level5Questions": [
-              "[PL] Czy dane są podstawą nowych modeli?"
-            ],
+            "level5Questions": ["[PL] Czy dane są podstawą nowych modeli?"],
             "level5Formula": "[PL] Innowacja"
           }
         }
@@ -1762,29 +1728,19 @@
             ],
             "level1Formula": "[PL] High risk of failure",
             "level2Desc": "[TODO] Decisions are made centrally without employee involvement. Innovation is limited due to lack of trust and empowerment.",
-            "level2Questions": [
-              "[PL] Are decisions top-down only?"
-            ],
+            "level2Questions": ["[PL] Are decisions top-down only?"],
             "level2Formula": "[PL] Low adaptability",
             "level3Desc": "[TODO] Leaders set ambitious goals and provide resources but tightly control execution.",
-            "level3Questions": [
-              "[PL] Are goals clear but rigid?"
-            ],
+            "level3Questions": ["[PL] Are goals clear but rigid?"],
             "level3Formula": "[PL] Fast results, limited learning",
             "level4Desc": "[TODO] Leaders encourage ideas, psychological safety and initiative.",
-            "level4Questions": [
-              "[PL] Do employees feel safe proposing ideas?"
-            ],
+            "level4Questions": ["[PL] Do employees feel safe proposing ideas?"],
             "level4Formula": "[PL] Strong engagement",
             "level5Desc": "[TODO] Leaders actively experiment, accept risk and learn from failure.",
-            "level5Questions": [
-              "[PL] Is experimentation encouraged?"
-            ],
+            "level5Questions": ["[PL] Is experimentation encouraged?"],
             "level5Formula": "[PL] High innovation capacity",
             "level6Desc": "[TODO] Leadership drives vision, values and long-term transformation across the organization.",
-            "level6Questions": [
-              "[PL] Is there a strong transformation vision?"
-            ],
+            "level6Questions": ["[PL] Is there a strong transformation vision?"],
             "level6Formula": "[PL] Sustainable transformation"
           },
           "readiness": {
@@ -1804,29 +1760,17 @@
             "level4Desc": "and presented in a way that is accessible to all employees. Communication should be two-way and consider the opinions and suggestions of employees so that the vision can be better adapted to the organization`s actual needs. Continuous communication of progress and achievements is also crucial for maintaining motivation and engagement in the change process.",
             "level5Desc": "taking specific actions to introduce and carry out changes. Implementing changes requires that we plan, define goals and directions, and identify the people and resources needed for change . It is also essential to define criteria for assessing progress and results.",
             "level6Desc": "objective is to make the transformation integral to the company`s working methods and culture. It is important to regularly assess the effectiveness of implemented changes and modify the strategy accordingly. Also important is that adequate training and support be given to help employees adapt to the new priorities and ways of working. This requires that the leadership continuously engage in the transformation process and promote the newly implemented solutions. Digital Pathfinder 516",
-            "level1Questions": [
-              "[PL] Is change acknowledged but not executed?"
-            ],
+            "level1Questions": ["[PL] Is change acknowledged but not executed?"],
             "level1Formula": "[PL] High inertia",
-            "level2Questions": [
-              "[PL] Is there a change coalition?"
-            ],
+            "level2Questions": ["[PL] Is there a change coalition?"],
             "level2Formula": "[PL] Medium risk",
-            "level3Questions": [
-              "[PL] Is there a shared vision?"
-            ],
+            "level3Questions": ["[PL] Is there a shared vision?"],
             "level3Formula": "[PL] Lower risk",
-            "level4Questions": [
-              "[PL] Is communication two-way?"
-            ],
+            "level4Questions": ["[PL] Is communication two-way?"],
             "level4Formula": "[PL] Low risk",
-            "level5Questions": [
-              "[PL] Are initiatives implemented?"
-            ],
+            "level5Questions": ["[PL] Are initiatives implemented?"],
             "level5Formula": "[PL] Controlled risk",
-            "level6Questions": [
-              "[PL] Is change part of culture?"
-            ],
+            "level6Questions": ["[PL] Is change part of culture?"],
             "level6Formula": "[PL] Very low risk"
           },
           "improvement": {
@@ -1846,29 +1790,17 @@
             "level4Desc": "acquisition of knowledge, skills and experience without the need for formal education, such as through reading books and articles or participating in online training. Self-education allows individuals to develop in directions that most interest them in the way that best suits them. In the context of organizations, employees` self-education can, and should, be integrated into the transformation culture strategy.",
             "level5Desc": "from various departments who collaborate on specific tasks or projects, leveraging their expertise towards a common objective. This team structure not only speeds up decision-making and boosts efficiency but also facilitates personal skill development and broader professional growth through cross- functional collaboration. For instance, when developing a new product or service, representatives from different departments can pool their specialized knowledge, enhancing the entire team`s understanding of the project`s challenges and potential solutions. This approach not only achieves better outcomes but also serves as a powerful educational experience within the context of real-world tasks.",
             "level6Desc": "serves as a guide and support for a junior employee, the mentee. Mentors are carefully selected for their rich experience and competence in a specific field, with their main goals being to assist the mentee in understanding the demands of their job and tools and to guide them towards achieving their goals. Mentoring is often integrated into organizational training programmes but can also exist as an individual professional development programme for Digital Pathfinder 518 employees. Through regular meetings , mentors share their knowledge and experience, help mentees develop practical skills, and provide advice on key issues related to their career paths. This process, based on a relationship of mutual trust, often significantly expands the mentee`s competencies, boosting their achievements within the organization. Piotr Wisniewski, PhD 519",
-            "level1Questions": [
-              "[PL] Is learning external only?"
-            ],
+            "level1Questions": ["[PL] Is learning external only?"],
             "level1Formula": "[PL] Skill gaps",
-            "level2Questions": [
-              "[PL] Are trainings systematic?"
-            ],
+            "level2Questions": ["[PL] Are trainings systematic?"],
             "level2Formula": "[PL] Moderate risk",
-            "level3Questions": [
-              "[PL] Are external experts used?"
-            ],
+            "level3Questions": ["[PL] Are external experts used?"],
             "level3Formula": "[PL] Lower risk",
-            "level4Questions": [
-              "[PL] Is self-learning encouraged?"
-            ],
+            "level4Questions": ["[PL] Is self-learning encouraged?"],
             "level4Formula": "[PL] Low risk",
-            "level5Questions": [
-              "[PL] Are teams cross-functional?"
-            ],
+            "level5Questions": ["[PL] Are teams cross-functional?"],
             "level5Formula": "[PL] Very low risk",
-            "level6Questions": [
-              "[PL] Is mentoring systematic?"
-            ],
+            "level6Questions": ["[PL] Is mentoring systematic?"],
             "level6Formula": "[PL] Minimal risk"
           },
           "innovation": {
@@ -1888,29 +1820,17 @@
             "level4Desc": "experimentation and seeking new solutions can sometimes lead to errors, but they are willing to accept this risk. Employees feel free to take risks and explore new ideas, even if it involves the chance of mistakes. Some companies, for example, run regular competitions for the biggest blunder of the week. As part of the competition, employees are encouraged to share mistakes that happened during the week. Though unusual, the contest aims to emphasize that every employee can make mistakes and that the company can accept mistakes as long as they lead to learning and improvement. This innovative approach to accepting mistakes aims to eliminate the fear of making mistakes and to create an atmosphere of experimentation. Employees, seeing that mistakes are part of the development and learning process, gain more confidence and willingness to try new solutions. This makes the organization more flexible and innovative.",
             "level5Desc": "stage invest significant resources in research, develop experimental activities, and design new solutions that are later tested in the form of prototypes. The R&D process is no longer a one-time event but a constant part of the pursuit of innovation within the organization. Employees recognize the role of this process in creating new products or services and strengthening the company`s market position.",
             "level6Desc": "Organizations acknowledge that partnerships with other companies, research institutes or startups are crucial for accelerating the innovation process. By being open to collaboration with external entities , organizations gain access to new technologies, knowledge and perspectives that may be hard to obtain internally. This approach allows organizations to better leverage the innovation ecosystem and more quickly put out new solutions. An example here is a medical software company that partnered with a local university. They jointly researched advanced diagnostic tools. This collaboration provided the company access to the latest scientific and technological advancements and Piotr Wisniewski, PhD 521 expert knowledge from the university. This resulted in the faster introduction of advanced diagnostic tools to the market, benefiting both the company and the entire medical sector. Digital Pathfinder 522",
-            "level1Questions": [
-              "[PL] Are ideas rewarded?"
-            ],
+            "level1Questions": ["[PL] Are ideas rewarded?"],
             "level1Formula": "[PL] Low maturity",
-            "level2Questions": [
-              "[PL] Are experiments allowed?"
-            ],
+            "level2Questions": ["[PL] Are experiments allowed?"],
             "level2Formula": "[PL] Moderate risk",
-            "level3Questions": [
-              "[PL] Are trends monitored?"
-            ],
+            "level3Questions": ["[PL] Are trends monitored?"],
             "level3Formula": "[PL] Lower risk",
-            "level4Questions": [
-              "[PL] Are mistakes tolerated?"
-            ],
+            "level4Questions": ["[PL] Are mistakes tolerated?"],
             "level4Formula": "[PL] Low risk",
-            "level5Questions": [
-              "[PL] Is R&D strategic?"
-            ],
+            "level5Questions": ["[PL] Is R&D strategic?"],
             "level5Formula": "[PL] Very low risk",
-            "level6Questions": [
-              "[PL] Are external partners used?"
-            ],
+            "level6Questions": ["[PL] Are external partners used?"],
             "level6Formula": "[PL] Minimal risk"
           },
           "resources": {
@@ -1930,29 +1850,17 @@
             "level4Desc": "to advanced use of data in the decision-making process. The question is whether the organization has appropriate information systems and databases and focuses on securing and utilizing them. At this point, the organization realizes that data are an essential foundation for fact-based decision-making. An example could be a logistics company utilizing advanced IT tools for shipment analysis. Through a data warehouse, the company can precisely monitor, analyse and forecast shipment traffic. Decisions such as optimizing delivery routes or inventory management are data-driven rather than intuitive. Furthermore, the company emphasizes data security, which is crucial when dealing with shipment information.",
             "level5Desc": "employees with access to modern tools and technologies. The question of whether employees have access to modern technologies supported by appropriate training and technical assistance is crucial in the context of organizational transformation. Organizations realize that innovations often require tools that allow for more advanced actions, and they invest in them. Our example here is that of an advertising agency deciding to invest in the latest graphic design and data analysis software. This gives employees access to advanced tools to create effective advertising campaigns and analyse their outcomes. Furthermore, the company secures training for employees, enabling them to use the new technologies effectively. This is an example of an organization that understands that investments in modern technologies contribute to improving efficiency and competitiveness.",
             "level6Desc": "ability to collaborate with external entities. This collaboration is crucial in the context of organizational transformation because external partners can bring Digital Pathfinder 524 knowledge, experience and capital that expedite innovative processes. The example here is a software company and a technical university entering into a strategic partnership. The university provides the company with research and knowledge in technology, and, in return, the company offers internships to university students. This mutual benefit accelerates the innovation process and contributes to the development of both parties. For the university, it means that its knowledge finds practical application and that it can provide students access to real projects. For the software company, it means access to the latest research and young, talented employees. Piotr Wisniewski, PhD 525 Axis 6: Cybersecurity In the digital age, cybersecurity has transcended its past role as a mere safeguard to become a fundamental pillar of operational integrity and trust. As organizations increasingly digitalize their operations, the importance of robust cybersecurity measures has never been more critical. Accordingly, this sixth axis of digital transformation explores how deeply an organization has ingrained security practices into its digital and operational fabric. The relentless evolution of cyber threats means that a proactive stance on cybersecurity is not just advisable; it is imperative for protecting sensitive customer data, ensuring privacy and maintaining the trust that is so crucial to sustaining reputation and financial viability. This axis evaluates an organization`s cybersecurity maturity across five distinct but interconnected areas: strategy and risk management, protection of networks and systems, data security, education and training, and emergency planning. Each area is assessed on a graduated scale that corresponds to the depth and sophistication of cybersecurity measures in place. From the basics of securing network perimeters to the complexities of managing a comprehensive emergency response, this axis provides a structured framework to gauge how prepared an organization is to defend against and respond to cyber incidents with the potential to disrupt operations and compromise data --- END OF FILE: 5. Kultura.pdf --- --- START OF FILE: 6. Cyberbezpieczenstwo .pdf --- Piotr Wisniewski, PhD 525 Axis 6: Cybersecurity In the digital age, cybersecurity has transcended its past role as a mere safeguard to become a fundamental pillar of operational integrity and trust. As organizations increasingly digitalize their operations, the importance of robust cybersecurity measures has never been more critical. Accordingly, this sixth axis of digital transformation explores how deeply an organization has ingrained security practices into its digital and operational fabric. The relentless evolution of cyber threats means that a proactive stance on cybersecurity is not just advisable; it is imperative for protecting sensitive customer data, ensuring privacy and maintaining the trust that is so crucial to sustaining reputation and financial viability. This axis evaluates an organization`s cybersecurity maturity across five distinct but interconnected areas: strategy and risk management, protection of networks and systems, data security, education and training, and emergency planning. Each area is assessed on a graduated scale that corresponds to the depth and sophistication of cybersecurity measures in place. From the basics of securing network perimeters to the complexities of managing a comprehensive emergency response, this axis provides a structured framework to gauge how prepared an organization is to defend against and respond to cyber incidents with the potential to disrupt operations and compromise data Digital Pathfinder 526 integrity. As we elaborate on the specifics of each area, we underscore the critical need for an integrated approach to cybersecurity, one that stays in step with both technological advancements and emerging threats. The level of an organization`s digital development in the area of cybersecurity is assessed in five areas: strategy and risk management, network and system protection, data protection, education and quality systems, and emergency plans. Each area is evaluated on a scale from level one to level six. Piotr Wisniewski, PhD 527",
-            "level1Questions": [
-              "[PL] Is budget allocated?"
-            ],
+            "level1Questions": ["[PL] Is budget allocated?"],
             "level1Formula": "[PL] High risk",
-            "level2Questions": [
-              "[PL] Are trainings accessible?"
-            ],
+            "level2Questions": ["[PL] Are trainings accessible?"],
             "level2Formula": "[PL] Medium risk",
-            "level3Questions": [
-              "[PL] Are experts engaged?"
-            ],
+            "level3Questions": ["[PL] Are experts engaged?"],
             "level3Formula": "[PL] Lower risk",
-            "level4Questions": [
-              "[PL] Is data available?"
-            ],
+            "level4Questions": ["[PL] Is data available?"],
             "level4Formula": "[PL] Low risk",
-            "level5Questions": [
-              "[PL] Are tools modern?"
-            ],
+            "level5Questions": ["[PL] Are tools modern?"],
             "level5Formula": "[PL] Very low risk",
-            "level6Questions": [
-              "[PL] Are partnerships strategic?"
-            ],
+            "level6Questions": ["[PL] Are partnerships strategic?"],
             "level6Formula": "[PL] Minimal risk"
           }
         }
@@ -1984,30 +1892,17 @@
               "[PL] Czy pojawiają się opóźnienia?"
             ],
             "level1Formula": "[PL] Dane opisują przeszłość",
-            "level2Questions": [
-              "[PL] Czy część danych zbiera się automatycznie?"
-            ],
+            "level2Questions": ["[PL] Czy część danych zbiera się automatycznie?"],
             "level2Formula": "[PL] Lepsza widoczność",
-            "level3Questions": [
-              "[PL] Czy dane zbierają się automatycznie?",
-              "[PL] Czy są spójne?"
-            ],
+            "level3Questions": ["[PL] Czy dane zbierają się automatycznie?", "[PL] Czy są spójne?"],
             "level3Formula": "[PL] Dane operacyjne",
-            "level4Questions": [
-              "[PL] Czy dane są real-time?"
-            ],
+            "level4Questions": ["[PL] Czy dane są real-time?"],
             "level4Formula": "[PL] Bieżący obraz",
-            "level5Questions": [
-              "[PL] Czy dane są standaryzowane?"
-            ],
+            "level5Questions": ["[PL] Czy dane są standaryzowane?"],
             "level5Formula": "[PL] Jedna wersja prawdy",
-            "level6Questions": [
-              "[PL] Czy dane są kompletne i jakościowe?"
-            ],
+            "level6Questions": ["[PL] Czy dane są kompletne i jakościowe?"],
             "level6Formula": "[PL] Przewidywalność",
-            "level7Questions": [
-              "[PL] Czy system sam poprawia dane?"
-            ],
+            "level7Questions": ["[PL] Czy system sam poprawia dane?"],
             "level7Formula": "[PL] Autonomiczna baza"
           },
           "storage": {
@@ -2028,33 +1923,19 @@
             "level5Desc": "services of external cloud service providers. These providers maintain cloud infrastructure, which their clients access via the Internet. Public clouds offer a wide range of services, including data processing, data storage, virtual machines and tools for data analysis. A company that uses the services of providers such as Google Cloud, Dropbox or AWS is operating at this level. Employing a public cloud reduces costs , allows resources to be scaled, and provides flexibility in managing data and applications.",
             "level6Desc": "organization. This means that cloud resources such as servers, storage and network are available only to the employees of that specific organization, and not to external users. An example is a financial corporation such as a bank Piotr Wisniewski, PhD 501 using a private cloud to securely store customer data. This ensures full control over data security, a critical aspect in the financial sector.",
             "level7Desc": "storage by utilizing a mix of solutions tailored to the specific needs of different types of data. For instance, operational data critical for production processes are stored on edge devices for immediate access, while sensitive information like technical drawings is kept in private clouds to enhance security. Other data, such as financial and material reports, benefit from the scalability and accessibility of public clouds, allowing for resource adjustments in response to fluctuating demands. This approach not only optimizes performance and cost-efficiency but also ensures robust security and control, exemplified by an automotive component manufacturer who effectively segregates data storage based on function and sensitivity. Digital Pathfinder 502",
-            "level1Questions": [
-              "[PL] Czy dane są w plikach lokalnych?"
-            ],
+            "level1Questions": ["[PL] Czy dane są w plikach lokalnych?"],
             "level1Formula": "[PL] Brak spójności",
-            "level2Questions": [
-              "[PL] Czy istnieje jedna baza danych?"
-            ],
+            "level2Questions": ["[PL] Czy istnieje jedna baza danych?"],
             "level2Formula": "[PL] Podstawowa spójność",
-            "level3Questions": [
-              "[PL] Czy istnieje hurtownia danych?"
-            ],
+            "level3Questions": ["[PL] Czy istnieje hurtownia danych?"],
             "level3Formula": "[PL] Porządek danych",
-            "level4Questions": [
-              "[PL] Czy dane są w różnych formatach?"
-            ],
+            "level4Questions": ["[PL] Czy dane są w różnych formatach?"],
             "level4Formula": "Flexibility",
-            "level5Questions": [
-              "[PL] Czy istnieje jedna architektura?"
-            ],
+            "level5Questions": ["[PL] Czy istnieje jedna architektura?"],
             "level5Formula": "[PL] Jedna platforma",
-            "level6Questions": [
-              "[PL] Czy spełnione są standardy?"
-            ],
+            "level6Questions": ["[PL] Czy spełnione są standardy?"],
             "level6Formula": "[PL] Zaufanie",
-            "level7Questions": [
-              "[PL] Czy system sam zarządza?"
-            ],
+            "level7Questions": ["[PL] Czy system sam zarządza?"],
             "level7Formula": "Autonomy"
           },
           "communication": {
@@ -2075,33 +1956,19 @@
             "level5Desc": "connect to one another via a central access point, facilitating centralized network management. Wireless networks find applications in various industries, including manufacturing, transportation, medicine and services .",
             "level6Desc": "servers connect multiple computers and devices into a network. WAN/LAN networks provide a stable connection between company branches and offices, enabling access to data and applications from different devices and locations. Various protocols and technologies such as TCP/IP, VPN and MPLS ensure fast and secure data exchange within the organization. In particular, VPN (Virtual Private Network) technology ensures secure communication between locations, which is crucial for safeguarding sensitive company data.",
             "level7Desc": "stored and processed in the cloud, which is usually provided by an external vendor. A cloud-based architecture allows access to applications and data from anywhere and any Internet-enabled device, allowing resources to be scaled flexibly according to needs. This enables organizations to adapt more easily to changing business requirements and reduce the costs of maintaining infrastructure. An example of cloud-based architecture is a microservices architecture, where applications are built as a set of smaller, independent services that can be easily scaled and updated. Digital Pathfinder 504",
-            "level1Questions": [
-              "[PL] Czy dane są przesyłane ręcznie?"
-            ],
+            "level1Questions": ["[PL] Czy dane są przesyłane ręcznie?"],
             "level1Formula": "Delays",
-            "level2Questions": [
-              "[PL] Czy dane są batch?"
-            ],
+            "level2Questions": ["[PL] Czy dane są batch?"],
             "level2Formula": "Periodic consistency",
-            "level3Questions": [
-              "[PL] Czy istnieją API?"
-            ],
+            "level3Questions": ["[PL] Czy istnieją API?"],
             "level3Formula": "Current consistency",
-            "level4Questions": [
-              "[PL] Czy architektura jest event-driven?"
-            ],
+            "level4Questions": ["[PL] Czy architektura jest event-driven?"],
             "level4Formula": "Immediacy",
-            "level5Questions": [
-              "[PL] Czy przepływy są orkiestrwane?"
-            ],
+            "level5Questions": ["[PL] Czy przepływy są orkiestrwane?"],
             "level5Formula": "Control",
-            "level6Questions": [
-              "[PL] Czy istnieje data fabric?"
-            ],
+            "level6Questions": ["[PL] Czy istnieje data fabric?"],
             "level6Formula": "Uniformity",
-            "level7Questions": [
-              "[PL] Czy system działa autonomicznie?"
-            ],
+            "level7Questions": ["[PL] Czy system działa autonomicznie?"],
             "level7Formula": "Autonomy"
           },
           "analysis": {
@@ -2122,33 +1989,19 @@
             "level5Desc": "improved and maintained through the automated detection and elimination of data errors, standardization of data, verification of information from external sources, and completion of missing data. Often, these tools can manage the data entry and modification process, continuously monitor data quality and then generate data quality reports. For example, an insurance company might use such tools to automatically detect and correct errors in customer data.",
             "level6Desc": "useful tool in various fields and involves the creation of data that mimic real- world information. This is particularly valuable for testing different scenarios and variations of system operations, algorithms or mathematical models. Data simulation can be used for safe, controlled testing without using real data, which is a crucial facility when dealing with sensitive information. In the medical field, for example, data simulation can create artificial datasets of patient information. The simulated data can be used to test and evaluate the performance of new diagnostic or therapeutic algorithms, eliminating the risk of making real-world errors or endangering patients. Digital Pathfinder 506",
             "level7Desc": "and classify atypical data in ways that are often hard or impossible using traditional analytical methods. The algorithms learn from existing data in order to classify new data, making them extremely versatile. In banks and payment processing companies, for example , machine learning algorithms can be used to identify anomalous customer behaviours. By analysing extensive datasets, machine learning algorithms can detect suspect behaviours and block such operations. Thus, by working with a database of banking transactions, machine learning algorithms further protect customers against, for example, fraudulent activity. Piotr Wisniewski, PhD 507",
-            "level1Questions": [
-              "[PL] Czy raporty opisują przeszłość?"
-            ],
+            "level1Questions": ["[PL] Czy raporty opisują przeszłość?"],
             "level1Formula": "History",
-            "level2Questions": [
-              "[PL] Czy znane są przyczyny?"
-            ],
+            "level2Questions": ["[PL] Czy znane są przyczyny?"],
             "level2Formula": "Understanding",
-            "level3Questions": [
-              "[PL] Czy firma prognozuje?"
-            ],
+            "level3Questions": ["[PL] Czy firma prognozuje?"],
             "level3Formula": "Prediction",
-            "level4Questions": [
-              "[PL] Czy system rekomenduje?"
-            ],
+            "level4Questions": ["[PL] Czy system rekomenduje?"],
             "level4Formula": "Recommendations",
-            "level5Questions": [
-              "[PL] Czy modele się uczą?"
-            ],
+            "level5Questions": ["[PL] Czy modele się uczą?"],
             "level5Formula": "Learning",
-            "level6Questions": [
-              "[PL] Czy system decyduje sam?"
-            ],
+            "level6Questions": ["[PL] Czy system decyduje sam?"],
             "level6Formula": "Autonomy",
-            "level7Questions": [
-              "[PL] Czy system się rozwija?"
-            ],
+            "level7Questions": ["[PL] Czy system się rozwija?"],
             "level7Formula": "Evolution"
           },
           "computing": {
@@ -2169,33 +2022,19 @@
             "level5Desc": "networking and application services over the Internet. In cloud computing, computational resources such as servers, memory, networks and databases are provided as a service, allowing them to be used flexibly, based on user needs. Various service models are available in cloud computing, including Software- as-a-Service, Platform-as-a-Service and Infrastructure-as-a-Service.",
             "level6Desc": "extraordinarily complex computations on multiple processors simultaneously. This allows large amounts of data to be processed quickly, which is essential in various fields such as science, finance, industry and data analysis. HPC systems consist of multiple computing nodes connected by a high-throughput network. In the field of science, HPC technology is used for simulating complex physical phenomena to process vast amounts of data and obtain results in a short time.",
             "level7Desc": "interconnected computers operating as a single computing unit. In the aviation industry, computer clusters are used for aerodynamics simulations, enabling the rapid processing of large amounts of data and shortening analysis times for more efficient designing of new aircraft models. Piotr Wisniewski, PhD 509 Axis 5: Competence levels and digital culture Axis 5, focusing on the digital culture of an organization, describes softer, yet equally crucial aspects of a company`s digital transformation. Unlike the first three axes, which directly influence the financial performance of an organization, the last three, especially Axis 5, emphasize the organizational behaviours critical for successful transformation. Experience in implementing digital transformations with client companies indicates that failures are often attributable to a lack of attention to organizational culture. A transformational culture within an organization encompasses values, attitudes and practices that promote agility in the face of changing market and technological conditions. Such a culture values openness to change, innovativeness and a propensity for experimentation and judicious risk-taking. In organizations endowed with a strong transformation culture, employees are actively engaged in the change process and encouraged by leaders to be creative and inventive, which enhances agility. For digital transformation strategies to succeed, they must align with the organizational culture. New technologies and processes require shifts in both thought and action across all levels of the organization. Without a culture that supports innovation, flexibility and openness to change, even the most --- END OF FILE: 4. Big data.pdf --- --- START OF FILE: 5. Kultura.pdf --- Piotr Wisniewski, PhD 509 Axis 5: Competence levels and digital culture Axis 5, focusing on the digital culture of an organization, describes softer, yet equally crucial aspects of a company`s digital transformation. Unlike the first three axes, which directly influence the financial performance of an organization, the last three, especially Axis 5, emphasize the organizational behaviours critical for successful transformation. Experience in implementing digital transformations with client companies indicates that failures are often attributable to a lack of attention to organizational culture. A transformational culture within an organization encompasses values, attitudes and practices that promote agility in the face of changing market and technological conditions. Such a culture values openness to change, innovativeness and a propensity for experimentation and judicious risk-taking. In organizations endowed with a strong transformation culture, employees are actively engaged in the change process and encouraged by leaders to be creative and inventive, which enhances agility. For digital transformation strategies to succeed, they must align with the organizational culture. New technologies and processes require shifts in both thought and action across all levels of the organization. Without a culture that supports innovation, flexibility and openness to change, even the most Digital Pathfinder 510 meticulously developed digital strategies may encounter tepid support or outright resistance. Thus, it is imperative to cultivate an organizational culture that not only supports but champions the values integral to digital transformation. This axis will explore five key areas – leadership styles, readiness for change, continuous improvement, innovation culture and resource availability – each of which is crucial for fostering an environment conducive to sustainable digital growth. Piotr Wisniewski, PhD 511",
-            "level1Questions": [
-              "[PL] Czy obliczenia są lokalne?"
-            ],
+            "level1Questions": ["[PL] Czy obliczenia są lokalne?"],
             "level1Formula": "Limitations",
-            "level2Questions": [
-              "[PL] Czy istnieją centralne serwery?"
-            ],
+            "level2Questions": ["[PL] Czy istnieją centralne serwery?"],
             "level2Formula": "Stability",
-            "level3Questions": [
-              "[PL] Czy firma korzysta z chmury?"
-            ],
+            "level3Questions": ["[PL] Czy firma korzysta z chmury?"],
             "level3Formula": "Flexibility",
-            "level4Questions": [
-              "[PL] Czy architektura jest hybrydowa?"
-            ],
+            "level4Questions": ["[PL] Czy architektura jest hybrydowa?"],
             "level4Formula": "Optimization",
-            "level5Questions": [
-              "[PL] Czy system jest rozproszony?"
-            ],
+            "level5Questions": ["[PL] Czy system jest rozproszony?"],
             "level5Formula": "Scale",
-            "level6Questions": [
-              "[PL] Czy są akceleratory?"
-            ],
+            "level6Questions": ["[PL] Czy są akceleratory?"],
             "level6Formula": "Performance",
-            "level7Questions": [
-              "[PL] Czy system sam zarządza?"
-            ],
+            "level7Questions": ["[PL] Czy system sam zarządza?"],
             "level7Formula": "Autonomy"
           }
         }
@@ -2226,25 +2065,15 @@
               "[PL] Czy ryzyka są mapowane?"
             ],
             "level1Formula": "[PL] Wysokie ryzyko reputacyjne",
-            "level2Questions": [
-              "[PL] Czy ryzyka są identyfikowane?"
-            ],
+            "level2Questions": ["[PL] Czy ryzyka są identyfikowane?"],
             "level2Formula": "[PL] Świadomość zagrożeń",
-            "level3Questions": [
-              "[PL] Czy istnieje plan działań?"
-            ],
+            "level3Questions": ["[PL] Czy istnieje plan działań?"],
             "level3Formula": "[PL] Kontrola ryzyka",
-            "level4Questions": [
-              "[PL] Czy polityki są egzekwowane?"
-            ],
+            "level4Questions": ["[PL] Czy polityki są egzekwowane?"],
             "level4Formula": "[PL] Zaufanie operacyjne",
-            "level5Questions": [
-              "[PL] Czy ludzie są szkoleni?"
-            ],
+            "level5Questions": ["[PL] Czy ludzie są szkoleni?"],
             "level5Formula": "[PL] Odporność organizacji",
-            "level6Questions": [
-              "[PL] Czy strategia jest audytowana?"
-            ],
+            "level6Questions": ["[PL] Czy strategia jest audytowana?"],
             "level6Formula": "[PL] Zaufanie strategiczne"
           },
           "network": {
@@ -2264,29 +2093,17 @@
             "level4Desc": "to compromise data, Security Information and Event Management systems and Intrusion Detection Systems analyse data from multiple sources and Digital Pathfinder 530 generate alerts or reports, enabling an effective response and ensuring operational continuity. These systems are used in the transportation sector, for example. Here, where complex logistics networks and data management are commonplace, incident detection systems are essential.",
             "level5Desc": "the user`s identity and access level. In the education sector, for example, where there is a need to secure access to university resources, authorization and authentication systems are indispensable. Students and staff must provide unique identification data and passwords to access educational materials.",
             "level6Desc": "of cybersecurity in, for example , the e-commerce industry, where secure transmission of financial data is a priority. Online merchants use VPNs to ensure a secure connection between different geographical locations, protecting sensitive data from interception. This allows for the secure transmission of financial information over public networks while protecting customers. Piotr Wisniewski, PhD 531",
-            "level1Questions": [
-              "[PL] Czy istnieją firewalle?"
-            ],
+            "level1Questions": ["[PL] Czy istnieją firewalle?"],
             "level1Formula": "Minimal protection",
-            "level2Questions": [
-              "[PL] Czy antivirus jest aktualny?"
-            ],
+            "level2Questions": ["[PL] Czy antivirus jest aktualny?"],
             "level2Formula": "System stability",
-            "level3Questions": [
-              "[PL] Czy ataki są wykrywane?"
-            ],
+            "level3Questions": ["[PL] Czy ataki są wykrywane?"],
             "level3Formula": "Rapid response",
-            "level4Questions": [
-              "[PL] Czy zdarzenia są korelowane?"
-            ],
+            "level4Questions": ["[PL] Czy zdarzenia są korelowane?"],
             "level4Formula": "Operational control",
-            "level5Questions": [
-              "[PL] Czy dostęp jest kontrolowany?"
-            ],
+            "level5Questions": ["[PL] Czy dostęp jest kontrolowany?"],
             "level5Formula": "System trust",
-            "level6Questions": [
-              "[PL] Czy komunikacja jest szyfrowana?"
-            ],
+            "level6Questions": ["[PL] Czy komunikacja jest szyfrowana?"],
             "level6Formula": "Operational continuity"
           },
           "dataProtection": {
@@ -2306,29 +2123,17 @@
             "level4Desc": "backup copies of data so that, in the event of the loss of original data, they can be effectively restored. This requires that a backup strategy be established, that the process of data restoration from backup copies be tested, and that the backup strategy be regularly adjusted to changing needs.",
             "level5Desc": "networks and s y s t e m s t o d e t e c t a b n o r m a l i t i e s a n d t h r e a t s . T h i s i n v o l v e s Digital Pathfinder 532 implementing solutions that monitor systems and network traffic, training monitoring personnel to respond to security alarms and continually updating monitoring tools.",
             "level6Desc": "access to data and systems by unauthorized individuals requires the implementation of identity verification systems, such as biometric scanners or digital certificates, and, of course, training. Piotr Wisniewski, PhD 533",
-            "level1Questions": [
-              "[PL] Czy dane są szyfrowane?"
-            ],
+            "level1Questions": ["[PL] Czy dane są szyfrowane?"],
             "level1Formula": "Data protection",
-            "level2Questions": [
-              "[PL] Czy hasła są zarządzane?"
-            ],
+            "level2Questions": ["[PL] Czy hasła są zarządzane?"],
             "level2Formula": "Controlled access",
-            "level3Questions": [
-              "[PL] Czy role są zdefiniowane?"
-            ],
+            "level3Questions": ["[PL] Czy role są zdefiniowane?"],
             "level3Formula": "Risk minimization",
-            "level4Questions": [
-              "[PL] Czy backupy są testowane?"
-            ],
+            "level4Questions": ["[PL] Czy backupy są testowane?"],
             "level4Formula": "Business continuity",
-            "level5Questions": [
-              "[PL] Czy zagrożenia są monitorowane?"
-            ],
+            "level5Questions": ["[PL] Czy zagrożenia są monitorowane?"],
             "level5Formula": "Early warning",
-            "level6Questions": [
-              "[PL] Czy stosowane jest MFA/biometria?"
-            ],
+            "level6Questions": ["[PL] Czy stosowane jest MFA/biometria?"],
             "level6Formula": "High trust"
           },
           "education": {
@@ -2348,29 +2153,17 @@
             "level4Desc": "conduct regular internal audits of cybersecurity. Their goal is to assess the effectiveness of systems and procedures, contributing to continuous improvement in this area. Digital Pathfinder 534",
             "level5Desc": "of internal and external audits to assess effectiveness and compliance with the organization`s cybersecurity policies and procedures. It also ensures compliance with applicable standards and regulations on information security.",
             "level6Desc": "management is used to certify organizations that have implemented a sufficient information security management system. Certification attests to high-quality risk management and protection of confidential information in the organization. This certificate builds trust with customers and business partners and contributes to the company`s development. Piotr Wisniewski, PhD 535",
-            "level1Questions": [
-              "[PL] Czy istnieje plan szkoleń?"
-            ],
+            "level1Questions": ["[PL] Czy istnieje plan szkoleń?"],
             "level1Formula": "[PL] Świadomość",
-            "level2Questions": [
-              "[PL] Czy szkolenia są realizowane?"
-            ],
+            "level2Questions": ["[PL] Czy szkolenia są realizowane?"],
             "level2Formula": "[PL] Zmniejszenie ryzyka",
-            "level3Questions": [
-              "[PL] Czy system jest testowany?"
-            ],
+            "level3Questions": ["[PL] Czy system jest testowany?"],
             "level3Formula": "[PL] Wykrywanie luk",
-            "level4Questions": [
-              "[PL] Czy są auditorzy?"
-            ],
+            "level4Questions": ["[PL] Czy są auditorzy?"],
             "level4Formula": "[PL] Kontrola jakości",
-            "level5Questions": [
-              "[PL] Czy audyty są planowane?"
-            ],
+            "level5Questions": ["[PL] Czy audyty są planowane?"],
             "level5Formula": "[PL] Zaufanie",
-            "level6Questions": [
-              "[PL] Czy istnieje certyfikacja?"
-            ],
+            "level6Questions": ["[PL] Czy istnieje certyfikacja?"],
             "level6Formula": "[PL] Wiarygodność rynkowa"
           },
           "contingency": {
@@ -2390,29 +2183,17 @@
             "level4Desc": "emergency plans is regular employee training in emergencies. These training sessions cover both technical aspects and security procedures.",
             "level5Desc": "is important to regularly test them in practice. These tests should include various incident scenarios and be conducted in a controlled manner. Regular Digital Pathfinder 536 testing allows adjustments to be made to emergency plans based on changing conditions and threats.",
             "level6Desc": "is necessary to keep accurate documentation. This documentation includes information about procedures, test results and implemented changes. This allows for the rapid identification of weaknesses and introduction of corrections. Precise documentation is important if incidents are to be responded to swiftly and their harms minimized. In conclusion, cybersecurity is often underappreciated until a crisis unfolds. Much like safety measures in traditional industries, where the value of a Safety Officer is often only recognized following a serious incident, the critical importance of robust cybersecurity measures tends to be realized in hindsight. As enterprises expand their digital footprints, the necessity for both technical and non-technical measures to safeguard information, systems, and software becomes increasingly imperative . This aspect of digital transformation is not merely a precaution ; it is an essential component of maintaining trust and operational integrity in the digital age. Neglecting this could lead to severe consequences, making it essential for businesses to prioritize and continuously enhance their cybersecurity strategies. Piotr Wisniewski, PhD 537 Index 6V Adobe AI, Artificial Intelligence Alibaba AlphaGo Altman, Sam Amazon API, Application Programming Interface AR/VR, Augmented Reality/ Virtual Reality B2B, business to business Ballmer Steve Bennis, Warren Bezos, Jeff Big Data Black swan Blik Boeing Bolt Booking.com Branson, Richard Buffett, Warren butterfly effect C&D, Connect and Develop ChatGPT Christensen, Clayton Cisco CMMS, Computerized Maintenance Management Systems Cooperators CRM, Customer Relationship Management customer experience DBR77 Deep Blue Deep Mind Devol, Georg Digital 2022 Global Overview Report Digital Change Management Digital Roadmap Dropbox EDI, Electronic Data Interchange Eight-step model (see: Kotter`s eight-step model) ERP, Enterprise Resource Planning ETL, Extract, Transform, Load Farley, Jim FMEA, Failure Mode and Effects Analysis Ford (Motor Company) Ford, Henry Frog (see Żabka ) GAI, General Artificial --- END OF FILE: 6. Cyberbezpieczenstwo .pdf --- --- START OF FILE: 7. Os AI opis.pdf --- AXIS 7: ARTIFICIAL INTELLIGENCE READINESS & INTEGRATION (Wprowadzenie do całej osi – styl zgodny z pozostałymi osiami DRD) Artificial Intelligence has become one of the most transformative forces shaping modern organizations. While earlier axes examine processes, data, culture or products, this axis focuses on the organization’s ability to adopt, scale and operationalize AI in a structured, safe and value-creating manner. AI is no longer an experimental technology reserved for innovators. It increasingly defines competitive advantage, productivity, decision-making quality and the speed at which organizations can respond to change. Companies that understand how to integrate AI into their architecture, processes, people and governance structures will build stronger adaptability and long-term resilience. Axis 7 evaluates maturity across five areas that collectively determine the organization’s readiness for AI: 7A – Data Exposure & AI Foundations Evaluates how accessible, structured and prepared the organization’s data is for use by AI models. 7B – AI-Augmented Processes Describes how deeply AI supports or automates decision-making inside operational and administrative workflows. 7C – AI in Products & Services Assesses whether AI enhances offerings or becomes a core component of new digital products. 7D – AI Governance, Safety & Ethics Measures the organization’s capability to manage risks, compliance and responsible AI deployment. 7E – AI Empowerment of Employees Examines whether employees possess the skills, tools and routines to work effectively with AI in daily operations. The maturity scale, similarly to other axes, ranges from Level 1 (initial) to Level 5 (advanced) and allows organizations to identify precisely where they stand and what steps must be taken to progress to the next stage. AREA 7A — Data Exposure & AI Foundations Wprowadzenie (dlaczego to ważne) Artificial Intelligence is only as powerful as the data it can access. Organizations with fragmented, inconsistent or inaccessible data struggle to achieve meaningful AI outcomes. Conversely, companies that maintain structured, integrated and governed data environments progress quickly toward automation, advanced analytics and generative AI adoption. This area assesses whether the organization’s data architecture — including operational data, transactional data, machine data, documents and knowledge — is ready to be consumed by AI models. A company cannot achieve AI maturity without achieving maturity in this area first. Poniżej przedstawiono pięciopoziomową skalę umożliwiającą precyzyjną samoocenę. LEVEL 1 — Fragmented Data, No AI Readiness Jak to rozumieć Data are scattered across spreadsheets, local drives and disconnected systems. There is no unified view of the organization’s information. Preparing any dataset for analysis requires manual work and significant effort. Data quality issues are common and not monitored. Typowe technologie / brak technologii • Excel, lokalne pliki, brak API • Brak systemów ETL / brak hurtowni danych • Brak standardów nazewnictwa i metadanych Jak rozpoznać, że jesteś na tym poziomie • Każde zapytanie analityczne wymaga ręcznego zbierania danych • Dane są niekompletne lub niespójne między systemami • AI nie może działać, bo dane nie są dostępne w odpowiednim formacie LEVEL 2 — Structured Data in Silos Jak to rozumieć Firma posiada kilka systemów cyfrowych (ERP, MES, CRM), ale każdy z nich przechowuje dane we własnym „silosie”. Dane są bardziej uporządkowane, lecz nie są łatwo dostępne dla AI. Eksporty realizowane są ręcznie. Typowe technologie • ERP / MES / CRM jako główne źródła danych • Podstawowe API, ale niewykorzystywane • Manualne integracje (CSV, XLS export/import) Jak rozpoznać, że jesteś na tym poziomie • Dane są cyfrowe, lecz niepołączone • Aby wykonać analizę, pracownicy łączą pliki z różnych źródeł • AI może działać tylko na małych, jednorazowo przygotowanych zestawach LEVEL 3 — Centralized Data & Initial AI Readiness Jak to rozumieć Organizacja buduje pierwsze scentralizowane repozytoria danych. Procesy ETL zaczynają funkcjonować, a dane są pobierane do jednego miejsca. Pojawiają się pierwsze projekty machine learning, oparte na ustandaryzowanych zbiorach danych. Typowe technologie • Data Warehouse / Data Lake (np. BigQuery, Redshift, Snowflake) • ETL/ELT (Airflow, Fivetran, dbt) • Pierwsze API integracyjne Jak rozpoznać, że jesteś na tym poziomie • Dane w hurtowni są aktualizowane regularnie • Analitycy i data scientists mogą korzystać z uzgodnionych źródeł • Projekty AI nie wymagają manualnego łączenia danych LEVEL 4 — Fully AI-Ready Data Architecture Jak to rozumieć Organizacja posiada spójne zasady governance, jakość danych jest monitorowana, a źródła danych są udokumentowane. Dane są dostępne w czasie zbliżonym do rzeczywistego. AI może trenować modele i aktualizować je w sposób powtarzalny i niezawodny. Typowe technologie • Real-time streaming (Kafka, Pub/Sub) • Data Catalog / Metadata Management • Automatyczne walidacje danych • Feature Store dla modeli AI Jak rozpoznać, że jesteś na tym poziomie • Dane są zawsze dostępne, spójne i aktualne • Modele AI mają stabilne, powtarzalne pipeline’y • Dane wykorzystywane są w wielu inicjatywach AI równocześnie LEVEL 5 — Autonomous Data Intelligence Jak to rozumieć Dane są automatycznie przygotowywane, czyszczone, wersjonowane i udostępniane modelom AI. Systemy potrafią wykrywać anomalie, uzupełniać braki i optymalizować przepływy danych bez udziału człowieka. To najwyższy stopień dojrzałości fundamentów AI. Typowe technologie • Automatyczne data quality engines • Self-healing pipelines • Real-time feature engineering • Monitoring driftu danych i modeli Jak rozpoznać, że jesteś na tym poziomie • Systemy same reagują na problemy z danymi • AI działa na danych w czasie rzeczywistym, bez ręcznej ingerencji • Dane są traktowane jako produkt („data as a product”) ----------------------------------------------------- ⭐ AREA 7B — AI-Augmented Processes ----------------------------------------------------- Wprowadzenie (dlaczego to ważne) Procesy stanowią rdzeń działalności każdej organizacji — to one generują wynik finansowy, obsługują klientów, produkują wartość oraz organizują codzienną pracę. Dlatego dojrzałość w wykorzystaniu AI w procesach jest jednym z kluczowych elementów transformacji. Ten obszar mierzy, w jakim stopniu sztuczna inteligencja wspiera, optymalizuje lub autonomicznie prowadzi działania operacyjne w firmie. Ocena obejmuje: • zakres automatyzacji, • rolę AI w podejmowaniu decyzji, • integrację AI z systemami operacyjnymi, • stopień, w jakim procesy są projektowane „AI-first”. Wysoka dojrzałość oznacza, że procesy działają szybciej, taniej, stabilniej, przewidywalniej, a decyzje są podejmowane w sposób powtarzalny i oparty na danych. ⭐ LEVEL 1 — Isolated AI Experiments Jak to rozumieć AI pojawia się w organizacji jedynie w formie małych, niepowiązanych inicjatyw. Mogą to być testy narzędzi generatywnych, chatboty, OCR lub podstawowe automatyzacje biurowe — ale nie mają one wpływu na główne procesy biznesowe. Procesy działają tak jak dotychczas, a AI pojawia się jako ciekawostka lub inicjatywa pojedynczych pracowników. Typowe technologie • ChatGPT, Gemini, Copilot – używane prywatnie, nie jako część procesów • Proste narzędzia OCR • Pojedyncze makra, skrypty automatyzujące • Narzędzia do generowania treści (np. marketing) Jak rozpoznać, że jesteś na tym poziomie • AI działa „obok” procesów, nie w ich środku • Nie ma wpływu na decyzje operacyjne • Brak połączenia z systemami (ERP/MES/CRM) • Użycie AI zależy od indywidualnej inicjatywy, nie od strategii ⭐ LEVEL 2 — Assisted Work Automation Jak to rozumieć AI wspiera pracowników w wykonywaniu zadań, ale nie decyduje w procesach. Pojawiają się pierwsze automatyzacje: planowanie spotkań, generowanie treści, analiza dokumentów, klasyfikacja maili, automatyczne przepływy pracy (RPA). Rola AI to przyspieszanie pracy człowieka, nie jej przejmowanie. Proces działa tak jak wcześniej — ale szybciej. Typowe technologie • RPA (UiPath, Power Automate) • Generative AI w obsłudze biura (podsumowania, transkrypcje, drafty) • Automatyczne klasyfikatory dokumentów • Predictive alerts w systemach analitycznych • Wtyczki AI do Excel/Office Jak rozpoznać, że jesteś na tym poziomie • AI poprawia efektywność, ale nie ma wpływu na jakość procesu • Każda decyzja wciąż należy do człowieka • AI nie posiada dostępu do danych operacyjnych „na żywo” • Automatyzacje są jednostkowe, działające tylko w swoich wycinkach ⭐ LEVEL 3 — Integrated AI Decision Support Jak to rozumieć AI zaczyna być częścią procesu, a nie dodatkiem. Modele AI dostarczają rekomendacje operacyjne, np.: • prognozy sprzedaży, • predykcja awarii maszyn, • rekomendacje zamówień, • optymalizacja tras, • planowanie produkcji, • ocena ryzyka finansowego. Pracownicy podejmują decyzje w oparciu o wskazania AI. Procesy są projektowane tak, by uwzględniały dane i algorytmy — ale odpowiedzialność pozostaje po stronie człowieka. Typowe technologie • Modele ML (regresja, klasyfikacja, forecasting) • Systemy rekomendacyjne • Predykcyjne moduły ERP/MES/WMS • Computer vision w kontroli jakości • IoT + AI do analizy danych maszynowych Jak rozpoznać, że jesteś na tym poziomie • Każdy kluczowy proces ma elementy predykcyjne lub analityczne • Pracownik polega na rekomendacjach AI w codziennej pracy • Modele są trenowane cyklicznie, a dane przepływają automatycznie • Systemy generują powtarzalne rekomendacje o wysokiej jakości ⭐ LEVEL 4 — Semi-Autonomous Processes Jak to rozumieć AI wykonuje część działań procesowych samodzielnie. Człowiek pełni rolę nadzorcy lub zatwierdzającego. Przykłady: • automatyczne planowanie produkcji z możliwością akceptacji, • autonomiczne przydzielanie zleceń do pracowników lub maszyn, • dynamiczne sterowanie zapasami, • automatyczne generowanie zamówień, • autonomiczne wykrywanie i klasyfikacja usterek, • priorytetyzacja zadań w obsłudze klienta. W wielu procesach człowiek nie podejmuje już decyzji — jedynie kontroluje system. Typowe technologie • Autonomiczne moduły APS • Zaawansowane reinforcement learning / optymalizatory • Agentowe systemy workflow • Predictive + prescriptive analytics • Vision systems z auto-reagowaniem Jak rozpoznać, że jesteś na tym poziomie • AI wykonuje „action steps”, nie tylko analizy • Systemy same proponują i wdrażają zmiany • Człowiek działa tylko w wyjątkach lub zatwierdza krok końcowy • Zmienność procesu spada, stabilność rośnie ⭐ LEVEL 5 — Fully Autonomous Operational Orchestration Jak to rozumieć Procesy są projektowane tak, aby były wykonywane przez autonomiczne systemy AI. AI nie tylko decyduje, ale: • monitoruje procesy, • reaguje na odchylenia, • symuluje scenariusze, • podejmuje działania, • uczy się na podstawie wyników, • stale optymalizuje sposób działania organizacji. Człowiek zajmuje się nadzorem, audytami, strategią i rozwiązywaniem wyjątkowych sytuacji. Przykład (fabryka): AI zarządza harmonogramem produkcji, przepływem materiałów, kolejnością zleceń, jakością, maintenance i logistyką — działając w cyklu zamkniętej pętli. Typowe technologie • Multi-agent AI (operational agents, planning agents) • Autonomous decision engines • Digital twin + real-time optimization • Large Action Models • On-line reinforcement learning • Autonomous workflow orchestration Jak rozpoznać, że jesteś na tym poziomie • Procesy wykonują się w całości bez udziału człowieka • AI dynamicznie przebudowuje proces na podstawie danych w czasie rzeczywistym • Organizacja działa w modelu „closed-loop operations” • Pracownicy nie wykonują pracy operacyjnej — tylko nadzorują system ----------------------------------------------------- ⭐ AREA 7C — AI in Products & Services ----------------------------------------------------- Wprowadzenie (dlaczego to ważne) Artificial Intelligence is not only a tool for improving internal processes — it fundamentally reshapes the value delivered to customers. This area evaluates the extent to which AI is: • embedded in products, • enhances customer experience, • creates new digital services, • builds competitive advantage, • generates new revenue streams. As organizations mature, AI transitions from a minor feature to a core element of product architecture, eventually giving rise to fully AI-native offerings that could not exist without advanced algorithms. Ten obszar odpowiada na pytania: • Czy produkty korzystają z danych użytkowników? • Czy AI tworzy przewagę na rynku? • Czy firma jest w stanie skalować swoje produkty dzięki AI? • Czy pojawiają się nowe modele biznesowe oparte o inteligencję maszynową? Poniżej znajdują się poziomy dojrzałości. ⭐ LEVEL 1 — No AI Components in Products Jak to rozumieć Produkty i usługi nie zawierają żadnych elementów AI. Wartość dostarczana klientowi wynika w całości z tradycyjnych funkcji — manualnych, mechanicznych, proceduralnych lub standardowych cyfrowych modułów. AI nie jest brana pod uwagę podczas projektowania produktów, a roadmapa nie przewiduje wykorzystania AI. Technologie typowe / brak technologii • Tradycyjne systemy cyfrowe bez elementów inteligencji • Manualne konfiguracje, brak personalizacji • Brak modeli ML lub jakichkolwiek komponentów predykcyjnych Jak rozpoznać, że jesteś na tym poziomie • Produkty działają tak samo dla każdego użytkownika • Nie ma funkcji predykcyjnych ani rekomendacyjnych • Nie wykorzystuje się danych klientów do ulepszeń produktu • Firma konkuruje wyłącznie funkcjami, ceną lub obsługą, a nie inteligencją produktów ⭐ LEVEL 2 — Add-On AI Features Jak to rozumieć AI pojawia się jako dodatkowy moduł wzbogacający produkt, ale nie definiujący jego istoty. Funkcje AI mają charakter ulepszeń, np.: • rekomendacje, • klasyfikacja danych, • proste predykcje, • analiza dokumentów, • automatyczne podsumowania. AI jest dodatkiem, który usprawnia doświadczenie klienta, ale produkt nadal posiada klasyczną strukturę. Typowe technologie • API modeli AI (OpenAI, Gemini, Claude) • Proste machine learning models (np. klasyfikatory) • Vision AI z ograniczonym zakresem • Standardowe moduły personalizacji Jak rozpoznać, że jesteś na tym poziomie • AI „pomaga”, ale nie jest fundamentem produktu • Produkt może działać w pełni bez AI • Funkcje AI nie są kluczowym argumentem sprzedażowym • AI jest traktowane jako atrakcyjna funkcja, a nie strategia ⭐ LEVEL 3 — AI as a Core Product Component Jak to rozumieć AI staje się kluczowym elementem architektury produktu. Bez niego większość nowoczesnych funkcji nie mogłaby działać. Produkt „rozumie” użytkownika, adaptuje się i reaguje na dane. Przykłady: • predykcyjne utrzymanie ruchu (maintenance), • inteligentne planowanie, • dynamiczne rekomendacje, • adaptacyjne UI na podstawie zachowań użytkownika, • wykrywanie anomalii, • automatyczna optymalizacja parametrów usługi. Typowe technologie • DSPM / ML pipelines • Systemy rekomendacyjne • Vision AI do wykrywania usterek • Modele predykcyjne w produktach SaaS • Systemy edge AI z analizą na urządzeniach klienta Jak rozpoznać, że jesteś na tym poziomie • Produkt znacząco różni się od konkurencji dzięki AI • Funkcje AI działają wewnątrz produktu, nie jako dodatki • Dane klientów są wykorzystywane w treningu/rekonfiguracji • AI wpływa na jakość, efektywność lub koszty usługi ⭐ LEVEL 4 — Fully AI-Driven Products Jak to rozumieć AI odpowiada za większość logiki produktu i dynamicznie dostosowuje sposób działania. Produkt stale uczy się zachowań klienta, optymalizuje procesy i reaguje w czasie rzeczywistym. Jest to poziom, gdzie funkcjonalność produktu jest: • personalizowana, • adaptacyjna, • predykcyjna, • samodoskonaląca się. Przykłady: • autonomiczne moduły zarządzania produkcją, • inteligentne roboty reagujące na środowisko, • autonomiczne logistyczne systemy routingowe, • aplikacje, które same zmieniają UI, workflow i logikę działania. Typowe technologie • Reinforcement learning • Multi-modal AI • Real-time feedback loops • Auto-personalization engines • On-device learning (edge re-training) Jak rozpoznać, że jesteś na tym poziomie • Produkt samodzielnie podejmuje wiele decyzji • Zachowanie produktu zmienia się na podstawie danych • Produkt tworzy unikalne doświadczenia dla każdego klienta • AI jest fundamentem architektury — nie da się go „odłączyć” ⭐ LEVEL 5 — AI-Native Business Offerings Jak to rozumieć Firma oferuje produkty lub usługi, które nie mogłyby istnieć bez AI. AI tworzy nie tylko funkcje — tworzy cały model biznesowy. Na tym poziomie powstają: • autonomiczne systemy zarządzania (fabryka, magazyn, park maszyn), • w pełni autonomiczne analityczne lub operacyjne „agenty”, • platformy predykcyjne, które działają jak „inteligentni współpracownicy”, • cyfrowe bliźniaki działające w trybie closed-loop, • oprogramowanie, które reaguje na środowisko w czasie rzeczywistym i podejmuje działania. To poziom firm, które budują własne modele, własną AI-architekturę i własne systemy autonomiczne. Technologie, które dominują • Multi-agent systems • Proprietary LLM/SLM models • Digital Twins + Autonomous Control Loops • Synthetic data generation pipelines • RLHF + real-time optimization • AI-operated ecosystems Jak rozpoznać, że jesteś na tym poziomie • Produkt działa jak inteligentny system, nie aplikacja • AI podejmuje autonomicznie decyzje strategiczne i operacyjne • Klienci kupują rozwiązanie głównie dlatego, że jest AI-native • Firma posiada własne modele lub własną warstwę agentów • AI umożliwia całkowicie nowe modele biznesowe, niedostępne wcześniej ----------------------------------------------------- ⭐ AREA 7D — AI Governance, Safety & Ethics ----------------------------------------------------- Wprowadzenie (dlaczego to ważne) Wraz ze wzrostem wykorzystania sztucznej inteligencji rośnie znaczenie odpowiedzialnego zarządzania nią. AI niesie ogromną wartość, ale również nowe ryzyka: • błędne decyzje podejmowane autonomicznie, • niejawne uprzedzenia w danych (bias), • naruszenia prywatności i poufności, • niekontrolowane generowanie treści, • niezgodność z regulacjami (np. EU AI Act), • brak nadzoru nad modelem po wdrożeniu. Brak odpowiedniego governance może prowadzić do strat finansowych, utraty reputacji, ryzyk prawnych lub całkowitego wstrzymania projektów AI. Ten obszar bada, czy organizacja potrafi: • kontrolować ryzyka AI, • zapewniać bezpieczeństwo danych i modeli, • dokumentować procesy AI, • monitorować działanie systemów, • budować zaufanie i przejrzystość, • wdrażać AI zgodnie z etyką i prawem. ⭐ LEVEL 1 — No AI Governance, Uncontrolled Use Jak to rozumieć AI jest używane spontanicznie i bez nadzoru. Pracownicy korzystają z narzędzi AI według własnego uznania — bez zasad, kontroli czy świadomości ryzyk. Nie istnieją: • polityki użycia, • zasady bezpieczeństwa, • standardy prywatności, • kontrola danych wprowadzanych do modeli, • reguły dotyczące treści generowanych przez AI. Organizacja nie jest świadoma ryzyk. Typowe technologie / praktyki • Otwarta praca z publicznymi modelami • Brak kontroli nad tym, jakie dane trafiają do AI • Brak procesów audytu czy dokumentacji Jak rozpoznać, że jesteś na tym poziomie • Każdy używa AI jak chce • Często pojawia się zdanie „No przecież to tylko ChatGPT” • Poufne dane są kopiowane do narzędzi publicznych • Firma nie posiada żadnych dokumentów nt. AI ⭐ LEVEL 2 — Basic AI Usage Policies Jak to rozumieć Organizacja zaczyna dostrzegać ryzyka i tworzy podstawowe zasady korzystania z AI: • co wolno, • czego nie wolno, • jakie dane można używać, • jakie narzędzia są dopuszczone. Polityki te mają charakter informacyjny i nie są jeszcze egzekwowane. Typowe technologie / praktyki • Proste dokumenty: „Responsible Use of AI” • White-list lub black-list narzędzi • Edukacja pracowników w minimalnym zakresie • Wyłączanie generatywnych funkcji tam, gdzie to konieczne Jak rozpoznać, że jesteś na tym poziomie • Istnieją zasady, ale nie ma systemu nadzoru • Decyzje pozostają po stronie działów lub pojedynczych osób • Firma zaczyna zadawać pytania o bezpieczeństwo i zgodność z prawem • Nadal nie ma kontroli nad jakością modeli ani generowanych wyników ⭐ LEVEL 3 — Organization-Wide AI Governance Framework Jak to rozumieć Firma formalizuje podejście do AI. Powstają: • procesy akceptacji projektów AI, • kryteria oceny ryzyka, • dedykowana rola (Chief AI Officer, AI Committee), • kontrola danych wejściowych, • dokumentacja modeli, • zasady wyjaśnialności (explainability), • polityki zarządzania dostawcami AI. Organizacja zaczyna kontrolować nie tylko użycie AI, lecz również cały cykl życia projektów. Technologie / praktyki • Model cards • Data cards • Dokumentacja pipeline’ów ML • Centralna platforma do AI governance (np. Azure Responsible AI Dashboard) • Wstępny model risk scoring Jak rozpoznać, że jesteś na tym poziomie • Modele są wersjonowane i audytowane • AI nie jest wdrażane bez formalnego zatwierdzenia • Pracownicy wiedzą, czego nie powinni robić z AI • Jest jedna wspólna polityka obowiązująca w całej firmie ⭐ LEVEL 4 — Continuous AI Risk Management & Monitoring Jak to rozumieć Organizacja ma ustrukturyzowany system kontroli nad AI, który działa nie tylko przy wdrożeniu, ale cały czas. Obejmuje to: • monitoring działania modeli w czasie rzeczywistym, • wykrywanie driftu danych i modelu, • audyty jakości predykcji, • zgłaszanie incydentów AI, • procedury reagowania, • testy bezpieczeństwa i robustności modeli, • zapewnienie zgodności z regulacjami (np. EU AI Act). AI staje się częścią infrastruktury krytycznej, a firma monitoruje ją jak inne systemy produkcyjne. Technologie • ML observability platforms (Arize AI, Fiddler, Evidently) • Real-time monitoring & alerts • AI risk dashboards • Automated fairness checks • Testy penetracyjne modeli Jak rozpoznać, że jesteś na tym poziomie • Modele są monitorowane 24/7 • Firma zna procent błędów i odchyleń modeli • Każda zmiana AI musi przejść proces walidacji • AI jest traktowane tak samo poważnie jak systemy ERP/MES • Ryzyka są przypisane do właścicieli procesów ⭐ LEVEL 5 — Ethical, Transparent & Autonomous AI Governance Jak to rozumieć Najwyższy poziom — AI governance jest zautomatyzowane, wbudowane w systemy i zgodne z najlepszymi praktykami etycznymi. Systemy AI: • same wykrywają problemy, • same reagują, • same raportują nieprawidłowości, • dynamicznie dostosowują parametry, • minimalizują bias w czasie rzeczywistym, • wymuszają zgodność z polityką organizacji. Organizacja posiada zaawansowane podejście do przejrzystości, uczciwości, bezpieczeństwa i dokumentacji — oraz potrafi to udowodnić audytorom, klientom i regulatorom. Technologie / praktyki • Autonomous governance engines • Automatyczne audyty modeli • Dynamic access control • Model explainability na poziomie enterprise • Wbudowane regulatory guardrails • Pełna zgodność z AI-regulacjami (EU AI Act, NIST AI Framework) Jak rozpoznać, że jesteś na tym poziomie • Governance działa autonomicznie bez udziału człowieka • AI spełnia najwyższe standardy bezpieczeństwa i etyki • Firma sama wyznacza standardy rynku • Klienci i partnerzy widzą governance jako przewagę konkurencyjną • Regulacje nie ograniczają działalności, lecz wzmacniają --- END OF FILE: 7. Os AI opis.pdf ---",
-            "level1Questions": [
-              "[PL] Czy zagrożenia są znane?"
-            ],
+            "level1Questions": ["[PL] Czy zagrożenia są znane?"],
             "level1Formula": "[PL] Świadomość",
-            "level2Questions": [
-              "[PL] Czy priorytety są znane?"
-            ],
+            "level2Questions": ["[PL] Czy priorytety są znane?"],
             "level2Formula": "Rapid response",
-            "level3Questions": [
-              "[PL] Czy procedury są opisane?"
-            ],
+            "level3Questions": ["[PL] Czy procedury są opisane?"],
             "level3Formula": "[PL] Kontrola kryzysu",
-            "level4Questions": [
-              "[PL] Czy szkolenia są prowadzone?"
-            ],
+            "level4Questions": ["[PL] Czy szkolenia są prowadzone?"],
             "level4Formula": "[PL] Gotowość",
-            "level5Questions": [
-              "[PL] Czy plany są testowane?"
-            ],
+            "level5Questions": ["[PL] Czy plany są testowane?"],
             "level5Formula": "[PL] Odporność",
-            "level6Questions": [
-              "[PL] Czy dokumentacja jest aktualna?"
-            ],
+            "level6Questions": ["[PL] Czy dokumentacja jest aktualna?"],
             "level6Formula": "[PL] Ciągłość"
           }
         }
@@ -2789,18 +2570,18 @@
   },
   "help": {
     "panel": {
-      "header": "Help & Training",
-      "backToPlaybooks": "Back to playbooks",
-      "stepProgress": "Step {{current}} of {{total}}",
-      "takeAction": "Take Action",
-      "previous": "Previous",
-      "next": "Next",
-      "complete": "Complete",
-      "recommended": "Recommended for You",
-      "moreTopics": "More Help Topics",
-      "completed": "Completed",
-      "noTopics": "No help topics available",
-      "dismiss": "Dismiss"
+      "header": "Ayuda y Formación",
+      "backToPlaybooks": "Volver a playbooks",
+      "stepProgress": "Paso {{current}} de {{total}}",
+      "takeAction": "Actuar",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "complete": "Completar",
+      "recommended": "Recomendado para ti",
+      "moreTopics": "Más temas de ayuda",
+      "completed": "Completado",
+      "noTopics": "No hay temas de ayuda disponibles",
+      "dismiss": "Descartar"
     },
     "widget": {
       "label": "Ayuda",
@@ -2876,872 +2657,1336 @@
       "modules": {
         "dashboard": {
           "name": "Dashboard",
-          "description": "Your central command center for monitoring digital transformation progress. The dashboard provides a real-time overview of assessments, initiatives, and key metrics across your organization.",
-          "purpose": "Quickly understand the current state of your transformation journey, identify areas needing attention, and track progress toward strategic goals.",
+          "description": "Tu centro de comando central para monitorear el progreso de la transformación digital. El dashboard ofrece una visión general en tiempo real de las evaluaciones, iniciativas y métricas clave en toda tu organización.",
+          "purpose": "Entender rápidamente el estado actual de tu viaje de transformación, identificar áreas que requieren atención y realizar un seguimiento del progreso hacia los objetivos estratégicos.",
           "keyFeatures": [
-            "Real-time transformation maturity score",
-            "Initiative progress tracking",
-            "Active assessment status",
-            "Recent activity timeline",
-            "Quick access to pending tasks",
-            "Organization-wide metrics overview"
+            "Puntuación de madurez de transformación en tiempo real",
+            "Seguimiento del progreso de iniciativas",
+            "Estado de evaluaciones activas",
+            "Cronograma de actividad reciente",
+            "Acceso rápido a tareas pendientes",
+            "Visión general de métricas a nivel de organización"
           ],
           "workflow": [
-            "Review your overall maturity score",
-            "Check for any pending assessments or tasks",
-            "Review recent activity and updates",
-            "Navigate to specific modules from quick links"
+            "Revisar tu puntuación de madurez general",
+            "Comprobar si hay evaluaciones o tareas pendientes",
+            "Revisar la actividad reciente y las actualizaciones",
+            "Navegar a módulos específicos desde los enlaces rápidos"
           ],
           "tips": [
-            "Customize widgets to show metrics most relevant to your role",
-            "Set up dashboard notifications for important milestones",
-            "Use the snapshot view for executive presentations"
+            "Personaliza los widgets para mostrar las métricas más relevantes para tu rol",
+            "Configura notificaciones del dashboard para hitos importantes",
+            "Usa la vista instantánea para presentaciones ejecutivas"
           ]
         },
         "assessment": {
-          "name": "Assessment",
-          "description": "Comprehensive digital maturity assessment using industry-standard frameworks including DRD, SIRI, ADMA, CMMI, and Lean 4.0. Evaluate your organization across multiple dimensions to identify gaps and opportunities.",
-          "purpose": "Objectively measure your current digital maturity level, benchmark against industry standards, and generate actionable insights for improvement.",
+          "name": "Evaluación",
+          "description": "Evaluación integral de la madurez digital utilizando marcos estándar de la industria, incluyendo DRD, SIRI, ADMA, CMMI y Lean 4.0. Evalúa tu organización en múltiples dimensiones para identificar brechas y oportunidades.",
+          "purpose": "Medir objetivamente tu nivel de madurez digital actual, compararlo con los estándares de la industria y generar información procesable para la mejora.",
           "keyFeatures": [
-            "Multiple assessment frameworks (DRD, SIRI, ADMA, CMMI, Lean)",
-            "AI-assisted evaluation with evidence tracking",
-            "Gap analysis and heatmaps",
-            "Benchmark comparisons with industry peers",
-            "Automatic report generation",
-            "Multi-axis assessment (Processes, Digital, Data, Culture, etc.)",
-            "Reviewer workflow for quality assurance"
+            "Múltiples marcos de evaluación (DRD, SIRI, ADMA, CMMI, Lean)",
+            "Evaluación asistida por IA con seguimiento de evidencia",
+            "Análisis de brechas y mapas de calor",
+            "Comparaciones de referencia con pares de la industria",
+            "Generación automática de informes",
+            "Evaluación multieje (Procesos, Digital, Datos, Cultura, etc.)",
+            "Flujo de trabajo de revisor para garantía de calidad"
           ],
           "workflow": [
-            "Select the appropriate assessment framework",
-            "Complete questionnaires for each assessment axis",
-            "Upload evidence documents to support your answers",
-            "AI analyzes responses and generates preliminary scores",
-            "Review and adjust scores with your team",
-            "Submit for reviewer approval if required",
-            "Generate comprehensive assessment report"
+            "Seleccionar el marco de evaluación adecuado",
+            "Completar cuestionarios para cada eje de evaluación",
+            "Cargar documentos de evidencia para respaldar tus respuestas",
+            "La IA analiza las respuestas y genera puntuaciones preliminares",
+            "Revisar y ajustar las puntuaciones con tu equipo",
+            "Enviar para la aprobación del revisor si es necesario",
+            "Generar un informe de evaluación integral"
           ],
           "tips": [
-            "Complete the Context Builder first for more accurate AI recommendations",
-            "Upload real evidence documents for credible assessments",
-            "Use the comparison view to track improvement over time",
-            "Schedule regular re-assessments (quarterly recommended)"
+            "Completa primero el Constructor de Contexto para obtener recomendaciones de IA más precisas",
+            "Carga documentos de evidencia reales para evaluaciones creíbles",
+            "Usa la vista de comparación para seguir la mejora a lo largo del tiempo",
+            "Programa reevaluaciones regulares (recomendado trimestralmente)"
           ]
         },
         "initiatives": {
-          "name": "Initiatives",
-          "description": "Transform assessment insights into actionable improvement initiatives. Generate, prioritize, and manage transformation projects that address identified gaps and drive organizational improvement.",
-          "purpose": "Bridge the gap between assessment findings and concrete actions by creating structured initiatives with clear ownership, timelines, and expected outcomes.",
+          "name": "Iniciativas",
+          "description": "Transforma los hallazgos de las evaluaciones en iniciativas de mejora procesables. Genera, prioriza y gestiona proyectos de transformación que aborden las brechas identificadas e impulsen la mejora organizacional.",
+          "purpose": "Cerrar la brecha entre los hallazgos de la evaluación y las acciones concretas creando iniciativas estructuradas con propiedad clara, cronogramas y resultados esperados.",
           "keyFeatures": [
-            "AI-powered initiative generation based on gaps",
-            "Initiative templates library",
-            "Business case builder with ROI estimation",
-            "Priority scoring (impact vs. effort matrix)",
-            "Resource allocation planning",
-            "Initiative dependencies tracking",
-            "Progress monitoring and milestones"
+            "Generación de iniciativas impulsada por IA basada en brechas",
+            "Biblioteca de plantillas de iniciativas",
+            "Constructor de casos de negocio con estimación de ROI",
+            "Puntuación de prioridad (matriz de impacto vs. esfuerzo)",
+            "Planificación de asignación de recursos",
+            "Seguimiento de dependencias de iniciativas",
+            "Monitoreo del progreso e hitos"
           ],
           "workflow": [
-            "Review identified gaps from assessments",
-            "Use AI to generate initiative suggestions",
-            "Select and customize initiatives for your context",
-            "Define scope, timeline, and resource requirements",
-            "Assign ownership and team members",
-            "Prioritize using impact/effort scoring",
-            "Add to roadmap for execution planning"
+            "Revisar las brechas identificadas en las evaluaciones",
+            "Usar IA para generar sugerencias de iniciativas",
+            "Seleccionar y personalizar iniciativas para tu contexto",
+            "Definir el alcance, el cronograma y los requisitos de recursos",
+            "Asignar propiedad y miembros del equipo",
+            "Priorizar usando puntuación de impacto/esfuerzo",
+            "Añadir a la hoja de ruta para la planificación de la ejecución"
           ],
           "tips": [
-            "Start with quick wins to build momentum",
-            "Ensure each initiative has a clear owner",
-            "Link initiatives to specific assessment gaps for traceability",
-            "Review and reprioritize initiatives quarterly"
+            "Comienza con victorias rápidas para generar impulso",
+            "Asegúrate de que cada iniciativa tenga un propietario claro",
+            "Vincula las iniciativas a brechas de evaluación específicas para trazabilidad",
+            "Revisa y vuelve a priorizar las iniciativas trimestralmente"
           ]
         },
         "roadmap": {
-          "name": "Roadmap",
-          "description": "Visual strategic planning for your transformation journey. Organize initiatives into a timeline-based roadmap with phases, dependencies, and resource considerations.",
-          "purpose": "Create a clear, shareable transformation timeline that aligns stakeholders and guides execution over months and years.",
+          "name": "Hoja de ruta",
+          "description": "Planificación estratégica visual para tu viaje de transformación. Organiza las iniciativas en una hoja de ruta basada en el tiempo con fases, dependencias y consideraciones de recursos.",
+          "purpose": "Crear un cronograma de transformación claro y compartible que alinee a las partes interesadas y guíe la ejecución a lo largo de meses y años.",
           "keyFeatures": [
-            "Gantt chart and timeline views",
-            "Drag-and-drop initiative scheduling",
-            "Phase management (Quick Wins, Foundation, Advanced)",
-            "Dependency visualization",
-            "Resource capacity planning",
-            "Milestone tracking",
-            "Export for presentations"
+            "Vistas de diagrama de Gantt y cronograma",
+            "Programación de iniciativas mediante arrastrar y soltar",
+            "Gestión de fases (Victorias rápidas, Base, Avanzado)",
+            "Visualización de dependencias",
+            "Planificación de capacidad de recursos",
+            "Seguimiento de hitos",
+            "Exportación para presentaciones"
           ],
           "workflow": [
-            "Review prioritized initiatives",
-            "Organize initiatives into strategic phases",
-            "Set start dates and durations",
-            "Define dependencies between initiatives",
-            "Assign resources and check capacity",
-            "Set key milestones and review gates",
-            "Share roadmap with stakeholders"
+            "Revisar las iniciativas priorizadas",
+            "Organizar las iniciativas en fases estratégicas",
+            "Establecer fechas de inicio y duraciones",
+            "Definir dependencias entre iniciativas",
+            "Asignar recursos y comprobar la capacidad",
+            "Establecer hitos clave y puertas de revisión",
+            "Compartir la hoja de ruta con las partes interesadas"
           ],
           "tips": [
-            "Build in buffer time for unexpected delays",
-            "Start with a 12-18 month horizon",
-            "Use phases to communicate strategic intent",
-            "Review and adjust roadmap monthly"
+            "Incorpora tiempo de amortiguación para retrasos inesperados",
+            "Comienza con un horizonte de 12 a 18 meses",
+            "Usa las fases para comunicar la intención estratégica",
+            "Revisa y ajusta la hoja de ruta mensualmente"
           ]
         },
         "implementation": {
-          "name": "Implementation",
-          "description": "Execute your transformation initiatives through structured pilot programs and full rollouts. Track progress, manage changes, and ensure successful delivery.",
-          "purpose": "Move from planning to action with disciplined execution, change management, and continuous improvement feedback loops.",
+          "name": "Implementación",
+          "description": "Ejecuta tus iniciativas de transformación a través de programas piloto estructurados y lanzamientos completos. Realiza un seguimiento del progreso, gestiona los cambios y garantiza una entrega exitosa.",
+          "purpose": "Pasar de la planificación a la acción con una ejecución disciplinada, gestión del cambio y bucles de retroalimentación de mejora continua.",
           "keyFeatures": [
-            "Pilot program management",
-            "Stage-gate workflow",
-            "Change request tracking",
-            "Risk and issue management",
-            "Stakeholder communication",
-            "Go/No-go decision support",
-            "Rollout planning and execution",
-            "ADKAR change management"
+            "Gestión de programas piloto",
+            "Flujo de trabajo de puertas de etapa",
+            "Seguimiento de solicitudes de cambio",
+            "Gestión de riesgos y problemas",
+            "Comunicación con las partes interesadas",
+            "Soporte para decisiones go/no-go",
+            "Planificación y ejecución de lanzamientos",
+            "Gestión del cambio ADKAR"
           ],
           "workflow": [
-            "Select initiatives for pilot",
-            "Define pilot scope and success criteria",
-            "Execute pilot with monitoring",
-            "Collect feedback and lessons learned",
-            "Make Go/No-go decision",
-            "Plan full rollout based on pilot learnings",
-            "Execute rollout with change management",
-            "Transition to operations"
+            "Seleccionar iniciativas para el piloto",
+            "Definir el alcance del piloto y los criterios de éxito",
+            "Ejecutar el piloto con monitoreo",
+            "Recopilar comentarios y lecciones aprendidas",
+            "Tomar la decisión go/no-go",
+            "Planificar el lanzamiento completo basado en los aprendizajes del piloto",
+            "Ejecutar el lanzamiento con gestión del cambio",
+            "Transición a las operaciones"
           ],
           "tips": [
-            "Always pilot before full rollout",
-            "Define clear success metrics upfront",
-            "Engage change champions early",
-            "Document everything for future reference"
+            "Siempre realiza un piloto antes del lanzamiento completo",
+            "Define métricas de éxito claras desde el principio",
+            "Involucra a los campeones del cambio temprano",
+            "Documéntalo todo para referencia futura"
+          ]
+        },
+        "reports": {
+          "name": "Informes y ROI",
+          "description": "Genera informes detallados y calcula el retorno de inversión para tus iniciativas de transformación. Presenta hallazgos a las partes interesadas con documentación profesional.",
+          "purpose": "Comunicar el valor de la transformación, realizar un seguimiento del ROI y proporcionar informes basados en evidencia para las partes interesadas y auditores.",
+          "keyFeatures": [
+            "Informes resumidos para ejecutivos",
+            "Calculadora de ROI con proyecciones",
+            "Paneles de seguimiento de KPI/OKR",
+            "Informes de comparación de evaluaciones",
+            "Exportación a PDF/PowerPoint",
+            "Constructor de informes personalizados",
+            "Documentación de seguimiento de auditoría",
+            "Informes de referencia (benchmark)"
+          ],
+          "workflow": [
+            "Seleccionar el tipo de informe o plantilla",
+            "Configurar los parámetros del informe",
+            "Previsualizar y personalizar el contenido",
+            "Añadir comentarios e información relevante",
+            "Exportar o compartir el informe",
+            "Programar informes recurrentes"
+          ],
+          "tips": [
+            "Usa la vista ejecutiva para presentaciones ante la junta",
+            "Sigue las métricas de ROI desde el inicio de la iniciativa",
+            "Compara las evaluaciones actuales con las de referencia",
+            "Programa informes de progreso mensuales"
+          ]
+        },
+        "mywork": {
+          "name": "Mi trabajo",
+          "description": "Tu centro personal de gestión de tareas. Consulta las tareas asignadas, gestiona tu bandeja de entrada, entra en modo de enfoque para el trabajo concentrado y realiza un seguimiento de tus contribuciones en todas las actividades de transformación.",
+          "purpose": "Mantenerse organizado y productivo centralizando todas tus tareas, notificaciones y elementos de trabajo en un solo lugar.",
+          "keyFeatures": [
+            "Lista de tareas personal con filtros",
+            "Bandeja de entrada para notificaciones y menciones",
+            "Modo de enfoque para trabajar sin distracciones",
+            "Priorización de tareas (P1-P4)",
+            "Seguimiento de fechas de vencimiento y recordatorios",
+            "Historial de actividad",
+            "Agregación de tareas entre módulos"
+          ],
+          "workflow": [
+            "Consultar la bandeja de entrada para ver elementos nuevos",
+            "Revisar y priorizar las tareas de hoy",
+            "Usar el modo de enfoque para trabajos complejos",
+            "Marcar las tareas como completadas a medida que las terminas",
+            "Procesar la bandeja de entrada para dejarla a cero"
+          ],
+          "tips": [
+            "Procesa tu bandeja de entrada a diario",
+            "Usa el modo de enfoque para las evaluaciones",
+            "Establece estimaciones de tareas realistas",
+            "Revisa semanalmente para volver a priorizar"
+          ]
+        },
+        "organization": {
+          "name": "Contexto organizacional",
+          "description": "Define el contexto estratégico de tu organización, incluyendo el perfil de la empresa, los objetivos, los desafíos, las megatendencias y la estrategia. Esta base permite que la IA proporcione recomendaciones altamente relevantes.",
+          "purpose": "Proporcionar al sistema de IA un contexto organizacional profundo para que las recomendaciones, evaluaciones e iniciativas se adapten a tu situación específica.",
+          "keyFeatures": [
+            "Configuración del perfil de la empresa",
+            "Definición de objetivos estratégicos",
+            "Mapeo de desafíos",
+            "Análisis de megatendencias",
+            "Síntesis de estrategia",
+            "Mejora del contexto de IA",
+            "Soporte para múltiples sitios"
+          ],
+          "workflow": [
+            "Completar el perfil de la empresa",
+            "Definir objetivos estratégicos y KPI",
+            "Mapeo de desafíos actuales",
+            "Analizar las megatendencias relevantes",
+            "Sintetizar la dirección estratégica",
+            "Revisar las recomendaciones de IA"
+          ],
+          "tips": [
+            "Mantén el contexto actualizado a medida que la estrategia evoluciona",
+            "Sé específico sobre la industria y los desafíos",
+            "Incluye objetivos tanto a corto como a largo plazo",
+            "Revisa trimestralmente con el liderazgo"
+          ]
+        },
+        "settings": {
+          "name": "Ajustes de usuario",
+          "description": "Personaliza tu experiencia en Consultinity. Configura tu perfil, seguridad, notificaciones, preferencias de IA, integraciones y opciones de accesibilidad.",
+          "purpose": "Personalizar la aplicación para que coincida con tu estilo de trabajo, requisitos de seguridad y preferencias de comunicación.",
+          "keyFeatures": [
+            "Gestión del perfil",
+            "Autenticación de dos factores",
+            "Preferencias de notificación",
+            "Personalización del comportamiento de la IA",
+            "Configuración de tema e idioma",
+            "Conexiones de integración",
+            "Controles de privacidad",
+            "Opciones de accesibilidad"
+          ],
+          "workflow": [
+            "Actualizar la información del perfil",
+            "Habilitar 2FA para seguridad",
+            "Configurar canales de notificación",
+            "Establecer preferencias de IA",
+            "Conectar integraciones (Slack, etc.)",
+            "Ajustar la configuración de pantalla"
+          ],
+          "tips": [
+            "Habilita 2FA para la seguridad de la cuenta",
+            "Configura la integración con Slack para actualizaciones en tiempo real",
+            "Personaliza el estilo de respuesta de la IA a tu gusto",
+            "Revisa la configuración de privacidad periódicamente"
+          ]
+        },
+        "admin": {
+          "name": "Panel de administración",
+          "description": "Centro de administración de la organización para gestionar usuarios, proyectos y configuración de toda la organización. Supervisa la salud del sistema y configura las funciones de la plataforma.",
+          "purpose": "Administrar y supervisar el uso de la plataforma por parte de tu organización con control total sobre los usuarios y los ajustes.",
+          "keyFeatures": [
+            "Gestión de usuarios e invitaciones",
+            "Administración de proyectos",
+            "Configuración de IA/LLM",
+            "Gestión del conocimiento",
+            "Análisis y métricas de uso",
+            "Revisión de comentarios",
+            "Seguridad y control de acceso",
+            "Gestión de playbooks"
+          ],
+          "workflow": [
+            "Invitar e incorporar nuevos usuarios",
+            "Crear y configurar proyectos",
+            "Configurar proveedores y límites de IA",
+            "Cargar conocimiento organizacional",
+            "Monitorear el uso y los costos",
+            "Revisar los comentarios del equipo",
+            "Gestionar las políticas de seguridad"
+          ],
+          "tips": [
+            "Revisa regularmente los permisos de los usuarios",
+            "Establece límites de uso de IA apropiados",
+            "Mantén actualizada la base de conocimientos organizacional",
+            "Monitorea los registros de auditoría en busca de actividades inusuales"
+          ]
+        },
+        "superadmin": {
+          "name": "Consola de Super Administrador",
+          "description": "Administración en toda la plataforma para gestionar múltiples organizaciones, la salud del sistema y las configuraciones globales. Reservada para administradores de la plataforma.",
+          "purpose": "Gestionar toda la infraestructura de la plataforma y dar soporte a múltiples organizaciones inquilinas.",
+          "keyFeatures": [
+            "Gestión multi-inquilino",
+            "Monitoreo de la salud del sistema",
+            "Configuraciones globales",
+            "Gestión de Feature Flags",
+            "Herramientas de soporte",
+            "Facturación y suscripciones de la plataforma",
+            "Configuración de SSO/SAML",
+            "Gestión de políticas de seguridad global",
+            "Studio de Marca Blanca (White-label)",
+            "Centro de cumplimiento"
+          ],
+          "workflow": [
+            "Monitorear el dashboard de salud de la plataforma",
+            "Gestionar cuentas de organizaciones",
+            "Configurar SSO empresarial",
+            "Establecer políticas de seguridad global",
+            "Gestionar facturación y suscripciones",
+            "Configurar proveedores de IA a nivel global",
+            "Aplicar branding de marca blanca",
+            "Garantizar requisitos de cumplimiento"
+          ],
+          "tips": [
+            "Usa la suplantación con cuidado para la depuración",
+            "Documenta todos los cambios de configuración global",
+            "Prueba los cambios de SSO en sandbox antes de aplicarlos",
+            "Monitorea los costos de IA en todas las organizaciones"
+          ]
+        },
+        "ai-infrastructure": {
+          "name": "Infraestructura de IA",
+          "description": "Centro de gestión central para todos los proveedores de LLM y servicios de IA. Configura claves API, gestiona niveles de modelos, establece límites globales y supervisa la salud del sistema de IA en toda la plataforma.",
+          "purpose": "Configurar y mantener la infraestructura de IA/LLM que impulsa todas las funciones inteligentes de Consultinity, garantizando un rendimiento óptimo y control de costos.",
+          "keyFeatures": [
+            "Configuración de proveedores de LLM (OpenAI, Google, Ollama, etc.)",
+            "Asignación de niveles de modelos (Económico, Estándar, Premium, Razonamiento)",
+            "Gestión y prueba de claves API",
+            "Límites de tasa globales y presupuestos de tokens",
+            "Monitoreo de salud en tiempo real",
+            "Seguimiento de costos y análisis",
+            "Configuración de interruptores de circuito (circuit breakers)",
+            "Ajustes de detección de PII"
+          ],
+          "workflow": [
+            "Añadir y configurar proveedores de LLM con claves API",
+            "Asignar modelos a niveles de rendimiento",
+            "Establecer límites de tasa globales y presupuestos de tokens",
+            "Probar conexiones de proveedores",
+            "Monitorear el dashboard de salud para detectar problemas",
+            "Revisar análisis de uso y costos",
+            "Ajustar umbrales de interruptores de circuito según sea necesario"
+          ],
+          "tips": [
+            "Usa modelos económicos para tareas simples de procesamiento de texto",
+            "Implementa límites de tokens estrictos para evitar costos inesperados",
+            "Revisa regularmente la salud de los proveedores para garantizar la redundancia",
+            "Prueba las nuevas configuraciones de modelos en un entorno de desarrollo primero"
+          ]
+        },
+        "playbookTemplates": {
+          "name": "Plantillas de Playbook",
+          "description": "Crea y gestiona plantillas de playbooks de IA que definen flujos de trabajo de automatización estándar. Estas plantillas se distribuyen a las organizaciones para su ejecución local.",
+          "purpose": "Estandarizar la lógica de automatización de IA en toda la plataforma, permitiendo que disparadores específicos lancen flujos de trabajo de agentes deterministas.",
+          "keyFeatures": [
+            "Constructor visual de playbooks",
+            "Gestión de versiones y ciclo de vida",
+            "Configuración de disparadores",
+            "Motor de validación",
+            "Publicación con un solo clic"
+          ],
+          "workflow": [
+            "Crear un nuevo borrador de plantilla",
+            "Definir disparadores y lógica de agentes",
+            "Validar la estructura de la plantilla",
+            "Publicar para que esté disponible para todas las organizaciones"
+          ],
+          "tips": [
+            "Valida siempre las plantillas antes de publicarlas",
+            "Usa claves descriptivas para facilitar el acceso programático",
+            "Dibuja el flujo de trabajo antes de empezar a construir"
+          ]
+        },
+        "ai-tools": {
+          "name": "Herramientas de IA",
+          "description": "Asistentes impulsados por IA para análisis, recomendaciones y generación de contenido.",
+          "purpose": "Aumentar tus capacidades con IA que entiende los contextos de transformación.",
+          "keyFeatures": [
+            "Asistente de chat de IA",
+            "Análisis de evaluaciones",
+            "Recomendaciones de iniciativas",
+            "Generación de contenido",
+            "Análisis de brechas"
+          ],
+          "workflow": [
+            "Describe tu pregunta o necesidad",
+            "Revisar sugerencias de IA",
+            "Refinan y aplicar recomendaciones",
+            "Proporcionar comentarios para mejorar"
+          ],
+          "tips": [
+            "Sé específico en tus preguntas",
+            "Proporciona contexto para mejores resultados",
+            "Usa sugerencias de IA como puntos de partida"
+          ]
+        },
+        "knowledge": {
+          "name": "Base de conocimientos",
+          "description": "Accede al conocimiento de transformación, mejores prácticas y materiales de referencia.",
+          "purpose": "Proporcionar un repositorio centralizado de conocimiento de transformación y recursos de aprendizaje.",
+          "keyFeatures": [
+            "Biblioteca de mejores prácticas",
+            "Marcos de la industria",
+            "Casos de estudio",
+            "Repositorio de documentos",
+            "Búsqueda y descubrimiento"
+          ],
+          "workflow": [
+            "Buscar temas relevantes",
+            "Explorar categorías",
+            "Leer y aplicar conocimientos",
+            "Contribuir con documentación"
+          ],
+          "tips": [
+            "Marca los recursos utilizados con frecuencia",
+            "Comparte contenido relevante con el equipo",
+            "Contribuye con tus aprendizajes"
+          ]
+        },
+        "onboarding": {
+          "name": "Incorporación",
+          "description": "Introducción guiada a la plataforma para nuevos usuarios.",
+          "purpose": "Ayudar a los nuevos usuarios a comenzar rápidamente y entender las capacidades de la plataforma.",
+          "keyFeatures": [
+            "Tutoriales interactivos",
+            "Asistente de configuración",
+            "Recorridos por funciones",
+            "Seguimiento del progreso"
+          ],
+          "workflow": [
+            "Completar configuración de la cuenta",
+            "Seguir tutoriales guiados",
+            "Configurar ajustes iniciales",
+            "Iniciar primera evaluación"
+          ],
+          "tips": [
+            "Completa todos los pasos de incorporación",
+            "Haz preguntas a través del centro de ayuda",
+            "Vuelve a visitar los tutoriales según sea necesario"
+          ]
+        },
+        "consultant": {
+          "name": "Portal del consultor",
+          "description": "Herramientas para consultores que gestionan múltiples organizaciones de clientes.",
+          "purpose": "Permitir a los consultores gestionar y dar soporte eficientemente a múltiples transformaciones de clientes.",
+          "keyFeatures": [
+            "Vista de cartera de clientes",
+            "Análisis de varios clientes",
+            "Seguimiento de entrega de servicios",
+            "Gestión de recursos"
+          ],
+          "workflow": [
+            "Revisar cartera de clientes",
+            "Monitorear salud del compromiso",
+            "Planificar entrega de servicios",
+            "Informar a las partes interesadas"
+          ],
+          "tips": [
+            "Usa plantillas para consistencia",
+            "Realiza benchmarks entre clientes",
+            "Documenta las mejores prácticas"
+          ]
+        },
+        "ecosystem": {
+          "name": "Ecosistema",
+          "description": "Conéctate con socios, proveedores y la comunidad de transformación en general.",
+          "purpose": "Ampliar las capacidades de transformación a través de asociaciones e integraciones del ecosistema.",
+          "keyFeatures": [
+            "Directorio de socios",
+            "Mercado de soluciones",
+            "Foros de la comunidad",
+            "Catálogo de integraciones"
+          ],
+          "workflow": [
+            "Explorar socios disponibles",
+            "Evaluar soluciones",
+            "Iniciar asociaciones",
+            "Configurar integraciones"
+          ],
+          "tips": [
+            "Verificar credenciales de socios",
+            "Comenzar con integraciones probadas",
+            "Participar en la comunidad"
           ]
         }
       },
       "tabs": {
-        "overview": "Overview",
-        "howto": "How to Use",
+        "overview": "Resumen",
+        "howto": "Cómo usar",
         "faq": "FAQ",
-        "video": "Video"
+        "video": "Videos"
       },
       "audience": {
-        "user": "User",
-        "admin": "Admin",
-        "superadmin": "Super Admin",
-        "for": "For:"
+        "user": "Usuario",
+        "admin": "Administrador",
+        "superadmin": "Super Administrador",
+        "for": "Para:"
       },
       "video": {
-        "watched": "Watched",
-        "watch": "Watch",
-        "watchAgain": "Watch again",
-        "progress": "Watch Progress",
+        "watched": "Visto",
+        "watch": "Ver",
+        "watchAgain": "Ver de nuevo",
+        "progress": "Progreso de visualización",
         "progressSummary": "{{watched}} / {{total}}"
       },
       "faq": {
-        "searchPlaceholder": "Search questions...",
-        "noResults": "No questions found.",
-        "noFAQ": "No FAQ available for this module."
+        "searchPlaceholder": "Buscar preguntas...",
+        "noResults": "No se encontraron preguntas.",
+        "noFAQ": "No hay FAQ disponibles para este módulo."
       },
       "content": {
-        "help": "Help",
-        "helpCenter": "Help Center",
-        "currentContext": "Current context:",
-        "actualContext": "Current Context",
-        "contextDesc": "This documentation is for the view you are currently on.",
-        "relatedModules": "Related Modules",
-        "relatedModulesDesc": "These modules work together with the current one.",
-        "fullDocumentation": "Full Documentation",
-        "purpose": "Purpose",
-        "keyFeatures": "Key Features",
-        "workflow": "Workflow",
-        "tips": "Tips",
-        "selectView": "Select a specific card or view to see detailed instructions.",
-        "relatedDocs": "Related Documentation",
+        "help": "Ayuda",
+        "helpCenter": "Centro de ayuda",
+        "currentContext": "Contexto actual:",
+        "actualContext": "Contexto actual",
+        "contextDesc": "Esta documentación es para la vista en la que te encuentras actualmente.",
+        "relatedModules": "Módulos relacionados",
+        "relatedModulesDesc": "Estos módulos funcionan en conjunto con el actual.",
+        "fullDocumentation": "Documentación completa",
+        "purpose": "Propósito",
+        "keyFeatures": "Funciones clave",
+        "workflow": "Flujo de trabajo",
+        "tips": "Consejos",
+        "selectView": "Selecciona una tarjeta o vista específica para ver instrucciones detalladas.",
+        "relatedDocs": "Documentación relacionada",
         "modules": {
           "dashboard": {
             "name": "Dashboard",
-            "description": "Your central command center for monitoring digital transformation progress. The dashboard provides a real-time overview of assessments, initiatives, and key metrics across your organization.",
-            "purpose": "Quickly understand the current state of your transformation journey, identify areas needing attention, and track progress toward strategic goals.",
+            "description": "Tu centro de comando central para monitorear el progreso de la transformación digital. El dashboard ofrece una visión general en tiempo real de las evaluaciones, iniciativas y métricas clave en toda tu organización.",
+            "purpose": "Entender rápidamente el estado actual de tu viaje de transformación, identificar áreas que requieren atención y realizar un seguimiento del progreso hacia los objetivos estratégicos.",
             "keyFeatures": [
-              "Real-time transformation maturity score",
-              "Initiative progress tracking",
-              "Active assessment status",
-              "Recent activity timeline",
-              "Quick access to pending tasks",
-              "Organization-wide metrics overview"
+              "Puntuación de madurez de transformación en tiempo real",
+              "Seguimiento del progreso de iniciativas",
+              "Estado de evaluaciones activas",
+              "Cronograma de actividad reciente",
+              "Acceso rápido a tareas pendientes",
+              "Visión general de métricas a nivel de organización"
             ],
             "workflow": [
-              "Review your overall maturity score",
-              "Check for any pending assessments or tasks",
-              "Review recent activity and updates",
-              "Navigate to specific modules from quick links"
+              "Revisar tu puntuación de madurez general",
+              "Comprobar si hay evaluaciones o tareas pendientes",
+              "Revisar la actividad reciente y las actualizaciones",
+              "Navegar a módulos específicos desde los enlaces rápidos"
             ],
             "tips": [
-              "Customize widgets to show metrics most relevant to your role",
-              "Set up dashboard notifications for important milestones",
-              "Use the snapshot view for executive presentations"
+              "Personaliza los widgets para mostrar las métricas más relevantes para tu rol",
+              "Configura notificaciones del dashboard para hitos importantes",
+              "Usa la vista instantánea para presentaciones ejecutivas"
             ]
           },
           "assessment": {
-            "name": "Assessment",
-            "description": "Comprehensive digital maturity assessment using industry-standard frameworks including DRD, SIRI, ADMA, CMMI, and Lean 4.0. Evaluate your organization across multiple dimensions to identify gaps and opportunities.",
-            "purpose": "Objectively measure your current digital maturity level, benchmark against industry standards, and generate actionable insights for improvement.",
+            "name": "Evaluación",
+            "description": "Evaluación integral de la madurez digital utilizando marcos estándar de la industria, incluyendo DRD, SIRI, ADMA, CMMI y Lean 4.0. Evalúa tu organización en múltiples dimensiones para identificar brechas y oportunidades.",
+            "purpose": "Medir objetivamente tu nivel de madurez digital actual, compararlo con los estándares de la industria y generar información procesable para la mejora.",
             "keyFeatures": [
-              "Multiple assessment frameworks (DRD, SIRI, ADMA, CMMI, Lean)",
-              "AI-assisted evaluation with evidence tracking",
-              "Gap analysis and heatmaps",
-              "Benchmark comparisons with industry peers",
-              "Automatic report generation",
-              "Multi-axis assessment (Processes, Digital, Data, Culture, etc.)",
-              "Reviewer workflow for quality assurance"
+              "Múltiples marcos de evaluación (DRD, SIRI, ADMA, CMMI, Lean)",
+              "Evaluación asistida por IA con seguimiento de evidencia",
+              "Análisis de brechas y mapas de calor",
+              "Comparaciones de referencia con pares de la industria",
+              "Generación automática de informes",
+              "Evaluación multieje (Procesos, Digital, Datos, Cultura, etc.)",
+              "Flujo de trabajo de revisor para garantía de calidad"
             ],
             "workflow": [
-              "Select the appropriate assessment framework",
-              "Complete questionnaires for each assessment axis",
-              "Upload evidence documents to support your answers",
-              "AI analyzes responses and generates preliminary scores",
-              "Review and adjust scores with your team",
-              "Submit for reviewer approval if required",
-              "Generate comprehensive assessment report"
+              "Seleccionar el marco de evaluación adecuado",
+              "Completar cuestionarios para cada eje de evaluación",
+              "Cargar documentos de evidencia para respaldar tus respuestas",
+              "La IA analiza las respuestas y genera puntuaciones preliminares",
+              "Revisar y ajustar las puntuaciones con tu equipo",
+              "Enviar para la aprobación del revisor si es necesario",
+              "Generar un informe de evaluación integral"
             ],
             "tips": [
-              "Complete the Context Builder first for more accurate AI recommendations",
-              "Upload real evidence documents for credible assessments",
-              "Use the comparison view to track improvement over time",
-              "Schedule regular re-assessments (quarterly recommended)"
+              "Completa primero el Constructor de Contexto para obtener recomendaciones de IA más precisas",
+              "Carga documentos de evidencia reales para evaluaciones creíbles",
+              "Usa la vista de comparación para seguir la mejora a lo largo del tiempo",
+              "Programa reevaluaciones regulares (recomendado trimestralmente)"
             ]
           },
           "initiatives": {
-            "name": "Initiatives",
-            "description": "Transform assessment insights into actionable improvement initiatives. Generate, prioritize, and manage transformation projects that address identified gaps and drive organizational improvement.",
-            "purpose": "Bridge the gap between assessment findings and concrete actions by creating structured initiatives with clear ownership, timelines, and expected outcomes.",
+            "name": "Iniciativas",
+            "description": "Transforma los hallazgos de las evaluaciones en iniciativas de mejora procesables. Genera, prioriza y gestiona proyectos de transformación que aborden las brechas identificadas e impulsen la mejora organizacional.",
+            "purpose": "Cerrar la brecha entre los hallazgos de la evaluación y las acciones concretas creando iniciativas estructuradas con propiedad clara, cronogramas y resultados esperados.",
             "keyFeatures": [
-              "AI-powered initiative generation based on gaps",
-              "Initiative templates library",
-              "Business case builder with ROI estimation",
-              "Priority scoring (impact vs. effort matrix)",
-              "Resource allocation planning",
-              "Initiative dependencies tracking",
-              "Progress monitoring and milestones"
+              "Generación de iniciativas impulsada por IA basada en brechas",
+              "Biblioteca de plantillas de iniciativas",
+              "Constructor de casos de negocio con estimación de ROI",
+              "Puntuación de prioridad (matriz de impacto vs. esfuerzo)",
+              "Planificación de asignación de recursos",
+              "Seguimiento de dependencias de iniciativas",
+              "Monitoreo del progreso e hitos"
             ],
             "workflow": [
-              "Review identified gaps from assessments",
-              "Use AI to generate initiative suggestions",
-              "Select and customize initiatives for your context",
-              "Define scope, timeline, and resource requirements",
-              "Assign ownership and team members",
-              "Prioritize using impact/effort scoring",
-              "Add to roadmap for execution planning"
+              "Revisar las brechas identificadas en las evaluaciones",
+              "Usar IA para generar sugerencias de iniciativas",
+              "Seleccionar y personalizar iniciativas para tu contexto",
+              "Definir el alcance, el cronograma y los requisitos de recursos",
+              "Asignar propiedad y miembros del equipo",
+              "Priorizar usando puntuación de impacto/esfuerzo",
+              "Añadir a la hoja de ruta para la planificación de la ejecución"
             ],
             "tips": [
-              "Start with quick wins to build momentum",
-              "Ensure each initiative has a clear owner",
-              "Link initiatives to specific assessment gaps for traceability",
-              "Review and reprioritize initiatives quarterly"
+              "Comienza con victorias rápidas para generar impulso",
+              "Asegúrate de que cada iniciativa tenga un propietario claro",
+              "Vincula las iniciativas a brechas de evaluación específicas para trazabilidad",
+              "Revisa y vuelve a priorizar las iniciativas trimestralmente"
             ]
           },
           "roadmap": {
-            "name": "Roadmap",
-            "description": "Visual strategic planning for your transformation journey. Organize initiatives into a timeline-based roadmap with phases, dependencies, and resource considerations.",
-            "purpose": "Create a clear, shareable transformation timeline that aligns stakeholders and guides execution over months and years.",
+            "name": "Hoja de ruta",
+            "description": "Planificación estratégica visual para tu viaje de transformación. Organiza las iniciativas en una hoja de ruta basada en el tiempo con fases, dependencias y consideraciones de recursos.",
+            "purpose": "Crear un cronograma de transformación claro y compartible que alinee a las partes interesadas y guíe la ejecución a lo largo de meses y años.",
             "keyFeatures": [
-              "Gantt chart and timeline views",
-              "Drag-and-drop initiative scheduling",
-              "Phase management (Quick Wins, Foundation, Advanced)",
-              "Dependency visualization",
-              "Resource capacity planning",
-              "Milestone tracking",
-              "Export for presentations"
+              "Vistas de diagrama de Gantt y cronograma",
+              "Programación de iniciativas mediante arrastrar y soltar",
+              "Gestión de fases (Victorias rápidas, Base, Avanzado)",
+              "Visualización de dependencias",
+              "Planificación de capacidad de recursos",
+              "Seguimiento de hitos",
+              "Exportación para presentaciones"
             ],
             "workflow": [
-              "Review prioritized initiatives",
-              "Organize initiatives into strategic phases",
-              "Set start dates and durations",
-              "Define dependencies between initiatives",
-              "Assign resources and check capacity",
-              "Set key milestones and review gates",
-              "Share roadmap with stakeholders"
+              "Revisar las iniciativas priorizadas",
+              "Organizar las iniciativas en fases estratégicas",
+              "Establecer fechas de inicio y duraciones",
+              "Definir dependencias entre iniciativas",
+              "Asignar recursos y comprobar la capacidad",
+              "Establecer hitos clave y puertas de revisión",
+              "Compartir la hoja de ruta con las partes interesadas"
             ],
             "tips": [
-              "Build in buffer time for unexpected delays",
-              "Start with a 12-18 month horizon",
-              "Use phases to communicate strategic intent",
-              "Review and adjust roadmap monthly"
+              "Incorpora tiempo de amortiguación para retrasos inesperados",
+              "Comienza con un horizonte de 12 a 18 meses",
+              "Usa las fases para comunicar la intención estratégica",
+              "Revisa y ajusta la hoja de ruta mensualmente"
             ]
           },
           "implementation": {
-            "name": "Implementation",
-            "description": "Execute your transformation initiatives through structured pilot programs and full rollouts. Track progress, manage changes, and ensure successful delivery.",
-            "purpose": "Move from planning to action with disciplined execution, change management, and continuous improvement feedback loops.",
+            "name": "Implementación",
+            "description": "Ejecuta tus iniciativas de transformación a través de programas piloto estructurados y lanzamientos completos. Realiza un seguimiento del progreso, gestiona los cambios y garantiza una entrega exitosa.",
+            "purpose": "Pasar de la planificación a la acción con una ejecución disciplinada, gestión del cambio y bucles de retroalimentación de mejora continua.",
             "keyFeatures": [
-              "Pilot program management",
-              "Stage-gate workflow",
-              "Change request tracking",
-              "Risk and issue management",
-              "Stakeholder communication",
-              "Go/No-go decision support",
-              "Rollout planning and execution",
-              "ADKAR change management"
+              "Gestión de programas piloto",
+              "Flujo de trabajo de puertas de etapa",
+              "Seguimiento de solicitudes de cambio",
+              "Gestión de riesgos y problemas",
+              "Comunicación con las partes interesadas",
+              "Soporte para decisiones go/no-go",
+              "Planificación y ejecución de lanzamientos",
+              "Gestión del cambio ADKAR"
             ],
             "workflow": [
-              "Select initiatives for pilot",
-              "Define pilot scope and success criteria",
-              "Execute pilot with monitoring",
-              "Collect feedback and lessons learned",
-              "Make Go/No-go decision",
-              "Plan full rollout based on pilot learnings",
-              "Execute rollout with change management",
-              "Transition to operations"
+              "Seleccionar iniciativas para el piloto",
+              "Definir el alcance del piloto y los criterios de éxito",
+              "Ejecutar el piloto con monitoreo",
+              "Recopilar comentarios y lecciones aprendidas",
+              "Tomar la decisión go/no-go",
+              "Planificar el lanzamiento completo basado en los aprendizajes del piloto",
+              "Ejecutar el lanzamiento con gestión del cambio",
+              "Transición a las operaciones"
             ],
             "tips": [
-              "Always pilot before full rollout",
-              "Define clear success metrics upfront",
-              "Engage change champions early",
-              "Document everything for future reference"
+              "Siempre realiza un piloto antes del lanzamiento completo",
+              "Define métricas de éxito claras desde el principio",
+              "Involucra a los campeones del cambio temprano",
+              "Documéntalo todo para referencia futura"
             ]
           },
           "reports": {
-            "name": "Reports & ROI",
-            "description": "Generate comprehensive reports and calculate return on investment for your transformation initiatives. Present findings to stakeholders with professional documentation.",
-            "purpose": "Communicate transformation value, track ROI, and provide evidence-based reporting for stakeholders and auditors.",
+            "name": "Informes y ROI",
+            "description": "Genera informes detallados y calcula el retorno de inversión para tus iniciativas de transformación. Presenta hallazgos a las partes interesadas con documentación profesional.",
+            "purpose": "Comunicar el valor de la transformación, realizar un seguimiento del ROI y proporcionar informes basados en evidencia para las partes interesadas y auditores.",
             "keyFeatures": [
-              "Executive summary reports",
-              "ROI calculator with projections",
-              "KPI/OKR tracking dashboards",
-              "Assessment comparison reports",
-              "PDF/PowerPoint export",
-              "Custom report builder",
-              "Audit trail documentation",
-              "Benchmark reports"
+              "Informes resumidos para ejecutivos",
+              "Calculadora de ROI con proyecciones",
+              "Paneles de seguimiento de KPI/OKR",
+              "Informes de comparación de evaluaciones",
+              "Exportación a PDF/PowerPoint",
+              "Constructor de informes personalizados",
+              "Documentación de seguimiento de auditoría",
+              "Informes de referencia (benchmark)"
             ],
             "workflow": [
-              "Select report type or template",
-              "Configure report parameters",
-              "Preview and customize content",
-              "Add commentary and insights",
-              "Export or share report",
-              "Schedule recurring reports"
+              "Seleccionar el tipo de informe o plantilla",
+              "Configurar los parámetros del informe",
+              "Previsualizar y personalizar el contenido",
+              "Añadir comentarios e información relevante",
+              "Exportar o compartir el informe",
+              "Programar informes recurrentes"
             ],
             "tips": [
-              "Use executive view for board presentations",
-              "Track ROI metrics from initiative start",
-              "Compare current vs baseline assessments",
-              "Schedule monthly progress reports"
+              "Usa la vista ejecutiva para presentaciones ante la junta",
+              "Sigue las métricas de ROI desde el inicio de la iniciativa",
+              "Compara las evaluaciones actuales con las de referencia",
+              "Programa informes de progreso mensuales"
             ]
           },
           "mywork": {
-            "name": "My Work",
-            "description": "Your personal task management hub. View assigned tasks, manage your inbox, enter focus mode for deep work, and track your contributions across all transformation activities.",
-            "purpose": "Stay organized and productive by centralizing all your tasks, notifications, and work items in one place.",
+            "name": "Mi trabajo",
+            "description": "Tu centro personal de gestión de tareas. Consulta las tareas asignadas, gestiona tu bandeja de entrada, entra en modo de enfoque para el trabajo concentrado y realiza un seguimiento de tus contribuciones en todas las actividades de transformación.",
+            "purpose": "Mantenerse organizado y productivo centralizando todas tus tareas, notificaciones y elementos de trabajo en un solo lugar.",
             "keyFeatures": [
-              "Personal task list with filters",
-              "Inbox for notifications and mentions",
-              "Focus mode for distraction-free work",
-              "Task prioritization (P1-P4)",
-              "Due date tracking and reminders",
-              "Activity history",
-              "Cross-module task aggregation"
+              "Lista de tareas personal con filtros",
+              "Bandeja de entrada para notificaciones y menciones",
+              "Modo de enfoque para trabajar sin distracciones",
+              "Priorización de tareas (P1-P4)",
+              "Seguimiento de fechas de vencimiento y recordatorios",
+              "Historial de actividad",
+              "Agregación de tareas entre módulos"
             ],
             "workflow": [
-              "Check inbox for new items",
-              "Review and prioritize today's tasks",
-              "Use focus mode for complex work",
-              "Mark tasks complete as you finish",
-              "Process inbox to zero"
+              "Consultar la bandeja de entrada para ver elementos nuevos",
+              "Revisar y priorizar las tareas de hoy",
+              "Usar el modo de enfoque para trabajos complejos",
+              "Marcar las tareas como completadas a medida que las terminas",
+              "Procesar la bandeja de entrada para dejarla a cero"
             ],
             "tips": [
-              "Process your inbox daily",
-              "Use focus mode for assessments",
-              "Set realistic task estimates",
-              "Review weekly to reprioritize"
+              "Procesa tu bandeja de entrada a diario",
+              "Usa el modo de enfoque para las evaluaciones",
+              "Establece estimaciones de tareas realistas",
+              "Revisa semanalmente para volver a priorizar"
             ]
           },
           "organization": {
-            "name": "Organization Context",
-            "description": "Define your organization's strategic context including company profile, goals, challenges, megatrends, and strategy. This foundation enables AI to provide highly relevant recommendations.",
-            "purpose": "Provide the AI system with deep organizational context so recommendations, assessments, and initiatives are tailored to your specific situation.",
+            "name": "Contexto organizacional",
+            "description": "Define el contexto estratégico de tu organización, incluyendo el perfil de la empresa, los objetivos, los desafíos, las megatendencias y la estrategia. Esta base permite que la IA proporcione recomendaciones altamente relevantes.",
+            "purpose": "Proporcionar al sistema de IA un contexto organizacional profundo para que las recomendaciones, evaluaciones e iniciativas se adapten a tu situación específica.",
             "keyFeatures": [
-              "Company profile configuration",
-              "Strategic goals definition",
-              "Challenge mapping",
-              "Megatrend analysis",
-              "Strategy synthesis",
-              "AI context enhancement",
-              "Multi-site support"
+              "Configuración del perfil de la empresa",
+              "Definición de objetivos estratégicos",
+              "Mapeo de desafíos",
+              "Análisis de megatendencias",
+              "Síntesis de estrategia",
+              "Mejora del contexto de IA",
+              "Soporte para múltiples sitios"
             ],
             "workflow": [
-              "Complete company profile",
-              "Define strategic goals and KPIs",
-              "Map current challenges",
-              "Analyze relevant megatrends",
-              "Synthesize strategic direction",
-              "Review AI recommendations"
+              "Completar el perfil de la empresa",
+              "Definir objetivos estratégicos y KPI",
+              "Mapear los desafíos actuales",
+              "Analizar las megatendencias relevantes",
+              "Sintetizar la dirección estratégica",
+              "Revisar las recomendaciones de IA"
             ],
             "tips": [
-              "Keep context updated as strategy evolves",
-              "Be specific about industry and challenges",
-              "Include both short and long-term goals",
-              "Review quarterly with leadership"
+              "Mantén el contexto actualizado a medida que la estrategia evoluciona",
+              "Sé específico sobre la industria y los desafíos",
+              "Incluye objetivos tanto a corto como a largo plazo",
+              "Revisa trimestralmente con el liderazgo"
             ]
           },
           "settings": {
-            "name": "User Settings",
-            "description": "Personalize your Consultinity experience. Configure your profile, security, notifications, AI preferences, integrations, and accessibility options.",
-            "purpose": "Customize the application to match your work style, security requirements, and communication preferences.",
+            "name": "Ajustes de usuario",
+            "description": "Personaliza tu experiencia en Consultinity. Configura tu perfil, seguridad, notificaciones, preferencias de IA, integraciones y opciones de accesibilidad.",
+            "purpose": "Personalizar la aplicación para que coincida con tu estilo de trabajo, requisitos de seguridad y preferencias de comunicación.",
             "keyFeatures": [
-              "Profile management",
-              "Two-factor authentication",
-              "Notification preferences",
-              "AI behavior customization",
-              "Theme and language settings",
-              "Integration connections",
-              "Privacy controls",
-              "Accessibility options"
+              "Gestión del perfil",
+              "Autenticación de dos factores",
+              "Preferencias de notificación",
+              "Personalización del comportamiento de la IA",
+              "Configuración de tema e idioma",
+              "Conexiones de integración",
+              "Controles de privacidad",
+              "Opciones de accesibilidad"
             ],
             "workflow": [
-              "Complete your profile information",
-              "Enable 2FA for security",
-              "Configure notification channels",
-              "Set AI preferences",
-              "Connect integrations (Slack, etc.)",
-              "Adjust display preferences"
+              "Actualizar la información del perfil",
+              "Habilitar 2FA para seguridad",
+              "Configurar canales de notificación",
+              "Establecer preferencias de IA",
+              "Conectar integraciones (Slack, etc.)",
+              "Ajustar la configuración de pantalla"
             ],
             "tips": [
-              "Enable 2FA for account security",
-              "Set up Slack integration for real-time updates",
-              "Customize AI response style to your preference",
-              "Review privacy settings periodically"
+              "Habilita 2FA para la seguridad de la cuenta",
+              "Configura la integración con Slack para actualizaciones en tiempo real",
+              "Personaliza el estilo de respuesta de la IA a tu gusto",
+              "Revisa la configuración de privacidad periódicamente"
             ]
           },
           "admin": {
-            "name": "Admin Panel",
-            "description": "Organization administration center for managing users, projects, AI configuration, knowledge base, and operational metrics. Available to organization administrators.",
-            "purpose": "Manage your organization's Consultinity instance, control access, monitor usage, and configure organizational settings.",
+            "name": "Panel de administración",
+            "description": "Centro de administración de la organización para gestionar usuarios, proyectos y configuración de toda la organización. Supervisa la salud del sistema y configura las funciones de la plataforma.",
+            "purpose": "Administrar y supervisar el uso de la plataforma por parte de tu organización con control total sobre los usuarios y los ajustes.",
             "keyFeatures": [
-              "User management and invitations",
-              "Project administration",
-              "AI/LLM configuration",
-              "Knowledge base management",
-              "Usage analytics and metrics",
-              "Feedback review",
-              "Security and access control",
-              "Playbook management"
+              "Gestión de usuarios e invitaciones",
+              "Administración de proyectos",
+              "Configuración de IA/LLM",
+              "Gestión del conocimiento",
+              "Análisis y métricas de uso",
+              "Revisión de comentarios",
+              "Seguridad y control de acceso",
+              "Gestión de playbooks"
             ],
             "workflow": [
-              "Invite and onboard new users",
-              "Create and configure projects",
-              "Set up AI providers and limits",
-              "Upload organizational knowledge",
-              "Monitor usage and costs",
-              "Review team feedback",
-              "Manage security policies"
+              "Invitar e incorporar nuevos usuarios",
+              "Crear y configurar proyectos",
+              "Configurar proveedores y límites de IA",
+              "Cargar conocimiento organizacional",
+              "Monitorear el uso y los costos",
+              "Revisar los comentarios del equipo",
+              "Gestionar las políticas de seguridad"
             ],
             "tips": [
-              "Regularly review user access permissions",
-              "Set appropriate AI usage limits",
-              "Keep knowledge base current",
-              "Monitor for unusual activity"
+              "Revisa regularmente los permisos de los usuarios",
+              "Establece límites de uso de IA apropiados",
+              "Mantén actualizada la base de conocimientos organizacional",
+              "Monitorea los registros de auditoría en busca de actividades inusuales"
             ]
           },
           "superadmin": {
-            "name": "Super Admin Console",
-            "description": "Platform-wide administration for DBR77 operators. Manage all organizations, users, billing, AI configuration, SSO, security policies, white-labeling, and compliance across the entire Consultinity platform.",
-            "purpose": "Full control over the Consultinity platform for DBR77 team members to manage multi-tenant operations, enterprise features, and platform health.",
+            "name": "Consola de Super Administrador",
+            "description": "Administración en toda la plataforma para gestionar múltiples organizaciones, la salud del sistema y las configuraciones globales. Reservada para administradores de la plataforma.",
+            "purpose": "Gestionar toda la infraestructura de la plataforma y dar soporte a múltiples organizaciones inquilinas.",
             "keyFeatures": [
-              "Multi-organization management",
-              "Global user administration",
-              "Platform billing and invoicing",
-              "AI provider configuration",
-              "SSO/SAML configuration",
-              "Security policy management",
-              "White-label studio",
-              "Compliance center",
-              "API management",
-              "Bulk operations"
+              "Gestión multi-inquilino",
+              "Monitoreo de la salud del sistema",
+              "Configuraciones globales",
+              "Gestión de Feature Flags",
+              "Herramientas de soporte",
+              "Facturación y suscripciones de la plataforma",
+              "Configuración de SSO/SAML",
+              "Gestión de políticas de seguridad global",
+              "Studio de Marca Blanca (White-label)",
+              "Centro de cumplimiento"
             ],
             "workflow": [
-              "Monitor platform health dashboard",
-              "Manage organization accounts",
-              "Configure enterprise SSO",
-              "Set security policies",
-              "Manage billing and subscriptions",
-              "Configure AI providers globally",
-              "Apply white-label branding",
-              "Ensure compliance requirements"
+              "Monitorear el dashboard de salud de la plataforma",
+              "Gestionar cuentas de organizaciones",
+              "Configurar SSO empresarial",
+              "Establecer políticas de seguridad global",
+              "Gestionar facturación y suscripciones",
+              "Configurar proveedores de IA a nivel global",
+              "Aplicar branding de marca blanca",
+              "Garantizar requisitos de cumplimiento"
             ],
             "tips": [
-              "Use impersonation carefully for debugging",
-              "Document all configuration changes",
-              "Test SSO changes in sandbox first",
-              "Monitor AI costs across organizations"
+              "Usa la suplantación con cuidado para la depuración",
+              "Documenta todos los cambios de configuración global",
+              "Prueba los cambios de SSO en sandbox antes de aplicarlos",
+              "Monitorea los costos de IA en todas las organizaciones"
+            ]
+          },
+          "ai-infrastructure": {
+            "name": "Infraestructura de IA",
+            "description": "Centro de gestión central para todos los proveedores de LLM y servicios de IA. Configura claves API, gestiona niveles de modelos, establece límites globales y supervisa la salud del sistema de IA en toda la plataforma.",
+            "purpose": "Configurar y mantener la infraestructura de IA/LLM que impulsa todas las funciones inteligentes de Consultinity, garantizando un rendimiento óptimo y control de costos.",
+            "keyFeatures": [
+              "Configuración de proveedores de LLM (OpenAI, Google, Ollama, etc.)",
+              "Asignación de niveles de modelos (Económico, Estándar, Premium, Razonamiento)",
+              "Gestión y prueba de claves API",
+              "Límites de tasa globales y presupuestos de tokens",
+              "Monitoreo de salud en tiempo real",
+              "Seguimiento de costos y análisis",
+              "Configuración de interruptores de circuito (circuit breakers)",
+              "Ajustes de detección de PII"
+            ],
+            "workflow": [
+              "Añadir y configurar proveedores de LLM con claves API",
+              "Asignar modelos a niveles de rendimiento",
+              "Establecer límites de tasa globales y presupuestos de tokens",
+              "Probar conexiones de proveedores",
+              "Monitorear el dashboard de salud para detectar problemas",
+              "Revisar análisis de uso y costos",
+              "Ajustar umbrales de interruptores de circuito según sea necesario"
+            ],
+            "tips": [
+              "Usa modelos económicos para tareas simples de procesamiento de texto",
+              "Implementa límites de tokens estrictos para evitar costos inesperados",
+              "Revisa regularmente la salud de los proveedores para garantizar la redundancia",
+              "Prueba las nuevas configuraciones de modelos en un entorno de desarrollo primero"
+            ]
+          },
+          "playbookTemplates": {
+            "name": "Plantillas de Playbook",
+            "description": "Crea y gestiona plantillas de playbooks de IA que definen flujos de trabajo de automatización estándar. Estas plantillas se distribuyen a las organizaciones para su ejecución local.",
+            "purpose": "Estandarizar la lógica de automatización de IA en toda la plataforma, permitiendo que disparadores específicos lancen flujos de trabajo de agentes deterministas.",
+            "keyFeatures": [
+              "Constructor visual de playbooks",
+              "Gestión de versiones y ciclo de vida",
+              "Configuración de disparadores",
+              "Motor de validación",
+              "Publicación con un solo clic"
+            ],
+            "workflow": [
+              "Crear un nuevo borrador de plantilla",
+              "Definir disparadores y lógica de agentes",
+              "Validar la estructura de la plantilla",
+              "Publicar para que esté disponible para todas las organizaciones"
+            ],
+            "tips": [
+              "Valida siempre las plantillas antes de publicarlas",
+              "Usa claves descriptivas para facilitar el acceso programático",
+              "Dibuja el flujo de trabajo antes de empezar a construir"
             ]
           },
           "ai-tools": {
-            "name": "AI Tools",
-            "description": "AI-powered assistance for transformation decisions. Get proactive recommendations, analyze proposals, and leverage AI for strategic insights.",
-            "purpose": "Augment human decision-making with AI-generated insights, recommendations, and analysis across all transformation activities.",
+            "name": "Herramientas de IA",
+            "description": "Asistentes impulsados por IA para análisis, recomendaciones y generación de contenido.",
+            "purpose": "Aumentar tus capacidades con IA que entiende los contextos de transformación.",
             "keyFeatures": [
-              "AI Action Advisor",
-              "Proactive recommendations",
-              "Automation scheme designer",
-              "Chat-based consultation",
-              "Evidence-based suggestions",
-              "Risk analysis",
-              "What-if scenarios"
+              "Asistente de chat de IA",
+              "Análisis de evaluaciones",
+              "Recomendaciones de iniciativas",
+              "Generación de contenido",
+              "Análisis de brechas"
             ],
             "workflow": [
-              "Review AI-generated recommendations",
-              "Evaluate evidence and reasoning",
-              "Accept, modify, or reject proposals",
-              "Implement accepted recommendations",
-              "Provide feedback to improve AI"
+              "Describe tu pregunta o necesidad",
+              "Revisar sugerencias de IA",
+              "Refinar y aplicar recomendaciones",
+              "Proporcionar comentarios para mejorar"
             ],
             "tips": [
-              "Always review AI suggestions critically",
-              "Provide feedback to improve future recommendations",
-              "Use AI for ideation, humans for decisions",
-              "Check evidence before accepting recommendations"
+              "Sé específico en tus preguntas",
+              "Proporciona contexto para mejores resultados",
+              "Usa sugerencias de IA como puntos de partida"
             ]
           },
           "knowledge": {
-            "name": "Knowledge Base",
-            "description": "Educational resources and documentation for digital transformation. Access masterclasses, guides, templates, and best practices.",
-            "purpose": "Provide on-demand learning and support materials to help teams understand methodologies and execute effective transformation.",
+            "name": "Base de conocimientos",
+            "description": "Accede al conocimiento de transformación, mejores prácticas y materiales de referencia.",
+            "purpose": "Proporcionar un repositorio centralizado de conocimiento de transformación y recursos de aprendizaje.",
             "keyFeatures": [
-              "Methodology guides",
-              "Best practice templates",
-              "Video masterclasses",
-              "Case studies library",
-              "Glossary of terms",
-              "External resource links",
-              "Searchable article database",
-              "Downloadable assets"
+              "Biblioteca de mejores prácticas",
+              "Marcos de la industria",
+              "Casos de estudio",
+              "Repositorio de documentos",
+              "Búsqueda y descubrimiento"
             ],
             "workflow": [
-              "Search for specific topics or guides",
-              "Browse content by category",
-              "Watch video tutorials",
-              "Download templates for offline use",
-              "Share useful articles with team",
-              "Suggest new topics"
+              "Buscar temas relevantes",
+              "Explorar categorías",
+              "Leer y aplicar conocimientos",
+              "Contribuir con documentación"
             ],
             "tips": [
-              "Bookmark frequently used guides",
-              "Check for new content updates weekly",
-              "Use templates to save time on deliverables",
-              "Contribute your own learnings"
+              "Marca los recursos utilizados con frecuencia",
+              "Comparte contenido relevante con el equipo",
+              "Contribuye con tus aprendizajes"
             ]
           },
           "onboarding": {
-            "name": "Onboarding",
-            "description": "Your guide to getting started with Consultinity. Complete your profile, understand the platform basics, and set up your organization.",
-            "purpose": "Ensure a smooth start and efficient setup of your workspace.",
+            "name": "Incorporación",
+            "description": "Introducción guiada a la plataforma para nuevos usuarios.",
+            "purpose": "Ayudar a los nuevos usuarios a comenzar rápidamente y entender las capacidades de la plataforma.",
             "keyFeatures": [
-              "Profile setup",
-              "Organization configuration",
-              "Platform tour",
-              "Initial goal setting"
+              "Tutoriales interactivos",
+              "Asistente de configuración",
+              "Recorridos por funciones",
+              "Seguimiento del progreso"
             ],
             "workflow": [
-              "Complete user profile",
-              "Set up organization details",
-              "Take the platform tour"
+              "Completar configuración de la cuenta",
+              "Seguir tutoriales guiados",
+              "Configurar ajustes iniciales",
+              "Iniciar primera evaluación"
             ],
             "tips": [
-              "Complete all steps for a better experience",
-              "Invite team members early"
+              "Completa todos los pasos de incorporación",
+              "Haz preguntas a través del centro de ayuda",
+              "Vuelve a visitar los tutoriales según sea necesario"
             ]
           },
           "consultant": {
-            "name": "Consultant Panel",
-            "description": "Dedicated workspace for external consultants to manage multiple client organizations and projects.",
-            "purpose": "Streamline client management and project oversight.",
+            "name": "Portal del consultor",
+            "description": "Herramientas para consultores que gestionan múltiples organizaciones de clientes.",
+            "purpose": "Permitir a los consultores gestionar y dar soporte eficientemente a múltiples transformaciones de clientes.",
             "keyFeatures": [
-              "Client portfolio view",
-              "Project tracking",
-              "Resource allocation",
-              "Client reporting"
+              "Vista de cartera de clientes",
+              "Análisis de varios clientes",
+              "Seguimiento de entrega de servicios",
+              "Gestión de recursos"
             ],
             "workflow": [
-              "View client list",
-              "Select a project",
-              "Generate reports"
+              "Revisar cartera de clientes",
+              "Monitorear salud del compromiso",
+              "Planificar entrega de servicios",
+              "Informar a las partes interesadas"
             ],
             "tips": [
-              "Use the portfolio view for high-level status",
-              "Standardize reports across clients"
+              "Usa plantillas para consistencia",
+              "Realiza benchmarks entre clientes",
+              "Documenta las mejores prácticas"
             ]
           },
           "ecosystem": {
-            "name": "Ecosystem",
-            "description": "Connect with partners, affiliates, and other organizations in the DBR77 ecosystem.",
-            "purpose": "Expand your network and leverage external expertise.",
+            "name": "Ecosistema",
+            "description": "Conéctate con socios, proveedores y la comunidad de transformación en general.",
+            "purpose": "Ampliar las capacidades de transformación a través de asociaciones e integraciones del ecosistema.",
             "keyFeatures": [
-              "Partner directory",
-              "Affiliate dashboard",
-              "Collaboration tools"
+              "Directorio de socios",
+              "Mercado de soluciones",
+              "Foros de la comunidad",
+              "Catálogo de integraciones"
             ],
             "workflow": [
-              "Explore partners",
-              "Connect with experts",
-              "Track affiliate performance"
+              "Explorar socios disponibles",
+              "Evaluar soluciones",
+              "Iniciar asociaciones",
+              "Configurar integraciones"
             ],
             "tips": [
-              "Look for certified partners",
-              "Monitor your affiliate impact"
+              "Verificar credenciales de socios",
+              "Comenzar con integraciones probadas",
+              "Participar en la comunidad"
             ]
           }
         },
         "dashboard": {
           "0": {
-            "title": "How to use the dashboard?",
-            "content": "The dashboard shows an overview of your organization and current activities. Click on cards to see details."
+            "title": "¿Cómo usar el dashboard?",
+            "content": "El dashboard muestra una visión general de tu organización y las actividades actuales. Haz clic en las tarjetas para ver los detalles."
           },
           "1": {
-            "title": "Dashboard Video Tutorial",
-            "content": "Watch this 2-minute video to learn how to customize your dashboard views."
+            "title": "Video tutorial del Dashboard",
+            "content": "Mira este video de 2 minutos para aprender a personalizar las vistas de tu dashboard."
           }
         },
         "assessment": {
           "0": {
-            "title": "How to assess maturity?",
-            "content": "Maturity assessment involves defining the current state (Actual) and target state (Target) for each area."
+            "title": "¿Cómo evaluar la madurez?",
+            "content": "La evaluación de la madurez implica definir el estado actual (Actual) y el estado objetivo (Target) para cada área."
           },
           "1": {
-            "title": "Assessment FAQ",
-            "content": "Find answers to common questions about maturity levels and scoring."
+            "title": "FAQ de evaluación",
+            "content": "Encuentra respuestas a preguntas comunes sobre niveles de madurez y puntuación."
           },
           "2": {
-            "title": "Helper Questions",
-            "content": "Use helper questions to better understand each maturity level requirements."
+            "title": "Preguntas de ayuda",
+            "content": "Usa las preguntas de ayuda para entender mejor los requisitos de cada nivel de madurez."
           }
         },
         "initiatives": {
           "0": {
-            "title": "What is an initiative?",
-            "content": "An initiative is a specific transformation action with a defined goal, scope, and schedule."
+            "title": "¿Qué es una iniciativa?",
+            "content": "Una iniciativa es una acción de transformación específica con un objetivo, alcance y cronograma definidos."
           },
           "1": {
-            "title": "Prioritizing Initiatives",
-            "content": "Use the Impact/Effort matrix to prioritize your transformation actions."
+            "title": "Priorización de iniciativas",
+            "content": "Usa la matriz de Impacto/Esfuerzo para priorizar tus acciones de transformación."
           }
         },
         "roadmap": {
           "0": {
-            "title": "How to read the roadmap?",
-            "content": "The roadmap shows a timeline with project phases and dependencies."
+            "title": "¿Cómo leer la hoja de ruta?",
+            "content": "La hoja de ruta muestra un cronograma con fases del proyecto y dependencias."
           },
           "1": {
-            "title": "Roadmap Video Guide",
-            "content": "Learn how to edit schedules and manage dependencies in the roadmap."
+            "title": "Video guía de la hoja de ruta",
+            "content": "Aprende a editar cronogramas y gestionar dependencias en la hoja de ruta."
           }
         },
         "team": {
           "0": {
-            "title": "Inviting Members",
-            "content": "Click 'Invite', enter email and choose a role for your team members."
+            "title": "Invitar miembros",
+            "content": "Haz clic en 'Invitar', introduce el correo electrónico y elige un rol para los miembros de tu equipo."
           },
           "1": {
-            "title": "Roles & Permissions",
-            "content": "Information about different user roles (Admin, Member, Viewer) in the system."
+            "title": "Roles y permisos",
+            "content": "Información sobre los diferentes roles de usuario (Administrador, Miembro, Visor) en el sistema."
           }
         },
         "drd_workspace": {
           "0": {
-            "title": "What is a decision axis?",
-            "content": "A decision axis (DRD Axis) is a space to structure one strategic topic."
+            "title": "¿Qué es un eje de decisión?",
+            "content": "Un eje de decisión (Eje DRD) es un espacio para estructurar un tema estratégico."
           },
           "1": {
-            "title": "Adding Perspectives",
-            "content": "Learn how to collect different points of view to reach consensus."
+            "title": "Añadir perspectivas",
+            "content": "Aprende a recopilar diferentes puntos de vista para llegar a un consenso."
           },
           "2": {
-            "title": "Using Snapshots",
-            "content": "Snapshots save the current state of discussion for future reference."
+            "title": "Uso de instantáneas (Snapshots)",
+            "content": "Las instantáneas guardan el estado actual de la discusión para referencia futura."
           }
         },
         "sso": {
           "0": {
-            "title": "What is SSO?",
-            "content": "Single Sign-On (SSO) allows users to log in using corporate accounts."
+            "title": "¿Qué es el SSO?",
+            "content": "El inicio de sesión único (SSO) permite a los usuarios iniciar sesión con sus cuentas corporativas."
           },
           "1": {
-            "title": "Google SSO Setup",
-            "content": "Detailed guide on configuring Google Workspace as an Identity Provider."
+            "title": "Configuración de Google SSO",
+            "content": "Guía detallada sobre la configuración de Google Workspace como proveedor de identidad."
           },
           "2": {
-            "title": "SSO FAQ",
-            "content": "Common questions about modern authentication and SSO integration."
+            "title": "FAQ de SSO",
+            "content": "Preguntas comunes sobre autenticación moderna e integración de SSO."
           }
         },
         "security": {
           "0": {
-            "title": "Security Policies",
-            "content": "Define requirements for passwords, sessions, MFA, and IP access."
+            "title": "Políticas de seguridad",
+            "content": "Define requisitos para contraseñas, sesiones, MFA y acceso por IP."
           },
           "1": {
-            "title": "Compliance Presets",
-            "content": "Configure policies according to industry standards like SOC2 or HIPAA."
+            "title": "Ajustes de cumplimiento",
+            "content": "Configura políticas de acuerdo con estándares de la industria como SOC2 o HIPAA."
           },
           "2": {
-            "title": "Account Lockout",
-            "content": "Settings for handling failed login attempts and account recovery."
+            "title": "Bloqueo de cuenta",
+            "content": "Ajustes para gestionar intentos fallidos de inicio de sesión y recuperación de cuentas."
           }
         },
         "whitelabel": {
           "0": {
-            "title": "What is white-label?",
-            "content": "Customize the platform's appearance to match your organization's brand."
+            "title": "¿Qué es la marca blanca (white-label)?",
+            "content": "Personaliza la apariencia de la plataforma para que coincida con la marca de tu organización."
           },
           "1": {
-            "title": "Changing Colors & Logos",
-            "content": "How to update theme colors and upload your company logo."
+            "title": "Cambio de colores y logotipos",
+            "content": "Cómo actualizar los colores del tema y cargar el logotipo de tu empresa."
           },
           "2": {
-            "title": "Custom Domains",
-            "content": "Configuring your own domain (e.g. pmo.yourcompany.com) for the platform."
+            "title": "Dominios personalizados",
+            "content": "Configuración de tu propio dominio (ej. pmo.tuempresa.com) para la plataforma."
           }
         },
         "integrations": {
           "0": {
-            "title": "What are integrations?",
-            "content": "Connect Consultinity with external tools like Slack, Teams, or Jira."
+            "title": "¿Qué son las integraciones?",
+            "content": "Conecta Consultinity con herramientas externas como Slack, Teams o Jira."
           },
           "1": {
-            "title": "Webhook Configuration",
-            "content": "Learn how to set up real-time event notifications via webhooks."
+            "title": "Configuración de Webhooks",
+            "content": "Aprende a configurar notificaciones de eventos en tiempo real a través de webhooks."
           },
           "2": {
-            "title": "API Keys",
-            "content": "Managing secure access tokens for direct API integrations."
+            "title": "Claves API",
+            "content": "Gestión de tokens de acceso seguro para integraciones directas con la API."
           }
         },
         "default": {
           "0": {
-            "title": "First Steps",
-            "content": "Start with the dashboard or explore the available modules."
+            "title": "Primeros pasos",
+            "content": "Comienza con el dashboard o explora los módulos disponibles."
           },
           "1": {
-            "title": "Need Help?",
-            "content": "Contact us via chat or email at support@consultinity.com"
+            "title": "¿Necesitas ayuda?",
+            "content": "Contáctanos a través del chat o por correo electrónico en support@consultinity.com"
           }
         }
       },
       "difficulty": {
-        "beginner": "Beginner",
-        "intermediate": "Intermediate",
-        "advanced": "Advanced"
+        "beginner": "Principiante",
+        "intermediate": "Intermedio",
+        "advanced": "Avanzado"
+      },
+      "search": {
+        "placeholder": "Buscar en la ayuda...",
+        "noResults": "Sin resultados para",
+        "tryDifferentKeywords": "Prueba con diferentes palabras clave",
+        "suggestions": "Sugerencias",
+        "recentSearches": "Búsquedas recientes",
+        "clear": "Limpiar",
+        "popular": "Popular",
+        "types": {
+          "module": "Módulo",
+          "card": "Documentación",
+          "faq": "FAQ",
+          "video": "Video"
+        },
+        "filters": {
+          "all": "Todo",
+          "module": "Módulos",
+          "card": "Docs",
+          "faq": "FAQs",
+          "video": "Videos"
+        },
+        "footer": {
+          "navigate": "navegar",
+          "select": "seleccionar",
+          "close": "cerrar",
+          "results": "results"
+        }
+      },
+      "feedback": {
+        "title": "¿Te ha resultado útil?",
+        "yes": "Sí",
+        "no": "No",
+        "addComment": "Add feedback",
+        "commentPlaceholder": "Tell us how we can improve...",
+        "submit": "Enviar",
+        "skip": "Skip",
+        "thanks": "Thank you for your feedback!",
+        "error": "Failed to submit feedback"
+      },
+      "toggle": {
+        "open": "Abrir Centro de Ayuda",
+        "close": "Cerrar Centro de Ayuda"
+      },
+      "video": {
+        "watched": "Visto",
+        "chapters": "Capítulos",
+        "settings": "Ajustes",
+        "speed": "Velocidad",
+        "controls": {
+          "play": "Reproducir (k)",
+          "pause": "Pausa (k)",
+          "mute": "Silenciar (m)",
+          "unmute": "Desactivar silencio (m)",
+          "fullscreen": "Pantalla completa (f)",
+          "exitFullscreen": "Salir de pantalla completa (f)",
+          "prev10": "-10s",
+          "next10": "+10s"
+        },
+        "shortcuts": "Espacio/K: Reproducir · ←/→: Buscar · M: Silenciar · F: Pantalla completa"
+      },
+      "whatsNew": {
+        "title": "Novedades",
+        "version": "Versión",
+        "features": "Nuevas funciones",
+        "improvements": "Mejoras",
+        "fixes": "Correcciones",
+        "breaking": "Cambios importantes",
+        "dontShow": "No mostrar para esta versión",
+        "gotIt": "¡Entendido!",
+        "learnMore": "Saber más",
+        "changelog": "Ver registro de cambios completo",
+        "watchDemo": "Ver demo"
       }
     },
     "search": {
-      "placeholder": "Search help...",
-      "noResults": "No results for",
-      "tryDifferentKeywords": "Try different keywords",
-      "suggestions": "Suggestions",
-      "recentSearches": "Recent Searches",
-      "clear": "Clear",
+      "placeholder": "Buscar en la ayuda...",
+      "noResults": "Sin resultados para",
+      "tryDifferentKeywords": "Prueba con diferentes palabras clave",
+      "suggestions": "Sugerencias",
+      "recentSearches": "Búsquedas recientes",
+      "clear": "Limpiar",
       "popular": "Popular",
       "types": {
-        "module": "Module",
-        "card": "Documentation",
+        "module": "Módulo",
+        "card": "Documentación",
         "faq": "FAQ",
         "video": "Video"
       },
       "filters": {
-        "all": "All",
-        "module": "Modules",
+        "all": "Todo",
+        "module": "Módulos",
         "card": "Docs",
         "faq": "FAQs",
         "video": "Videos"
       },
       "footer": {
-        "navigate": "navigate",
-        "select": "select",
-        "close": "close",
-        "results": "results"
+        "navigate": "navegar",
+        "select": "seleccionar",
+        "close": "cerrar",
+        "results": "resultados"
       }
     },
     "feedback": {
-      "title": "Was this helpful?",
-      "yes": "Yes",
+      "title": "¿Te ha resultado útil?",
+      "yes": "Sí",
       "no": "No",
-      "addComment": "Add feedback",
-      "commentPlaceholder": "Tell us how we can improve...",
-      "submit": "Submit",
-      "skip": "Skip",
-      "thanks": "Thank you for your feedback!",
-      "error": "Failed to submit feedback"
+      "addComment": "Añadir comentario",
+      "commentPlaceholder": "Cuéntanos cómo podemos mejorar...",
+      "submit": "Enviar",
+      "skip": "Omitir",
+      "thanks": "¡Gracias por tus comentarios!",
+      "error": "Error al enviar los comentarios"
     },
     "toggle": {
-      "open": "Open Help Center",
-      "close": "Close Help Center"
+      "open": "Abrir Centro de Ayuda",
+      "close": "Cerrar Centro de Ayuda"
     },
     "video": {
-      "watched": "Watched",
-      "chapters": "Chapters",
-      "settings": "Settings",
-      "speed": "Speed",
+      "watched": "Visto",
+      "chapters": "Capítulos",
+      "settings": "Ajustes",
+      "speed": "Velocidad",
       "controls": {
-        "play": "Play (k)",
-        "pause": "Pause (k)",
-        "mute": "Mute (m)",
-        "unmute": "Unmute (m)",
-        "fullscreen": "Fullscreen (f)",
-        "exitFullscreen": "Exit fullscreen (f)",
+        "play": "Reproducir (k)",
+        "pause": "Pausa (k)",
+        "mute": "Silenciar (m)",
+        "unmute": "Desactivar silencio (m)",
+        "fullscreen": "Pantalla completa (f)",
+        "exitFullscreen": "Salir de pantalla completa (f)",
         "prev10": "-10s",
         "next10": "+10s"
       },
-      "shortcuts": "Space/K: Play · ←/→: Seek · M: Mute · F: Fullscreen"
+      "shortcuts": "Espacio/K: Reproducir · ←/→: Buscar · M: Silenciar · F: Pantalla completa"
     },
     "whatsNew": {
-      "title": "What's New",
-      "version": "Version",
-      "features": "New Features",
-      "improvements": "Improvements",
-      "fixes": "Bug Fixes",
-      "breaking": "Breaking Changes",
-      "dontShow": "Don't show for this version",
-      "gotIt": "Got it!",
-      "learnMore": "Learn More",
-      "changelog": "View full changelog",
-      "watchDemo": "Watch demo"
+      "title": "Novedades",
+      "version": "Versión",
+      "features": "Nuevas funciones",
+      "improvements": "Mejoras",
+      "fixes": "Correcciones",
+      "breaking": "Cambios importantes",
+      "dontShow": "No mostrar para esta versión",
+      "gotIt": "¡Entendido!",
+      "learnMore": "Saber más",
+      "changelog": "Ver registro de cambios completo",
+      "watchDemo": "Ver demo"
     }
   },
   "reports": {
-    "generateFinal": "Generate Final Report",
+    "generateFinal": "Generar informe final",
     "templates": {
       "SIRI": {
-        "title": "SIRI Assessment Report",
-        "executiveSummary": "Executive Summary",
-        "buildingBlocksAssessment": "Building Blocks Assessment",
-        "gapAnalysisTopPriorities": "Gap Analysis - Top Priorities",
-        "recommendations": "Recommendations"
+        "title": "Informe de evaluación SIRI",
+        "executiveSummary": "Resumen ejecutivo",
+        "buildingBlocksAssessment": "Evaluación de bloques de construcción",
+        "gapAnalysisTopPriorities": "Análisis de brechas - Prioridades principales",
+        "recommendations": "Recomendaciones"
       },
       "ADMA": {
-        "title": "ADMA 2.0 Assessment Report",
-        "executiveSummary": "Executive Summary",
-        "fivePillarsAssessment": "Five Pillars Assessment",
-        "gapAnalysisTopPriorities": "Gap Analysis - Top Priorities",
-        "transformationRecommendations": "Transformation Recommendations",
-        "maturityLevelLegend": "ADMA Maturity Levels"
+        "title": "Informe de evaluación ADMA 2.0",
+        "executiveSummary": "Resumen ejecutivo",
+        "fivePillarsAssessment": "Evaluación de los cinco pilares",
+        "gapAnalysisTopPriorities": "Análisis de brechas - Prioridades principales",
+        "transformationRecommendations": "Recomendaciones de transformación",
+        "maturityLevelLegend": "Niveles de madurez ADMA"
       },
       "CMMI": {
-        "title": "CMMI Assessment Report",
-        "organizationMaturityLevel": "Organization Maturity Level",
-        "categoryAssessment": "Category Assessment",
-        "practiceAreasMatrix": "Practice Areas Matrix",
-        "improvementPlan": "Improvement Plan - Top Priorities",
-        "recommendedNextSteps": "Recommended Next Steps",
-        "shortTerm": "Short-term (0-6 months)",
-        "longTerm": "Long-term (6-18 months)"
+        "title": "Informe de evaluación CMMI",
+        "organizationMaturityLevel": "Nivel de madurez de la organización",
+        "categoryAssessment": "Evaluación por categorías",
+        "practiceAreasMatrix": "Matriz de áreas de práctica",
+        "improvementPlan": "Plan de mejora - Prioridades principales",
+        "recommendedNextSteps": "Próximos pasos recomendados",
+        "shortTerm": "Corto plazo (0-6 meses)",
+        "longTerm": "Largo plazo (6-18 meses)"
       },
       "LEAN": {
-        "title": "Lean 4.0 Report",
-        "executiveSummary": "Executive Summary",
-        "topWorkstationsToAutomate": "Top 5 Workstations for Automation",
-        "roleEvolution": "Role Evolution",
-        "workstationPage": "Workstation Page",
-        "estimatedAnnualSavings": "Estimated Annual Savings",
-        "requiredNewCompetencies": "Required New Competencies"
+        "title": "Informe Lean 4.0",
+        "executiveSummary": "Resumen ejecutivo",
+        "topWorkstationsToAutomate": "Top 5 estaciones de trabajo para automatizar",
+        "roleEvolution": "Evolución de roles",
+        "workstationPage": "Página de la estación de trabajo",
+        "estimatedAnnualSavings": "Ahorro anual estimado",
+        "requiredNewCompetencies": "Nuevas competencias requeridas"
       }
     }
   }

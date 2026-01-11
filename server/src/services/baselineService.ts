@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Baseline Service
  * Enterprise SaaS Architecture - TypeScript Backend

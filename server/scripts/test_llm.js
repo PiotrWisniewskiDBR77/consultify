@@ -3,27 +3,29 @@ import { LLMConfigService } from '../src/services/ai/llmConfigService.js';
 import db from '../database.js';
 
 async function testConnection() {
-    console.log('--- LLM CONNECTION TEST ---');
+  console.log('--- LLM CONNECTION TEST ---');
 
-    // Mock DB for the service if needed, or just let it use the real one
-    // The service requires the DB to be initialized.
+  // Mock DB for the service if needed, or just let it use the real one
+  // The service requires the DB to be initialized.
 
-    // Use the service directly
-    const configService = new LLMConfigService();
-    await configService.initialize();
+  // Use the service directly
+  const configService = new LLMConfigService();
+  await configService.initialize();
 
-    const providers = await configService.getAllProviders();
-    console.log(`Found ${providers.length} active providers.`);
+  const providers = await configService.getAllProviders();
+  console.log(`Found ${providers.length} active providers.`);
 
-    providers.forEach(p => {
-        console.log(`[${p.provider}] Status: ${p.healthStatus}, Configured: ${p.isConfigured}, Tier: ${p.tier}`);
-        if (p.isConfigured) {
-            console.log(`   -> Active URL: ${p.endpoint}`);
-        }
-    });
+  providers.forEach((p) => {
+    console.log(
+      `[${p.provider}] Status: ${p.healthStatus}, Configured: ${p.isConfigured}, Tier: ${p.tier}`
+    );
+    if (p.isConfigured) {
+      console.log(`   -> Active URL: ${p.endpoint}`);
+    }
+  });
 
-    // We won't actually make an HTTP request to OpenAI/Google here to avoid cost/complexity in this simple script,
-    // but verifying the SERVICE returns them as active is the key step 1.
+  // We won't actually make an HTTP request to OpenAI/Google here to avoid cost/complexity in this simple script,
+  // but verifying the SERVICE returns them as active is the key step 1.
 }
 
 testConnection().catch(console.error);

@@ -28,9 +28,9 @@ router.use(aiRateLimiter);
 
 // Only allow in development
 if (process.env.NODE_ENV === 'production') {
-    router.use((_req: Request, res: Response) => {
-        return res.status(403).json({ error: 'Chaos endpoints are not available in production' });
-    });
+  router.use((_req: Request, res: Response) => {
+    return res.status(403).json({ error: 'Chaos endpoints are not available in production' });
+  });
 }
 
 // ==========================================
@@ -38,15 +38,15 @@ if (process.env.NODE_ENV === 'production') {
 // ==========================================
 
 interface ChaosState {
-    redisFailure: boolean;
-    dbFailure: boolean;
-    latencyMs: number;
+  redisFailure: boolean;
+  dbFailure: boolean;
+  latencyMs: number;
 }
 
 const chaosState: ChaosState = {
-    redisFailure: false,
-    dbFailure: false,
-    latencyMs: 0,
+  redisFailure: false,
+  dbFailure: false,
+  latencyMs: 0,
 };
 
 // ==========================================
@@ -54,13 +54,13 @@ const chaosState: ChaosState = {
 // ==========================================
 
 router.use((req: Request, res: Response, next) => {
-    if (chaosState.latencyMs > 0) {
-        setTimeout(() => {
-            next();
-        }, chaosState.latencyMs);
-    } else {
-        next();
-    }
+  if (chaosState.latencyMs > 0) {
+    setTimeout(() => {
+      next();
+    }, chaosState.latencyMs);
+  } else {
+    next();
+  }
 });
 
 // ==========================================
@@ -72,33 +72,34 @@ router.use((req: Request, res: Response, next) => {
  * Simulate Redis connection failure
  */
 router.post('/simulate-redis-failure', async (_req: Request, res: Response) => {
+  try {
+    chaosState.redisFailure = true;
+
+    // Disconnect Redis if connected
     try {
-        chaosState.redisFailure = true;
-
-        // Disconnect Redis if connected
-        try {
-            const { getRedisClient, isRedisConnected } = (await import('../services/ai/redisClient.js')) as any;
-            if (isRedisConnected()) {
-                const client = getRedisClient();
-                if (client && typeof client.quit === 'function') {
-                    await client.quit();
-                }
-            }
-        } catch (error) {
-            // Redis not available or already disconnected
+      const { getRedisClient, isRedisConnected } =
+        (await import('../services/ai/redisClient.js')) as any;
+      if (isRedisConnected()) {
+        const client = getRedisClient();
+        if (client && typeof client.quit === 'function') {
+          await client.quit();
         }
-
-        return res.status(200).json({
-            message: 'Redis failure simulated',
-            state: chaosState,
-        });
-    } catch (error: unknown) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        return res.status(500).json({
-            error: 'Failed to simulate Redis failure',
-            details: err.message,
-        });
+      }
+    } catch (error) {
+      // Redis not available or already disconnected
     }
+
+    return res.status(200).json({
+      message: 'Redis failure simulated',
+      state: chaosState,
+    });
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    return res.status(500).json({
+      error: 'Failed to simulate Redis failure',
+      details: err.message,
+    });
+  }
 });
 
 /**
@@ -106,24 +107,24 @@ router.post('/simulate-redis-failure', async (_req: Request, res: Response) => {
  * Simulate database connection failure
  */
 router.post('/simulate-db-failure', async (_req: Request, res: Response) => {
-    try {
-        chaosState.dbFailure = true;
+  try {
+    chaosState.dbFailure = true;
 
-        // Note: Actual DB disconnection would require more complex setup
-        // This is a flag that can be checked by middleware
+    // Note: Actual DB disconnection would require more complex setup
+    // This is a flag that can be checked by middleware
 
-        return res.status(200).json({
-            message: 'Database failure simulated (flag set)',
-            state: chaosState,
-            note: 'Actual DB disconnection requires application restart',
-        });
-    } catch (error: unknown) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        return res.status(500).json({
-            error: 'Failed to simulate database failure',
-            details: err.message,
-        });
-    }
+    return res.status(200).json({
+      message: 'Database failure simulated (flag set)',
+      state: chaosState,
+      note: 'Actual DB disconnection requires application restart',
+    });
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    return res.status(500).json({
+      error: 'Failed to simulate database failure',
+      details: err.message,
+    });
+  }
 });
 
 /**
@@ -132,30 +133,30 @@ router.post('/simulate-db-failure', async (_req: Request, res: Response) => {
  * Body: { latencyMs: number }
  */
 router.post('/inject-latency', (req: Request, res: Response) => {
-    try {
-        const { latencyMs } = req.body;
+  try {
+    const { latencyMs } = req.body;
 
-        if (typeof latencyMs !== 'number' || latencyMs < 0 || latencyMs > 10000) {
-            return res.status(400).json({
-                error: 'Invalid latencyMs. Must be a number between 0 and 10000',
-            });
-            return;
-        }
-
-        chaosState.latencyMs = latencyMs;
-
-        return res.status(200).json({
-            message: `Latency injection ${latencyMs > 0 ? 'enabled' : 'disabled'}`,
-            latencyMs,
-            state: chaosState,
-        });
-    } catch (error: unknown) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        return res.status(500).json({
-            error: 'Failed to inject latency',
-            details: err.message,
-        });
+    if (typeof latencyMs !== 'number' || latencyMs < 0 || latencyMs > 10000) {
+      return res.status(400).json({
+        error: 'Invalid latencyMs. Must be a number between 0 and 10000',
+      });
+      return;
     }
+
+    chaosState.latencyMs = latencyMs;
+
+    return res.status(200).json({
+      message: `Latency injection ${latencyMs > 0 ? 'enabled' : 'disabled'}`,
+      latencyMs,
+      state: chaosState,
+    });
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    return res.status(500).json({
+      error: 'Failed to inject latency',
+      details: err.message,
+    });
+  }
 });
 
 /**
@@ -163,33 +164,34 @@ router.post('/inject-latency', (req: Request, res: Response) => {
  * Reset all chaos simulations
  */
 router.post('/reset', async (_req: Request, res: Response) => {
+  try {
+    chaosState.redisFailure = false;
+    chaosState.dbFailure = false;
+    chaosState.latencyMs = 0;
+
+    // Reconnect Redis if it was disconnected
     try {
-        chaosState.redisFailure = false;
-        chaosState.dbFailure = false;
-        chaosState.latencyMs = 0;
-
-        // Reconnect Redis if it was disconnected
-        try {
-            const { getRedisClient, isRedisConnected } = (await import('../services/ai/redisClient.js')) as any;
-            if (!isRedisConnected()) {
-                // Redis client should auto-reconnect, but we can trigger reconnection
-                logger.info('[Chaos] Redis should auto-reconnect');
-            }
-        } catch (error) {
-            // Redis not available
-        }
-
-        return res.status(200).json({
-            message: 'All chaos simulations reset',
-            state: chaosState,
-        });
-    } catch (error: unknown) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        return res.status(500).json({
-            error: 'Failed to reset chaos simulations',
-            details: err.message,
-        });
+      const { getRedisClient, isRedisConnected } =
+        (await import('../services/ai/redisClient.js')) as any;
+      if (!isRedisConnected()) {
+        // Redis client should auto-reconnect, but we can trigger reconnection
+        logger.info('[Chaos] Redis should auto-reconnect');
+      }
+    } catch (error) {
+      // Redis not available
     }
+
+    return res.status(200).json({
+      message: 'All chaos simulations reset',
+      state: chaosState,
+    });
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    return res.status(500).json({
+      error: 'Failed to reset chaos simulations',
+      details: err.message,
+    });
+  }
 });
 
 /**
@@ -197,10 +199,10 @@ router.post('/reset', async (_req: Request, res: Response) => {
  * Get current chaos state
  */
 router.get('/status', (_req: Request, res: Response) => {
-    return res.status(200).json({
-        state: chaosState,
-        environment: process.env.NODE_ENV,
-    });
+  return res.status(200).json({
+    state: chaosState,
+    environment: process.env.NODE_ENV,
+  });
 });
 
 export default router;

@@ -131,12 +131,8 @@ e2e-results.xml
 debug-*.png
 
 # Test result files
-test-results-*.txt
-
-# Coverage directories
-coverage-*/
-
-# Additional ignores
+test-results-*.txt# Coverage directories
+coverage-*/# Additional ignores
 *.bak
 coverage/.tmp
 .nx/

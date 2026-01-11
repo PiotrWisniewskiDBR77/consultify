@@ -8,7 +8,9 @@
 import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadBenchmarkdata = createCachedLazyService('../../../ai/intelligence/benchmarkDataService.js');
+const loadBenchmarkdata = createCachedLazyService(
+  '../../../ai/intelligence/benchmarkDataService.js'
+);
 
 // Export default instance (for backward compatibility)
 export default loadBenchmarkdata();

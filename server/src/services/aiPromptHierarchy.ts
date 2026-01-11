@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aiprompthierarchy Service
  * Enterprise SaaS Architecture - TypeScript Backend

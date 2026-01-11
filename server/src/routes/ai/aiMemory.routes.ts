@@ -20,7 +20,7 @@ const router = Router();
 
 // Helper: Format key for display
 function formatKey(key: string): string {
-    return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // ==================== GET ALL MEMORIES ====================
@@ -29,42 +29,42 @@ function formatKey(key: string): string {
  * List all user's AI memories
  */
 router.get(
-    '/',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const userId = req.user?.id || (req.user as any)?.userId;
-            const { source } = req.query;
+  '/',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id || (req.user as any)?.userId;
+      const { source } = req.query;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            let query = `
+      let query = `
             SELECT id, key, value, source, confidence, context, created_at, updated_at
             FROM ai_user_memory
             WHERE user_id = ?
         `;
-            const params: unknown[] = [userId];
+      const params: unknown[] = [userId];
 
-            if (source) {
-                query += ` AND source = ?`;
-                params.push(source);
-            }
+      if (source) {
+        query += ` AND source = ?`;
+        params.push(source);
+      }
 
-            query += ` ORDER BY key ASC`;
+      query += ` ORDER BY key ASC`;
 
-            const memories = await dbAll(query, params);
+      const memories = await dbAll(query, params);
 
-            return res.json({
-                memories,
-                total: memories.length,
-            });
-        } catch (err: any) {
-            logger.error('[AIMemory] List error:', err);
-            return res.status(500).json({ error: 'Failed to fetch memories' });
-        }
-    }),
+      return res.json({
+        memories,
+        total: memories.length,
+      });
+    } catch (err: any) {
+      logger.error('[AIMemory] List error:', err);
+      return res.status(500).json({ error: 'Failed to fetch memories' });
+    }
+  })
 );
 
 // ==================== GET MEMORY FOR AI CONTEXT ====================
@@ -73,87 +73,92 @@ router.get(
  * Get formatted memory context for AI system prompt
  */
 router.get(
-    '/context',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const userId = req.user?.id || (req.user as any)?.userId;
+  '/context',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id || (req.user as any)?.userId;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const memories = (await dbAll(
-                `
+      const memories = (await dbAll(
+        `
             SELECT key, value, source, confidence
             FROM ai_user_memory
             WHERE user_id = ?
             ORDER BY confidence DESC
         `,
-                [userId],
-            )) as Array<{
-                key?: string;
-                value?: string;
-                source?: string;
-                confidence?: number;
-            }>;
+        [userId]
+      )) as Array<{
+        key?: string;
+        value?: string;
+        source?: string;
+        confidence?: number;
+      }>;
 
-            if (memories.length === 0) {
-                return res.json({ context: null, memories: [] });
-            }
+      if (memories.length === 0) {
+        return res.json({ context: null, memories: [] });
+      }
 
-            // Build context string
-            const contextParts: string[] = [];
+      // Build context string
+      const contextParts: string[] = [];
 
-            // Group memories by category
-            const preferences = memories.filter(
-                (m) =>
-                    m.key &&
-                    ['preferred_language', 'communication_style', 'response_length', 'timezone'].includes(m.key),
-            );
-            const context = memories.filter(
-                (m) => m.key && ['role_context', 'project_focus', 'expertise_level'].includes(m.key),
-            );
-            const custom = memories.filter(
-                (m) => m.key && !preferences.some((p) => p.key === m.key) && !context.some((c) => c.key === m.key),
-            );
+      // Group memories by category
+      const preferences = memories.filter(
+        (m) =>
+          m.key &&
+          ['preferred_language', 'communication_style', 'response_length', 'timezone'].includes(
+            m.key
+          )
+      );
+      const context = memories.filter(
+        (m) => m.key && ['role_context', 'project_focus', 'expertise_level'].includes(m.key)
+      );
+      const custom = memories.filter(
+        (m) =>
+          m.key &&
+          !preferences.some((p) => p.key === m.key) &&
+          !context.some((c) => c.key === m.key)
+      );
 
-            if (preferences.length > 0) {
-                contextParts.push('USER PREFERENCES:');
-                preferences.forEach((m) => {
-                    if (m.key && m.value) {
-                        contextParts.push(`- ${formatKey(m.key)}: ${m.value}`);
-                    }
-                });
-            }
+      if (preferences.length > 0) {
+        contextParts.push('USER PREFERENCES:');
+        preferences.forEach((m) => {
+          if (m.key && m.value) {
+            contextParts.push(`- ${formatKey(m.key)}: ${m.value}`);
+          }
+        });
+      }
 
-            if (context.length > 0) {
-                contextParts.push('\nUSER CONTEXT:');
-                context.forEach((m) => {
-                    if (m.key && m.value) {
-                        contextParts.push(`- ${formatKey(m.key)}: ${m.value}`);
-                    }
-                });
-            }
+      if (context.length > 0) {
+        contextParts.push('\nUSER CONTEXT:');
+        context.forEach((m) => {
+          if (m.key && m.value) {
+            contextParts.push(`- ${formatKey(m.key)}: ${m.value}`);
+          }
+        });
+      }
 
-            if (custom.length > 0) {
-                contextParts.push('\nADDITIONAL NOTES:');
-                custom.forEach((m) => {
-                    if (m.key && m.value) {
-                        contextParts.push(`- ${m.key}: ${m.value}`);
-                    }
-                });
-            }
+      if (custom.length > 0) {
+        contextParts.push('\nADDITIONAL NOTES:');
+        custom.forEach((m) => {
+          if (m.key && m.value) {
+            contextParts.push(`- ${m.key}: ${m.value}`);
+          }
+        });
+      }
 
-            return res.json({
-                context: contextParts.join('\n'),
-                memories: memories.map((m) => ({ key: m.key, value: m.value })),
-            });
-        } catch (err: any) {
-            logger.error('[AIMemory] Context error:', err);
-            return res.status(500).json({ error: 'Failed to generate context' });
-        }
-    }),
+      return res.json({
+        context: contextParts.join('\n'),
+        memories: memories.map((m) => ({ key: m.key, value: m.value })),
+      });
+    } catch (err: any) {
+      logger.error('[AIMemory] Context error:', err);
+      return res.status(500).json({ error: 'Failed to generate context' });
+    }
+  })
 );
 
 // ==================== SET/UPDATE MEMORY ====================
@@ -162,74 +167,74 @@ router.get(
  * Set or update a memory value
  */
 router.put(
-    '/:key',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const userId = req.user?.id || (req.user as any)?.userId;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
-            const { key } = req.params;
-            const { value, source = 'explicit', confidence = 1.0, context } = req.body;
+  '/:key',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id || (req.user as any)?.userId;
+      const organizationId = req.user?.organizationId || req.user?.organization_id;
+      const { key } = req.params;
+      const { value, source = 'explicit', confidence = 1.0, context } = req.body;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            if (!value || (typeof value === 'string' && value.trim().length === 0)) {
-                return res.status(400).json({ error: 'Value is required' });
-            }
+      if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+        return res.status(400).json({ error: 'Value is required' });
+      }
 
-            // Validate key format
-            if (!/^[a-z_]+$/.test(key)) {
-                return res.status(400).json({
-                    error: 'Invalid key format. Use lowercase letters and underscores only.',
-                });
-            }
+      // Validate key format
+      if (!/^[a-z_]+$/.test(key)) {
+        return res.status(400).json({
+          error: 'Invalid key format. Use lowercase letters and underscores only.',
+        });
+      }
 
-            const now = new Date().toISOString();
-            const valueStr = typeof value === 'string' ? value.trim() : String(value);
+      const now = new Date().toISOString();
+      const valueStr = typeof value === 'string' ? value.trim() : String(value);
 
-            // Upsert: Insert or update on conflict
-            const existing = (await dbGet(
-                `
+      // Upsert: Insert or update on conflict
+      const existing = (await dbGet(
+        `
             SELECT id FROM ai_user_memory WHERE user_id = ? AND key = ?
         `,
-                [userId, key],
-            )) as { id?: string } | null;
+        [userId, key]
+      )) as { id?: string } | null;
 
-            if (existing?.id) {
-                await dbRun(
-                    `
+      if (existing?.id) {
+        await dbRun(
+          `
                 UPDATE ai_user_memory
                 SET value = ?, source = ?, confidence = ?, context = ?, updated_at = ?
                 WHERE id = ?
             `,
-                    [valueStr, source, confidence, context || null, now, existing.id],
-                );
-            } else {
-                const id = uuidv4();
-                await dbRun(
-                    `
+          [valueStr, source, confidence, context || null, now, existing.id]
+        );
+      } else {
+        const id = uuidv4();
+        await dbRun(
+          `
                 INSERT INTO ai_user_memory (id, user_id, organization_id, key, value, source, confidence, context, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
-                    [id, userId, organizationId, key, valueStr, source, confidence, context || null, now, now],
-                );
-            }
+          [id, userId, organizationId, key, valueStr, source, confidence, context || null, now, now]
+        );
+      }
 
-            const updated = await dbGet(
-                `
+      const updated = await dbGet(
+        `
             SELECT * FROM ai_user_memory WHERE user_id = ? AND key = ?
         `,
-                [userId, key],
-            );
+        [userId, key]
+      );
 
-            return res.json(updated);
-        } catch (err: any) {
-            logger.error('[AIMemory] Set error:', err);
-            return res.status(500).json({ error: 'Failed to set memory' });
-        }
-    }),
+      return res.json(updated);
+    } catch (err: any) {
+      logger.error('[AIMemory] Set error:', err);
+      return res.status(500).json({ error: 'Failed to set memory' });
+    }
+  })
 );
 
 // ==================== DELETE MEMORY ====================
@@ -238,35 +243,35 @@ router.put(
  * Delete a specific memory
  */
 router.delete(
-    '/:key',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const userId = req.user?.id || (req.user as any)?.userId;
-            const { key } = req.params;
+  '/:key',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id || (req.user as any)?.userId;
+      const { key } = req.params;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const result = await dbRun(
-                `
+      const result = await dbRun(
+        `
             DELETE FROM ai_user_memory
             WHERE user_id = ? AND key = ?
         `,
-                [userId, key],
-            );
+        [userId, key]
+      );
 
-            if (!result.success || (result.changes || 0) === 0) {
-                return res.status(404).json({ error: 'Memory not found' });
-            }
+      if (!result.success || (result.changes || 0) === 0) {
+        return res.status(404).json({ error: 'Memory not found' });
+      }
 
-            return res.json({ success: true, deleted: key });
-        } catch (err: any) {
-            logger.error('[AIMemory] Delete error:', err);
-            return res.status(500).json({ error: 'Failed to delete memory' });
-        }
-    }),
+      return res.json({ success: true, deleted: key });
+    } catch (err: any) {
+      logger.error('[AIMemory] Delete error:', err);
+      return res.status(500).json({ error: 'Failed to delete memory' });
+    }
+  })
 );
 
 // ==================== BULK SET (from AI inference) ====================
@@ -275,87 +280,87 @@ router.delete(
  * Set multiple memories at once (typically from AI inference)
  */
 router.post(
-    '/bulk',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const userId = req.user?.id || (req.user as any)?.userId;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
-            const { memories } = req.body;
+  '/bulk',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id || (req.user as any)?.userId;
+      const organizationId = req.user?.organizationId || req.user?.organization_id;
+      const { memories } = req.body;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            if (!Array.isArray(memories) || memories.length === 0) {
-                return res.status(400).json({ error: 'Memories array is required' });
-            }
+      if (!Array.isArray(memories) || memories.length === 0) {
+        return res.status(400).json({ error: 'Memories array is required' });
+      }
 
-            const now = new Date().toISOString();
-            const results: Array<{ key: string; action: string }> = [];
+      const now = new Date().toISOString();
+      const results: Array<{ key: string; action: string }> = [];
 
-            for (const memory of memories) {
-                const {
-                    key,
-                    value,
-                    source = 'inferred',
-                    confidence = 0.8,
-                } = memory as {
-                    key?: string;
-                    value?: string;
-                    source?: string;
-                    confidence?: number;
-                };
+      for (const memory of memories) {
+        const {
+          key,
+          value,
+          source = 'inferred',
+          confidence = 0.8,
+        } = memory as {
+          key?: string;
+          value?: string;
+          source?: string;
+          confidence?: number;
+        };
 
-                if (!key || !value) continue;
-                if (!/^[a-z_]+$/.test(key)) continue;
+        if (!key || !value) continue;
+        if (!/^[a-z_]+$/.test(key)) continue;
 
-                const existing = (await dbGet(
-                    `
+        const existing = (await dbGet(
+          `
                 SELECT id, confidence FROM ai_user_memory WHERE user_id = ? AND key = ?
             `,
-                    [userId, key],
-                )) as { id?: string; confidence?: number } | null;
+          [userId, key]
+        )) as { id?: string; confidence?: number } | null;
 
-                const valueStr = typeof value === 'string' ? value.trim() : String(value);
+        const valueStr = typeof value === 'string' ? value.trim() : String(value);
 
-                // Only update if new confidence is higher or source is explicit
-                if (existing?.id) {
-                    if (
-                        source === 'explicit' ||
-                        (confidence && existing.confidence && confidence > existing.confidence)
-                    ) {
-                        await dbRun(
-                            `
+        // Only update if new confidence is higher or source is explicit
+        if (existing?.id) {
+          if (
+            source === 'explicit' ||
+            (confidence && existing.confidence && confidence > existing.confidence)
+          ) {
+            await dbRun(
+              `
                         UPDATE ai_user_memory
                         SET value = ?, source = ?, confidence = ?, updated_at = ?
                         WHERE id = ?
                     `,
-                            [valueStr, source, confidence, now, existing.id],
-                        );
-                        results.push({ key, action: 'updated' });
-                    } else {
-                        results.push({ key, action: 'skipped' });
-                    }
-                } else {
-                    const id = uuidv4();
-                    await dbRun(
-                        `
+              [valueStr, source, confidence, now, existing.id]
+            );
+            results.push({ key, action: 'updated' });
+          } else {
+            results.push({ key, action: 'skipped' });
+          }
+        } else {
+          const id = uuidv4();
+          await dbRun(
+            `
                     INSERT INTO ai_user_memory (id, user_id, organization_id, key, value, source, confidence, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `,
-                        [id, userId, organizationId, key, valueStr, source, confidence, now, now],
-                    );
-                    results.push({ key, action: 'created' });
-                }
-            }
-
-            return res.json({ success: true, results });
-        } catch (err: any) {
-            logger.error('[AIMemory] Bulk set error:', err);
-            return res.status(500).json({ error: 'Failed to set memories' });
+            [id, userId, organizationId, key, valueStr, source, confidence, now, now]
+          );
+          results.push({ key, action: 'created' });
         }
-    }),
+      }
+
+      return res.json({ success: true, results });
+    } catch (err: any) {
+      logger.error('[AIMemory] Bulk set error:', err);
+      return res.status(500).json({ error: 'Failed to set memories' });
+    }
+  })
 );
 
 // ==================== PARSE AI RESPONSE FOR MEMORIES ====================
@@ -364,64 +369,64 @@ router.post(
  * Parse AI response for REMEMBER: directives
  */
 router.post(
-    '/parse',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const { response } = req.body;
+  '/parse',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { response } = req.body;
 
-            if (!response || typeof response !== 'string') {
-                return res.json({ memories: [] });
-            }
+      if (!response || typeof response !== 'string') {
+        return res.json({ memories: [] });
+      }
 
-            // Look for REMEMBER: patterns in AI response
-            const rememberPattern = /REMEMBER:\s*(.+?)(?:\n|$)/gi;
-            const memories: Array<{
-                key: string;
-                value: string;
-                source: string;
-                confidence: number;
-            }> = [];
-            let match: RegExpExecArray | null;
+      // Look for REMEMBER: patterns in AI response
+      const rememberPattern = /REMEMBER:\s*(.+?)(?:\n|$)/gi;
+      const memories: Array<{
+        key: string;
+        value: string;
+        source: string;
+        confidence: number;
+      }> = [];
+      let match: RegExpExecArray | null;
 
-            while ((match = rememberPattern.exec(response)) !== null) {
-                const statement = match[1].trim();
+      while ((match = rememberPattern.exec(response)) !== null) {
+        const statement = match[1].trim();
 
-                // Try to extract key-value pairs
-                const kvMatch = statement.match(/^(.+?):\s*(.+)$/);
-                if (kvMatch) {
-                    const key = kvMatch[1]
-                        .toLowerCase()
-                        .replace(/[^a-z\s]/g, '')
-                        .replace(/\s+/g, '_')
-                        .slice(0, 50);
-                    const value = kvMatch[2].trim();
+        // Try to extract key-value pairs
+        const kvMatch = statement.match(/^(.+?):\s*(.+)$/);
+        if (kvMatch) {
+          const key = kvMatch[1]
+            .toLowerCase()
+            .replace(/[^a-z\s]/g, '')
+            .replace(/\s+/g, '_')
+            .slice(0, 50);
+          const value = kvMatch[2].trim();
 
-                    if (key && value) {
-                        memories.push({
-                            key,
-                            value,
-                            source: 'inferred',
-                            confidence: 0.8,
-                        });
-                    }
-                } else {
-                    // Store as custom note
-                    memories.push({
-                        key: `note_${Date.now()}`,
-                        value: statement,
-                        source: 'inferred',
-                        confidence: 0.7,
-                    });
-                }
-            }
-
-            return res.json({ memories });
-        } catch (err: any) {
-            logger.error('[AIMemory] Parse error:', err);
-            return res.status(500).json({ error: 'Failed to parse response' });
+          if (key && value) {
+            memories.push({
+              key,
+              value,
+              source: 'inferred',
+              confidence: 0.8,
+            });
+          }
+        } else {
+          // Store as custom note
+          memories.push({
+            key: `note_${Date.now()}`,
+            value: statement,
+            source: 'inferred',
+            confidence: 0.7,
+          });
         }
-    }),
+      }
+
+      return res.json({ memories });
+    } catch (err: any) {
+      logger.error('[AIMemory] Parse error:', err);
+      return res.status(500).json({ error: 'Failed to parse response' });
+    }
+  })
 );
 
 export default router;

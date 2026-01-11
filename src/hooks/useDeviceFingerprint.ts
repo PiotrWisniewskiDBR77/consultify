@@ -7,14 +7,14 @@ import { useState } from 'react';
 // Generate device fingerprint
 // This is a placeholder implementation
 const generateFingerprint = (): string | null => {
-    // In a real implementation, this would collect various device characteristics
-    // For now, return null
-    return null;
+  // In a real implementation, this would collect various device characteristics
+  // For now, return null
+  return null;
 };
 
 export const useDeviceFingerprint = (): string | null => {
-    // Use lazy initialization to compute fingerprint once
-    const [fingerprint] = useState<string | null>(() => generateFingerprint());
+  // Use lazy initialization to compute fingerprint once
+  const [fingerprint] = useState<string | null>(() => generateFingerprint());
 
-    return fingerprint;
+  return fingerprint;
 };

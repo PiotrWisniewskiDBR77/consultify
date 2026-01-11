@@ -7,18 +7,18 @@ import { AIMessageHistory, sendMessageToAI } from './gemini';
  */
 
 export const Agent = {
-    /**
-     * Enriches a skeletal initiative with a professional business case, risks, and milestones.
-     * This corresponds to the work a Senior Consultant would do.
-     */
-    enrichInitiativeWithAI: async (
-        initiative: FullInitiative,
-        profile: Partial<CompanyProfile>,
-        fullSessionResponse: FullSession,
-        language: string = 'en',
-    ): Promise<Partial<FullInitiative>> => {
-        // Construct the "Senior Consultant" prompt
-        const context = `
+  /**
+   * Enriches a skeletal initiative with a professional business case, risks, and milestones.
+   * This corresponds to the work a Senior Consultant would do.
+   */
+  enrichInitiativeWithAI: async (
+    initiative: FullInitiative,
+    profile: Partial<CompanyProfile>,
+    fullSessionResponse: FullSession,
+    language: string = 'en'
+  ): Promise<Partial<FullInitiative>> => {
+    // Construct the "Senior Consultant" prompt
+    const context = `
       CONTEXT:
       ACT AS: Expert Digital Transformation Architect.
       LANGUAGE: ${language.toUpperCase()}. You MUST respond in ${language.toUpperCase()}.
@@ -49,39 +49,39 @@ export const Agent = {
       }
     `;
 
-        try {
-            // We send this as a "User" message to trigger the specific response.
-            // In a real agent system, we might have a dedicated system prompt for "Generator".
-            const history: AIMessageHistory[] = []; // Stateless call for this specific task
+    try {
+      // We send this as a "User" message to trigger the specific response.
+      // In a real agent system, we might have a dedicated system prompt for "Generator".
+      const history: AIMessageHistory[] = []; // Stateless call for this specific task
 
-            const responseText = await sendMessageToAI(history, context);
+      const responseText = await sendMessageToAI(history, context);
 
-            // Sanitization: Remove markdown code blocks if the model adds them
-            const cleanJson = responseText
-                .replace(/```json/g, '')
-                .replace(/```/g, '')
-                .trim();
+      // Sanitization: Remove markdown code blocks if the model adds them
+      const cleanJson = responseText
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
 
-            const generatedData = JSON.parse(cleanJson);
+      const generatedData = JSON.parse(cleanJson);
 
-            return generatedData;
-        } catch (error) {
-            console.error('AI Agent failed to enrich initiative:', error);
-            // Fallback: Return empty or partial to avoid breaking the UI
-            return {};
-        }
-    },
+      return generatedData;
+    } catch (error) {
+      console.error('AI Agent failed to enrich initiative:', error);
+      // Fallback: Return empty or partial to avoid breaking the UI
+      return {};
+    }
+  },
 
-    /**
-     * Proactively analyzes the entire session state to find risks, opportunities, and anomalies.
-     * This powers the "Morning Briefing" on the dashboard.
-     */
-    analyzeSessionForInsights: async (
-        session: FullSession,
-        companyName: string,
-        language: string = 'en',
-    ): Promise<{ type: 'risk' | 'opportunity' | 'anomaly'; text: string; impact: string }[]> => {
-        const context = `
+  /**
+   * Proactively analyzes the entire session state to find risks, opportunities, and anomalies.
+   * This powers the "Morning Briefing" on the dashboard.
+   */
+  analyzeSessionForInsights: async (
+    session: FullSession,
+    companyName: string,
+    language: string = 'en'
+  ): Promise<{ type: 'risk' | 'opportunity' | 'anomaly'; text: string; impact: string }[]> => {
+    const context = `
             ACT AS: Chief Strategy Officer (Artificial Intelligence).
             LANGUAGE: ${language.toUpperCase()}. You MUST respond in ${language.toUpperCase()}.
             
@@ -106,34 +106,34 @@ export const Agent = {
             Max 3 items. Be concise.
         `;
 
-        try {
-            const history: AIMessageHistory[] = [];
-            const responseText = await sendMessageToAI(history, context);
-            const cleanJson = responseText
-                .replace(/```json/g, '')
-                .replace(/```/g, '')
-                .trim();
-            return JSON.parse(cleanJson);
-        } catch (e) {
-            console.error('AI Insight Analysis failed', e);
-            return [];
-        }
-    },
+    try {
+      const history: AIMessageHistory[] = [];
+      const responseText = await sendMessageToAI(history, context);
+      const cleanJson = responseText
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
+      return JSON.parse(cleanJson);
+    } catch (e) {
+      console.error('AI Insight Analysis failed', e);
+      return [];
+    }
+  },
 
-    /**
-     * Conducts an interactive interview for a specific assessment axis.
-     * It asks the next question based on chat history or concludes with a score.
-     */
-    conductAssessmentInterview: async (
-        axis: string,
-        chatHistory: { role: 'user' | 'model'; text: string }[],
-        language: string = 'en',
-    ): Promise<{
-        nextQuestion?: string;
-        conclusion?: { score: number; reasoning: string };
-        isFinished: boolean;
-    }> => {
-        const context = `
+  /**
+   * Conducts an interactive interview for a specific assessment axis.
+   * It asks the next question based on chat history or concludes with a score.
+   */
+  conductAssessmentInterview: async (
+    axis: string,
+    chatHistory: { role: 'user' | 'model'; text: string }[],
+    language: string = 'en'
+  ): Promise<{
+    nextQuestion?: string;
+    conclusion?: { score: number; reasoning: string };
+    isFinished: boolean;
+  }> => {
+    const context = `
             ACT AS: specialized Auditor for Digital Maturity in "${axis}".
             LANGUAGE: ${language === 'pl' ? 'Polish' : 'English'}.
             
@@ -158,19 +158,19 @@ export const Agent = {
             { "isFinished": true, "conclusion": { "score": 3.5, "reasoning": "User has basics but lacks automation." } }
         `;
 
-        try {
-            // We pass empty history to sending function because we injected history into the prompt context manually
-            // to have tighter control over the "system" instructions.
-            const responseText = await sendMessageToAI([], context);
-            const cleanJson = responseText
-                .replace(/```json/g, '')
-                .replace(/```/g, '')
-                .trim();
-            return JSON.parse(cleanJson);
-        } catch (e) {
-            console.error('AI Interview failed', e);
-            // Fallback
-            return { isFinished: false, nextQuestion: 'Could you elaborate on your current processes?' };
-        }
-    },
+    try {
+      // We pass empty history to sending function because we injected history into the prompt context manually
+      // to have tighter control over the "system" instructions.
+      const responseText = await sendMessageToAI([], context);
+      const cleanJson = responseText
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
+      return JSON.parse(cleanJson);
+    } catch (e) {
+      console.error('AI Interview failed', e);
+      // Fallback
+      return { isFinished: false, nextQuestion: 'Could you elaborate on your current processes?' };
+    }
+  },
 };

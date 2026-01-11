@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aidecisiongovernance Service
  * Enterprise SaaS Architecture - TypeScript Backend

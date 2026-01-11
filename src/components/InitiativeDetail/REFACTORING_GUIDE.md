@@ -1,6 +1,7 @@
 # InitiativeDetailModal Refactoring Guide
 
 ## Current State
+
 - **File**: `src/components/InitiativeDetailModal.tsx`
 - **Size**: 2,819 lines (exceeds recommended 300-500 lines)
 - **Problem**: Monolithic component with 9 tabs embedded inline
@@ -42,6 +43,7 @@ src/components/InitiativeDetail/
 5. **Test incrementally**: Test after each tab extraction
 
 ## Priority Order
+
 1. IntelligenceTab (already exists as separate component)
 2. HistoryTab (~170 lines - simplest)
 3. TeamTab (~340 lines)
@@ -50,7 +52,3 @@ src/components/InitiativeDetail/
 6. ExecutionTab (~300 lines)
 7. DefinitionTab (~467 lines)
 8. OverviewTab (~523 lines - most complex)
-
-
-
-

@@ -33,7 +33,7 @@ report:
   # Format
   format: table
   # Template
-  template: ""
+  template: ''
 
 # Cache settings
 cache:
@@ -44,13 +44,3 @@ cache:
 ignore:
   # Ignore file
   file: .trivyignore
-
-
-
-
-
-
-
-
-
-

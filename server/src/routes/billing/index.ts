@@ -21,7 +21,3 @@ router.use('/settlements', settlementsRoutes);
 router.use('/tokens', tokenBillingRoutes);
 
 export default router;
-
-
-
-

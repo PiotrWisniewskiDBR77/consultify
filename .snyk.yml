@@ -15,14 +15,14 @@ fail-on: upgradeable
 
 # Exclude paths
 exclude:
-  - "**/node_modules/**"
-  - "**/dist/**"
-  - "**/build/**"
-  - "**/coverage/**"
-  - "**/tests/**"
-  - "**/__mocks__/**"
-  - "**/*.test.*"
-  - "**/*.spec.*"
+  - '**/node_modules/**'
+  - '**/dist/**'
+  - '**/build/**'
+  - '**/coverage/**'
+  - '**/tests/**'
+  - '**/__mocks__/**'
+  - '**/*.test.*'
+  - '**/*.spec.*'
 
 # Policy
 policy: |
@@ -44,13 +44,3 @@ test:
 monitor:
   # Monitor all projects
   all-projects: false
-
-
-
-
-
-
-
-
-
-

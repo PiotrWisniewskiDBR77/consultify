@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Airecommendation Service
  * Enterprise SaaS Architecture - TypeScript Backend

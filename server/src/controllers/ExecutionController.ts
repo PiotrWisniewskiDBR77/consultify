@@ -11,64 +11,69 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
 export class ExecutionController {
-    /**
-     * Get execution summary for a project
-     */
-    static getExecutionSummary = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { projectId } = req.params;
-        const orgId = req.user?.organizationId;
+  /**
+   * Get execution summary for a project
+   */
+  static getExecutionSummary = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { projectId } = req.params;
+      const orgId = req.user?.organizationId;
 
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-        res.json({
-            projectId,
-            completionPercentage: 0,
-            onTrackTasks: 0,
-            atRiskTasks: 0,
-            blockedTasks: 0,
-            updatedAt: new Date().toISOString()
-        });
-    });
+      res.json({
+        projectId,
+        completionPercentage: 0,
+        onTrackTasks: 0,
+        atRiskTasks: 0,
+        blockedTasks: 0,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+  );
 
-    /**
-     * Get blocked tasks for a project
-     */
-    static getBlockers = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { projectId } = req.params;
-        const orgId = req.user?.organizationId;
+  /**
+   * Get blocked tasks for a project
+   */
+  static getBlockers = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { projectId } = req.params;
+      const orgId = req.user?.organizationId;
 
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-        res.json([]);
-    });
+      res.json([]);
+    }
+  );
 
-    /**
-     * Perform gate check
-     */
-    static checkGate = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { projectId } = req.params;
-        const { targetPhase } = req.body;
-        const orgId = req.user?.organizationId;
+  /**
+   * Perform gate check
+   */
+  static checkGate = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { projectId } = req.params;
+      const { targetPhase } = req.body;
+      const orgId = req.user?.organizationId;
 
-        if (!orgId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-        res.json({
-            projectId,
-            targetPhase,
-            canAdvance: true,
-            message: 'Gate check passed (basic logic)'
-        });
-    });
+      res.json({
+        projectId,
+        targetPhase,
+        canAdvance: true,
+        message: 'Gate check passed (basic logic)',
+      });
+    }
+  );
 }
 
 export default ExecutionController;
-

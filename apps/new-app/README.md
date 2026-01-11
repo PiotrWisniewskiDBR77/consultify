@@ -52,15 +52,3 @@ This app uses the shared packages from `@consultinity/*`:
 1. Update branding in `frontend/src/`
 2. Add custom API routes in `backend/src/`
 3. Import shared utilities: `import { ... } from '@consultinity/shared'`
-
-
-
-
-
-
-
-
-
-
-
-

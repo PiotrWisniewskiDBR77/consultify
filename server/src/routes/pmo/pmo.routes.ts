@@ -29,15 +29,15 @@ router.use(verifyToken);
  * Returns canonical PMOHealthSnapshot for a project
  */
 router.get(
-    '/health/:projectId',
-    asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-        const { projectId } = req.params;
+  '/health/:projectId',
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { projectId } = req.params;
 
-        const { getHealthSnapshot } = (await import('../../services/pmoHealthService.js')) as any;
-        const snapshot = await getHealthSnapshot(projectId);
+    const { getHealthSnapshot } = (await import('../../services/pmoHealthService.js')) as any;
+    const snapshot = await getHealthSnapshot(projectId);
 
-        return res.json(snapshot);
-    }),
+    return res.json(snapshot);
+  })
 );
 
 export default router;

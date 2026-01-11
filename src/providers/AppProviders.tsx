@@ -11,33 +11,33 @@ import { TrialProvider } from '../contexts/TrialContext';
 import { AutoSaveProvider } from '../context/AutoSaveContext';
 
 interface AppProvidersProps {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
-    // Log initialization for debugging
-    React.useEffect(() => {
-        console.log('[AppProviders] Initializing providers...');
-    }, []);
+  // Log initialization for debugging
+  React.useEffect(() => {
+    console.log('[AppProviders] Initializing providers...');
+  }, []);
 
-    return (
-        <ErrorBoundary>
-            <BrowserRouter>
-                <AutoSaveProvider>
-                    <TrialProvider>
-                        <AccessPolicyProvider>
-                            <AIProvider>
-                                <HelpProvider>
-                                    <TourProvider>
-                                        {children}
-                                        <Toaster position="bottom-right" />
-                                    </TourProvider>
-                                </HelpProvider>
-                            </AIProvider>
-                        </AccessPolicyProvider>
-                    </TrialProvider>
-                </AutoSaveProvider>
-            </BrowserRouter>
-        </ErrorBoundary>
-    );
+  return (
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AutoSaveProvider>
+          <TrialProvider>
+            <AccessPolicyProvider>
+              <AIProvider>
+                <HelpProvider>
+                  <TourProvider>
+                    {children}
+                    <Toaster position="bottom-right" />
+                  </TourProvider>
+                </HelpProvider>
+              </AIProvider>
+            </AccessPolicyProvider>
+          </TrialProvider>
+        </AutoSaveProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
+  );
 };

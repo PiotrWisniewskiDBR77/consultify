@@ -1,5 +1,5 @@
 export const TEST_SCHEMA = [
-    `CREATE TABLE IF NOT EXISTS organizations (
+  `CREATE TABLE IF NOT EXISTS organizations (
         id TEXT PRIMARY KEY,
         name TEXT,
         plan TEXT DEFAULT 'free',
@@ -34,7 +34,51 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         valid_until DATETIME
     )`,
-    `CREATE TABLE IF NOT EXISTS users (
+  `CREATE TABLE IF NOT EXISTS project_memory (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        memory_type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        title TEXT,
+        importance INTEGER DEFAULT 1,
+        recorded_by TEXT,
+        tags TEXT,
+        related_entity_type TEXT,
+        related_entity_id TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+        FOREIGN KEY (recorded_by) REFERENCES users(id)
+    )`,
+  `CREATE TABLE IF NOT EXISTS ai_drafts (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        user_id TEXT NOT NULL,
+        draft_type TEXT NOT NULL,
+        target_entity_type TEXT,
+        target_entity_id TEXT,
+        target_field TEXT,
+        original_content TEXT,
+        suggested_content TEXT NOT NULL,
+        diff_data TEXT,
+        confidence_score REAL DEFAULT 0.8,
+        reasoning TEXT,
+        status TEXT DEFAULT 'PENDING',
+        reviewed_by TEXT,
+        reviewed_at TEXT,
+        review_notes TEXT,
+        model_used TEXT,
+        prompt_id TEXT,
+        tokens_used INTEGER,
+        expires_at TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (organization_id) REFERENCES organizations(id),
+        FOREIGN KEY (project_id) REFERENCES projects(id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (reviewed_by) REFERENCES users(id)
+    )`,
+  `CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         email TEXT UNIQUE,
@@ -72,7 +116,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS projects (
+  `CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         name TEXT NOT NULL,
@@ -104,7 +148,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS tasks (
+  `CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
         project_id TEXT,
         organization_id TEXT NOT NULL,
@@ -152,7 +196,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(assignee_id) REFERENCES users(id) ON DELETE SET NULL,
         FOREIGN KEY(reporter_id) REFERENCES users(id) ON DELETE SET NULL
     )`,
-    `CREATE TABLE IF NOT EXISTS sessions (
+  `CREATE TABLE IF NOT EXISTS sessions (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         project_id TEXT,
@@ -168,7 +212,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
     )`,
-    `CREATE TABLE IF NOT EXISTS refresh_tokens (
+  `CREATE TABLE IF NOT EXISTS refresh_tokens (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         token_hash TEXT NOT NULL,
@@ -183,7 +227,7 @@ export const TEST_SCHEMA = [
         last_used_at DATETIME,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS audit_logs (
+  `CREATE TABLE IF NOT EXISTS audit_logs (
         id TEXT PRIMARY KEY,
         timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         user_id TEXT,
@@ -204,7 +248,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
     )`,
-    `CREATE TABLE IF NOT EXISTS notifications (
+  `CREATE TABLE IF NOT EXISTS notifications (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         organization_id TEXT,
@@ -231,7 +275,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
     )`,
-    `CREATE TABLE IF NOT EXISTS teams (
+  `CREATE TABLE IF NOT EXISTS teams (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         name TEXT NOT NULL,
@@ -241,7 +285,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(lead_id) REFERENCES users(id) ON DELETE SET NULL
     )`,
-    `CREATE TABLE IF NOT EXISTS team_members (
+  `CREATE TABLE IF NOT EXISTS team_members (
         team_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
         role TEXT DEFAULT 'member',
@@ -250,7 +294,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(team_id) REFERENCES teams(id) ON DELETE CASCADE,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS invitations (
+  `CREATE TABLE IF NOT EXISTS invitations (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         email TEXT NOT NULL,
@@ -272,12 +316,12 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(invited_by) REFERENCES users(id) ON DELETE SET NULL
     )`,
-    `CREATE TABLE IF NOT EXISTS settings (
+  `CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
         value TEXT,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS revoked_tokens (
+  `CREATE TABLE IF NOT EXISTS revoked_tokens (
         jti TEXT PRIMARY KEY,
         user_id TEXT,
         expires_at DATETIME,
@@ -286,7 +330,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS superadmin_ai_settings (
+  `CREATE TABLE IF NOT EXISTS superadmin_ai_settings (
         id TEXT PRIMARY KEY DEFAULT 'global',
         default_provider TEXT,
         fallback_chain TEXT DEFAULT '[]',
@@ -302,7 +346,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_by TEXT
     )`,
-    `CREATE TABLE IF NOT EXISTS organization_ai_settings (
+  `CREATE TABLE IF NOT EXISTS organization_ai_settings (
         organization_id TEXT PRIMARY KEY,
         policy_level TEXT DEFAULT 'ADVISORY',
         max_policy_level TEXT DEFAULT 'ASSISTED',
@@ -327,7 +371,7 @@ export const TEST_SCHEMA = [
         updated_by TEXT,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS user_ai_settings (
+  `CREATE TABLE IF NOT EXISTS user_ai_settings (
         user_id TEXT PRIMARY KEY,
         response_style TEXT DEFAULT 'balanced',
         writing_tone TEXT DEFAULT 'professional',
@@ -352,7 +396,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_policies (
+  `CREATE TABLE IF NOT EXISTS ai_policies (
         organization_id TEXT PRIMARY KEY,
         policy_level TEXT DEFAULT 'ADVISORY',
         internet_enabled INTEGER DEFAULT 0,
@@ -365,7 +409,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS initiatives (
+  `CREATE TABLE IF NOT EXISTS initiatives (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         project_id TEXT,
@@ -416,7 +460,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS maturity_assessments (
+  `CREATE TABLE IF NOT EXISTS maturity_assessments (
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         project_id TEXT NOT NULL,
@@ -447,7 +491,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS roadmap_waves (
+  `CREATE TABLE IF NOT EXISTS roadmap_waves (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         project_id TEXT NOT NULL,
@@ -459,7 +503,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`,
-    `CREATE TABLE IF NOT EXISTS change_requests (
+  `CREATE TABLE IF NOT EXISTS change_requests (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         project_id TEXT,
@@ -472,7 +516,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`,
-    `CREATE TABLE IF NOT EXISTS governance_policies (
+  `CREATE TABLE IF NOT EXISTS governance_policies (
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         name TEXT NOT NULL,
@@ -482,7 +526,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`,
-    `CREATE TABLE IF NOT EXISTS project_notification_settings (
+  `CREATE TABLE IF NOT EXISTS project_notification_settings (
         id TEXT PRIMARY KEY,
         project_id TEXT UNIQUE NOT NULL,
         task_overdue_enabled INTEGER DEFAULT 1,
@@ -498,7 +542,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS project_users (
+  `CREATE TABLE IF NOT EXISTS project_users (
         project_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
         role TEXT DEFAULT 'member',
@@ -507,7 +551,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS invitation_events (
+  `CREATE TABLE IF NOT EXISTS invitation_events (
         id TEXT PRIMARY KEY,
         invitation_id TEXT NOT NULL,
         event_type TEXT NOT NULL,
@@ -518,7 +562,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(invitation_id) REFERENCES invitations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS billing_margins (
+  `CREATE TABLE IF NOT EXISTS billing_margins (
         id TEXT PRIMARY KEY,
         source_type TEXT NOT NULL UNIQUE,
         display_name TEXT,
@@ -528,7 +572,7 @@ export const TEST_SCHEMA = [
         is_active INTEGER DEFAULT 1,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS token_packages (
+  `CREATE TABLE IF NOT EXISTS token_packages (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT,
@@ -541,7 +585,7 @@ export const TEST_SCHEMA = [
         is_active INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS user_token_balance (
+  `CREATE TABLE IF NOT EXISTS user_token_balance (
         user_id TEXT PRIMARY KEY,
         platform_tokens INTEGER DEFAULT 0,
         platform_tokens_bonus INTEGER DEFAULT 0,
@@ -552,7 +596,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS token_transactions (
+  `CREATE TABLE IF NOT EXISTS token_transactions (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         organization_id TEXT,
@@ -572,7 +616,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS token_ledger (
+  `CREATE TABLE IF NOT EXISTS token_ledger (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         actor_user_id TEXT,
@@ -586,7 +630,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS payment_methods (
+  `CREATE TABLE IF NOT EXISTS payment_methods (
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         type TEXT DEFAULT 'card',
@@ -598,7 +642,7 @@ export const TEST_SCHEMA = [
         created_at TEXT DEFAULT (datetime('now')),
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS subscription_plans (
+  `CREATE TABLE IF NOT EXISTS subscription_plans (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT,
@@ -609,6 +653,10 @@ export const TEST_SCHEMA = [
         stripe_monthly_price_id TEXT,
         stripe_yearly_price_id TEXT,
         tokens_included INTEGER DEFAULT 0,
+        token_limit INTEGER DEFAULT 0,
+        token_overage_rate REAL DEFAULT 0,
+        storage_limit_gb REAL DEFAULT 0,
+        storage_overage_rate REAL DEFAULT 0,
         seats_included INTEGER DEFAULT 0,
         seat_price_monthly REAL DEFAULT 0,
         billing_model TEXT DEFAULT 'subscription',
@@ -618,7 +666,7 @@ export const TEST_SCHEMA = [
         is_active INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS organization_seats (
+  `CREATE TABLE IF NOT EXISTS organization_seats (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         base_seats_included INTEGER DEFAULT 0,
@@ -633,7 +681,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS organization_members (
+  `CREATE TABLE IF NOT EXISTS organization_members (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
@@ -646,9 +694,9 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(invited_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
         UNIQUE(organization_id, user_id)
     )`,
-    `CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_org_members_org ON organization_members(organization_id)`,
-    `CREATE TABLE IF NOT EXISTS organization_billing (
+  `CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_org_members_org ON organization_members(organization_id)`,
+  `CREATE TABLE IF NOT EXISTS organization_billing (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL UNIQUE,
         subscription_plan_id TEXT,
@@ -660,13 +708,15 @@ export const TEST_SCHEMA = [
         payment_method_brand TEXT,
         current_period_start DATETIME,
         current_period_end DATETIME,
+        token_limit INTEGER DEFAULT 0,
+        storage_limit_gb REAL DEFAULT 0,
         status TEXT DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(subscription_plan_id) REFERENCES subscription_plans(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS usage_records (
+  `CREATE TABLE IF NOT EXISTS usage_records (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         user_id TEXT,
@@ -678,7 +728,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
     )`,
-    `CREATE TABLE IF NOT EXISTS usage_summaries (
+  `CREATE TABLE IF NOT EXISTS usage_summaries (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         period_start DATE NOT NULL,
@@ -695,7 +745,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(organization_id, period_start)
     )`,
-    `CREATE TABLE IF NOT EXISTS invoices (
+  `CREATE TABLE IF NOT EXISTS invoices (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         stripe_invoice_id TEXT UNIQUE,
@@ -709,7 +759,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS plan_features (
+  `CREATE TABLE IF NOT EXISTS plan_features (
         id TEXT PRIMARY KEY,
         plan_id TEXT NOT NULL,
         feature_key TEXT NOT NULL,
@@ -717,7 +767,7 @@ export const TEST_SCHEMA = [
         limit_value INTEGER,
         FOREIGN KEY(plan_id) REFERENCES subscription_plans(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS spending_alerts (
+  `CREATE TABLE IF NOT EXISTS spending_alerts (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         type TEXT NOT NULL,
@@ -730,7 +780,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS stripe_events (
+  `CREATE TABLE IF NOT EXISTS stripe_events (
         id TEXT PRIMARY KEY,
         event_id TEXT UNIQUE NOT NULL,
         event_type TEXT NOT NULL,
@@ -742,7 +792,7 @@ export const TEST_SCHEMA = [
         retry_count INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS payment_attempts (
+  `CREATE TABLE IF NOT EXISTS payment_attempts (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         invoice_id TEXT,
@@ -762,7 +812,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY (organization_id) REFERENCES organizations(id),
         FOREIGN KEY (invoice_id) REFERENCES invoices(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS dunning_states (
+  `CREATE TABLE IF NOT EXISTS dunning_states (
         id TEXT PRIMARY KEY,
         organization_id TEXT UNIQUE NOT NULL,
         subscription_id TEXT,
@@ -779,7 +829,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS subscription_state_history (
+  `CREATE TABLE IF NOT EXISTS subscription_state_history (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         subscription_id TEXT NOT NULL,
@@ -791,7 +841,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS checkout_sessions (
+  `CREATE TABLE IF NOT EXISTS checkout_sessions (
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         user_id TEXT,
@@ -811,7 +861,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY (organization_id) REFERENCES organizations(id),
         FOREIGN KEY (user_id) REFERENCES users(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS proration_records (
+  `CREATE TABLE IF NOT EXISTS proration_records (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         subscription_id TEXT NOT NULL,
@@ -829,7 +879,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS billing_usage_events (
+  `CREATE TABLE IF NOT EXISTS billing_usage_events (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         subscription_id TEXT,
@@ -845,7 +895,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS billing_credits (
+  `CREATE TABLE IF NOT EXISTS billing_credits (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         amount INTEGER NOT NULL,
@@ -861,7 +911,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS billing_email_queue (
+  `CREATE TABLE IF NOT EXISTS billing_email_queue (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         email_type TEXT NOT NULL,
@@ -882,7 +932,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS billing_notification_preferences (
+  `CREATE TABLE IF NOT EXISTS billing_notification_preferences (
         id TEXT PRIMARY KEY,
         organization_id TEXT UNIQUE NOT NULL,
         invoice_created INTEGER DEFAULT 1,
@@ -899,7 +949,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS billing_disputes (
+  `CREATE TABLE IF NOT EXISTS billing_disputes (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         stripe_dispute_id TEXT UNIQUE NOT NULL,
@@ -916,7 +966,7 @@ export const TEST_SCHEMA = [
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (organization_id) REFERENCES organizations(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS billing_refunds (
+  `CREATE TABLE IF NOT EXISTS billing_refunds (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         invoice_id TEXT,
@@ -935,7 +985,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY (organization_id) REFERENCES organizations(id),
         FOREIGN KEY (invoice_id) REFERENCES invoices(id)
     )`,
-    `CREATE TABLE IF NOT EXISTS billing_invoices (
+  `CREATE TABLE IF NOT EXISTS billing_invoices (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         amount_due REAL,
@@ -945,7 +995,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS stage_gates (
+  `CREATE TABLE IF NOT EXISTS stage_gates (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL,
         gate_type TEXT NOT NULL,
@@ -957,7 +1007,7 @@ export const TEST_SCHEMA = [
         notes TEXT,
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS decisions (
+  `CREATE TABLE IF NOT EXISTS decisions (
         id TEXT PRIMARY KEY,
         organization_id TEXT,
         project_id TEXT,
@@ -977,7 +1027,7 @@ export const TEST_SCHEMA = [
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS kpi_results (
+  `CREATE TABLE IF NOT EXISTS kpi_results (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL,
         kpi_id TEXT,
@@ -985,7 +1035,7 @@ export const TEST_SCHEMA = [
         measured_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
     )`,
-    `CREATE TABLE IF NOT EXISTS llm_providers (
+  `CREATE TABLE IF NOT EXISTS llm_providers (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         provider TEXT NOT NULL,
@@ -1006,10 +1056,10 @@ export const TEST_SCHEMA = [
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,
-    `INSERT OR IGNORE INTO superadmin_ai_settings(id) VALUES('global')`,
-    `INSERT OR IGNORE INTO organizations(id, name, plan, status) VALUES('org-dbr77-system', 'DBR77 System', 'enterprise', 'active')`,
-    `REPLACE INTO users(id, organization_id, email, password, first_name, last_name, role, status) VALUES('admin-001', 'org-dbr77-system', 'admin@dbr77.com', '$2b$08$fwxcIJu6Rb9YIHYuWhkd5uKPsjSr/26rEfb20ldkMlS08WpfswmYa', 'Super', 'Admin', 'SUPERADMIN', 'active')`,
-    `CREATE TABLE IF NOT EXISTS organization_limits (
+  `INSERT OR IGNORE INTO superadmin_ai_settings(id) VALUES('global')`,
+  `INSERT OR IGNORE INTO organizations(id, name, plan, status) VALUES('org-dbr77-system', 'DBR77 System', 'enterprise', 'active')`,
+  `REPLACE INTO users(id, organization_id, email, password, first_name, last_name, role, status) VALUES('admin-001', 'org-dbr77-system', 'admin@dbr77.com', '$2b$08$fwxcIJu6Rb9YIHYuWhkd5uKPsjSr/26rEfb20ldkMlS08WpfswmYa', 'Super', 'Admin', 'SUPERADMIN', 'active')`,
+  `CREATE TABLE IF NOT EXISTS organization_limits (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL UNIQUE,
         max_projects INTEGER DEFAULT 3,
@@ -1022,7 +1072,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_project_memory (
+  `CREATE TABLE IF NOT EXISTS ai_project_memory (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL,
         memory_type TEXT NOT NULL,
@@ -1030,7 +1080,7 @@ export const TEST_SCHEMA = [
         metadata TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_organization_memory (
+  `CREATE TABLE IF NOT EXISTS ai_organization_memory (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         pmo_maturity TEXT DEFAULT 'BASIC',
@@ -1039,7 +1089,7 @@ export const TEST_SCHEMA = [
         industry_focus TEXT,
         last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS usage_counters (
+  `CREATE TABLE IF NOT EXISTS usage_counters (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         counter_date DATE NOT NULL,
@@ -1050,7 +1100,7 @@ export const TEST_SCHEMA = [
         storage_used_mb REAL DEFAULT 0,
         UNIQUE(organization_id, counter_date)
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_partial_responses (
+  `CREATE TABLE IF NOT EXISTS ai_partial_responses (
         id TEXT PRIMARY KEY,
         session_id TEXT UNIQUE NOT NULL,
         user_id TEXT NOT NULL,
@@ -1058,7 +1108,7 @@ export const TEST_SCHEMA = [
         content TEXT NOT NULL,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_audit_logs (
+  `CREATE TABLE IF NOT EXISTS ai_audit_logs (
         id TEXT PRIMARY KEY,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         user_id TEXT,
@@ -1093,7 +1143,7 @@ export const TEST_SCHEMA = [
         cost_usd REAL DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_actions (
+  `CREATE TABLE IF NOT EXISTS ai_actions (
         id TEXT PRIMARY KEY,
         user_id TEXT,
         organization_id TEXT,
@@ -1110,7 +1160,7 @@ export const TEST_SCHEMA = [
         executed_at DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_user_preferences (
+  `CREATE TABLE IF NOT EXISTS ai_user_preferences (
         user_id TEXT PRIMARY KEY,
         preferred_tone TEXT DEFAULT 'EXPERT',
         education_mode INTEGER DEFAULT 0,
@@ -1121,7 +1171,7 @@ export const TEST_SCHEMA = [
         custom_instructions TEXT,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_system_prompts (
+  `CREATE TABLE IF NOT EXISTS ai_system_prompts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         key TEXT UNIQUE NOT NULL,
         description TEXT,
@@ -1132,7 +1182,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_knowledge_embeddings (
+  `CREATE TABLE IF NOT EXISTS ai_knowledge_embeddings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         document_id TEXT,
         chunk_index INTEGER DEFAULT 0,
@@ -1142,7 +1192,7 @@ export const TEST_SCHEMA = [
         source_type TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_feature_control (
+  `CREATE TABLE IF NOT EXISTS ai_feature_control (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         feature_key TEXT UNIQUE NOT NULL,
         is_enabled INTEGER DEFAULT 1,
@@ -1154,7 +1204,7 @@ export const TEST_SCHEMA = [
         disable_reason TEXT,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_conversations (
+  `CREATE TABLE IF NOT EXISTS ai_conversations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         conversation_id TEXT UNIQUE NOT NULL,
         user_id TEXT NOT NULL,
@@ -1166,7 +1216,7 @@ export const TEST_SCHEMA = [
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    `CREATE TABLE IF NOT EXISTS ai_cost_tracking (
+  `CREATE TABLE IF NOT EXISTS ai_cost_tracking (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         organization_id TEXT NOT NULL,
         month TEXT NOT NULL,
@@ -1176,7 +1226,7 @@ export const TEST_SCHEMA = [
         last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(organization_id, month)
     )`,
-    `CREATE TABLE IF NOT EXISTS access_requests(
+  `CREATE TABLE IF NOT EXISTS access_requests(
         id TEXT PRIMARY KEY,
         email TEXT NOT NULL,
         first_name TEXT,
@@ -1194,5 +1244,509 @@ export const TEST_SCHEMA = [
         rejection_reason TEXT,
         FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY(reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+    )`,
+  `CREATE TABLE IF NOT EXISTS circuit_breaker_state (
+        id TEXT PRIMARY KEY,
+        service TEXT NOT NULL,
+        state TEXT DEFAULT 'CLOSED',
+        failures INTEGER DEFAULT 0,
+        last_failure DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS admin_audit_logs (
+        id TEXT PRIMARY KEY,
+        admin_id TEXT,
+        action_type TEXT NOT NULL,
+        metadata_json TEXT,
+        risk_score INTEGER DEFAULT 0,
+        risk_level TEXT DEFAULT 'low',
+        status TEXT DEFAULT 'unresolved',
+        resolved_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS admin_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        mfa_verified INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        ip_address TEXT,
+        user_agent TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        expires_at DATETIME,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS permissions (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        severity TEXT DEFAULT 'low',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS admin_approval_workflows (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        resource_type TEXT NOT NULL,
+        approvers TEXT,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS admin_approval_requests (
+        id TEXT PRIMARY KEY,
+        workflow_id TEXT NOT NULL,
+        requester TEXT NOT NULL,
+        resource TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(workflow_id) REFERENCES admin_approval_workflows(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS admin_dashboards (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        config TEXT,
+        created_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS admin_saved_reports (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        query TEXT,
+        created_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS admin_report_executions (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        executed_by TEXT,
+        status TEXT DEFAULT 'completed',
+        result_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS system_feedback (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        type TEXT NOT NULL,
+        message TEXT NOT NULL,
+        rating INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+    )`,
+  `CREATE TABLE IF NOT EXISTS custom_statuses (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        color TEXT DEFAULT '#6B7280',
+        sort_order INTEGER DEFAULT 0,
+        is_default INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS task_comments (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS activity_logs (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        user_id TEXT,
+        action TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id TEXT,
+        entity_name TEXT,
+        old_value TEXT,
+        new_value TEXT,
+        ip_address TEXT,
+        user_agent TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+    )`,
+  `CREATE TABLE IF NOT EXISTS custom_prompts (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        context TEXT NOT NULL,
+        template TEXT NOT NULL,
+        variables TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+        FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+    )`,
+  `CREATE TABLE IF NOT EXISTS webhooks (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        url TEXT NOT NULL,
+        events TEXT NOT NULL,
+        secret TEXT NOT NULL,
+        is_active INTEGER DEFAULT 1,
+        created_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+        FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+    )`,
+  `CREATE TABLE IF NOT EXISTS ai_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        action TEXT,
+        model TEXT,
+        input_tokens INTEGER,
+        output_tokens INTEGER,
+        latency_ms INTEGER,
+        topic TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS ai_ideas (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT DEFAULT 'new',
+        priority TEXT DEFAULT 'medium',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS ai_observations (
+        id TEXT PRIMARY KEY,
+        content TEXT NOT NULL,
+        category TEXT,
+        confidence_score REAL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS megatrends (
+        id TEXT PRIMARY KEY,
+        industry TEXT NOT NULL,
+        type TEXT NOT NULL,
+        label TEXT NOT NULL,
+        description TEXT,
+        base_impact_score REAL,
+        initial_ring TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS custom_trends (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        company_id TEXT,
+        industry TEXT,
+        type TEXT,
+        label TEXT,
+        description TEXT,
+        ring TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS maturity_scores (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        category TEXT NOT NULL,
+        score REAL DEFAULT 0,
+        measured_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS client_context (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        context_key TEXT NOT NULL,
+        context_value TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS knowledge_docs (
+        id TEXT PRIMARY KEY,
+        filename TEXT NOT NULL,
+        filepath TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS knowledge_chunks (
+        id TEXT PRIMARY KEY,
+        doc_id TEXT NOT NULL,
+        content TEXT NOT NULL,
+        chunk_index INTEGER DEFAULT 0,
+        embedding TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(doc_id) REFERENCES knowledge_docs(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS webhook_deliveries (
+        id TEXT PRIMARY KEY,
+        webhook_id TEXT NOT NULL,
+        event TEXT NOT NULL,
+        status TEXT DEFAULT 'sent',
+        response_code INTEGER,
+        response_body TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS integrations (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        config TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS integration_sync_logs (
+        id TEXT PRIMARY KEY,
+        integration_id TEXT NOT NULL,
+        status TEXT DEFAULT 'success',
+        message TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(integration_id) REFERENCES integrations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS system_metrics (
+        id TEXT PRIMARY KEY,
+        metric_name TEXT NOT NULL,
+        metric_value REAL NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS security_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        event_type TEXT NOT NULL,
+        severity TEXT DEFAULT 'low',
+        ip_address TEXT,
+        metadata TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+    )`,
+  `CREATE TABLE IF NOT EXISTS security_incidents (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        description TEXT,
+        severity TEXT,
+        type TEXT,
+        status TEXT DEFAULT 'open',
+        metadata_json TEXT,
+        resolved_by TEXT,
+        resolution_notes TEXT,
+        resolved_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(resolved_by) REFERENCES users(id)
+    )`,
+  `CREATE TABLE IF NOT EXISTS compliance_records (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        status TEXT DEFAULT 'compliant',
+        evidence_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS backup_records (
+        id TEXT PRIMARY KEY,
+        filename TEXT NOT NULL,
+        size INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'completed',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS access_codes (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        code TEXT NOT NULL UNIQUE,
+        role TEXT DEFAULT 'USER',
+        max_uses INTEGER DEFAULT 1,
+        current_uses INTEGER DEFAULT 0,
+        expires_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS access_code_usage (
+        id TEXT PRIMARY KEY,
+        code_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(code_id) REFERENCES access_codes(id) ON DELETE CASCADE,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS reports (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        type TEXT,
+        config TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS report_blocks (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        content TEXT,
+        sort_order INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS report_snapshots (
+        id TEXT PRIMARY KEY,
+        report_id TEXT NOT NULL,
+        data TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS multi_framework_assessments (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        frameworks TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS rapid_lean_assessments (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS help_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        event_type TEXT NOT NULL,
+        context TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+    )`,
+  `CREATE TABLE IF NOT EXISTS organization_events (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        metadata TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS task_dependencies (
+        id TEXT PRIMARY KEY,
+        from_task_id TEXT NOT NULL,
+        to_task_id TEXT NOT NULL,
+        type TEXT DEFAULT 'hard',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(from_task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+        FOREIGN KEY(to_task_id) REFERENCES tasks(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS ai_user_memory (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        memory_type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS ai_experiments (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        status TEXT DEFAULT 'draft',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS ai_experiment_variants (
+        id TEXT PRIMARY KEY,
+        experiment_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        config TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(experiment_id) REFERENCES ai_experiments(id) ON DELETE CASCADE
+    )`,
+  `CREATE TABLE IF NOT EXISTS system_config (
+        config_key TEXT PRIMARY KEY,
+        config_value TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS ai_drafts (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        user_id TEXT NOT NULL,
+        draft_type TEXT NOT NULL,
+        target_entity_type TEXT,
+        target_entity_id TEXT,
+        target_field TEXT,
+        original_content TEXT,
+        suggested_content TEXT NOT NULL,
+        diff_data TEXT,
+        confidence_score REAL DEFAULT 0.8,
+        reasoning TEXT,
+        status TEXT DEFAULT 'PENDING',
+        reviewed_by TEXT,
+        reviewed_at DATETIME,
+        review_notes TEXT,
+        model_used TEXT,
+        prompt_id TEXT,
+        tokens_used INTEGER,
+        expires_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (organization_id) REFERENCES organizations(id),
+        FOREIGN KEY (project_id) REFERENCES projects(id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (reviewed_by) REFERENCES users(id)
+    )`,
+  `CREATE TABLE IF NOT EXISTS ai_feedback (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        user_id TEXT,
+        interaction_id TEXT,
+        draft_id TEXT,
+        feedback_type TEXT,
+        rating INTEGER,
+        comment TEXT,
+        capability TEXT,
+        model_used TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS user_ai_profiles (
+        user_id TEXT PRIMARY KEY,
+        response_mode_preference TEXT DEFAULT 'standard',
+        quick_length_preference TEXT DEFAULT 'short',
+        standard_length_preference TEXT DEFAULT 'medium',
+        deep_study_length_preference TEXT DEFAULT 'long',
+        auto_detect_intent INTEGER DEFAULT 1,
+        prefer_bullet_points INTEGER DEFAULT 0,
+        prefer_tables INTEGER DEFAULT 0,
+        prefer_action_items INTEGER DEFAULT 0,
+        include_examples INTEGER DEFAULT 0,
+        satisfaction_score REAL DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS system_onboarding (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        organization_id TEXT,
+        context_data TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+  `CREATE TABLE IF NOT EXISTS user_api_keys (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        organization_id TEXT,
+        display_name TEXT,
+        name TEXT,
+        key_prefix TEXT,
+        key_hash TEXT,
+        provider TEXT DEFAULT 'custom',
+        scopes TEXT DEFAULT '[]',
+        permissions TEXT DEFAULT '[]',
+        is_active INTEGER DEFAULT 1,
+        usage_count INTEGER DEFAULT 0,
+        quota_used INTEGER DEFAULT 0,
+        rate_limit INTEGER DEFAULT 1000,
+        rate_limit_per_minute INTEGER,
+        rate_limit_per_day INTEGER,
+        last_used_at DATETIME,
+        expires_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
 ];

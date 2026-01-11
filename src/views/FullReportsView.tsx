@@ -11,9 +11,9 @@ import { SplitLayout } from '../components/layout/SplitLayout';
 import { ManagementReportsView } from '../components/Reports/Management/ManagementReportsView';
 
 export const FullReportsView: React.FC = () => {
-    return (
-        <SplitLayout title="Management Reports">
-            <ManagementReportsView />
-        </SplitLayout>
-    );
+  return (
+    <SplitLayout title="Management Reports">
+      <ManagementReportsView />
+    </SplitLayout>
+  );
 };

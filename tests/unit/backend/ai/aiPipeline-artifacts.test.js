@@ -4,7 +4,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { extractArtifacts, enhanceResponse } from '../../../../server/src/services/ai/AIPipeline.js';
+import {
+  extractArtifacts,
+  enhanceResponse,
+} from '../../../../server/src/services/ai/AIPipeline.js';
 
 describe('aiPipeline - Artifacts', () => {
   describe('extractArtifacts', () => {
@@ -16,9 +19,9 @@ describe('aiPipeline - Artifacts', () => {
         Content here
         \`\`\`
       `;
-      
+
       const { cleanContent, artifacts } = extractArtifacts(content);
-      
+
       expect(artifacts).toHaveLength(1);
       expect(artifacts[0].type).toBe('markdown');
       expect(artifacts[0].title).toBe('My Document');
@@ -34,9 +37,9 @@ describe('aiPipeline - Artifacts', () => {
         }
         \`\`\`
       `;
-      
+
       const { artifacts } = extractArtifacts(content);
-      
+
       expect(artifacts).toHaveLength(1);
       expect(artifacts[0].type).toBe('code');
       expect(artifacts[0].language).toBe('typescript');
@@ -57,9 +60,9 @@ describe('aiPipeline - Artifacts', () => {
         }
         \`\`\`
       `;
-      
+
       const { artifacts } = extractArtifacts(content);
-      
+
       expect(artifacts).toHaveLength(1);
       expect(artifacts[0].type).toBe('pmo-document');
       expect(artifacts[0].title).toBe('RACI Matrix');
@@ -76,16 +79,16 @@ describe('aiPipeline - Artifacts', () => {
         console.log('test');
         \`\`\`
       `;
-      
+
       const { artifacts } = extractArtifacts(content);
-      
+
       expect(artifacts).toHaveLength(2);
       // Check that both types are present (order may vary)
-      const types = artifacts.map(a => a.type);
+      const types = artifacts.map((a) => a.type);
       expect(types).toContain('markdown');
       expect(types).toContain('code');
       // Check that code artifact has language
-      const codeArtifact = artifacts.find(a => a.type === 'code');
+      const codeArtifact = artifacts.find((a) => a.type === 'code');
       expect(codeArtifact?.language).toBe('javascript');
     });
 
@@ -101,16 +104,16 @@ describe('aiPipeline - Artifacts', () => {
         }
         \`\`\`
       `;
-      
+
       const { artifacts } = extractArtifacts(content);
-      
+
       // Should extract substantial code blocks (>100 chars)
       expect(artifacts.length).toBeGreaterThan(0);
     });
 
     it('handles empty response', () => {
       const { artifacts, cleanContent } = extractArtifacts('');
-      
+
       expect(artifacts).toHaveLength(0);
       expect(cleanContent).toBe('');
     });
@@ -121,9 +124,9 @@ describe('aiPipeline - Artifacts', () => {
         { invalid json }
         \`\`\`
       `;
-      
+
       const { artifacts } = extractArtifacts(content);
-      
+
       // Should skip invalid JSON
       expect(artifacts.length).toBeLessThanOrEqual(0);
     });
@@ -140,9 +143,9 @@ describe('aiPipeline - Artifacts', () => {
         Content
         \`\`\`
       `;
-      
+
       const { cleanContent, artifacts } = extractArtifacts(content);
-      
+
       expect(artifacts).toHaveLength(1);
       // Regular code blocks should remain in content
       expect(cleanContent).toContain('Regular code block');
@@ -156,11 +159,11 @@ describe('aiPipeline - Artifacts', () => {
           \`\`\`artifact:markdown:Test
           # Content
           \`\`\`
-        `
+        `,
       };
-      
+
       const enhanced = enhanceResponse(response);
-      
+
       expect(enhanced.artifacts).toBeDefined();
       expect(enhanced.artifacts.length).toBeGreaterThan(0);
       expect(enhanced.artifacts[0].type).toBe('markdown');
@@ -171,15 +174,14 @@ describe('aiPipeline - Artifacts', () => {
         content: 'Test',
         usage: { tokens: 100 },
         model: 'gpt-4',
-        metadata: { test: true }
+        metadata: { test: true },
       };
-      
+
       const enhanced = enhanceResponse(response);
-      
+
       expect(enhanced.usage).toEqual(response.usage);
       expect(enhanced.model).toBe(response.model);
       expect(enhanced.metadata).toEqual(response.metadata);
     });
   });
 });
-

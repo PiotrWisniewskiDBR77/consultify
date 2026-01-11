@@ -33,13 +33,3 @@ test.describe('Visual Regression', () => {
     });
   });
 });
-
-
-
-
-
-
-
-
-
-

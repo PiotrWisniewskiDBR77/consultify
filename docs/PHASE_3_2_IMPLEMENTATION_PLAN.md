@@ -29,27 +29,28 @@
 # Kategorie:
 # - CRITICAL: Używane w >10 miejscach, krytyczne dla działania systemu
 # - HIGH: Używane w 5-10 miejscach, ważne funkcjonalności
-# - MEDIUM: Używane w 2-4 miejscach, standardowe funkcjonalności  
+# - MEDIUM: Używane w 2-4 miejscach, standardowe funkcjonalności
 # - LOW: Używane w 1 miejscu, rzadko używane
 # - UNUSED: Nie używane (można usunąć)
 ```
 
 **Krok 2:** Analiza złożoności migracji:
+
 - **SIMPLE:** <200 linii JS, prosta logika
 - **MEDIUM:** 200-500 linii JS, średnia złożoność
 - **COMPLEX:** >500 linii JS, złożona logika
 
 **Krok 3:** Utworzenie macierzy priorytetów:
 
-| Priorytet | Kryteria | Liczba | Strategia |
-|-----------|----------|--------|-----------|
-| **P0** | CRITICAL + SIMPLE | ~20-30 | Migracja natychmiastowa |
-| **P1** | CRITICAL + MEDIUM | ~15-25 | Migracja w pierwszym tygodniu |
-| **P2** | HIGH + SIMPLE | ~40-50 | Batch 1 (Tydzień 2) |
-| **P3** | HIGH + MEDIUM | ~30-40 | Batch 2 (Tydzień 3) |
-| **P4** | MEDIUM + SIMPLE | ~50-60 | Batch 3 (Tydzień 4) |
-| **P5** | MEDIUM + COMPLEX | ~20-30 | Batch 4 (Tydzień 5) |
-| **P6** | LOW + ALL | ~30-40 | Batch 5 (Tydzień 6) |
+| Priorytet | Kryteria          | Liczba | Strategia                     |
+| --------- | ----------------- | ------ | ----------------------------- |
+| **P0**    | CRITICAL + SIMPLE | ~20-30 | Migracja natychmiastowa       |
+| **P1**    | CRITICAL + MEDIUM | ~15-25 | Migracja w pierwszym tygodniu |
+| **P2**    | HIGH + SIMPLE     | ~40-50 | Batch 1 (Tydzień 2)           |
+| **P3**    | HIGH + MEDIUM     | ~30-40 | Batch 2 (Tydzień 3)           |
+| **P4**    | MEDIUM + SIMPLE   | ~50-60 | Batch 3 (Tydzień 4)           |
+| **P5**    | MEDIUM + COMPLEX  | ~20-30 | Batch 4 (Tydzień 5)           |
+| **P6**    | LOW + ALL         | ~30-40 | Batch 5 (Tydzień 6)           |
 
 ---
 
@@ -58,6 +59,7 @@
 #### 2.1. Struktura Batcha
 
 Każdy batch zawiera:
+
 - **10-15 serwisów** (zarządzalna liczba)
 - **Podobna złożoność** (ułatwia pracę)
 - **Podobna funkcjonalność** (ułatwia testowanie)
@@ -179,18 +181,21 @@ export default [service];
 #### 4.1. Skrypty Wspomagające
 
 **scripts/categorize-wrappers.cjs**
+
 - Analizuje użycie każdego wrapper service
 - Kategoryzuje według częstotliwości użycia
 - Szacuje złożoność migracji
 - Generuje macierz priorytetów
 
 **scripts/verify-migration.cjs**
+
 - Sprawdza czy wrapper został usunięty
 - Weryfikuje brak createRequire() w pliku
 - Sprawdza kompilację TypeScript
 - Generuje raport weryfikacji
 
 **scripts/batch-status.cjs**
+
 - Pokazuje status każdego batcha
 - Lista ukończonych serwisów
 - Lista pozostałych serwisów
@@ -199,6 +204,7 @@ export default [service];
 #### 4.2. CI/CD Checks
 
 Dodanie automatycznych checków:
+
 - TypeScript compilation check
 - Linter check (no createRequire, no require)
 - Import verification (czy wszystkie importy działają)
@@ -208,28 +214,34 @@ Dodanie automatycznych checków:
 ### 5. HARMONOGRAM REALIZACJI
 
 #### Tydzień 1: Analiza i Przygotowanie
+
 - **Dzień 1-2:** Utworzenie skryptów analitycznych
 - **Dzień 3-4:** Kategoryzacja wszystkich wrapper services
 - **Dzień 5:** Utworzenie macierzy priorytetów i planu batchów
 
 #### Tydzień 2: Batch 1 - P0 + P1 (Critical Services)
+
 - **Dzień 1-2:** Migracja P0 services (CRITICAL + SIMPLE)
 - **Dzień 3-4:** Migracja P1 services (CRITICAL + MEDIUM)
 - **Dzień 5:** Weryfikacja i testowanie
 
 #### Tydzień 3: Batch 2 - P2 (High Priority Simple)
+
 - **Dzień 1-3:** Migracja P2 services (HIGH + SIMPLE)
 - **Dzień 4-5:** Weryfikacja i testowanie
 
 #### Tydzień 4: Batch 3 - P3 (High Priority Medium)
+
 - **Dzień 1-3:** Migracja P3 services (HIGH + MEDIUM)
 - **Dzień 4-5:** Weryfikacja i testowanie
 
 #### Tydzień 5: Batch 4 - P4 + P5 (Medium Priority)
+
 - **Dzień 1-3:** Migracja P4 services (MEDIUM + SIMPLE)
 - **Dzień 4-5:** Migracja P5 services (MEDIUM + COMPLEX)
 
 #### Tydzień 6: Batch 5 - P6 (Low Priority) + Finalizacja
+
 - **Dzień 1-3:** Migracja P6 services (LOW + ALL)
 - **Dzień 4:** Finalna weryfikacja wszystkich serwisów
 - **Dzień 5:** Dokumentacja i raport końcowy
@@ -256,6 +268,7 @@ Dodanie automatycznych checków:
 #### 6.3. Tracking
 
 Codzienne aktualizacje:
+
 - Liczba zmigrowanych serwisów
 - Liczba pozostałych wrapperów
 - Błędy napotkane
@@ -266,26 +279,34 @@ Codzienne aktualizacje:
 ### 7. RYZYKA I MITIGACJE
 
 #### Ryzyko 1: Regression w funkcjonalności
+
 **Mitigacja:**
+
 - Testowanie każdego zmigrowanego serwisu
 - Code review przed commit
 - Incremental commits (pojedyncze serwisy)
 - Rollback plan dla każdego batcha
 
 #### Ryzyko 2: Złożone zależności między serwisami
+
 **Mitigacja:**
+
 - Analiza zależności przed migracją
 - Migracja w odpowiedniej kolejności (zależności najpierw)
 - Testowanie integracji po każdej migracji
 
 #### Ryzyko 3: Brak czasu na migrację wszystkich serwisów
+
 **Mitigacja:**
+
 - Priorytetyzacja (critical services najpierw)
 - Batch processing (zarządzalne części)
 - Możliwość kontynuacji w następnej fazie
 
 #### Ryzyko 4: Błędy w migracji callback → async/await
+
 **Mitigacja:**
+
 - Użycie sprawdzonych wzorców migracji
 - Testowanie każdej zmigrowanej funkcji
 - Code review z naciskiem na async patterns
@@ -344,24 +365,28 @@ Part of Phase 3.2 migration
 Po zakończeniu wszystkich batchów:
 
 1. **Sprawdzenie kompletności:**
+
    ```bash
    grep -r "createRequire" server/src/services --include="*.ts" | wc -l
    # Powinno zwrócić: 0
    ```
 
 2. **Sprawdzenie require():**
+
    ```bash
    grep -r "require(" server/src/services --include="*.ts" | grep -v "//" | wc -l
    # Powinno zwrócić: 0 (lub tylko komentarze)
    ```
 
 3. **Build verification:**
+
    ```bash
    npm run build
    # Powinno przejść bez błędów
    ```
 
 4. **Test verification:**
+
    ```bash
    npm test
    # Wszystkie testy powinny przejść
@@ -383,6 +408,7 @@ Po zakończeniu wszystkich batchów:
 **Sukces:** 0 createRequire(), 0 require(), 100% ES modules, wszystkie testy przechodzą
 
 **Następne kroki:**
+
 1. Utworzenie skryptów analitycznych (Tydzień 1)
 2. Rozpoczęcie Batch 1 - Critical Services (Tydzień 2)
 3. Kontynuacja batch processing (Tydzień 3-6)
@@ -390,20 +416,5 @@ Po zakończeniu wszystkich batchów:
 
 ---
 
-*Plan utworzony: 2025-01-XX*  
-*Ostatnia aktualizacja: 2025-01-XX*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+_Plan utworzony: 2025-01-XX_  
+_Ostatnia aktualizacja: 2025-01-XX_

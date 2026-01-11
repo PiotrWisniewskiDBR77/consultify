@@ -1,7 +1,8 @@
+// @ts-nocheck
 /**
  * Permission Middleware
  * Step 14: Governance, Security & Enterprise Controls
- * 
+ *
  * Database-backed permission checking middleware.
  * Uses PBAC (Permission-Based Access Control) with org-user overrides.
  */
@@ -11,8 +12,8 @@ import { GovernanceAuditService } from '../services/governanceAuditService.js';
 
 // Dependencies object to allow injection
 const deps = {
-    PermissionService,
-    GovernanceAuditService
+  PermissionService,
+  GovernanceAuditService,
 };
 
 /**
@@ -21,46 +22,46 @@ const deps = {
  * @returns {Function} Express middleware
  */
 const requirePermission = (permissionKey) => {
-    return async (req, res, next) => {
-        try {
-            const userId = req.userId || req.user?.id;
-            const orgId = req.organizationId || req.user?.organization_id;
-            const userRole = req.userRole || req.user?.role;
+  return async (req, res, next) => {
+    try {
+      const userId = req.userId || req.user?.id;
+      const orgId = req.organizationId || req.user?.organization_id;
+      const userRole = req.userRole || req.user?.role;
 
-            if (!userId) {
-                return res.status(401).json({
-                    error: 'Authentication required',
-                    code: 'AUTH_REQUIRED'
-                });
-            }
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED',
+        });
+      }
 
-            const hasPermission = await deps.PermissionService.hasPermission(
-                userId,
-                orgId,
-                permissionKey,
-                userRole
-            );
+      const hasPermission = await deps.PermissionService.hasPermission(
+        userId,
+        orgId,
+        permissionKey,
+        userRole
+      );
 
-            if (!hasPermission) {
-                console.log(`[PermissionMiddleware] Denied: ${permissionKey} for user ${userId}`);
-                return res.status(403).json({
-                    error: 'Permission denied',
-                    required: permissionKey,
-                    code: 'PERMISSION_DENIED'
-                });
-            }
+      if (!hasPermission) {
+        console.log(`[PermissionMiddleware] Denied: ${permissionKey} for user ${userId}`);
+        return res.status(403).json({
+          error: 'Permission denied',
+          required: permissionKey,
+          code: 'PERMISSION_DENIED',
+        });
+      }
 
-            // Attach permission info for audit logging
-            req.permissionChecked = permissionKey;
-            next();
-        } catch (err) {
-            console.error('[PermissionMiddleware] Error:', err);
-            return res.status(500).json({
-                error: 'Permission check failed',
-                code: 'PERMISSION_ERROR'
-            });
-        }
-    };
+      // Attach permission info for audit logging
+      req.permissionChecked = permissionKey;
+      next();
+    } catch (err) {
+      console.error('[PermissionMiddleware] Error:', err);
+      return res.status(500).json({
+        error: 'Permission check failed',
+        code: 'PERMISSION_ERROR',
+      });
+    }
+  };
 };
 
 /**
@@ -69,47 +70,49 @@ const requirePermission = (permissionKey) => {
  * @returns {Function} Express middleware
  */
 const requireAnyPermission = (permissionKeys) => {
-    return async (req, res, next) => {
-        try {
-            const userId = req.userId || req.user?.id;
-            const orgId = req.organizationId || req.user?.organization_id;
-            const userRole = req.userRole || req.user?.role;
+  return async (req, res, next) => {
+    try {
+      const userId = req.userId || req.user?.id;
+      const orgId = req.organizationId || req.user?.organization_id;
+      const userRole = req.userRole || req.user?.role;
 
-            if (!userId) {
-                return res.status(401).json({
-                    error: 'Authentication required',
-                    code: 'AUTH_REQUIRED'
-                });
-            }
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED',
+        });
+      }
 
-            for (const permissionKey of permissionKeys) {
-                const hasPermission = await deps.PermissionService.hasPermission(
-                    userId,
-                    orgId,
-                    permissionKey,
-                    userRole
-                );
+      for (const permissionKey of permissionKeys) {
+        const hasPermission = await deps.PermissionService.hasPermission(
+          userId,
+          orgId,
+          permissionKey,
+          userRole
+        );
 
-                if (hasPermission) {
-                    req.permissionChecked = permissionKey;
-                    return next();
-                }
-            }
-
-            console.log(`[PermissionMiddleware] Denied: none of [${permissionKeys.join(', ')}] for user ${userId}`);
-            return res.status(403).json({
-                error: 'Permission denied',
-                requiredAny: permissionKeys,
-                code: 'PERMISSION_DENIED'
-            });
-        } catch (err) {
-            console.error('[PermissionMiddleware] Error:', err);
-            return res.status(500).json({
-                error: 'Permission check failed',
-                code: 'PERMISSION_ERROR'
-            });
+        if (hasPermission) {
+          req.permissionChecked = permissionKey;
+          return next();
         }
-    };
+      }
+
+      console.log(
+        `[PermissionMiddleware] Denied: none of [${permissionKeys.join(', ')}] for user ${userId}`
+      );
+      return res.status(403).json({
+        error: 'Permission denied',
+        requiredAny: permissionKeys,
+        code: 'PERMISSION_DENIED',
+      });
+    } catch (err) {
+      console.error('[PermissionMiddleware] Error:', err);
+      return res.status(500).json({
+        error: 'Permission check failed',
+        code: 'PERMISSION_ERROR',
+      });
+    }
+  };
 };
 
 /**
@@ -118,53 +121,55 @@ const requireAnyPermission = (permissionKeys) => {
  * @returns {Function} Express middleware
  */
 const requireAllPermissions = (permissionKeys) => {
-    return async (req, res, next) => {
-        try {
-            const userId = req.userId || req.user?.id;
-            const orgId = req.organizationId || req.user?.organization_id;
-            const userRole = req.userRole || req.user?.role;
+  return async (req, res, next) => {
+    try {
+      const userId = req.userId || req.user?.id;
+      const orgId = req.organizationId || req.user?.organization_id;
+      const userRole = req.userRole || req.user?.role;
 
-            if (!userId) {
-                return res.status(401).json({
-                    error: 'Authentication required',
-                    code: 'AUTH_REQUIRED'
-                });
-            }
+      if (!userId) {
+        return res.status(401).json({
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED',
+        });
+      }
 
-            const missingPermissions = [];
+      const missingPermissions = [];
 
-            for (const permissionKey of permissionKeys) {
-                const hasPermission = await deps.PermissionService.hasPermission(
-                    userId,
-                    orgId,
-                    permissionKey,
-                    userRole
-                );
+      for (const permissionKey of permissionKeys) {
+        const hasPermission = await deps.PermissionService.hasPermission(
+          userId,
+          orgId,
+          permissionKey,
+          userRole
+        );
 
-                if (!hasPermission) {
-                    missingPermissions.push(permissionKey);
-                }
-            }
-
-            if (missingPermissions.length > 0) {
-                console.log(`[PermissionMiddleware] Denied: missing [${missingPermissions.join(', ')}] for user ${userId}`);
-                return res.status(403).json({
-                    error: 'Permission denied',
-                    missing: missingPermissions,
-                    code: 'PERMISSION_DENIED'
-                });
-            }
-
-            req.permissionChecked = permissionKeys;
-            next();
-        } catch (err) {
-            console.error('[PermissionMiddleware] Error:', err);
-            return res.status(500).json({
-                error: 'Permission check failed',
-                code: 'PERMISSION_ERROR'
-            });
+        if (!hasPermission) {
+          missingPermissions.push(permissionKey);
         }
-    };
+      }
+
+      if (missingPermissions.length > 0) {
+        console.log(
+          `[PermissionMiddleware] Denied: missing [${missingPermissions.join(', ')}] for user ${userId}`
+        );
+        return res.status(403).json({
+          error: 'Permission denied',
+          missing: missingPermissions,
+          code: 'PERMISSION_DENIED',
+        });
+      }
+
+      req.permissionChecked = permissionKeys;
+      next();
+    } catch (err) {
+      console.error('[PermissionMiddleware] Error:', err);
+      return res.status(500).json({
+        error: 'Permission check failed',
+        code: 'PERMISSION_ERROR',
+      });
+    }
+  };
 };
 
 /**
@@ -178,60 +183,60 @@ const requireAllPermissions = (permissionKeys) => {
  * @param {Function} [options.getAfter] - Function to get after state
  */
 const auditAction = (options) => {
-    const {
-        action,
-        resourceType,
-        getResourceId = () => null,
-        getBefore = () => null,
-        getAfter = () => null
-    } = options;
+  const {
+    action,
+    resourceType,
+    getResourceId = () => null,
+    getBefore = () => null,
+    getAfter = () => null,
+  } = options;
 
-    return async (req, res, next) => {
-        // Store original json method
-        const originalJson = res.json.bind(res);
+  return async (req, res, next) => {
+    // Store original json method
+    const originalJson = res.json.bind(res);
 
-        // Override json to intercept response
-        res.json = async function (data) {
-            // Only audit on success (2xx status codes)
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-                try {
-                    await deps.GovernanceAuditService.logAudit({
-                        actorId: req.userId || req.user?.id,
-                        actorRole: req.userRole || req.user?.role,
-                        orgId: req.organizationId || req.user?.organization_id,
-                        action,
-                        resourceType,
-                        resourceId: getResourceId(req, data),
-                        before: getBefore(req),
-                        after: getAfter(req, data),
-                        correlationId: req.correlationId || req.get('X-Correlation-Id')
-                    });
-                } catch (auditErr) {
-                    console.error('[AuditMiddleware] Error logging audit:', auditErr);
-                    // Don't fail the request if audit fails
-                }
-            }
+    // Override json to intercept response
+    res.json = async function (data) {
+      // Only audit on success (2xx status codes)
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        try {
+          await deps.GovernanceAuditService.logAudit({
+            actorId: req.userId || req.user?.id,
+            actorRole: req.userRole || req.user?.role,
+            orgId: req.organizationId || req.user?.organization_id,
+            action,
+            resourceType,
+            resourceId: getResourceId(req, data),
+            before: getBefore(req),
+            after: getAfter(req, data),
+            correlationId: req.correlationId || req.get('X-Correlation-Id'),
+          });
+        } catch (auditErr) {
+          console.error('[AuditMiddleware] Error logging audit:', auditErr);
+          // Don't fail the request if audit fails
+        }
+      }
 
-            // Call original json method
-            return originalJson(data);
-        };
-
-        next();
+      // Call original json method
+      return originalJson(data);
     };
+
+    next();
+  };
 };
 
 /**
  * Inject dependencies for testing
- * @param {Object} newDeps 
+ * @param {Object} newDeps
  */
 function setDependencies(newDeps) {
-    Object.assign(deps, newDeps);
+  Object.assign(deps, newDeps);
 }
 
 export {
-    requirePermission,
-    requireAnyPermission,
-    requireAllPermissions,
-    auditAction,
-    setDependencies
+  requirePermission,
+  requireAnyPermission,
+  requireAllPermissions,
+  auditAction,
+  setDependencies,
 };

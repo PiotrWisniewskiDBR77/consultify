@@ -38,6 +38,76 @@ Returns global metrics overview for SuperAdmin dashboard.
 }
 ```
 
+#### GET /api/metrics/org/overview
+
+Returns organization-specific overview metrics. Requires authentication.
+
+**Authentication:** Required (Bearer token)
+
+**Response:**
+```json
+{
+  "activeUsers": 15,
+  "selfServeUsers": 12,
+  "orgStatus": "trial",
+  "daysLeft": 20,
+  "conversionTarget": "Paid",
+  "seatConfiguration": {
+    "seatsUsed": 10,
+    "totalSeats": 25,
+    "seatsRemaining": 15,
+    "utilizationPercent": 40
+  }
+}
+```
+
+#### GET /api/metrics/org/help
+
+Returns organization help/playbook completion metrics. Requires authentication.
+
+**Authentication:** Required (Bearer token)
+
+**Response:**
+```json
+{
+  "byPlaybook": [
+    {
+      "playbookKey": "getting_started",
+      "started": 50,
+      "completed": 42,
+      "completionRate": 84
+    }
+  ],
+  "totalStarted": 125,
+  "totalCompleted": 95,
+  "overallCompletionRate": 76
+}
+```
+
+#### GET /api/metrics/org/team
+
+Returns organization team/invitation metrics. Requires authentication.
+
+**Authentication:** Required (Bearer token)
+
+**Response:**
+```json
+{
+  "invitations": {
+    "sent": 20,
+    "accepted": 15,
+    "pending": 5,
+    "acceptanceRate": 75
+  },
+  "seatManagement": {
+    "seatsUsed": 15,
+    "totalSeats": 25,
+    "seatsRemaining": 10,
+    "utilizationPercent": 60
+  }
+}
+```
+
 #### GET /api/metrics/funnels
 
 Returns conversion funnels.

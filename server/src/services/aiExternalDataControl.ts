@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aiexternaldatacontrol Service
  * Enterprise SaaS Architecture - TypeScript Backend

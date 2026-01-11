@@ -24,55 +24,55 @@ import { BUSINESS_AREAS, MATURITY_LEVELS } from './AreaMatrixTable';
 // ============================================================================
 
 export interface InterviewData {
-    intervieweeName: string;
-    intervieweeRole: string;
-    date: string;
-    notes: string;
-    keyQuote?: string;
-    observations?: string[];
+  intervieweeName: string;
+  intervieweeRole: string;
+  date: string;
+  notes: string;
+  keyQuote?: string;
+  observations?: string[];
 }
 
 export interface AreaLevelInfo {
-    name: string;
-    namePl: string;
-    description: string;
-    descriptionPl: string;
-    characteristics: string[];
-    tools: string[];
-    risks?: string[];
+  name: string;
+  namePl: string;
+  description: string;
+  descriptionPl: string;
+  characteristics: string[];
+  tools: string[];
+  risks?: string[];
 }
 
 export interface AreaDetailData {
-    areaId: string;
-    axisId: string;
-    currentLevel: number;
-    targetLevel: number;
-    currentLevelInfo: AreaLevelInfo;
-    targetLevelInfo: AreaLevelInfo;
-    interview?: InterviewData;
-    recommendations?: Array<{
-        title: string;
-        description?: string;
-        priority: 'HIGH' | 'MEDIUM' | 'LOW';
-        timeEstimate?: string;
-        budgetEstimate?: string;
-    }>;
-    kpis?: Array<{
-        name: string;
-        unit: string;
-        currentValue?: number | string;
-        targetValue?: number | string;
-        benchmark?: { low: number; medium: number; high: number };
-    }>;
-    risks?: string[];
+  areaId: string;
+  axisId: string;
+  currentLevel: number;
+  targetLevel: number;
+  currentLevelInfo: AreaLevelInfo;
+  targetLevelInfo: AreaLevelInfo;
+  interview?: InterviewData;
+  recommendations?: Array<{
+    title: string;
+    description?: string;
+    priority: 'HIGH' | 'MEDIUM' | 'LOW';
+    timeEstimate?: string;
+    budgetEstimate?: string;
+  }>;
+  kpis?: Array<{
+    name: string;
+    unit: string;
+    currentValue?: number | string;
+    targetValue?: number | string;
+    benchmark?: { low: number; medium: number; high: number };
+  }>;
+  risks?: string[];
 }
 
 interface AreaDetailCardProps {
-    data: AreaDetailData;
-    language?: 'pl' | 'en';
-    onEdit?: (sectionId: string, content: string) => void;
-    isEditable?: boolean;
-    initiallyExpanded?: boolean;
+  data: AreaDetailData;
+  language?: 'pl' | 'en';
+  onEdit?: (sectionId: string, content: string) => void;
+  isEditable?: boolean;
+  initiallyExpanded?: boolean;
 }
 
 // ============================================================================
@@ -80,347 +80,357 @@ interface AreaDetailCardProps {
 // ============================================================================
 
 export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
-    data,
-    language = 'pl',
-    onEdit,
-    isEditable = false,
-    initiallyExpanded = true,
+  data,
+  language = 'pl',
+  onEdit,
+  isEditable = false,
+  initiallyExpanded = true,
 }) => {
-    const [isExpanded, setIsExpanded] = useState(initiallyExpanded);
-    const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(initiallyExpanded);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
-    const isPolish = language === 'pl';
-    const area = BUSINESS_AREAS.find((a) => a.id === data.areaId);
-    const gap = data.targetLevel - data.currentLevel;
+  const isPolish = language === 'pl';
+  const area = BUSINESS_AREAS.find((a) => a.id === data.areaId);
+  const gap = data.targetLevel - data.currentLevel;
 
-    // Priority based on gap
-    const getPriorityInfo = (gap: number) => {
-        if (gap >= 3) return { label: isPolish ? 'Krytyczny' : 'Critical', color: '#ef4444', bg: '#fef2f2' };
-        if (gap >= 2) return { label: isPolish ? 'Wysoki' : 'High', color: '#f59e0b', bg: '#fffbeb' };
-        if (gap >= 1) return { label: isPolish ? 'Średni' : 'Medium', color: '#eab308', bg: '#fefce8' };
-        return { label: isPolish ? 'Niski' : 'Low', color: '#22c55e', bg: '#f0fdf4' };
-    };
+  // Priority based on gap
+  const getPriorityInfo = (gap: number) => {
+    if (gap >= 3)
+      return { label: isPolish ? 'Krytyczny' : 'Critical', color: '#ef4444', bg: '#fef2f2' };
+    if (gap >= 2) return { label: isPolish ? 'Wysoki' : 'High', color: '#f59e0b', bg: '#fffbeb' };
+    if (gap >= 1) return { label: isPolish ? 'Średni' : 'Medium', color: '#eab308', bg: '#fefce8' };
+    return { label: isPolish ? 'Niski' : 'Low', color: '#22c55e', bg: '#f0fdf4' };
+  };
 
-    const priority = getPriorityInfo(gap);
-    const currentLevelMeta = MATURITY_LEVELS.find((l) => l.level === data.currentLevel);
-    const targetLevelMeta = MATURITY_LEVELS.find((l) => l.level === data.targetLevel);
+  const priority = getPriorityInfo(gap);
+  const currentLevelMeta = MATURITY_LEVELS.find((l) => l.level === data.currentLevel);
+  const targetLevelMeta = MATURITY_LEVELS.find((l) => l.level === data.targetLevel);
 
-    const cardVariants = {
-        collapsed: { height: 'auto' },
-        expanded: { height: 'auto' },
-    };
+  const cardVariants = {
+    collapsed: { height: 'auto' },
+    expanded: { height: 'auto' },
+  };
 
-    const contentVariants = {
-        hidden: { opacity: 0, height: 0 },
-        visible: { opacity: 1, height: 'auto', transition: { duration: 0.3 } },
-    };
+  const contentVariants = {
+    hidden: { opacity: 0, height: 0 },
+    visible: { opacity: 1, height: 'auto', transition: { duration: 0.3 } },
+  };
 
-    return (
-        <motion.div
-            className="area-detail-card"
-            layout
-            variants={cardVariants}
-            initial="collapsed"
-            animate={isExpanded ? 'expanded' : 'collapsed'}
-        >
-            {/* Header - Always Visible */}
-            <div className="card-header" onClick={() => setIsExpanded(!isExpanded)}>
-                <div className="header-left">
-                    <span className="area-icon">{area?.icon || '📊'}</span>
-                    <div className="header-titles">
-                        <h3 className="area-name">{isPolish ? area?.namePl : area?.name}</h3>
-                        <span className="area-description">
-                            {isPolish ? data.currentLevelInfo.namePl : data.currentLevelInfo.name}
-                        </span>
-                    </div>
-                </div>
+  return (
+    <motion.div
+      className="area-detail-card"
+      layout
+      variants={cardVariants}
+      initial="collapsed"
+      animate={isExpanded ? 'expanded' : 'collapsed'}
+    >
+      {/* Header - Always Visible */}
+      <div className="card-header" onClick={() => setIsExpanded(!isExpanded)}>
+        <div className="header-left">
+          <span className="area-icon">{area?.icon || '📊'}</span>
+          <div className="header-titles">
+            <h3 className="area-name">{isPolish ? area?.namePl : area?.name}</h3>
+            <span className="area-description">
+              {isPolish ? data.currentLevelInfo.namePl : data.currentLevelInfo.name}
+            </span>
+          </div>
+        </div>
 
-                <div className="header-right">
-                    {/* Level indicators */}
-                    <div className="level-indicators">
-                        <div className="level-badge current" style={{ borderColor: currentLevelMeta?.color }}>
-                            <span className="level-value">{data.currentLevel}</span>
-                            <span className="level-label">{isPolish ? 'Akt.' : 'Cur.'}</span>
-                        </div>
-                        <span className="arrow">→</span>
-                        <div className="level-badge target" style={{ borderColor: targetLevelMeta?.color }}>
-                            <span className="level-value">{data.targetLevel}</span>
-                            <span className="level-label">{isPolish ? 'Cel' : 'Tgt.'}</span>
-                        </div>
-                        <div className="level-badge gap" style={{ background: priority.bg, color: priority.color }}>
-                            <span className="level-value">+{gap}</span>
-                            <span className="level-label">{isPolish ? 'Luka' : 'Gap'}</span>
-                        </div>
-                    </div>
-
-                    {/* Priority badge */}
-                    <div className="priority-badge" style={{ background: priority.bg, color: priority.color }}>
-                        {priority.label}
-                    </div>
-
-                    {/* Expand toggle */}
-                    <motion.span className="expand-toggle" animate={{ rotate: isExpanded ? 180 : 0 }}>
-                        ▼
-                    </motion.span>
-                </div>
+        <div className="header-right">
+          {/* Level indicators */}
+          <div className="level-indicators">
+            <div className="level-badge current" style={{ borderColor: currentLevelMeta?.color }}>
+              <span className="level-value">{data.currentLevel}</span>
+              <span className="level-label">{isPolish ? 'Akt.' : 'Cur.'}</span>
             </div>
+            <span className="arrow">→</span>
+            <div className="level-badge target" style={{ borderColor: targetLevelMeta?.color }}>
+              <span className="level-value">{data.targetLevel}</span>
+              <span className="level-label">{isPolish ? 'Cel' : 'Tgt.'}</span>
+            </div>
+            <div
+              className="level-badge gap"
+              style={{ background: priority.bg, color: priority.color }}
+            >
+              <span className="level-value">+{gap}</span>
+              <span className="level-label">{isPolish ? 'Luka' : 'Gap'}</span>
+            </div>
+          </div>
 
-            {/* Expandable Content */}
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        className="card-content"
-                        variants={contentVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="hidden"
-                    >
-                        {/* Section 1: Current State Description */}
-                        <section className="content-section current-state">
-                            <div className="section-header">
-                                <h4>📋 {isPolish ? 'Opis stanu aktualnego' : 'Current State Description'}</h4>
-                                <span
-                                    className="level-tag"
-                                    style={{
-                                        background: `${currentLevelMeta?.color}20`,
-                                        color: currentLevelMeta?.color,
-                                    }}
-                                >
-                                    {isPolish ? 'Poziom' : 'Level'} {data.currentLevel}
+          {/* Priority badge */}
+          <div
+            className="priority-badge"
+            style={{ background: priority.bg, color: priority.color }}
+          >
+            {priority.label}
+          </div>
+
+          {/* Expand toggle */}
+          <motion.span className="expand-toggle" animate={{ rotate: isExpanded ? 180 : 0 }}>
+            ▼
+          </motion.span>
+        </div>
+      </div>
+
+      {/* Expandable Content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            className="card-content"
+            variants={contentVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+          >
+            {/* Section 1: Current State Description */}
+            <section className="content-section current-state">
+              <div className="section-header">
+                <h4>📋 {isPolish ? 'Opis stanu aktualnego' : 'Current State Description'}</h4>
+                <span
+                  className="level-tag"
+                  style={{
+                    background: `${currentLevelMeta?.color}20`,
+                    color: currentLevelMeta?.color,
+                  }}
+                >
+                  {isPolish ? 'Poziom' : 'Level'} {data.currentLevel}
+                </span>
+              </div>
+              <div className="section-body">
+                <p className="description">
+                  {isPolish
+                    ? data.currentLevelInfo.descriptionPl
+                    : data.currentLevelInfo.description}
+                </p>
+
+                <div className="characteristics">
+                  <h5>
+                    {isPolish
+                      ? 'Charakterystyki obecnego poziomu'
+                      : 'Characteristics of Current Level'}
+                    :
+                  </h5>
+                  <ul>
+                    {data.currentLevelInfo.characteristics.map((char, i) => (
+                      <li key={i}>{char}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="tools">
+                  <h5>{isPolish ? 'Używane narzędzia' : 'Tools Used'}:</h5>
+                  <div className="tools-list">
+                    {data.currentLevelInfo.tools.map((tool, i) => (
+                      <span key={i} className="tool-badge">
+                        {tool}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 2: Interview Notes (if available) */}
+            {data.interview && (
+              <section className="content-section interview-notes">
+                <div className="section-header">
+                  <h4>📝 {isPolish ? 'Notatki z wywiadu' : 'Interview Notes'}</h4>
+                </div>
+                <div className="section-body">
+                  <div className="interview-meta">
+                    <div className="meta-item">
+                      <span className="meta-label">{isPolish ? 'Rozmówca' : 'Interviewee'}:</span>
+                      <span className="meta-value">{data.interview.intervieweeName}</span>
+                    </div>
+                    <div className="meta-item">
+                      <span className="meta-label">{isPolish ? 'Stanowisko' : 'Role'}:</span>
+                      <span className="meta-value">{data.interview.intervieweeRole}</span>
+                    </div>
+                    <div className="meta-item">
+                      <span className="meta-label">{isPolish ? 'Data' : 'Date'}:</span>
+                      <span className="meta-value">{data.interview.date}</span>
+                    </div>
+                  </div>
+
+                  {data.interview.keyQuote && (
+                    <blockquote className="key-quote">"{data.interview.keyQuote}"</blockquote>
+                  )}
+
+                  <div className="notes-content">
+                    <p>{data.interview.notes}</p>
+                  </div>
+
+                  {data.interview.observations && data.interview.observations.length > 0 && (
+                    <div className="observations">
+                      <h5>{isPolish ? 'Kluczowe obserwacje' : 'Key Observations'}:</h5>
+                      <ul>
+                        {data.interview.observations.map((obs, i) => (
+                          <li key={i}>{obs}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Section 3: Target State */}
+            <section className="content-section target-state">
+              <div className="section-header">
+                <h4>
+                  🎯 {isPolish ? 'Aby osiągnąć poziom' : 'To Reach Level'} {data.targetLevel}:{' '}
+                  {isPolish ? data.targetLevelInfo.namePl : data.targetLevelInfo.name}
+                </h4>
+                <span
+                  className="level-tag"
+                  style={{
+                    background: `${targetLevelMeta?.color}20`,
+                    color: targetLevelMeta?.color,
+                  }}
+                >
+                  {isPolish ? 'Cel' : 'Target'}
+                </span>
+              </div>
+              <div className="section-body">
+                <p className="description">
+                  {isPolish ? data.targetLevelInfo.descriptionPl : data.targetLevelInfo.description}
+                </p>
+
+                <div className="characteristics">
+                  <h5>{isPolish ? 'Wymagane charakterystyki' : 'Required Characteristics'}:</h5>
+                  <ul>
+                    {data.targetLevelInfo.characteristics.map((char, i) => (
+                      <li key={i}>{char}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="tools">
+                  <h5>{isPolish ? 'Przykładowe narzędzia' : 'Example Tools'}:</h5>
+                  <div className="tools-list">
+                    {data.targetLevelInfo.tools.map((tool, i) => (
+                      <span key={i} className="tool-badge target">
+                        {tool}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Section 4: Recommendations */}
+            {data.recommendations && data.recommendations.length > 0 && (
+              <section className="content-section recommendations">
+                <div className="section-header">
+                  <h4>🚀 {isPolish ? 'Rekomendacje rozwojowe' : 'Development Recommendations'}</h4>
+                </div>
+                <div className="section-body">
+                  <ol className="recommendations-list">
+                    {data.recommendations.map((rec, i) => (
+                      <li
+                        key={i}
+                        className={`recommendation-item priority-${rec.priority.toLowerCase()}`}
+                      >
+                        <div className="rec-header">
+                          <strong>{rec.title}</strong>
+                          <span className={`rec-priority ${rec.priority.toLowerCase()}`}>
+                            {rec.priority === 'HIGH'
+                              ? isPolish
+                                ? 'Wysoki'
+                                : 'High'
+                              : rec.priority === 'MEDIUM'
+                                ? isPolish
+                                  ? 'Średni'
+                                  : 'Medium'
+                                : isPolish
+                                  ? 'Niski'
+                                  : 'Low'}
+                          </span>
+                        </div>
+                        {rec.description && <p className="rec-description">{rec.description}</p>}
+                        <div className="rec-meta">
+                          {rec.timeEstimate && (
+                            <span className="meta-tag">⏱️ {rec.timeEstimate}</span>
+                          )}
+                          {rec.budgetEstimate && (
+                            <span className="meta-tag">💰 {rec.budgetEstimate}</span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </section>
+            )}
+
+            {/* Section 5: Risks */}
+            {data.risks && data.risks.length > 0 && (
+              <section className="content-section risks">
+                <div className="section-header">
+                  <h4>⚠️ {isPolish ? 'Ryzyka' : 'Risks'}</h4>
+                </div>
+                <div className="section-body">
+                  <ul className="risks-list">
+                    {data.risks.map((risk, i) => (
+                      <li key={i} className="risk-item">
+                        {risk}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            )}
+
+            {/* Section 6: KPIs */}
+            {data.kpis && data.kpis.length > 0 && (
+              <section className="content-section kpis">
+                <div className="section-header">
+                  <h4>📈 {isPolish ? 'KPI do monitorowania' : 'KPIs to Monitor'}</h4>
+                </div>
+                <div className="section-body">
+                  <div className="kpi-grid">
+                    {data.kpis.map((kpi, i) => (
+                      <div key={i} className="kpi-card">
+                        <div className="kpi-name">{kpi.name}</div>
+                        {kpi.currentValue !== undefined && (
+                          <div className="kpi-values">
+                            <span className="current">
+                              {kpi.currentValue} {kpi.unit}
+                            </span>
+                            {kpi.targetValue !== undefined && (
+                              <>
+                                <span className="arrow">→</span>
+                                <span className="target">
+                                  {kpi.targetValue} {kpi.unit}
                                 </span>
-                            </div>
-                            <div className="section-body">
-                                <p className="description">
-                                    {isPolish ? data.currentLevelInfo.descriptionPl : data.currentLevelInfo.description}
-                                </p>
-
-                                <div className="characteristics">
-                                    <h5>
-                                        {isPolish
-                                            ? 'Charakterystyki obecnego poziomu'
-                                            : 'Characteristics of Current Level'}
-                                        :
-                                    </h5>
-                                    <ul>
-                                        {data.currentLevelInfo.characteristics.map((char, i) => (
-                                            <li key={i}>{char}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                <div className="tools">
-                                    <h5>{isPolish ? 'Używane narzędzia' : 'Tools Used'}:</h5>
-                                    <div className="tools-list">
-                                        {data.currentLevelInfo.tools.map((tool, i) => (
-                                            <span key={i} className="tool-badge">
-                                                {tool}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        {/* Section 2: Interview Notes (if available) */}
-                        {data.interview && (
-                            <section className="content-section interview-notes">
-                                <div className="section-header">
-                                    <h4>📝 {isPolish ? 'Notatki z wywiadu' : 'Interview Notes'}</h4>
-                                </div>
-                                <div className="section-body">
-                                    <div className="interview-meta">
-                                        <div className="meta-item">
-                                            <span className="meta-label">{isPolish ? 'Rozmówca' : 'Interviewee'}:</span>
-                                            <span className="meta-value">{data.interview.intervieweeName}</span>
-                                        </div>
-                                        <div className="meta-item">
-                                            <span className="meta-label">{isPolish ? 'Stanowisko' : 'Role'}:</span>
-                                            <span className="meta-value">{data.interview.intervieweeRole}</span>
-                                        </div>
-                                        <div className="meta-item">
-                                            <span className="meta-label">{isPolish ? 'Data' : 'Date'}:</span>
-                                            <span className="meta-value">{data.interview.date}</span>
-                                        </div>
-                                    </div>
-
-                                    {data.interview.keyQuote && (
-                                        <blockquote className="key-quote">"{data.interview.keyQuote}"</blockquote>
-                                    )}
-
-                                    <div className="notes-content">
-                                        <p>{data.interview.notes}</p>
-                                    </div>
-
-                                    {data.interview.observations && data.interview.observations.length > 0 && (
-                                        <div className="observations">
-                                            <h5>{isPolish ? 'Kluczowe obserwacje' : 'Key Observations'}:</h5>
-                                            <ul>
-                                                {data.interview.observations.map((obs, i) => (
-                                                    <li key={i}>{obs}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-                                </div>
-                            </section>
+                              </>
+                            )}
+                          </div>
                         )}
-
-                        {/* Section 3: Target State */}
-                        <section className="content-section target-state">
-                            <div className="section-header">
-                                <h4>
-                                    🎯 {isPolish ? 'Aby osiągnąć poziom' : 'To Reach Level'} {data.targetLevel}:{' '}
-                                    {isPolish ? data.targetLevelInfo.namePl : data.targetLevelInfo.name}
-                                </h4>
-                                <span
-                                    className="level-tag"
-                                    style={{ background: `${targetLevelMeta?.color}20`, color: targetLevelMeta?.color }}
-                                >
-                                    {isPolish ? 'Cel' : 'Target'}
-                                </span>
-                            </div>
-                            <div className="section-body">
-                                <p className="description">
-                                    {isPolish ? data.targetLevelInfo.descriptionPl : data.targetLevelInfo.description}
-                                </p>
-
-                                <div className="characteristics">
-                                    <h5>{isPolish ? 'Wymagane charakterystyki' : 'Required Characteristics'}:</h5>
-                                    <ul>
-                                        {data.targetLevelInfo.characteristics.map((char, i) => (
-                                            <li key={i}>{char}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                <div className="tools">
-                                    <h5>{isPolish ? 'Przykładowe narzędzia' : 'Example Tools'}:</h5>
-                                    <div className="tools-list">
-                                        {data.targetLevelInfo.tools.map((tool, i) => (
-                                            <span key={i} className="tool-badge target">
-                                                {tool}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        {/* Section 4: Recommendations */}
-                        {data.recommendations && data.recommendations.length > 0 && (
-                            <section className="content-section recommendations">
-                                <div className="section-header">
-                                    <h4>🚀 {isPolish ? 'Rekomendacje rozwojowe' : 'Development Recommendations'}</h4>
-                                </div>
-                                <div className="section-body">
-                                    <ol className="recommendations-list">
-                                        {data.recommendations.map((rec, i) => (
-                                            <li
-                                                key={i}
-                                                className={`recommendation-item priority-${rec.priority.toLowerCase()}`}
-                                            >
-                                                <div className="rec-header">
-                                                    <strong>{rec.title}</strong>
-                                                    <span className={`rec-priority ${rec.priority.toLowerCase()}`}>
-                                                        {rec.priority === 'HIGH'
-                                                            ? isPolish
-                                                                ? 'Wysoki'
-                                                                : 'High'
-                                                            : rec.priority === 'MEDIUM'
-                                                              ? isPolish
-                                                                  ? 'Średni'
-                                                                  : 'Medium'
-                                                              : isPolish
-                                                                ? 'Niski'
-                                                                : 'Low'}
-                                                    </span>
-                                                </div>
-                                                {rec.description && (
-                                                    <p className="rec-description">{rec.description}</p>
-                                                )}
-                                                <div className="rec-meta">
-                                                    {rec.timeEstimate && (
-                                                        <span className="meta-tag">⏱️ {rec.timeEstimate}</span>
-                                                    )}
-                                                    {rec.budgetEstimate && (
-                                                        <span className="meta-tag">💰 {rec.budgetEstimate}</span>
-                                                    )}
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ol>
-                                </div>
-                            </section>
+                        {kpi.benchmark && (
+                          <div className="kpi-benchmark">
+                            <span className="benchmark-label">Benchmark:</span>
+                            <span className="benchmark-low">
+                              Low: {kpi.benchmark.low}
+                              {kpi.unit}
+                            </span>
+                            <span className="benchmark-high">
+                              Best: {kpi.benchmark.high}
+                              {kpi.unit}
+                            </span>
+                          </div>
                         )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-                        {/* Section 5: Risks */}
-                        {data.risks && data.risks.length > 0 && (
-                            <section className="content-section risks">
-                                <div className="section-header">
-                                    <h4>⚠️ {isPolish ? 'Ryzyka' : 'Risks'}</h4>
-                                </div>
-                                <div className="section-body">
-                                    <ul className="risks-list">
-                                        {data.risks.map((risk, i) => (
-                                            <li key={i} className="risk-item">
-                                                {risk}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </section>
-                        )}
-
-                        {/* Section 6: KPIs */}
-                        {data.kpis && data.kpis.length > 0 && (
-                            <section className="content-section kpis">
-                                <div className="section-header">
-                                    <h4>📈 {isPolish ? 'KPI do monitorowania' : 'KPIs to Monitor'}</h4>
-                                </div>
-                                <div className="section-body">
-                                    <div className="kpi-grid">
-                                        {data.kpis.map((kpi, i) => (
-                                            <div key={i} className="kpi-card">
-                                                <div className="kpi-name">{kpi.name}</div>
-                                                {kpi.currentValue !== undefined && (
-                                                    <div className="kpi-values">
-                                                        <span className="current">
-                                                            {kpi.currentValue} {kpi.unit}
-                                                        </span>
-                                                        {kpi.targetValue !== undefined && (
-                                                            <>
-                                                                <span className="arrow">→</span>
-                                                                <span className="target">
-                                                                    {kpi.targetValue} {kpi.unit}
-                                                                </span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {kpi.benchmark && (
-                                                    <div className="kpi-benchmark">
-                                                        <span className="benchmark-label">Benchmark:</span>
-                                                        <span className="benchmark-low">
-                                                            Low: {kpi.benchmark.low}
-                                                            {kpi.unit}
-                                                        </span>
-                                                        <span className="benchmark-high">
-                                                            Best: {kpi.benchmark.high}
-                                                            {kpi.unit}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </section>
-                        )}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <style>{`
+      <style>{`
                 .area-detail-card {
                     background: white;
                     border-radius: 12px;
@@ -830,8 +840,8 @@ export const AreaDetailCard: React.FC<AreaDetailCardProps> = ({
                     }
                 }
             `}</style>
-        </motion.div>
-    );
+    </motion.div>
+  );
 };
 
 export default AreaDetailCard;

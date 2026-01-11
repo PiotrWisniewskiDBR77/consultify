@@ -4,15 +4,15 @@ info:
   description: |
     Complete billing management API for subscription management, invoicing, 
     payment processing, and usage tracking. Integrates with Stripe for payment processing.
-    
+
     ## Authentication
     All endpoints require Bearer token authentication via the `Authorization` header.
     Most endpoints also require the `X-Organization-Id` header for multi-tenant access.
-    
+
     ## Rate Limiting
     - Standard endpoints: 100 requests/minute
     - Webhook endpoints: 1000 requests/minute
-    
+
     ## Webhooks
     Stripe webhooks are handled at `/webhooks/stripe` with signature verification.
   version: 2.0.0
@@ -1476,4 +1476,3 @@ components:
           items:
             type: string
             format: email
-

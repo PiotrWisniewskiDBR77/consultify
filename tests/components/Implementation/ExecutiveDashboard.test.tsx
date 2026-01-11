@@ -7,17 +7,17 @@ import { render, screen } from '@testing-library/react';
 const ExecutiveDashboard = () => <div data-testid="executive-dashboard">Executive Dashboard</div>;
 
 describe('ExecutiveDashboard Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders component', () => {
-        render(<ExecutiveDashboard />);
-        expect(screen.getByTestId('executive-dashboard')).toBeInTheDocument();
-    });
+  it('renders component', () => {
+    render(<ExecutiveDashboard />);
+    expect(screen.getByTestId('executive-dashboard')).toBeInTheDocument();
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(<ExecutiveDashboard />);
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(<ExecutiveDashboard />);
+    expect(container).toBeInTheDocument();
+  });
 });

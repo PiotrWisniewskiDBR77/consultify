@@ -10,8 +10,6 @@
 
 ## Circular Dependencies (TS ↔ JS)
 
-
-
 ## Break Point Strategy
 
 1. Convert legacy JS files in cycles to TypeScript

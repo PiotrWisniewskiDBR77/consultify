@@ -1,0 +1,99 @@
+{
+  "sourceLocale": "en",
+  "targetLocales": ["pl", "de", "es", "ar", "ja"],
+  "localesDir": "public/locales",
+  "helpPaths": [
+    "help.panel",
+    "help.widget",
+    "help.ai",
+    "help.sidePanel.modules",
+    "help.sidePanel.tabs",
+    "help.sidePanel.audience",
+    "help.sidePanel.video",
+    "help.sidePanel.faq",
+    "help.sidePanel.content",
+    "help.sidePanel.difficulty",
+    "help.search",
+    "help.feedback",
+    "help.toggle",
+    "help.video",
+    "help.whatsNew",
+    "reports"
+  ],
+  "glossary": {
+    "Dashboard": {
+      "pl": "Dashboard",
+      "de": "Dashboard",
+      "es": "Panel de Control",
+      "ar": "لوحة التحكم",
+      "ja": "ダッシュボード"
+    },
+    "Assessment": {
+      "pl": "Ocena",
+      "de": "Bewertung",
+      "es": "Evaluación",
+      "ar": "التقييم",
+      "ja": "評価"
+    },
+    "Initiative": {
+      "pl": "Inicjatywa",
+      "de": "Initiative",
+      "es": "Iniciativa",
+      "ar": "مبادرة",
+      "ja": "イニシアチブ"
+    },
+    "Roadmap": {
+      "pl": "Mapa drogowa",
+      "de": "Roadmap",
+      "es": "Hoja de Ruta",
+      "ar": "خارطة الطريق",
+      "ja": "ロードマップ"
+    },
+    "Implementation": {
+      "pl": "Wdrożenie",
+      "de": "Implementierung",
+      "es": "Implementación",
+      "ar": "التنفيذ",
+      "ja": "実装"
+    },
+    "ROI": {
+      "pl": "ROI",
+      "de": "ROI",
+      "es": "ROI",
+      "ar": "ROI",
+      "ja": "ROI"
+    },
+    "AI": {
+      "pl": "AI",
+      "de": "KI",
+      "es": "IA",
+      "ar": "الذكاء الاصطناعي",
+      "ja": "AI"
+    },
+    "SSO": {
+      "pl": "SSO",
+      "de": "SSO",
+      "es": "SSO",
+      "ar": "SSO",
+      "ja": "SSO"
+    },
+    "API": {
+      "pl": "API",
+      "de": "API",
+      "es": "API",
+      "ar": "API",
+      "ja": "API"
+    },
+    "Consultinity": {
+      "pl": "Consultinity",
+      "de": "Consultinity",
+      "es": "Consultinity",
+      "ar": "Consultinity",
+      "ja": "Consultinity"
+    }
+  },
+  "aiProvider": "openai",
+  "aiModel": "gpt-4o-mini",
+  "batchSize": 10,
+  "cacheFile": "scripts/i18n/translation-cache.json"
+}

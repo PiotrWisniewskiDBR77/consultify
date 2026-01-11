@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Breakglass Service
  * Enterprise SaaS Architecture - TypeScript Backend

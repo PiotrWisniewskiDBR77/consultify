@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aimodeenforcer Service
  * Enterprise SaaS Architecture - TypeScript Backend

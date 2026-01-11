@@ -18,18 +18,19 @@ const router = Router();
 
 // Service interfaces
 interface GamificationServiceInterface {
-    getUserProfile?: (userId: string) => Promise<unknown>;
-    getUserAchievements?: (userId: string) => Promise<unknown>;
+  getUserProfile?: (userId: string) => Promise<unknown>;
+  getUserAchievements?: (userId: string) => Promise<unknown>;
 }
 
 // Dynamic import for GamificationService (may not be migrated yet)
 let GamificationService: GamificationServiceInterface | null = null;
 
 try {
-//     const gamificationModule = (await import('../services/gamificationService.js')) as any;
-    GamificationService = (gamificationModule.default || gamificationModule) as GamificationServiceInterface;
+  //     const gamificationModule = (await import('../services/gamificationService.js')) as any;
+  GamificationService = (gamificationModule.default ||
+    gamificationModule) as GamificationServiceInterface;
 } catch {
-    logger.warn('[Gamification Routes] GamificationService not available');
+  logger.warn('[Gamification Routes] GamificationService not available');
 }
 
 /**
@@ -37,34 +38,36 @@ try {
  * Get current user's stats and achievements
  */
 router.get(
-    '/me',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!GamificationService?.getUserProfile || !GamificationService?.getUserAchievements) {
-            return res.status(503).json({ error: 'Gamification service not available' });
-        }
+  '/me',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!GamificationService?.getUserProfile || !GamificationService?.getUserAchievements) {
+      return res.status(503).json({ error: 'Gamification service not available' });
+    }
 
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const profile = await GamificationService.getUserProfile(userId);
-            const achievements = await GamificationService.getUserAchievements(userId);
+      const profile = await GamificationService.getUserProfile(userId);
+      const achievements = await GamificationService.getUserAchievements(userId);
 
-            return res.json({
-                success: true,
-                data: {
-                    ...(profile as Record<string, unknown>),
-                    achievements,
-                },
-            });
-        } catch (error: unknown) {
-            logger.error('Gamification profile error:', error);
-            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
-        }
-    }),
+      return res.json({
+        success: true,
+        data: {
+          ...(profile as Record<string, unknown>),
+          achievements,
+        },
+      });
+    } catch (error: unknown) {
+      logger.error('Gamification profile error:', error);
+      return res
+        .status(500)
+        .json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  })
 );
 
 export default router;

@@ -1,0 +1,416 @@
+/* Budget Dashboard - Admin Styles */
+
+.budget-dashboard {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-primary, #1a1a1a);
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-secondary, #666);
+    font-size: 1rem;
+}
+
+/* Budget Overview Cards */
+.budget-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.overview-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 12px;
+}
+
+.card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-content label {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #666);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.card-content .value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary, #1a1a1a);
+    margin-bottom: 0.25rem;
+}
+
+.card-content .value.spent {
+    color: #f59e0b;
+}
+
+.card-content .value.remaining {
+    color: #10b981;
+}
+
+.card-content small {
+    color: var(--text-secondary, #666);
+    font-size: 0.8rem;
+}
+
+/* Budget Progress Section */
+.budget-progress-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.progress-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.alert-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.alert-badge.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.alert-badge.exceeded {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.progress-bar-container {
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: visible;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4f46e5, #6366f1);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.warning {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.progress-fill.exceeded {
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+}
+
+.threshold-marker {
+    position: absolute;
+    top: -5px;
+    bottom: -5px;
+    width: 3px;
+    background: #dc2626;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.threshold-marker::before {
+    content: '⚠️';
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #666);
+}
+
+.current-percentage {
+    font-weight: 700;
+    color: var(--primary-color, #4f46e5);
+}
+
+/* Charts Grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.chart-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary, #1a1a1a);
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+}
+
+/* Expenses Section */
+.expenses-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color, #e0e0e0);
+}
+
+.section-header h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.filters {
+    display: flex;
+    gap: 1rem;
+}
+
+.category-filter {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.category-filter:focus {
+    outline: none;
+    border-color: var(--primary-color, #4f46e5);
+}
+
+/* Expenses Table */
+.expenses-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+}
+
+.expenses-table thead {
+    background: var(--bg-secondary, #f8f9fa);
+}
+
+.expenses-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--text-secondary, #666);
+    border-bottom: 2px solid var(--border-color, #e0e0e0);
+}
+
+.expenses-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color, #f0f0f0);
+    color: var(--text-primary, #1a1a1a);
+}
+
+.expenses-table tr:hover {
+    background: var(--bg-hover, #f9fafb);
+}
+
+.category-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.category-badge.tokens {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.category-badge.storage {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.category-badge.compute {
+    background: #fce7f3;
+    color: #9f1239;
+}
+
+.category-badge.api {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.category-badge.other {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.expenses-table .amount {
+    font-weight: 600;
+    text-align: right;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.page-info {
+    font-weight: 600;
+    color: var(--text-primary, #1a1a1a);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--text-primary, #1a1a1a);
+    border: 1px solid var(--border-color, #e0e0e0);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--bg-hover, #f9fafb);
+    border-color: var(--primary-color, #4f46e5);
+}
+
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Loading & Empty States */
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary, #666);
+    font-size: 1.1rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary, #666);
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .budget-dashboard {
+        padding: 1rem;
+    }
+
+    .budget-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .filters {
+        width: 100%;
+    }
+
+    .category-filter {
+        width: 100%;
+    }
+
+    .expenses-table {
+        font-size: 0.85rem;
+    }
+
+    .expenses-table th,
+    .expenses-table td {
+        padding: 0.5rem;
+    }
+}

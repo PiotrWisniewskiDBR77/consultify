@@ -15,4 +15,3 @@ router.get('/:id/results', asyncHandler(AIExperimentsController.getResults));
 router.delete('/:id', asyncHandler(AIExperimentsController.deleteExperiment));
 
 export default router;
-

@@ -6,29 +6,29 @@ import { render, screen } from '@testing-library/react';
 import { RapidLeanWorkspace } from '../../src/components/assessment/RapidLeanWorkspace';
 
 describe('RapidLeanWorkspace Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders component', () => {
-        render(<RapidLeanWorkspace />);
-        expect(document.body).toBeDefined();
-    });
+  it('renders component', () => {
+    render(<RapidLeanWorkspace />);
+    expect(document.body).toBeDefined();
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(<RapidLeanWorkspace />);
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(<RapidLeanWorkspace />);
+    expect(container).toBeInTheDocument();
+  });
 
-    it('displays workspace content', () => {
-        render(<RapidLeanWorkspace />);
+  it('displays workspace content', () => {
+    render(<RapidLeanWorkspace />);
 
-        const workspaceElements = screen.queryAllByText(/lean|workspace|rapid/i);
-        expect(workspaceElements.length).toBeGreaterThanOrEqual(0);
-    });
+    const workspaceElements = screen.queryAllByText(/lean|workspace|rapid/i);
+    expect(workspaceElements.length).toBeGreaterThanOrEqual(0);
+  });
 
-    it('has content', () => {
-        render(<RapidLeanWorkspace />);
-        expect(document.body.innerHTML.length).toBeGreaterThan(50);
-    });
+  it('has content', () => {
+    render(<RapidLeanWorkspace />);
+    expect(document.body.innerHTML.length).toBeGreaterThan(50);
+  });
 });

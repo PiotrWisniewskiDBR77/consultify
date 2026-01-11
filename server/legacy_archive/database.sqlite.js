@@ -1,9 +1,9 @@
 /**
  * DEPRECATED: This file is kept for reference only.
- * 
+ *
  * Use database.sqlite.active.js instead, which is the current active implementation.
  * This file may be removed in a future version.
- * 
+ *
  * @deprecated Use database.sqlite.active.js
  */
 
@@ -25,48 +25,48 @@ const GLOBAL_KEY = '__CONSULTINITY_SQLITE_INSTANCE__';
  * Get or create the SQLite database instance
  */
 export function getDatabaseInstance() {
-    let db = process[GLOBAL_KEY];
-    if (!db) db = global[GLOBAL_KEY];
+  let db = process[GLOBAL_KEY];
+  if (!db) db = global[GLOBAL_KEY];
 
-    if (db) {
-        // console.log('[SQLite] Reusing existing global instance');
-        return db;
-    }
-
-    console.log('[SQLite] Connecting. PID:', process.pid, 'CWD:', process.cwd(), 'Path:', dbPath);
-
-    // Allow bypassing real DB connection for Unit Tests
-    if (process.env.MOCK_DB === 'true') {
-        console.log('Using MOCKED DB (No connection)');
-        db = {
-            prepare: () => ({ run: () => { }, finalize: () => { } }),
-            run: () => { },
-            all: () => { },
-            get: () => { },
-            serialize: (cb) => cb && cb()
-        };
-    } else {
-        db = new sqlite3.Database(dbPath, (err) => {
-            if (err) {
-                console.error('Error opening database', err.message);
-            } else {
-                console.log('Connected to the SQLite database.');
-                if (process.env.NODE_ENV !== 'test') {
-                    initDb(db);
-                }
-            }
-        });
-    }
-
-    process[GLOBAL_KEY] = db;
-    global[GLOBAL_KEY] = db;
+  if (db) {
+    // console.log('[SQLite] Reusing existing global instance');
     return db;
+  }
+
+  console.log('[SQLite] Connecting. PID:', process.pid, 'CWD:', process.cwd(), 'Path:', dbPath);
+
+  // Allow bypassing real DB connection for Unit Tests
+  if (process.env.MOCK_DB === 'true') {
+    console.log('Using MOCKED DB (No connection)');
+    db = {
+      prepare: () => ({ run: () => {}, finalize: () => {} }),
+      run: () => {},
+      all: () => {},
+      get: () => {},
+      serialize: (cb) => cb && cb(),
+    };
+  } else {
+    db = new sqlite3.Database(dbPath, (err) => {
+      if (err) {
+        console.error('Error opening database', err.message);
+      } else {
+        console.log('Connected to the SQLite database.');
+        if (process.env.NODE_ENV !== 'test') {
+          initDb(db);
+        }
+      }
+    });
+  }
+
+  process[GLOBAL_KEY] = db;
+  global[GLOBAL_KEY] = db;
+  return db;
 }
 
 export function initDb(db) {
-    db.serialize(() => {
-        // Organizations Table (New)
-        db.run(`CREATE TABLE IF NOT EXISTS organizations (
+  db.serialize(() => {
+    // Organizations Table (New)
+    db.run(`CREATE TABLE IF NOT EXISTS organizations (
             id TEXT PRIMARY KEY,
             name TEXT,
             plan TEXT DEFAULT 'free',
@@ -75,14 +75,14 @@ export function initDb(db) {
             valid_until DATETIME
         )`);
 
-        // Users Table (Updated with organization_id)
-        // We will drop the old one if it exists to ensure clean schema for this major refactor
-        // In a real prod env, we would migrate. Here we wipe for simplicity as agreed.
-        // ONLY drop in dev mode
-        if (process.env.NODE_ENV !== 'production') {
-            // db.run(`DROP TABLE IF EXISTS users`);
-        }
-        db.run(`CREATE TABLE IF NOT EXISTS users (
+    // Users Table (Updated with organization_id)
+    // We will drop the old one if it exists to ensure clean schema for this major refactor
+    // In a real prod env, we would migrate. Here we wipe for simplicity as agreed.
+    // ONLY drop in dev mode
+    if (process.env.NODE_ENV !== 'production') {
+      // db.run(`DROP TABLE IF EXISTS users`);
+    }
+    db.run(`CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             organization_id TEXT,
             email TEXT UNIQUE,
@@ -98,11 +98,11 @@ export function initDb(db) {
             FOREIGN KEY(organization_id) REFERENCES organizations(id)
         )`);
 
-        // Migrations
-        db.run(`ALTER TABLE users ADD COLUMN impersonator_id TEXT`, (err) => { });
+    // Migrations
+    db.run(`ALTER TABLE users ADD COLUMN impersonator_id TEXT`, (err) => {});
 
-        // Sessions Table (Linked to user_id and optionally project_id)
-        db.run(`CREATE TABLE IF NOT EXISTS sessions(
+    // Sessions Table (Linked to user_id and optionally project_id)
+    db.run(`CREATE TABLE IF NOT EXISTS sessions(
                                                         id TEXT PRIMARY KEY,
                                                         user_id TEXT,
                                                         project_id TEXT,
@@ -113,15 +113,15 @@ export function initDb(db) {
                                                         FOREIGN KEY(project_id) REFERENCES projects(id)
                                                     )`);
 
-        // Settings Table (Global/System settings)
-        db.run(`CREATE TABLE IF NOT EXISTS settings(
+    // Settings Table (Global/System settings)
+    db.run(`CREATE TABLE IF NOT EXISTS settings(
                                                         key TEXT PRIMARY KEY,
                                                         value TEXT,
                                                         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                                                     )`);
 
-        // Projects Table
-        db.run(`CREATE TABLE IF NOT EXISTS projects(
+    // Projects Table
+    db.run(`CREATE TABLE IF NOT EXISTS projects(
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -144,11 +144,11 @@ export function initDb(db) {
             FOREIGN KEY(organization_id) REFERENCES organizations(id)
         )`);
 
-        // Migration: Add context_data to projects if it doesn't exist
-        db.run(`ALTER TABLE projects ADD COLUMN context_data TEXT`, (err) => { });
+    // Migration: Add context_data to projects if it doesn't exist
+    db.run(`ALTER TABLE projects ADD COLUMN context_data TEXT`, (err) => {});
 
-        // Knowledge Base: Documents
-        db.run(`CREATE TABLE IF NOT EXISTS knowledge_docs(
+    // Knowledge Base: Documents
+    db.run(`CREATE TABLE IF NOT EXISTS knowledge_docs(
                                                         id TEXT PRIMARY KEY,
                                                         filename TEXT,
                                                         filepath TEXT,
@@ -156,8 +156,8 @@ export function initDb(db) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                                                     )`);
 
-        // Knowledge Base: Chunks (Simple Text Search / Vector Store Placeholder)
-        db.run(`CREATE TABLE IF NOT EXISTS knowledge_chunks(
+    // Knowledge Base: Chunks (Simple Text Search / Vector Store Placeholder)
+    db.run(`CREATE TABLE IF NOT EXISTS knowledge_chunks(
                                                         id TEXT PRIMARY KEY,
                                                         doc_id TEXT,
                                                         content TEXT,
@@ -166,8 +166,8 @@ export function initDb(db) {
             FOREIGN KEY(doc_id) REFERENCES knowledge_docs(id) ON DELETE CASCADE
         )`);
 
-        // LLM Providers
-        db.run(`CREATE TABLE IF NOT EXISTS llm_providers(
+    // LLM Providers
+    db.run(`CREATE TABLE IF NOT EXISTS llm_providers(
                                                             id TEXT PRIMARY KEY,
                                                             name TEXT,
                                                             provider TEXT, --openai, anthropic, google, local
@@ -181,17 +181,17 @@ export function initDb(db) {
                                                             visibility TEXT DEFAULT 'admin' -- admin, public, beta
                                                         )`);
 
-        // Migration: Add markup_multiplier if not exists
-        db.run(`ALTER TABLE llm_providers ADD COLUMN markup_multiplier REAL DEFAULT 1.0`, (err) => {
-            // Ignore error if column already exists
-        });
+    // Migration: Add markup_multiplier if not exists
+    db.run(`ALTER TABLE llm_providers ADD COLUMN markup_multiplier REAL DEFAULT 1.0`, (err) => {
+      // Ignore error if column already exists
+    });
 
-        // ==========================================
-        // PHASE 1: CORE INFRASTRUCTURE TABLES
-        // ==========================================
+    // ==========================================
+    // PHASE 1: CORE INFRASTRUCTURE TABLES
+    // ==========================================
 
-        // Teams Table
-        db.run(`CREATE TABLE IF NOT EXISTS teams (
+    // Teams Table
+    db.run(`CREATE TABLE IF NOT EXISTS teams (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -202,8 +202,8 @@ export function initDb(db) {
             FOREIGN KEY(lead_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Team Members Junction Table
-        db.run(`CREATE TABLE IF NOT EXISTS team_members (
+    // Team Members Junction Table
+    db.run(`CREATE TABLE IF NOT EXISTS team_members (
             team_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
             role TEXT DEFAULT 'member', -- member, lead
@@ -213,8 +213,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Project Users Junction Table (for visibility control)
-        db.run(`CREATE TABLE IF NOT EXISTS project_users (
+    // Project Users Junction Table (for visibility control)
+    db.run(`CREATE TABLE IF NOT EXISTS project_users (
             project_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
             role TEXT DEFAULT 'member', -- owner, admin, member, viewer
@@ -224,8 +224,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Custom Workflow Statuses per Organization
-        db.run(`CREATE TABLE IF NOT EXISTS projects (
+    // Custom Workflow Statuses per Organization
+    db.run(`CREATE TABLE IF NOT EXISTS projects (
                     id TEXT PRIMARY KEY,
                     organization_id TEXT NOT NULL,
                     name TEXT NOT NULL,
@@ -245,7 +245,7 @@ export function initDb(db) {
                     FOREIGN KEY(organization_id) REFERENCES organizations(id)
                 )`);
 
-        db.run(`CREATE TABLE IF NOT EXISTS tasks (
+    db.run(`CREATE TABLE IF NOT EXISTS tasks (
                     id TEXT PRIMARY KEY,
                     project_id TEXT,
                     organization_id TEXT NOT NULL,
@@ -291,7 +291,7 @@ export function initDb(db) {
                     FOREIGN KEY(organization_id) REFERENCES organizations(id),
                     FOREIGN KEY(project_id) REFERENCES projects(id)
                 )`);
-        db.run(`CREATE TABLE IF NOT EXISTS custom_statuses (
+    db.run(`CREATE TABLE IF NOT EXISTS custom_statuses (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -302,8 +302,8 @@ export function initDb(db) {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // Tasks Table (Full Task Module)
-        db.run(`CREATE TABLE IF NOT EXISTS tasks (
+    // Tasks Table (Full Task Module)
+    db.run(`CREATE TABLE IF NOT EXISTS tasks (
             id TEXT PRIMARY KEY,
             project_id TEXT,
             organization_id TEXT NOT NULL,
@@ -353,8 +353,8 @@ export function initDb(db) {
             FOREIGN KEY(custom_status_id) REFERENCES custom_statuses(id) ON DELETE SET NULL
         )`);
 
-        // Task Comments
-        db.run(`CREATE TABLE IF NOT EXISTS task_comments (
+    // Task Comments
+    db.run(`CREATE TABLE IF NOT EXISTS task_comments (
             id TEXT PRIMARY KEY,
             task_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
@@ -365,8 +365,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Notifications Table
-        db.run(`CREATE TABLE IF NOT EXISTS notifications (
+    // Notifications Table
+    db.run(`CREATE TABLE IF NOT EXISTS notifications (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             organization_id TEXT,
@@ -393,27 +393,27 @@ export function initDb(db) {
             FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
         )`);
 
-        // Migration: Add columns if they don't exist
-        db.run(`ALTER TABLE notifications ADD COLUMN organization_id TEXT`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN project_id TEXT`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN initiative_id TEXT`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN task_id TEXT`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN related_id TEXT`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN severity TEXT DEFAULT 'INFO'`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN priority TEXT DEFAULT 'medium'`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN is_read INTEGER DEFAULT 0`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN is_actionable INTEGER DEFAULT 0`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN action_url TEXT`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN expires_at DATETIME`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN read_at DATETIME`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN related_object_type TEXT`, (err) => { });
-        db.run(`ALTER TABLE notifications ADD COLUMN related_object_id TEXT`, (err) => { });
+    // Migration: Add columns if they don't exist
+    db.run(`ALTER TABLE notifications ADD COLUMN organization_id TEXT`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN project_id TEXT`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN initiative_id TEXT`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN task_id TEXT`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN related_id TEXT`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN severity TEXT DEFAULT 'INFO'`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN priority TEXT DEFAULT 'medium'`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN is_read INTEGER DEFAULT 0`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN is_actionable INTEGER DEFAULT 0`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN action_url TEXT`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN expires_at DATETIME`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN read_at DATETIME`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN related_object_type TEXT`, (err) => {});
+    db.run(`ALTER TABLE notifications ADD COLUMN related_object_id TEXT`, (err) => {});
 
-        // Sync read -> is_read if needed
-        db.run(`UPDATE notifications SET is_read = read WHERE is_read = 0 AND read = 1`, (err) => { });
+    // Sync read -> is_read if needed
+    db.run(`UPDATE notifications SET is_read = read WHERE is_read = 0 AND read = 1`, (err) => {});
 
-        // Activity Logs (Audit Trail) - Extended for Enterprise System Module
-        db.run(`CREATE TABLE IF NOT EXISTS activity_logs (
+    // Activity Logs (Audit Trail) - Extended for Enterprise System Module
+    db.run(`CREATE TABLE IF NOT EXISTS activity_logs (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             user_id TEXT,
@@ -430,8 +430,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Extended Audit Logs Table (Enterprise System Module)
-        db.run(`CREATE TABLE IF NOT EXISTS audit_logs (
+    // Extended Audit Logs Table (Enterprise System Module)
+    db.run(`CREATE TABLE IF NOT EXISTS audit_logs (
             id TEXT PRIMARY KEY,
             timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             user_id TEXT,
@@ -452,38 +452,54 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Add indexes for audit_logs
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC)`, (err) => { });
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`, (err) => { });
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_action_type ON audit_logs(action_type)`, (err) => { });
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs(resource_type, resource_id)`, (err) => { });
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_risk_level ON audit_logs(risk_level)`, (err) => { });
-        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_org_id ON audit_logs(organization_id)`, (err) => { });
+    // Add indexes for audit_logs
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC)`,
+      (err) => {}
+    );
+    db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`, (err) => {});
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_action_type ON audit_logs(action_type)`,
+      (err) => {}
+    );
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs(resource_type, resource_id)`,
+      (err) => {}
+    );
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_risk_level ON audit_logs(risk_level)`,
+      (err) => {}
+    );
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_org_id ON audit_logs(organization_id)`,
+      (err) => {}
+    );
 
-        // User Token Quota (Add columns to users - we'll use ALTER TABLE to add if not exists)
-        db.run(`ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000`, (err) => {
-            // Ignore error if column already exists
-        });
-        db.run(`ALTER TABLE users ADD COLUMN token_used INTEGER DEFAULT 0`, (err) => {
-            // Ignore error if column already exists
-        });
-        db.run(`ALTER TABLE users ADD COLUMN token_reset_at DATETIME`, (err) => {
-            // Ignore error if column already exists
-        });
-        db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`, (err) => {
-            // Ignore error if column already exists
-        });
-        db.run(`ALTER TABLE users ADD COLUMN title TEXT`, (err) => {
-            // Ignore error if column already exists
-        });
+    // User Token Quota (Add columns to users - we'll use ALTER TABLE to add if not exists)
+    db.run(`ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000`, (err) => {
+      // Ignore error if column already exists
+    });
+    db.run(`ALTER TABLE users ADD COLUMN token_used INTEGER DEFAULT 0`, (err) => {
+      // Ignore error if column already exists
+    });
+    db.run(`ALTER TABLE users ADD COLUMN token_reset_at DATETIME`, (err) => {
+      // Ignore error if column already exists
+    });
+    db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`, (err) => {
+      // Ignore error if column already exists
+    });
+    db.run(`ALTER TABLE users ADD COLUMN title TEXT`, (err) => {
+      // Ignore error if column already exists
+    });
 
-        // GAP-03: Add rag_enabled column to projects
-        db.run(`ALTER TABLE projects ADD COLUMN rag_enabled INTEGER DEFAULT 1`, (err) => {
-            // Ignore error if column already exists
-        });
+    // GAP-03: Add rag_enabled column to projects
+    db.run(`ALTER TABLE projects ADD COLUMN rag_enabled INTEGER DEFAULT 1`, (err) => {
+      // Ignore error if column already exists
+    });
 
-        // MED-04: Project Notification Settings table
-        db.run(`CREATE TABLE IF NOT EXISTS project_notification_settings (
+    // MED-04: Project Notification Settings table
+    db.run(
+      `CREATE TABLE IF NOT EXISTS project_notification_settings (
             id TEXT PRIMARY KEY,
             project_id TEXT UNIQUE NOT NULL,
             task_overdue_enabled INTEGER DEFAULT 1,
@@ -498,16 +514,18 @@ export function initDb(db) {
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (project_id) REFERENCES projects(id)
-        )`, (err) => {
-            // Table creation - ignore if exists
-        });
+        )`,
+      (err) => {
+        // Table creation - ignore if exists
+      }
+    );
 
-        // ==========================================
-        // PHASE 3: AI EVOLUTION TABLES
-        // ==========================================
+    // ==========================================
+    // PHASE 3: AI EVOLUTION TABLES
+    // ==========================================
 
-        // AI Feedback (Self-Learning Memory)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_feedback (
+    // AI Feedback (Self-Learning Memory)
+    db.run(`CREATE TABLE IF NOT EXISTS ai_feedback (
             id TEXT PRIMARY KEY,
             organization_id TEXT,
             user_id TEXT,
@@ -523,8 +541,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Custom AI Prompts (Organization-specific)
-        db.run(`CREATE TABLE IF NOT EXISTS custom_prompts (
+    // Custom AI Prompts (Organization-specific)
+    db.run(`CREATE TABLE IF NOT EXISTS custom_prompts (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -539,8 +557,8 @@ export function initDb(db) {
             FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Webhooks (Integration Hub)
-        db.run(`CREATE TABLE IF NOT EXISTS webhooks (
+    // Webhooks (Integration Hub)
+    db.run(`CREATE TABLE IF NOT EXISTS webhooks (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             name TEXT NOT NULL,
@@ -556,8 +574,8 @@ export function initDb(db) {
             FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // AI Logs (Analytics)
-        db.run(`CREATE TABLE IF NOT EXISTS ai_logs (
+    // AI Logs (Analytics)
+    db.run(`CREATE TABLE IF NOT EXISTS ai_logs (
             id TEXT PRIMARY KEY,
             user_id TEXT,
             action TEXT, -- diagnose, chat, etc.
@@ -569,8 +587,8 @@ export function initDb(db) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // System Prompts (Super Admin Control)
-        db.run(`CREATE TABLE IF NOT EXISTS system_prompts (
+    // System Prompts (Super Admin Control)
+    db.run(`CREATE TABLE IF NOT EXISTS system_prompts (
             id TEXT PRIMARY KEY,
             key TEXT UNIQUE, -- e.g. 'ANALYST', 'CONSULTANT'
             content TEXT,
@@ -579,23 +597,50 @@ export function initDb(db) {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // Seed Default System Prompts if not exist
-        const defaultPrompts = [
-            { key: 'ANALYST', desc: 'Tone for Diagnosis', content: "You are an Expert Digital Analyst. Your tone is objective, data-driven, and analytical. You focus on interpreting facts, KPIs, and current state assessments without fluff." },
-            { key: 'CONSULTANT', desc: 'Tone for Recommendations', content: "You are a Senior Digital Transformation Consultant. Your tone is professional, solution-oriented, and convincing. You bridge the gap between analysis and strategy, recommending concrete initiatives." },
-            { key: 'STRATEGIST', desc: 'Tone for Roadmap', content: "You are a Strategic Advisor to the CEO. You think in 3-5 year horizons. You focus on competitive advantage, business models, and high-level roadmap architecture. You prioritize culture and leadership." },
-            { key: 'FINANCE', desc: 'Tone for ROI', content: "You are a Financial Expert / CFO Advisor. You speak in terms of ROI, CAPEX, OPEX, payback periods, and net present value. You justify every initiative with economic logic." },
-            { key: 'MENTOR', desc: 'Tone for Coaching', content: "You are a Leadership Coach and Mentor. Your tone is supportive, encouraging, and psychological. You focus on mindset, change management, and overcoming resistance." }
-        ];
+    // Seed Default System Prompts if not exist
+    const defaultPrompts = [
+      {
+        key: 'ANALYST',
+        desc: 'Tone for Diagnosis',
+        content:
+          'You are an Expert Digital Analyst. Your tone is objective, data-driven, and analytical. You focus on interpreting facts, KPIs, and current state assessments without fluff.',
+      },
+      {
+        key: 'CONSULTANT',
+        desc: 'Tone for Recommendations',
+        content:
+          'You are a Senior Digital Transformation Consultant. Your tone is professional, solution-oriented, and convincing. You bridge the gap between analysis and strategy, recommending concrete initiatives.',
+      },
+      {
+        key: 'STRATEGIST',
+        desc: 'Tone for Roadmap',
+        content:
+          'You are a Strategic Advisor to the CEO. You think in 3-5 year horizons. You focus on competitive advantage, business models, and high-level roadmap architecture. You prioritize culture and leadership.',
+      },
+      {
+        key: 'FINANCE',
+        desc: 'Tone for ROI',
+        content:
+          'You are a Financial Expert / CFO Advisor. You speak in terms of ROI, CAPEX, OPEX, payback periods, and net present value. You justify every initiative with economic logic.',
+      },
+      {
+        key: 'MENTOR',
+        desc: 'Tone for Coaching',
+        content:
+          'You are a Leadership Coach and Mentor. Your tone is supportive, encouraging, and psychological. You focus on mindset, change management, and overcoming resistance.',
+      },
+    ];
 
-        const insertPrompt = db.prepare(`INSERT OR IGNORE INTO system_prompts (id, key, description, content, updated_by) VALUES (?, ?, ?, ?, ?)`);
-        defaultPrompts.forEach(p => {
-            insertPrompt.run(uuidv4(), p.key, p.desc, p.content, 'system');
-        });
-        insertPrompt.finalize();
+    const insertPrompt = db.prepare(
+      `INSERT OR IGNORE INTO system_prompts (id, key, description, content, updated_by) VALUES (?, ?, ?, ?, ?)`
+    );
+    defaultPrompts.forEach((p) => {
+      insertPrompt.run(uuidv4(), p.key, p.desc, p.content, 'system');
+    });
+    insertPrompt.finalize();
 
-        // Feedback / System Issues Table
-        db.run(`CREATE TABLE IF NOT EXISTS feedback (
+    // Feedback / System Issues Table
+    db.run(`CREATE TABLE IF NOT EXISTS feedback (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             type TEXT NOT NULL, -- bug, feature, general
@@ -607,8 +652,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Revoked Tokens Table (JWT Blacklist)
-        db.run(`CREATE TABLE IF NOT EXISTS revoked_tokens (
+    // Revoked Tokens Table (JWT Blacklist)
+    db.run(`CREATE TABLE IF NOT EXISTS revoked_tokens (
             jti TEXT PRIMARY KEY,
             user_id TEXT,
             expires_at DATETIME NOT NULL,
@@ -617,10 +662,10 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Refresh Tokens Table (Critical for Auth)
-        // DROP to ensure schema update since we are fixing it
-        db.run(`DROP TABLE IF EXISTS refresh_tokens`);
-        db.run(`CREATE TABLE IF NOT EXISTS refresh_tokens (
+    // Refresh Tokens Table (Critical for Auth)
+    // DROP to ensure schema update since we are fixing it
+    db.run(`DROP TABLE IF EXISTS refresh_tokens`);
+    db.run(`CREATE TABLE IF NOT EXISTS refresh_tokens (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             token_hash TEXT NOT NULL,
@@ -636,8 +681,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Invitations Table
-        db.run(`CREATE TABLE IF NOT EXISTS invitations (
+    // Invitations Table
+    db.run(`CREATE TABLE IF NOT EXISTS invitations (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             email TEXT NOT NULL,
@@ -652,8 +697,8 @@ export function initDb(db) {
             FOREIGN KEY(invited_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Access Requests Table (for controlled organization access)
-        db.run(`CREATE TABLE IF NOT EXISTS access_requests (
+    // Access Requests Table (for controlled organization access)
+    db.run(`CREATE TABLE IF NOT EXISTS access_requests (
             id TEXT PRIMARY KEY,
             email TEXT NOT NULL,
             first_name TEXT,
@@ -673,8 +718,8 @@ export function initDb(db) {
             FOREIGN KEY(reviewed_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Access Codes Table (Admin-generated codes for organization access)
-        db.run(`CREATE TABLE IF NOT EXISTS access_codes (
+    // Access Codes Table (Admin-generated codes for organization access)
+    db.run(`CREATE TABLE IF NOT EXISTS access_codes (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             code TEXT NOT NULL UNIQUE,
@@ -689,8 +734,8 @@ export function initDb(db) {
             FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Usage Tracking for Access Codes
-        db.run(`CREATE TABLE IF NOT EXISTS access_code_usage (
+    // Usage Tracking for Access Codes
+    db.run(`CREATE TABLE IF NOT EXISTS access_code_usage (
             id TEXT PRIMARY KEY,
             code_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
@@ -699,12 +744,12 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // ==========================================
-        // PHASE 4: COMPOSABLE REPORTS SYSTEM
-        // ==========================================
+    // ==========================================
+    // PHASE 4: COMPOSABLE REPORTS SYSTEM
+    // ==========================================
 
-        // 1. REPORTS TABLE (Container)
-        db.run(`CREATE TABLE IF NOT EXISTS reports (
+    // 1. REPORTS TABLE (Container)
+    db.run(`CREATE TABLE IF NOT EXISTS reports (
             id TEXT PRIMARY KEY,
             project_id TEXT,
             organization_id TEXT NOT NULL,
@@ -718,8 +763,8 @@ export function initDb(db) {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // 2. REPORT BLOCKS TABLE (Content)
-        db.run(`CREATE TABLE IF NOT EXISTS report_blocks (
+    // 2. REPORT BLOCKS TABLE (Content)
+    db.run(`CREATE TABLE IF NOT EXISTS report_blocks (
             id TEXT PRIMARY KEY,
             report_id TEXT NOT NULL,
             type TEXT NOT NULL, -- text, table, cards, matrix, evidence_list, recommendation, image
@@ -737,8 +782,8 @@ export function initDb(db) {
             FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
         )`);
 
-        // 3. REPORT SNAPSHOTS (Versioning)
-        db.run(`CREATE TABLE IF NOT EXISTS report_snapshots (
+    // 3. REPORT SNAPSHOTS (Versioning)
+    db.run(`CREATE TABLE IF NOT EXISTS report_snapshots (
             id TEXT PRIMARY KEY,
             report_id TEXT NOT NULL,
             version INTEGER NOT NULL,
@@ -748,14 +793,14 @@ export function initDb(db) {
             FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
         )`);
 
-        // ==========================================
-        // PHASE 2: DRD STRATEGY EXECUTION ENGINE
-        // ==========================================
+    // ==========================================
+    // PHASE 2: DRD STRATEGY EXECUTION ENGINE
+    // ==========================================
 
-        // --- PHASE 1.5: AI LEARNING & CONTEXT (NEW) ---
+    // --- PHASE 1.5: AI LEARNING & CONTEXT (NEW) ---
 
-        // 1. Knowledge Candidates (The "Inbox" for AI Ideas)
-        db.run(`CREATE TABLE IF NOT EXISTS knowledge_candidates (
+    // 1. Knowledge Candidates (The "Inbox" for AI Ideas)
+    db.run(`CREATE TABLE IF NOT EXISTS knowledge_candidates (
             id TEXT PRIMARY KEY,
             content TEXT NOT NULL,          -- The proposed insight/idea
             reasoning TEXT,                 -- Why is this useful?
@@ -768,8 +813,8 @@ export function initDb(db) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // 2. Global Strategic Directions (Admin Controls)
-        db.run(`CREATE TABLE IF NOT EXISTS global_strategies (
+    // 2. Global Strategic Directions (Admin Controls)
+    db.run(`CREATE TABLE IF NOT EXISTS global_strategies (
             id TEXT PRIMARY KEY,
             title TEXT NOT NULL,
             description TEXT,
@@ -778,8 +823,8 @@ export function initDb(db) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // 3. Client Context (Persistent Memory per Client)
-        db.run(`CREATE TABLE IF NOT EXISTS client_context (
+    // 3. Client Context (Persistent Memory per Client)
+    db.run(`CREATE TABLE IF NOT EXISTS client_context (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             key TEXT NOT NULL,              -- e.g., 'cultural_tone', 'risk_appetite', 'industry_focus'
@@ -790,22 +835,22 @@ export function initDb(db) {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // Update Knowledge Chunks for Vector Support
-        db.run(`ALTER TABLE knowledge_chunks ADD COLUMN embedding TEXT`, (err) => {
-            // Ignore if exists
-        });
+    // Update Knowledge Chunks for Vector Support
+    db.run(`ALTER TABLE knowledge_chunks ADD COLUMN embedding TEXT`, (err) => {
+      // Ignore if exists
+    });
 
-        // ==========================================
-        // PHASE 4: ANALYTICS & BENCHMARKING
-        // ==========================================
+    // ==========================================
+    // PHASE 4: ANALYTICS & BENCHMARKING
+    // ==========================================
 
-        // 1. Add Industry to Organizations
-        db.run(`ALTER TABLE organizations ADD COLUMN industry TEXT DEFAULT 'General'`, (err) => {
-            // Ignore if exists
-        });
+    // 1. Add Industry to Organizations
+    db.run(`ALTER TABLE organizations ADD COLUMN industry TEXT DEFAULT 'General'`, (err) => {
+      // Ignore if exists
+    });
 
-        // 2. Maturity Scores (Structured Data for Benchmarking)
-        db.run(`CREATE TABLE IF NOT EXISTS maturity_scores (
+    // 2. Maturity Scores (Structured Data for Benchmarking)
+    db.run(`CREATE TABLE IF NOT EXISTS maturity_scores (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             axis TEXT NOT NULL,         -- e.g. 'Culture', 'Data'
@@ -815,22 +860,22 @@ export function initDb(db) {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // Add Active LLM Provider to Organizations
-        db.run(`ALTER TABLE organizations ADD COLUMN active_llm_provider_id TEXT`, (err) => {
-            // Ignore if exists
-        });
+    // Add Active LLM Provider to Organizations
+    db.run(`ALTER TABLE organizations ADD COLUMN active_llm_provider_id TEXT`, (err) => {
+      // Ignore if exists
+    });
 
-        // Add Discount Percent to Organizations
-        db.run(`ALTER TABLE organizations ADD COLUMN discount_percent INTEGER DEFAULT 0`, (err) => {
-            // Ignore if exists
-        });
+    // Add Discount Percent to Organizations
+    db.run(`ALTER TABLE organizations ADD COLUMN discount_percent INTEGER DEFAULT 0`, (err) => {
+      // Ignore if exists
+    });
 
-        // ==========================================
-        // PHASE 2: DRD STRATEGY EXECUTION ENGINE
-        // ==========================================
+    // ==========================================
+    // PHASE 2: DRD STRATEGY EXECUTION ENGINE
+    // ==========================================
 
-        // Initiatves Table (Master Object)
-        db.run(`CREATE TABLE IF NOT EXISTS initiatives (
+    // Initiatves Table (Master Object)
+    db.run(`CREATE TABLE IF NOT EXISTS initiatives (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             project_id TEXT, -- Optional link to legacy project container
@@ -862,29 +907,32 @@ export function initDb(db) {
             FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Update Initiatives Table with Professional Card fields
-        const initiativeColumns = [
-            { name: 'problem_statement', type: 'TEXT', default: "''" },
-            { name: 'deliverables', type: 'TEXT', default: "'[]'" }, // JSON
-            { name: 'success_criteria', type: 'TEXT', default: "'[]'" }, // JSON
-            { name: 'scope_in', type: 'TEXT', default: "'[]'" }, // JSON
-            { name: 'scope_out', type: 'TEXT', default: "'[]'" }, // JSON
-            { name: 'key_risks', type: 'TEXT', default: "'[]'" } // JSON
-        ];
+    // Update Initiatives Table with Professional Card fields
+    const initiativeColumns = [
+      { name: 'problem_statement', type: 'TEXT', default: "''" },
+      { name: 'deliverables', type: 'TEXT', default: "'[]'" }, // JSON
+      { name: 'success_criteria', type: 'TEXT', default: "'[]'" }, // JSON
+      { name: 'scope_in', type: 'TEXT', default: "'[]'" }, // JSON
+      { name: 'scope_out', type: 'TEXT', default: "'[]'" }, // JSON
+      { name: 'key_risks', type: 'TEXT', default: "'[]'" }, // JSON
+    ];
 
-        initiativeColumns.forEach(col => {
-            db.run(`ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
-                // Ignore error if column already exists
-            });
-        });
+    initiativeColumns.forEach((col) => {
+      db.run(
+        `ALTER TABLE initiatives ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`,
+        (err) => {
+          // Ignore error if column already exists
+        }
+      );
+    });
 
-        // Add report_id for traceability
-        db.run(`ALTER TABLE initiatives ADD COLUMN report_id TEXT`, (err) => {
-            // Ignore if exists - Link to assessment_reports
-        });
+    // Add report_id for traceability
+    db.run(`ALTER TABLE initiatives ADD COLUMN report_id TEXT`, (err) => {
+      // Ignore if exists - Link to assessment_reports
+    });
 
-        // Task Dependencies
-        db.run(`CREATE TABLE IF NOT EXISTS task_dependencies (
+    // Task Dependencies
+    db.run(`CREATE TABLE IF NOT EXISTS task_dependencies (
             id TEXT PRIMARY KEY,
             from_task_id TEXT NOT NULL,
             to_task_id TEXT NOT NULL,
@@ -894,32 +942,35 @@ export function initDb(db) {
             FOREIGN KEY(to_task_id) REFERENCES tasks(id) ON DELETE CASCADE
         )`);
 
-        // Extend TASKS table with Consulting-Grade fields
-        // We use ALTER TABLE for each new column to ensure backward compatibility
-        const taskColumns = [
-            { name: 'task_type', type: 'TEXT', default: "'execution'" }, // analytical, design, execution, validation
-            { name: 'budget_allocated', type: 'REAL', default: '0' },
-            { name: 'budget_spent', type: 'REAL', default: '0' },
-            { name: 'risk_rating', type: 'TEXT', default: "'low'" }, // low, medium, high, critical
-            { name: 'acceptance_criteria', type: 'TEXT', default: "''" },
-            { name: 'blocking_issues', type: 'TEXT', default: "''" }, // JSON or Text description
-            { name: 'step_phase', type: 'TEXT', default: "'design'" }, // design, pilot, rollout
-            { name: 'initiative_id', type: 'TEXT', default: 'NULL' },
-            { name: 'why', type: 'TEXT', default: "''" } // justification // Link to parent Initiative
-        ];
+    // Extend TASKS table with Consulting-Grade fields
+    // We use ALTER TABLE for each new column to ensure backward compatibility
+    const taskColumns = [
+      { name: 'task_type', type: 'TEXT', default: "'execution'" }, // analytical, design, execution, validation
+      { name: 'budget_allocated', type: 'REAL', default: '0' },
+      { name: 'budget_spent', type: 'REAL', default: '0' },
+      { name: 'risk_rating', type: 'TEXT', default: "'low'" }, // low, medium, high, critical
+      { name: 'acceptance_criteria', type: 'TEXT', default: "''" },
+      { name: 'blocking_issues', type: 'TEXT', default: "''" }, // JSON or Text description
+      { name: 'step_phase', type: 'TEXT', default: "'design'" }, // design, pilot, rollout
+      { name: 'initiative_id', type: 'TEXT', default: 'NULL' },
+      { name: 'why', type: 'TEXT', default: "''" }, // justification // Link to parent Initiative
+    ];
 
-        taskColumns.forEach(col => {
-            db.run(`ALTER TABLE tasks ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`, (err) => {
-                // Ignore error if column already exists
-            });
-        });
+    taskColumns.forEach((col) => {
+      db.run(
+        `ALTER TABLE tasks ADD COLUMN ${col.name} ${col.type} DEFAULT ${col.default}`,
+        (err) => {
+          // Ignore error if column already exists
+        }
+      );
+    });
 
-        // ==========================================
-        // PHASE: ENTERPRISE SAAS BILLING
-        // ==========================================
+    // ==========================================
+    // PHASE: ENTERPRISE SAAS BILLING
+    // ==========================================
 
-        // 1. SUBSCRIPTION PLANS (Superadmin-managed)
-        db.run(`CREATE TABLE IF NOT EXISTS subscription_plans (
+    // 1. SUBSCRIPTION PLANS (Superadmin-managed)
+    db.run(`CREATE TABLE IF NOT EXISTS subscription_plans (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             price_monthly REAL NOT NULL,
@@ -932,29 +983,82 @@ export function initDb(db) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // Migration: Ensure new columns exist for subscription_plans (if table already existed)
-        const planCols = ['token_overage_rate REAL', 'storage_overage_rate REAL', 'stripe_price_id TEXT'];
-        planCols.forEach(col => {
-            db.run(`ALTER TABLE subscription_plans ADD COLUMN ${col}`, (err) => { /* ignore error if exists */ });
-        });
+    // Migration: Ensure new columns exist for subscription_plans (if table already existed)
+    const planCols = [
+      'token_overage_rate REAL',
+      'storage_overage_rate REAL',
+      'stripe_price_id TEXT',
+    ];
+    planCols.forEach((col) => {
+      db.run(`ALTER TABLE subscription_plans ADD COLUMN ${col}`, (err) => {
+        /* ignore error if exists */
+      });
+    });
 
-        // Seed Default Subscription Plans
-        const defaultPlans = [
-            { id: 'plan_free', name: 'Free', price_monthly: 0, token_limit: 50000, storage_limit_gb: 1, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' },
-            { id: 'plan_basic', name: 'Basic', price_monthly: 20, token_limit: 500000, storage_limit_gb: 10, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' },
-            { id: 'plan_standard', name: 'Standard', price_monthly: 100, token_limit: 5000000, storage_limit_gb: 50, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' },
-            { id: 'plan_premium', name: 'Premium', price_monthly: 500, token_limit: 30000000, storage_limit_gb: 500, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' }
-        ];
+    // Seed Default Subscription Plans
+    const defaultPlans = [
+      {
+        id: 'plan_free',
+        name: 'Free',
+        price_monthly: 0,
+        token_limit: 50000,
+        storage_limit_gb: 1,
+        token_overage_rate: 0.015,
+        storage_overage_rate: 0.1,
+        stripe_price_id: '',
+      },
+      {
+        id: 'plan_basic',
+        name: 'Basic',
+        price_monthly: 20,
+        token_limit: 500000,
+        storage_limit_gb: 10,
+        token_overage_rate: 0.015,
+        storage_overage_rate: 0.1,
+        stripe_price_id: '',
+      },
+      {
+        id: 'plan_standard',
+        name: 'Standard',
+        price_monthly: 100,
+        token_limit: 5000000,
+        storage_limit_gb: 50,
+        token_overage_rate: 0.015,
+        storage_overage_rate: 0.1,
+        stripe_price_id: '',
+      },
+      {
+        id: 'plan_premium',
+        name: 'Premium',
+        price_monthly: 500,
+        token_limit: 30000000,
+        storage_limit_gb: 500,
+        token_overage_rate: 0.015,
+        storage_overage_rate: 0.1,
+        stripe_price_id: '',
+      },
+    ];
 
-        const insertPlan = db.prepare(`INSERT OR IGNORE INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate, stripe_price_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+    const insertPlan = db.prepare(
+      `INSERT OR IGNORE INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate, stripe_price_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    );
 
-        defaultPlans.forEach(p => {
-            insertPlan.run(p.id, p.name, p.price_monthly, p.token_limit, p.storage_limit_gb, p.token_overage_rate, p.storage_overage_rate, p.stripe_price_id);
-        });
-        insertPlan.finalize();
+    defaultPlans.forEach((p) => {
+      insertPlan.run(
+        p.id,
+        p.name,
+        p.price_monthly,
+        p.token_limit,
+        p.storage_limit_gb,
+        p.token_overage_rate,
+        p.storage_overage_rate,
+        p.stripe_price_id
+      );
+    });
+    insertPlan.finalize();
 
-        // 2. ORGANIZATION BILLING (per tenant)
-        db.run(`CREATE TABLE IF NOT EXISTS organization_billing (
+    // 2. ORGANIZATION BILLING (per tenant)
+    db.run(`CREATE TABLE IF NOT EXISTS organization_billing (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL UNIQUE,
             subscription_plan_id TEXT,
@@ -973,8 +1077,8 @@ export function initDb(db) {
             FOREIGN KEY(subscription_plan_id) REFERENCES subscription_plans(id)
         )`);
 
-        // Usage Counters (Daily velocity limits)
-        db.run(`CREATE TABLE IF NOT EXISTS usage_counters (
+    // Usage Counters (Daily velocity limits)
+    db.run(`CREATE TABLE IF NOT EXISTS usage_counters (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             counter_date DATE NOT NULL,
@@ -986,8 +1090,8 @@ export function initDb(db) {
             UNIQUE(organization_id, counter_date)
         )`);
 
-        // 3. USAGE RECORDS (detailed token/storage tracking)
-        db.run(`CREATE TABLE IF NOT EXISTS usage_records (
+    // 3. USAGE RECORDS (detailed token/storage tracking)
+    db.run(`CREATE TABLE IF NOT EXISTS usage_records (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             user_id TEXT,
@@ -1000,8 +1104,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // 4. MONTHLY USAGE SUMMARIES (for billing)
-        db.run(`CREATE TABLE IF NOT EXISTS usage_summaries (
+    // 4. MONTHLY USAGE SUMMARIES (for billing)
+    db.run(`CREATE TABLE IF NOT EXISTS usage_summaries (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             period_start DATE NOT NULL,
@@ -1019,12 +1123,12 @@ export function initDb(db) {
             UNIQUE(organization_id, period_start)
         )`);
 
-        // ==========================================
-        // PHASE 1.5: DEMO & ENTERPRISE EXTENSIONS
-        // ==========================================
+    // ==========================================
+    // PHASE 1.5: DEMO & ENTERPRISE EXTENSIONS
+    // ==========================================
 
-        // Organization Limits (Static tier-based limits)
-        db.run(`CREATE TABLE IF NOT EXISTS organization_limits (
+    // Organization Limits (Static tier-based limits)
+    db.run(`CREATE TABLE IF NOT EXISTS organization_limits (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL UNIQUE,
             max_projects INTEGER DEFAULT 3,
@@ -1039,8 +1143,8 @@ export function initDb(db) {
             FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // Organization Events (Lifecycle tracking)
-        db.run(`CREATE TABLE IF NOT EXISTS organization_events (
+    // Organization Events (Lifecycle tracking)
+    db.run(`CREATE TABLE IF NOT EXISTS organization_events (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             event_type TEXT NOT NULL,
@@ -1049,8 +1153,8 @@ export function initDb(db) {
             FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // Maturity Assessments
-        db.run(`CREATE TABLE IF NOT EXISTS maturity_assessments (
+    // Maturity Assessments
+    db.run(`CREATE TABLE IF NOT EXISTS maturity_assessments (
             id TEXT PRIMARY KEY,
             project_id TEXT NOT NULL,
             axis_scores TEXT,
@@ -1065,8 +1169,8 @@ export function initDb(db) {
             FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
         )`);
 
-        // Multi Framework Assessments
-        db.run(`CREATE TABLE IF NOT EXISTS multi_framework_assessments (
+    // Multi Framework Assessments
+    db.run(`CREATE TABLE IF NOT EXISTS multi_framework_assessments (
             id TEXT PRIMARY KEY,
             project_id TEXT,
             organization_id TEXT NOT NULL,
@@ -1081,8 +1185,8 @@ export function initDb(db) {
             FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // Rapid Lean Assessments
-        db.run(`CREATE TABLE IF NOT EXISTS rapid_lean_assessments (
+    // Rapid Lean Assessments
+    db.run(`CREATE TABLE IF NOT EXISTS rapid_lean_assessments (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             project_id TEXT,
@@ -1104,8 +1208,8 @@ export function initDb(db) {
             FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
         )`);
 
-        // Help Events
-        db.run(`CREATE TABLE IF NOT EXISTS help_events (
+    // Help Events
+    db.run(`CREATE TABLE IF NOT EXISTS help_events (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             user_id TEXT,
@@ -1116,14 +1220,17 @@ export function initDb(db) {
             FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // Migration: Add organization_type to organizations
-        db.run(`ALTER TABLE organizations ADD COLUMN organization_type TEXT DEFAULT 'TRIAL'`, (err) => { });
-        db.run(`ALTER TABLE organizations ADD COLUMN is_active INTEGER DEFAULT 1`, (err) => { });
-        db.run(`ALTER TABLE organizations ADD COLUMN trial_started_at DATETIME`, (err) => { });
-        db.run(`ALTER TABLE organizations ADD COLUMN trial_expires_at DATETIME`, (err) => { });
+    // Migration: Add organization_type to organizations
+    db.run(
+      `ALTER TABLE organizations ADD COLUMN organization_type TEXT DEFAULT 'TRIAL'`,
+      (err) => {}
+    );
+    db.run(`ALTER TABLE organizations ADD COLUMN is_active INTEGER DEFAULT 1`, (err) => {});
+    db.run(`ALTER TABLE organizations ADD COLUMN trial_started_at DATETIME`, (err) => {});
+    db.run(`ALTER TABLE organizations ADD COLUMN trial_expires_at DATETIME`, (err) => {});
 
-        // 5. INVOICES (for history & reconciliation)
-        db.run(`CREATE TABLE IF NOT EXISTS invoices (
+    // 5. INVOICES (for history & reconciliation)
+    db.run(`CREATE TABLE IF NOT EXISTS invoices (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             stripe_invoice_id TEXT UNIQUE,
@@ -1138,8 +1245,8 @@ export function initDb(db) {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // 6. FEATURE FLAGS (per plan)
-        db.run(`CREATE TABLE IF NOT EXISTS plan_features (
+    // 6. FEATURE FLAGS (per plan)
+    db.run(`CREATE TABLE IF NOT EXISTS plan_features (
             id TEXT PRIMARY KEY,
             plan_id TEXT NOT NULL,
             feature_key TEXT NOT NULL,
@@ -1148,12 +1255,12 @@ export function initDb(db) {
             FOREIGN KEY(plan_id) REFERENCES subscription_plans(id) ON DELETE CASCADE
         )`);
 
-        // ==========================================
-        // PHASE: 3-TIER TOKEN BILLING SYSTEM
-        // ==========================================
+    // ==========================================
+    // PHASE: 3-TIER TOKEN BILLING SYSTEM
+    // ==========================================
 
-        // 1. Billing Margins (Configurable per source type)
-        db.run(`CREATE TABLE IF NOT EXISTS billing_margins (
+    // 1. Billing Margins (Configurable per source type)
+    db.run(`CREATE TABLE IF NOT EXISTS billing_margins (
             id TEXT PRIMARY KEY,
             source_type TEXT NOT NULL UNIQUE, -- 'platform', 'byok', 'local'
             display_name TEXT,
@@ -1164,8 +1271,8 @@ export function initDb(db) {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // 2. Token Packages (Purchasable bundles)
-        db.run(`CREATE TABLE IF NOT EXISTS token_packages (
+    // 2. Token Packages (Purchasable bundles)
+    db.run(`CREATE TABLE IF NOT EXISTS token_packages (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             description TEXT,
@@ -1179,8 +1286,8 @@ export function initDb(db) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // 3. User Token Balance (Per-user token wallet)
-        db.run(`CREATE TABLE IF NOT EXISTS user_token_balance (
+    // 3. User Token Balance (Per-user token wallet)
+    db.run(`CREATE TABLE IF NOT EXISTS user_token_balance (
             user_id TEXT PRIMARY KEY,
             platform_tokens INTEGER DEFAULT 0,      -- Purchased from us
             platform_tokens_bonus INTEGER DEFAULT 0, -- Bonus tokens
@@ -1192,8 +1299,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // 4. Token Transactions (Full audit trail)
-        db.run(`CREATE TABLE IF NOT EXISTS token_transactions (
+    // 4. Token Transactions (Full audit trail)
+    db.run(`CREATE TABLE IF NOT EXISTS token_transactions (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             organization_id TEXT,
@@ -1215,13 +1322,13 @@ export function initDb(db) {
             FOREIGN KEY(package_id) REFERENCES token_packages(id) ON DELETE SET NULL
         )`);
 
-        // Migration: Add metadata if not exists
-        db.run(`ALTER TABLE token_transactions ADD COLUMN metadata TEXT`, (err) => {
-            // Ignore error if column already exists
-        });
+    // Migration: Add metadata if not exists
+    db.run(`ALTER TABLE token_transactions ADD COLUMN metadata TEXT`, (err) => {
+      // Ignore error if column already exists
+    });
 
-        // 5. User API Keys (BYOK - Bring Your Own Key)
-        db.run(`CREATE TABLE IF NOT EXISTS user_api_keys (
+    // 5. User API Keys (BYOK - Bring Your Own Key)
+    db.run(`CREATE TABLE IF NOT EXISTS user_api_keys (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             organization_id TEXT,
@@ -1238,12 +1345,12 @@ export function initDb(db) {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // ==========================================
-        // PHASE: SYSTEM MODULE - ENTERPRISE TABLES
-        // ==========================================
+    // ==========================================
+    // PHASE: SYSTEM MODULE - ENTERPRISE TABLES
+    // ==========================================
 
-        // Feature Flags Table
-        db.run(`CREATE TABLE IF NOT EXISTS feature_flags (
+    // Feature Flags Table
+    db.run(`CREATE TABLE IF NOT EXISTS feature_flags (
             id TEXT PRIMARY KEY,
             flag_key TEXT UNIQUE NOT NULL,
             name TEXT NOT NULL,
@@ -1261,8 +1368,8 @@ export function initDb(db) {
             FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Feature Flag History Table
-        db.run(`CREATE TABLE IF NOT EXISTS feature_flag_history (
+    // Feature Flag History Table
+    db.run(`CREATE TABLE IF NOT EXISTS feature_flag_history (
             id TEXT PRIMARY KEY,
             feature_flag_id TEXT NOT NULL,
             change_type TEXT NOT NULL, -- created, updated, enabled, disabled
@@ -1274,8 +1381,8 @@ export function initDb(db) {
             FOREIGN KEY(changed_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Webhook Deliveries Table
-        db.run(`CREATE TABLE IF NOT EXISTS webhook_deliveries (
+    // Webhook Deliveries Table
+    db.run(`CREATE TABLE IF NOT EXISTS webhook_deliveries (
             id TEXT PRIMARY KEY,
             webhook_id TEXT NOT NULL,
             event_type TEXT NOT NULL,
@@ -1289,24 +1396,33 @@ export function initDb(db) {
             FOREIGN KEY(webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
         )`);
 
-        // Add indexes for webhook_deliveries
-        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook_id ON webhook_deliveries(webhook_id)`, (err) => { });
-        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status ON webhook_deliveries(status)`, (err) => { });
-        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_at ON webhook_deliveries(created_at DESC)`, (err) => { });
+    // Add indexes for webhook_deliveries
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook_id ON webhook_deliveries(webhook_id)`,
+      (err) => {}
+    );
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status ON webhook_deliveries(status)`,
+      (err) => {}
+    );
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_at ON webhook_deliveries(created_at DESC)`,
+      (err) => {}
+    );
 
-        // Extend existing webhooks table with missing columns
-        db.run(`ALTER TABLE webhooks ADD COLUMN retry_policy TEXT`, (err) => {
-            // Ignore error if column already exists
-        });
-        db.run(`ALTER TABLE webhooks ADD COLUMN headers TEXT`, (err) => {
-            // Ignore error if column already exists
-        });
-        db.run(`ALTER TABLE webhooks ADD COLUMN payload_template TEXT`, (err) => {
-            // Ignore error if column already exists
-        });
+    // Extend existing webhooks table with missing columns
+    db.run(`ALTER TABLE webhooks ADD COLUMN retry_policy TEXT`, (err) => {
+      // Ignore error if column already exists
+    });
+    db.run(`ALTER TABLE webhooks ADD COLUMN headers TEXT`, (err) => {
+      // Ignore error if column already exists
+    });
+    db.run(`ALTER TABLE webhooks ADD COLUMN payload_template TEXT`, (err) => {
+      // Ignore error if column already exists
+    });
 
-        // Integrations Table
-        db.run(`CREATE TABLE IF NOT EXISTS integrations (
+    // Integrations Table
+    db.run(`CREATE TABLE IF NOT EXISTS integrations (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
             type TEXT NOT NULL, -- slack, jira, google_workspace, microsoft_365, github, etc.
@@ -1322,8 +1438,8 @@ export function initDb(db) {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        // Integration Sync Logs Table
-        db.run(`CREATE TABLE IF NOT EXISTS integration_sync_logs (
+    // Integration Sync Logs Table
+    db.run(`CREATE TABLE IF NOT EXISTS integration_sync_logs (
             id TEXT PRIMARY KEY,
             integration_id TEXT NOT NULL,
             sync_type TEXT NOT NULL, -- full, incremental
@@ -1335,8 +1451,8 @@ export function initDb(db) {
             FOREIGN KEY(integration_id) REFERENCES integrations(id) ON DELETE CASCADE
         )`);
 
-        // System Metrics Table
-        db.run(`CREATE TABLE IF NOT EXISTS system_metrics (
+    // System Metrics Table
+    db.run(`CREATE TABLE IF NOT EXISTS system_metrics (
             id TEXT PRIMARY KEY,
             metric_name TEXT NOT NULL,
             metric_value REAL NOT NULL,
@@ -1345,11 +1461,14 @@ export function initDb(db) {
             timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // Add indexes for system_metrics
-        db.run(`CREATE INDEX IF NOT EXISTS idx_system_metrics_name_time ON system_metrics(metric_name, timestamp DESC)`, (err) => { });
+    // Add indexes for system_metrics
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_system_metrics_name_time ON system_metrics(metric_name, timestamp DESC)`,
+      (err) => {}
+    );
 
-        // Security Events Table
-        db.run(`CREATE TABLE IF NOT EXISTS security_events (
+    // Security Events Table
+    db.run(`CREATE TABLE IF NOT EXISTS security_events (
             id TEXT PRIMARY KEY,
             event_type TEXT NOT NULL,
             severity TEXT NOT NULL, -- low, medium, high, critical
@@ -1364,8 +1483,8 @@ export function initDb(db) {
             FOREIGN KEY(resolved_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // Compliance Records Table
-        db.run(`CREATE TABLE IF NOT EXISTS compliance_records (
+    // Compliance Records Table
+    db.run(`CREATE TABLE IF NOT EXISTS compliance_records (
             id TEXT PRIMARY KEY,
             framework TEXT NOT NULL, -- GDPR, SOC2, ISO27001, HIPAA, PCI_DSS
             control_id TEXT,
@@ -1378,8 +1497,8 @@ export function initDb(db) {
             FOREIGN KEY(verified_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // System Configuration Table
-        db.run(`CREATE TABLE IF NOT EXISTS system_config (
+    // System Configuration Table
+    db.run(`CREATE TABLE IF NOT EXISTS system_config (
             id TEXT PRIMARY KEY,
             config_key TEXT UNIQUE NOT NULL,
             config_value TEXT NOT NULL, -- JSON
@@ -1391,8 +1510,8 @@ export function initDb(db) {
             FOREIGN KEY(updated_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
-        // API Keys Table
-        db.run(`CREATE TABLE IF NOT EXISTS api_keys (
+    // API Keys Table
+    db.run(`CREATE TABLE IF NOT EXISTS api_keys (
             id TEXT PRIMARY KEY,
             organization_id TEXT,
             user_id TEXT,
@@ -1409,8 +1528,8 @@ export function initDb(db) {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Backup Records Table
-        db.run(`CREATE TABLE IF NOT EXISTS backup_records (
+    // Backup Records Table
+    db.run(`CREATE TABLE IF NOT EXISTS backup_records (
             id TEXT PRIMARY KEY,
             backup_type TEXT NOT NULL, -- full, incremental
             status TEXT NOT NULL, -- in_progress, completed, failed
@@ -1422,8 +1541,9 @@ export function initDb(db) {
             metadata TEXT -- JSON
         )`);
 
-        // Migrate existing activity_logs to audit_logs (one-time migration)
-        db.run(`INSERT OR IGNORE INTO audit_logs (
+    // Migrate existing activity_logs to audit_logs (one-time migration)
+    db.run(
+      `INSERT OR IGNORE INTO audit_logs (
             id, timestamp, user_id, organization_id, action_type, resource_type, resource_id,
             before_data, after_data, ip_address, user_agent, risk_level
         )
@@ -1431,44 +1551,83 @@ export function initDb(db) {
             id, created_at, user_id, organization_id, action, entity_type, entity_id,
             old_value, new_value, ip_address, user_agent, 'LOW'
         FROM activity_logs
-        WHERE NOT EXISTS (SELECT 1 FROM audit_logs WHERE audit_logs.id = activity_logs.id)`, (err) => {
-            if (err) {
-                console.log('[Migration] Activity logs migration note:', err.message);
-            } else {
-                console.log('[Migration] Migrated activity_logs to audit_logs');
-            }
-        });
+        WHERE NOT EXISTS (SELECT 1 FROM audit_logs WHERE audit_logs.id = activity_logs.id)`,
+      (err) => {
+        if (err) {
+          console.log('[Migration] Activity logs migration note:', err.message);
+        } else {
+          console.log('[Migration] Migrated activity_logs to audit_logs');
+        }
+      }
+    );
 
-        // Seed Default Billing Margins
-        const defaultMargins = [
-            { id: 'margin-platform', source_type: 'platform', display_name: 'Platform Tokens', base_cost: 0.010, margin: 40 },
-            { id: 'margin-byok', source_type: 'byok', display_name: 'User API Key (BYOK)', base_cost: 0, margin: 15 },
-            { id: 'margin-local', source_type: 'local', display_name: 'Local/Self-Hosted', base_cost: 0, margin: 5 }
-        ];
+    // Seed Default Billing Margins
+    const defaultMargins = [
+      {
+        id: 'margin-platform',
+        source_type: 'platform',
+        display_name: 'Platform Tokens',
+        base_cost: 0.01,
+        margin: 40,
+      },
+      {
+        id: 'margin-byok',
+        source_type: 'byok',
+        display_name: 'User API Key (BYOK)',
+        base_cost: 0,
+        margin: 15,
+      },
+      {
+        id: 'margin-local',
+        source_type: 'local',
+        display_name: 'Local/Self-Hosted',
+        base_cost: 0,
+        margin: 5,
+      },
+    ];
 
-        const insertMargin = db.prepare(`INSERT OR IGNORE INTO billing_margins (id, source_type, display_name, base_cost_per_1k, margin_percent) VALUES (?, ?, ?, ?, ?)`);
-        defaultMargins.forEach(m => {
-            insertMargin.run(m.id, m.source_type, m.display_name, m.base_cost, m.margin);
-        });
-        insertMargin.finalize();
+    const insertMargin = db.prepare(
+      `INSERT OR IGNORE INTO billing_margins (id, source_type, display_name, base_cost_per_1k, margin_percent) VALUES (?, ?, ?, ?, ?)`
+    );
+    defaultMargins.forEach((m) => {
+      insertMargin.run(m.id, m.source_type, m.display_name, m.base_cost, m.margin);
+    });
+    insertMargin.finalize();
 
-        // Seed Default Token Packages
-        const defaultTokenPackages = [
-            { id: 'pkg-1k', name: 'Starter', tokens: 10000, price: 1.50, bonus: 0, popular: 0, order: 1 },
-            { id: 'pkg-10k', name: 'Basic', tokens: 100000, price: 12.00, bonus: 5, popular: 0, order: 2 },
-            { id: 'pkg-100k', name: 'Pro', tokens: 1000000, price: 100.00, bonus: 10, popular: 1, order: 3 },
-            { id: 'pkg-1m', name: 'Enterprise', tokens: 10000000, price: 800.00, bonus: 20, popular: 0, order: 4 }
-        ];
+    // Seed Default Token Packages
+    const defaultTokenPackages = [
+      { id: 'pkg-1k', name: 'Starter', tokens: 10000, price: 1.5, bonus: 0, popular: 0, order: 1 },
+      { id: 'pkg-10k', name: 'Basic', tokens: 100000, price: 12.0, bonus: 5, popular: 0, order: 2 },
+      {
+        id: 'pkg-100k',
+        name: 'Pro',
+        tokens: 1000000,
+        price: 100.0,
+        bonus: 10,
+        popular: 1,
+        order: 3,
+      },
+      {
+        id: 'pkg-1m',
+        name: 'Enterprise',
+        tokens: 10000000,
+        price: 800.0,
+        bonus: 20,
+        popular: 0,
+        order: 4,
+      },
+    ];
 
-        const insertPackage = db.prepare(`INSERT OR IGNORE INTO token_packages (id, name, tokens, price_usd, bonus_percent, is_popular, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-        defaultTokenPackages.forEach(p => {
-            insertPackage.run(p.id, p.name, p.tokens, p.price, p.bonus, p.popular, p.order);
-        });
-        insertPackage.finalize();
+    const insertPackage = db.prepare(
+      `INSERT OR IGNORE INTO token_packages (id, name, tokens, price_usd, bonus_percent, is_popular, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    );
+    defaultTokenPackages.forEach((p) => {
+      insertPackage.run(p.id, p.name, p.tokens, p.price, p.bonus, p.popular, p.order);
+    });
+    insertPackage.finalize();
 
-
-        // AI Ideas Board
-        db.run(`CREATE TABLE IF NOT EXISTS ai_ideas (
+    // AI Ideas Board
+    db.run(`CREATE TABLE IF NOT EXISTS ai_ideas (
             id TEXT PRIMARY KEY,
             title TEXT NOT NULL,
             description TEXT,
@@ -1477,8 +1636,8 @@ export function initDb(db) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // AI System Observations
-        db.run(`CREATE TABLE IF NOT EXISTS ai_observations (
+    // AI System Observations
+    db.run(`CREATE TABLE IF NOT EXISTS ai_observations (
             id TEXT PRIMARY KEY,
             content TEXT NOT NULL,
             category TEXT,
@@ -1486,12 +1645,12 @@ export function initDb(db) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // ==========================================
-        // PHASE 5: MEGATREND SCANNER
-        // ==========================================
+    // ==========================================
+    // PHASE 5: MEGATREND SCANNER
+    // ==========================================
 
-        // Megatrends (Baseline Data)
-        db.run(`CREATE TABLE IF NOT EXISTS megatrends (
+    // Megatrends (Baseline Data)
+    db.run(`CREATE TABLE IF NOT EXISTS megatrends (
             id TEXT PRIMARY KEY,
             industry TEXT NOT NULL,
             type TEXT NOT NULL,          -- Technology, Business, Societal
@@ -1501,8 +1660,8 @@ export function initDb(db) {
             initial_ring TEXT DEFAULT 'Watch Closely'
         )`);
 
-        // Custom Trends (Company Specific)
-        db.run(`CREATE TABLE IF NOT EXISTS custom_trends (
+    // Custom Trends (Company Specific)
+    db.run(`CREATE TABLE IF NOT EXISTS custom_trends (
             id TEXT PRIMARY KEY,
             company_id TEXT NOT NULL,
             industry TEXT,
@@ -1514,82 +1673,147 @@ export function initDb(db) {
             FOREIGN KEY(company_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
-        console.log('Database initialized successfully');
+    console.log('Database initialized successfully');
 
-        // Seed Super Admin & Default Organization
-        const superAdminOrgId = 'org-dbr77-system';
-        const superAdminId = 'admin-001';
-        const hashedPassword = bcrypt.hashSync('123456', 8);
+    // Seed Super Admin & Default Organization
+    const superAdminOrgId = 'org-dbr77-system';
+    const superAdminId = 'admin-001';
+    const hashedPassword = bcrypt.hashSync('123456', 8);
 
-        // Check if admin exists (or rather, just ensure seed since we dropped table)
-        db.get("SELECT id FROM organizations WHERE id = ?", [superAdminOrgId], (err, row) => {
-            if (!row) {
-                // Create System Organization
-                const insertOrg = db.prepare(`INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`);
-                insertOrg.run(superAdminOrgId, 'DBR77 System', 'enterprise', 'active');
-                insertOrg.finalize();
+    // Check if admin exists (or rather, just ensure seed since we dropped table)
+    db.get('SELECT id FROM organizations WHERE id = ?', [superAdminOrgId], (err, row) => {
+      if (!row) {
+        // Create System Organization
+        const insertOrg = db.prepare(
+          `INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`
+        );
+        insertOrg.run(superAdminOrgId, 'DBR77 System', 'enterprise', 'active');
+        insertOrg.finalize();
 
-                // Create Super Admin User
-                const insertUser = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`);
-                const superAdminPassword = bcrypt.hashSync('Admin123!', 8);
-                insertUser.run(superAdminId, superAdminOrgId, 'admin@dbr77.com', superAdminPassword, 'Super', 'Admin', 'SUPERADMIN');
-                insertUser.finalize();
+        // Create Super Admin User
+        const insertUser = db.prepare(
+          `INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`
+        );
+        const superAdminPassword = bcrypt.hashSync('Admin123!', 8);
+        insertUser.run(
+          superAdminId,
+          superAdminOrgId,
+          'admin@dbr77.com',
+          superAdminPassword,
+          'Super',
+          'Admin',
+          'SUPERADMIN'
+        );
+        insertUser.finalize();
 
-                console.log('Seeded SuperAdmin (admin@dbr77.com) and System Org.');
+        console.log('Seeded SuperAdmin (admin@dbr77.com) and System Org.');
 
-                // --- SEED TEST ORGANIZATION: DBR77 ---
-                const dbr77OrgId = 'org-dbr77-test';
-                const dbr77AdminId = 'user-dbr77-admin';
-                const dbr77UserId = 'user-dbr77-user';
+        // --- SEED TEST ORGANIZATION: DBR77 ---
+        const dbr77OrgId = 'org-dbr77-test';
+        const dbr77AdminId = 'user-dbr77-admin';
+        const dbr77UserId = 'user-dbr77-user';
 
-                // Create DBR77 Organization
-                const insertDbr77Org = db.prepare(`INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`);
-                insertDbr77Org.run(dbr77OrgId, 'DBR77', 'pro', 'active');
-                insertDbr77Org.finalize();
+        // Create DBR77 Organization
+        const insertDbr77Org = db.prepare(
+          `INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`
+        );
+        insertDbr77Org.run(dbr77OrgId, 'DBR77', 'pro', 'active');
+        insertDbr77Org.finalize();
 
-                // Create Admin user for DBR77
-                const insertDbr77Admin = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`);
-                insertDbr77Admin.run(dbr77AdminId, dbr77OrgId, 'piotr.wisniewski@dbr77.com', hashedPassword, 'Piotr', 'Wiśniewski', 'ADMIN');
-                insertDbr77Admin.finalize();
+        // Create Admin user for DBR77
+        const insertDbr77Admin = db.prepare(
+          `INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`
+        );
+        insertDbr77Admin.run(
+          dbr77AdminId,
+          dbr77OrgId,
+          'piotr.wisniewski@dbr77.com',
+          hashedPassword,
+          'Piotr',
+          'Wiśniewski',
+          'ADMIN'
+        );
+        insertDbr77Admin.finalize();
 
-                // Create regular User for DBR77
-                const insertDbr77User = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`);
-                insertDbr77User.run(dbr77UserId, dbr77OrgId, 'justyna.laskowska@dbr77.com', hashedPassword, 'Justyna', 'Laskowska', 'USER');
-                insertDbr77User.finalize();
+        // Create regular User for DBR77
+        const insertDbr77User = db.prepare(
+          `INSERT INTO users(id, organization_id, email, password, first_name, last_name, role) VALUES(?, ?, ?, ?, ?, ?, ?)`
+        );
+        insertDbr77User.run(
+          dbr77UserId,
+          dbr77OrgId,
+          'justyna.laskowska@dbr77.com',
+          hashedPassword,
+          'Justyna',
+          'Laskowska',
+          'USER'
+        );
+        insertDbr77User.finalize();
 
-                // Create a sample project for DBR77
-                const dbr77ProjectId = 'project-dbr77-001';
-                const insertProject = db.prepare(`INSERT INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`);
-                insertProject.run(dbr77ProjectId, dbr77OrgId, 'Digital Transformation 2025', 'active', dbr77AdminId);
-                insertProject.finalize();
+        // Create a sample project for DBR77
+        const dbr77ProjectId = 'project-dbr77-001';
+        const insertProject = db.prepare(
+          `INSERT INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`
+        );
+        insertProject.run(
+          dbr77ProjectId,
+          dbr77OrgId,
+          'Digital Transformation 2025',
+          'active',
+          dbr77AdminId
+        );
+        insertProject.finalize();
 
-                console.log('Seeded DBR77 Organization with Admin (piotr.wisniewski@dbr77.com) and User (justyna.laskowska@dbr77.com).');
+        console.log(
+          'Seeded DBR77 Organization with Admin (piotr.wisniewski@dbr77.com) and User (justyna.laskowska@dbr77.com).'
+        );
 
-                // --- SEED DEMO ORGANIZATION: Legolex Demo ---
-                const demoOrgId = 'org-legolex-demo';
-                const demoAdminId = 'user-demo-admin';
+        // --- SEED DEMO ORGANIZATION: Legolex Demo ---
+        const demoOrgId = 'org-legolex-demo';
+        const demoAdminId = 'user-demo-admin';
 
-                // Create Demo Organization
-                const insertDemoOrg = db.prepare(`INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`);
-                insertDemoOrg.run(demoOrgId, 'Legolex Demo Corp', 'enterprise', 'active');
-                insertDemoOrg.finalize();
+        // Create Demo Organization
+        const insertDemoOrg = db.prepare(
+          `INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`
+        );
+        insertDemoOrg.run(demoOrgId, 'Legolex Demo Corp', 'enterprise', 'active');
+        insertDemoOrg.finalize();
 
-                // Create Demo Admin user
-                const demoPassword = bcrypt.hashSync('Demo123!', 8);
-                const insertDemoAdmin = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`);
-                insertDemoAdmin.run(demoAdminId, demoOrgId, 'demo@legolex.com', demoPassword, 'Demo', 'User', 'ADMIN', 'active');
-                insertDemoAdmin.finalize();
+        // Create Demo Admin user
+        const demoPassword = bcrypt.hashSync('Demo123!', 8);
+        const insertDemoAdmin = db.prepare(
+          `INSERT INTO users(id, organization_id, email, password, first_name, last_name, role, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`
+        );
+        insertDemoAdmin.run(
+          demoAdminId,
+          demoOrgId,
+          'demo@legolex.com',
+          demoPassword,
+          'Demo',
+          'User',
+          'ADMIN',
+          'active'
+        );
+        insertDemoAdmin.finalize();
 
-                // Create a sample project for Demo
-                const demoProjectId = 'project-demo-001';
-                const insertDemoProject = db.prepare(`INSERT INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`);
-                insertDemoProject.run(demoProjectId, demoOrgId, 'Strategic Transformation Demo', 'active', demoAdminId);
-                insertDemoProject.finalize();
+        // Create a sample project for Demo
+        const demoProjectId = 'project-demo-001';
+        const insertDemoProject = db.prepare(
+          `INSERT INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`
+        );
+        insertDemoProject.run(
+          demoProjectId,
+          demoOrgId,
+          'Strategic Transformation Demo',
+          'active',
+          demoAdminId
+        );
+        insertDemoProject.finalize();
 
-                console.log('Seeded Demo Organization with Admin (demo@legolex.com).');
-            }
-        });
+        console.log('Seeded Demo Organization with Admin (demo@legolex.com).');
+      }
     });
+  });
 }
 
 export default getDatabaseInstance();

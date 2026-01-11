@@ -84,6 +84,7 @@
     "assessmentLean": "Lean 4.0",
     "assessmentOther": "Inne",
     "affiliateDashboard": "Wpływ Ekosystemu",
+    "discoveryConsultant": "Discovery",
     "collapse": "Zwiń",
     "expand": "Rozwiń",
     "metrics": "Metryki & Konwersja",
@@ -1291,10 +1292,7 @@
             ],
             "level4Formula": "Doświadczenie klienta",
             "level5Desc": "Model e-commerce wykorzystuje AI, VR, IoT i zaawansowaną analitykę do tworzenia inteligentnych doświadczeń zakupowych. System sam optymalizuje ofertę, ceny i kanały sprzedaży.",
-            "level5Questions": [
-              "Czy AI steruje ofertą?",
-              "Czy doświadczenie jest inteligentne?"
-            ],
+            "level5Questions": ["Czy AI steruje ofertą?", "Czy doświadczenie jest inteligentne?"],
             "level5Formula": "Inteligentna wartość"
           },
           "platform": {
@@ -1309,20 +1307,13 @@
               "7": "Autonomiczny Ekosystem"
             },
             "level1Desc": "Firma korzysta z istniejących platform do realizacji prostych transakcji, bez tworzenia własnego ekosystemu.",
-            "level1Questions": [
-              "Czy firma tylko korzysta z platform?"
-            ],
+            "level1Questions": ["Czy firma tylko korzysta z platform?"],
             "level1Formula": "Dostęp do rynku",
             "level2Desc": "Firma udostępnia platformę umożliwiającą sprzedaż produktów lub usług przez podmioty trzecie.",
-            "level2Questions": [
-              "Czy inni sprzedają na platformie?"
-            ],
+            "level2Questions": ["Czy inni sprzedają na platformie?"],
             "level2Formula": "Pośrednictwo",
             "level3Desc": "Platforma łączy dostawców, partnerów i klientów, tworząc wartość poprzez ekosystem.",
-            "level3Questions": [
-              "Czy istnieje ekosystem?",
-              "Czy platforma tworzy synergie?"
-            ],
+            "level3Questions": ["Czy istnieje ekosystem?", "Czy platforma tworzy synergie?"],
             "level3Formula": "Synergia",
             "level4Desc": "Platforma oferuje dodatkowo aplikacje i narzędzia SaaS dla uczestników rynku.",
             "level4Questions": [
@@ -1331,10 +1322,7 @@
             ],
             "level4Formula": "Produktywność",
             "level5Desc": "Platforma łączy SEM z aktywną społecznością i inteligentnym wsparciem użytkowników.",
-            "level5Questions": [
-              "Czy użytkownicy współpracują?",
-              "Czy AI wspiera społeczność?"
-            ],
+            "level5Questions": ["Czy użytkownicy współpracują?", "Czy AI wspiera społeczność?"],
             "level5Formula": "Ekosystem wiedzy"
           },
           "aas": {
@@ -1349,29 +1337,19 @@
               "7": "Wszystko-jako-Usługa (XaaS)"
             },
             "level1Desc": "Usługi cyfrowe są realizowane w formie długoterminowych umów, przypominających tradycyjny outsourcing.",
-            "level1Questions": [
-              "Czy usługa przypomina outsourcing?"
-            ],
+            "level1Questions": ["Czy usługa przypomina outsourcing?"],
             "level1Formula": "Wygoda",
             "level2Desc": "Firma oferuje usługi w modelu subskrypcyjnym z jasno zdefiniowanym zakresem.",
-            "level2Questions": [
-              "Czy klient płaci abonament?"
-            ],
+            "level2Questions": ["Czy klient płaci abonament?"],
             "level2Formula": "Dostępność",
             "level3Desc": "Klient płaci za faktyczne użycie zasobów lub funkcji.",
-            "level3Questions": [
-              "Czy klient płaci za użycie?"
-            ],
+            "level3Questions": ["Czy klient płaci za użycie?"],
             "level3Formula": "Elastyczność",
             "level4Desc": "Klient płaci za osiągnięcie konkretnego rezultatu, a dostawca przejmuje odpowiedzialność za wynik.",
-            "level4Questions": [
-              "Czy płatność zależy od wyniku?"
-            ],
+            "level4Questions": ["Czy płatność zależy od wyniku?"],
             "level4Formula": "Wynik",
             "level5Desc": "Dostawca przejmuje całościowe procesy biznesowe klienta, działając jako główny operator.",
-            "level5Questions": [
-              "Czy dostawca zarządza procesem klienta?"
-            ],
+            "level5Questions": ["Czy dostawca zarządza procesem klienta?"],
             "level5Formula": "Delegacja"
           },
           "sharing": {
@@ -1386,29 +1364,19 @@
               "7": "Autonomiczna Pula Zasobów"
             },
             "level1Desc": "Platforma umożliwia współdzielenie zasobów cyfrowych.",
-            "level1Questions": [
-              "Czy zasoby są cyfrowe?"
-            ],
+            "level1Questions": ["Czy zasoby są cyfrowe?"],
             "level1Formula": "Współdzielenie",
             "level2Desc": "Platforma umożliwia współdzielenie fizycznych aktywów.",
-            "level2Questions": [
-              "Czy zasoby są fizyczne?"
-            ],
+            "level2Questions": ["Czy zasoby są fizyczne?"],
             "level2Formula": "Dostęp",
             "level3Desc": "Platforma umożliwia współdzielenie wiedzy i kompetencji.",
-            "level3Questions": [
-              "Czy użytkownicy dzielą się wiedzą?"
-            ],
+            "level3Questions": ["Czy użytkownicy dzielą się wiedzą?"],
             "level3Formula": "Know-how",
             "level4Desc": "Platforma zarządza zasobami w imieniu klientów.",
-            "level4Questions": [
-              "Czy platforma zarządza zasobami?"
-            ],
+            "level4Questions": ["Czy platforma zarządza zasobami?"],
             "level4Formula": "Elastyczność",
             "level5Desc": "Platforma udostępnia złożone rozwiązania biznesowe jako wspólne zasoby.",
-            "level5Questions": [
-              "Czy rozwiązania są kompleksowe?"
-            ],
+            "level5Questions": ["Czy rozwiązania są kompleksowe?"],
             "level5Formula": "Efektywność"
           },
           "monetization": {
@@ -1423,29 +1391,19 @@
               "7": "Dane jako Główny Zasób"
             },
             "level1Desc": "Firma gromadzi dane i wykorzystuje je do poprawy własnych działań.",
-            "level1Questions": [
-              "Czy dane są wykorzystywane wewnętrznie?"
-            ],
+            "level1Questions": ["Czy dane są wykorzystywane wewnętrznie?"],
             "level1Formula": "Zrozumienie",
             "level2Desc": "Firma analizuje dane w celu wspierania decyzji biznesowych.",
-            "level2Questions": [
-              "Czy dane wspierają decyzje?"
-            ],
+            "level2Questions": ["Czy dane wspierają decyzje?"],
             "level2Formula": "Insight",
             "level3Desc": "Dane są wykorzystywane do personalizacji produktów i usług.",
-            "level3Questions": [
-              "Czy dane personalizują ofertę?"
-            ],
+            "level3Questions": ["Czy dane personalizują ofertę?"],
             "level3Formula": "Dopasowanie",
             "level4Desc": "Firma sprzedaje dane lub usługi analityczne innym podmiotom.",
-            "level4Questions": [
-              "Czy dane są sprzedawane?"
-            ],
+            "level4Questions": ["Czy dane są sprzedawane?"],
             "level4Formula": "Monetyzacja",
             "level5Desc": "Dane stanowią fundament nowych produktów, modeli biznesowych i algorytmów AI.",
-            "level5Questions": [
-              "Czy dane są podstawą nowych modeli?"
-            ],
+            "level5Questions": ["Czy dane są podstawą nowych modeli?"],
             "level5Formula": "Innowacja"
           }
         }
@@ -1466,35 +1424,22 @@
               "7": "Przywództwo Sieciowe"
             },
             "level1Desc": "Leadership avoids involvement in innovation and change. Employees are left without guidance, motivation or feedback, which leads to stagnation and loss of competitiveness.",
-            "level1Questions": [
-              "Are leaders disengaged from change?",
-              "Are ideas ignored?"
-            ],
+            "level1Questions": ["Are leaders disengaged from change?", "Are ideas ignored?"],
             "level1Formula": "High risk of failure",
             "level2Desc": "Decisions are made centrally without employee involvement. Innovation is limited due to lack of trust and empowerment.",
-            "level2Questions": [
-              "Are decisions top-down only?"
-            ],
+            "level2Questions": ["Are decisions top-down only?"],
             "level2Formula": "Low adaptability",
             "level3Desc": "Leaders set ambitious goals and provide resources but tightly control execution.",
-            "level3Questions": [
-              "Are goals clear but rigid?"
-            ],
+            "level3Questions": ["Are goals clear but rigid?"],
             "level3Formula": "Fast results, limited learning",
             "level4Desc": "Leaders encourage ideas, psychological safety and initiative.",
-            "level4Questions": [
-              "Do employees feel safe proposing ideas?"
-            ],
+            "level4Questions": ["Do employees feel safe proposing ideas?"],
             "level4Formula": "Strong engagement",
             "level5Desc": "Leaders actively experiment, accept risk and learn from failure.",
-            "level5Questions": [
-              "Is experimentation encouraged?"
-            ],
+            "level5Questions": ["Is experimentation encouraged?"],
             "level5Formula": "High innovation capacity",
             "level6Desc": "Leadership drives vision, values and long-term transformation across the organization.",
-            "level6Questions": [
-              "Is there a strong transformation vision?"
-            ],
+            "level6Questions": ["Is there a strong transformation vision?"],
             "level6Formula": "Sustainable transformation"
           },
           "readiness": {
@@ -1509,34 +1454,22 @@
               "7": "Ciągłe Wymyślanie Się na Nowo"
             },
             "level1Desc": "The organization understands that change is necessary but has not yet organized action.",
-            "level1Questions": [
-              "Is change acknowledged but not executed?"
-            ],
+            "level1Questions": ["Is change acknowledged but not executed?"],
             "level1Formula": "High inertia",
             "level2Desc": "A dedicated group supports and promotes transformation initiatives.",
-            "level2Questions": [
-              "Is there a change coalition?"
-            ],
+            "level2Questions": ["Is there a change coalition?"],
             "level2Formula": "Medium risk",
             "level3Desc": "A clear transformation vision and strategy are being developed collaboratively.",
-            "level3Questions": [
-              "Is there a shared vision?"
-            ],
+            "level3Questions": ["Is there a shared vision?"],
             "level3Formula": "Lower risk",
             "level4Desc": "Vision is communicated clearly and continuously across the organization.",
-            "level4Questions": [
-              "Is communication two-way?"
-            ],
+            "level4Questions": ["Is communication two-way?"],
             "level4Formula": "Low risk",
             "level5Desc": "Transformation initiatives are actively executed and monitored.",
-            "level5Questions": [
-              "Are initiatives implemented?"
-            ],
+            "level5Questions": ["Are initiatives implemented?"],
             "level5Formula": "Controlled risk",
             "level6Desc": "Change is embedded in culture and daily operations.",
-            "level6Questions": [
-              "Is change part of culture?"
-            ],
+            "level6Questions": ["Is change part of culture?"],
             "level6Formula": "Very low risk"
           },
           "improvement": {
@@ -1551,34 +1484,22 @@
               "7": "Samo-Optymalizująca się Organizacja"
             },
             "level1Desc": "Learning occurs mainly through fairs, conferences and external events.",
-            "level1Questions": [
-              "Is learning external only?"
-            ],
+            "level1Questions": ["Is learning external only?"],
             "level1Formula": "Skill gaps",
             "level2Desc": "Regular internal training programmes exist.",
-            "level2Questions": [
-              "Are trainings systematic?"
-            ],
+            "level2Questions": ["Are trainings systematic?"],
             "level2Formula": "Moderate risk",
             "level3Desc": "External experts complement internal learning.",
-            "level3Questions": [
-              "Are external experts used?"
-            ],
+            "level3Questions": ["Are external experts used?"],
             "level3Formula": "Lower risk",
             "level4Desc": "Employees actively pursue self-learning.",
-            "level4Questions": [
-              "Is self-learning encouraged?"
-            ],
+            "level4Questions": ["Is self-learning encouraged?"],
             "level4Formula": "Low risk",
             "level5Desc": "Cross-functional teams learn through real projects.",
-            "level5Questions": [
-              "Are teams cross-functional?"
-            ],
+            "level5Questions": ["Are teams cross-functional?"],
             "level5Formula": "Very low risk",
             "level6Desc": "Formal mentoring accelerates competence transfer.",
-            "level6Questions": [
-              "Is mentoring systematic?"
-            ],
+            "level6Questions": ["Is mentoring systematic?"],
             "level6Formula": "Minimal risk"
           },
           "innovation": {
@@ -1593,34 +1514,22 @@
               "7": "DNA Innowacji"
             },
             "level1Desc": "Employees are encouraged to submit ideas.",
-            "level1Questions": [
-              "Are ideas rewarded?"
-            ],
+            "level1Questions": ["Are ideas rewarded?"],
             "level1Formula": "Low maturity",
             "level2Desc": "Ideas are tested through pilots and prototypes.",
-            "level2Questions": [
-              "Are experiments allowed?"
-            ],
+            "level2Questions": ["Are experiments allowed?"],
             "level2Formula": "Moderate risk",
             "level3Desc": "Organization actively analyzes market and technology trends.",
-            "level3Questions": [
-              "Are trends monitored?"
-            ],
+            "level3Questions": ["Are trends monitored?"],
             "level3Formula": "Lower risk",
             "level4Desc": "Failures are accepted as learning opportunities.",
-            "level4Questions": [
-              "Are mistakes tolerated?"
-            ],
+            "level4Questions": ["Are mistakes tolerated?"],
             "level4Formula": "Low risk",
             "level5Desc": "R&D is embedded in company strategy.",
-            "level5Questions": [
-              "Is R&D strategic?"
-            ],
+            "level5Questions": ["Is R&D strategic?"],
             "level5Formula": "Very low risk",
             "level6Desc": "Innovation ecosystem partnerships are strategic.",
-            "level6Questions": [
-              "Are external partners used?"
-            ],
+            "level6Questions": ["Are external partners used?"],
             "level6Formula": "Minimal risk"
           },
           "resources": {
@@ -1635,34 +1544,22 @@
               "7": "Zasoby Obfitego Ekosystemu"
             },
             "level1Desc": "Financial resources for transformation are identified.",
-            "level1Questions": [
-              "Is budget allocated?"
-            ],
+            "level1Questions": ["Is budget allocated?"],
             "level1Formula": "High risk",
             "level2Desc": "Employees have access to training resources.",
-            "level2Questions": [
-              "Are trainings accessible?"
-            ],
+            "level2Questions": ["Are trainings accessible?"],
             "level2Formula": "Medium risk",
             "level3Desc": "Internal and external experts are accessible.",
-            "level3Questions": [
-              "Are experts engaged?"
-            ],
+            "level3Questions": ["Are experts engaged?"],
             "level3Formula": "Lower risk",
             "level4Desc": "Reliable data supports decision-making.",
-            "level4Questions": [
-              "Is data available?"
-            ],
+            "level4Questions": ["Is data available?"],
             "level4Formula": "Low risk",
             "level5Desc": "Modern tools and technologies are available.",
-            "level5Questions": [
-              "Are tools modern?"
-            ],
+            "level5Questions": ["Are tools modern?"],
             "level5Formula": "Very low risk",
             "level6Desc": "Strategic partners extend organizational capabilities.",
-            "level6Questions": [
-              "Are partnerships strategic?"
-            ],
+            "level6Questions": ["Are partnerships strategic?"],
             "level6Formula": "Minimal risk"
           }
         }
@@ -1689,35 +1586,22 @@
             ],
             "level1Formula": "Dane opisują przeszłość",
             "level2Desc": "Część danych jest zbierana automatycznie, ale proces nadal wymaga ręcznych korekt. Dane są dostępne szybciej, ale ich jakość bywa nierówna.",
-            "level2Questions": [
-              "Czy część danych zbiera się automatycznie?"
-            ],
+            "level2Questions": ["Czy część danych zbiera się automatycznie?"],
             "level2Formula": "Lepsza widoczność",
             "level3Desc": "Dane są zbierane automatycznie w sposób ciągły i spójny, tworząc wiarygodną bazę operacyjną.",
-            "level3Questions": [
-              "Czy dane zbierają się automatycznie?",
-              "Czy są spójne?"
-            ],
+            "level3Questions": ["Czy dane zbierają się automatycznie?", "Czy są spójne?"],
             "level3Formula": "Dane operacyjne",
             "level4Desc": "Dane są dostępne w czasie rzeczywistym i pokazują aktualny stan procesów.",
-            "level4Questions": [
-              "Czy dane są real-time?"
-            ],
+            "level4Questions": ["Czy dane są real-time?"],
             "level4Formula": "Bieżący obraz",
             "level5Desc": "Dane są zbierane według wspólnych standardów w całej organizacji.",
-            "level5Questions": [
-              "Czy dane są standaryzowane?"
-            ],
+            "level5Questions": ["Czy dane są standaryzowane?"],
             "level5Formula": "Jedna wersja prawdy",
             "level6Desc": "Dane są kompletne i wysokiej jakości, gotowe do analiz predykcyjnych.",
-            "level6Questions": [
-              "Czy dane są kompletne i jakościowe?"
-            ],
+            "level6Questions": ["Czy dane są kompletne i jakościowe?"],
             "level6Formula": "Przewidywalność",
             "level7Desc": "System sam optymalizuje zbieranie danych, wykrywa luki i poprawia jakość.",
-            "level7Questions": [
-              "Czy system sam poprawia dane?"
-            ],
+            "level7Questions": ["Czy system sam poprawia dane?"],
             "level7Formula": "Autonomiczna baza"
           },
           "storage": {
@@ -1732,39 +1616,25 @@
               "7": "Zdecentralizowana Sieć (Mesh)"
             },
             "level1Desc": "Dane są przechowywane lokalnie w plikach i systemach rozproszonych, bez centralnej struktury i kontroli.",
-            "level1Questions": [
-              "Czy dane są w plikach lokalnych?"
-            ],
+            "level1Questions": ["Czy dane są w plikach lokalnych?"],
             "level1Formula": "Brak spójności",
             "level2Desc": "Dane są przechowywane w jednej centralnej bazie, ale bez zaawansowanej architektury.",
-            "level2Questions": [
-              "Czy istnieje jedna baza danych?"
-            ],
+            "level2Questions": ["Czy istnieje jedna baza danych?"],
             "level2Formula": "Podstawowa spójność",
             "level3Desc": "Dane są uporządkowane w hurtowni danych i przygotowane do analiz.",
-            "level3Questions": [
-              "Czy istnieje hurtownia danych?"
-            ],
+            "level3Questions": ["Czy istnieje hurtownia danych?"],
             "level3Formula": "Porządek danych",
             "level4Desc": "Firma przechowuje dane w różnych formatach w data lake.",
-            "level4Questions": [
-              "Czy dane są w różnych formatach?"
-            ],
+            "level4Questions": ["Czy dane są w różnych formatach?"],
             "level4Formula": "Elastyczność",
             "level5Desc": "Architektura łączy zalety hurtowni i data lake.",
-            "level5Questions": [
-              "Czy istnieje jedna architektura?"
-            ],
+            "level5Questions": ["Czy istnieje jedna architektura?"],
             "level5Formula": "Jedna platforma",
             "level6Desc": "Platforma danych spełnia standardy enterprise.",
-            "level6Questions": [
-              "Czy spełnione są standardy?"
-            ],
+            "level6Questions": ["Czy spełnione są standardy?"],
             "level6Formula": "Zaufanie",
             "level7Desc": "System sam zarządza przechowywaniem danych.",
-            "level7Questions": [
-              "Czy system sam zarządza?"
-            ],
+            "level7Questions": ["Czy system sam zarządza?"],
             "level7Formula": "Autonomia"
           },
           "communication": {
@@ -1779,39 +1649,25 @@
               "7": "Komunikacja Sieci Neuronowej"
             },
             "level1Desc": "Dane są przekazywane ręcznie pomiędzy systemami.",
-            "level1Questions": [
-              "Czy dane są przesyłane ręcznie?"
-            ],
+            "level1Questions": ["Czy dane są przesyłane ręcznie?"],
             "level1Formula": "Opóźnienia",
             "level2Desc": "Dane są przesyłane cyklicznie w paczkach.",
-            "level2Questions": [
-              "Czy dane są batch?"
-            ],
+            "level2Questions": ["Czy dane są batch?"],
             "level2Formula": "Okresowa spójność",
             "level3Desc": "Systemy komunikują się przez API.",
-            "level3Questions": [
-              "Czy istnieją API?"
-            ],
+            "level3Questions": ["Czy istnieją API?"],
             "level3Formula": "Bieżąca spójność",
             "level4Desc": "Dane są przesyłane w reakcji na zdarzenia.",
-            "level4Questions": [
-              "Czy architektura jest event-driven?"
-            ],
+            "level4Questions": ["Czy architektura jest event-driven?"],
             "level4Formula": "Natychmiastowość",
             "level5Desc": "Przepływy danych są centralnie orkiestrwane.",
-            "level5Questions": [
-              "Czy przepływy są orkiestrwane?"
-            ],
+            "level5Questions": ["Czy przepływy są orkiestrwane?"],
             "level5Formula": "Kontrola",
             "level6Desc": "Spójna warstwa komunikacji danych w skali enterprise.",
-            "level6Questions": [
-              "Czy istnieje data fabric?"
-            ],
+            "level6Questions": ["Czy istnieje data fabric?"],
             "level6Formula": "Jednolitość",
             "level7Desc": "System sam optymalizuje przepływy danych.",
-            "level7Questions": [
-              "Czy system działa autonomicznie?"
-            ],
+            "level7Questions": ["Czy system działa autonomicznie?"],
             "level7Formula": "Autonomia"
           },
           "analysis": {
@@ -1826,39 +1682,25 @@
               "7": "AI Preskryptywne"
             },
             "level1Desc": "Analiza danych opisuje przeszłość.",
-            "level1Questions": [
-              "Czy raporty opisują przeszłość?"
-            ],
+            "level1Questions": ["Czy raporty opisują przeszłość?"],
             "level1Formula": "Historia",
             "level2Desc": "Analiza przyczyn zdarzeń.",
-            "level2Questions": [
-              "Czy znane są przyczyny?"
-            ],
+            "level2Questions": ["Czy znane są przyczyny?"],
             "level2Formula": "Zrozumienie",
             "level3Desc": "Prognozowanie przyszłych zdarzeń.",
-            "level3Questions": [
-              "Czy firma prognozuje?"
-            ],
+            "level3Questions": ["Czy firma prognozuje?"],
             "level3Formula": "Przewidywanie",
             "level4Desc": "System rekomenduje działania.",
-            "level4Questions": [
-              "Czy system rekomenduje?"
-            ],
+            "level4Questions": ["Czy system rekomenduje?"],
             "level4Formula": "Rekomendacje",
             "level5Desc": "Modele uczą się na bieżąco.",
-            "level5Questions": [
-              "Czy modele się uczą?"
-            ],
+            "level5Questions": ["Czy modele się uczą?"],
             "level5Formula": "Uczenie",
             "level6Desc": "System sam podejmuje decyzje.",
-            "level6Questions": [
-              "Czy system decyduje sam?"
-            ],
+            "level6Questions": ["Czy system decyduje sam?"],
             "level6Formula": "Autonomia",
             "level7Desc": "System sam rozwija modele analityczne.",
-            "level7Questions": [
-              "Czy system się rozwija?"
-            ],
+            "level7Questions": ["Czy system się rozwija?"],
             "level7Formula": "Ewolucja"
           },
           "computing": {
@@ -1873,39 +1715,25 @@
               "7": "Przetwarzanie Wszechobecne"
             },
             "level1Desc": "Obliczenia wykonywane lokalnie.",
-            "level1Questions": [
-              "Czy obliczenia są lokalne?"
-            ],
+            "level1Questions": ["Czy obliczenia są lokalne?"],
             "level1Formula": "Ograniczenia",
             "level2Desc": "Obliczenia na serwerach centralnych.",
-            "level2Questions": [
-              "Czy istnieją centralne serwery?"
-            ],
+            "level2Questions": ["Czy istnieją centralne serwery?"],
             "level2Formula": "Stabilność",
             "level3Desc": "Elastyczna moc obliczeniowa w chmurze.",
-            "level3Questions": [
-              "Czy firma korzysta z chmury?"
-            ],
+            "level3Questions": ["Czy firma korzysta z chmury?"],
             "level3Formula": "Elastyczność",
             "level4Desc": "Połączenie chmury i on-prem.",
-            "level4Questions": [
-              "Czy architektura jest hybrydowa?"
-            ],
+            "level4Questions": ["Czy architektura jest hybrydowa?"],
             "level4Formula": "Optymalizacja",
             "level5Desc": "Obliczenia rozproszone.",
-            "level5Questions": [
-              "Czy system jest rozproszony?"
-            ],
+            "level5Questions": ["Czy system jest rozproszony?"],
             "level5Formula": "Skala",
             "level6Desc": "Wykorzystanie GPU/TPU.",
-            "level6Questions": [
-              "Czy są akceleratory?"
-            ],
+            "level6Questions": ["Czy są akceleratory?"],
             "level6Formula": "Wydajność",
             "level7Desc": "System sam zarządza mocą obliczeniową.",
-            "level7Questions": [
-              "Czy system sam zarządza?"
-            ],
+            "level7Questions": ["Czy system sam zarządza?"],
             "level7Formula": "Autonomia"
           }
         }
@@ -1926,35 +1754,22 @@
               "7": "Autonomiczny System Immunologiczny"
             },
             "level1Desc": "Organizacja nie posiada strategii ani polityk cyberbezpieczeństwa. Działania są reaktywne i przypadkowe, a ryzyko biznesowe jest niekontrolowane.",
-            "level1Questions": [
-              "Czy istnieje formalna strategia?",
-              "Czy ryzyka są mapowane?"
-            ],
+            "level1Questions": ["Czy istnieje formalna strategia?", "Czy ryzyka są mapowane?"],
             "level1Formula": "Wysokie ryzyko reputacyjne",
             "level2Desc": "Organizacja identyfikuje podstawowe ryzyka cybernetyczne, ale nie posiada spójnego planu działania.",
-            "level2Questions": [
-              "Czy ryzyka są identyfikowane?"
-            ],
+            "level2Questions": ["Czy ryzyka są identyfikowane?"],
             "level2Formula": "Świadomość zagrożeń",
             "level3Desc": "Istnieje plan działań ograniczających ryzyko, jednak jego realizacja nie jest systematycznie monitorowana.",
-            "level3Questions": [
-              "Czy istnieje plan działań?"
-            ],
+            "level3Questions": ["Czy istnieje plan działań?"],
             "level3Formula": "Kontrola ryzyka",
             "level4Desc": "Funkcjonują formalne polityki bezpieczeństwa regulujące standardy i procedury.",
-            "level4Questions": [
-              "Czy polityki są egzekwowane?"
-            ],
+            "level4Questions": ["Czy polityki są egzekwowane?"],
             "level4Formula": "Zaufanie operacyjne",
             "level5Desc": "Strategia obejmuje kompetencje ludzi, szkolenia i role odpowiedzialne za cyberbezpieczeństwo.",
-            "level5Questions": [
-              "Czy ludzie są szkoleni?"
-            ],
+            "level5Questions": ["Czy ludzie są szkoleni?"],
             "level5Formula": "Odporność organizacji",
             "level6Desc": "Strategia jest stale monitorowana, audytowana i aktualizowana w odpowiedzi na nowe zagrożenia.",
-            "level6Questions": [
-              "Czy strategia jest audytowana?"
-            ],
+            "level6Questions": ["Czy strategia jest audytowana?"],
             "level6Formula": "Zaufanie strategiczne"
           },
           "network": {
@@ -1969,34 +1784,22 @@
               "7": "Samo-Naprawiające się Sieci"
             },
             "level1Desc": "Podstawowa ochrona sieci oparta na firewallach.",
-            "level1Questions": [
-              "Czy istnieją firewalle?"
-            ],
+            "level1Questions": ["Czy istnieją firewalle?"],
             "level1Formula": "Minimalna ochrona",
             "level2Desc": "Systemy zabezpieczone przed podstawowym malware.",
-            "level2Questions": [
-              "Czy antivirus jest aktualny?"
-            ],
+            "level2Questions": ["Czy antivirus jest aktualny?"],
             "level2Formula": "Stabilność systemów",
             "level3Desc": "Wykrywanie prób naruszeń i ataków.",
-            "level3Questions": [
-              "Czy ataki są wykrywane?"
-            ],
+            "level3Questions": ["Czy ataki są wykrywane?"],
             "level3Formula": "Szybka reakcja",
             "level4Desc": "Centralna analiza zdarzeń bezpieczeństwa.",
-            "level4Questions": [
-              "Czy zdarzenia są korelowane?"
-            ],
+            "level4Questions": ["Czy zdarzenia są korelowane?"],
             "level4Formula": "Kontrola operacyjna",
             "level5Desc": "Zaawansowane systemy uwierzytelniania i autoryzacji.",
-            "level5Questions": [
-              "Czy dostęp jest kontrolowany?"
-            ],
+            "level5Questions": ["Czy dostęp jest kontrolowany?"],
             "level5Formula": "Zaufanie systemowe",
             "level6Desc": "Bezpieczna komunikacja sieciowa w skali organizacji.",
-            "level6Questions": [
-              "Czy komunikacja jest szyfrowana?"
-            ],
+            "level6Questions": ["Czy komunikacja jest szyfrowana?"],
             "level6Formula": "Ciągłość operacyjna"
           },
           "dataProtection": {
@@ -2011,34 +1814,22 @@
               "7": "Szyfrowanie Odporne na Quantum"
             },
             "level1Desc": "Dane są szyfrowane w podstawowym zakresie.",
-            "level1Questions": [
-              "Czy dane są szyfrowane?"
-            ],
+            "level1Questions": ["Czy dane są szyfrowane?"],
             "level1Formula": "Ochrona danych",
             "level2Desc": "Stosowane są zasady silnych haseł.",
-            "level2Questions": [
-              "Czy hasła są zarządzane?"
-            ],
+            "level2Questions": ["Czy hasła są zarządzane?"],
             "level2Formula": "Dostęp kontrolowany",
             "level3Desc": "Dostęp do danych jest kontrolowany rolami.",
-            "level3Questions": [
-              "Czy role są zdefiniowane?"
-            ],
+            "level3Questions": ["Czy role są zdefiniowane?"],
             "level3Formula": "Minimalizacja ryzyka",
             "level4Desc": "Systematyczne kopie zapasowe i procedury odtwarzania.",
-            "level4Questions": [
-              "Czy backupy są testowane?"
-            ],
+            "level4Questions": ["Czy backupy są testowane?"],
             "level4Formula": "Ciągłość biznesu",
             "level5Desc": "Stały monitoring zagrożeń związanych z danymi.",
-            "level5Questions": [
-              "Czy zagrożenia są monitorowane?"
-            ],
+            "level5Questions": ["Czy zagrożenia są monitorowane?"],
             "level5Formula": "Wczesne ostrzeganie",
             "level6Desc": "Zaawansowane mechanizmy weryfikacji tożsamości.",
-            "level6Questions": [
-              "Czy stosowane jest MFA/biometria?"
-            ],
+            "level6Questions": ["Czy stosowane jest MFA/biometria?"],
             "level6Formula": "Wysokie zaufanie"
           },
           "education": {
@@ -2053,34 +1844,22 @@
               "7": "Mentalność Security-First"
             },
             "level1Desc": "Zdefiniowany jest system szkoleń cyberbezpieczeństwa.",
-            "level1Questions": [
-              "Czy istnieje plan szkoleń?"
-            ],
+            "level1Questions": ["Czy istnieje plan szkoleń?"],
             "level1Formula": "Świadomość",
             "level2Desc": "Szkolenia są realizowane według planu.",
-            "level2Questions": [
-              "Czy szkolenia są realizowane?"
-            ],
+            "level2Questions": ["Czy szkolenia są realizowane?"],
             "level2Formula": "Zmniejszenie ryzyka",
             "level3Desc": "Prowadzone są testy bezpieczeństwa.",
-            "level3Questions": [
-              "Czy system jest testowany?"
-            ],
+            "level3Questions": ["Czy system jest testowany?"],
             "level3Formula": "Wykrywanie luk",
             "level4Desc": "Istnieją kompetencje audytorskie wewnątrz organizacji.",
-            "level4Questions": [
-              "Czy są auditorzy?"
-            ],
+            "level4Questions": ["Czy są auditorzy?"],
             "level4Formula": "Kontrola jakości",
             "level5Desc": "Audyt bezpieczeństwa jest planowany i systematyczny.",
-            "level5Questions": [
-              "Czy audyty są planowane?"
-            ],
+            "level5Questions": ["Czy audyty są planowane?"],
             "level5Formula": "Zaufanie",
             "level6Desc": "Organizacja posiada certyfikację ISO 27001.",
-            "level6Questions": [
-              "Czy istnieje certyfikacja?"
-            ],
+            "level6Questions": ["Czy istnieje certyfikacja?"],
             "level6Formula": "Wiarygodność rynkowa"
           },
           "contingency": {
@@ -2095,34 +1874,22 @@
               "7": "Operacje Antykruche"
             },
             "level1Desc": "Zidentyfikowano potencjalne zagrożenia.",
-            "level1Questions": [
-              "Czy zagrożenia są znane?"
-            ],
+            "level1Questions": ["Czy zagrożenia są znane?"],
             "level1Formula": "Świadomość",
             "level2Desc": "Zdefiniowano priorytety reagowania.",
-            "level2Questions": [
-              "Czy priorytety są znane?"
-            ],
+            "level2Questions": ["Czy priorytety są znane?"],
             "level2Formula": "Szybka reakcja",
             "level3Desc": "Istnieją procedury reagowania.",
-            "level3Questions": [
-              "Czy procedury są opisane?"
-            ],
+            "level3Questions": ["Czy procedury są opisane?"],
             "level3Formula": "Kontrola kryzysu",
             "level4Desc": "Pracownicy są szkoleni w reagowaniu kryzysowym.",
-            "level4Questions": [
-              "Czy szkolenia są prowadzone?"
-            ],
+            "level4Questions": ["Czy szkolenia są prowadzone?"],
             "level4Formula": "Gotowość",
             "level5Desc": "Plany awaryjne są regularnie testowane.",
-            "level5Questions": [
-              "Czy plany są testowane?"
-            ],
+            "level5Questions": ["Czy plany są testowane?"],
             "level5Formula": "Odporność",
             "level6Desc": "Dokumentacja awaryjna jest aktualna i używana.",
-            "level6Questions": [
-              "Czy dokumentacja jest aktualna?"
-            ],
+            "level6Questions": ["Czy dokumentacja jest aktualna?"],
             "level6Formula": "Ciągłość"
           }
         }
@@ -4400,6 +4167,35 @@
             "Deprecjonuj stare wersje zamiast usuwać, aby zachować historię"
           ]
         },
+        "emailTemplates": {
+          "name": "Szablony Email",
+          "description": "Zarządzaj szablonami emaili systemowych dla powiadomień, alertów, raportów i automatycznej komunikacji. Twórz profesjonalne, responsywne emaile ze wsparciem zmiennych.",
+          "purpose": "Scentralizuj zarządzanie szablonami email dla spójnej, profesjonalnej komunikacji na całej platformie.",
+          "keyFeatures": [
+            "Bogaty edytor HTML z podglądem",
+            "Wsparcie zmiennych/placeholderów ({{zmienna}})",
+            "Historia wersji i ścieżka audytu",
+            "Wysyłka testowych emaili",
+            "Organizacja według kategorii",
+            "Klonowanie i duplikowanie szablonów",
+            "Wsparcie wielojęzyczności"
+          ],
+          "workflow": [
+            "Przeglądaj istniejące szablony według statusu lub kategorii",
+            "Utwórz nowy szablon z nazwą i unikalnym kluczem",
+            "Zaprojektuj treść używając edytora HTML",
+            "Dodaj zmienne dla dynamicznej zawartości",
+            "Podglądaj i wysyłaj testowe emaile",
+            "Opublikuj, aby udostępnić do użytku systemowego"
+          ],
+          "tips": [
+            "Zawsze wysyłaj testowe emaile przed publikacją",
+            "Używaj opisowych kluczy szablonów dla dostępu przez API",
+            "Utrzymuj treść emaili przyjazną dla urządzeń mobilnych",
+            "Dokumentuj dostępne zmienne dla każdego szablonu",
+            "Używaj kategorii do logicznej organizacji szablonów"
+          ]
+        },
         "ai-tools": {
           "name": "Narzędzia AI",
           "description": "Pomoc napędzana AI dla decyzji transformacyjnych. Otrzymuj proaktywne rekomendacje, analizuj propozycje i wykorzystuj AI do strategicznych wniosków.",
@@ -4486,11 +4282,7 @@
             "Alokacja zasobów",
             "Raportowanie dla klientów"
           ],
-          "workflow": [
-            "Przeglądaj listę klientów",
-            "Wybierz projekt",
-            "Generuj raporty"
-          ],
+          "workflow": ["Przeglądaj listę klientów", "Wybierz projekt", "Generuj raporty"],
           "tips": [
             "Używaj widoku portfolio dla statusu ogólnego",
             "Standaryzuj raporty między klientami"
@@ -4500,20 +4292,13 @@
           "name": "Ekosystem",
           "description": "Połącz się z partnerami, firmami stowarzyszonymi i innymi organizacjami w ekosystemie DBR77.",
           "purpose": "Rozszerz swoją sieć i wykorzystaj zewnętrzną wiedzę ekspercką.",
-          "keyFeatures": [
-            "Katalog partnerów",
-            "Panel partnerski",
-            "Narzędzia współpracy"
-          ],
+          "keyFeatures": ["Katalog partnerów", "Panel partnerski", "Narzędzia współpracy"],
           "workflow": [
             "Przeglądaj partnerów",
             "Połącz się z ekspertami",
             "Śledź wyniki partnerskie"
           ],
-          "tips": [
-            "Szukaj certyfikowanych partnerów",
-            "Monitoruj swój wpływ partnerski"
-          ]
+          "tips": ["Szukaj certyfikowanych partnerów", "Monitoruj swój wpływ partnerski"]
         }
       },
       "tabs": {
@@ -4928,6 +4713,35 @@
               "Deprecjonuj stare wersje zamiast usuwać, aby zachować historię"
             ]
           },
+          "emailTemplates": {
+            "name": "Szablony Email",
+            "description": "Zarządzaj szablonami emaili systemowych dla powiadomień, alertów, raportów i automatycznej komunikacji. Twórz profesjonalne, responsywne emaile ze wsparciem zmiennych.",
+            "purpose": "Scentralizuj zarządzanie szablonami email dla spójnej, profesjonalnej komunikacji na całej platformie.",
+            "keyFeatures": [
+              "Bogaty edytor HTML z podglądem",
+              "Wsparcie zmiennych/placeholderów ({{zmienna}})",
+              "Historia wersji i ścieżka audytu",
+              "Wysyłka testowych emaili",
+              "Organizacja według kategorii",
+              "Klonowanie i duplikowanie szablonów",
+              "Wsparcie wielojęzyczności"
+            ],
+            "workflow": [
+              "Przeglądaj istniejące szablony według statusu lub kategorii",
+              "Utwórz nowy szablon z nazwą i unikalnym kluczem",
+              "Zaprojektuj treść używając edytora HTML",
+              "Dodaj zmienne dla dynamicznej zawartości",
+              "Podglądaj i wysyłaj testowe emaile",
+              "Opublikuj, aby udostępnić do użytku systemowego"
+            ],
+            "tips": [
+              "Zawsze wysyłaj testowe emaile przed publikacją",
+              "Używaj opisowych kluczy szablonów dla dostępu przez API",
+              "Utrzymuj treść emaili przyjazną dla urządzeń mobilnych",
+              "Dokumentuj dostępne zmienne dla każdego szablonu",
+              "Używaj kategorii do logicznej organizacji szablonów"
+            ]
+          },
           "ai-tools": {
             "name": "Narzędzia AI",
             "description": "Pomoc napędzana AI dla decyzji transformacyjnych. Otrzymuj proaktywne rekomendacje, analizuj propozycje i wykorzystuj AI do strategicznych wniosków.",
@@ -5014,11 +4828,7 @@
               "Alokacja zasobów",
               "Raportowanie dla klientów"
             ],
-            "workflow": [
-              "Przeglądaj listę klientów",
-              "Wybierz projekt",
-              "Generuj raporty"
-            ],
+            "workflow": ["Przeglądaj listę klientów", "Wybierz projekt", "Generuj raporty"],
             "tips": [
               "Używaj widoku portfolio dla statusu ogólnego",
               "Standaryzuj raporty między klientami"
@@ -5028,20 +4838,13 @@
             "name": "Ekosystem",
             "description": "Połącz się z partnerami, firmami stowarzyszonymi i innymi organizacjami w ekosystemie DBR77.",
             "purpose": "Rozszerz swoją sieć i wykorzystaj zewnętrzną wiedzę ekspercką.",
-            "keyFeatures": [
-              "Katalog partnerów",
-              "Panel partnerski",
-              "Narzędzia współpracy"
-            ],
+            "keyFeatures": ["Katalog partnerów", "Panel partnerski", "Narzędzia współpracy"],
             "workflow": [
               "Przeglądaj partnerów",
               "Połącz się z ekspertami",
               "Śledź wyniki partnerskie"
             ],
-            "tips": [
-              "Szukaj certyfikowanych partnerów",
-              "Monitoruj swój wpływ partnerski"
-            ]
+            "tips": ["Szukaj certyfikowanych partnerów", "Monitoruj swój wpływ partnerski"]
           }
         },
         "difficulty": {
@@ -5966,3 +5769,4 @@
       "confirmDelete": "Czy na pewno chcesz usunąć ten dokument?"
     }
   }
+}

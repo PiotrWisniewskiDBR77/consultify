@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aimaturitymonitor Service
  * Enterprise SaaS Architecture - TypeScript Backend

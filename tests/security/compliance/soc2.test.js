@@ -1,10 +1,10 @@
 /**
  * SOC2 Compliance Tests
  * Tests for SOC2 Type II compliance requirements
- * 
+ *
  * These tests verify automated security controls that can be tested programmatically.
  * Manual audit requirements are documented in comments.
- * 
+ *
  * @module tests/security/compliance/soc2.test.js
  */
 
@@ -20,18 +20,9 @@ describe('SOC2 Compliance', () => {
     app.use(express.json());
 
     // Track authenticated routes
-    const protectedRoutes = [
-      '/api/users',
-      '/api/projects',
-      '/api/settings',
-      '/api/admin'
-    ];
+    const protectedRoutes = ['/api/users', '/api/projects', '/api/settings', '/api/admin'];
 
-    const publicRoutes = [
-      '/api/health',
-      '/api/auth/login',
-      '/api/auth/register'
-    ];
+    const publicRoutes = ['/api/health', '/api/auth/login', '/api/auth/register'];
 
     // Auth middleware simulator
     const requireAuth = (req, res, next) => {
@@ -44,7 +35,7 @@ describe('SOC2 Compliance', () => {
     };
 
     // Protected endpoints
-    protectedRoutes.forEach(route => {
+    protectedRoutes.forEach((route) => {
       app.get(route, requireAuth, (req, res) => {
         res.json({ data: 'protected' });
       });
@@ -83,7 +74,7 @@ describe('SOC2 Compliance', () => {
       console.error('Error:', err.message);
       return res.status(500).json({
         error: 'Internal server error',
-        requestId: 'req-' + Date.now()
+        requestId: 'req-' + Date.now(),
       });
     });
   });
@@ -94,12 +85,7 @@ describe('SOC2 Compliance', () => {
 
   describe('Security Controls (CC.6)', () => {
     it('should enforce authentication on protected API endpoints', async () => {
-      const protectedEndpoints = [
-        '/api/users',
-        '/api/projects',
-        '/api/settings',
-        '/api/admin'
-      ];
+      const protectedEndpoints = ['/api/users', '/api/projects', '/api/settings', '/api/admin'];
 
       for (const endpoint of protectedEndpoints) {
         const response = await request(app).get(endpoint);
@@ -128,7 +114,7 @@ describe('SOC2 Compliance', () => {
       const encryptionConfig = {
         database: 'AES-256 at rest (SQLite WAL mode)',
         secrets: 'Environment variables / Secret manager',
-        backups: 'Encrypted at rest'
+        backups: 'Encrypted at rest',
       };
 
       expect(encryptionConfig.database).toContain('AES');
@@ -141,7 +127,7 @@ describe('SOC2 Compliance', () => {
       const expectedHeaders = [
         'X-Content-Type-Options',
         'X-Frame-Options',
-        'Strict-Transport-Security'
+        'Strict-Transport-Security',
       ];
 
       // Verify the app doesn't override critical headers incorrectly
@@ -179,7 +165,7 @@ describe('SOC2 Compliance', () => {
         schedule: 'Daily automated backups',
         retention: '30 days',
         encryption: true,
-        tested: true // Regular restore tests
+        tested: true, // Regular restore tests
       };
 
       expect(backupConfig.schedule).toBeDefined();
@@ -193,16 +179,12 @@ describe('SOC2 Compliance', () => {
 
   describe('Processing Integrity Controls (PI.1)', () => {
     it('should validate input data - email format', async () => {
-      const invalidEmail = await request(app)
-        .post('/api/data')
-        .send({ email: 'not-an-email' });
+      const invalidEmail = await request(app).post('/api/data').send({ email: 'not-an-email' });
 
       expect(invalidEmail.status).toBe(400);
       expect(invalidEmail.body.error).toContain('Invalid email');
 
-      const validEmail = await request(app)
-        .post('/api/data')
-        .send({ email: 'valid@example.com' });
+      const validEmail = await request(app).post('/api/data').send({ email: 'valid@example.com' });
 
       expect(validEmail.status).toBe(200);
     });
@@ -264,7 +246,7 @@ describe('SOC2 Compliance', () => {
       const collectedData = {
         email: 'Required for account identification and communication',
         name: 'Optional, for personalization',
-        organization: 'Required for multi-tenant isolation'
+        organization: 'Required for multi-tenant isolation',
       };
 
       // Verify no unnecessary data is collected

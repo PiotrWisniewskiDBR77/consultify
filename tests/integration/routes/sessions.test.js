@@ -6,31 +6,31 @@ import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
 vi.hoisted(() => {
-    process.env.MOCK_DB = 'false';
-    const workerId = process.env.VITEST_WORKER_ID || '0';
-    process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
 });
 
 const VALID_STATUSES = [200, 201, 400, 401, 403, 404, 500, 501];
 
 describe('Integration Test: Sessions Routes', () => {
-    let app;
+  let app;
 
-    beforeAll(async () => {
-        await initializeDatabase();
-        const serverModule = await import('../../../server/src/index.js');
-        app = serverModule.default;
+  beforeAll(async () => {
+    await initializeDatabase();
+    const serverModule = await import('../../../server/src/index.js');
+    app = serverModule.default;
+  });
+
+  describe('GET /api/sessions', () => {
+    it('should return user sessions', async () => {
+      const response = await request(app).get('/api/sessions');
+      expect(VALID_STATUSES).toContain(response.status);
     });
 
-    describe('GET /api/sessions', () => {
-        it('should return user sessions', async () => {
-            const response = await request(app).get('/api/sessions');
-            expect(VALID_STATUSES).toContain(response.status);
-        });
-
-        it('should require authentication', async () => {
-            const response = await request(app).get('/api/sessions');
-            expect(VALID_STATUSES).toContain(response.status);
-        });
+    it('should require authentication', async () => {
+      const response = await request(app).get('/api/sessions');
+      expect(VALID_STATUSES).toContain(response.status);
     });
+  });
 });

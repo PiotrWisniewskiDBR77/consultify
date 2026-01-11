@@ -12,7 +12,11 @@ const DecisionController = DecisionControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
-import { CreateDecisionSchema, DecideSchema, EscalateDecisionSchema } from '../../validators/decision.validators.js';
+import {
+  CreateDecisionSchema,
+  DecideSchema,
+  EscalateDecisionSchema,
+} from '../../validators/decision.validators.js';
 
 // Apply rate limiting
 const router = Router();
@@ -64,6 +68,10 @@ router.put('/:id/decide', validateBody(DecideSchema), DecisionController.decide)
  * POST /api/decisions/:id/escalate
  * Escalate decision
  */
-router.post('/:id/escalate', validateBody(EscalateDecisionSchema), DecisionController.escalateDecision);
+router.post(
+  '/:id/escalate',
+  validateBody(EscalateDecisionSchema),
+  DecisionController.escalateDecision
+);
 
 export default router;

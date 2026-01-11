@@ -15,11 +15,12 @@ import { checkPlanLimit } from '../../middleware/planLimits.middleware.js';
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody, validateQuery } from '../../middleware/validation.middleware.js';
 import {
-    CreateProjectSchema,
-    ProjectNotificationSettingsSchema,
-    UpdateAIRoleSchema,
-    UpdateProjectSchema,
-    UpdateRegulatoryModeSchema,
+  ArchiveProjectSchema,
+  CreateProjectSchema,
+  ProjectNotificationSettingsSchema,
+  UpdateAIRoleSchema,
+  UpdateProjectSchema,
+  UpdateRegulatoryModeSchema,
 } from '../../validators/project.validators.js';
 
 const router = Router();
@@ -48,14 +49,14 @@ router.get('/', ProjectController.getProjects);
  * Create a new project
  */
 router.post(
-    '/',
-    (req, res, next) => {
-        console.log('[ProjectsRoute] POST / hit');
-        next();
-    },
-    checkPlanLimit('max_projects'),
-    validateBody(CreateProjectSchema),
-    ProjectController.createProject,
+  '/',
+  (req, res, next) => {
+    console.log('[ProjectsRoute] POST / hit');
+    next();
+  },
+  checkPlanLimit('max_projects'),
+  validateBody(CreateProjectSchema),
+  ProjectController.createProject
 );
 
 /**
@@ -91,9 +92,9 @@ router.get('/:id/notification-settings', ProjectController.getNotificationSettin
  * Update notification settings for project
  */
 router.put(
-    '/:id/notification-settings',
-    validateBody(ProjectNotificationSettingsSchema),
-    ProjectController.updateNotificationSettings,
+  '/:id/notification-settings',
+  validateBody(ProjectNotificationSettingsSchema),
+  ProjectController.updateNotificationSettings
 );
 
 // ==========================================
@@ -126,6 +127,58 @@ router.get('/:id/regulatory-mode', ProjectController.getRegulatoryMode);
  * PUT /api/projects/:id/regulatory-mode
  * Update regulatory mode for project (Admin only)
  */
-router.put('/:id/regulatory-mode', validateBody(UpdateRegulatoryModeSchema), ProjectController.updateRegulatoryMode);
+router.put(
+  '/:id/regulatory-mode',
+  validateBody(UpdateRegulatoryModeSchema),
+  ProjectController.updateRegulatoryMode
+);
+
+// ==========================================
+// FLOW-PROJECT-001: ARCHIVE MANAGEMENT
+// ==========================================
+
+/**
+ * POST /api/projects/:id/archive
+ * Archive a completed or cancelled project
+ */
+router.post('/:id/archive', validateBody(ArchiveProjectSchema), ProjectController.archiveProject);
+
+/**
+ * POST /api/projects/:id/unarchive
+ * Restore an archived project
+ */
+router.post('/:id/unarchive', ProjectController.unarchiveProject);
+
+// ==========================================
+// PMO ROLES
+// ==========================================
+
+/**
+ * GET /api/projects/:id/pmo-roles
+ * Get PMO role assignments for project
+ */
+router.get('/:id/pmo-roles', ProjectController.getPMORoles);
+
+/**
+ * POST /api/projects/:id/pmo-roles
+ * Assign PMO role to user in project
+ */
+router.post('/:id/pmo-roles', ProjectController.assignPMORole);
+
+/**
+ * DELETE /api/projects/:id/pmo-roles/:assignmentId
+ * Remove PMO role assignment
+ */
+router.delete('/:id/pmo-roles/:assignmentId', ProjectController.removePMORole);
+
+// ==========================================
+// LOCATIONS
+// ==========================================
+
+/**
+ * GET /api/locations
+ * Get all locations for organization
+ */
+router.get('/locations', ProjectController.getLocations);
 
 export default router;

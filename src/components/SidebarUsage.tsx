@@ -6,44 +6,44 @@ import { useAppStore } from '../store/useAppStore';
 import UsageMeters from './billing/UsageMeters';
 
 interface SidebarUsageProps {
-    showFull: boolean;
+  showFull: boolean;
 }
 
 export const SidebarUsage: React.FC<SidebarUsageProps> = ({ showFull }) => {
-    const { freeSessionData } = useAppStore();
+  const { freeSessionData } = useAppStore();
 
-    const [usage, setUsage] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+  const [usage, setUsage] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchUsage = async () => {
-            try {
-                const data = await Api.getUsage();
-                setUsage(data);
-            } catch (error) {
-                console.error('Failed to fetch sidebar usage:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const data = await Api.getUsage();
+        setUsage(data);
+      } catch (error) {
+        console.error('Failed to fetch sidebar usage:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        fetchUsage();
-    }, []);
+    fetchUsage();
+  }, []);
 
-    if (loading) {
-        if (!showFull) return null; // Don't show loader in mini mode
-        return (
-            <div className="flex justify-center py-4">
-                <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
-            </div>
-        );
-    }
-
-    if (!usage) return null;
-
+  if (loading) {
+    if (!showFull) return null; // Don't show loader in mini mode
     return (
-        <div className={`transition-all duration-300 ${!showFull ? 'px-2' : 'px-4'}`}>
-            <UsageMeters usage={usage} compact={!showFull} />
-        </div>
+      <div className="flex justify-center py-4">
+        <Loader2 className="w-5 h-5 text-slate-400 dark:text-slate-500 animate-spin" />
+      </div>
     );
+  }
+
+  if (!usage) return null;
+
+  return (
+    <div className={`transition-all duration-300 ${!showFull ? 'px-2' : 'px-4'}`}>
+      <UsageMeters usage={usage} compact={!showFull} />
+    </div>
+  );
 };

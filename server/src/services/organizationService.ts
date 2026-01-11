@@ -22,100 +22,100 @@ import logger from '../utils/Logger.js';
 // ==========================================
 
 export const ROLES = {
-    OWNER: 'OWNER',
-    ADMIN: 'ADMIN',
-    MEMBER: 'MEMBER',
-    CONSULTANT: 'CONSULTANT',
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  CONSULTANT: 'CONSULTANT',
 } as const;
 
 export type OrganizationRole = (typeof ROLES)[keyof typeof ROLES];
 
 interface CreateOrganizationParams {
-    userId: string;
-    name: string;
-    email?: string;
-    attribution?: { type: string; id: string } | null;
+  userId: string;
+  name: string;
+  email?: string;
+  attribution?: { type: string; id: string } | null;
 }
 
 interface CreateOrganizationResult {
-    id: string;
-    name: string;
-    role: OrganizationRole;
+  id: string;
+  name: string;
+  role: OrganizationRole;
 }
 
 interface Organization {
-    id: string;
-    name: string;
-    status: string;
-    billing_status: string;
-    token_balance: number;
-    created_at: string;
+  id: string;
+  name: string;
+  status: string;
+  billing_status: string;
+  token_balance: number;
+  created_at: string;
 }
 
 interface AddMemberParams {
-    organizationId: string;
-    userId: string;
-    role: OrganizationRole;
-    invitedBy?: string;
+  organizationId: string;
+  userId: string;
+  role: OrganizationRole;
+  invitedBy?: string;
 }
 
 interface AddMemberResult {
-    id: string;
-    organizationId: string;
-    userId: string;
-    role: OrganizationRole;
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: OrganizationRole;
 }
 
 interface Member {
-    id: string;
-    user_id: string;
-    role: OrganizationRole;
-    status: string;
-    created_at: string;
-    first_name?: string;
-    last_name?: string;
-    email?: string;
+  id: string;
+  user_id: string;
+  role: OrganizationRole;
+  status: string;
+  created_at: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
 }
 
 interface UserOrganization {
-    id: string;
-    name: string;
-    billing_status: string;
-    role: OrganizationRole;
+  id: string;
+  name: string;
+  billing_status: string;
+  role: OrganizationRole;
 }
 
 interface AISettings {
-    ai_assertiveness_level: string;
-    ai_autonomy_level: string;
+  ai_assertiveness_level: string;
+  ai_autonomy_level: string;
 }
 
 interface UpdateAISettingsParams {
-    ai_assertiveness_level?: string;
-    ai_autonomy_level?: string;
+  ai_assertiveness_level?: string;
+  ai_autonomy_level?: string;
 }
 
 interface ActivateBillingResult {
-    success: boolean;
-    billingStatus: string;
-    organizationType: string;
-    tokensAdded: number;
+  success: boolean;
+  billingStatus: string;
+  organizationType: string;
+  tokensAdded: number;
 }
 
 interface UpdateMemberRoleParams {
-    organizationId: string;
-    userId: string;
-    role: OrganizationRole;
+  organizationId: string;
+  userId: string;
+  role: OrganizationRole;
 }
 
 interface UpdateMemberRoleResult {
-    organizationId: string;
-    userId: string;
-    role: OrganizationRole;
+  organizationId: string;
+  userId: string;
+  role: OrganizationRole;
 }
 
 interface RemoveMemberParams {
-    organizationId: string;
-    userId: string;
+  organizationId: string;
+  userId: string;
 }
 
 // ==========================================
@@ -128,289 +128,301 @@ let db: IDatabase = getDatabase();
  * Set database instance (for testing)
  */
 export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
-    if (newDeps.db) {
-        db = newDeps.db;
-    }
+  if (newDeps.db) {
+    db = newDeps.db;
+  }
 }
 
 /**
  * Create a new organization with an initial OWNER
  */
-export async function createOrganization(params: CreateOrganizationParams): Promise<CreateOrganizationResult> {
-    const { userId, name, attribution = null } = params;
-    const orgId = uuidv4();
-    const now = new Date().toISOString();
-    const attributionJson = attribution ? JSON.stringify(attribution) : null;
+export async function createOrganization(
+  params: CreateOrganizationParams
+): Promise<CreateOrganizationResult> {
+  const { userId, name, attribution = null } = params;
+  const orgId = uuidv4();
+  const now = new Date().toISOString();
+  const attributionJson = attribution ? JSON.stringify(attribution) : null;
 
-    // Use transaction for atomic operations
-    const memberId = uuidv4();
-    const result = await DbPromise.transaction([
-        {
-            sql: `INSERT INTO organizations (
+  // Use transaction for atomic operations
+  const memberId = uuidv4();
+  const result = await DbPromise.transaction([
+    {
+      sql: `INSERT INTO organizations (
                 id, name, status, billing_status, token_balance, created_by_user_id, created_at, is_active,
                 ai_assertiveness_level, ai_autonomy_level, attribution_data
             )
              VALUES (?, ?, 'active', 'TRIAL', 0, ?, ?, 1, 'MEDIUM', 'SUGGEST_ONLY', ?)`,
-            params: [orgId, name, userId, now, attributionJson],
-        },
-        {
-            sql: `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+      params: [orgId, name, userId, now, attributionJson],
+    },
+    {
+      sql: `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
                  VALUES (?, ?, ?, ?, 'ACTIVE', ?)`,
-            params: [memberId, orgId, userId, 'OWNER', now],
-        },
-    ]);
+      params: [memberId, orgId, userId, 'OWNER', now],
+    },
+  ]);
 
-    if (!result.success) {
-        throw new Error(result.error || 'Failed to create organization');
-    }
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to create organization');
+  }
 
-    return { id: orgId, name, role: 'OWNER' };
+  return { id: orgId, name, role: 'OWNER' };
 }
 
 /**
  * Get organization details including billing and tokens
  */
 export async function getOrganization(orgId: string): Promise<Organization> {
-    const row = await DbPromise.get<Organization>(
-        `SELECT id, name, status, billing_status, token_balance, created_at 
+  const row = await DbPromise.get<Organization>(
+    `SELECT id, name, status, billing_status, token_balance, created_at 
          FROM organizations WHERE id = ?`,
-        [orgId],
-    );
+    [orgId]
+  );
 
-    if (!row) {
-        throw new Error('Organization not found');
-    }
+  if (!row) {
+    throw new Error('Organization not found');
+  }
 
-    return row;
+  return row;
 }
 
 /**
  * Add a member to the organization
  */
 export async function addMember(params: AddMemberParams): Promise<AddMemberResult> {
-    const { organizationId, userId, role, invitedBy } = params;
+  const { organizationId, userId, role, invitedBy } = params;
 
-    if (!Object.values(ROLES).includes(role)) {
-        throw new Error('Invalid role');
-    }
+  if (!Object.values(ROLES).includes(role)) {
+    throw new Error('Invalid role');
+  }
 
-    const id = uuidv4();
+  const id = uuidv4();
 
-    try {
-        const _result = await DbPromise.run(
-            `INSERT INTO organization_members (id, organization_id, user_id, role, status, invited_by_user_id)
+  try {
+    const _result = await DbPromise.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status, invited_by_user_id)
              VALUES (?, ?, ?, ?, 'ACTIVE', ?)`,
-            [id, organizationId, userId, role, invitedBy || null],
-            { fallback: false },
-        );
+      [id, organizationId, userId, role, invitedBy || null],
+      { fallback: false }
+    );
 
-        return { id, organizationId, userId, role };
-    } catch (err: any) {
-        const error = err as Error;
-        // Check for unique constraint violation
-        if (error.message.includes('UNIQUE constraint failed')) {
-            throw new Error('User is already a member of this organization');
-        }
-        throw err;
+    return { id, organizationId, userId, role };
+  } catch (err: any) {
+    const error = err as Error;
+    // Check for unique constraint violation
+    if (error.message.includes('UNIQUE constraint failed')) {
+      throw new Error('User is already a member of this organization');
     }
+    throw err;
+  }
 }
 
 /**
  * Get members of an organization
  */
 export async function getMembers(orgId: string): Promise<Member[]> {
-    const rows = await DbPromise.all<Member>(
-        db,
-        `SELECT m.id, m.user_id, m.role, m.status, m.created_at, u.first_name, u.last_name, u.email
+  const rows = await DbPromise.all<Member>(
+    db,
+    `SELECT m.id, m.user_id, m.role, m.status, m.created_at, u.first_name, u.last_name, u.email
          FROM organization_members m
          JOIN users u ON m.user_id = u.id
          WHERE m.organization_id = ?`,
-        [orgId],
-    );
+    [orgId]
+  );
 
-    return rows || [];
+  return rows || [];
 }
 
 /**
  * Get organizations for a user
  */
 export async function getUserOrganizations(userId: string): Promise<UserOrganization[]> {
-    const rows = await DbPromise.all<UserOrganization>(
-        db,
-        `SELECT o.id, o.name, o.billing_status, m.role
+  const rows = await DbPromise.all<UserOrganization>(
+    db,
+    `SELECT o.id, o.name, o.billing_status, m.role
          FROM organizations o
          JOIN organization_members m ON o.id = m.organization_id
          WHERE m.user_id = ?`,
-        [userId],
-    );
+    [userId]
+  );
 
-    return rows || [];
+  return rows || [];
 }
 
 /**
  * Activate billing for an organization
  */
 export async function activateBilling(orgId: string): Promise<ActivateBillingResult> {
-    const INITIAL_TOKENS = 100000; // Configurable initial pack
+  const INITIAL_TOKENS = 100000; // Configurable initial pack
 
-    // Use transaction for atomic operations
-    const result = await DbPromise.transaction([
-        {
-            sql: `UPDATE organizations 
+  // Use transaction for atomic operations
+  const result = await DbPromise.transaction([
+    {
+      sql: `UPDATE organizations 
                  SET billing_status = 'ACTIVE', 
                      organization_type = 'PAID',
                      status = 'active',
                      token_balance = IFNULL(token_balance, 0) + ? 
                  WHERE id = ?`,
-            params: [INITIAL_TOKENS, orgId],
-        },
-        {
-            sql: `INSERT OR REPLACE INTO organization_billing (organization_id, status, updated_at)
+      params: [INITIAL_TOKENS, orgId],
+    },
+    {
+      sql: `INSERT OR REPLACE INTO organization_billing (organization_id, status, updated_at)
                  VALUES (?, 'ACTIVE', CURRENT_TIMESTAMP)`,
-            params: [orgId],
-        },
-    ]);
+      params: [orgId],
+    },
+  ]);
 
-    if (!result.success) {
-        throw new Error(result.error || 'Failed to activate billing');
-    }
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to activate billing');
+  }
 
-    // Check if organization was updated
-    if (result.results[0]?.changes === 0) {
-        throw new Error('Organization not found');
-    }
+  // Check if organization was updated
+  if (result.results[0]?.changes === 0) {
+    throw new Error('Organization not found');
+  }
 
-    // Log the event (post-commit)
-    try {
-        const { default: OrganizationEventService } = { default: {} } as any; // Stubbed missing service
-        await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, { initialTokens: INITIAL_TOKENS });
-    } catch (e: unknown) {
-        // Event logging failed, but billing is active. Acceptable.
-        logger.error('Post-billing activation error', e);
-    }
+  // Log the event (post-commit)
+  try {
+    const { default: OrganizationEventService } = { default: {} } as any; // Stubbed missing service
+    await OrganizationEventService.logEvent(orgId, 'BILLING_ACTIVATED', null, {
+      initialTokens: INITIAL_TOKENS,
+    });
+  } catch (e: unknown) {
+    // Event logging failed, but billing is active. Acceptable.
+    logger.error('Post-billing activation error', e);
+  }
 
-    return {
-        success: true,
-        billingStatus: 'ACTIVE',
-        organizationType: 'PAID',
-        tokensAdded: INITIAL_TOKENS,
-    };
+  return {
+    success: true,
+    billingStatus: 'ACTIVE',
+    organizationType: 'PAID',
+    tokensAdded: INITIAL_TOKENS,
+  };
 }
 
 /**
  * Update AI settings for an organization
  */
-export async function updateAISettings(orgId: string, settings: UpdateAISettingsParams): Promise<void> {
-    const updates: string[] = [];
-    const params: unknown[] = [];
+export async function updateAISettings(
+  orgId: string,
+  settings: UpdateAISettingsParams
+): Promise<void> {
+  const updates: string[] = [];
+  const params: unknown[] = [];
 
-    if (settings.ai_assertiveness_level) {
-        updates.push('ai_assertiveness_level = ?');
-        params.push(settings.ai_assertiveness_level);
-    }
-    if (settings.ai_autonomy_level) {
-        updates.push('ai_autonomy_level = ?');
-        params.push(settings.ai_autonomy_level);
-    }
+  if (settings.ai_assertiveness_level) {
+    updates.push('ai_assertiveness_level = ?');
+    params.push(settings.ai_assertiveness_level);
+  }
+  if (settings.ai_autonomy_level) {
+    updates.push('ai_autonomy_level = ?');
+    params.push(settings.ai_autonomy_level);
+  }
 
-    if (updates.length === 0) return;
+  if (updates.length === 0) return;
 
-    params.push(orgId);
+  params.push(orgId);
 
-    await DbPromise.run(db, `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`, params);
+  await DbPromise.run(db, `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`, params);
 }
 
 /**
  * Get AI settings for an organization
  */
 export async function getAISettings(orgId: string): Promise<AISettings> {
-    const row = await DbPromise.get<AISettings>(
-        db,
-        `SELECT ai_assertiveness_level, ai_autonomy_level 
+  const row = await DbPromise.get<AISettings>(
+    db,
+    `SELECT ai_assertiveness_level, ai_autonomy_level 
         FROM organizations WHERE id = ?`,
-        [orgId],
-    );
+    [orgId]
+  );
 
-    return (
-        row || {
-            ai_assertiveness_level: 'MEDIUM',
-            ai_autonomy_level: 'SUGGEST_ONLY',
-        }
-    );
+  return (
+    row || {
+      ai_assertiveness_level: 'MEDIUM',
+      ai_autonomy_level: 'SUGGEST_ONLY',
+    }
+  );
 }
 
 /**
  * Remove a member from the organization
  */
 export async function removeMember(params: RemoveMemberParams): Promise<void> {
-    const { organizationId, userId } = params;
+  const { organizationId, userId } = params;
 
-    const result = await DbPromise.run(
-        db,
-        `DELETE FROM organization_members 
+  const result = await DbPromise.run(
+    db,
+    `DELETE FROM organization_members 
          WHERE organization_id = ? AND user_id = ?`,
-        [organizationId, userId],
-    );
+    [organizationId, userId]
+  );
 
-    if ((result.changes || 0) === 0) {
-        throw new Error('Member not found');
-    }
+  if ((result.changes || 0) === 0) {
+    throw new Error('Member not found');
+  }
 }
 
 /**
  * Update a member's role in the organization
  */
-export async function updateMemberRole(params: UpdateMemberRoleParams): Promise<UpdateMemberRoleResult> {
-    const { organizationId, userId, role } = params;
+export async function updateMemberRole(
+  params: UpdateMemberRoleParams
+): Promise<UpdateMemberRoleResult> {
+  const { organizationId, userId, role } = params;
 
-    if (!Object.values(ROLES).includes(role)) {
-        throw new Error('Invalid role');
-    }
+  if (!Object.values(ROLES).includes(role)) {
+    throw new Error('Invalid role');
+  }
 
-    const result = await DbPromise.run(
-        db,
-        `UPDATE organization_members 
+  const result = await DbPromise.run(
+    db,
+    `UPDATE organization_members 
          SET role = ? 
          WHERE organization_id = ? AND user_id = ?`,
-        [role, organizationId, userId],
-    );
+    [role, organizationId, userId]
+  );
 
-    if ((result.changes || 0) === 0) {
-        throw new Error('Member not found');
-    }
+  if ((result.changes || 0) === 0) {
+    throw new Error('Member not found');
+  }
 
-    return { organizationId, userId, role };
+  return { organizationId, userId, role };
 }
 
 /**
  * Get a member's role in the organization
  */
-export async function getMemberRole(organizationId: string, userId: string): Promise<OrganizationRole | null> {
-    const row = await DbPromise.get<{ role: OrganizationRole }>(
-        db,
-        `SELECT role FROM organization_members 
+export async function getMemberRole(
+  organizationId: string,
+  userId: string
+): Promise<OrganizationRole | null> {
+  const row = await DbPromise.get<{ role: OrganizationRole }>(
+    db,
+    `SELECT role FROM organization_members 
          WHERE organization_id = ? AND user_id = ?`,
-        [organizationId, userId],
-    );
+    [organizationId, userId]
+  );
 
-    return row ? row.role : null;
+  return row ? row.role : null;
 }
 
 // Default export for backward compatibility
 const OrganizationService = {
-    ROLES,
-    setDependencies,
-    createOrganization,
-    getOrganization,
-    addMember,
-    getMembers,
-    getUserOrganizations,
-    activateBilling,
-    updateAISettings,
-    getAISettings,
-    removeMember,
-    updateMemberRole,
-    getMemberRole,
+  ROLES,
+  setDependencies,
+  createOrganization,
+  getOrganization,
+  addMember,
+  getMembers,
+  getUserOrganizations,
+  activateBilling,
+  updateAISettings,
+  getAISettings,
+  removeMember,
+  updateMemberRole,
+  getMemberRole,
 };
 
 export default OrganizationService;

@@ -5,410 +5,441 @@
  * Extracts scores and maps them to DRD structure.
  */
 
-import { AlertCircle, CheckCircle2, ChevronRight, Edit2, File, FileText, Loader2, Save, Upload, X } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronRight,
+  Edit2,
+  File,
+  FileText,
+  Loader2,
+  Save,
+  Upload,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 
 // Helper to get auth token from localStorage
 const getAuthToken = () => localStorage.getItem('token');
 
 interface ExtractedDimension {
-    axis: string;
-    actual: number;
-    confidence: number;
+  axis: string;
+  actual: number;
+  confidence: number;
 }
 
 interface ImportResult {
-    id: string;
-    status: string;
-    extractedData: {
-        reportType: string;
-        dimensionCount: number;
-        confidence: number;
-    };
-    drdMapping: Record<string, ExtractedDimension>;
+  id: string;
+  status: string;
+  extractedData: {
+    reportType: string;
+    dimensionCount: number;
+    confidence: number;
+  };
+  drdMapping: Record<string, ExtractedDimension>;
 }
 
 interface ImportReportModalProps {
-    projectId?: string;
-    onClose: () => void;
-    onImported: (reportId: string) => void;
+  projectId?: string;
+  onClose: () => void;
+  onImported: (reportId: string) => void;
 }
 
 const DRD_AXES = [
-    { id: 'processes', name: 'Digital Processes', maxLevel: 7 },
-    { id: 'digitalProducts', name: 'Digital Products', maxLevel: 5 },
-    { id: 'businessModels', name: 'Business Models', maxLevel: 5 },
-    { id: 'dataManagement', name: 'Data Management', maxLevel: 7 },
-    { id: 'culture', name: 'Culture', maxLevel: 5 },
-    { id: 'cybersecurity', name: 'Cybersecurity', maxLevel: 5 },
-    { id: 'aiMaturity', name: 'AI Maturity', maxLevel: 5 },
+  { id: 'processes', name: 'Digital Processes', maxLevel: 7 },
+  { id: 'digitalProducts', name: 'Digital Products', maxLevel: 5 },
+  { id: 'businessModels', name: 'Business Models', maxLevel: 5 },
+  { id: 'dataManagement', name: 'Data Management', maxLevel: 7 },
+  { id: 'culture', name: 'Culture', maxLevel: 5 },
+  { id: 'cybersecurity', name: 'Cybersecurity', maxLevel: 5 },
+  { id: 'aiMaturity', name: 'AI Maturity', maxLevel: 5 },
 ];
 
-export const ImportReportModal: React.FC<ImportReportModalProps> = ({ projectId, onClose, onImported }) => {
-    const token = getAuthToken();
-    const fileInputRef = useRef<HTMLInputElement>(null);
+export const ImportReportModal: React.FC<ImportReportModalProps> = ({
+  projectId,
+  onClose,
+  onImported,
+}) => {
+  const token = getAuthToken();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // State
-    const [step, setStep] = useState<'upload' | 'mapping' | 'success'>('upload');
-    const [file, setFile] = useState<File | null>(null);
-    const [reportName, setReportName] = useState('');
-    const [uploading, setUploading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [importResult, setImportResult] = useState<ImportResult | null>(null);
-    const [editingScores, setEditingScores] = useState<Record<string, number>>({});
-    const [editMode, setEditMode] = useState(false);
+  // State
+  const [step, setStep] = useState<'upload' | 'mapping' | 'success'>('upload');
+  const [file, setFile] = useState<File | null>(null);
+  const [reportName, setReportName] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [editingScores, setEditingScores] = useState<Record<string, number>>({});
+  const [editMode, setEditMode] = useState(false);
 
-    // Handle file selection
-    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0];
-        if (selectedFile) {
-            setFile(selectedFile);
-            setReportName(selectedFile.name.replace(/\.[^/.]+$/, ''));
-            setError(null);
-        }
-    }, []);
+  // Handle file selection
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setReportName(selectedFile.name.replace(/\.[^/.]+$/, ''));
+      setError(null);
+    }
+  }, []);
 
-    // Handle drag and drop
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile) {
-            const ext = droppedFile.name.toLowerCase();
-            if (ext.endsWith('.pdf') || ext.endsWith('.xlsx') || ext.endsWith('.xls') || ext.endsWith('.txt')) {
-                setFile(droppedFile);
-                setReportName(droppedFile.name.replace(/\.[^/.]+$/, ''));
-                setError(null);
-            } else {
-                setError('Only PDF, Excel, and TXT files are supported');
-            }
-        }
-    }, []);
-
-    // Upload and import file
-    const handleImport = async () => {
-        if (!file) return;
-
-        setUploading(true);
+  // Handle drag and drop
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      const ext = droppedFile.name.toLowerCase();
+      if (
+        ext.endsWith('.pdf') ||
+        ext.endsWith('.xlsx') ||
+        ext.endsWith('.xls') ||
+        ext.endsWith('.txt')
+      ) {
+        setFile(droppedFile);
+        setReportName(droppedFile.name.replace(/\.[^/.]+$/, ''));
         setError(null);
+      } else {
+        setError('Only PDF, Excel, and TXT files are supported');
+      }
+    }
+  }, []);
 
-        try {
-            const formData = new FormData();
-            formData.append('reportFile', file);
-            formData.append('reportName', reportName);
-            if (projectId) {
-                formData.append('projectId', projectId);
-            }
+  // Upload and import file
+  const handleImport = async () => {
+    if (!file) return;
 
-            const response = await fetch('/api/assessment-reports/import', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                body: formData,
-            });
+    setUploading(true);
+    setError(null);
 
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || data.details || 'Import failed');
-            }
+    try {
+      const formData = new FormData();
+      formData.append('reportFile', file);
+      formData.append('reportName', reportName);
+      if (projectId) {
+        formData.append('projectId', projectId);
+      }
 
-            const result = await response.json();
-            setImportResult(result);
+      const response = await fetch('/api/assessment-reports/import', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-            // Initialize editing scores from result
-            const initialScores: Record<string, number> = {};
-            Object.entries(result.drdMapping).forEach(([axis, data]: [string, any]) => {
-                initialScores[axis] = data.actual;
-            });
-            setEditingScores(initialScores);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || data.details || 'Import failed');
+      }
 
-            setStep('mapping');
-        } catch (err: any) {
-            console.error('[ImportReportModal] Import error:', err);
-            setError(err.message || 'Failed to import report');
-        } finally {
-            setUploading(false);
-        }
-    };
+      const result = await response.json();
+      setImportResult(result);
 
-    // Save adjusted scores and proceed
-    const handleSave = async () => {
-        if (!importResult) return;
+      // Initialize editing scores from result
+      const initialScores: Record<string, number> = {};
+      Object.entries(result.drdMapping).forEach(([axis, data]: [string, any]) => {
+        initialScores[axis] = data.actual;
+      });
+      setEditingScores(initialScores);
 
-        // In a real implementation, we would update the report with adjusted scores
-        // For now, just proceed to success
-        setStep('success');
+      setStep('mapping');
+    } catch (err: any) {
+      console.error('[ImportReportModal] Import error:', err);
+      setError(err.message || 'Failed to import report');
+    } finally {
+      setUploading(false);
+    }
+  };
 
-        setTimeout(() => {
-            onImported(importResult.id);
-            onClose();
-        }, 1500);
-    };
+  // Save adjusted scores and proceed
+  const handleSave = async () => {
+    if (!importResult) return;
 
-    // Render based on step
-    const renderContent = () => {
-        if (step === 'success') {
-            return (
-                <div className="flex flex-col items-center justify-center py-12">
-                    <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
-                        <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+    // In a real implementation, we would update the report with adjusted scores
+    // For now, just proceed to success
+    setStep('success');
+
+    setTimeout(() => {
+      onImported(importResult.id);
+      onClose();
+    }, 1500);
+  };
+
+  // Render based on step
+  const renderContent = () => {
+    if (step === 'success') {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mb-4">
+            <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
+            Report Imported Successfully
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            You can now generate initiatives from this report
+          </p>
+        </div>
+      );
+    }
+
+    if (step === 'mapping' && importResult) {
+      return (
+        <div className="space-y-4">
+          {/* Extraction summary */}
+          <div className="p-4 bg-green-50 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <span className="font-medium text-green-700 dark:text-green-400">
+                Data Extracted Successfully
+              </span>
+            </div>
+            <div className="text-sm text-green-600 dark:text-green-300 space-y-1">
+              <p>Report Type: {importResult.extractedData.reportType}</p>
+              <p>Dimensions Found: {importResult.extractedData.dimensionCount}</p>
+              <p>Confidence: {Math.round(importResult.extractedData.confidence * 100)}%</p>
+            </div>
+          </div>
+
+          {/* DRD Mapping */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-navy-900 dark:text-white">DRD Axis Mapping</h4>
+              <button
+                onClick={() => setEditMode(!editMode)}
+                className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 px-2 py-1 rounded"
+              >
+                <Edit2 size={12} />
+                {editMode ? 'Done' : 'Adjust Scores'}
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {DRD_AXES.map((axis) => {
+                const mapped = importResult.drdMapping[axis.id];
+                const score = editingScores[axis.id] ?? mapped?.actual ?? 0;
+                const confidence = mapped?.confidence ?? 0;
+
+                return (
+                  <div
+                    key={axis.id}
+                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border border-slate-200 dark:border-navy-700"
+                  >
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-navy-900 dark:text-white">
+                        {axis.name}
+                      </span>
+                      {confidence > 0 && (
+                        <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
+                          ({Math.round(confidence * 100)}% confidence)
+                        </span>
+                      )}
                     </div>
-                    <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
-                        Report Imported Successfully
-                    </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        You can now generate initiatives from this report
-                    </p>
-                </div>
-            );
-        }
-
-        if (step === 'mapping' && importResult) {
-            return (
-                <div className="space-y-4">
-                    {/* Extraction summary */}
-                    <div className="p-4 bg-green-50 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-500/30">
-                        <div className="flex items-center gap-2 mb-2">
-                            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
-                            <span className="font-medium text-green-700 dark:text-green-400">
-                                Data Extracted Successfully
-                            </span>
-                        </div>
-                        <div className="text-sm text-green-600 dark:text-green-300 space-y-1">
-                            <p>Report Type: {importResult.extractedData.reportType}</p>
-                            <p>Dimensions Found: {importResult.extractedData.dimensionCount}</p>
-                            <p>Confidence: {Math.round(importResult.extractedData.confidence * 100)}%</p>
-                        </div>
+                    <div className="flex items-center gap-2">
+                      {editMode ? (
+                        <input
+                          type="number"
+                          min="0"
+                          max={axis.maxLevel}
+                          step="0.5"
+                          value={score || ''}
+                          onChange={(e) =>
+                            setEditingScores((prev) => ({
+                              ...prev,
+                              [axis.id]: parseFloat(e.target.value) || 0,
+                            }))
+                          }
+                          className="w-16 px-2 py-1 text-sm text-center rounded border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900"
+                        />
+                      ) : (
+                        <span
+                          className={`text-sm font-medium ${
+                            score > 0
+                              ? 'text-purple-600 dark:text-purple-400'
+                              : 'text-slate-400 dark:text-slate-500'
+                          }`}
+                        >
+                          {score > 0 ? score.toFixed(1) : '-'}
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                        / {axis.maxLevel}
+                      </span>
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-                    {/* DRD Mapping */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-medium text-navy-900 dark:text-white">DRD Axis Mapping</h4>
-                            <button
-                                onClick={() => setEditMode(!editMode)}
-                                className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 px-2 py-1 rounded"
-                            >
-                                <Edit2 size={12} />
-                                {editMode ? 'Done' : 'Adjust Scores'}
-                            </button>
-                        </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+            Review and adjust extracted scores before saving. You can generate initiatives from this
+            report.
+          </p>
+        </div>
+      );
+    }
 
-                        <div className="space-y-2">
-                            {DRD_AXES.map((axis) => {
-                                const mapped = importResult.drdMapping[axis.id];
-                                const score = editingScores[axis.id] ?? mapped?.actual ?? 0;
-                                const confidence = mapped?.confidence ?? 0;
-
-                                return (
-                                    <div
-                                        key={axis.id}
-                                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg border border-slate-200 dark:border-white/10"
-                                    >
-                                        <div className="flex-1">
-                                            <span className="text-sm font-medium text-navy-900 dark:text-white">
-                                                {axis.name}
-                                            </span>
-                                            {confidence > 0 && (
-                                                <span className="ml-2 text-xs text-slate-400">
-                                                    ({Math.round(confidence * 100)}% confidence)
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {editMode ? (
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max={axis.maxLevel}
-                                                    step="0.5"
-                                                    value={score || ''}
-                                                    onChange={(e) =>
-                                                        setEditingScores((prev) => ({
-                                                            ...prev,
-                                                            [axis.id]: parseFloat(e.target.value) || 0,
-                                                        }))
-                                                    }
-                                                    className="w-16 px-2 py-1 text-sm text-center rounded border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900"
-                                                />
-                                            ) : (
-                                                <span
-                                                    className={`text-sm font-medium ${
-                                                        score > 0
-                                                            ? 'text-purple-600 dark:text-purple-400'
-                                                            : 'text-slate-400'
-                                                    }`}
-                                                >
-                                                    {score > 0 ? score.toFixed(1) : '-'}
-                                                </span>
-                                            )}
-                                            <span className="text-xs text-slate-400">/ {axis.maxLevel}</span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                        Review and adjust extracted scores before saving. You can generate initiatives from this report.
-                    </p>
-                </div>
-            );
-        }
-
-        // Upload step
-        return (
-            <div className="space-y-4">
-                {/* Drop zone */}
-                <div
-                    onDrop={handleDrop}
-                    onDragOver={(e) => e.preventDefault()}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`
+    // Upload step
+    return (
+      <div className="space-y-4">
+        {/* Drop zone */}
+        <div
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+          onClick={() => fileInputRef.current?.click()}
+          className={`
                         border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all
                         ${
-                            file
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                                : 'border-slate-200 dark:border-white/10 hover:border-purple-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                          file
+                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                            : 'border-slate-200 dark:border-navy-700 hover:border-purple-400 hover:bg-slate-50 dark:hover:bg-white/5'
                         }
                     `}
-                >
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".pdf,.xlsx,.xls,.txt"
-                        onChange={handleFileChange}
-                        className="hidden"
-                    />
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.xlsx,.xls,.txt"
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
-                    {file ? (
-                        <div className="flex flex-col items-center">
-                            <FileText className="w-12 h-12 text-purple-500 mb-3" />
-                            <p className="font-medium text-navy-900 dark:text-white mb-1">{file.name}</p>
-                            <p className="text-sm text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center">
-                            <Upload className="w-12 h-12 text-slate-400 mb-3" />
-                            <p className="font-medium text-navy-900 dark:text-white mb-1">Drop your report here</p>
-                            <p className="text-sm text-slate-500">or click to browse (PDF, Excel, TXT)</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Report name */}
-                {file && (
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Report Name
-                        </label>
-                        <input
-                            type="text"
-                            value={reportName}
-                            onChange={(e) => setReportName(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
-                        />
-                    </div>
-                )}
-
-                {/* Info */}
-                <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
-                    <p className="text-sm text-blue-700 dark:text-blue-400">
-                        <strong>How it works:</strong> We'll analyze your report with AI to extract maturity scores and
-                        map them to the DRD framework. You can review and adjust the mapping before saving.
-                    </p>
-                </div>
+          {file ? (
+            <div className="flex flex-col items-center">
+              <FileText className="w-12 h-12 text-purple-500 mb-3" />
+              <p className="font-medium text-navy-900 dark:text-white mb-1">{file.name}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {(file.size / 1024 / 1024).toFixed(2)} MB
+              </p>
             </div>
-        );
-    };
+          ) : (
+            <div className="flex flex-col items-center">
+              <Upload className="w-12 h-12 text-slate-400 dark:text-slate-500 mb-3" />
+              <p className="font-medium text-navy-900 dark:text-white mb-1">
+                Drop your report here
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                or click to browse (PDF, Excel, TXT)
+              </p>
+            </div>
+          )}
+        </div>
 
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                                <Upload className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Import Report</h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {step === 'upload' && 'Upload an external assessment report'}
-                                    {step === 'mapping' && 'Review extracted data'}
-                                    {step === 'success' && 'Import complete'}
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
-                    </div>
-                </div>
+        {/* Report name */}
+        {file && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Report Name
+            </label>
+            <input
+              type="text"
+              value={reportName}
+              onChange={(e) => setReportName(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white"
+            />
+          </div>
+        )}
 
-                {/* Content */}
-                <div className="px-6 py-4 max-h-[500px] overflow-y-auto">
-                    {renderContent()}
+        {/* Info */}
+        <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
+          <p className="text-sm text-blue-700 dark:text-blue-400">
+            <strong>How it works:</strong> We'll analyze your report with AI to extract maturity
+            scores and map them to the DRD framework. You can review and adjust the mapping before
+            saving.
+          </p>
+        </div>
+      </div>
+    );
+  };
 
-                    {/* Error */}
-                    {error && (
-                        <div className="mt-4 flex items-center gap-2 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm">
-                            <AlertCircle size={16} />
-                            {error}
-                        </div>
-                    )}
-                </div>
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-navy-900 rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <Upload className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-navy-900 dark:text-white">Import Report</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {step === 'upload' && 'Upload an external assessment report'}
+                  {step === 'mapping' && 'Review extracted data'}
+                  {step === 'success' && 'Import complete'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
 
-                {/* Footer */}
-                {step !== 'success' && (
-                    <div className="px-6 py-4 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-navy-950">
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={step === 'mapping' ? () => setStep('upload') : onClose}
-                                className="flex-1 px-4 py-2.5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 rounded-lg font-medium hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                            >
-                                {step === 'mapping' ? 'Back' : 'Cancel'}
-                            </button>
-                            <button
-                                onClick={step === 'upload' ? handleImport : handleSave}
-                                disabled={step === 'upload' ? !file || uploading : false}
-                                className={`
+        {/* Content */}
+        <div className="px-6 py-4 max-h-[500px] overflow-y-auto">
+          {renderContent()}
+
+          {/* Error */}
+          {error && (
+            <div className="mt-4 flex items-center gap-2 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {step !== 'success' && (
+          <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={step === 'mapping' ? () => setStep('upload') : onClose}
+                className="flex-1 px-4 py-2.5 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 rounded-lg font-medium hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              >
+                {step === 'mapping' ? 'Back' : 'Cancel'}
+              </button>
+              <button
+                onClick={step === 'upload' ? handleImport : handleSave}
+                disabled={step === 'upload' ? !file || uploading : false}
+                className={`
                                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                                     ${
-                                        (step === 'upload' && file && !uploading) || step === 'mapping'
-                                            ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                                      (step === 'upload' && file && !uploading) ||
+                                      step === 'mapping'
+                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                                     }
                                 `}
-                            >
-                                {uploading ? (
-                                    <>
-                                        <Loader2 size={16} className="animate-spin" />
-                                        Analyzing...
-                                    </>
-                                ) : step === 'mapping' ? (
-                                    <>
-                                        <Save size={16} />
-                                        Save Report
-                                    </>
-                                ) : (
-                                    <>
-                                        <ChevronRight size={16} />
-                                        Import & Analyze
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Analyzing...
+                  </>
+                ) : step === 'mapping' ? (
+                  <>
+                    <Save size={16} />
+                    Save Report
+                  </>
+                ) : (
+                  <>
+                    <ChevronRight size={16} />
+                    Import & Analyze
+                  </>
                 )}
+              </button>
             </div>
-        </div>
-    );
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default ImportReportModal;

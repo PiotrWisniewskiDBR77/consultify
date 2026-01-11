@@ -1,0 +1,184 @@
+{
+  "discovery": {
+    "title": "Discovery Consultant",
+    "subtitle": "AI-powered rozmowa z konsultantem",
+    "chatTitle": "Konsultant AI",
+    "chatSubtitle": "Twój wirtualny partner transformacyjny",
+
+    "phases": {
+      "welcome": "Powitanie",
+      "ice_breaking": "Poznanie kontekstu",
+      "pain_discovery": "Odkrywanie problemów",
+      "impact_assessment": "Ocena wpływu",
+      "recommendations": "Rekomendacje",
+      "decision": "Decyzja",
+      "completed": "Zakończone"
+    },
+
+    "phaseDescriptions": {
+      "welcome": "Wprowadzenie do sesji discovery",
+      "ice_breaking": "Zrozumienie firmy i roli",
+      "pain_discovery": "Identyfikacja kluczowych wyzwań",
+      "impact_assessment": "Kwantyfikacja wpływu biznesowego",
+      "recommendations": "Prezentacja ścieżki transformacji",
+      "decision": "Następne kroki i konwersja",
+      "completed": "Sesja zakończona"
+    },
+
+    "canvas": {
+      "title": "Discovery Canvas",
+      "categories": {
+        "pains": "Problemy",
+        "insights": "Spostrzeżenia",
+        "opportunities": "Szanse",
+        "recommendations": "Rekomendacje"
+      },
+      "emptyState": "Rozpocznij rozmowę, a AI automatycznie dodaje znaleziska na tablicę",
+      "autoLayout": "Uporządkuj automatycznie",
+      "export": "Eksportuj obraz",
+      "zoomIn": "Przybliż",
+      "zoomOut": "Oddal",
+      "fitView": "Dopasuj widok"
+    },
+
+    "nodes": {
+      "painPoint": {
+        "title": "Problem",
+        "severity": "Dotkliwość",
+        "impact": "Wpływ",
+        "area": "Obszar"
+      },
+      "insight": {
+        "title": "Spostrzeżenie",
+        "linkedTo": "Powiązane z"
+      },
+      "opportunity": {
+        "title": "Szansa",
+        "potentialValue": "Potencjalna wartość"
+      },
+      "quote": {
+        "title": "Cytat",
+        "sentiment": "Wydźwięk"
+      },
+      "recommendation": {
+        "title": "Rekomendacja",
+        "confidence": "Pewność",
+        "type": "Typ transformacji"
+      },
+      "tool": {
+        "title": "Narzędzie",
+        "category": "Kategoria",
+        "effort": "Nakład pracy",
+        "impact": "Wpływ"
+      },
+      "assessment": {
+        "title": "Assessment",
+        "framework": "Framework"
+      },
+      "initiative": {
+        "title": "Inicjatywa",
+        "quickWin": "Quick Win"
+      }
+    },
+
+    "severity": {
+      "1": "Drobny",
+      "2": "Zauważalny",
+      "3": "Znaczący",
+      "4": "Krytyczny",
+      "5": "Blokujący"
+    },
+
+    "areas": {
+      "process": "Procesy",
+      "technology": "Technologia",
+      "people": "Ludzie",
+      "data": "Dane"
+    },
+
+    "transformationType": {
+      "strategic": "Transformacja strategiczna",
+      "operational": "Transformacja operacyjna",
+      "digital": "Transformacja cyfrowa"
+    },
+
+    "recommendations": {
+      "title": "Rekomendacje",
+      "matchScore": "Dopasowanie",
+      "suggestedAssessments": "Sugerowane assessmenty",
+      "suggestedTools": "Rekomendowane narzędzia",
+      "initiativeIdeas": "Pomysły na inicjatywy",
+      "noRecommendations": "Kontynuuj rozmowę, aby otrzymać rekomendacje"
+    },
+
+    "actions": {
+      "startProject": "Rozpocznij projekt",
+      "startProjectDesc": "Utwórz projekt transformacyjny z tymi danymi",
+      "attachToProject": "Przenieś do projektu",
+      "attachToProjectDesc": "Dodaj tę rozmowę do aktywnego projektu",
+      "save": "Zapisz rozmowę",
+      "saveDesc": "Zachowaj do późniejszego wykorzystania",
+      "continueChat": "Kontynuuj rozmowę",
+      "continueChatDesc": "Chcę dowiedzieć się więcej",
+      "exportPdf": "Eksportuj PDF"
+    },
+
+    "conversion": {
+      "title": "Utwórz projekt z Discovery",
+      "projectName": "Nazwa projektu",
+      "defaultName": "Discovery: {{company}}",
+      "whatWillBeTransferred": "Co zostanie przeniesione",
+      "painPointsCount": "{{count}} problemów",
+      "insightsCount": "{{count}} spostrzeżeń",
+      "recommendedTransformation": "Rekomendowana transformacja",
+      "suggestedAssessments": "{{count}} sugerowanych assessmentów",
+      "conversationHistory": "Pełna historia rozmowy",
+      "createInitiatives": "Utwórz inicjatywy z pomysłów",
+      "converting": "Tworzenie projektu...",
+      "success": "Projekt utworzony!",
+      "error": "Nie udało się utworzyć projektu"
+    },
+
+    "version": {
+      "title": "Wersje",
+      "current": "Aktualna",
+      "save": "Zapisz wersję",
+      "load": "Wczytaj wersję",
+      "saved": "Wersja zapisana",
+      "noVersions": "Brak zapisanych wersji"
+    },
+
+    "header": {
+      "newSession": "Nowa sesja",
+      "client": "Klient",
+      "industry": "Branża",
+      "size": "Wielkość",
+      "phase": "Faza"
+    },
+
+    "prompts": {
+      "welcome": "Witaj! Jestem Twoim wirtualnym konsultantem transformacyjnym. Pomogę Ci zrozumieć, gdzie leżą największe szanse na usprawnienie w Twojej organizacji.\n\nZanim zaczniemy - opowiedz mi o sobie i firmie. Jaka jest Twoja rola?",
+      "askIndustry": "W jakiej branży działa Twoja firma i jakiej jest wielkości?",
+      "askGoals": "Co skłoniło Cię do rozmowy o transformacji? Jaki jest najważniejszy cel biznesowy na najbliższe 12 miesięcy?",
+      "askPain": "Teraz kluczowe pytanie: Co dziś najbardziej spowalnia realizację tego celu? Co Cię 'boli' operacyjnie?",
+      "askMorePains": "Czy jest coś jeszcze, co utrudnia Wam osiągnięcie celu?",
+      "askImpact": "Ile to kosztuje firmę miesięcznie/rocznie? (nawet przybliżona estymata pomoże)",
+      "recommendationIntro": "Na podstawie naszej rozmowy, widzę że Wasza sytuacja wskazuje na potrzebę"
+    },
+
+    "errors": {
+      "loadFailed": "Nie udało się wczytać sesji",
+      "saveFailed": "Nie udało się zapisać sesji",
+      "conversionFailed": "Nie udało się utworzyć projektu",
+      "extractionFailed": "Nie udało się przetworzyć odpowiedzi"
+    },
+
+    "tooltips": {
+      "addNode": "Dodaj element",
+      "deleteNode": "Usuń element",
+      "editNode": "Edytuj element",
+      "connectNodes": "Połącz elementy",
+      "severity": "Jak bardzo ten problem wpływa na biznes"
+    }
+  }
+}

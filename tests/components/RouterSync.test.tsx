@@ -8,25 +8,25 @@ import { BrowserRouter } from 'react-router-dom';
 const RouterSync = () => <div data-testid="router-sync">Router Sync</div>;
 
 describe('RouterSync Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders component', () => {
-        render(
-            <BrowserRouter>
-                <RouterSync />
-            </BrowserRouter>
-        );
-        expect(screen.getByTestId('router-sync')).toBeInTheDocument();
-    });
+  it('renders component', () => {
+    render(
+      <BrowserRouter>
+        <RouterSync />
+      </BrowserRouter>
+    );
+    expect(screen.getByTestId('router-sync')).toBeInTheDocument();
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(
-            <BrowserRouter>
-                <RouterSync />
-            </BrowserRouter>
-        );
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <RouterSync />
+      </BrowserRouter>
+    );
+    expect(container).toBeInTheDocument();
+  });
 });

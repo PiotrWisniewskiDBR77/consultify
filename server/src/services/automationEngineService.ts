@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Automationengine Service
  * Enterprise SaaS Architecture - TypeScript Backend

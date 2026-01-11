@@ -7,6 +7,6 @@ export type HelpModuleId = string;
 
 export function getHelpMapping(viewId: string): ViewHelpMapping {
   return {
-    moduleId: 'welcome'
+    moduleId: 'welcome',
   };
 }

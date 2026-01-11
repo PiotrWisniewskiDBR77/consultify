@@ -13,11 +13,11 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
-    AddMemberSchema,
-    CreateOrganizationSchema,
-    InviteMemberSchema,
-    UpdateMemberRoleSchema,
-    UpdateOrganizationSchema,
+  AddMemberSchema,
+  CreateOrganizationSchema,
+  InviteMemberSchema,
+  UpdateMemberRoleSchema,
+  UpdateOrganizationSchema,
 } from '../../validators/organization.validators.js';
 
 const router = Router();
@@ -54,7 +54,11 @@ router.get('/:orgId', OrganizationController.getOrganizationById);
  * PUT /api/organizations/:orgId
  * Update organization
  */
-router.put('/:orgId', validateBody(UpdateOrganizationSchema), OrganizationController.updateOrganization);
+router.put(
+  '/:orgId',
+  validateBody(UpdateOrganizationSchema),
+  OrganizationController.updateOrganization
+);
 
 // ==========================================
 // MEMBERS MANAGEMENT
@@ -77,9 +81,9 @@ router.post('/:orgId/members', validateBody(AddMemberSchema), OrganizationContro
  * Update member role
  */
 router.patch(
-    '/:orgId/members/:memberId/role',
-    validateBody(UpdateMemberRoleSchema),
-    OrganizationController.updateMemberRole,
+  '/:orgId/members/:memberId/role',
+  validateBody(UpdateMemberRoleSchema),
+  OrganizationController.updateMemberRole
 );
 
 /**

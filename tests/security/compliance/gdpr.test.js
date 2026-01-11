@@ -1,10 +1,10 @@
 /**
  * GDPR Compliance Tests
  * Tests for GDPR compliance requirements
- * 
+ *
  * These tests verify automated privacy controls that can be tested programmatically.
  * Manual verification requirements are documented in comments.
- * 
+ *
  * @module tests/security/compliance/gdpr.test.js
  */
 
@@ -29,9 +29,9 @@ describe('GDPR Compliance', () => {
       preferences: { newsletter: true, marketing: false },
       consents: {
         dataProcessing: { granted: true, timestamp: '2024-01-01T00:00:00Z' },
-        marketing: { granted: false, timestamp: '2024-01-01T00:00:00Z' }
+        marketing: { granted: false, timestamp: '2024-01-01T00:00:00Z' },
       },
-      createdAt: '2024-01-01T00:00:00Z'
+      createdAt: '2024-01-01T00:00:00Z',
     });
 
     // Auth middleware
@@ -59,12 +59,12 @@ describe('GDPR Compliance', () => {
           profile: {
             id: user.id,
             email: user.email,
-            name: user.name
+            name: user.name,
           },
           preferences: user.preferences,
           consents: user.consents,
-          accountCreated: user.createdAt
-        }
+          accountCreated: user.createdAt,
+        },
       });
     });
 
@@ -81,7 +81,7 @@ describe('GDPR Compliance', () => {
       res.json({
         success: true,
         message: 'All personal data has been deleted',
-        deletedAt: new Date().toISOString()
+        deletedAt: new Date().toISOString(),
       });
     });
 
@@ -99,7 +99,7 @@ describe('GDPR Compliance', () => {
         'Field,Value',
         `Email,${user.email}`,
         `Name,${user.name}`,
-        `Account Created,${user.createdAt}`
+        `Account Created,${user.createdAt}`,
       ].join('\n');
 
       res.send(csv);
@@ -112,7 +112,7 @@ describe('GDPR Compliance', () => {
     app.get('/api/user/consents', requireAuth, (req, res) => {
       res.json({
         consents: req.user.consents,
-        canWithdraw: true
+        canWithdraw: true,
       });
     });
 
@@ -128,12 +128,12 @@ describe('GDPR Compliance', () => {
 
       user.consents[consentType] = {
         granted,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       res.json({
         success: true,
-        consent: user.consents[consentType]
+        consent: user.consents[consentType],
       });
     });
 
@@ -145,13 +145,13 @@ describe('GDPR Compliance', () => {
         user.consents[consentType] = {
           granted: false,
           timestamp: new Date().toISOString(),
-          withdrawn: true
+          withdrawn: true,
         };
       }
 
       res.json({
         success: true,
-        consentWithdrawn: consentType
+        consentWithdrawn: consentType,
       });
     });
 
@@ -173,8 +173,8 @@ describe('GDPR Compliance', () => {
           'Log breach details',
           'Notify Data Protection Officer',
           'Assess risk to individuals',
-          'Prepare user notifications if high risk'
-        ]
+          'Prepare user notifications if high risk',
+        ],
       });
     });
   });
@@ -185,9 +185,7 @@ describe('GDPR Compliance', () => {
 
   describe('Right to Access (Article 15)', () => {
     it('should allow users to access their personal data', async () => {
-      const response = await request(app)
-        .get('/api/user/data-export')
-        .set('X-User-Id', 'user-1');
+      const response = await request(app).get('/api/user/data-export').set('X-User-Id', 'user-1');
 
       expect(response.status).toBe(200);
       expect(response.body.data).toBeDefined();
@@ -211,7 +209,7 @@ describe('GDPR Compliance', () => {
       userData.set('delete-test', {
         id: 'delete-test',
         email: 'delete@test.com',
-        name: 'To Delete'
+        name: 'To Delete',
       });
 
       const response = await request(app)
@@ -229,12 +227,10 @@ describe('GDPR Compliance', () => {
         id: 'verify-delete',
         email: 'verify@test.com',
         name: 'Verify Delete',
-        preferences: { theme: 'dark' }
+        preferences: { theme: 'dark' },
       });
 
-      await request(app)
-        .delete('/api/user/account')
-        .set('X-User-Id', 'verify-delete');
+      await request(app).delete('/api/user/account').set('X-User-Id', 'verify-delete');
 
       // Verify data is gone
       expect(userData.has('verify-delete')).toBe(false);
@@ -247,9 +243,7 @@ describe('GDPR Compliance', () => {
 
   describe('Data Portability (Article 20)', () => {
     it('should allow users to export their data in machine-readable format (JSON)', async () => {
-      const response = await request(app)
-        .get('/api/user/data-export')
-        .set('X-User-Id', 'user-1');
+      const response = await request(app).get('/api/user/data-export').set('X-User-Id', 'user-1');
 
       expect(response.status).toBe(200);
       expect(response.type).toContain('json');
@@ -274,9 +268,7 @@ describe('GDPR Compliance', () => {
 
   describe('Consent Management (Articles 6-7)', () => {
     it('should return current consent status', async () => {
-      const response = await request(app)
-        .get('/api/user/consents')
-        .set('X-User-Id', 'user-1');
+      const response = await request(app).get('/api/user/consents').set('X-User-Id', 'user-1');
 
       expect(response.status).toBe(200);
       expect(response.body.consents).toBeDefined();
@@ -288,12 +280,10 @@ describe('GDPR Compliance', () => {
       userData.set('no-consent', {
         id: 'no-consent',
         email: 'noconsent@test.com',
-        consents: {}
+        consents: {},
       });
 
-      const response = await request(app)
-        .get('/api/user/consents')
-        .set('X-User-Id', 'no-consent');
+      const response = await request(app).get('/api/user/consents').set('X-User-Id', 'no-consent');
 
       expect(response.status).toBe(200);
       // Empty consents means no implicit consent
@@ -304,7 +294,7 @@ describe('GDPR Compliance', () => {
       userData.set('consent-test', {
         id: 'consent-test',
         email: 'consent@test.com',
-        consents: {}
+        consents: {},
       });
 
       const response = await request(app)
@@ -336,12 +326,12 @@ describe('GDPR Compliance', () => {
       // Define and document required fields with justification
       const requiredFields = {
         email: 'Account identification, required for login',
-        organizationId: 'Multi-tenant isolation, required for data security'
+        organizationId: 'Multi-tenant isolation, required for data security',
       };
 
       const optionalFields = {
         name: 'Personalization, can be omitted',
-        preferences: 'User experience, can use defaults'
+        preferences: 'User experience, can use defaults',
       };
 
       // Verify we're not collecting excessive data
@@ -362,12 +352,10 @@ describe('GDPR Compliance', () => {
     });
 
     it('should have breach notification mechanism', async () => {
-      const response = await request(app)
-        .post('/api/admin/breach-notification')
-        .send({
-          affectedUsers: 100,
-          description: 'Test breach for compliance verification'
-        });
+      const response = await request(app).post('/api/admin/breach-notification').send({
+        affectedUsers: 100,
+        description: 'Test breach for compliance verification',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.notificationRequired).toBe(true);

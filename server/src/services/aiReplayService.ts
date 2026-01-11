@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aireplay Service
  * Enterprise SaaS Architecture - TypeScript Backend

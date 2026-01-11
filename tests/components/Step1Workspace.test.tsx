@@ -6,46 +6,39 @@ import { render, screen } from '@testing-library/react';
 import { Step1Workspace } from '../../src/components/workspaces/Step1Workspace';
 
 vi.mock('react-i18next', () => ({
-    useTranslation: () => ({
-        t: (key: string) => {
-            if (key === 'step1') return {
-                title: 'Assessment',
-                subtitle: 'Step 1',
-                profile: 'Profile',
-                industry: 'Industry',
-                size: 'Size',
-                country: 'Country',
-                nextStep: 'Next Step'
-            };
-            return key;
-        }
-    })
+  useTranslation: () => ({
+    t: (key: string) => {
+      if (key === 'step1')
+        return {
+          title: 'Assessment',
+          subtitle: 'Step 1',
+          profile: 'Profile',
+          industry: 'Industry',
+          size: 'Size',
+          country: 'Country',
+          nextStep: 'Next Step',
+        };
+      return key;
+    },
+  }),
 }));
 
 const mockSession = {
-    id: 'session-1',
-    assessment: {}
+  id: 'session-1',
+  assessment: {},
 } as any;
 
 describe('Step1Workspace Component', () => {
-    it('renders step 1 workspace', () => {
-        render(<Step1Workspace profile={{ industry: 'Tech' }} sessionData={mockSession} isStepComplete={true} onNextStep={vi.fn()} />);
+  it('renders step 1 workspace', () => {
+    render(
+      <Step1Workspace
+        profile={{ industry: 'Tech' }}
+        sessionData={mockSession}
+        isStepComplete={true}
+        onNextStep={vi.fn()}
+      />
+    );
 
-        expect(screen.getByText(/Assessment/i) || screen.getByText(/Step 1/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText(/Assessment/i) || screen.getByText(/Step 1/i)).toBeInTheDocument();
+  });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

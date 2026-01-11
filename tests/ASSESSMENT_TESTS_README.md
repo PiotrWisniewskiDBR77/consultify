@@ -8,74 +8,74 @@ Kompleksowy system testów dla modułu oceny Digital Readiness Diagnosis (DRD) z
 
 Lokalizacja: `tests/unit/backend/`
 
-| Plik | Opis | Pokrycie |
-|------|------|----------|
-| `assessmentService.test.js` | Testy serwisu oceny | Logika biznesowa, gap analysis |
-| `assessmentWorkflowService.test.js` | Testy serwisu workflow | Inicjalizacja, przejścia stanów, wersjonowanie |
-| `aiAssessmentPartnerService.test.js` | Testy serwisu AI | Guidance, walidacja, sugestie |
-| `aiAssessmentFormHelper.test.js` | Testy helpera formularzy AI | Sugestie pól, walidacja, autocomplete |
-| `aiAssessmentReportGenerator.test.js` | Testy generatora raportów AI | Raporty pełne, stakeholder, benchmark |
-| `initiativeGeneratorService.test.js` | Testy generatora inicjatyw | Generowanie z luk, priorytetyzacja |
-| `drdAxisValidation.test.js` | Testy walidacji osi DRD | Struktura osi, zależności, spójność ocen |
-| `assessmentRBAC.test.js` | Testy middleware RBAC | Kontrola dostępu, role |
-| `assessmentAuditLogger.test.js` | Testy logowania audytowego | Logowanie zdarzeń, historia |
-| `assessmentReportService.test.js` | Testy serwisu raportów | Generowanie PDF, Excel |
-| `assessmentOverviewService.test.js` | Testy serwisu przeglądu | Dashboard, statystyki |
+| Plik                                  | Opis                         | Pokrycie                                       |
+| ------------------------------------- | ---------------------------- | ---------------------------------------------- |
+| `assessmentService.test.js`           | Testy serwisu oceny          | Logika biznesowa, gap analysis                 |
+| `assessmentWorkflowService.test.js`   | Testy serwisu workflow       | Inicjalizacja, przejścia stanów, wersjonowanie |
+| `aiAssessmentPartnerService.test.js`  | Testy serwisu AI             | Guidance, walidacja, sugestie                  |
+| `aiAssessmentFormHelper.test.js`      | Testy helpera formularzy AI  | Sugestie pól, walidacja, autocomplete          |
+| `aiAssessmentReportGenerator.test.js` | Testy generatora raportów AI | Raporty pełne, stakeholder, benchmark          |
+| `initiativeGeneratorService.test.js`  | Testy generatora inicjatyw   | Generowanie z luk, priorytetyzacja             |
+| `drdAxisValidation.test.js`           | Testy walidacji osi DRD      | Struktura osi, zależności, spójność ocen       |
+| `assessmentRBAC.test.js`              | Testy middleware RBAC        | Kontrola dostępu, role                         |
+| `assessmentAuditLogger.test.js`       | Testy logowania audytowego   | Logowanie zdarzeń, historia                    |
+| `assessmentReportService.test.js`     | Testy serwisu raportów       | Generowanie PDF, Excel                         |
+| `assessmentOverviewService.test.js`   | Testy serwisu przeglądu      | Dashboard, statystyki                          |
 
 ### 📁 Testy komponentów (Component Tests)
 
 Lokalizacja: `tests/components/`
 
-| Plik | Opis | Pokrycie |
-|------|------|----------|
-| `AssessmentWizard.test.tsx` | Kreator oceny | Nawigacja, wprowadzanie danych |
-| `AssessmentWorkflowPanel.test.tsx` | Panel workflow | Status, akcje, modal |
-| `AxisCommentsPanel.test.tsx` | Panel komentarzy | CRUD komentarzy, wątki |
-| `GapAnalysisDashboard.test.tsx` | Dashboard analizy luk | Wizualizacja, filtrowanie |
-| `AssessmentMatrixCard.test.tsx` | Karta matrycy | Wyświetlanie, edycja |
-| `AssessmentHubDashboard.test.tsx` | Główny dashboard | Przegląd, nawigacja |
+| Plik                               | Opis                  | Pokrycie                       |
+| ---------------------------------- | --------------------- | ------------------------------ |
+| `AssessmentWizard.test.tsx`        | Kreator oceny         | Nawigacja, wprowadzanie danych |
+| `AssessmentWorkflowPanel.test.tsx` | Panel workflow        | Status, akcje, modal           |
+| `AxisCommentsPanel.test.tsx`       | Panel komentarzy      | CRUD komentarzy, wątki         |
+| `GapAnalysisDashboard.test.tsx`    | Dashboard analizy luk | Wizualizacja, filtrowanie      |
+| `AssessmentMatrixCard.test.tsx`    | Karta matrycy         | Wyświetlanie, edycja           |
+| `AssessmentHubDashboard.test.tsx`  | Główny dashboard      | Przegląd, nawigacja            |
 
 ### 📁 Testy hooków (Hook Tests)
 
 Lokalizacja: `tests/hooks/`
 
-| Plik | Opis | Pokrycie |
-|------|------|----------|
-| `useAssessmentWorkflow.test.ts` | Hook workflow | Stan, API, computed |
-| `useAssessmentAI.test.ts` | Hook AI | Sugestie, walidacja, błędy |
-| `useAssessmentCollaboration.test.tsx` | Hook współpracy | Obecność, aktywności |
+| Plik                                  | Opis            | Pokrycie                   |
+| ------------------------------------- | --------------- | -------------------------- |
+| `useAssessmentWorkflow.test.ts`       | Hook workflow   | Stan, API, computed        |
+| `useAssessmentAI.test.ts`             | Hook AI         | Sugestie, walidacja, błędy |
+| `useAssessmentCollaboration.test.tsx` | Hook współpracy | Obecność, aktywności       |
 
 ### 📁 Testy integracyjne (Integration Tests)
 
 Lokalizacja: `tests/integration/`
 
-| Plik | Opis | Pokrycie |
-|------|------|----------|
-| `assessment-workflow.integration.test.js` | Integracja workflow | End-to-end workflow |
-| `assessment-ai.integration.test.js` | Integracja AI | Wszystkie endpointy AI |
-| `assessment-rbac.integration.test.js` | Integracja RBAC | Autoryzacja, izolacja org |
-| `assessment-reports.integration.test.js` | Integracja raportów | Generowanie, eksport |
-| `assessment-api.integration.test.js` | Integracja API Assessment | Wszystkie endpointy, CRUD, AI |
+| Plik                                      | Opis                      | Pokrycie                      |
+| ----------------------------------------- | ------------------------- | ----------------------------- |
+| `assessment-workflow.integration.test.js` | Integracja workflow       | End-to-end workflow           |
+| `assessment-ai.integration.test.js`       | Integracja AI             | Wszystkie endpointy AI        |
+| `assessment-rbac.integration.test.js`     | Integracja RBAC           | Autoryzacja, izolacja org     |
+| `assessment-reports.integration.test.js`  | Integracja raportów       | Generowanie, eksport          |
+| `assessment-api.integration.test.js`      | Integracja API Assessment | Wszystkie endpointy, CRUD, AI |
 
 ### 📁 Testy E2E (End-to-End Tests)
 
 Lokalizacja: `tests/e2e/`
 
-| Plik | Opis | Pokrycie |
-|------|------|----------|
-| `assessmentFlow.spec.ts` | Podstawowy flow | Nawigacja, kreator |
-| `assessment-workflow-flow.spec.ts` | Flow workflow | Submisja, recenzja, zatwierdzanie |
-| `assessment-matrix.spec.ts` | Flow matrycy | Wszystkie osie, wyniki |
-| `assessment-ai-features.spec.ts` | Flow AI | Sugestie, korekty, insights |
+| Plik                               | Opis            | Pokrycie                          |
+| ---------------------------------- | --------------- | --------------------------------- |
+| `assessmentFlow.spec.ts`           | Podstawowy flow | Nawigacja, kreator                |
+| `assessment-workflow-flow.spec.ts` | Flow workflow   | Submisja, recenzja, zatwierdzanie |
+| `assessment-matrix.spec.ts`        | Flow matrycy    | Wszystkie osie, wyniki            |
+| `assessment-ai-features.spec.ts`   | Flow AI         | Sugestie, korekty, insights       |
 
 ### 📁 Narzędzia testowe (Test Utilities)
 
 Lokalizacja: `tests/utils/`
 
-| Plik | Opis |
-|------|------|
-| `testUtils.ts` | Helpery, fabryki, asercje |
-| `assessmentMocks.ts` | Dane mockowe, serwisy |
+| Plik                 | Opis                      |
+| -------------------- | ------------------------- |
+| `testUtils.ts`       | Helpery, fabryki, asercje |
+| `assessmentMocks.ts` | Dane mockowe, serwisy     |
 
 ## Uruchamianie testów
 
@@ -133,17 +133,17 @@ npm test -- --coverage
 
 ```typescript
 describe('Component', () => {
-    beforeEach(() => {
-        // Setup
-    });
+  beforeEach(() => {
+    // Setup
+  });
 
-    describe('Feature', () => {
-        it('should do something', () => {
-            // Arrange
-            // Act
-            // Assert
-        });
+  describe('Feature', () => {
+    it('should do something', () => {
+      // Arrange
+      // Act
+      // Assert
     });
+  });
 });
 ```
 
@@ -162,12 +162,12 @@ const assessment = createMockAssessment({ status: 'APPROVED' });
 
 ### Wymagane minimum: 90%
 
-| Metryka | Wymagane | Aktualny cel |
-|---------|----------|--------------|
-| Statements | 90% | 90%+ |
-| Branches | 85% | 90%+ |
-| Functions | 90% | 90%+ |
-| Lines | 90% | 90%+ |
+| Metryka    | Wymagane | Aktualny cel |
+| ---------- | -------- | ------------ |
+| Statements | 90%      | 90%+         |
+| Branches   | 85%      | 90%+         |
+| Functions  | 90%      | 90%+         |
+| Lines      | 90%      | 90%+         |
 
 ### Obszary krytyczne
 
@@ -210,4 +210,3 @@ Przy każdej zmianie w kodzie produkcyjnym:
 - [ ] Nowe funkcje mają testy
 - [ ] Mocki są aktualne
 - [ ] Brak testów zależnych od kolejności
-

@@ -1,12 +1,14 @@
 # SuperAdmin Routing - Manual Test Checklist
 
 ## Przed rozpoczęciem testów
+
 - [ ] Upewnij się, że serwer dev działa (`npm run dev`)
 - [ ] Otwórz przeglądarkę z DevTools (F12)
 - [ ] Sprawdź konsolę pod kątem błędów przed rozpoczęciem
 - [ ] Zaloguj się jako SuperAdmin (lub użyj odpowiednich danych testowych)
 
 ## Test 1: Overview Module
+
 **URL**: `http://localhost:3000/superadmin/overview`
 
 - [ ] Otwórz URL w przeglądarce
@@ -18,11 +20,12 @@
 - [ ] Sprawdź konsolę przeglądarki - brak błędów JavaScript
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 2: Customers Module
+
 **URL**: `http://localhost:3000/superadmin/customers`
 
 - [ ] Otwórz URL w przeglądarce
@@ -34,11 +37,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 3: AI Infrastructure Module
+
 **URL**: `http://localhost:3000/superadmin/ai-infrastructure`
 
 - [ ] Otwórz URL w przeglądarce
@@ -50,11 +54,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 4: AI Development Module
+
 **URL**: `http://localhost:3000/superadmin/ai-development`
 
 - [ ] Otwórz URL w przeglądarce
@@ -66,11 +71,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 5: AI Operations Module
+
 **URL**: `http://localhost:3000/superadmin/ai-operations`
 
 - [ ] Otwórz URL w przeglądarce
@@ -82,11 +88,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 6: System Module
+
 **URL**: `http://localhost:3000/superadmin/system`
 
 - [ ] Otwórz URL w przeglądarce
@@ -98,11 +105,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 7: Content Module
+
 **URL**: `http://localhost:3000/superadmin/content`
 
 - [ ] Otwórz URL w przeglądarce
@@ -114,11 +122,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 8: Revenue Module
+
 **URL**: `http://localhost:3000/superadmin/revenue`
 
 - [ ] Otwórz URL w przeglądarce
@@ -130,11 +139,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 9: Security Module
+
 **URL**: `http://localhost:3000/superadmin/security`
 
 - [ ] Otwórz URL w przeglądarce
@@ -146,11 +156,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 10: Analytics Module
+
 **URL**: `http://localhost:3000/superadmin/analytics`
 
 - [ ] Otwórz URL w przeglądarce
@@ -162,11 +173,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 11: Configuration Module
+
 **URL**: `http://localhost:3000/superadmin/configuration`
 
 - [ ] Otwórz URL w przeglądarce
@@ -178,11 +190,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 12: Legacy Route Redirect
+
 **URL**: `http://localhost:3000/superadmin/ai-platform`
 
 - [ ] Otwórz legacy URL w przeglądarce
@@ -192,11 +205,12 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 13: Default Route Redirect
+
 **URL**: `http://localhost:3000/superadmin`
 
 - [ ] Otwórz główny URL SuperAdmin
@@ -206,12 +220,14 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 14: Deep Linking
+
 **Kroki**:
+
 - [ ] Otwórz bezpośrednio każdy z następujących URL-i:
   - `http://localhost:3000/superadmin/overview`
   - `http://localhost:3000/superadmin/customers`
@@ -229,12 +245,14 @@
 - [ ] Sprawdź konsolę - brak błędów dla każdego URL
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 15: Browser Navigation (Back/Forward)
+
 **Kroki**:
+
 - [ ] Otwórz `http://localhost:3000/superadmin/overview`
 - [ ] Przejdź do `http://localhost:3000/superadmin/customers`
 - [ ] Przejdź do `http://localhost:3000/superadmin/ai-infrastructure`
@@ -247,12 +265,14 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 16: Sidebar Navigation
+
 **Kroki**:
+
 - [ ] Otwórz `http://localhost:3000/superadmin/overview`
 - [ ] Dla każdego przycisku w sidebarze SuperAdmin:
   - [ ] Kliknij przycisk
@@ -262,6 +282,7 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Lista przycisków do przetestowania**:
+
 - [ ] Overview
 - [ ] Customers
 - [ ] AI Infrastructure
@@ -275,12 +296,14 @@
 - [ ] Configuration
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 17: Page Refresh State Preservation
+
 **Kroki**:
+
 - [ ] Otwórz `http://localhost:3000/superadmin/customers`
 - [ ] Sprawdź aktualny stan modułu (jeśli są otwarte taby, filtry, etc.)
 - [ ] Odśwież stronę (F5)
@@ -290,12 +313,14 @@
 - [ ] Sprawdź konsolę - brak błędów
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Test 18: Console Errors Check
+
 **Kroki**:
+
 - [ ] Otwórz DevTools (F12)
 - [ ] Przejdź przez wszystkie moduły SuperAdmin:
   - Overview, Customers, AI Infrastructure, AI Development, AI Operations, System, Content, Revenue, Security, Analytics, Configuration
@@ -308,32 +333,32 @@
 - [ ] Sprawdź czy nie ma memory leaks (sprawdź Performance tab)
 
 **Status**: ☐ PASS / ☐ FAIL
-**Uwagi**: 
+**Uwagi**:
 
 ---
 
 ## Podsumowanie testów manualnych
 
-**Data testów**: _______________
-**Tester**: _______________
-**Wersja aplikacji**: _______________
+**Data testów**: ******\_\_\_******
+**Tester**: ******\_\_\_******
+**Wersja aplikacji**: ******\_\_\_******
 
 **Wyniki**:
-- Testy zakończone sukcesem: ___ / 18
-- Testy zakończone niepowodzeniem: ___ / 18
-- Testy pominięte: ___ / 18
+
+- Testy zakończone sukcesem: \_\_\_ / 18
+- Testy zakończone niepowodzeniem: \_\_\_ / 18
+- Testy pominięte: \_\_\_ / 18
 
 **Znalezione problemy**:
-1. 
-2. 
-3. 
+
+1.
+2.
+3.
 
 **Rekomendacje**:
-1. 
-2. 
-3. 
+
+1.
+2.
+3.
 
 **Ogólna ocena**: ☐ PASS / ☐ FAIL / ☐ NEEDS IMPROVEMENT
-
-
-

@@ -5,14 +5,14 @@ import type { IDatabase } from '../../../../../src/database/IDatabase.js';
 import { CommentService } from '../../../../../src/services/content/CommentService.js';
 
 describe('CommentService', () => {
-    let service: CommentService;
-    let db: any;
+  let service: CommentService;
+  let db: any;
 
-    beforeEach(async () => {
-        const testDb = await TestDatabaseFactory.create();
+  beforeEach(async () => {
+    const testDb = await TestDatabaseFactory.create();
 
-        // Initialize schema
-        await testDb.exec(`
+    // Initialize schema
+    await testDb.exec(`
             CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
                 first_name TEXT,
@@ -46,153 +46,157 @@ describe('CommentService', () => {
             INSERT INTO users (id, first_name, last_name, avatar_url) VALUES ('user-2', 'Jane', 'Smith', 'http://avatar.com/jane');
         `);
 
-        db = {
-            ...testDb,
-            run: testDb.runAsync.bind(testDb),
-            get: testDb.getAsync.bind(testDb),
-            all: testDb.allAsync.bind(testDb),
-            exec: (sql: string, cb?: any) => testDb.exec(sql, cb),
-            close: () => testDb.close(),
-        };
+    db = {
+      ...testDb,
+      run: testDb.runAsync.bind(testDb),
+      get: testDb.getAsync.bind(testDb),
+      all: testDb.allAsync.bind(testDb),
+      exec: (sql: string, cb?: any) => testDb.exec(sql, cb),
+      close: () => testDb.close(),
+    };
 
-        service = new CommentService({ db: db as IDatabase });
+    service = new CommentService({ db: db as IDatabase });
+  });
+
+  afterEach(async () => {
+    if (db) await db.close();
+  });
+
+  describe('createComment', () => {
+    it('should create a comment successfully', async () => {
+      const data = {
+        contentId: 'playbook-1',
+        contentType: 'PLAYBOOK',
+        userId: 'user-1',
+        commentText: 'Great playbook!',
+      };
+
+      const comment = await service.createComment(data);
+
+      expect(comment.id).toMatch(/^cmt-/);
+      expect(comment.contentId).toBe(data.contentId);
+      expect(comment.userId).toBe(data.userId);
+      expect(comment.commentText).toBe(data.commentText);
+      expect(comment.isResolved).toBe(false);
+      expect(comment.threadId).toBe(comment.id); // Root comment threadId is self
+      expect(comment.user).toBeDefined();
+      expect(comment.user?.firstName).toBe('John');
+      expect(comment.user?.avatar).toBe('http://avatar.com/john');
     });
 
-    afterEach(async () => {
-        if (db) await db.close();
+    it('should create a reply correctly', async () => {
+      const parent = await service.createComment({
+        contentId: 'playbook-1',
+        contentType: 'PLAYBOOK',
+        userId: 'user-1',
+        commentText: 'Root',
+      });
+
+      const reply = await service.createComment({
+        contentId: 'playbook-1',
+        contentType: 'PLAYBOOK',
+        userId: 'user-2',
+        commentText: 'Reply',
+        parentCommentId: parent.id,
+      });
+
+      expect(reply.parentCommentId).toBe(parent.id);
+      expect(reply.threadId).toBe(parent.id); // Inherits threadId
+    });
+  });
+
+  describe('getContentComments', () => {
+    it('should return threaded comments', async () => {
+      const root = await service.createComment({
+        contentId: 'playbook-1',
+        contentType: 'PLAYBOOK',
+        userId: 'user-1',
+        commentText: 'Root',
+      });
+
+      await service.createComment({
+        contentId: 'playbook-1',
+        contentType: 'PLAYBOOK',
+        userId: 'user-2',
+        commentText: 'Reply 1',
+        parentCommentId: root.id,
+      });
+
+      const comments = await service.getContentComments('playbook-1', 'PLAYBOOK');
+      expect(comments).toHaveLength(1); // One root
+      expect(comments[0].id).toBe(root.id);
+      expect(comments[0].replies).toHaveLength(1);
+      expect(comments[0].replies![0].commentText).toBe('Reply 1');
     });
 
-    describe('createComment', () => {
-        it('should create a comment successfully', async () => {
-            const data = {
-                contentId: 'playbook-1',
-                contentType: 'PLAYBOOK',
-                userId: 'user-1',
-                commentText: 'Great playbook!',
-            };
+    it('should filter resolved comments via options', async () => {
+      const comment = await service.createComment({
+        contentId: 'playbook-1',
+        contentType: 'PLAYBOOK',
+        userId: 'user-1',
+        commentText: 'Resolved',
+      });
+      await service.resolveComment(comment.id, 'user-1');
 
-            const comment = await service.createComment(data);
+      const all = await service.getContentComments('playbook-1', 'PLAYBOOK', {
+        includeResolved: true,
+      });
+      expect(all).toHaveLength(1);
 
-            expect(comment.id).toMatch(/^cmt-/);
-            expect(comment.contentId).toBe(data.contentId);
-            expect(comment.userId).toBe(data.userId);
-            expect(comment.commentText).toBe(data.commentText);
-            expect(comment.isResolved).toBe(false);
-            expect(comment.threadId).toBe(comment.id); // Root comment threadId is self
-            expect(comment.user).toBeDefined();
-            expect(comment.user?.firstName).toBe('John');
-            expect(comment.user?.avatar).toBe('http://avatar.com/john');
-        });
+      const unresolved = await service.getContentComments('playbook-1', 'PLAYBOOK', {
+        includeResolved: false,
+      });
+      expect(unresolved).toHaveLength(0);
+    });
+  });
 
-        it('should create a reply correctly', async () => {
-            const parent = await service.createComment({
-                contentId: 'playbook-1',
-                contentType: 'PLAYBOOK',
-                userId: 'user-1',
-                commentText: 'Root',
-            });
+  describe('updateComment', () => {
+    it('should update text and set edited flag', async () => {
+      const comment = await service.createComment({
+        contentId: 'p1',
+        contentType: 'P',
+        userId: 'user-1',
+        commentText: 'Original',
+      });
 
-            const reply = await service.createComment({
-                contentId: 'playbook-1',
-                contentType: 'PLAYBOOK',
-                userId: 'user-2',
-                commentText: 'Reply',
-                parentCommentId: parent.id,
-            });
-
-            expect(reply.parentCommentId).toBe(parent.id);
-            expect(reply.threadId).toBe(parent.id); // Inherits threadId
-        });
+      const updated = await service.updateComment(comment.id, 'Updated text', 'user-1');
+      expect(updated.commentText).toBe('Updated text');
+      expect(updated.isEdited).toBe(true);
+      expect(updated.editedAt).toBeDefined();
     });
 
-    describe('getContentComments', () => {
-        it('should return threaded comments', async () => {
-            const root = await service.createComment({
-                contentId: 'playbook-1',
-                contentType: 'PLAYBOOK',
-                userId: 'user-1',
-                commentText: 'Root',
-            });
+    it('should fail if user is not author', async () => {
+      const comment = await service.createComment({
+        contentId: 'p1',
+        contentType: 'P',
+        userId: 'user-1',
+        commentText: 'Original',
+      });
 
-            await service.createComment({
-                contentId: 'playbook-1',
-                contentType: 'PLAYBOOK',
-                userId: 'user-2',
-                commentText: 'Reply 1',
-                parentCommentId: root.id,
-            });
-
-            const comments = await service.getContentComments('playbook-1', 'PLAYBOOK');
-            expect(comments).toHaveLength(1); // One root
-            expect(comments[0].id).toBe(root.id);
-            expect(comments[0].replies).toHaveLength(1);
-            expect(comments[0].replies![0].commentText).toBe('Reply 1');
-        });
-
-        it('should filter resolved comments via options', async () => {
-            const comment = await service.createComment({
-                contentId: 'playbook-1',
-                contentType: 'PLAYBOOK',
-                userId: 'user-1',
-                commentText: 'Resolved',
-            });
-            await service.resolveComment(comment.id, 'user-1');
-
-            const all = await service.getContentComments('playbook-1', 'PLAYBOOK', { includeResolved: true });
-            expect(all).toHaveLength(1);
-
-            const unresolved = await service.getContentComments('playbook-1', 'PLAYBOOK', { includeResolved: false });
-            expect(unresolved).toHaveLength(0);
-        });
+      await expect(service.updateComment(comment.id, 'Hack', 'user-2')).rejects.toThrow(
+        'Can only edit your own comments'
+      );
     });
+  });
 
-    describe('updateComment', () => {
-        it('should update text and set edited flag', async () => {
-            const comment = await service.createComment({
-                contentId: 'p1',
-                contentType: 'P',
-                userId: 'user-1',
-                commentText: 'Original',
-            });
+  describe('deleteComment', () => {
+    it('should delete comment and cascades (if supported by sqlite config)', async () => {
+      // Note: SQLite FK cascade requires PRAGMA foreign_keys = ON;
+      // TestDatabaseFactory might not enable it by default.
+      // But we can check explicit deletion of the item itself.
 
-            const updated = await service.updateComment(comment.id, 'Updated text', 'user-1');
-            expect(updated.commentText).toBe('Updated text');
-            expect(updated.isEdited).toBe(true);
-            expect(updated.editedAt).toBeDefined();
-        });
+      const comment = await service.createComment({
+        contentId: 'p1',
+        contentType: 'P',
+        userId: 'user-1',
+        commentText: 'To Delete',
+      });
 
-        it('should fail if user is not author', async () => {
-            const comment = await service.createComment({
-                contentId: 'p1',
-                contentType: 'P',
-                userId: 'user-1',
-                commentText: 'Original',
-            });
+      const result = await service.deleteComment(comment.id);
+      expect(result).toBe(true);
 
-            await expect(service.updateComment(comment.id, 'Hack', 'user-2')).rejects.toThrow(
-                'Can only edit your own comments',
-            );
-        });
+      const fetched = await service.getCommentById(comment.id);
+      expect(fetched).toBeNull();
     });
-
-    describe('deleteComment', () => {
-        it('should delete comment and cascades (if supported by sqlite config)', async () => {
-            // Note: SQLite FK cascade requires PRAGMA foreign_keys = ON;
-            // TestDatabaseFactory might not enable it by default.
-            // But we can check explicit deletion of the item itself.
-
-            const comment = await service.createComment({
-                contentId: 'p1',
-                contentType: 'P',
-                userId: 'user-1',
-                commentText: 'To Delete',
-            });
-
-            const result = await service.deleteComment(comment.id);
-            expect(result).toBe(true);
-
-            const fetched = await service.getCommentById(comment.id);
-            expect(fetched).toBeNull();
-        });
-    });
+  });
 });

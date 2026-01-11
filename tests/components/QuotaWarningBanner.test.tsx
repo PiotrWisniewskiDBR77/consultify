@@ -7,17 +7,17 @@ import { render, screen } from '@testing-library/react';
 const QuotaWarningBanner = () => <div data-testid="quota-warning">Quota Warning Banner</div>;
 
 describe('QuotaWarningBanner Component', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders component', () => {
-        render(<QuotaWarningBanner />);
-        expect(screen.getByTestId('quota-warning')).toBeInTheDocument();
-    });
+  it('renders component', () => {
+    render(<QuotaWarningBanner />);
+    expect(screen.getByTestId('quota-warning')).toBeInTheDocument();
+  });
 
-    it('renders without crashing', () => {
-        const { container } = render(<QuotaWarningBanner />);
-        expect(container).toBeInTheDocument();
-    });
+  it('renders without crashing', () => {
+    const { container } = render(<QuotaWarningBanner />);
+    expect(container).toBeInTheDocument();
+  });
 });

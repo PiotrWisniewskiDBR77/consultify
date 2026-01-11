@@ -1,191 +1,191 @@
 /**
  * Realtime Client Service Integration Tests
- * 
+ *
  * Tests WebSocket connection management, subscription handling, and message processing.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock WebSocket
 class MockWebSocket {
-    static CONNECTING = 0;
-    static OPEN = 1;
-    static CLOSING = 2;
-    static CLOSED = 3;
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
 
-    readyState = MockWebSocket.CONNECTING;
-    onopen: (() => void) | null = null;
-    onclose: (() => void) | null = null;
-    onmessage: ((event: { data: string }) => void) | null = null;
-    onerror: ((error: Error) => void) | null = null;
+  readyState = MockWebSocket.CONNECTING;
+  onopen: (() => void) | null = null;
+  onclose: (() => void) | null = null;
+  onmessage: ((event: { data: string }) => void) | null = null;
+  onerror: ((error: Error) => void) | null = null;
 
-    constructor(public url: string) { }
+  constructor(public url: string) {}
 
-    send = vi.fn();
-    close = vi.fn();
+  send = vi.fn();
+  close = vi.fn();
 
-    simulateOpen() {
-        this.readyState = MockWebSocket.OPEN;
-        this.onopen?.();
-    }
+  simulateOpen() {
+    this.readyState = MockWebSocket.OPEN;
+    this.onopen?.();
+  }
 
-    simulateMessage(data: any) {
-        this.onmessage?.({ data: JSON.stringify(data) });
-    }
+  simulateMessage(data: any) {
+    this.onmessage?.({ data: JSON.stringify(data) });
+  }
 
-    simulateClose() {
-        this.readyState = MockWebSocket.CLOSED;
-        this.onclose?.();
-    }
+  simulateClose() {
+    this.readyState = MockWebSocket.CLOSED;
+    this.onclose?.();
+  }
 }
 
 describe('RealtimeClient', () => {
-    let mockWs: MockWebSocket;
+  let mockWs: MockWebSocket;
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockWs = new MockWebSocket('ws://localhost:3000');
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockWs = new MockWebSocket('ws://localhost:3000');
+  });
+
+  it('should establish WebSocket connection', () => {
+    expect(mockWs.url).toBe('ws://localhost:3000');
+    expect(mockWs.readyState).toBe(MockWebSocket.CONNECTING);
+
+    mockWs.simulateOpen();
+    expect(mockWs.readyState).toBe(MockWebSocket.OPEN);
+  });
+
+  it('should handle connection open event', () => {
+    const onOpen = vi.fn();
+    mockWs.onopen = onOpen;
+
+    mockWs.simulateOpen();
+
+    expect(onOpen).toHaveBeenCalled();
+  });
+
+  it('should subscribe to channels', () => {
+    mockWs.simulateOpen();
+
+    const subscription = {
+      type: 'subscribe',
+      channel: 'project:123',
+    };
+
+    mockWs.send(JSON.stringify(subscription));
+
+    expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify(subscription));
+  });
+
+  it('should handle incoming messages', () => {
+    const messageHandler = vi.fn();
+    mockWs.onmessage = (event) => messageHandler(JSON.parse(event.data));
+
+    mockWs.simulateOpen();
+    mockWs.simulateMessage({ type: 'update', payload: { id: 1 } });
+
+    expect(messageHandler).toHaveBeenCalledWith({
+      type: 'update',
+      payload: { id: 1 },
     });
+  });
 
-    it('should establish WebSocket connection', () => {
-        expect(mockWs.url).toBe('ws://localhost:3000');
-        expect(mockWs.readyState).toBe(MockWebSocket.CONNECTING);
+  it('should handle different message types', () => {
+    const handlers: Record<string, vi.Mock> = {
+      'task:update': vi.fn(),
+      'project:update': vi.fn(),
+      notification: vi.fn(),
+    };
 
-        mockWs.simulateOpen();
-        expect(mockWs.readyState).toBe(MockWebSocket.OPEN);
-    });
+    mockWs.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      handlers[data.type]?.(data.payload);
+    };
 
-    it('should handle connection open event', () => {
-        const onOpen = vi.fn();
-        mockWs.onopen = onOpen;
+    mockWs.simulateMessage({ type: 'task:update', payload: { id: 1 } });
+    mockWs.simulateMessage({ type: 'notification', payload: { message: 'Hello' } });
 
-        mockWs.simulateOpen();
+    expect(handlers['task:update']).toHaveBeenCalled();
+    expect(handlers['notification']).toHaveBeenCalled();
+    expect(handlers['project:update']).not.toHaveBeenCalled();
+  });
 
-        expect(onOpen).toHaveBeenCalled();
-    });
+  it('should unsubscribe from channels', () => {
+    mockWs.simulateOpen();
 
-    it('should subscribe to channels', () => {
-        mockWs.simulateOpen();
+    const unsubscribe = {
+      type: 'unsubscribe',
+      channel: 'project:123',
+    };
 
-        const subscription = {
-            type: 'subscribe',
-            channel: 'project:123',
-        };
+    mockWs.send(JSON.stringify(unsubscribe));
 
-        mockWs.send(JSON.stringify(subscription));
+    expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify(unsubscribe));
+  });
 
-        expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify(subscription));
-    });
+  it('should handle connection close', () => {
+    const onClose = vi.fn();
+    mockWs.onclose = onClose;
 
-    it('should handle incoming messages', () => {
-        const messageHandler = vi.fn();
-        mockWs.onmessage = (event) => messageHandler(JSON.parse(event.data));
+    mockWs.simulateOpen();
+    mockWs.simulateClose();
 
-        mockWs.simulateOpen();
-        mockWs.simulateMessage({ type: 'update', payload: { id: 1 } });
+    expect(onClose).toHaveBeenCalled();
+    expect(mockWs.readyState).toBe(MockWebSocket.CLOSED);
+  });
 
-        expect(messageHandler).toHaveBeenCalledWith({
-            type: 'update',
-            payload: { id: 1 }
-        });
-    });
+  it('should implement reconnection logic', async () => {
+    const maxRetries = 3;
+    let retryCount = 0;
 
-    it('should handle different message types', () => {
-        const handlers: Record<string, vi.Mock> = {
-            'task:update': vi.fn(),
-            'project:update': vi.fn(),
-            'notification': vi.fn(),
-        };
+    const reconnect = () => {
+      if (retryCount < maxRetries) {
+        retryCount++;
+        return new MockWebSocket('ws://localhost:3000');
+      }
+      return null;
+    };
 
-        mockWs.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            handlers[data.type]?.(data.payload);
-        };
+    mockWs.simulateClose();
+    const newWs = reconnect();
 
-        mockWs.simulateMessage({ type: 'task:update', payload: { id: 1 } });
-        mockWs.simulateMessage({ type: 'notification', payload: { message: 'Hello' } });
+    expect(newWs).not.toBeNull();
+    expect(retryCount).toBe(1);
+  });
 
-        expect(handlers['task:update']).toHaveBeenCalled();
-        expect(handlers['notification']).toHaveBeenCalled();
-        expect(handlers['project:update']).not.toHaveBeenCalled();
-    });
+  it('should send heartbeat/ping messages', () => {
+    mockWs.simulateOpen();
 
-    it('should unsubscribe from channels', () => {
-        mockWs.simulateOpen();
+    const heartbeat = { type: 'ping' };
+    mockWs.send(JSON.stringify(heartbeat));
 
-        const unsubscribe = {
-            type: 'unsubscribe',
-            channel: 'project:123',
-        };
+    expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify(heartbeat));
+  });
 
-        mockWs.send(JSON.stringify(unsubscribe));
+  it('should handle authentication', () => {
+    mockWs.simulateOpen();
 
-        expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify(unsubscribe));
-    });
+    const authMessage = {
+      type: 'auth',
+      token: 'jwt-token-here',
+    };
 
-    it('should handle connection close', () => {
-        const onClose = vi.fn();
-        mockWs.onclose = onClose;
+    mockWs.send(JSON.stringify(authMessage));
+    expect(mockWs.send).toHaveBeenCalled();
+  });
 
-        mockWs.simulateOpen();
-        mockWs.simulateClose();
+  it('should queue messages when disconnected', () => {
+    const messageQueue: any[] = [];
+    const isConnected = false;
 
-        expect(onClose).toHaveBeenCalled();
-        expect(mockWs.readyState).toBe(MockWebSocket.CLOSED);
-    });
+    const sendMessage = (msg: any) => {
+      if (!isConnected) {
+        messageQueue.push(msg);
+      }
+    };
 
-    it('should implement reconnection logic', async () => {
-        const maxRetries = 3;
-        let retryCount = 0;
+    sendMessage({ type: 'update', data: 1 });
+    sendMessage({ type: 'update', data: 2 });
 
-        const reconnect = () => {
-            if (retryCount < maxRetries) {
-                retryCount++;
-                return new MockWebSocket('ws://localhost:3000');
-            }
-            return null;
-        };
-
-        mockWs.simulateClose();
-        const newWs = reconnect();
-
-        expect(newWs).not.toBeNull();
-        expect(retryCount).toBe(1);
-    });
-
-    it('should send heartbeat/ping messages', () => {
-        mockWs.simulateOpen();
-
-        const heartbeat = { type: 'ping' };
-        mockWs.send(JSON.stringify(heartbeat));
-
-        expect(mockWs.send).toHaveBeenCalledWith(JSON.stringify(heartbeat));
-    });
-
-    it('should handle authentication', () => {
-        mockWs.simulateOpen();
-
-        const authMessage = {
-            type: 'auth',
-            token: 'jwt-token-here',
-        };
-
-        mockWs.send(JSON.stringify(authMessage));
-        expect(mockWs.send).toHaveBeenCalled();
-    });
-
-    it('should queue messages when disconnected', () => {
-        const messageQueue: any[] = [];
-        const isConnected = false;
-
-        const sendMessage = (msg: any) => {
-            if (!isConnected) {
-                messageQueue.push(msg);
-            }
-        };
-
-        sendMessage({ type: 'update', data: 1 });
-        sendMessage({ type: 'update', data: 2 });
-
-        expect(messageQueue).toHaveLength(2);
-    });
+    expect(messageQueue).toHaveLength(2);
+  });
 });

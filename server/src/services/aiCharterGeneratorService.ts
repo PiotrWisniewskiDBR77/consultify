@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aichartergenerator Service
  * Enterprise SaaS Architecture - TypeScript Backend

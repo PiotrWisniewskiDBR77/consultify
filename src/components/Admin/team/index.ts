@@ -22,12 +22,12 @@ export { MembershipStatsCard } from './MembershipStatsCard';
 export type { OrgNode } from './OrganizationChart';
 export { OrganizationChart } from './OrganizationChart';
 export type {
-    ActionType,
-    ConditionField,
-    ConditionOperator,
-    RoutingRule,
-    RuleAction,
-    RuleCondition,
+  ActionType,
+  ConditionField,
+  ConditionOperator,
+  RoutingRule,
+  RuleAction,
+  RuleCondition,
 } from './TeamRoutingRules';
 export { TeamRoutingRules } from './TeamRoutingRules';
 export { WorkingHoursEditor } from './WorkingHoursEditor';

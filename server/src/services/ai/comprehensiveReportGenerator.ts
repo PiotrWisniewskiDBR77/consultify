@@ -8,7 +8,9 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadComprehensivereportgenerator = createCachedLazyService('../../ai/comprehensiveReportGenerator.js');
+const loadComprehensivereportgenerator = createCachedLazyService(
+  '../../ai/comprehensiveReportGenerator.js'
+);
 
 // Export default instance (for backward compatibility)
 export default loadComprehensivereportgenerator();
