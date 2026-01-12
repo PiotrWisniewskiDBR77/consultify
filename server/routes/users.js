@@ -12,7 +12,7 @@ router.get('/', (req, res) => {
     // SuperAdmin sees all? Or we keep strict tenant separation even for him unless impersonating.
     // For now: Admin sees own org users.
 
-    db.all('SELECT id, email, first_name, last_name, role, status, avatar_url, last_login FROM users WHERE organization_id = ?', [req.user.organizationId], (err, rows) => {
+    db.all('SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config FROM users WHERE organization_id = ? ORDER BY first_name, last_name', [req.user.organizationId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
 
         const users = rows.map(u => ({

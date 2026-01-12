@@ -335,9 +335,13 @@ function initDb() {
                 message TEXT,
                 data TEXT,
                 read INTEGER DEFAULT 0,
+                severity TEXT DEFAULT 'normal',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )`);
+            
+            // Add severity column if it doesn't exist (for compatibility)
+            await safeRun("ALTER TABLE notifications ADD COLUMN severity TEXT DEFAULT 'normal'");
 
             // Activity Logs
             await query(`CREATE TABLE IF NOT EXISTS activity_logs (
@@ -362,6 +366,8 @@ function initDb() {
             await safeRun("ALTER TABLE users ADD COLUMN token_used INTEGER DEFAULT 0");
             await safeRun("ALTER TABLE users ADD COLUMN token_reset_at TIMESTAMP");
             await safeRun("ALTER TABLE users ADD COLUMN avatar_url TEXT");
+            await safeRun("ALTER TABLE users ADD COLUMN license_plan_id TEXT");
+            await safeRun("ALTER TABLE users ADD COLUMN ai_config TEXT");
 
             // AI Feedback
             await query(`CREATE TABLE IF NOT EXISTS ai_feedback (
@@ -556,6 +562,7 @@ function initDb() {
                 scope_in TEXT DEFAULT '[]',
                 scope_out TEXT DEFAULT '[]',
                 key_risks TEXT DEFAULT '[]',
+                location_id TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
@@ -563,6 +570,9 @@ function initDb() {
                 FOREIGN KEY(owner_execution_id) REFERENCES users(id) ON DELETE SET NULL,
                 FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
             )`);
+            
+            // Add location_id column if it doesn't exist
+            await safeRun("ALTER TABLE initiatives ADD COLUMN location_id TEXT");
 
             // Task Dependencies
             await query(`CREATE TABLE IF NOT EXISTS task_dependencies (
@@ -749,6 +759,115 @@ function initDb() {
                 FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
             )`);
 
+            // Locations
+            await query(`CREATE TABLE IF NOT EXISTS locations (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                address TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+
+            // Decisions
+            await query(`CREATE TABLE IF NOT EXISTS decisions (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                status TEXT DEFAULT 'pending',
+                decision_owner_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(decision_owner_id) REFERENCES users(id) ON DELETE SET NULL
+            )`);
+
+            // RAID Items (Risks, Assumptions, Issues, Dependencies)
+            await query(`CREATE TABLE IF NOT EXISTS raid_items (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                initiative_id TEXT,
+                project_id TEXT,
+                type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                status TEXT DEFAULT 'open',
+                priority TEXT DEFAULT 'medium',
+                owner_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+                FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
+            )`);
+
+            // Budget Line Items
+            await query(`CREATE TABLE IF NOT EXISTS budget_line_items (
+                id TEXT PRIMARY KEY,
+                budget_id TEXT NOT NULL,
+                organization_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                category TEXT,
+                planned_amount REAL DEFAULT 0,
+                actual_amount REAL DEFAULT 0,
+                committed_amount REAL DEFAULT 0,
+                forecast_amount REAL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )`);
+
+            // Inbox Items
+            await query(`CREATE TABLE IF NOT EXISTS inbox_items (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                organization_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                urgency TEXT DEFAULT 'normal',
+                source_type TEXT,
+                source_user_id TEXT,
+                linked_task_id TEXT,
+                linked_initiative_id TEXT,
+                linked_decision_id TEXT,
+                triaged INTEGER DEFAULT 0,
+                triaged_at TIMESTAMP,
+                triage_action TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(source_user_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(linked_task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+                FOREIGN KEY(linked_initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
+                FOREIGN KEY(linked_decision_id) REFERENCES decisions(id) ON DELETE SET NULL
+            )`);
+
+            // Focus Tasks (Daily planning)
+            await query(`CREATE TABLE IF NOT EXISTS focus_tasks (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                task_id TEXT NOT NULL,
+                date DATE NOT NULL,
+                time_block TEXT,
+                position INTEGER DEFAULT 0,
+                is_completed INTEGER DEFAULT 0,
+                completed_at TIMESTAMP,
+                due_time TIME,
+                estimated_minutes INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE
+            )`);
+
+            // Ensure notifications table uses 'read' column (not 'is_read')
+            // The table already exists with 'read', but let's make sure
+            await safeRun("ALTER TABLE notifications ADD COLUMN read INTEGER DEFAULT 0");
+            // Note: We can't easily drop is_read if it exists without checking first
+            // The error suggests the code is using is_read, so we need to fix the code, not the schema
 
             console.log('[Postgres] Schema Check Complete.');
 
