@@ -39,9 +39,9 @@ export function initSentry(app: Express): SentryHandlers {
     if (!isEnabled) {
         console.log('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
         return {
-            requestHandler: () => (req: Request, res: Response, next: NextFunction) => next(),
-            tracingHandler: () => (req: Request, res: Response, next: NextFunction) => next(),
-            errorHandler: () => (err: Error, req: Request, res: Response, next: NextFunction) => next(err),
+            requestHandler: () => (_req: Request, _res: Response, next: NextFunction) => next(),
+            tracingHandler: () => (_req: Request, _res: Response, next: NextFunction) => next(),
+            errorHandler: () => (err: Error, _req: Request, _res: Response, next: NextFunction) => next(err),
         };
     }
 
@@ -65,7 +65,7 @@ export function initSentry(app: Express): SentryHandlers {
         profilesSampleRate: isProduction ? 0.1 : 1.0,
 
         // Filter sensitive data
-        beforeSend(event, hint) {
+        beforeSend(event: Sentry.Event, _hint: Sentry.EventHint) {
             // Remove sensitive headers
             if (event.request && event.request.headers) {
                 delete event.request.headers['authorization'];
