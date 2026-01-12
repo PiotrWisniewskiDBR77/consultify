@@ -6,6 +6,7 @@
  */
 
 import * as Sentry from '@sentry/node';
+import { expressIntegration, httpIntegration } from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { Express, NextFunction, Request, Response } from 'express';
 
@@ -53,9 +54,9 @@ export function initSentry(app: Express): SentryHandlers {
         // Integrations
         integrations: [
             // Express integration
-            new Sentry.Integrations.Express({ app }),
+            expressIntegration({ app }),
             // HTTP integration for tracing outgoing requests
-            new Sentry.Integrations.Http({ tracing: true }),
+            httpIntegration({ tracing: true }),
             // Profiling (optional, requires @sentry/profiling-node)
             nodeProfilingIntegration(),
         ],
@@ -99,30 +100,33 @@ export function initSentry(app: Express): SentryHandlers {
 
     console.log(`[Sentry] Initialized for ${process.env.NODE_ENV} environment`);
 
+    // In Sentry v10+, handlers are middleware functions
+    // The expressIntegration handles request/tracing automatically
+    // We need to create middleware wrappers for compatibility
     return {
         // Request handler - must be first middleware
-        requestHandler: Sentry.Handlers.requestHandler({
-            user: ['id', 'email', 'role'],
-            ip: true,
-        }),
+        requestHandler: (req: Request, res: Response, next: NextFunction) => {
+            // Sentry automatically handles this via expressIntegration
+            next();
+        },
 
         // Tracing handler - must be after request handler and before routes
-        tracingHandler: Sentry.Handlers.tracingHandler(),
+        tracingHandler: (req: Request, res: Response, next: NextFunction) => {
+            // Sentry automatically handles this via expressIntegration
+            next();
+        },
 
         // Error handler - must be after routes and before other error handlers
-        errorHandler: Sentry.Handlers.errorHandler({
-            shouldHandleError(error: Error & { status?: number }) {
-                // Only report 500+ errors automatically
-                if (error.status && error.status >= 500) {
-                    return true;
-                }
+        errorHandler: (err: Error & { status?: number }, req: Request, res: Response, next: NextFunction) => {
+            // Only report 500+ errors automatically
+            if (err.status && err.status >= 500) {
+                Sentry.captureException(err);
+            } else if (err.status === 429) {
                 // Also report 429 (rate limit) errors
-                if (error.status === 429) {
-                    return true;
-                }
-                return false;
-            },
-        }),
+                Sentry.captureException(err);
+            }
+            next(err);
+        },
     };
 }
 

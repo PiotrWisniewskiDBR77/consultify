@@ -8,9 +8,9 @@
  * - Daily usage counter resets
  */
 
-import { getDatabase } from '../src/database/Database.ts';
-import DemoService from '../src/services/demoService.ts';
-import TrialService from '../src/services/trialService.ts';
+import { getDatabase } from '../src/database/Database.js';
+import DemoService from '../src/services/demoService.js';
+import TrialService from '../src/services/trialService.js';
 
 /**
  * Run all trial/demo scheduled tasks

@@ -3,14 +3,14 @@
  * Monitors database connectivity and sends alerts on failure.
  */
 
-const cron = require('node-cron');
+import cron from 'node-cron';
 import { getDatabase } from '../src/database/Database.js';
+import EmailService from '../services/emailService.js';
+
 const db = getDatabase();
-const EmailService = import('emailService.js');
 
 let isSystemHealthy = true; // Track previous state to avoid spamming
 let consecutiveFailures = 0;
-const ALERT_THRESHOLD = 1; // Send alert immediately on first confirmed failure
 const ALERT_EMAIL = 'piotr.wisniewski@dbr77.com';
 
 const startHealthCheck = () => {
@@ -26,7 +26,8 @@ const startHealthCheck = () => {
                 if (isSystemHealthy) {
                     isSystemHealthy = false;
                     // System just went DOWN
-                    await EmailService.sendEmail(
+                    const emailService = await EmailService;
+                    await emailService.sendEmail(
                         ALERT_EMAIL,
                         'CRITICAL ALERT: System Database Down',
                         `
@@ -43,7 +44,8 @@ const startHealthCheck = () => {
                 if (!isSystemHealthy) {
                     // System just came UP
                     console.log('[HEALTH CHECK] RECOVERED');
-                    await EmailService.sendEmail(
+                    const emailService = await EmailService;
+                    await emailService.sendEmail(
                         ALERT_EMAIL,
                         'RESOLVED: System Database Recovered',
                         `

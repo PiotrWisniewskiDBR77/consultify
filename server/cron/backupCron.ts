@@ -5,10 +5,10 @@
  * Also runs retention policy cleanup.
  */
 
-const cron = require('node-cron');
-const BackupService = import('backupService.js');
+import cron from 'node-cron';
+import BackupService from '../services/backupService.js';
 
-let backupJob = null;
+let backupJob: cron.ScheduledTask | null = null;
 
 /**
  * Start the backup cron job
@@ -27,19 +27,20 @@ function startBackupJob() {
 
             try {
                 // Create backup
-                const result = await BackupService.createBackup('full', 'scheduled');
+                const backupService = await BackupService;
+                const result = await backupService.createBackup('full', 'scheduled');
                 console.log(`[BackupCron] Backup completed: ${result.id}`);
 
                 // Run retention policy
-                const cleanup = await BackupService.runRetentionPolicy();
+                const cleanup = await backupService.runRetentionPolicy();
                 console.log(`[BackupCron] Cleanup: deleted ${cleanup.deleted} old backups`);
             } catch (error) {
                 console.error('[BackupCron] Scheduled backup failed:', error);
 
                 // Report to Sentry if available
                 try {
-                    const { captureException } = require('../config/sentry');
-                    captureException(error, {
+                    const { captureException } = await import('../config/sentry.js');
+                    captureException(error as Error, {
                         tags: { component: 'backup', job: 'scheduled' },
                     });
                 } catch (e) {
@@ -71,7 +72,8 @@ function stopBackupJob() {
  */
 async function triggerManualBackup(reason = 'manual') {
     console.log(`[BackupCron] Manual backup triggered: ${reason}`);
-    return BackupService.createBackup('full', reason);
+    const backupService = await BackupService;
+    return backupService.createBackup('full', reason);
 }
 
 export default {

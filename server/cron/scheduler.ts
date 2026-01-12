@@ -1,17 +1,17 @@
 import cron from 'node-cron';
 
-import AIMemoryMetricsService from '../src/services/ai/aiMemoryMetricsService.ts';
-import { learningSystem } from '../src/services/ai/learningSystem.ts'; // Check if file exists
-import AICostControlService from '../src/services/aiCostControlService.ts';
-import AIMemoryManager from '../src/services/aiMemoryManager.ts';
-import FeedbackService from '../src/services/feedbackService.ts';
-import MetricsAggregator from '../src/services/metricsAggregator.ts';
-import ReportEmailService from '../src/services/reportEmailService.ts';
-import RetentionPolicyService from '../src/services/retentionPolicyService.ts';
-import ScheduledReportsService from '../src/services/scheduledReportsService.ts';
-import SLAService from '../src/services/slaService.ts';
-import StorageReconciliationService from '../src/services/storageReconciliationService.ts';
-import TrialCron from './trialCron.ts'; // Assuming JS usage for legacy or TS if Vitest resolves
+import AIMemoryMetricsService from '../src/services/ai/aiMemoryMetricsService.js';
+import { learningSystem } from '../src/services/ai/learningSystem.js'; // Check if file exists
+import AICostControlService from '../src/services/aiCostControlService.js';
+import AIMemoryManager from '../src/services/aiMemoryManager.js';
+import FeedbackService from '../src/services/feedbackService.js';
+import MetricsAggregator from '../src/services/metricsAggregator.js';
+import ReportEmailService from '../src/services/reportEmailService.js';
+import RetentionPolicyService from '../src/services/retentionPolicyService.js';
+import ScheduledReportsService from '../src/services/scheduledReportsService.js';
+import SLAService from '../src/services/slaService.js';
+import StorageReconciliationService from '../src/services/storageReconciliationService.js';
+import TrialCron from './trialCron.js'; // Assuming JS usage for legacy or TS if Vitest resolves
 
 const Scheduler = {
     init: () => {

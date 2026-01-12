@@ -9,10 +9,10 @@
  * Runs every hour.
  */
 
-const cron = require('node-cron');
-const DunningService = import('dunningService.js');
+import cron from 'node-cron';
+import DunningService from '../services/dunningService.js';
 
-let dunningJob = null;
+let dunningJob: cron.ScheduledTask | null = null;
 
 /**
  * Start the dunning cron job
@@ -30,7 +30,8 @@ function startDunningJob() {
             console.log('[DunningCron] Starting scheduled dunning processing...');
 
             try {
-                await DunningService.processScheduledRetries();
+                const dunningService = await DunningService;
+                await dunningService.processScheduledRetries();
             } catch (error) {
                 console.error('[DunningCron] Processing failed:', error);
 
