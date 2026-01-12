@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof voiceRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(voiceRoutesJS as RequestHandler);
+    router.use(voiceRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (voiceRoutesJS && typeof (voiceRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(voiceRoutesJS as RequestHandler);
+    router.use(voiceRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('voice.js did not export a valid router');

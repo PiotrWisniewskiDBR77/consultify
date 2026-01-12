@@ -6,7 +6,7 @@
  */
 
 import { NextFunction, Request, Response, Router } from 'express';
-import express from 'express';
+import express, { type RequestHandler } from 'express';
 import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -26,6 +26,7 @@ interface BillingServiceInterface {
     updateSubscription?: (subscriptionId: string, data: unknown) => Promise<void>;
     cancelSubscription?: (subscriptionId: string) => Promise<void>;
     createInvoice?: (invoiceData: unknown) => Promise<void>;
+    upsertOrganizationBilling?: (orgId: string, data: unknown) => Promise<void>;
 }
 
 // Dynamic import for billingService (may not be migrated yet)
@@ -47,7 +48,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
  */
 router.post(
     '/stripe',
-    express.raw({ type: 'application/json' }),
+    express.raw({ type: 'application/json' }) as RequestHandler,
     asyncHandler(async (req: Request, res: Response) => {
         let event: Stripe.Event;
 
@@ -55,7 +56,8 @@ router.post(
         if (endpointSecret) {
             const sig = req.headers['stripe-signature'] as string;
             try {
-                const stripe = (await import('stripe')).default(process.env.STRIPE_SECRET_KEY || '');
+                const StripeClass = (await import('stripe')).default;
+                const stripe = new StripeClass(process.env.STRIPE_SECRET_KEY || '');
                 event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
             } catch (err: unknown) {
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error';

@@ -18,10 +18,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof user_profile_completenessRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(user_profile_completenessRoutesJS as RequestHandler);
+    router.use(user_profile_completenessRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (user_profile_completenessRoutesJS && typeof (user_profile_completenessRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function, use it
-    router.use(user_profile_completenessRoutesJS as RequestHandler);
+    router.use(user_profile_completenessRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('user-profile-completeness.js did not export a valid router');

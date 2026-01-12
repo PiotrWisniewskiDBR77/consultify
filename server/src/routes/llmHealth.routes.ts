@@ -38,9 +38,9 @@ let ErrorMessagesEnum: ErrorMessages | null = null;
 try {
     const healthModule = await import('../../services/ai/llmHealthMonitor.js');
     const module = healthModule.default || healthModule;
-    llmHealthMonitor = module.llmHealthMonitor || module;
-    HealthStatusEnum = module.HealthStatus || module;
-    ErrorMessagesEnum = module.ErrorMessages || module;
+    llmHealthMonitor = (module.llmHealthMonitor || module) as typeof llmHealthMonitor;
+    HealthStatusEnum = (module.HealthStatus || module) as typeof HealthStatusEnum;
+    ErrorMessagesEnum = (module.ErrorMessages || module) as typeof ErrorMessagesEnum;
 } catch {
     console.warn('[LLMHealth Routes] llmHealthMonitor not available');
 }

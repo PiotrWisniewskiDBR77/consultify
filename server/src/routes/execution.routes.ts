@@ -63,7 +63,9 @@ router.get(
         }
 
         try {
-            const blockers = await ExecutionService.getBlockedTasks(req.params.projectId);
+            const { projectId } = req.params;
+            const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
+            const blockers = await ExecutionService.getBlockedTasks(projectIdStr);
             res.json(blockers);
         } catch (err: unknown) {
             return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });

@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof chat_projectsRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(chat_projectsRoutesJS as RequestHandler);
+    router.use(chat_projectsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (chat_projectsRoutesJS && typeof (chat_projectsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(chat_projectsRoutesJS as RequestHandler);
+    router.use(chat_projectsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('chat-projects.js did not export a valid router');

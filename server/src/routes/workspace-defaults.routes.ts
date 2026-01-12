@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof workspace_defaultsRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(workspace_defaultsRoutesJS as RequestHandler);
+    router.use(workspace_defaultsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (workspace_defaultsRoutesJS && typeof (workspace_defaultsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(workspace_defaultsRoutesJS as RequestHandler);
+    router.use(workspace_defaultsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('workspace-defaults.js did not export a valid router');

@@ -12,7 +12,7 @@ import BillingWebhookService, { BILLING_EVENT_TYPES } from '../services/BillingW
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
-    _CreditNoteIdParamSchema,
+    CreditNoteIdParamSchema,
     BillingStatsQuerySchema,
     CancelSubscriptionRequestSchema,
     CreateCreditNoteRequestSchema,
@@ -152,15 +152,18 @@ router.get(
     validateQuery(ListInvoicesQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const { status, organizationId, page, pageSize } = req.query as {
+            const queryParams = req.query as unknown as {
                 status?: string;
                 organizationId?: string;
-                page: number;
-                pageSize: number;
+                page?: string | number;
+                pageSize?: string | number;
             };
+            const { status, organizationId } = queryParams;
+            const page = Number(queryParams.page) || 1;
+            const pageSize = Number(queryParams.pageSize) || 20;
             const offset = (page - 1) * pageSize;
 
-            const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+            const isSuperAdmin = req.user!.role === 'owner';
 
             let query = `
             SELECT i.*, o.name as organization_name
@@ -242,7 +245,8 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
-            const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+            const idStr = Array.isArray(id) ? id[0] : id;
+            const isSuperAdmin = req.user!.role === 'owner';
 
             let query = `
             SELECT i.*, o.name as organization_name
@@ -250,15 +254,27 @@ router.get(
             LEFT JOIN organizations o ON i.organization_id = o.id
             WHERE i.id = ?
         `;
-            const params: SQLParams = [id];
+            const params: SQLParams = [idStr];
 
             if (!isSuperAdmin) {
                 query += ` AND i.organization_id = ?`;
                 params.push(req.user!.organizationId);
             }
 
-            interface InvoiceDetailRow extends InvoiceRow {
-                // Additional fields from JOIN
+            interface InvoiceDetailRow {
+                id: string;
+                organization_id: string;
+                organization_name?: string;
+                status: string;
+                amount: number;
+                amount_paid: number;
+                currency: string;
+                due_date: string;
+                paid_at?: string;
+                line_items?: string;
+                metadata?: string;
+                created_at: string;
+                updated_at: string;
             }
             const invoice = await dbGet<InvoiceDetailRow>(query, params);
 
@@ -270,8 +286,8 @@ router.get(
             res.json({
                 invoice: {
                     ...invoice,
-                    line_items: invoice.line_items ? JSON.parse(invoice.line_items) : [],
-                    metadata: invoice.metadata ? JSON.parse(invoice.metadata) : {},
+                    line_items: invoice.line_items ? JSON.parse(invoice.line_items as string) : [],
+                    metadata: invoice.metadata ? JSON.parse(invoice.metadata as string) : {},
                 },
             });
         } catch (error: unknown) {
@@ -383,7 +399,8 @@ router.put(
             }
 
             updates.push('updated_at = datetime("now")');
-            params.push(id);
+            const idStr = Array.isArray(id) ? id[0] : id;
+            params.push(idStr);
 
             await dbRun(`UPDATE invoices SET ${updates.join(', ')} WHERE id = ?`, params);
 
@@ -431,15 +448,18 @@ router.get(
     validateQuery(ListSubscriptionsQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const { status, organizationId, page, pageSize } = req.query as {
+            const queryParams = req.query as unknown as {
                 status?: string;
                 organizationId?: string;
-                page: number;
-                pageSize: number;
+                page?: string | number;
+                pageSize?: string | number;
             };
+            const { status, organizationId } = queryParams;
+            const page = Number(queryParams.page) || 1;
+            const pageSize = Number(queryParams.pageSize) || 20;
             const offset = (page - 1) * pageSize;
 
-            const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+            const isSuperAdmin = req.user!.role === 'owner';
 
             let query = `
             SELECT s.*, sp.name as plan_name, sp.price_monthly, sp.price_yearly,
@@ -504,7 +524,8 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
-            const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+            const idStr = Array.isArray(id) ? id[0] : id;
+            const isSuperAdmin = req.user!.role === 'owner';
 
             let query = `
             SELECT s.*, sp.name as plan_name, sp.price_monthly, sp.price_yearly,
@@ -514,7 +535,7 @@ router.get(
             LEFT JOIN organizations o ON s.organization_id = o.id
             WHERE s.id = ?
         `;
-            const params: SQLParams = [id];
+            const params: SQLParams = [idStr];
 
             if (!isSuperAdmin) {
                 query += ` AND s.organization_id = ?`;
@@ -646,7 +667,8 @@ router.put(
             }
 
             updates.push('updated_at = datetime("now")');
-            params.push(id);
+            const idStr = Array.isArray(id) ? id[0] : id;
+            params.push(idStr);
 
             await dbRun(`UPDATE subscriptions SET ${updates.join(', ')} WHERE id = ?`, params);
 
@@ -666,10 +688,11 @@ router.post(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const { id } = req.params;
+            const idStr = Array.isArray(id) ? id[0] : id;
             const { immediately } = req.body;
-            const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+            const isSuperAdmin = req.user!.role === 'owner';
 
-            const subscription = (await dbGet(`SELECT * FROM subscriptions WHERE id = ?`, [id])) as {
+            const subscription = (await dbGet(`SELECT * FROM subscriptions WHERE id = ?`, [idStr])) as {
                 organization_id: string;
             } | null;
             if (!subscription) {
@@ -689,7 +712,7 @@ router.post(
                 SET status = 'canceled', canceled_at = datetime('now'), updated_at = datetime('now')
                 WHERE id = ?
             `,
-                    [id],
+                    [idStr],
                 );
             } else {
                 await dbRun(
@@ -698,7 +721,7 @@ router.post(
                 SET cancel_at_period_end = 1, updated_at = datetime('now')
                 WHERE id = ?
             `,
-                    [id],
+                    [idStr],
                 );
             }
 
@@ -723,7 +746,8 @@ router.get(
     validateQuery(ListPlansQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const { includeInactive } = req.query as { includeInactive: boolean };
+            const queryParams = req.query as unknown as { includeInactive?: string | boolean };
+            const includeInactive = queryParams.includeInactive === 'true' || queryParams.includeInactive === true;
 
             let query = `SELECT * FROM subscription_plans WHERE 1=1`;
             if (!includeInactive) {
@@ -862,7 +886,8 @@ router.put(
             }
 
             updates.push('updated_at = datetime("now")');
-            params.push(id);
+            const idStr = Array.isArray(id) ? id[0] : id;
+            params.push(idStr);
 
             await dbRun(`UPDATE subscription_plans SET ${updates.join(', ')} WHERE id = ?`, params);
 
@@ -894,7 +919,7 @@ router.get(
             };
             const offset = ((page || 1) - 1) * (pageSize || 50);
 
-            const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+            const isSuperAdmin = req.user!.role === 'owner';
 
             let query = `
             SELECT cn.*, o.name as organization_name
@@ -970,7 +995,7 @@ router.get(
                 startDate?: string;
                 endDate?: string;
             };
-            const isSuperAdmin = req.user!.role === 'SUPERADMIN';
+            const isSuperAdmin = req.user!.role === 'owner';
 
             const orgId = isSuperAdmin && organizationId ? organizationId : req.user!.organizationId;
 
@@ -1313,13 +1338,15 @@ router.get(
     validateParams(InvoiceIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const event = await BillingWebhookService.getEventById(req.params.id);
+            const { id } = req.params;
+            const idStr = Array.isArray(id) ? id[0] : id;
+            const event = await BillingWebhookService.getEventById(idStr);
             if (!event) {
                 res.status(404).json({ error: 'Webhook event not found' });
                 return;
             }
             const orgId = (req as unknown as { org?: { id: string } }).org?.id || req.user!.organizationId;
-            if ((event as { organization_id: string }).organization_id !== orgId && req.user!.role !== 'SUPERADMIN') {
+            if ((event as { organization_id: string }).organization_id !== orgId && req.user!.role !== 'owner') {
                 res.status(403).json({ error: 'Permission denied' });
                 return;
             }
@@ -1346,7 +1373,9 @@ router.post(
     validateParams(InvoiceIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const event = await BillingWebhookService.getEventById(req.params.id);
+            const { id } = req.params;
+            const idStr = Array.isArray(id) ? id[0] : id;
+            const event = await BillingWebhookService.getEventById(idStr);
             if (!event) {
                 res.status(404).json({ error: 'Webhook event not found' });
                 return;

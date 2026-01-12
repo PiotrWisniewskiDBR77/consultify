@@ -14,7 +14,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { requireOrgAccess, requireOrgRole } from '../middleware/rbac.middleware.js';
 import orgContextMiddleware from '../middleware/orgContext.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiKeyService, API_KEY_PERMISSIONS } from '../services/ApiKeyService.js';
+import { ApiKeyService, API_KEY_PERMISSIONS } from '../services/apiKeyService.js';
 
 const router = Router();
 

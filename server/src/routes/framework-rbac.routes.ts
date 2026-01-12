@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof framework_rbacRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(framework_rbacRoutesJS as RequestHandler);
+    router.use(framework_rbacRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (framework_rbacRoutesJS && typeof (framework_rbacRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(framework_rbacRoutesJS as RequestHandler);
+    router.use(framework_rbacRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('framework-rbac.js did not export a valid router');

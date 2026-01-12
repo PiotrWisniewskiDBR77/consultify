@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof featureFlagsRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(featureFlagsRoutesJS as RequestHandler);
+    router.use(featureFlagsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (featureFlagsRoutesJS && typeof (featureFlagsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(featureFlagsRoutesJS as RequestHandler);
+    router.use(featureFlagsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('featureFlags.js did not export a valid router');

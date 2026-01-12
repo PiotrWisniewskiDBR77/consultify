@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof user_keyboard_shortcutsRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(user_keyboard_shortcutsRoutesJS as RequestHandler);
+    router.use(user_keyboard_shortcutsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (user_keyboard_shortcutsRoutesJS && typeof (user_keyboard_shortcutsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(user_keyboard_shortcutsRoutesJS as RequestHandler);
+    router.use(user_keyboard_shortcutsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('user-keyboard-shortcuts.js did not export a valid router');

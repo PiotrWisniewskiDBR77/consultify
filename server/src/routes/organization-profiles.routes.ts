@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof organization_profilesRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(organization_profilesRoutesJS as RequestHandler);
+    router.use(organization_profilesRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (organization_profilesRoutesJS && typeof (organization_profilesRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(organization_profilesRoutesJS as RequestHandler);
+    router.use(organization_profilesRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('organization-profiles.js did not export a valid router');

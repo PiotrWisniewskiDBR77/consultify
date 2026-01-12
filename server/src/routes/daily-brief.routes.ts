@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof daily_briefRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(daily_briefRoutesJS as RequestHandler);
+    router.use(daily_briefRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (daily_briefRoutesJS && typeof (daily_briefRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(daily_briefRoutesJS as RequestHandler);
+    router.use(daily_briefRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('daily-brief.js did not export a valid router');

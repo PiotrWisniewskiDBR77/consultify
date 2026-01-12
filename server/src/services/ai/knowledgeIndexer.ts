@@ -769,11 +769,11 @@ export class KnowledgeIndexer {
         if (this.isPg) {
             const db = getDatabase();
             const result = await db.query(sql);
-            return result.rows || [];
+            return (result.rows || []) as { source_type: string; doc_count: number; chunk_count: number; last_indexed: string; }[];
         }
 
         const rows = await DbPromise.all(sql, [], { fallback: false });
-        return rows || [];
+        return (rows || []) as { source_type: string; doc_count: number; chunk_count: number; last_indexed: string; }[];
     }
 
     /**

@@ -20,10 +20,10 @@ const router = Router();
 /*
 if (typeof aiPlaybooksRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(aiPlaybooksRoutesJS as RequestHandler);
+    router.use(aiPlaybooksRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (aiPlaybooksRoutesJS && typeof (aiPlaybooksRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(aiPlaybooksRoutesJS as RequestHandler);
+    router.use(aiPlaybooksRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('aiPlaybooks.js did not export a valid router');

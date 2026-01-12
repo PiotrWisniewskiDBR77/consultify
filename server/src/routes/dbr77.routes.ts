@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof dbr77RoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(dbr77RoutesJS as RequestHandler);
+    router.use(dbr77RoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (dbr77RoutesJS && typeof (dbr77RoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(dbr77RoutesJS as RequestHandler);
+    router.use(dbr77RoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('dbr77.js did not export a valid router');

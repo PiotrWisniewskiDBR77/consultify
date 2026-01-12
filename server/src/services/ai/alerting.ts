@@ -114,7 +114,7 @@ export class AlertingService {
                     category: 'alert',
                 });
                 captureMessage(alert.message, {
-                    level: alert.severity === SEVERITY.CRITICAL ? 'fatal' : 'error',
+                    level: (alert.severity === SEVERITY.CRITICAL ? 'fatal' : 'error') as 'fatal' | 'error',
                     tags: {
                         alertType: alert.type,
                         severity: alert.severity,
@@ -123,7 +123,7 @@ export class AlertingService {
                         ...(alert.data.organizationId ? { organizationId: String(alert.data.organizationId) } : {}),
                     },
                     extra: alert.data,
-                });
+                } as any);
             } catch (error: unknown) {
                 // Sentry not available, continue without it
                 aiLogger.debug('Alerting', 'Sentry integration not available');

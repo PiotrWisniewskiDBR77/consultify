@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof my_workRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(my_workRoutesJS as RequestHandler);
+    router.use(my_workRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (my_workRoutesJS && typeof (my_workRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(my_workRoutesJS as RequestHandler);
+    router.use(my_workRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('my-work.js did not export a valid router');

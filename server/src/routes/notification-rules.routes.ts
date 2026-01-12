@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof notification_rulesRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(notification_rulesRoutesJS as RequestHandler);
+    router.use(notification_rulesRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (notification_rulesRoutesJS && typeof (notification_rulesRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(notification_rulesRoutesJS as RequestHandler);
+    router.use(notification_rulesRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('notification-rules.js did not export a valid router');

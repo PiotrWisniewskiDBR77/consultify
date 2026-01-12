@@ -53,13 +53,13 @@ router.post('/users', validateBody(CreateUserAdminSchema), SuperAdminController.
 router.post(
     '/users/invite',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.inviteUser(req, res);
+        await (SuperAdminController as any).inviteUser(req, res);
     }),
 );
 router.post(
     '/users/:id/reset-password',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.resetUserPassword(req, res);
+        await (SuperAdminController as any).resetUserPassword(req, res);
     }),
 );
 
@@ -70,19 +70,19 @@ router.post(
 router.get(
     '/access-requests',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getAccessRequests(req, res);
+        await (SuperAdminController as any).getAccessRequests(req, res);
     }),
 );
 router.post(
     '/access-requests/:id/approve',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.approveAccessRequest(req, res);
+        await (SuperAdminController as any).approveAccessRequest(req, res);
     }),
 );
 router.post(
     '/access-requests/:id/reject',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.rejectAccessRequest(req, res);
+        await (SuperAdminController as any).rejectAccessRequest(req, res);
     }),
 );
 
@@ -93,14 +93,14 @@ router.post(
 router.get(
     '/access-codes',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getAccessCodes(req, res);
+        await (SuperAdminController as any).getAccessCodes(req, res);
     }),
 );
 router.post(
     '/access-codes',
     validateBody(CreateAccessCodeSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createAccessCode(req, res);
+        await (SuperAdminController as any).createAccessCode(req, res);
     }),
 );
 
@@ -117,13 +117,13 @@ router.post('/impersonate', validateBody(ImpersonateUserSchema), SuperAdminContr
 router.get(
     '/database/tables',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getDatabaseTables(req, res);
+        await (SuperAdminController as any).getDatabaseTables(req, res);
     }),
 );
 router.get(
     '/database/rows/:tableName',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getDatabaseRows(req, res);
+        await (SuperAdminController as any).getDatabaseRows(req, res);
     }),
 );
 
@@ -134,19 +134,19 @@ router.get(
 router.get(
     '/storage/usage',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getStorageUsage(req, res);
+        await (SuperAdminController as any).getStorageUsage(req, res);
     }),
 );
 router.get(
     '/storage/files/:orgId',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getStorageFiles(req, res);
+        await (SuperAdminController as any).getStorageFiles(req, res);
     }),
 );
 router.delete(
     '/storage/files',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.deleteStorageFile(req, res);
+        await (SuperAdminController as any).deleteStorageFile(req, res);
     }),
 );
 
@@ -157,25 +157,25 @@ router.delete(
 router.get(
     '/legal/all',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getAllLegalDocs(req, res);
+        await (SuperAdminController as any).getAllLegalDocs(req, res);
     }),
 );
 router.post(
     '/legal/publish',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.publishLegalDoc(req, res);
+        await (SuperAdminController as any).publishLegalDoc(req, res);
     }),
 );
 router.put(
     '/legal/:id/toggle-active',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.toggleLegalDocActive(req, res);
+        await (SuperAdminController as any).toggleLegalDocActive(req, res);
     }),
 );
 router.get(
     '/legal/:id',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getLegalDocById(req, res);
+        await (SuperAdminController as any).getLegalDocById(req, res);
     }),
 );
 
@@ -186,13 +186,13 @@ router.get(
 router.get(
     '/legal-events',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getLegalEvents(req, res);
+        await (SuperAdminController as any).getLegalEvents(req, res);
     }),
 );
 router.get(
     '/legal-events/stats',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getLegalEventStats(req, res);
+        await (SuperAdminController as any).getLegalEventStats(req, res);
     }),
 );
 
@@ -203,19 +203,19 @@ router.get(
 router.get(
     '/organizations/:id/attribution',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getOrgAttribution(req, res);
+        await (SuperAdminController as any).getOrgAttribution(req, res);
     }),
 );
 router.get(
     '/attribution/export',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.exportAttribution(req, res);
+        await (SuperAdminController as any).exportAttribution(req, res);
     }),
 );
 router.get(
     '/attribution/partner-summary',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getPartnerSummary(req, res);
+        await (SuperAdminController as any).getPartnerSummary(req, res);
     }),
 );
 
@@ -226,7 +226,7 @@ router.get(
 router.get(
     '/usage/by-organization',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUsageByOrganization(req, res);
+        await (SuperAdminController as any).getUsageByOrganization(req, res);
     }),
 );
 
@@ -237,31 +237,31 @@ router.get(
 router.get(
     '/invoices',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getInvoices(req, res);
+        await (SuperAdminController as any).getInvoices(req, res);
     }),
 );
 router.get(
     '/invoices/stats',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getInvoiceStats(req, res);
+        await (SuperAdminController as any).getInvoiceStats(req, res);
     }),
 );
 router.post(
     '/invoices/:id/remind',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.remindInvoice(req, res);
+        await (SuperAdminController as any).remindInvoice(req, res);
     }),
 );
 router.post(
     '/invoices/:id/mark-paid',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.markInvoicePaid(req, res);
+        await (SuperAdminController as any).markInvoicePaid(req, res);
     }),
 );
 router.get(
     '/invoices/:id/pdf',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getInvoicePdf(req, res);
+        await (SuperAdminController as any).getInvoicePdf(req, res);
     }),
 );
 
@@ -272,7 +272,7 @@ router.get(
 router.post(
     '/branding/:orgId/logo',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.uploadBrandingLogo(req, res);
+        await (SuperAdminController as any).uploadBrandingLogo(req, res);
     }),
 );
 
@@ -283,25 +283,25 @@ router.post(
 router.get(
     '/api-keys',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getApiKeys(req, res);
+        await (SuperAdminController as any).getApiKeys(req, res);
     }),
 );
 router.post(
     '/api-keys',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createApiKey(req, res);
+        await (SuperAdminController as any).createApiKey(req, res);
     }),
 );
 router.delete(
     '/api-keys/:id',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.deleteApiKey(req, res);
+        await (SuperAdminController as any).deleteApiKey(req, res);
     }),
 );
 router.get(
     '/api-keys/:id/usage',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getApiKeyUsage(req, res);
+        await (SuperAdminController as any).getApiKeyUsage(req, res);
     }),
 );
 
@@ -312,25 +312,25 @@ router.get(
 router.get(
     '/compliance/frameworks',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getComplianceFrameworks(req, res);
+        await (SuperAdminController as any).getComplianceFrameworks(req, res);
     }),
 );
 router.get(
     '/compliance/status/:frameworkId',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getComplianceStatus(req, res);
+        await (SuperAdminController as any).getComplianceStatus(req, res);
     }),
 );
 router.get(
     '/compliance/dsar',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getDsarRequests(req, res);
+        await (SuperAdminController as any).getDsarRequests(req, res);
     }),
 );
 router.get(
     '/compliance/audits',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getComplianceAudits(req, res);
+        await (SuperAdminController as any).getComplianceAudits(req, res);
     }),
 );
 
@@ -347,49 +347,49 @@ router.get('/system-health', SuperAdminController.getSystemHealth);
 router.get(
     '/organizations/:id/metadata',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getOrganizationMetadata(req, res);
+        await (SuperAdminController as any).getOrganizationMetadata(req, res);
     }),
 );
 router.put(
     '/organizations/:id/metadata',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.updateOrganizationMetadata(req, res);
+        await (SuperAdminController as any).updateOrganizationMetadata(req, res);
     }),
 );
 router.get(
     '/organizations/:id/tags',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getOrganizationTags(req, res);
+        await (SuperAdminController as any).getOrganizationTags(req, res);
     }),
 );
 router.post(
     '/organizations/:id/tags',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.addOrganizationTag(req, res);
+        await (SuperAdminController as any).addOrganizationTag(req, res);
     }),
 );
 router.delete(
     '/organizations/:id/tags/:tagId',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.removeOrganizationTag(req, res);
+        await (SuperAdminController as any).removeOrganizationTag(req, res);
     }),
 );
 router.get(
     '/organizations/:id/health',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getOrganizationHealth(req, res);
+        await (SuperAdminController as any).getOrganizationHealth(req, res);
     }),
 );
 router.get(
     '/organizations/:id/relationships',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getOrganizationRelationships(req, res);
+        await (SuperAdminController as any).getOrganizationRelationships(req, res);
     }),
 );
 router.get(
     '/organizations/:id/analytics',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getOrganizationAnalytics(req, res);
+        await (SuperAdminController as any).getOrganizationAnalytics(req, res);
     }),
 );
 
@@ -400,61 +400,61 @@ router.get(
 router.get(
     '/users/:id/profile-extended',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUserProfileExtended(req, res);
+        await (SuperAdminController as any).getUserProfileExtended(req, res);
     }),
 );
 router.put(
     '/users/:id/profile-extended',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.updateUserProfileExtended(req, res);
+        await (SuperAdminController as any).updateUserProfileExtended(req, res);
     }),
 );
 router.get(
     '/users/:id/activity',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUserActivity(req, res);
+        await (SuperAdminController as any).getUserActivity(req, res);
     }),
 );
 router.get(
     '/users/:id/sessions',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUserSessions(req, res);
+        await (SuperAdminController as any).getUserSessions(req, res);
     }),
 );
 router.delete(
     '/users/:id/sessions/:sessionId',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.revokeUserSession(req, res);
+        await (SuperAdminController as any).revokeUserSession(req, res);
     }),
 );
 router.get(
     '/users/:id/groups',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUserGroups(req, res);
+        await (SuperAdminController as any).getUserGroups(req, res);
     }),
 );
 router.get(
     '/users/:id/onboarding',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUserOnboardingProgress(req, res);
+        await (SuperAdminController as any).getUserOnboardingProgress(req, res);
     }),
 );
 router.put(
     '/users/:id/onboarding',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.updateUserOnboardingProgress(req, res);
+        await (SuperAdminController as any).updateUserOnboardingProgress(req, res);
     }),
 );
 router.get(
     '/users/:id/license',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUserLicense(req, res);
+        await (SuperAdminController as any).getUserLicense(req, res);
     }),
 );
 router.put(
     '/users/:id/license',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.assignUserLicense(req, res);
+        await (SuperAdminController as any).assignUserLicense(req, res);
     }),
 );
 
@@ -465,73 +465,73 @@ router.put(
 router.get(
     '/organizations/:id/ip-whitelist',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getIPWhitelist(req, res);
+        await (SuperAdminController as any).getIPWhitelist(req, res);
     }),
 );
 router.post(
     '/organizations/:id/ip-whitelist',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.addIPWhitelist(req, res);
+        await (SuperAdminController as any).addIPWhitelist(req, res);
     }),
 );
 router.delete(
     '/ip-whitelist/:id',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.removeIPWhitelist(req, res);
+        await (SuperAdminController as any).removeIPWhitelist(req, res);
     }),
 );
 router.get(
     '/users/:id/devices',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUserDevices(req, res);
+        await (SuperAdminController as any).getUserDevices(req, res);
     }),
 );
 router.post(
     '/devices/:id/block',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.blockDevice(req, res);
+        await (SuperAdminController as any).blockDevice(req, res);
     }),
 );
 router.get(
     '/users/:id/mfa',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getMFAMethods(req, res);
+        await (SuperAdminController as any).getMFAMethods(req, res);
     }),
 );
 router.post(
     '/users/:id/mfa/totp/setup',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.setupTOTP(req, res);
+        await (SuperAdminController as any).setupTOTP(req, res);
     }),
 );
 router.post(
     '/users/:id/mfa/totp/verify',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.verifyTOTP(req, res);
+        await (SuperAdminController as any).verifyTOTP(req, res);
     }),
 );
 router.get(
     '/organizations/:id/password-policy',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getPasswordPolicy(req, res);
+        await (SuperAdminController as any).getPasswordPolicy(req, res);
     }),
 );
 router.put(
     '/organizations/:id/password-policy',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.updatePasswordPolicy(req, res);
+        await (SuperAdminController as any).updatePasswordPolicy(req, res);
     }),
 );
 router.get(
     '/security-events',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getSecurityEvents(req, res);
+        await (SuperAdminController as any).getSecurityEvents(req, res);
     }),
 );
 router.post(
     '/security-events/:id/resolve',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.resolveSecurityEvent(req, res);
+        await (SuperAdminController as any).resolveSecurityEvent(req, res);
     }),
 );
 
@@ -542,43 +542,43 @@ router.post(
 router.get(
     '/support/tickets',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getSupportTickets(req, res);
+        await (SuperAdminController as any).getSupportTickets(req, res);
     }),
 );
 router.post(
     '/support/tickets',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createSupportTicket(req, res);
+        await (SuperAdminController as any).createSupportTicket(req, res);
     }),
 );
 router.put(
     '/support/tickets/:id',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.updateSupportTicket(req, res);
+        await (SuperAdminController as any).updateSupportTicket(req, res);
     }),
 );
 router.post(
     '/support/tickets/:id/comments',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.addTicketComment(req, res);
+        await (SuperAdminController as any).addTicketComment(req, res);
     }),
 );
 router.get(
     '/organizations/:id/customer-success/notes',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getCustomerSuccessNotes(req, res);
+        await (SuperAdminController as any).getCustomerSuccessNotes(req, res);
     }),
 );
 router.post(
     '/organizations/:id/customer-success/notes',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createCustomerSuccessNote(req, res);
+        await (SuperAdminController as any).createCustomerSuccessNote(req, res);
     }),
 );
 router.get(
     '/organizations/:id/customer-success/health',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getCustomerHealthCheck(req, res);
+        await (SuperAdminController as any).getCustomerHealthCheck(req, res);
     }),
 );
 
@@ -589,37 +589,37 @@ router.get(
 router.get(
     '/feedback',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getFeedbackItems(req, res);
+        await (SuperAdminController as any).getFeedbackItems(req, res);
     }),
 );
 router.post(
     '/feedback',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createFeedbackItem(req, res);
+        await (SuperAdminController as any).createFeedbackItem(req, res);
     }),
 );
 router.post(
     '/feedback/:id/vote',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.voteFeedback(req, res);
+        await (SuperAdminController as any).voteFeedback(req, res);
     }),
 );
 router.post(
     '/feedback/:id/comments',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.addFeedbackComment(req, res);
+        await (SuperAdminController as any).addFeedbackComment(req, res);
     }),
 );
 router.get(
     '/feature-roadmap',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getFeatureRoadmap(req, res);
+        await (SuperAdminController as any).getFeatureRoadmap(req, res);
     }),
 );
 router.put(
     '/feature-roadmap/:id',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.updateFeatureRoadmap(req, res);
+        await (SuperAdminController as any).updateFeatureRoadmap(req, res);
     }),
 );
 
@@ -630,13 +630,13 @@ router.put(
 router.get(
     '/users/:id/adoption-metrics',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUserAdoptionMetrics(req, res);
+        await (SuperAdminController as any).getUserAdoptionMetrics(req, res);
     }),
 );
 router.get(
     '/organizations/:id/churn-prediction',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getChurnPrediction(req, res);
+        await (SuperAdminController as any).getChurnPrediction(req, res);
     }),
 );
 
@@ -647,37 +647,37 @@ router.get(
 router.get(
     '/compliance/retention-policies',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getDataRetentionPolicies(req, res);
+        await (SuperAdminController as any).getDataRetentionPolicies(req, res);
     }),
 );
 router.post(
     '/compliance/retention-policies',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createDataRetentionPolicy(req, res);
+        await (SuperAdminController as any).createDataRetentionPolicy(req, res);
     }),
 );
 router.get(
     '/compliance/gdpr-requests',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getGDPRRequests(req, res);
+        await (SuperAdminController as any).getGDPRRequests(req, res);
     }),
 );
 router.post(
     '/compliance/gdpr-requests',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createGDPRRequest(req, res);
+        await (SuperAdminController as any).createGDPRRequest(req, res);
     }),
 );
 router.get(
     '/users/:id/consents',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getUserConsents(req, res);
+        await (SuperAdminController as any).getUserConsents(req, res);
     }),
 );
 router.put(
     '/users/:id/consents',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.updateUserConsent(req, res);
+        await (SuperAdminController as any).updateUserConsent(req, res);
     }),
 );
 
@@ -688,31 +688,31 @@ router.put(
 router.get(
     '/automation/rules',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getAutomationRules(req, res);
+        await (SuperAdminController as any).getAutomationRules(req, res);
     }),
 );
 router.post(
     '/automation/rules',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createAutomationRule(req, res);
+        await (SuperAdminController as any).createAutomationRule(req, res);
     }),
 );
 router.put(
     '/automation/rules/:id',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.updateAutomationRule(req, res);
+        await (SuperAdminController as any).updateAutomationRule(req, res);
     }),
 );
 router.get(
     '/webhooks',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getWebhookSubscriptions(req, res);
+        await (SuperAdminController as any).getWebhookSubscriptions(req, res);
     }),
 );
 router.post(
     '/webhooks',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createWebhookSubscription(req, res);
+        await (SuperAdminController as any).createWebhookSubscription(req, res);
     }),
 );
 
@@ -723,37 +723,37 @@ router.post(
 router.get(
     '/email/templates',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getEmailTemplates(req, res);
+        await (SuperAdminController as any).getEmailTemplates(req, res);
     }),
 );
 router.post(
     '/email/templates',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createEmailTemplate(req, res);
+        await (SuperAdminController as any).createEmailTemplate(req, res);
     }),
 );
 router.get(
     '/email/campaigns',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getEmailCampaigns(req, res);
+        await (SuperAdminController as any).getEmailCampaigns(req, res);
     }),
 );
 router.post(
     '/email/campaigns',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.createEmailCampaign(req, res);
+        await (SuperAdminController as any).createEmailCampaign(req, res);
     }),
 );
 router.get(
     '/users/:id/notification-preferences',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.getNotificationPreferences(req, res);
+        await (SuperAdminController as any).getNotificationPreferences(req, res);
     }),
 );
 router.put(
     '/users/:id/notification-preferences',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.updateNotificationPreferences(req, res);
+        await (SuperAdminController as any).updateNotificationPreferences(req, res);
     }),
 );
 
@@ -764,7 +764,7 @@ router.put(
 router.post(
     '/refresh-token',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        await SuperAdminController.refreshToken(req, res);
+        await (SuperAdminController as any).refreshToken(req, res);
     }),
 );
 

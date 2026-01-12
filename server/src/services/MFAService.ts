@@ -6,7 +6,7 @@
  */
 
 // Lazy load the JS service module
-import service from '../../services/MFAService.js';
+import service from '../services/MFAService.js';
 
 // Export default instance (for backward compatibility)
 export default service;

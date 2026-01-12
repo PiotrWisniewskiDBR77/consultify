@@ -56,7 +56,10 @@ const router = Router();
 
 // Lazy load services to avoid circular dependencies
 
-const getAIContextBuilder = async () => await import('../services/aiContextBuilder.js').then((m) => m.default || m);
+const getAIContextBuilder = async () => {
+    const module = await import('../services/aiContextBuilder.js');
+    return (module as any).default || (module as any).aiContextBuilder || module;
+};
 const getAIPolicyEngine = async () =>
     await import('../services/aiPolicyEngine.js').then((m) => (m as any).default || m);
 const getAIMemoryManager = async () =>
@@ -80,7 +83,7 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const AIContextBuilder = await getAIContextBuilder();
-            const context = await AIContextBuilder.buildContext(
+            const context = await (AIContextBuilder as any).buildContext(
                 req.userId as string,
                 req.organizationId as string,
                 null,
@@ -102,7 +105,7 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const AIContextBuilder = await getAIContextBuilder();
-            const context = await AIContextBuilder.buildContext(
+            const context = await (AIContextBuilder as any).buildContext(
                 req.userId as string,
                 req.organizationId as string,
                 req.params.projectId,
@@ -1511,7 +1514,7 @@ router.get(
         try {
             const { projectId, screenContext } = req.query as any;
 
-            const suggestions = await ProactiveSuggestionsService.generateSuggestions({
+            const suggestions = await (ProactiveSuggestionsService as any).generateSuggestions({
                 userId: req.userId!,
                 organizationId: req.organizationId!,
                 projectId: projectId || null,
@@ -1535,7 +1538,7 @@ router.post(
         try {
             const { suggestionId, action, feedback } = req.body;
 
-            await ProactiveSuggestionsService.recordSuggestionAction(suggestionId, req.userId!, action, feedback);
+            await (ProactiveSuggestionsService as any).recordSuggestionAction(suggestionId, req.userId!, action, feedback);
 
             res.json({ success: true });
         } catch (err: unknown) {
@@ -1553,7 +1556,7 @@ router.get(
         try {
             const { days } = req.query as any;
 
-            const metrics = await ProactiveSuggestionsService.getSuggestionMetrics(req.organizationId!, days);
+            const metrics = await (ProactiveSuggestionsService as any).getSuggestionMetrics(req.organizationId!, days);
 
             res.json({ success: true, metrics });
         } catch (err: unknown) {
@@ -1573,7 +1576,7 @@ router.post(
         try {
             const { query, response, context, sources } = req.body;
 
-            const metrics = await ResponseQualityService.calculateQuality({
+            const metrics = await (ResponseQualityService as any).calculateQuality({
                 query,
                 response,
                 context: {
@@ -1599,7 +1602,7 @@ router.get(
         try {
             const { days } = req.query as any;
 
-            const metrics = await ResponseQualityService.getAggregateMetrics(req.organizationId!, days);
+            const metrics = await (ResponseQualityService as any).getAggregateMetrics(req.organizationId!, days);
 
             res.json({ success: true, metrics });
         } catch (err: unknown) {
@@ -1617,7 +1620,7 @@ router.get(
         try {
             const { days } = req.query as any;
 
-            const trends = await ResponseQualityService.getQualityTrends(req.organizationId!, days);
+            const trends = await (ResponseQualityService as any).getQualityTrends(req.organizationId!, days);
 
             res.json({ success: true, trends });
         } catch (err: unknown) {

@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof scimRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(scimRoutesJS as RequestHandler);
+    router.use(scimRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (scimRoutesJS && typeof (scimRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(scimRoutesJS as RequestHandler);
+    router.use(scimRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('scim.js did not export a valid router');

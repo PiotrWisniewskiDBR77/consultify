@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof baselinesRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(baselinesRoutesJS as RequestHandler);
+    router.use(baselinesRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (baselinesRoutesJS && typeof (baselinesRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(baselinesRoutesJS as RequestHandler);
+    router.use(baselinesRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('baselines.js did not export a valid router');

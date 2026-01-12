@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof locationsRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(locationsRoutesJS as RequestHandler);
+    router.use(locationsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (locationsRoutesJS && typeof (locationsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(locationsRoutesJS as RequestHandler);
+    router.use(locationsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('locations.js did not export a valid router');

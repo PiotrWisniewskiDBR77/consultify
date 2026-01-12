@@ -29,14 +29,14 @@ let requireOrgAccess: RequireOrgAccessMiddleware | null = null;
 
 try {
     const budgetModule = await import('../services/budgetManagementService.js');
-    budgetManagementService = (budgetModule.default || budgetModule) as BudgetManagementServiceInterface;
+    budgetManagementService = (budgetModule.default || budgetModule) as unknown as BudgetManagementServiceInterface;
 } catch {
     console.warn('[Budgets] budgetManagementService not available');
 }
 
 try {
-    const rbacModule = await import('../../middleware/rbac.js');
-    requireOrgAccess = rbacModule.requireOrgAccess as RequireOrgAccessMiddleware;
+    const rbacModule = await import('../../middleware/rbac.middleware.js');
+    requireOrgAccess = (rbacModule as any).requireOrgAccess as RequireOrgAccessMiddleware;
 } catch {
     console.warn('[Budgets] requireOrgAccess middleware not available');
 }
@@ -48,7 +48,7 @@ try {
 router.get(
     '/user/:userId',
     verifyToken,
-    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    requireOrgAccess ? requireOrgAccess({ roles: ['administrator', 'owner'] }) : [],
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!budgetManagementService?.getBudgetStatus) {
             return res.status(503).json({ error: 'Budget service not available' });
@@ -61,7 +61,8 @@ router.get(
             }
 
             const { userId } = req.params;
-            const budget = await budgetManagementService.getBudgetStatus(orgId, userId);
+            const userIdStr = Array.isArray(userId) ? userId[0] : userId;
+            const budget = await budgetManagementService.getBudgetStatus(orgId, userIdStr);
             res.json({ budget });
         } catch (error: unknown) {
             console.error('[Budgets] Get user budget error:', error);
@@ -77,7 +78,7 @@ router.get(
 router.put(
     '/user/:userId',
     verifyToken,
-    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    requireOrgAccess ? requireOrgAccess({ roles: ['administrator', 'owner'] }) : [],
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!budgetManagementService?.setUserBudget) {
             return res.status(503).json({ error: 'Budget service not available' });
@@ -90,8 +91,9 @@ router.put(
             }
 
             const { userId } = req.params;
+            const userIdStr = Array.isArray(userId) ? userId[0] : userId;
             const budget = req.body;
-            await budgetManagementService.setUserBudget(orgId, userId, budget);
+            await budgetManagementService.setUserBudget(orgId, userIdStr, budget);
             res.json({ success: true });
         } catch (error: unknown) {
             console.error('[Budgets] Set user budget error:', error);
@@ -107,7 +109,7 @@ router.put(
 router.get(
     '/project/:projectId',
     verifyToken,
-    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    requireOrgAccess ? requireOrgAccess({ roles: ['administrator', 'owner'] }) : [],
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!budgetManagementService?.getBudgetStatus) {
             return res.status(503).json({ error: 'Budget service not available' });
@@ -120,7 +122,8 @@ router.get(
             }
 
             const { projectId } = req.params;
-            const budget = await budgetManagementService.getBudgetStatus(orgId, null, projectId);
+            const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
+            const budget = await budgetManagementService.getBudgetStatus(orgId, null, projectIdStr);
             res.json({ budget });
         } catch (error: unknown) {
             console.error('[Budgets] Get project budget error:', error);
@@ -136,7 +139,7 @@ router.get(
 router.put(
     '/project/:projectId',
     verifyToken,
-    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    requireOrgAccess ? requireOrgAccess({ roles: ['administrator', 'owner'] }) : [],
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!budgetManagementService?.setProjectBudget) {
             return res.status(503).json({ error: 'Budget service not available' });
@@ -149,8 +152,9 @@ router.put(
             }
 
             const { projectId } = req.params;
+            const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
             const budget = req.body;
-            await budgetManagementService.setProjectBudget(orgId, projectId, budget);
+            await budgetManagementService.setProjectBudget(orgId, projectIdStr, budget);
             res.json({ success: true });
         } catch (error: unknown) {
             console.error('[Budgets] Set project budget error:', error);
@@ -166,7 +170,7 @@ router.put(
 router.get(
     '/organization',
     verifyToken,
-    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    requireOrgAccess ? requireOrgAccess({ roles: ['administrator', 'owner'] }) : [],
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!budgetManagementService?.getBudgetStatus) {
             return res.status(503).json({ error: 'Budget service not available' });
@@ -196,9 +200,9 @@ router.get(
 router.put(
     '/organization',
     verifyToken,
-    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    requireOrgAccess ? requireOrgAccess({ roles: ['administrator', 'owner'] }) : [],
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!budgetManagementService?.setOrgBudget) {
+        if (!budgetManagementService) {
             return res.status(503).json({ error: 'Budget service not available' });
         }
 
@@ -209,7 +213,7 @@ router.put(
             }
 
             const budget = req.body;
-            await budgetManagementService.setOrgBudget(orgId, budget);
+            await (budgetManagementService as any).setOrgBudget(orgId, budget);
             res.json({ success: true });
         } catch (error: unknown) {
             console.error('[Budgets] Set org budget error:', error);
@@ -227,7 +231,7 @@ router.put(
 router.get(
     '/status',
     verifyToken,
-    requireOrgAccess ? requireOrgAccess({ roles: ['ADMIN', 'OWNER'] }) : [],
+    requireOrgAccess ? requireOrgAccess({ roles: ['administrator', 'owner'] }) : [],
     asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!budgetManagementService?.getBudgetStatus) {
             return res.status(503).json({ error: 'Budget service not available' });

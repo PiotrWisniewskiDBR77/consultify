@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof assessment_hubRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(assessment_hubRoutesJS as RequestHandler);
+    router.use(assessment_hubRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (assessment_hubRoutesJS && typeof (assessment_hubRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(assessment_hubRoutesJS as RequestHandler);
+    router.use(assessment_hubRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('assessment-hub.js did not export a valid router');

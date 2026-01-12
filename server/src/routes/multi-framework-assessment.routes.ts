@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof multi_framework_assessmentRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(multi_framework_assessmentRoutesJS as RequestHandler);
+    router.use(multi_framework_assessmentRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (multi_framework_assessmentRoutesJS && typeof (multi_framework_assessmentRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(multi_framework_assessmentRoutesJS as RequestHandler);
+    router.use(multi_framework_assessmentRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('multi-framework-assessment.js did not export a valid router');

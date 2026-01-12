@@ -7,7 +7,7 @@
  */
 
 import { getAlertEmailService } from './AlertEmailService.js';
-import { alerts } from './ai/alerting.js';
+import { alertingService } from './ai/alerting.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
@@ -167,7 +167,7 @@ class AlertAggregator {
 
         // Send via alerting service
         try {
-            await alerts.send(alert.alertType as any, {
+            await alertingService.send(alert.alertType as any, {
                 ...alert.data,
                 aggregatedCount: alert.count,
                 firstOccurrence: alert.firstOccurrence,

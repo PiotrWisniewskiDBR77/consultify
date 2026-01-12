@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof ssoRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(ssoRoutesJS as RequestHandler);
+    router.use(ssoRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (ssoRoutesJS && typeof (ssoRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(ssoRoutesJS as RequestHandler);
+    router.use(ssoRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('sso.js did not export a valid router');

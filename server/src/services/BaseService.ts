@@ -24,6 +24,8 @@ export interface QueryOptions {
     ttl?: number;
     parseJson?: boolean;
     jsonFields?: string[];
+    _cacheKey?: string; // Internal cache key
+    _ttl?: number; // Internal TTL
 }
 
 export interface QueryParallelItem {
@@ -68,7 +70,7 @@ export abstract class BaseService<T extends { id: string }> {
         // }
 
         const rows = await this.queryAllInternal<R>(sql, params);
-        return parseJson ? rows.map((r) => this.parseJsonFields(r, jsonFields)) : rows;
+        return parseJson ? rows.map((r) => this.parseJsonFields(r as Record<string, unknown>, jsonFields) as R) : rows;
     }
 
     /**
@@ -90,7 +92,7 @@ export abstract class BaseService<T extends { id: string }> {
         // }
 
         const row = await this.queryOneInternal<R>(sql, params);
-        return parseJson && row ? this.parseJsonFields(row, jsonFields) : row;
+        return parseJson && row ? this.parseJsonFields(row as Record<string, unknown>, jsonFields) as R : row;
     }
 
     /**

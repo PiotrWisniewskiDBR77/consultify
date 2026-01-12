@@ -255,9 +255,9 @@ class AuditLogger {
             const logs = await db.all(
                 `SELECT * FROM audit_logs ${whereClause} ORDER BY timestamp DESC LIMIT ? OFFSET ?`,
                 [...params, limit, offset],
-            );
+            ) as unknown[];
 
-            return logs.map((log: any) => ({
+            return (logs as any[]).map((log: any) => ({
                 id: log.id,
                 userId: log.user_id,
                 organizationId: log.organization_id,
@@ -309,10 +309,10 @@ class AuditLogger {
 
             const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-            const logs = await db.all(`SELECT * FROM audit_logs ${whereClause}`, params);
+            const logs = (await db.all(`SELECT * FROM audit_logs ${whereClause}`, params)) as unknown[];
 
             const stats = {
-                total: logs.length,
+                total: (logs as any[]).length,
                 byAction: {} as Record<string, number>,
                 byResourceType: {} as Record<string, number>,
                 successRate: 0,
@@ -320,7 +320,7 @@ class AuditLogger {
 
             let successCount = 0;
 
-            logs.forEach((log: any) => {
+            (logs as any[]).forEach((log: any) => {
                 // Count by action
                 stats.byAction[log.action] = (stats.byAction[log.action] || 0) + 1;
 
@@ -333,7 +333,8 @@ class AuditLogger {
                 }
             });
 
-            stats.successRate = logs.length > 0 ? (successCount / logs.length) * 100 : 0;
+            const logsArray = logs as any[];
+            stats.successRate = logsArray.length > 0 ? (successCount / logsArray.length) * 100 : 0;
 
             return stats;
         } catch (error: unknown) {
@@ -367,5 +368,4 @@ export function getAuditLogger(): AuditLogger {
 // ==========================================
 
 export default AuditLogger;
-export type { AuditLogEntry, AuditLogQuery };
 

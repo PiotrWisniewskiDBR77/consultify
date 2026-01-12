@@ -11,7 +11,8 @@ const invalidate = async () => {
         logger.info('Published router:config_update event.');
         process.exit(0);
     } catch (error) {
-        logger.error('Failed to invalidate cache', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('Failed to invalidate cache', err);
         process.exit(1);
     }
 };

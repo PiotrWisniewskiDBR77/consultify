@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof report_commentsRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(report_commentsRoutesJS as RequestHandler);
+    router.use(report_commentsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (report_commentsRoutesJS && typeof (report_commentsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(report_commentsRoutesJS as RequestHandler);
+    router.use(report_commentsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('report-comments.js did not export a valid router');

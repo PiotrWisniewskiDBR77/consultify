@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof generic_reportsRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(generic_reportsRoutesJS as RequestHandler);
+    router.use(generic_reportsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (generic_reportsRoutesJS && typeof (generic_reportsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a Router object with handle method, use it
-    router.use(generic_reportsRoutesJS as RequestHandler);
+    router.use(generic_reportsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('generic-reports.js did not export a valid router');

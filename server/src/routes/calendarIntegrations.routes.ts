@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof calendarIntegrationsRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(calendarIntegrationsRoutesJS as RequestHandler);
+    router.use(calendarIntegrationsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (calendarIntegrationsRoutesJS && typeof (calendarIntegrationsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(calendarIntegrationsRoutesJS as RequestHandler);
+    router.use(calendarIntegrationsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('calendarIntegrations.js did not export a valid router');

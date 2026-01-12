@@ -233,7 +233,10 @@ router.get(
         }
         const { status, eventType, page = '1', pageSize = '50' } = req.query;
 
-        const filters = { status, eventType };
+        const filters = { 
+            status: typeof status === 'string' ? status : undefined,
+            eventType: typeof eventType === 'string' ? eventType : undefined
+        };
         const pagination = {
             page: parseInt(page as string),
             pageSize: parseInt(pageSize as string),

@@ -15,7 +15,7 @@ import refreshTokenService from '../services/RefreshTokenService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
-    _MFASetupRequestSchema,
+    MFASetupRequestSchema,
     ChangePasswordRequestSchema,
     LoginRequestSchema,
     MFADisableRequestSchema,
@@ -101,7 +101,8 @@ router.delete(
         const { id } = req.params;
 
         try {
-            await refreshTokenService.revokeSession(req.user!.id, id);
+            const idStr = Array.isArray(id) ? id[0] : id;
+            await refreshTokenService.revokeSession(req.user!.id, idStr);
             res.json({ success: true, message: 'Session revoked' });
         } catch (error: unknown) {
             console.error('[Auth] Revoke session error:', error);
@@ -290,18 +291,19 @@ router.post(
                 organizationId: adminUser.organization_id,
                 jti: jti,
             },
-            config.JWT_SECRET,
-            { expiresIn: config.JWT_EXPIRES_IN },
+            config.JWT_SECRET as string,
+            { expiresIn: config.JWT_EXPIRES_IN as string | number },
         );
 
         // Log the reversion
         ActivityService.log({
             userId: adminUser.id,
+            organizationId: adminUser.organization_id || adminUser.organizationId,
             action: 'impersonate_end',
             entityType: 'user',
             entityId: req.user!.id,
             entityName: req.user!.email || '',
-        });
+        } as any);
 
         // Return admin user and token
         const safeUser = {
@@ -361,12 +363,12 @@ router.post(
 
             ActivityService.log({
                 userId: user.id,
+                organizationId: user.organization_id || user.organizationId,
                 action: 'demo_login',
                 entityType: 'user',
                 entityId: user.id,
                 entityName: DEMO_EMAIL,
-                metadata: { ip: req.ip },
-            });
+            } as any);
 
             const safeUser = {
                 id: user.id,
@@ -614,7 +616,7 @@ router.post(
     verifyToken,
     validateBody(RevokeAllTokensRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPERADMIN') {
+        if (req.user!.role !== 'administrator' && req.user!.role !== 'owner') {
             res.status(403).json({ error: 'Not authorized' });
             return;
         }
@@ -642,7 +644,7 @@ router.post(
             });
         };
 
-        if (req.user!.role !== 'SUPERADMIN' && userId && userId !== req.user!.id) {
+        if (req.user!.role !== 'owner' && userId && userId !== req.user!.id) {
             const targetUser = await dbGet<{
                 organization_id: string;
             }>('SELECT organization_id FROM users WHERE id = ?', [userId]);
@@ -702,11 +704,12 @@ router.post(
 
             ActivityService.log({
                 userId,
+                organizationId: req.user?.organizationId,
                 action: 'password_changed',
                 entityType: 'user',
                 entityId: userId,
                 entityName: 'Password Change',
-            });
+            } as any);
 
             await refreshTokenService.revokeAllUserTokens(userId);
 

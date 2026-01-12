@@ -20,10 +20,10 @@ const router = Router();
 /*
 if (typeof contentRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(contentRoutesJS as RequestHandler);
+    router.use(contentRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (contentRoutesJS && typeof (contentRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(contentRoutesJS as RequestHandler);
+    router.use(contentRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('content.js did not export a valid router');

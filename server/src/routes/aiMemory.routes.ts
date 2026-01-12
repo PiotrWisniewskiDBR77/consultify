@@ -30,7 +30,7 @@ router.get(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
+            const userId = req.user?.id;
             const { source } = req.query;
 
             if (!userId) {
@@ -74,7 +74,7 @@ router.get(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
+            const userId = req.user?.id;
 
             if (!userId) {
                 return res.status(401).json({ error: 'Unauthorized' });
@@ -163,8 +163,8 @@ router.put(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
-            const organizationId = req.user?.organizationId || req.user?.organizationId;
+            const userId = req.user?.id;
+            const organizationId = req.user?.organizationId;
             const { key } = req.params;
             const { value, source = 'explicit', confidence = 1.0, context } = req.body;
 
@@ -239,7 +239,7 @@ router.delete(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
+            const userId = req.user?.id;
             const { key } = req.params;
 
             if (!userId) {
@@ -276,8 +276,8 @@ router.post(
     verifyToken,
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
-            const userId = req.user?.id || req.user?.userId;
-            const organizationId = req.user?.organizationId || req.user?.organizationId;
+            const userId = req.user?.id;
+            const organizationId = req.user?.organizationId;
             const { memories } = req.body;
 
             if (!userId) {

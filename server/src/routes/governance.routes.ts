@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof governanceRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(governanceRoutesJS as RequestHandler);
+    router.use(governanceRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (governanceRoutesJS && typeof (governanceRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a Router object with handle method, use it
-    router.use(governanceRoutesJS as RequestHandler);
+    router.use(governanceRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('governance.js did not export a valid router');

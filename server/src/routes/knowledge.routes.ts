@@ -139,7 +139,7 @@ try {
 
 try {
     const storageModule = await import('../../services/storageService.js');
-    StorageService = storageModule.default || storageModule;
+    StorageService = (storageModule.default || storageModule) as typeof StorageService;
 } catch {
     console.warn('[Knowledge] StorageService not available');
 }
@@ -401,7 +401,7 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             // Use unified AI pipeline for observation generation
-            const aiPipelineModule = await import('../../services/ai/AIPipeline.js');
+            const aiPipelineModule = await import('../../services/ai/aiPipeline.js');
             const pipeline = aiPipelineModule.aiPipeline || aiPipelineModule.AIPipeline.getInstance();
             const userId = req.user?.id;
             const organizationId = req.user?.organizationId;

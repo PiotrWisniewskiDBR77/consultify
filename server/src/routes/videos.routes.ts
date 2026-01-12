@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof videosRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(videosRoutesJS as RequestHandler);
+    router.use(videosRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (videosRoutesJS && typeof (videosRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(videosRoutesJS as RequestHandler);
+    router.use(videosRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('videos.js did not export a valid router');

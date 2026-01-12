@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof budgetRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(budgetRoutesJS as RequestHandler);
+    router.use(budgetRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (budgetRoutesJS && typeof (budgetRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(budgetRoutesJS as RequestHandler);
+    router.use(budgetRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('budget.js did not export a valid router');

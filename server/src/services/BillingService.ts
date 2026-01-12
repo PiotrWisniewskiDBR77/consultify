@@ -5,7 +5,7 @@
  * Delegates to granulated billing modules for queries, commands, and events.
  */
 
-import type Stripe from 'stripe';
+import Stripe from 'stripe';
 
 import { BillingCommandService } from './billing/BillingCommandService.js';
 import { BillingDependencyLoader } from './billing/billingDependencyLoader.js';

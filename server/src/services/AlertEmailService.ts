@@ -188,7 +188,7 @@ class AlertEmailService {
                 html: template.html,
             }).catch((error: unknown) => {
                 const err = error instanceof Error ? error : new Error(String(error));
-                logger.error(`[AlertEmail] Failed to send email to ${recipient}:`, err.message);
+                logger.error(`[AlertEmail] Failed to send email to ${recipient}:`, err);
                 return false;
             }),
         );

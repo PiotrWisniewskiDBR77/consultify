@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof rapidleanRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(rapidleanRoutesJS as RequestHandler);
+    router.use(rapidleanRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (rapidleanRoutesJS && typeof (rapidleanRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(rapidleanRoutesJS as RequestHandler);
+    router.use(rapidleanRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('rapidlean.js did not export a valid router');

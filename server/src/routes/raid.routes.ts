@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof raidRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(raidRoutesJS as RequestHandler);
+    router.use(raidRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (raidRoutesJS && typeof (raidRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(raidRoutesJS as RequestHandler);
+    router.use(raidRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('raid.js did not export a valid router');

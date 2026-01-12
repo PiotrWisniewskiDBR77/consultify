@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof prompt_assistantRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(prompt_assistantRoutesJS as RequestHandler);
+    router.use(prompt_assistantRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (prompt_assistantRoutesJS && typeof (prompt_assistantRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(prompt_assistantRoutesJS as RequestHandler);
+    router.use(prompt_assistantRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('prompt-assistant.js did not export a valid router');

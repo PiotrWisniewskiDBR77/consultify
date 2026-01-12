@@ -96,7 +96,7 @@ class AuditLogService {
     private _db: IDatabase;
 
     constructor(dbInstance?: IDatabase) {
-        this.db = dbInstance || getDatabase();
+        this._db = dbInstance || getDatabase();
     }
 
     /**

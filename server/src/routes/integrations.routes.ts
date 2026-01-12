@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof integrationsRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(integrationsRoutesJS as RequestHandler);
+    router.use(integrationsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (integrationsRoutesJS && typeof (integrationsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(integrationsRoutesJS as RequestHandler);
+    router.use(integrationsRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('integrations.js did not export a valid router');

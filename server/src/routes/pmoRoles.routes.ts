@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof pmoRolesRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(pmoRolesRoutesJS as RequestHandler);
+    router.use(pmoRolesRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (pmoRolesRoutesJS && typeof (pmoRolesRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(pmoRolesRoutesJS as RequestHandler);
+    router.use(pmoRolesRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('pmoRoles.js did not export a valid router');

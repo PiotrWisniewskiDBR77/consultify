@@ -87,7 +87,9 @@ export class IngestionPipeline {
             const fileName = path.basename(filePath);
             const extension = path.extname(filePath).toLowerCase();
 
-            const docType = Object.entries(DOCUMENT_TYPES).find(([, config]) => config.extensions.includes(extension));
+            const docType = Object.entries(DOCUMENT_TYPES).find(([, config]) => 
+                config.extensions.includes(extension as '.md' | '.mdx' | '.txt' | '.json')
+            );
 
             if (!docType) {
                 throw new Error(`Unsupported file type: ${extension}`);
@@ -421,7 +423,7 @@ export class IngestionPipeline {
                 const subFiles = await this._listFiles(fullPath, options);
                 files.push(...subFiles);
             } else if (entry.isFile()) {
-                const ext = path.extname(entry.name).toLowerCase();
+                const ext = path.extname(entry.name).toLowerCase() as '.md' | '.mdx' | '.txt' | '.json';
                 if (supportedExtensions.includes(ext)) {
                     if (!pattern || new RegExp(pattern).test(entry.name)) {
                         files.push(fullPath);

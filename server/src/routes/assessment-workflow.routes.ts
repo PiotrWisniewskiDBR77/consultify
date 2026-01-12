@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof assessment_workflowRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(assessment_workflowRoutesJS as RequestHandler);
+    router.use(assessment_workflowRoutesJS as unknown as unknown as unknown as unknown as RequestHandler);
 } else if (assessment_workflowRoutesJS && typeof (assessment_workflowRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(assessment_workflowRoutesJS as RequestHandler);
+    router.use(assessment_workflowRoutesJS as unknown as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('assessment-workflow.js did not export a valid router');

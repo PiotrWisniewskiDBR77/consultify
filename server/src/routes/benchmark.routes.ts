@@ -19,10 +19,10 @@ const router = Router();
 // The JS route file exports a router that we can use directly
 if (typeof benchmarkRoutesJS === 'function') {
     // If it's a router function, use it
-    router.use(benchmarkRoutesJS as RequestHandler);
+    router.use(benchmarkRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else if (benchmarkRoutesJS && typeof (benchmarkRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(benchmarkRoutesJS as RequestHandler);
+    router.use(benchmarkRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
     // Fallback or error
     console.error('benchmark.js did not export a valid router');
