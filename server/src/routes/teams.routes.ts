@@ -74,7 +74,7 @@ router.get(
             createdAt: t.created_at,
         }));
 
-        res.json(formattedTeams);
+        return res.json(formattedTeams);
     }),
 );
 
@@ -85,7 +85,10 @@ router.get(
 router.get(
     '/:id',
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            return res.status(400).json({ error: 'id is required' });
+        }
         const orgId = req.user?.organizationId;
         if (!orgId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -133,7 +136,7 @@ router.get(
             avatar_url: string | null;
         }>(membersSql, [id]);
 
-        res.json({
+        return res.json({
             id: team.id,
             organizationId: team.organization_id,
             name: team.name,
@@ -206,7 +209,7 @@ router.post(
             }
         }
 
-        res.json({
+        return res.json({
             id,
             organizationId: orgId,
             name,
@@ -225,7 +228,10 @@ router.put(
     '/:id',
     verifyAdmin,
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            return res.status(400).json({ error: 'id is required' });
+        }
         const orgId = req.user?.organizationId;
         if (!orgId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -247,7 +253,7 @@ router.put(
             return res.status(404).json({ error: 'Team not found' });
         }
 
-        res.json({ message: 'Team updated' });
+        return res.json({ message: 'Team updated' });
     }),
 );
 
@@ -259,7 +265,10 @@ router.delete(
     '/:id',
     verifyAdmin,
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            return res.status(400).json({ error: 'id is required' });
+        }
         const orgId = req.user?.organizationId;
         if (!orgId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -279,7 +288,7 @@ router.delete(
             return res.status(404).json({ error: 'Team not found' });
         }
 
-        res.json({ message: 'Team deleted' });
+        return res.json({ message: 'Team deleted' });
     }),
 );
 
@@ -291,7 +300,10 @@ router.post(
     '/:id/members',
     verifyAdmin,
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            return res.status(400).json({ error: 'id is required' });
+        }
         const orgId = req.user?.organizationId;
         if (!orgId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -334,7 +346,7 @@ router.post(
             throw new Error(runResult.error || 'Failed to add team member');
         }
 
-        res.json({ message: 'Member added to team' });
+        return res.json({ message: 'Member added to team' });
     }),
 );
 
@@ -346,7 +358,11 @@ router.delete(
     '/:id/members/:userId',
     verifyAdmin,
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { id, userId } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        const userId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+        if (!id || !userId) {
+            return res.status(400).json({ error: 'id and userId are required' });
+        }
         const orgId = req.user?.organizationId;
         if (!orgId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -368,7 +384,7 @@ router.delete(
             return res.status(404).json({ error: 'Member not in team' });
         }
 
-        res.json({ message: 'Member removed from team' });
+        return res.json({ message: 'Member removed from team' });
     }),
 );
 

@@ -271,7 +271,7 @@ router.post(
                 lastCheck?: string;
             };
 
-            res.json({
+            return res.json({
                 success: result.status === HealthStatusEnum.HEALTHY || result.status === HealthStatusEnum.DEGRADED,
                 result: {
                     status: result.status,
@@ -286,7 +286,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[LLMHealth] Test error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -334,7 +334,7 @@ router.get(
                 }
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 summary: {
                     ...summary,
@@ -350,7 +350,7 @@ router.get(
                     })),
             });
         } catch (error: unknown) {
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -372,7 +372,7 @@ router.get(
             });
         }
 
-        res.json({
+        return res.json({
             success: true,
             categories: Object.entries(ErrorMessagesEnum).map(([key, value]) => ({
                 code: key,
