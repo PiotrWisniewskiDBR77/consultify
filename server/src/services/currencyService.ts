@@ -115,7 +115,7 @@ class CurrencyServiceClass {
 
             return currencies;
         } catch (error: unknown) {
-            logger.error('[Currency] Error fetching currencies:', error);
+            logger.error('[Currency] Error fetching currencies:', error instanceof Error ? error : null);
             return Object.entries(DEFAULT_CURRENCIES).map(([code, data]) => ({
                 code,
                 ...data,
@@ -245,7 +245,7 @@ class CurrencyServiceClass {
 
             logger.info(`[Currency] Updated ${supported.length} exchange rates`);
         } catch (error: unknown) {
-            logger.error('[Currency] Failed to update rates:', error);
+            logger.error('[Currency] Failed to update rates:', error instanceof Error ? error : null);
             await this._useFallbackRates();
         }
     }
@@ -288,7 +288,7 @@ class CurrencyServiceClass {
                     return fromRate * toRate;
                 }
             } catch (error: unknown) {
-                logger.error('[Currency] API fetch failed:', error);
+                logger.error('[Currency] API fetch failed:', error instanceof Error ? error : null);
             }
         }
 

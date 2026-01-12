@@ -93,7 +93,7 @@ router.get(
             res.json(settings);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting superadmin settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -137,7 +137,7 @@ router.put(
             res.json(updated);
         } catch (error: unknown) {
             console.error('[AI Settings] Error updating superadmin settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -176,7 +176,7 @@ router.get(
             res.json(settings);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting org settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -234,7 +234,7 @@ router.put(
             res.json(updated);
         } catch (error: unknown) {
             console.error('[AI Settings] Error updating org settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -268,7 +268,7 @@ router.get(
             res.json(settings);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting user settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -316,7 +316,7 @@ router.put(
             res.json(updated);
         } catch (error: unknown) {
             console.error('[AI Settings] Error updating user settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -353,7 +353,7 @@ router.get(
             res.json(effective);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting effective settings:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get settings',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -390,7 +390,7 @@ router.get(
             res.json(models);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting available models:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get models',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -426,7 +426,7 @@ router.get(
             res.json(proactivity);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting proactivity:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get proactivity',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -451,7 +451,7 @@ router.get(
             res.json(modes);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting proactivity modes:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get modes',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -507,7 +507,7 @@ router.get(
             res.json(auditLog);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting audit log:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get audit log',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -548,7 +548,7 @@ router.get(
             res.json(auditLog);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting org audit log:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get audit log',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -584,7 +584,7 @@ router.get(
             res.json(costs);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting user costs:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get cost history',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -628,7 +628,7 @@ router.get(
             res.json(tiers);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting user tiers:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get user tiers',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -678,7 +678,7 @@ router.put(
             res.json(result);
         } catch (error: unknown) {
             console.error('[AI Settings] Error assigning user tier:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to assign tier',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -723,7 +723,7 @@ router.get(
             res.json(costs);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting cost attribution:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get costs',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -804,7 +804,7 @@ router.get(
             }
         } catch (error: unknown) {
             console.error('[AI Settings] Error generating compliance report:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to generate report',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -848,7 +848,7 @@ router.post(
             res.json(report);
         } catch (error: unknown) {
             console.error('[AI Settings] Error generating compliance report:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to generate report',
                 message: error instanceof Error ? error.message : 'Unknown error',
             });

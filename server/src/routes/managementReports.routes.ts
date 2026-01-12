@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/managementReports.js');
 const managementReportsRoutesJS = module.default || module;
@@ -17,15 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (
-    typeof managementReportsRoutesJS === 'function' ||
-    (managementReportsRoutesJS && typeof managementReportsRoutesJS.handle === 'function')
-) {
+if (typeof managementReportsRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(managementReportsRoutesJS as RequestHandler);
+} else if (managementReportsRoutesJS && typeof (managementReportsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(managementReportsRoutesJS);
+    router.use(managementReportsRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('managementReports.js did not export a valid router');
+}
 }
 
 export default router;

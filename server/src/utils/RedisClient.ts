@@ -71,7 +71,6 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
         url: redisUrl,
         socket: {
             connectTimeout: connectTimeout,
-            commandTimeout: commandTimeout,
             reconnectStrategy: (retries: number) => {
                 if (retries > 10) {
                     console.error('[Redis] Max reconnection attempts exceeded');

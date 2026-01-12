@@ -5,10 +5,9 @@
  * Lazy-loaded ES module wrapper for backward compatibility during migration
  */
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
+// Re-export named exports from JS module
+export { getRedisClient, isRedisConnected, initRedis, closeRedis, healthCheck } from '../../services/ai/redisClient.js';
 
-// Lazy load the JS service module
-const loadRedisclient = createCachedLazyService('../../services/ai/redisClient.js');
-
-// Export default instance (for backward compatibility)
-export default loadRedisclient();
+// Default export for backward compatibility
+import redisClientModule from '../../services/ai/redisClient.js';
+export default redisClientModule;

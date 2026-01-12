@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/notification-rules.js');
 const notification_rulesRoutesJS = module.default || module;
@@ -17,15 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (
-    typeof notification_rulesRoutesJS === 'function' ||
-    (notification_rulesRoutesJS && typeof notification_rulesRoutesJS.handle === 'function')
-) {
+if (typeof notification_rulesRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(notification_rulesRoutesJS as RequestHandler);
+} else if (notification_rulesRoutesJS && typeof (notification_rulesRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(notification_rulesRoutesJS);
+    router.use(notification_rulesRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('notification-rules.js did not export a valid router');
+}
 }
 
 export default router;

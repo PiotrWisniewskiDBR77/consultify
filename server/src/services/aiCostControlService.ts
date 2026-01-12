@@ -490,7 +490,7 @@ class AICostControlServiceClass {
                 modelCategory: params.modelCategory,
             };
         } catch (err: unknown) {
-            logger.error('[AICostControl] Log usage error:', err);
+            logger.error('[AICostControl] Log usage error:', err instanceof Error ? err : null);
             throw err;
         }
     }

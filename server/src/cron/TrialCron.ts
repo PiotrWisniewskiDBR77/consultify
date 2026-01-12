@@ -94,7 +94,7 @@ class TrialCron {
                 trialsLocked,
             };
         } catch (error: unknown) {
-            logger.error('[TrialCron] Error running daily trial tasks:', error);
+            logger.error('[TrialCron] Error running daily trial tasks:', error instanceof Error ? error : null);
             throw error;
         }
     }
@@ -113,7 +113,7 @@ class TrialCron {
             logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
             return deleted;
         } catch (err: unknown) {
-            logger.error('[TrialCron] Error cleaning up usage counters:', err);
+            logger.error('[TrialCron] Error cleaning up usage counters:', err instanceof Error ? err : null);
             throw err;
         }
     }

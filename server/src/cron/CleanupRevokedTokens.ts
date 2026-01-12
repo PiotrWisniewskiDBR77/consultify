@@ -54,7 +54,7 @@ class CleanupRevokedTokensCron {
             }
             return deleted;
         } catch (err: unknown) {
-            logger.error('[Cron] Error cleaning up revoked tokens:', err);
+            logger.error('[Cron] Error cleaning up revoked tokens:', err instanceof Error ? err : null);
             throw err;
         }
     }
@@ -68,7 +68,7 @@ class CleanupRevokedTokensCron {
             try {
                 await this.cleanupRevokedTokens();
             } catch (err: unknown) {
-                logger.error('[Cron] Initial token cleanup failed:', err);
+                logger.error('[Cron] Initial token cleanup failed:', err instanceof Error ? err : null);
             }
         }, 5000);
 
@@ -77,7 +77,7 @@ class CleanupRevokedTokensCron {
             try {
                 await this.cleanupRevokedTokens();
             } catch (err: unknown) {
-                logger.error('[Cron] Periodic token cleanup failed:', err);
+                logger.error('[Cron] Periodic token cleanup failed:', err instanceof Error ? err : null);
             }
         }, this.deps.config.TOKEN_CLEANUP_INTERVAL);
 

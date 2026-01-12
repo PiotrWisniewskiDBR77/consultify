@@ -36,7 +36,7 @@ interface Context {
 /**
  * Initialize Sentry
  */
-export function initSentry(app: Express): SentryHandlers {
+export function initSentry(_app: Express): SentryHandlers {
     if (!isEnabled) {
         console.log('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
         return {
@@ -77,9 +77,10 @@ export function initSentry(app: Express): SentryHandlers {
             // Remove sensitive data from request body
             if (event.request?.data) {
                 const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'mfaToken', 'backupCode'];
+                const requestData = event.request.data;
                 sensitiveFields.forEach((field) => {
-                    if (typeof event.request.data === 'object' && event.request.data && field in event.request.data) {
-                        (event.request.data as Record<string, unknown>)[field] = '[REDACTED]';
+                    if (typeof requestData === 'object' && requestData && field in requestData) {
+                        (requestData as Record<string, unknown>)[field] = '[REDACTED]';
                     }
                 });
             }
@@ -105,19 +106,19 @@ export function initSentry(app: Express): SentryHandlers {
     // We need to create middleware wrappers for compatibility
     return {
         // Request handler - must be first middleware
-        requestHandler: (req: Request, res: Response, next: NextFunction) => {
+        requestHandler: (_req: Request, _res: Response, next: NextFunction) => {
             // Sentry automatically handles this via expressIntegration
             next();
         },
 
         // Tracing handler - must be after request handler and before routes
-        tracingHandler: (req: Request, res: Response, next: NextFunction) => {
+        tracingHandler: (_req: Request, _res: Response, next: NextFunction) => {
             // Sentry automatically handles this via expressIntegration
             next();
         },
 
         // Error handler - must be after routes and before other error handlers
-        errorHandler: (err: Error & { status?: number }, req: Request, res: Response, next: NextFunction) => {
+        errorHandler: (err: Error & { status?: number }, _req: Request, _res: Response, next: NextFunction) => {
             // Only report 500+ errors automatically
             if (err.status && err.status >= 500) {
                 Sentry.captureException(err);

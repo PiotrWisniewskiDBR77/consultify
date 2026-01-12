@@ -151,7 +151,7 @@ class AuditLogService {
             );
             return { id, timestamp };
         } catch (err: unknown) {
-            logger.error('[AuditLog] Error creating log:', err);
+            logger.error('[AuditLog] Error creating log:', err instanceof Error ? err : null);
             throw err;
         }
     }

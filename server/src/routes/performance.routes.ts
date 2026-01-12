@@ -8,9 +8,9 @@
 
 import { Router, type Request, type Response } from 'express';
 
-import { getMetricsService } from '../services/MetricsService.js';
-import { httpRequestDurationSeconds, dbQueryDurationSeconds, llmCallDurationSeconds } from '../services/MetricsService.js';
-import { httpRequestsPerSecond, dbQueriesPerSecond, llmRequestsPerSecond } from '../services/MetricsService.js';
+import { getMetricsService } from '../services/metricsService.js';
+import { httpRequestDurationSeconds, dbQueryDurationSeconds, llmCallDurationSeconds } from '../services/metricsService.js';
+import { httpRequestsPerSecond, dbQueriesPerSecond, llmRequestsPerSecond } from '../services/metricsService.js';
 
 const router = Router();
 
@@ -69,7 +69,7 @@ router.get('/metrics', async (_req: Request, res: Response) => {
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
         console.error('[PerformanceRoutes] Error generating performance metrics:', err);
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to generate performance metrics',
             details: err.message,
         });

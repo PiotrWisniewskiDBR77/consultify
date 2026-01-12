@@ -178,7 +178,7 @@ router.post(
             });
         } catch (err: unknown) {
             console.error('[AccessCodes] Generate error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -263,7 +263,7 @@ router.post(
             }
         } catch (err: unknown) {
             console.error('[AccessCodes] Accept error:', err);
-            res.status(500).json({ ok: false, error: 'INTERNAL_ERROR' });
+            return res.status(500).json({ ok: false, error: 'INTERNAL_ERROR' });
         }
     }),
 );
@@ -305,7 +305,7 @@ router.get(
 
             res.json(sanitized);
         } catch (err: unknown) {
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -330,7 +330,7 @@ router.post(
             await AccessCodeService.revokeCode(req.params.id);
             res.json({ success: true });
         } catch (err: unknown) {
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }

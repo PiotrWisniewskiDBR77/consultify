@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/dbr77.js');
 const dbr77RoutesJS = module.default || module;
@@ -17,12 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof dbr77RoutesJS === 'function' || (dbr77RoutesJS && typeof dbr77RoutesJS.handle === 'function')) {
+if (typeof dbr77RoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(dbr77RoutesJS as RequestHandler);
+} else if (dbr77RoutesJS && typeof (dbr77RoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(dbr77RoutesJS);
+    router.use(dbr77RoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('dbr77.js did not export a valid router');
+}
 }
 
 export default router;

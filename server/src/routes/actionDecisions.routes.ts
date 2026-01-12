@@ -263,7 +263,7 @@ router.get(
             res.json(log);
         } catch (err: unknown) {
             console.error('[ActionAuditRoute] Error:', err);
-            res.status(500).json({ error: 'Failed to fetch audit log' });
+            return res.status(500).json({ error: 'Failed to fetch audit log' });
         }
     }),
 );
@@ -324,7 +324,7 @@ router.post(
             res.json(executionResult);
         } catch (err: unknown) {
             console.error('[ActionExecutionRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -382,7 +382,7 @@ router.post(
             res.json(dryRunResult);
         } catch (err: unknown) {
             console.error('[ActionDryRunRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -436,7 +436,7 @@ router.get(
             res.json(result.data);
         } catch (err: unknown) {
             console.error('[AuditExportRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -490,7 +490,7 @@ router.get(
             res.json(result.data);
         } catch (err: unknown) {
             console.error('[ExecutionsExportRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -534,7 +534,7 @@ router.get(
             res.json(rules);
         } catch (err: unknown) {
             console.error('[PolicyRulesRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -636,7 +636,7 @@ router.post(
             res.status(201).json(rule);
         } catch (err: unknown) {
             console.error('[PolicyCreateRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -665,7 +665,7 @@ router.get(
             res.json(status);
         } catch (err: unknown) {
             console.error('[PolicyStatusRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -705,7 +705,7 @@ router.patch(
             res.json(result);
         } catch (err: unknown) {
             console.error('[PolicyGlobalRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -749,7 +749,7 @@ router.post(
             res.json(result);
         } catch (err: unknown) {
             console.error('[PolicyEvaluateRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -828,7 +828,7 @@ router.post(
             res.status(202).json(result);
         } catch (err: unknown) {
             console.error('[AsyncExecuteRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -872,7 +872,7 @@ router.get(
             res.json(job);
         } catch (err: unknown) {
             console.error('[AsyncJobStatusRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -1007,7 +1007,7 @@ router.get(
             res.json({ jobs, count: jobs.length });
         } catch (err: unknown) {
             console.error('[DeadLetterListRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }
@@ -1043,7 +1043,7 @@ router.get(
             res.json(stats);
         } catch (err: unknown) {
             console.error('[JobStatsRoute] Error:', err);
-            res.status(500).json({
+            return res.status(500).json({
                 error: err instanceof Error ? err.message : 'Unknown error',
             });
         }

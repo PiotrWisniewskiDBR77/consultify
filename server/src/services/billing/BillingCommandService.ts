@@ -3,7 +3,7 @@ import type Stripe from 'stripe';
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
 import type {
-    _SeatPricing,
+    SeatPricing,
     BillingPlan,
     BillingServiceDependencies,
     CreatePlanData,
@@ -14,9 +14,9 @@ import type {
     PaymentMethod,
     SeatCost,
     SetupIntent,
+    TaxSettings,
     UpdateBillingAlertsData,
     UpdatePlanData,
-    UpdateTaxSettingsData,
     UpdateUserPlanData,
     UpsertBillingData,
 } from './types.js';
@@ -520,7 +520,7 @@ export class BillingCommandService {
         return { id, organization_id: orgId, ...alertSettings };
     }
 
-    async updateTaxSettings(orgId: string, taxSettings: UpdateTaxSettingsData): Promise<Record<string, unknown>> {
+    async updateTaxSettings(orgId: string, taxSettings: Partial<TaxSettings>): Promise<Record<string, unknown>> {
         const deps = this.deps();
         const id = `tax-${deps.uuidv4()}`;
 

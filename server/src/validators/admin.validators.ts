@@ -53,7 +53,7 @@ export const CreateAdminAlertSchema = z.object({
     type: z.enum(['usage', 'cost', 'security', 'performance', 'compliance']),
     threshold: z.number().optional(),
     enabled: z.boolean().optional().default(true),
-    config: z.record(z.unknown()).optional(),
+    config: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ==========================================

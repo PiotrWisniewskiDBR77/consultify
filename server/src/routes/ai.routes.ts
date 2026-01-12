@@ -89,7 +89,7 @@ router.get(
             res.json(context);
         } catch (err: unknown) {
             const error = err as Error;
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -111,7 +111,7 @@ router.get(
             res.json(context);
         } catch (err: unknown) {
             const error = err as Error;
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );

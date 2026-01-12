@@ -104,7 +104,7 @@ async function checkAndTriggerAlerts() {
         if (!deps.db) {
             throw new Error('Database not initialized');
         }
-        const orgs = (await deps.db.all<{ id: string }>('SELECT id FROM organizations WHERE status = ?', ['active'])) || [];
+        const orgs: Array<{ id: string }> = (await deps.db.all<{ id: string }>('SELECT id FROM organizations WHERE status = ?', ['active'])) || [];
 
         let triggeredCount = 0;
         for (const org of orgs) {
@@ -144,7 +144,7 @@ async function generatePayAsYouGoInvoices() {
         if (!deps.db) {
             throw new Error('Database not initialized');
         }
-        const orgs = (await deps.db.all<{ organization_id: string }>(
+        const orgs: Array<{ organization_id: string }> = (await deps.db.all<{ organization_id: string }>(
             `SELECT os.organization_id
              FROM organization_seats os
              WHERE os.billing_model IN('pay_as_you_go', 'hybrid')`,
@@ -188,7 +188,7 @@ async function updateSeatCounts() {
         if (!deps.db) {
             throw new Error('Database not initialized');
         }
-        const orgs = (await deps.db.all<{ id: string }>('SELECT id FROM organizations WHERE status = ?', ['active'])) || [];
+        const orgs: Array<{ id: string }> = (await deps.db.all<{ id: string }>('SELECT id FROM organizations WHERE status = ?', ['active'])) || [];
 
         let updated = 0;
         for (const org of orgs) {

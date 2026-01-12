@@ -143,7 +143,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[LLMHealth] Error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -223,7 +223,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[LLMHealth] Error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error',
             });

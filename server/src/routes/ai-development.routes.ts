@@ -121,7 +121,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Development] Error listing prompts:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list prompts',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -149,7 +149,7 @@ router.get(
             res.json({ success: true, data: categories });
         } catch (error: unknown) {
             console.error('[AI Development] Error listing categories:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list categories',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -201,7 +201,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Development] Error getting prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -271,7 +271,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Development] Error creating prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to create prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -353,7 +353,7 @@ router.put(
             res.json({ success: true, data: { id, version: newVersion } });
         } catch (error: unknown) {
             console.error('[AI Development] Error updating prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -400,7 +400,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Development] Error testing prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to test prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -442,7 +442,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Development] Error listing experiments:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list experiments',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -477,7 +477,7 @@ router.post(
             res.status(201).json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AI Development] Error creating experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to create experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -503,7 +503,7 @@ router.get(
             res.json({ success: true, data: stats });
         } catch (error: unknown) {
             console.error('[AI Development] Error getting experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -534,7 +534,7 @@ router.post(
             res.json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AI Development] Error starting experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to start experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -561,7 +561,7 @@ router.post(
             res.json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AI Development] Error stopping experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to stop experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -592,7 +592,7 @@ router.get(
             res.json({ success: true, data: items });
         } catch (error: unknown) {
             console.error('[AI Development] Error listing knowledge candidates:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list candidates',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -618,7 +618,7 @@ router.post(
             res.json({ success: true, data: { id }, message: 'Candidate submitted' });
         } catch (error: unknown) {
             console.error('[AI Development] Error submitting candidate:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to submit candidate',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -645,7 +645,7 @@ router.put(
             res.json({ success: true, message: 'Status updated' });
         } catch (error: unknown) {
             console.error('[AI Development] Error updating candidate status:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update status',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -675,7 +675,7 @@ router.get(
             res.json({ success: true, data: ideas });
         } catch (error: unknown) {
             console.error('[AI Development] Error getting approved ideas:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get approved ideas',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -713,7 +713,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Development] Error getting intelligence config:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get config',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -748,7 +748,7 @@ router.put(
             res.json({ success: true, message: 'Configuration updated' });
         } catch (error: unknown) {
             console.error('[AI Development] Error updating intelligence config:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update config',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -812,7 +812,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Development] Error getting summary:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get summary',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });

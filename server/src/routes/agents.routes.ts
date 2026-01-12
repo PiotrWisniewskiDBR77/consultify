@@ -89,7 +89,7 @@ router.post(
             res.json(result);
         } catch (error: unknown) {
             console.error('[Agents API] Error processing query:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );
@@ -138,7 +138,7 @@ router.post(
             res.json(result);
         } catch (error: unknown) {
             console.error('[Agents API] Error querying specialist:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );
@@ -178,7 +178,7 @@ router.post(
             res.json(recommendations);
         } catch (error: unknown) {
             console.error('[Agents API] Error getting recommendations:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );
@@ -200,7 +200,7 @@ router.get(
             res.json({ agents });
         } catch (error: unknown) {
             console.error('[Agents API] Error getting agents:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );
@@ -223,7 +223,7 @@ router.get(
             res.json(metrics);
         } catch (error: unknown) {
             console.error('[Agents API] Error getting metrics:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );
@@ -266,7 +266,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[Agents API] Error analyzing initiative:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );
@@ -311,7 +311,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[Agents API] Error conducting strategic review:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );

@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/user-settings-templates.js');
 const user_settings_templatesRoutesJS = module.default || module;
@@ -17,15 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (
-    typeof user_settings_templatesRoutesJS === 'function' ||
-    (user_settings_templatesRoutesJS && typeof user_settings_templatesRoutesJS.handle === 'function')
-) {
+if (typeof user_settings_templatesRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(user_settings_templatesRoutesJS as RequestHandler);
+} else if (user_settings_templatesRoutesJS && typeof (user_settings_templatesRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(user_settings_templatesRoutesJS);
+    router.use(user_settings_templatesRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('user-settings-templates.js did not export a valid router');
+}
 }
 
 export default router;

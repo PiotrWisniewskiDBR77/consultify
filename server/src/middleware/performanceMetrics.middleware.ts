@@ -9,7 +9,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import { getMetricsService } from '../services/MetricsService.js';
+import { getMetricsService } from '../services/metricsService.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================

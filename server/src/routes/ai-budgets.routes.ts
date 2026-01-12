@@ -117,7 +117,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] List budgets error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to list budgets',
             });
@@ -187,7 +187,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Create budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: error instanceof Error ? error.message : 'Failed to create budget',
             });
@@ -224,7 +224,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Get budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to get budget',
             });
@@ -261,7 +261,7 @@ router.put(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Update budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to update budget',
             });
@@ -298,7 +298,7 @@ router.delete(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Delete budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to delete budget',
             });
@@ -336,7 +336,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Reset budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to reset budget',
             });
@@ -378,7 +378,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Check budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to check budget',
             });
@@ -420,7 +420,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Record usage error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to record usage',
             });
@@ -461,7 +461,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Get stats error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to get statistics',
             });
@@ -505,7 +505,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] List alerts error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to list alerts',
             });
@@ -547,7 +547,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Acknowledge alert error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to acknowledge alert',
             });
@@ -584,7 +584,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Dismiss alert error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to dismiss alert',
             });
@@ -627,7 +627,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] List model permissions error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to list model permissions',
             });
@@ -693,7 +693,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Set model permission error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to set model permission',
             });
@@ -738,7 +738,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Check model access error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to check model access',
             });
@@ -775,7 +775,7 @@ router.delete(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Delete model permission error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to delete model permission',
             });
@@ -803,7 +803,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Get model costs error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to get model costs',
             });
@@ -839,7 +839,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Budgets] Estimate cost error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: 'Failed to estimate cost',
             });

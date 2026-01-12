@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/locations.js');
 const locationsRoutesJS = module.default || module;
@@ -17,12 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof locationsRoutesJS === 'function' || (locationsRoutesJS && typeof locationsRoutesJS.handle === 'function')) {
+if (typeof locationsRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(locationsRoutesJS as RequestHandler);
+} else if (locationsRoutesJS && typeof (locationsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(locationsRoutesJS);
+    router.use(locationsRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('locations.js did not export a valid router');
+}
 }
 
 export default router;

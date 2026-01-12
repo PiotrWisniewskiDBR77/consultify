@@ -6,8 +6,8 @@
  * Alerts when memory growth exceeds thresholds
  */
 
-import { getMetricsService } from './MetricsService.js';
-import { memoryUsageBytes } from './MetricsService.js';
+import { getMetricsService } from './metricsService.js';
+import { memoryUsageBytes } from './metricsService.js';
 
 // ==========================================
 // TYPES

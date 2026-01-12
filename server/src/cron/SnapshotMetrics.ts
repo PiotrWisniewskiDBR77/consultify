@@ -56,7 +56,7 @@ class SnapshotMetricsCron {
             try {
                 await deps.metricsPersistenceService.saveSnapshot(true); // Save and reset
             } catch (err: unknown) {
-                logger.error('[Cron] Metrics snapshot failed:', err);
+                logger.error('[Cron] Metrics snapshot failed:', err instanceof Error ? err : null);
             }
         });
 

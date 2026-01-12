@@ -124,7 +124,7 @@ class PayAsYouGoServiceClass {
 
                 this.#initialized = true;
             } catch (error: unknown) {
-                logger.error('Failed to initialize PayAsYouGoService dependencies:', error);
+                logger.error('Failed to initialize PayAsYouGoService dependencies:', error instanceof Error ? error : null);
                 throw error;
             } finally {
                 this.#initPromise = null;

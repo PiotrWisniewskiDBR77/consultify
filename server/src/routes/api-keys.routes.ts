@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/api-keys.js');
 const api_keysRoutesJS = module.default || module;
@@ -17,12 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof api_keysRoutesJS === 'function' || (api_keysRoutesJS && typeof api_keysRoutesJS.handle === 'function')) {
+if (typeof api_keysRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(api_keysRoutesJS as RequestHandler);
+} else if (api_keysRoutesJS && typeof (api_keysRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(api_keysRoutesJS);
+    router.use(api_keysRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('api-keys.js did not export a valid router');
+}
 }
 
 export default router;

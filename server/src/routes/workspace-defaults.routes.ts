@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/workspace-defaults.js');
 const workspace_defaultsRoutesJS = module.default || module;
@@ -17,15 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (
-    typeof workspace_defaultsRoutesJS === 'function' ||
-    (workspace_defaultsRoutesJS && typeof workspace_defaultsRoutesJS.handle === 'function')
-) {
+if (typeof workspace_defaultsRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(workspace_defaultsRoutesJS as RequestHandler);
+} else if (workspace_defaultsRoutesJS && typeof (workspace_defaultsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(workspace_defaultsRoutesJS);
+    router.use(workspace_defaultsRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('workspace-defaults.js did not export a valid router');
+}
 }
 
 export default router;

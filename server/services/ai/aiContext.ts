@@ -12,11 +12,6 @@
 
 import db from '../../database.js';
 
-interface Database {
-    get: (sql: string, params: unknown[], callback: (err: Error | null, row: unknown) => void) => void;
-    all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
-}
-
 export interface IndustryProfile {
     name: string;
     namePl: string;
@@ -377,14 +372,14 @@ const DRD_AXES: Record<string, DrdAxis> = {
 };
 
 class ContextBuilder {
-    private industryProfiles: Record<string, IndustryProfile>;
-    private sizeProfiles: Record<string, CompanySizeProfile>;
-    private regulations: Record<string, RegulatoryContext>;
+    private _industryProfiles: Record<string, IndustryProfile>;
+    private _sizeProfiles: Record<string, CompanySizeProfile>;
+    private _regulations: Record<string, RegulatoryContext>;
 
     constructor() {
-        this.industryProfiles = INDUSTRY_PROFILES;
-        this.sizeProfiles = COMPANY_SIZE_PROFILES;
-        this.regulations = REGULATORY_CONTEXT;
+        this._industryProfiles = INDUSTRY_PROFILES;
+        this._sizeProfiles = COMPANY_SIZE_PROFILES;
+        this._regulations = REGULATORY_CONTEXT;
     }
 
     /**
@@ -417,9 +412,9 @@ class ContextBuilder {
             // Basic identifiers
             user: {
                 id: userId,
-                name: userInfo?.name,
-                role: userInfo?.role,
-                email: userInfo?.email,
+                name: (userInfo as { name?: string } | null)?.name,
+                role: (userInfo as { role?: string } | null)?.role,
+                email: (userInfo as { email?: string } | null)?.email,
             },
             organization: {
                 id: organizationId,

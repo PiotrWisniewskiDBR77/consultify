@@ -88,7 +88,7 @@ export function errorHandlerMiddleware(
             path: req.path,
             method: req.method,
             userId: (req as any).user?.id,
-        });
+        } as any);
     } else {
         logger.warn(`[ErrorHandler] ${err.message}`, {
             statusCode: err.statusCode,

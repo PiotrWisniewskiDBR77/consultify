@@ -73,7 +73,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Prompts API] Error listing prompts:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list prompts',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -104,7 +104,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Prompts API] Error listing categories:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list categories',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -162,7 +162,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AI Prompts API] Error getting prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -233,7 +233,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Prompts API] Error creating prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to create prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -319,7 +319,7 @@ router.put(
             });
         } catch (error: unknown) {
             console.error('[AI Prompts API] Error updating prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to update prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -355,7 +355,7 @@ router.delete(
             res.json({ success: true, message: 'Prompt deactivated' });
         } catch (error: unknown) {
             console.error('[AI Prompts API] Error deleting prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to delete prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -404,7 +404,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Prompts API] Error testing prompt:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to test prompt',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -485,7 +485,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[AI Prompts API] Error restoring version:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to restore version',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });

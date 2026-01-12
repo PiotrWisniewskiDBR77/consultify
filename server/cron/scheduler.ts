@@ -153,7 +153,7 @@ const Scheduler = {
         cron.schedule('0 * * * *', async () => {
             try {
                 const result = await AIMemoryManager.cleanupPartialResponses(1); // 1 hour
-                if (result.deleted > 0) {
+                if (result.deleted && result.deleted > 0) {
                     console.log(`[Scheduler] Partial Response Cleanup: ${result.deleted} entries removed`);
                 }
             } catch (err) {
@@ -178,7 +178,7 @@ const Scheduler = {
         cron.schedule('0 1 * * *', async () => {
             console.log('[Scheduler] Running AI Memory Metrics Aggregation');
             try {
-                const result = await AIMemoryMetricsService.aggregateDailyMetrics();
+                const result = (await AIMemoryMetricsService.aggregateDailyMetrics()) as { aggregated: number; date: string };
                 console.log(
                     `[Scheduler] Memory Metrics Aggregation completed: ${result.aggregated} organizations for ${result.date}`,
                 );

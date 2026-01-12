@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/intelligence.js');
 const intelligenceRoutesJS = module.default || module;
@@ -17,15 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (
-    typeof intelligenceRoutesJS === 'function' ||
-    (intelligenceRoutesJS && typeof intelligenceRoutesJS.handle === 'function')
-) {
+if (typeof intelligenceRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(intelligenceRoutesJS as RequestHandler);
+} else if (intelligenceRoutesJS && typeof (intelligenceRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(intelligenceRoutesJS);
+    router.use(intelligenceRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('intelligence.js did not export a valid router');
+}
 }
 
 export default router;

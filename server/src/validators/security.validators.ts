@@ -245,7 +245,11 @@ export const CSRFTokenSchema = z.string()
  * IP Address schema
  */
 export const IPAddressSchema = z.string()
-    .ip({ message: 'Invalid IP address' });
+    .refine((val) => {
+        const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+        const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+        return ipv4Regex.test(val) || ipv6Regex.test(val);
+    }, { message: 'Invalid IP address' });
 
 // ==========================================
 // COMMON ENUMS

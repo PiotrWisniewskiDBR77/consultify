@@ -45,7 +45,7 @@ router.get(
             const summary = await ExecutionService.getExecutionSummary(req.params.projectId);
             res.json(summary);
         } catch (err: unknown) {
-            res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
 );
@@ -66,7 +66,7 @@ router.get(
             const blockers = await ExecutionService.getBlockedTasks(req.params.projectId);
             res.json(blockers);
         } catch (err: unknown) {
-            res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
 );
@@ -88,7 +88,7 @@ router.post(
             const result = await ExecutionService.checkDecisionGate(req.params.projectId, targetPhase);
             res.json(result);
         } catch (err: unknown) {
-            res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
 );

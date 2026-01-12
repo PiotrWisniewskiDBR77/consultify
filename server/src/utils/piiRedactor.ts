@@ -148,13 +148,13 @@ const PiiRedactor: PiiRedactor = {
      */
     redactKeys: <T extends Record<string, unknown>>(obj: T, keys: string[]): T => {
         if (obj === null || typeof obj !== 'object') return obj;
-        const redacted = { ...obj };
+        const redacted = { ...obj } as Record<string, unknown>;
         keys.forEach((key) => {
             if (key in redacted) {
                 redacted[key] = REDACTION_PLACEHOLDER;
             }
         });
-        return redacted;
+        return redacted as T;
     },
 
     /**

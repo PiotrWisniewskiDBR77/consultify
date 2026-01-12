@@ -341,7 +341,7 @@ router.post(
             res.json({ received: true });
         } catch (error: unknown) {
             console.error('[Webhook] Error processing event:', error);
-            res.status(500).json({ error: 'Webhook processing failed' });
+            return res.status(500).json({ error: 'Webhook processing failed' });
         }
     }),
 );

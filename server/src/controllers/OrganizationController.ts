@@ -32,7 +32,7 @@ export class OrganizationController {
             return;
         }
 
-        const { getUserOrganizations } = await import('../../services/organizationService.js');
+        const { getUserOrganizations } = await import('../services/organizationService.js');
         const orgs = await getUserOrganizations(userId);
 
         res.json(orgs);
@@ -55,7 +55,7 @@ export class OrganizationController {
                 return;
             }
 
-            const { createOrganization } = await import('../../services/organizationService.js');
+            const { createOrganization } = await import('../services/organizationService.js');
             const org = await createOrganization({ userId, name });
 
             res.status(201).json(org);
@@ -73,7 +73,7 @@ export class OrganizationController {
             return;
         }
 
-        const { getMembers, getOrganization } = await import('../../services/organizationService.js');
+        const { getMembers, getOrganization } = await import('../services/organizationService.js');
 
         // Security check: User must be member
         const members = await getMembers(orgId);
@@ -111,7 +111,7 @@ export class OrganizationController {
             return;
         }
 
-        const { getMembers } = await import('../../services/organizationService.js');
+        const { getMembers } = await import('../services/organizationService.js');
 
         // Security check
         const members = await getMembers(orgId);
@@ -137,7 +137,7 @@ export class OrganizationController {
                 return;
             }
 
-            const { getMembers, addMember: addMemberService } = await import('../../services/organizationService.js');
+            const { getMembers, addMember: addMemberService } = await import('../services/organizationService.js');
 
             // Security check: Only OWNER or ADMIN can add members
             const members = await getMembers(orgId);
@@ -175,7 +175,7 @@ export class OrganizationController {
                 return;
             }
 
-            const { updateMemberRole } = await import('../../services/organizationService.js');
+            const { updateMemberRole } = await import('../services/organizationService.js');
             const result = await updateMemberRole({
                 organizationId: orgId,
                 userId: memberId,
@@ -198,7 +198,7 @@ export class OrganizationController {
             return;
         }
 
-        const { removeMember } = await import('../../services/organizationService.js');
+        const { removeMember } = await import('../services/organizationService.js');
         await removeMember({
             organizationId: orgId,
             userId: memberId,

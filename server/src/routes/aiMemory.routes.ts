@@ -59,7 +59,7 @@ router.get(
             });
         } catch (err: unknown) {
             console.error('[AIMemory] List error:', err);
-            res.status(500).json({ error: 'Failed to fetch memories' });
+            return res.status(500).json({ error: 'Failed to fetch memories' });
         }
     }),
 );
@@ -148,7 +148,7 @@ router.get(
             });
         } catch (err: unknown) {
             console.error('[AIMemory] Context error:', err);
-            res.status(500).json({ error: 'Failed to generate context' });
+            return res.status(500).json({ error: 'Failed to generate context' });
         }
     }),
 );
@@ -224,7 +224,7 @@ router.put(
             res.json(updated);
         } catch (err: unknown) {
             console.error('[AIMemory] Set error:', err);
-            res.status(500).json({ error: 'Failed to set memory' });
+            return res.status(500).json({ error: 'Failed to set memory' });
         }
     }),
 );
@@ -261,7 +261,7 @@ router.delete(
             res.json({ success: true, deleted: key });
         } catch (err: unknown) {
             console.error('[AIMemory] Delete error:', err);
-            res.status(500).json({ error: 'Failed to delete memory' });
+            return res.status(500).json({ error: 'Failed to delete memory' });
         }
     }),
 );
@@ -350,7 +350,7 @@ router.post(
             res.json({ success: true, results });
         } catch (err: unknown) {
             console.error('[AIMemory] Bulk set error:', err);
-            res.status(500).json({ error: 'Failed to set memories' });
+            return res.status(500).json({ error: 'Failed to set memories' });
         }
     }),
 );
@@ -416,7 +416,7 @@ router.post(
             res.json({ memories });
         } catch (err: unknown) {
             console.error('[AIMemory] Parse error:', err);
-            res.status(500).json({ error: 'Failed to parse response' });
+            return res.status(500).json({ error: 'Failed to parse response' });
         }
     }),
 );

@@ -65,7 +65,7 @@ router.get(
             res.json({ budget });
         } catch (error: unknown) {
             console.error('[Budgets] Get user budget error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get user budget' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get user budget' });
         }
     }),
 );
@@ -95,7 +95,7 @@ router.put(
             res.json({ success: true });
         } catch (error: unknown) {
             console.error('[Budgets] Set user budget error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set user budget' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set user budget' });
         }
     }),
 );
@@ -124,7 +124,7 @@ router.get(
             res.json({ budget });
         } catch (error: unknown) {
             console.error('[Budgets] Get project budget error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get project budget' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get project budget' });
         }
     }),
 );
@@ -154,7 +154,7 @@ router.put(
             res.json({ success: true });
         } catch (error: unknown) {
             console.error('[Budgets] Set project budget error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set project budget' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set project budget' });
         }
     }),
 );
@@ -182,7 +182,7 @@ router.get(
             res.json({ budget });
         } catch (error: unknown) {
             console.error('[Budgets] Get org budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: error instanceof Error ? error.message : 'Failed to get organization budget',
             });
         }
@@ -213,7 +213,7 @@ router.put(
             res.json({ success: true });
         } catch (error: unknown) {
             console.error('[Budgets] Set org budget error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: error instanceof Error ? error.message : 'Failed to set organization budget',
             });
         }
@@ -248,7 +248,7 @@ router.get(
             res.json({ budget });
         } catch (error: unknown) {
             console.error('[Budgets] Get budget status error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get budget status' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get budget status' });
         }
     }),
 );

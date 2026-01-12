@@ -70,7 +70,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error listing experiments:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to list experiments',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -105,7 +105,7 @@ router.post(
             res.status(201).json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error creating experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to create experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -131,7 +131,7 @@ router.get(
             res.json({ success: true, data: stats });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error getting experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to get experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -162,7 +162,7 @@ router.post(
             res.json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error starting experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to start experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -189,7 +189,7 @@ router.post(
             res.json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error stopping experiment:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to stop experiment',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });
@@ -225,7 +225,7 @@ router.post(
             res.json({ success: true });
         } catch (error: unknown) {
             console.error('[AB Testing API] Error recording outcome:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Failed to record outcome',
                 details: error instanceof Error ? error.message : 'Unknown error',
             });

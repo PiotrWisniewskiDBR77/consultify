@@ -12,14 +12,14 @@ import { BillingDependencyLoader } from './billing/billingDependencyLoader.js';
 import { BillingEventService } from './billing/BillingEventService.js';
 import { BillingQueryService } from './billing/BillingQueryService.js';
 import type {
-    _BillingPlan,
-    _SetupIntent,
+    BillingPlan,
+    SetupIntent,
+    TaxSettings,
     BillingServiceDependencies,
     CreatePlanData,
     CreateUserPlanData,
     UpdateBillingAlertsData,
     UpdatePlanData,
-    UpdateTaxSettingsData,
     UpdateUserPlanData,
     UpsertBillingData,
 } from './billing/types.js';
@@ -178,7 +178,7 @@ class BillingServiceClass {
         return this.#queryService.getTaxSettings(orgId);
     }
 
-    async updateTaxSettings(orgId: string, settings: UpdateTaxSettingsData) {
+    async updateTaxSettings(orgId: string, settings: Partial<TaxSettings>) {
         await this.#ensureInitialized();
         return this.#commandService.updateTaxSettings(orgId, settings);
     }
@@ -261,7 +261,7 @@ export const getBillingAlerts = (orgId: string) => billingServiceInstance.getBil
 export const updateBillingAlerts = (orgId: string, alertSettings: UpdateBillingAlertsData) =>
     billingServiceInstance.updateBillingAlerts(orgId, alertSettings);
 export const getTaxSettings = (orgId: string) => billingServiceInstance.getTaxSettings(orgId);
-export const updateTaxSettings = (orgId: string, taxSettings: UpdateTaxSettingsData) =>
+export const updateTaxSettings = (orgId: string, taxSettings: Partial<TaxSettings>) =>
     billingServiceInstance.updateTaxSettings(orgId, taxSettings);
 export const validateDiscountCode = (code: string, planId: string) =>
     billingServiceInstance.validateDiscountCode(code, planId);

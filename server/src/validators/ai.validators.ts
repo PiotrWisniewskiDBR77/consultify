@@ -33,7 +33,7 @@ export const ChatStreamRequestSchema = z.object({
         )
         .optional(),
     systemInstruction: z.string().optional(),
-    context: z.record(z.unknown()).optional(),
+    context: z.record(z.string(), z.unknown()).optional(),
     roleName: z.string().optional(),
     language: z.enum(['pl', 'en', 'de', 'es', 'ja', 'ar']).optional(),
     conversationId: z.string().optional(),
@@ -46,7 +46,7 @@ export const AIContextQuerySchema = z.object({
 });
 
 // AI Policy Update Request
-export const UpdatePolicyRequestSchema = z.record(z.unknown());
+export const UpdatePolicyRequestSchema = z.record(z.string(), z.unknown());
 
 // Can Perform Action Query
 export const CanPerformActionQuerySchema = z.object({
@@ -62,7 +62,7 @@ export const RecordDecisionRequestSchema = z.object({
 });
 
 // Update User Preferences Request
-export const UpdateUserPreferencesRequestSchema = z.record(z.unknown());
+export const UpdateUserPreferencesRequestSchema = z.record(z.string(), z.unknown());
 
 // Create Draft Request
 export const CreateDraftRequestSchema = z.object({
@@ -95,7 +95,7 @@ export const GenerateProposalsQuerySchema = z.object({
 // Recommend Request
 export const RecommendRequestSchema = z.object({
     diagnosisReport: z.object({
-        assessment: z.record(z.unknown()).optional(),
+        assessment: z.record(z.string(), z.unknown()).optional(),
         goals: z.array(z.string()).optional(),
         painPoints: z.array(z.string()).optional(),
         industry: z.string().optional(),
@@ -122,8 +122,8 @@ export const GetAuditLogsQuerySchema = z.object({
     projectId: z.string().uuid().optional(),
     userId: z.string().uuid().optional(),
     actionType: z.string().optional(),
-    limit: z.string().transform(Number).pipe(z.number().int().positive().max(100)).default('50'),
-    offset: z.string().transform(Number).pipe(z.number().int().nonnegative()).default('0'),
+    limit: z.string().transform(Number).pipe(z.number().int().positive().max(100)).optional().default(50),
+    offset: z.string().transform(Number).pipe(z.number().int().nonnegative()).optional().default(0),
 });
 
 // Record Decision for Audit Request
@@ -134,8 +134,8 @@ export const RecordAuditDecisionRequestSchema = z.object({
 
 // Get Explanations Query
 export const GetExplanationsQuerySchema = z.object({
-    limit: z.string().transform(Number).pipe(z.number().int().positive().max(100)).default('50'),
-    offset: z.string().transform(Number).pipe(z.number().int().nonnegative()).default('0'),
+    limit: z.string().transform(Number).pipe(z.number().int().positive().max(100)).optional().default(50),
+    offset: z.string().transform(Number).pipe(z.number().int().nonnegative()).optional().default(0),
 });
 
 // Export Explanations Query
@@ -154,7 +154,7 @@ export const GetSuggestionsQuerySchema = z.object({
 // Post Suggestions Request
 export const PostSuggestionsRequestSchema = z.object({
     projectId: z.string().uuid().optional(),
-    conversationContext: z.record(z.unknown()).optional(),
+    conversationContext: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Record Suggestion Action Request
@@ -166,25 +166,25 @@ export const RecordSuggestionActionRequestSchema = z.object({
 
 // Get Suggestion Metrics Query
 export const GetSuggestionMetricsQuerySchema = z.object({
-    days: z.string().transform(Number).pipe(z.number().int().positive()).default('30'),
+    days: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(30),
 });
 
 // Calculate Quality Request
 export const CalculateQualityRequestSchema = z.object({
     query: z.string().min(1),
     response: z.string().min(1),
-    context: z.record(z.unknown()).optional(),
+    context: z.record(z.string(), z.unknown()).optional(),
     sources: z.array(z.string()).optional(),
 });
 
 // Get Aggregate Quality Query
 export const GetAggregateQualityQuerySchema = z.object({
-    days: z.string().transform(Number).pipe(z.number().int().positive()).default('30'),
+    days: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(30),
 });
 
 // Get Quality Trends Query
 export const GetQualityTrendsQuerySchema = z.object({
-    days: z.string().transform(Number).pipe(z.number().int().positive()).default('30'),
+    days: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(30),
 });
 
 // Get Patterns Query
@@ -211,7 +211,7 @@ export const ReportMessageRequestSchema = z.object({
 
 // Get Memory Metrics Query
 export const GetMemoryMetricsQuerySchema = z.object({
-    period: z.string().transform(Number).pipe(z.number().int().positive()).default('7'),
+    period: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(7),
 });
 
 // Get Current Memory Query
@@ -221,7 +221,7 @@ export const GetCurrentMemoryQuerySchema = z.object({
 
 // Get Memory Latency Query
 export const GetMemoryLatencyQuerySchema = z.object({
-    hours: z.string().transform(Number).pipe(z.number().int().positive()).default('24'),
+    hours: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(24),
 });
 
 // ID Params

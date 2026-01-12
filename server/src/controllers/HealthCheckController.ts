@@ -80,7 +80,7 @@ export class HealthCheckController {
 
         // Check metrics service
         try {
-            const { getMetricsService } = await import('../services/MetricsService.js');
+            const { getMetricsService } = await import('../services/metricsService.js');
             const metricsService = getMetricsService();
             await metricsService.getMetrics();
             checks.metrics = true;

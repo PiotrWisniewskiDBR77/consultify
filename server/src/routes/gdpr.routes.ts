@@ -152,8 +152,8 @@ router.get(
                 });
             }
         } catch (err: unknown) {
-            logger.error('[GDPR] Consents error:', err);
-            res.status(500).json({ error: 'Failed to get consents' });
+            logger.error('[GDPR] Consents error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to get consents' });
         }
     }),
 );
@@ -197,8 +197,8 @@ router.put(
 
             res.json({ success: true, message: 'Consents updated' });
         } catch (err: unknown) {
-            logger.error('[GDPR] Update consents error:', err);
-            res.status(500).json({ error: 'Failed to update consents' });
+            logger.error('[GDPR] Update consents error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to update consents' });
         }
     }),
 );
@@ -242,8 +242,8 @@ router.get(
                 });
             }
         } catch (err: unknown) {
-            logger.error('[GDPR] Retention error:', err);
-            res.status(500).json({ error: 'Failed to get retention settings' });
+            logger.error('[GDPR] Retention error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to get retention settings' });
         }
     }),
 );
@@ -281,8 +281,8 @@ router.put(
 
             res.json({ success: true, message: 'Retention settings updated' });
         } catch (err: unknown) {
-            logger.error('[GDPR] Update retention error:', err);
-            res.status(500).json({ error: 'Failed to update retention' });
+            logger.error('[GDPR] Update retention error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to update retention' });
         }
     }),
 );
@@ -316,8 +316,8 @@ router.get(
                 request: request || null,
             });
         } catch (err: unknown) {
-            logger.error('[GDPR] Export status error:', err);
-            res.status(500).json({ error: 'Failed to get export status' });
+            logger.error('[GDPR] Export status error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to get export status' });
         }
     }),
 );
@@ -372,7 +372,7 @@ router.post(
                         [`/api/gdpr/download-export/${requestId}`, requestId],
                     );
                 } catch (err: unknown) {
-                    logger.error('[GDPR] Export processing error:', err);
+                    logger.error('[GDPR] Export processing error:', err instanceof Error ? err : null);
                 }
             }, 2000);
 
@@ -386,8 +386,8 @@ router.post(
                 },
             });
         } catch (err: unknown) {
-            logger.error('[GDPR] Export request error:', err);
-            res.status(500).json({ error: 'Failed to request export' });
+            logger.error('[GDPR] Export request error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to request export' });
         }
     }),
 );
@@ -428,8 +428,8 @@ router.get(
             );
             res.send(JSON.stringify(userData, null, 2));
         } catch (err: unknown) {
-            logger.error('[GDPR] Download export error:', err);
-            res.status(500).json({ error: 'Failed to download export' });
+            logger.error('[GDPR] Download export error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to download export' });
         }
     }),
 );
@@ -481,8 +481,8 @@ router.post(
                 },
             });
         } catch (err: unknown) {
-            logger.error('[GDPR] Deletion request error:', err);
-            res.status(500).json({ error: 'Failed to request deletion' });
+            logger.error('[GDPR] Deletion request error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to request deletion' });
         }
     }),
 );
@@ -515,8 +515,8 @@ router.post(
 
             res.json({ success: true, message: 'Deletion cancelled' });
         } catch (err: unknown) {
-            logger.error('[GDPR] Cancel deletion error:', err);
-            res.status(500).json({ error: 'Failed to cancel deletion' });
+            logger.error('[GDPR] Cancel deletion error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to cancel deletion' });
         }
     }),
 );
@@ -546,8 +546,8 @@ router.get(
                 request: request || null,
             });
         } catch (err: unknown) {
-            logger.error('[GDPR] Deletion status error:', err);
-            res.status(500).json({ error: 'Failed to get deletion status' });
+            logger.error('[GDPR] Deletion status error:', err instanceof Error ? err : null);
+            return res.status(500).json({ error: 'Failed to get deletion status' });
         }
     }),
 );

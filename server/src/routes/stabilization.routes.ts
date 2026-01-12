@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/stabilization.js');
 const stabilizationRoutesJS = module.default || module;
@@ -17,15 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (
-    typeof stabilizationRoutesJS === 'function' ||
-    (stabilizationRoutesJS && typeof stabilizationRoutesJS.handle === 'function')
-) {
+if (typeof stabilizationRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(stabilizationRoutesJS as RequestHandler);
+} else if (stabilizationRoutesJS && typeof (stabilizationRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(stabilizationRoutesJS);
+    router.use(stabilizationRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('stabilization.js did not export a valid router');
+}
 }
 
 export default router;

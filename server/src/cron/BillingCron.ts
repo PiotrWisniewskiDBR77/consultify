@@ -100,7 +100,7 @@ class BillingCron {
             await deps.budgetManagementService.resetMonthlyBudgets();
             logger.info('[BillingCron] Monthly budgets reset completed');
         } catch (error: unknown) {
-            logger.error('[BillingCron] Error resetting monthly budgets:', error);
+            logger.error('[BillingCron] Error resetting monthly budgets:', error instanceof Error ? error : null);
             throw error;
         }
     }
@@ -134,14 +134,14 @@ class BillingCron {
                         logger.info(`[BillingCron] Triggered ${result.triggeredCount} alerts for org ${org.id}`);
                     }
                 } catch (err: unknown) {
-                    logger.error(`[BillingCron] Error checking alerts for org ${org.id}:`, err);
+                    logger.error(`[BillingCron] Error checking alerts for org ${org.id}:`, err instanceof Error ? err : null);
                 }
             }
 
             logger.info(`[BillingCron] Alert check completed. Triggered ${triggeredCount} alerts total`);
             return triggeredCount;
         } catch (error: unknown) {
-            logger.error('[BillingCron] Error checking alerts:', error);
+            logger.error('[BillingCron] Error checking alerts:', error instanceof Error ? error : null);
             throw error;
         }
     }
@@ -187,14 +187,14 @@ class BillingCron {
                         );
                     }
                 } catch (err: unknown) {
-                    logger.error(`[BillingCron] Error generating invoice for org ${org.organization_id}:`, err);
+                    logger.error(`[BillingCron] Error generating invoice for org ${org.organization_id}:`, err instanceof Error ? err : null);
                 }
             }
 
             logger.info(`[BillingCron] Invoice generation completed. Generated ${invoicesGenerated} invoices`);
             return invoicesGenerated;
         } catch (error: unknown) {
-            logger.error('[BillingCron] Error generating invoices:', error);
+            logger.error('[BillingCron] Error generating invoices:', error instanceof Error ? error : null);
             throw error;
         }
     }
@@ -224,14 +224,14 @@ class BillingCron {
                     await deps.seatManagementService.updateSeatCount(org.id);
                     updated++;
                 } catch (err: unknown) {
-                    logger.error(`[BillingCron] Error updating seat count for org ${org.id}:`, err);
+                    logger.error(`[BillingCron] Error updating seat count for org ${org.id}:`, err instanceof Error ? err : null);
                 }
             }
 
             logger.info(`[BillingCron] Seat count update completed. Updated ${updated} organizations`);
             return updated;
         } catch (error: unknown) {
-            logger.error('[BillingCron] Error updating seat counts:', error);
+            logger.error('[BillingCron] Error updating seat counts:', error instanceof Error ? error : null);
             throw error;
         }
     }
@@ -246,7 +246,7 @@ class BillingCron {
             // Implementation depends on your usage_summaries table structure
             logger.info('[BillingCron] Monthly usage calculation completed');
         } catch (error: unknown) {
-            logger.error('[BillingCron] Error calculating monthly usage:', error);
+            logger.error('[BillingCron] Error calculating monthly usage:', error instanceof Error ? error : null);
             throw error;
         }
     }

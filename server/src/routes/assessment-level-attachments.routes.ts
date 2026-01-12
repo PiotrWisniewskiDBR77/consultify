@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/assessment-level-attachments.js');
 const assessment_level_attachmentsRoutesJS = module.default || module;
@@ -17,15 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (
-    typeof assessment_level_attachmentsRoutesJS === 'function' ||
-    (assessment_level_attachmentsRoutesJS && typeof assessment_level_attachmentsRoutesJS.handle === 'function')
-) {
+if (typeof assessment_level_attachmentsRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(assessment_level_attachmentsRoutesJS as RequestHandler);
+} else if (assessment_level_attachmentsRoutesJS && typeof (assessment_level_attachmentsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(assessment_level_attachmentsRoutesJS);
+    router.use(assessment_level_attachmentsRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('assessment-level-attachments.js did not export a valid router');
+}
 }
 
 export default router;

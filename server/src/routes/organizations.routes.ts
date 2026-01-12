@@ -11,7 +11,7 @@ import OrganizationController from '../controllers/OrganizationController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
-    _InviteMemberSchema,
+    InviteMemberSchema,
     AddMemberSchema,
     CreateOrganizationSchema,
     UpdateMemberRoleSchema,

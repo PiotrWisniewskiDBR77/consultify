@@ -10,7 +10,7 @@ import { Router } from 'express';
 import ProjectController from '../controllers/ProjectController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { checkPlanLimit } from '../middleware/planLimits.middleware.js';
-import { _validateQuery, validateBody } from '../middleware/validation.middleware.js';
+import { validateQuery, validateBody } from '../middleware/validation.middleware.js';
 import {
     CreateProjectSchema,
     ProjectNotificationSettingsSchema,

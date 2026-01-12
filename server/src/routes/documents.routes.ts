@@ -91,7 +91,7 @@ router.get(
             res.json(documents);
         } catch (error: any) {
             console.error('[Documents] Error fetching project documents:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -119,7 +119,7 @@ router.get(
             res.json(documents);
         } catch (error: any) {
             console.error('[Documents] Error fetching user documents:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -152,7 +152,7 @@ router.get(
             res.json(documents);
         } catch (error: any) {
             console.error('[Documents] Error fetching documents:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -185,7 +185,7 @@ router.get(
             res.json(documents);
         } catch (error: any) {
             console.error('[Documents] Error fetching documents:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -210,7 +210,7 @@ router.get(
             res.json(document);
         } catch (error: any) {
             console.error('[Documents] Error fetching document:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -241,7 +241,7 @@ router.get(
             res.download(filePath, document.originalName || document.filename);
         } catch (error: any) {
             console.error('[Documents] Error downloading document:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -294,7 +294,7 @@ router.post(
             });
         } catch (error: any) {
             console.error('[Documents] Upload error:', error);
-            res.status(500).json({ error: error.message || 'Upload failed' });
+            return res.status(500).json({ error: error.message || 'Upload failed' });
         }
     }),
 );
@@ -330,7 +330,7 @@ router.put(
             });
         } catch (error: any) {
             console.error('[Documents] Move error:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );
@@ -362,7 +362,7 @@ router.delete(
             res.json({ message: 'Document deleted' });
         } catch (error: any) {
             console.error('[Documents] Delete error:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }),
 );

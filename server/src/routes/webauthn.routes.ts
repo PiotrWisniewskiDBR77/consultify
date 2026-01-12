@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/webauthn.js');
 const webauthnRoutesJS = module.default || module;
@@ -17,12 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof webauthnRoutesJS === 'function' || (webauthnRoutesJS && typeof webauthnRoutesJS.handle === 'function')) {
+if (typeof webauthnRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(webauthnRoutesJS as RequestHandler);
+} else if (webauthnRoutesJS && typeof (webauthnRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(webauthnRoutesJS);
+    router.use(webauthnRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('webauthn.js did not export a valid router');
+}
 }
 
 export default router;

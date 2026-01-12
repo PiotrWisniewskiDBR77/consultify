@@ -51,6 +51,7 @@ import budgetRoutes from './routes/budget.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
 import calendarIntegrationsRoutes from './routes/calendarIntegrations.routes.js';
 import capacityRoutes from './routes/capacity.routes.js';
+import chaosRoutes from './routes/chaos.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
 import connectorRoutes from './routes/connectors.routes.js';
 import consultantProjectAccessRoutes from './routes/consultant-project-access.routes.js';
@@ -419,7 +420,7 @@ export class ApiGateway {
             app.use('/api/budget', budgetRoutes);
             app.use('/api/content', contentRoutes);
         } catch (error: unknown) {
-            logger.error('[ApiGateway] Error loading routes:', error);
+            logger.error('[ApiGateway] Error loading routes:', error instanceof Error ? error : null);
             // Don't block server startup - allow degraded mode
         }
     }

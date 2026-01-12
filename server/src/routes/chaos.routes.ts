@@ -88,7 +88,7 @@ router.post('/simulate-redis-failure', async (_req: Request, res: Response) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to simulate Redis failure',
             details: err.message,
         });
@@ -113,7 +113,7 @@ router.post('/simulate-db-failure', async (_req: Request, res: Response) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to simulate database failure',
             details: err.message,
         });
@@ -145,7 +145,7 @@ router.post('/inject-latency', (req: Request, res: Response) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to inject latency',
             details: err.message,
         });
@@ -179,7 +179,7 @@ router.post('/reset', async (_req: Request, res: Response) => {
         });
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Failed to reset chaos simulations',
             details: err.message,
         });

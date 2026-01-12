@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/budget.js');
 const budgetRoutesJS = module.default || module;
@@ -17,12 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (typeof budgetRoutesJS === 'function' || (budgetRoutesJS && typeof budgetRoutesJS.handle === 'function')) {
+if (typeof budgetRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(budgetRoutesJS as RequestHandler);
+} else if (budgetRoutesJS && typeof (budgetRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(budgetRoutesJS);
+    router.use(budgetRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('budget.js did not export a valid router');
+}
 }
 
 export default router;

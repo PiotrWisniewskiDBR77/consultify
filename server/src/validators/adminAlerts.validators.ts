@@ -46,7 +46,7 @@ export const CreateAdminAlertBodySchema = z.object({
     alertFrequency: z.enum(['once', 'daily', 'weekly']).optional().default('once'),
     cooldownHours: z.number().int().min(1).max(168).optional().default(24),
     isActive: z.boolean().optional().default(true),
-    config: z.record(z.unknown()).optional(),
+    config: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const UpdateAdminAlertBodySchema = CreateAdminAlertBodySchema.partial();

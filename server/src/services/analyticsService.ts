@@ -165,7 +165,7 @@ export class AnalyticsServiceClass {
                 [uuidv4(), organizationId, axis, score, industry],
             );
         } catch (err: unknown) {
-            logger.error('[AnalyticsService] Failed to save maturity score:', err);
+            logger.error('[AnalyticsService] Failed to save maturity score:', err instanceof Error ? err : null);
         }
     }
 

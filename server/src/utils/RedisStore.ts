@@ -8,7 +8,18 @@
 
 import type { RedisClientType } from 'redis';
 
-import { getRedisClient, isRedisConnected } from '../services/ai/redisClient.js';
+import redisClientModule from '../services/ai/redisClient.js';
+
+// Helper functions to get Redis client and check connection
+const getRedisClient = () => {
+    const client = redisClientModule as any;
+    return client?.getRedisClient ? client.getRedisClient() : null;
+};
+
+const isRedisConnected = () => {
+    const client = redisClientModule as any;
+    return client?.isRedisConnected ? client.isRedisConnected() : false;
+};
 
 // ==========================================
 // TYPES

@@ -30,7 +30,7 @@ router.get(
             res.json(health);
         } catch (error: unknown) {
             console.error('[SystemHealth] Error:', error);
-            res.status(500).json({ error: 'Health check failed' });
+            return res.status(500).json({ error: 'Health check failed' });
         }
     }),
 );
@@ -52,7 +52,7 @@ router.get(
             res.json(health);
         } catch (error: unknown) {
             console.error('[SystemHealth] Error:', error);
-            res.status(500).json({ error: 'Health check failed' });
+            return res.status(500).json({ error: 'Health check failed' });
         }
     }),
 );
@@ -74,7 +74,7 @@ router.get(
             res.json(metrics);
         } catch (error: unknown) {
             console.error('[SystemHealth] Error fetching metrics:', error);
-            res.status(500).json({ error: 'Failed to fetch system metrics' });
+            return res.status(500).json({ error: 'Failed to fetch system metrics' });
         }
     }),
 );
@@ -96,7 +96,7 @@ router.get(
             res.json(status);
         } catch (error: unknown) {
             console.error('[SystemHealth] Error fetching service status:', error);
-            res.status(500).json({ error: 'Failed to fetch service status' });
+            return res.status(500).json({ error: 'Failed to fetch service status' });
         }
     }),
 );
@@ -118,7 +118,7 @@ router.post(
             res.json(health);
         } catch (error: unknown) {
             console.error('[SystemHealth] Error refreshing:', error);
-            res.status(500).json({ error: 'Failed to refresh health data' });
+            return res.status(500).json({ error: 'Failed to refresh health data' });
         }
     }),
 );
@@ -149,7 +149,7 @@ router.get(
             });
         } catch (error: unknown) {
             console.error('[SystemHealth] Encryption health check error:', error);
-            res.status(500).json({ 
+            return res.status(500).json({ 
                 error: 'Encryption health check failed',
                 healthy: false,
             });

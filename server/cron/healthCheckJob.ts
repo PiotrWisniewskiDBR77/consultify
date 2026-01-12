@@ -16,7 +16,6 @@ const ALERT_EMAIL = 'piotr.wisniewski@dbr77.com';
 const startHealthCheck = () => {
     // Run every minute: * * * * *
     cron.schedule('* * * * *', () => {
-        const start = Date.now();
         db.get('SELECT 1', [], async (err) => {
             if (err) {
                 // FAILURE

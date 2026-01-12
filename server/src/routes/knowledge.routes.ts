@@ -478,7 +478,7 @@ router.post(
             res.json({ id, message: 'Strategy created' });
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
     }),
 );
@@ -833,7 +833,7 @@ router.get(
             res.json(parsed);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            return res.status(500).json({ error: message });
         }
     }),
 );

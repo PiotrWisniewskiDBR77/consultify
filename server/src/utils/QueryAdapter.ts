@@ -6,8 +6,8 @@
  * Provides a unified interface for both SQLite and PostgreSQL
  */
 
-import { _databaseConfig } from '../config/DatabaseConfig.js';
-import type { _QueryResult, IDatabase, RunResult } from '../database/IDatabase.js';
+import { databaseConfig } from '../config/DatabaseConfig.js';
+import type { QueryResult, IDatabase, RunResult } from '../database/IDatabase.js';
 import { run as dbRunPromise } from './DbPromise.js';
 
 export type DatabaseType = 'sqlite' | 'postgres';
@@ -54,7 +54,7 @@ export class QueryAdapter {
             return new Promise<T[]>((resolve, reject) => {
                 this.db.all<T>(adapted.sql, adapted.params, (err: Error | null, rows: unknown) => {
                     if (err) reject(err);
-                    else resolve(rows || []);
+                    else resolve((rows as T[]) || []);
                 });
             });
         }
@@ -73,7 +73,7 @@ export class QueryAdapter {
             return new Promise<T | null>((resolve, reject) => {
                 this.db.get<T>(adapted.sql, adapted.params, (err: Error | null, row: unknown) => {
                     if (err) reject(err);
-                    else resolve(row || null);
+                    else resolve((row as T) || null);
                 });
             });
         }

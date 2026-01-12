@@ -281,7 +281,7 @@ export const PaginationSchema = z.object({
 /**
  * Zod schema for database row (generic)
  */
-export const DatabaseRowSchema = z.record(z.unknown());
+export const DatabaseRowSchema = z.record(z.string(), z.unknown());
 
 /**
  * Zod schema for database rows array (generic)

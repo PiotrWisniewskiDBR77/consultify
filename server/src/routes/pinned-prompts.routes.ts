@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/pinned-prompts.js');
 const pinned_promptsRoutesJS = module.default || module;
@@ -17,15 +17,16 @@ const router = Router();
 
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
-if (
-    typeof pinned_promptsRoutesJS === 'function' ||
-    (pinned_promptsRoutesJS && typeof pinned_promptsRoutesJS.handle === 'function')
-) {
+if (typeof pinned_promptsRoutesJS === 'function') {
+    // If it's a router function, use it
+    router.use(pinned_promptsRoutesJS as RequestHandler);
+} else if (pinned_promptsRoutesJS && typeof (pinned_promptsRoutesJS as { handle?: unknown }).handle === 'function') {
     // If it's a router function or Router object, use it
-    router.use(pinned_promptsRoutesJS);
+    router.use(pinned_promptsRoutesJS as RequestHandler);
 } else {
     // Fallback or error
     console.error('pinned-prompts.js did not export a valid router');
+}
 }
 
 export default router;

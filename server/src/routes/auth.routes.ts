@@ -72,7 +72,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[Auth] Refresh error:', error);
-            res.status(500).json({ error: 'Token refresh failed' });
+            return res.status(500).json({ error: 'Token refresh failed' });
         }
     }),
 );
@@ -87,7 +87,7 @@ router.get(
             res.json({ sessions });
         } catch (error: unknown) {
             console.error('[Auth] Get sessions error:', error);
-            res.status(500).json({ error: 'Failed to get sessions' });
+            return res.status(500).json({ error: 'Failed to get sessions' });
         }
     }),
 );
@@ -105,7 +105,7 @@ router.delete(
             res.json({ success: true, message: 'Session revoked' });
         } catch (error: unknown) {
             console.error('[Auth] Revoke session error:', error);
-            res.status(500).json({ error: 'Failed to revoke session' });
+            return res.status(500).json({ error: 'Failed to revoke session' });
         }
     }),
 );
@@ -243,7 +243,7 @@ router.post(
             res.json({ message: 'Logged out successfully' });
         } catch (error: unknown) {
             console.error('Logout error:', error);
-            res.status(500).json({ error: 'Logout failed' });
+            return res.status(500).json({ error: 'Logout failed' });
         }
     }),
 );
@@ -390,7 +390,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[Auth] Demo login error:', error);
-            res.status(500).json({ error: 'Demo login failed. Please try again.' });
+            return res.status(500).json({ error: 'Demo login failed. Please try again.' });
         }
     }),
 );
@@ -437,7 +437,7 @@ router.post(
                 }
             } catch (err: unknown) {
                 console.error('[Auth] Promo validation error:', err);
-                res.status(500).json({ error: 'Failed to validate promo code' });
+                return res.status(500).json({ error: 'Failed to validate promo code' });
                 return;
             }
         }
@@ -568,7 +568,7 @@ router.post(
                 });
             } catch (regErr) {
                 console.error('[Auth] Registration error:', regErr);
-                res.status(500).json({ error: 'Registration failed' });
+                return res.status(500).json({ error: 'Registration failed' });
             }
         };
 
@@ -716,7 +716,7 @@ router.post(
             });
         } catch (error: unknown) {
             console.error('[Auth] Change password error:', error);
-            res.status(500).json({ error: 'Failed to change password' });
+            return res.status(500).json({ error: 'Failed to change password' });
         }
     }),
 );
@@ -798,7 +798,7 @@ router.post(
             res.json({ success: true, message: 'Email verified successfully' });
         } catch (error: unknown) {
             console.error('Email verify error:', error);
-            res.status(500).json({ error: 'Verification failed' });
+            return res.status(500).json({ error: 'Verification failed' });
         }
     }),
 );
@@ -833,7 +833,7 @@ router.post(
             res.json({ success: true, message: 'Verification email sent' });
         } catch (error: unknown) {
             console.error('Resend verify error:', error);
-            res.status(500).json({ error: 'Failed to send email' });
+            return res.status(500).json({ error: 'Failed to send email' });
         }
     }),
 );
@@ -848,7 +848,7 @@ router.post(
             res.json(result);
         } catch (error: unknown) {
             console.error('MFA Setup error:', error);
-            res.status(500).json({ error: 'MFA setup failed' });
+            return res.status(500).json({ error: 'MFA setup failed' });
         }
     }),
 );
@@ -868,7 +868,7 @@ router.post(
             res.json(result);
         } catch (error: unknown) {
             console.error('MFA Enable error:', error);
-            res.status(500).json({ error: 'MFA activation failed' });
+            return res.status(500).json({ error: 'MFA activation failed' });
         }
     }),
 );
@@ -888,7 +888,7 @@ router.post(
             res.json(result);
         } catch (error: unknown) {
             console.error('MFA Disable error:', error);
-            res.status(500).json({ error: 'MFA disable failed' });
+            return res.status(500).json({ error: 'MFA disable failed' });
         }
     }),
 );
