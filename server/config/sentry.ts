@@ -54,9 +54,9 @@ export function initSentry(app: Express): SentryHandlers {
         // Integrations
         integrations: [
             // Express integration
-            expressIntegration({ app }),
+            expressIntegration(),
             // HTTP integration for tracing outgoing requests
-            httpIntegration({ tracing: true }),
+            httpIntegration(),
             // Profiling (optional, requires @sentry/profiling-node)
             nodeProfilingIntegration(),
         ],
@@ -66,16 +66,16 @@ export function initSentry(app: Express): SentryHandlers {
         profilesSampleRate: isProduction ? 0.1 : 1.0,
 
         // Filter sensitive data
-        beforeSend(event: Sentry.Event, _hint: Sentry.EventHint) {
+        beforeSend(event: Sentry.ErrorEvent, _hint: Sentry.EventHint) {
             // Remove sensitive headers
-            if (event.request && event.request.headers) {
+            if (event.request?.headers) {
                 delete event.request.headers['authorization'];
                 delete event.request.headers['cookie'];
                 delete event.request.headers['x-access-token'];
             }
 
             // Remove sensitive data from request body
-            if (event.request && event.request.data) {
+            if (event.request?.data) {
                 const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'mfaToken', 'backupCode'];
                 sensitiveFields.forEach((field) => {
                     if (typeof event.request.data === 'object' && event.request.data && field in event.request.data) {

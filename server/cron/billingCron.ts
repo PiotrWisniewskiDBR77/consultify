@@ -3,46 +3,48 @@
  * Handles scheduled tasks for billing system
  */
 
+import type { IDatabase } from '../src/database/IDatabase.js';
+
 // Dependency injection container
 const deps = {
-    _db: null,
-    _budgetManagementService: null,
-    _adminAlertService: null,
-    _payAsYouGoService: null,
-    _seatManagementService: null,
+    _db: null as IDatabase | null,
+    _budgetManagementService: null as any,
+    _adminAlertService: null as any,
+    _payAsYouGoService: null as any,
+    _seatManagementService: null as any,
 
     get db() {
         return this._db;
     },
-    set db(val) {
+    set db(val: IDatabase | null) {
         this._db = val;
     },
 
     get budgetManagementService() {
         return this._budgetManagementService;
     },
-    set budgetManagementService(val) {
+    set budgetManagementService(val: any) {
         this._budgetManagementService = val;
     },
 
     get adminAlertService() {
         return this._adminAlertService;
     },
-    set adminAlertService(val) {
+    set adminAlertService(val: any) {
         this._adminAlertService = val;
     },
 
     get payAsYouGoService() {
         return this._payAsYouGoService;
     },
-    set payAsYouGoService(val) {
+    set payAsYouGoService(val: any) {
         this._payAsYouGoService = val;
     },
 
     get seatManagementService() {
         return this._seatManagementService;
     },
-    set seatManagementService(val) {
+    set seatManagementService(val: any) {
         this._seatManagementService = val;
     },
 };
@@ -80,6 +82,9 @@ async function resetMonthlyBudgets() {
     await initDeps();
     try {
         console.log('[BillingCron] Running resetMonthlyBudgets...');
+        if (!deps.budgetManagementService) {
+            throw new Error('BudgetManagementService not initialized');
+        }
         await deps.budgetManagementService.resetMonthlyBudgets();
         console.log('[BillingCron] Monthly budgets reset completed');
     } catch (error) {
@@ -96,16 +101,10 @@ async function checkAndTriggerAlerts() {
         console.log('[BillingCron] Running checkAndTriggerAlerts...');
 
         // Get all active organizations
-        const orgs = await new Promise<Array<{ id: string }>>((resolve, reject) => {
-            if (!deps.db) {
-                reject(new Error('Database not initialized'));
-                return;
-            }
-            deps.db.all('SELECT id FROM organizations WHERE status = ?', ['active'], (err: Error | null, rows: unknown) => {
-                if (err) reject(err);
-                else resolve((rows as Array<{ id: string }>) || []);
-            });
-        });
+        if (!deps.db) {
+            throw new Error('Database not initialized');
+        }
+        const orgs = (await deps.db.all<{ id: string }>('SELECT id FROM organizations WHERE status = ?', ['active'])) || [];
 
         let triggeredCount = 0;
         for (const org of orgs) {
@@ -142,22 +141,15 @@ async function generatePayAsYouGoInvoices() {
         const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
         // Get all organizations with PAYG billing
-        const orgs = await new Promise<Array<{ organization_id: string }>>((resolve, reject) => {
-            if (!deps.db) {
-                reject(new Error('Database not initialized'));
-                return;
-            }
-            deps.db.all(
-                `SELECT os.organization_id
-                 FROM organization_seats os
-                 WHERE os.billing_model IN('pay_as_you_go', 'hybrid')`,
-                [],
-                (err: Error | null, rows: unknown) => {
-                    if (err) reject(err);
-                    else resolve((rows as Array<{ organization_id: string }>) || []);
-                },
-            );
-        });
+        if (!deps.db) {
+            throw new Error('Database not initialized');
+        }
+        const orgs = (await deps.db.all<{ organization_id: string }>(
+            `SELECT os.organization_id
+             FROM organization_seats os
+             WHERE os.billing_model IN('pay_as_you_go', 'hybrid')`,
+            [],
+        )) || [];
 
         let invoicesGenerated = 0;
         for (const org of orgs) {
@@ -193,16 +185,10 @@ async function updateSeatCounts() {
     try {
         console.log('[BillingCron] Running updateSeatCounts...');
 
-        const orgs = await new Promise<Array<{ id: string }>>((resolve, reject) => {
-            if (!deps.db) {
-                reject(new Error('Database not initialized'));
-                return;
-            }
-            deps.db.all('SELECT id FROM organizations WHERE status = ?', ['active'], (err: Error | null, rows: unknown) => {
-                if (err) reject(err);
-                else resolve((rows as Array<{ id: string }>) || []);
-            });
-        });
+        if (!deps.db) {
+            throw new Error('Database not initialized');
+        }
+        const orgs = (await deps.db.all<{ id: string }>('SELECT id FROM organizations WHERE status = ?', ['active'])) || [];
 
         let updated = 0;
         for (const org of orgs) {

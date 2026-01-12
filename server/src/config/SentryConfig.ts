@@ -93,9 +93,9 @@ export function initSentry(app: Express): SentryHandlers {
         // Integrations
         integrations: [
             // Express integration
-            expressIntegration({ app }),
+            expressIntegration(),
             // HTTP integration for tracing outgoing requests
-            httpIntegration({ tracing: true }),
+            httpIntegration(),
             // Profiling (optional, requires @sentry/profiling-node)
             nodeProfilingIntegration(),
         ],
@@ -105,7 +105,7 @@ export function initSentry(app: Express): SentryHandlers {
         profilesSampleRate: validatedConfig.profilesSampleRate,
 
         // Filter sensitive data
-        beforeSend(event) {
+        beforeSend(event: Sentry.ErrorEvent, _hint: Sentry.EventHint) {
             // Remove sensitive headers
             const request = event.request;
             if (request?.headers) {
