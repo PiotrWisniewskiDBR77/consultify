@@ -39,8 +39,9 @@ RUN npm run build
 FROM node:20-alpine AS backend-builder
 WORKDIR /app
 
-# Copy package files and install all dependencies (including dev)
+# Copy package files and TypeScript config files needed for build
 COPY server/package.json server/package-lock.json ./
+COPY server/tsconfig.json server/tsconfig.build.json ./
 RUN npm ci
 
 # Copy source and build

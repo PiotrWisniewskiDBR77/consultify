@@ -77,7 +77,7 @@ interface IKnowledgeService {
         content: string,
         reasoning: string,
         source: string,
-        relatedAxis?: string | null,
+        relatedAxis?: null,
         originContext?: string,
     ) => Promise<string>;
     updateCandidateStatus: (id: string, status: string, adminComment?: string) => Promise<number>;
@@ -129,7 +129,6 @@ const router = Router();
 // Dynamic imports for services that may not be migrated yet
 let KnowledgeService: IKnowledgeService | null = null;
 let StorageService: IStorageService | null = null;
-const _NotificationOutboxService: any = null;
 
 try {
     const knowledgeModule = await import('../../services/knowledgeService.js');
@@ -145,12 +144,7 @@ try {
     console.warn('[Knowledge] StorageService not available');
 }
 
-try {
-    const notificationModule = await import('../../services/notificationOutboxService.js');
-    NotificationOutboxService = notificationModule.default || notificationModule;
-} catch {
-    console.warn('[Knowledge] NotificationOutboxService not available');
-}
+// NotificationOutboxService removed - not used
 
 // Get directory paths
 const __filename = fileURLToPath(import.meta.url);
@@ -179,7 +173,7 @@ let recordStorageAfterUpload: ((req: AuthRequest, size: number, type: string) =>
 let enforceProjectQuota: any = null;
 
 try {
-    const quotaModule = await import('../../middleware/quotaMiddleware.js');
+    const quotaModule = await import('../../middleware/quota.middleware.js');
     enforceStorageQuota = quotaModule.enforceStorageQuota;
     recordStorageAfterUpload = quotaModule.recordStorageAfterUpload;
 } catch {
@@ -407,8 +401,8 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             // Use unified AI pipeline for observation generation
-            const { AIPipeline } = await import('../../services/ai/aiPipeline.js');
-            const pipeline = AIPipeline.getInstance();
+            const aiPipelineModule = await import('../../services/ai/AIPipeline.js');
+            const pipeline = aiPipelineModule.aiPipeline || aiPipelineModule.AIPipeline.getInstance();
             const userId = req.user?.id;
             const organizationId = req.user?.organizationId;
             if (!userId || !organizationId) {

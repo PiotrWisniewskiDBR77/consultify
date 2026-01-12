@@ -23,7 +23,7 @@ import {
 const router = Router();
 import Stripe from 'stripe';
 
-import type { DunningService } from '../services/DunningService.js';
+import type { DunningService } from '../services/dunningService.js';
 import type { InvoiceServiceClass } from '../services/InvoiceService.js';
 import webhookService from '../services/WebhookService.js';
 

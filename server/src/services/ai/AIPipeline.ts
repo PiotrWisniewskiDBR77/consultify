@@ -7,8 +7,6 @@
  */
 
 import type {
-    _ResponseMetadata,
-    _StreamChunk,
     AIArtifact,
     AICapability,
     AIContext,

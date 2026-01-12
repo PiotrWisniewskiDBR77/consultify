@@ -6,8 +6,8 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import EscalationService from '../services/EscalationService.js';
-import NotificationService from '../services/NotificationService.js';
+import EscalationService from '../services/escalationService.js';
+import NotificationService from '../services/notificationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -159,7 +159,7 @@ router.post(
         // In a real app we'd use a more robust policy engine
         if (!(req as any).can || !(req as any).can('edit_project_settings')) {
             // Fallback for when 'can' helper isn't available
-            if (req.user?.role !== 'SUPERADMIN' && req.user?.role !== 'ADMIN') {
+            if (!req.user?.isSuperAdmin && req.user?.role !== 'administrator' && req.user?.role !== 'owner') {
                 // Check if user is PM of this project
                 // This is just a placeholder logic
             }
