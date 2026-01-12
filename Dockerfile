@@ -26,7 +26,8 @@ WORKDIR /app
 
 # Copy package files and install all dependencies (including dev)
 COPY package.json package-lock.json ./
-RUN npm ci
+# Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
+RUN npm ci || (echo "Lock file out of sync, updating..." && npm install)
 
 # Copy source and build
 COPY . .
