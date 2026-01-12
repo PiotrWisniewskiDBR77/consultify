@@ -45,7 +45,7 @@ RUN npm ci
 
 # Copy source and build
 COPY server/ .
-RUN npm run build:backend || echo "Backend build step"
+RUN npm run build
 
 # ==========================================
 # STAGE 4: Production API
