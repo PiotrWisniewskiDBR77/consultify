@@ -1,8 +1,8 @@
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
-const bcrypt = require('bcryptjs');
-const fs = require('fs');
+import path from 'path';
+import { v4: uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
+import fs from 'fs';
 
 const dbPath = path.resolve(__dirname, 'consultify.db');
 

@@ -1,15 +1,37 @@
-const { Pool } = require('pg');
-const config = require('./config/database.config');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+import { Pool } from 'pg';
+import config from './config/database.config.js';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 console.log('[Postgres] Initializing connection pool...');
+console.log('[Postgres] Config:', {
+    host: config.postgres?.host,
+    port: config.postgres?.port,
+    database: config.postgres?.database,
+    user: config.postgres?.user,
+    ssl: config.postgres?.ssl,
+    connectionTimeoutMillis: config.postgres?.connectionTimeoutMillis,
+    max: config.postgres?.max
+});
 
 const pool = new Pool(config.postgres);
 
 pool.on('error', (err, client) => {
-    console.error('Unexpected error on idle client', err);
-    process.exit(-1);
+    console.error('[Postgres] Unexpected error on idle client:', err.message);
+    console.error('[Postgres] Error code:', err.code);
+    // Don't exit - allow retry
+});
+
+pool.on('connect', (client) => {
+    console.log('[Postgres] Client connected');
+});
+
+pool.on('acquire', (client) => {
+    console.log('[Postgres] Client acquired from pool');
+});
+
+pool.on('remove', (client) => {
+    console.log('[Postgres] Client removed from pool');
 });
 
 // Helper to convert SQLite params (?) to Postgres params ($1, $2)
@@ -19,8 +41,73 @@ function adaptQuery(sql) {
     // Also replace SQLite specific functions if possible
     let adapted = sql.replace(/\?/g, () => `$${paramIndex++}`);
 
-    // Replace datetime('now') with NOW()
-    adapted = adapted.replace(/datetime\('now'\)/g, "NOW()");
+    // Replace datetime('now') and datetime("now") with NOW()
+    adapted = adapted.replace(/datetime\(['"]now['"]\)/g, "NOW()");
+
+    // Replace datetime('now', '-N days') with NOW() - INTERVAL 'N days'
+    adapted = adapted.replace(/datetime\(['"]now['"],\s*['"]-(\d+)\s+days?['"]\)/gi, (match, days) => {
+        return `NOW() - INTERVAL '${days} days'`;
+    });
+
+    // Replace datetime('now', '+N days') with NOW() + INTERVAL 'N days'
+    adapted = adapted.replace(/datetime\(['"]now['"],\s*['"]\+(\d+)\s+days?['"]\)/gi, (match, days) => {
+        return `NOW() + INTERVAL '${days} days'`;
+    });
+
+    // Replace datetime('now', '-N hours') with NOW() - INTERVAL 'N hours'
+    adapted = adapted.replace(/datetime\(['"]now['"],\s*['"]-(\d+)\s+hours?['"]\)/gi, (match, hours) => {
+        return `NOW() - INTERVAL '${hours} hours'`;
+    });
+
+    // Replace datetime('now', '-N days') with NOW() - INTERVAL 'N days' (without quotes around interval)
+    adapted = adapted.replace(/datetime\(['"]now['"],\s*['"]-(\d+)\s+days?['"]\)/gi, (match, days) => {
+        return `NOW() - INTERVAL '${days} days'`;
+    });
+
+    // Replace datetime(date, '+' || N || ' days') with date + INTERVAL 'N days'
+    adapted = adapted.replace(/datetime\(([^,]+),\s*['"]\+['"]\s*\|\|\s*([^|]+)\s*\|\|\s*['"]\s+days?['"]\)/gi, (match, dateExpr, daysExpr) => {
+        return `${dateExpr} + INTERVAL '${daysExpr} days'`;
+    });
+
+    // Replace datetime(date, '+' || N || ' days') <= datetime('now') with date + INTERVAL 'N days' <= NOW()
+    adapted = adapted.replace(/datetime\(([^,]+),\s*['"]\+['"]\s*\|\|\s*([^|]+)\s*\|\|\s*['"]\s+days?['"]\)/gi, (match, dateExpr, daysExpr) => {
+        return `${dateExpr} + INTERVAL '${daysExpr} days'`;
+    });
+
+    // Replace julianday(date1) - julianday(date2) with EXTRACT(EPOCH FROM (date1 - date2)) / 86400
+    adapted = adapted.replace(/julianday\(([^)]+)\)\s*-\s*julianday\(([^)]+)\)/gi, (match, date1, date2) => {
+        return `EXTRACT(EPOCH FROM (${date1} - ${date2})) / 86400`;
+    });
+
+    // Replace date('now') with CURRENT_DATE
+    adapted = adapted.replace(/date\(['"]now['"]\)/g, "CURRENT_DATE");
+
+    // Replace date(column) with column::date (PostgreSQL cast)
+    adapted = adapted.replace(/date\(([^)]+)\)/g, "$1::date");
+
+    // Replace DATETIME column type with TIMESTAMP for PostgreSQL
+    adapted = adapted.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
+
+    // Replace INSERT OR REPLACE with INSERT ... ON CONFLICT DO UPDATE
+    // This is complex - we'll handle common cases
+    if (adapted.includes('INSERT OR REPLACE')) {
+        // Extract table name and columns for basic cases
+        const match = adapted.match(/INSERT\s+OR\s+REPLACE\s+INTO\s+(\w+)\s*\(([^)]+)\)/i);
+        if (match) {
+            const tableName = match[1];
+            const columns = match[2].split(',').map(c => c.trim());
+            // Find primary key or first column as conflict target
+            const conflictColumn = columns[0]; // Simplified - assumes first column is key
+            adapted = adapted.replace(/INSERT\s+OR\s+REPLACE\s+INTO/i, 'INSERT INTO');
+            // Add ON CONFLICT clause - this is a simplified version
+            // Full implementation would need to parse VALUES and UPDATE SET properly
+            adapted += ` ON CONFLICT (${conflictColumn}) DO UPDATE SET ${columns.map((col, idx) => `${col} = EXCLUDED.${col}`).join(', ')}`;
+        } else {
+            // Fallback: just remove INSERT OR REPLACE and add basic ON CONFLICT
+            adapted = adapted.replace(/INSERT\s+OR\s+REPLACE/i, 'INSERT');
+            // Note: This won't work perfectly for all cases, but handles simple ones
+        }
+    }
 
     // Replace INSERT OR IGNORE with INSERT ... ON CONFLICT DO NOTHING
     // This is a naive regex, might need more care for specific tables involving constraints
@@ -128,6 +215,29 @@ const db = {
     }
 };
 
+// Test connection with retry
+async function testConnection(retries = 3, delay = 2000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            console.log(`[Postgres] Testing connection (attempt ${i + 1}/${retries})...`);
+            const result = await pool.query('SELECT NOW() as current_time');
+            console.log('[Postgres] Connection test successful:', result.rows[0]);
+            return true;
+        } catch (err) {
+            console.error(`[Postgres] Connection test failed (attempt ${i + 1}/${retries}):`, err.message);
+            if (i < retries - 1) {
+                console.log(`[Postgres] Retrying in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; // Exponential backoff
+            } else {
+                console.error('[Postgres] All connection attempts failed');
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
 // Initialize Database Schema
 function initDb() {
     console.log('[Postgres] Checking/Initializing Schema...');
@@ -139,14 +249,47 @@ function initDb() {
 
     (async () => {
         try {
+            // Test connection first
+            const connected = await testConnection();
+            if (!connected) {
+                console.error('[Postgres] Cannot proceed with schema initialization - connection failed');
+                return;
+            }
             // Organizations Table
             await query(`CREATE TABLE IF NOT EXISTS organizations (
                 id TEXT PRIMARY KEY,
                 name TEXT,
                 plan TEXT DEFAULT 'free',
                 status TEXT DEFAULT 'active',
+                billing_status TEXT DEFAULT 'PENDING',
+                organization_type TEXT DEFAULT 'TRIAL',
+                token_balance INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                valid_until TIMESTAMP
+                valid_until TIMESTAMP,
+                discount_percent INTEGER DEFAULT 0,
+                -- MFA enforcement settings (enterprise feature)
+                mfa_required INTEGER DEFAULT 0,
+                mfa_grace_period_days INTEGER DEFAULT 7,
+                -- Trial Fields
+                trial_started_at TIMESTAMP,
+                trial_expires_at TIMESTAMP,
+                trial_extension_count INTEGER DEFAULT 0,
+                trial_warning_sent_at TIMESTAMP,
+                trial_tokens_used INTEGER DEFAULT 0,
+                -- Attribution
+                attribution_data TEXT,
+                -- Phase E: Onboarding Context
+                transformation_context TEXT DEFAULT '{}',
+                onboarding_status TEXT DEFAULT 'NOT_STARTED',
+                onboarding_plan_snapshot TEXT,
+                onboarding_plan_version INTEGER DEFAULT 0,
+                onboarding_accepted_at TIMESTAMP,
+                onboarding_accept_idempotency_key TEXT,
+                -- AI Governance Fields
+                ai_assertiveness_level TEXT DEFAULT 'MEDIUM',
+                ai_autonomy_level TEXT DEFAULT 'SUGGEST_ONLY',
+                created_by_user_id TEXT
             )`);
 
             // Users Table
@@ -162,6 +305,12 @@ function initDb() {
                 avatar_url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP,
+                -- MFA columns
+                mfa_enabled INTEGER DEFAULT 0,
+                mfa_secret TEXT,
+                mfa_backup_codes TEXT,
+                mfa_verified_at TIMESTAMP,
+                mfa_recovery_email TEXT,
                 FOREIGN KEY(organization_id) REFERENCES organizations(id)
             )`);
 
@@ -169,7 +318,31 @@ function initDb() {
             // We'll skip complex migration logic for Phase 1 and rely on CREATE TABLE IF NOT EXISTS
             // For ALTERs, we should wrap in try/catch or checks.
 
-            // Sessions
+            // Settings (no dependencies)
+            await query(`CREATE TABLE IF NOT EXISTS settings(
+                key TEXT PRIMARY KEY,
+                value TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+
+            // Projects (must be created before sessions, which references it)
+            await query(`CREATE TABLE IF NOT EXISTS projects(
+                id TEXT PRIMARY KEY,
+                organization_id TEXT,
+                name TEXT,
+                description TEXT,
+                goal TEXT,
+                status TEXT DEFAULT 'active',
+                owner_id TEXT,
+                initiative_count INTEGER DEFAULT 0,
+                assessment_count INTEGER DEFAULT 0,
+                member_count INTEGER DEFAULT 0,
+                document_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id)
+            )`);
+
+            // Sessions (references users and projects - must come after both)
             await query(`CREATE TABLE IF NOT EXISTS sessions(
                 id TEXT PRIMARY KEY,
                 user_id TEXT,
@@ -179,24 +352,6 @@ function initDb() {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id),
                 FOREIGN KEY(project_id) REFERENCES projects(id)
-            )`);
-
-            // Settings
-            await query(`CREATE TABLE IF NOT EXISTS settings(
-                key TEXT PRIMARY KEY,
-                value TEXT,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )`);
-
-            // Projects
-            await query(`CREATE TABLE IF NOT EXISTS projects(
-                id TEXT PRIMARY KEY,
-                organization_id TEXT,
-                name TEXT,
-                status TEXT DEFAULT 'active',
-                owner_id TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(organization_id) REFERENCES organizations(id)
             )`);
 
             // Knowledge Docs
@@ -335,13 +490,9 @@ function initDb() {
                 message TEXT,
                 data TEXT,
                 read INTEGER DEFAULT 0,
-                severity TEXT DEFAULT 'normal',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )`);
-            
-            // Add severity column if it doesn't exist (for compatibility)
-            await safeRun("ALTER TABLE notifications ADD COLUMN severity TEXT DEFAULT 'normal'");
 
             // Activity Logs
             await query(`CREATE TABLE IF NOT EXISTS activity_logs (
@@ -361,13 +512,32 @@ function initDb() {
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
             )`);
 
-            // Alter Users
-            await safeRun("ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000");
-            await safeRun("ALTER TABLE users ADD COLUMN token_used INTEGER DEFAULT 0");
-            await safeRun("ALTER TABLE users ADD COLUMN token_reset_at TIMESTAMP");
-            await safeRun("ALTER TABLE users ADD COLUMN avatar_url TEXT");
-            await safeRun("ALTER TABLE users ADD COLUMN license_plan_id TEXT");
-            await safeRun("ALTER TABLE users ADD COLUMN ai_config TEXT");
+            // Alter Users - Add columns if they don't exist (migration)
+            // Note: These columns are already in CREATE TABLE, but we add them here for existing databases
+            await query(`
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='token_limit') THEN
+                        ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='token_used') THEN
+                        ALTER TABLE users ADD COLUMN token_used INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='token_reset_at') THEN
+                        ALTER TABLE users ADD COLUMN token_reset_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='avatar_url') THEN
+                        ALTER TABLE users ADD COLUMN avatar_url TEXT;
+                    END IF;
+                END $$;
+            `).catch(err => {
+                // Ignore errors - columns might already exist or table might not exist yet
+                console.log('[Postgres] User token columns migration skipped (may already exist)');
+            });
 
             // AI Feedback
             await query(`CREATE TABLE IF NOT EXISTS ai_feedback (
@@ -474,15 +644,29 @@ function initDb() {
                 organization_id TEXT NOT NULL,
                 email TEXT NOT NULL,
                 role TEXT DEFAULT 'USER',
-                token TEXT NOT NULL UNIQUE,
+                token TEXT UNIQUE, -- Made NULLABLE for hash-based security
+                token_hash TEXT UNIQUE, -- Added for secure storage
                 status TEXT DEFAULT 'pending',
                 invited_by TEXT,
                 expires_at TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 accepted_at TIMESTAMP,
+                invitation_type TEXT DEFAULT 'ORG',
+                project_id TEXT,
+                role_to_assign TEXT,
+                accepted_by_user_id TEXT,
+                metadata TEXT DEFAULT '{}',
+                resend_count INTEGER DEFAULT 0,
+                last_resent_at TIMESTAMP,
                 FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
                 FOREIGN KEY(invited_by) REFERENCES users(id) ON DELETE SET NULL
             )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_email ON invitations(email)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_project ON invitations(project_id)`);
 
             // Access Requests
             await query(`CREATE TABLE IF NOT EXISTS access_requests (
@@ -562,17 +746,15 @@ function initDb() {
                 scope_in TEXT DEFAULT '[]',
                 scope_out TEXT DEFAULT '[]',
                 key_risks TEXT DEFAULT '[]',
-                location_id TEXT,
+                report_id TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
                 FOREIGN KEY(owner_business_id) REFERENCES users(id) ON DELETE SET NULL,
                 FOREIGN KEY(owner_execution_id) REFERENCES users(id) ON DELETE SET NULL,
-                FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL
+                FOREIGN KEY(sponsor_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(report_id) REFERENCES assessment_reports(id) ON DELETE SET NULL
             )`);
-            
-            // Add location_id column if it doesn't exist
-            await safeRun("ALTER TABLE initiatives ADD COLUMN location_id TEXT");
 
             // Task Dependencies
             await query(`CREATE TABLE IF NOT EXISTS task_dependencies (
@@ -759,115 +941,303 @@ function initDb() {
                 FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
             )`);
 
-            // Locations
-            await query(`CREATE TABLE IF NOT EXISTS locations (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT,
-                address TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-            )`);
-
-            // Decisions
-            await query(`CREATE TABLE IF NOT EXISTS decisions (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT NOT NULL,
+            // AI Ideas Board
+            await query(`CREATE TABLE IF NOT EXISTS ai_ideas (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 title TEXT NOT NULL,
                 description TEXT,
-                status TEXT DEFAULT 'pending',
-                decision_owner_id TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-                FOREIGN KEY(decision_owner_id) REFERENCES users(id) ON DELETE SET NULL
+                status VARCHAR(50) DEFAULT 'new',
+                priority VARCHAR(50) DEFAULT 'medium',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
 
-            // RAID Items (Risks, Assumptions, Issues, Dependencies)
-            await query(`CREATE TABLE IF NOT EXISTS raid_items (
-                id TEXT PRIMARY KEY,
-                organization_id TEXT NOT NULL,
-                initiative_id TEXT,
-                project_id TEXT,
-                type TEXT NOT NULL,
-                title TEXT NOT NULL,
-                description TEXT,
-                status TEXT DEFAULT 'open',
-                priority TEXT DEFAULT 'medium',
-                owner_id TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-                FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
-                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
-                FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
+            // AI System Observations
+            await query(`CREATE TABLE IF NOT EXISTS ai_observations (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                content TEXT NOT NULL,
+                category VARCHAR(50),
+                confidence_score REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )`);
 
-            // Budget Line Items
-            await query(`CREATE TABLE IF NOT EXISTS budget_line_items (
+            // Approval Assignments (for SLA tracking and escalation)
+            await query(`CREATE TABLE IF NOT EXISTS approval_assignments (
                 id TEXT PRIMARY KEY,
-                budget_id TEXT NOT NULL,
-                organization_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                category TEXT,
-                planned_amount REAL DEFAULT 0,
-                actual_amount REAL DEFAULT 0,
-                committed_amount REAL DEFAULT 0,
-                forecast_amount REAL DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-            )`);
-
-            // Inbox Items
-            await query(`CREATE TABLE IF NOT EXISTS inbox_items (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                organization_id TEXT NOT NULL,
-                type TEXT NOT NULL,
-                title TEXT NOT NULL,
-                description TEXT,
-                urgency TEXT DEFAULT 'normal',
-                source_type TEXT,
-                source_user_id TEXT,
-                linked_task_id TEXT,
-                linked_initiative_id TEXT,
-                linked_decision_id TEXT,
-                triaged INTEGER DEFAULT 0,
-                triaged_at TIMESTAMP,
-                triage_action TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-                FOREIGN KEY(source_user_id) REFERENCES users(id) ON DELETE SET NULL,
-                FOREIGN KEY(linked_task_id) REFERENCES tasks(id) ON DELETE SET NULL,
-                FOREIGN KEY(linked_initiative_id) REFERENCES initiatives(id) ON DELETE SET NULL,
-                FOREIGN KEY(linked_decision_id) REFERENCES decisions(id) ON DELETE SET NULL
-            )`);
-
-            // Focus Tasks (Daily planning)
-            await query(`CREATE TABLE IF NOT EXISTS focus_tasks (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                task_id TEXT NOT NULL,
-                date DATE NOT NULL,
-                time_block TEXT,
-                position INTEGER DEFAULT 0,
-                is_completed INTEGER DEFAULT 0,
+                org_id TEXT NOT NULL,
+                proposal_id TEXT NOT NULL,
+                assigned_to_user_id TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'PENDING',
+                sla_due_at TIMESTAMP NOT NULL,
+                escalated_to_user_id TEXT,
+                escalated_at TIMESTAMP,
+                escalation_reason TEXT,
+                acked_at TIMESTAMP,
                 completed_at TIMESTAMP,
-                due_time TIME,
-                estimated_minutes INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE
+                FOREIGN KEY(org_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY(assigned_to_user_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY(escalated_to_user_id) REFERENCES users(id) ON DELETE SET NULL
             )`);
 
-            // Ensure notifications table uses 'read' column (not 'is_read')
-            // The table already exists with 'read', but let's make sure
-            await safeRun("ALTER TABLE notifications ADD COLUMN read INTEGER DEFAULT 0");
-            // Note: We can't easily drop is_read if it exists without checking first
-            // The error suggests the code is using is_read, so we need to fix the code, not the schema
+            // Indexes for approval_assignments
+            await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_org ON approval_assignments(org_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_user ON approval_assignments(assigned_to_user_id, status)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_proposal ON approval_assignments(proposal_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_approval_assignments_sla ON approval_assignments(sla_due_at, status)`);
+
+            // MFA Attempts Table (for brute-force protection)
+            await query(`CREATE TABLE IF NOT EXISTS mfa_attempts (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                attempt_type TEXT NOT NULL CHECK(attempt_type IN ('TOTP', 'BACKUP_CODE', 'SMS', 'EMAIL')),
+                success INTEGER NOT NULL DEFAULT 0,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_mfa_attempts_user_time ON mfa_attempts(user_id, created_at DESC)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_mfa_attempts_ip ON mfa_attempts(ip_address, created_at DESC)`);
+
+            // Trusted Devices Table (remember this device feature)
+            await query(`CREATE TABLE IF NOT EXISTS trusted_devices (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                device_fingerprint TEXT NOT NULL,
+                device_name TEXT,
+                last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE(user_id, device_fingerprint)
+            )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_user ON trusted_devices(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_trusted_devices_fingerprint ON trusted_devices(device_fingerprint)`);
+
+            // Refresh Tokens Table (for JWT refresh token rotation)
+            await query(`CREATE TABLE IF NOT EXISTS refresh_tokens (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                token_hash TEXT NOT NULL UNIQUE,
+                token_family TEXT,
+                device_info TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                expires_at TIMESTAMP NOT NULL,
+                revoked_at TIMESTAMP,
+                revoked_reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_family ON refresh_tokens(token_family)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at)`);
+
+            // Scheduled Emails Table (for report email scheduling)
+            await query(`CREATE TABLE IF NOT EXISTS scheduled_emails (
+                id TEXT PRIMARY KEY,
+                report_id TEXT NOT NULL,
+                recipients TEXT NOT NULL,
+                scheduled_time TIMESTAMP NOT NULL,
+                status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SENT', 'FAILED')),
+                sent_at TIMESTAMP,
+                error TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+
+            await query(`CREATE INDEX IF NOT EXISTS idx_scheduled_emails_status_time ON scheduled_emails(status, scheduled_time)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_scheduled_emails_report ON scheduled_emails(report_id)`);
+
+            // Add MFA columns to existing tables if they don't exist (migration)
+            // Users table MFA columns
+            await query(`
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_enabled') THEN
+                        ALTER TABLE users ADD COLUMN mfa_enabled INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_secret') THEN
+                        ALTER TABLE users ADD COLUMN mfa_secret TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_backup_codes') THEN
+                        ALTER TABLE users ADD COLUMN mfa_backup_codes TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_verified_at') THEN
+                        ALTER TABLE users ADD COLUMN mfa_verified_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='users' AND column_name='mfa_recovery_email') THEN
+                        ALTER TABLE users ADD COLUMN mfa_recovery_email TEXT;
+                    END IF;
+                END $$;
+            `).catch(err => {
+                // Ignore errors - columns might already exist or table might not exist yet
+                console.log('[Postgres] MFA columns migration skipped (may already exist)');
+            });
+
+            // Organizations table - Add missing columns (migration)
+            await query(`
+                DO $$ 
+                BEGIN
+                    -- MFA columns
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='mfa_required') THEN
+                        ALTER TABLE organizations ADD COLUMN mfa_required INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='mfa_grace_period_days') THEN
+                        ALTER TABLE organizations ADD COLUMN mfa_grace_period_days INTEGER DEFAULT 7;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='discount_percent') THEN
+                        ALTER TABLE organizations ADD COLUMN discount_percent INTEGER DEFAULT 0;
+                    END IF;
+                    -- Trial fields
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_started_at') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_started_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_expires_at') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_expires_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_extension_count') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_extension_count INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_warning_sent_at') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_warning_sent_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='trial_tokens_used') THEN
+                        ALTER TABLE organizations ADD COLUMN trial_tokens_used INTEGER DEFAULT 0;
+                    END IF;
+                    -- Organization type and status
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='organization_type') THEN
+                        ALTER TABLE organizations ADD COLUMN organization_type TEXT DEFAULT 'TRIAL';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='billing_status') THEN
+                        ALTER TABLE organizations ADD COLUMN billing_status TEXT DEFAULT 'PENDING';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='is_active') THEN
+                        ALTER TABLE organizations ADD COLUMN is_active INTEGER DEFAULT 1;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='token_balance') THEN
+                        ALTER TABLE organizations ADD COLUMN token_balance INTEGER DEFAULT 0;
+                    END IF;
+                    -- Attribution
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='attribution_data') THEN
+                        ALTER TABLE organizations ADD COLUMN attribution_data TEXT;
+                    END IF;
+                    -- Onboarding
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='transformation_context') THEN
+                        ALTER TABLE organizations ADD COLUMN transformation_context TEXT DEFAULT '{}';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_status') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_status TEXT DEFAULT 'NOT_STARTED';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_plan_snapshot') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_plan_snapshot TEXT;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_plan_version') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_plan_version INTEGER DEFAULT 0;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_accepted_at') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_accepted_at TIMESTAMP;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='onboarding_accept_idempotency_key') THEN
+                        ALTER TABLE organizations ADD COLUMN onboarding_accept_idempotency_key TEXT;
+                    END IF;
+                    -- AI Governance
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='ai_assertiveness_level') THEN
+                        ALTER TABLE organizations ADD COLUMN ai_assertiveness_level TEXT DEFAULT 'MEDIUM';
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='ai_autonomy_level') THEN
+                        ALTER TABLE organizations ADD COLUMN ai_autonomy_level TEXT DEFAULT 'SUGGEST_ONLY';
+                    END IF;
+                    -- Created by
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='organizations' AND column_name='created_by_user_id') THEN
+                        ALTER TABLE organizations ADD COLUMN created_by_user_id TEXT;
+                    END IF;
+                END $$;
+            `).catch(err => {
+                // Ignore errors - columns might already exist or table might not exist yet
+                console.log('[Postgres] Organization columns migration skipped (may already exist)');
+            });
+
+            // ---------------------------------------------------------
+            // Phase 1.3: Performance Optimization (Missing Indexes)
+            // ---------------------------------------------------------
+            console.log('[Postgres] Verifying/Creating Indexes...');
+
+            // Users & Auth
+            await query(`CREATE INDEX IF NOT EXISTS idx_users_org ON users(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_revoked_tokens_user ON revoked_tokens(user_id)`);
+
+            // Teams & Access
+            await query(`CREATE INDEX IF NOT EXISTS idx_teams_org ON teams(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_teams_lead ON teams(lead_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_invitations_inviter ON invitations(invited_by)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_requests_org ON access_requests(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_requests_reviewer ON access_requests(reviewed_by)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_codes_org ON access_codes(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_codes_creator ON access_codes(created_by)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_code_usage_code ON access_code_usage(code_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_access_code_usage_user ON access_code_usage(user_id)`);
+
+            // Tasks Management
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_reporter ON tasks(reporter_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_custom_status ON tasks(custom_status_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_tasks_initiative ON tasks(initiative_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(task_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_task_comments_user ON task_comments(user_id)`);
+
+            // System Activities & Logs
+            await query(`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_org ON activity_logs(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id)`);
+
+            // AI & Customizations
+            await query(`CREATE INDEX IF NOT EXISTS idx_ai_feedback_org ON ai_feedback(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_ai_feedback_user ON ai_feedback(user_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_custom_prompts_org ON custom_prompts(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_custom_prompts_creator ON custom_prompts(created_by)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_webhooks_org ON webhooks(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_webhooks_creator ON webhooks(created_by)`);
+
+            // Core Modules
+            await query(`CREATE INDEX IF NOT EXISTS idx_initiatives_org ON initiatives(organization_id)`);
+            await query(`CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(doc_id)`);
 
             console.log('[Postgres] Schema Check Complete.');
 
@@ -876,6 +1246,15 @@ function initDb() {
 
         } catch (err) {
             console.error('[Postgres] InitDb Failed:', err);
+            // Log detailed error information
+            if (err.code) {
+                console.error('[Postgres] Error code:', err.code);
+            }
+            if (err.message) {
+                console.error('[Postgres] Error message:', err.message);
+            }
+            // Don't exit - allow app to start even if some tables fail
+            // This is important for Railway where tables might already exist or be created separately
         }
     })();
 }
@@ -901,4 +1280,4 @@ async function safeRun(sql) {
 // Initialize on load
 initDb();
 
-module.exports = db;
+export default db;

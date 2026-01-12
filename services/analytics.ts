@@ -1,4 +1,4 @@
-import { FullInitiative, Task } from '../types';
+import { FullInitiative, InitiativeStatus, Task, TaskStatus } from '../types';
 
 export interface AnalyticsData {
     totalInitiatives: number;
@@ -25,19 +25,15 @@ export interface VelocityData {
     target: number;
 }
 
-export const calculateAnalytics = (
-    initiatives: FullInitiative[],
-    tasks: Task[]
-): AnalyticsData => {
-    const completedInitiatives = initiatives.filter(i => i.status === 'completed');
-    const inProgressInitiatives = initiatives.filter(i => i.status === 'In Progress');
-    const completedTasks = tasks.filter(t => t.status === 'completed');
+export const calculateAnalytics = (initiatives: FullInitiative[], tasks: Task[]): AnalyticsData => {
+    const completedInitiatives = initiatives.filter((i) => i.status === InitiativeStatus.DONE);
+    const inProgressInitiatives = initiatives.filter((i) => i.status === InitiativeStatus.EXECUTING);
+    const completedTasks = tasks.filter((t) => t.status === TaskStatus.DONE);
 
     const totalCost = initiatives.reduce((sum, i) => sum + (i.capex || 0) + (i.firstYearOpex || 0), 0);
     const totalBenefit = initiatives.reduce((sum, i) => sum + (i.annualBenefit || 0), 0);
-    const averageROI = initiatives.length > 0
-        ? initiatives.reduce((sum, i) => sum + (i.roi || 0), 0) / initiatives.length
-        : 0;
+    const averageROI =
+        initiatives.length > 0 ? initiatives.reduce((sum, i) => sum + (i.roi || 0), 0) / initiatives.length : 0;
 
     return {
         totalInitiatives: initiatives.length,
@@ -48,7 +44,7 @@ export const calculateAnalytics = (
         completionRate: tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0,
         averageInitiativeROI: averageROI,
         totalCost,
-        totalBenefit
+        totalBenefit,
     };
 };
 
@@ -70,9 +66,8 @@ export const generateBurnDownData = (tasks: Task[], startDate: Date, endDate: Da
         const planned = totalTasks - (totalTasks / weeks) * week;
 
         // Actual completed by this week (would need real dates on tasks)
-        const completedByWeek = tasks.filter(t =>
-            t.status === 'completed' &&
-            new Date(t.updatedAt || t.createdAt) <= weekDate
+        const completedByWeek = tasks.filter(
+            (t) => t.status === TaskStatus.DONE && new Date(t.updatedAt || t.createdAt) <= weekDate,
         ).length;
 
         const actual = totalTasks - completedByWeek;
@@ -81,7 +76,7 @@ export const generateBurnDownData = (tasks: Task[], startDate: Date, endDate: Da
             week: weekLabel,
             planned,
             actual,
-            ideal
+            ideal,
         });
     }
 
@@ -90,31 +85,39 @@ export const generateBurnDownData = (tasks: Task[], startDate: Date, endDate: Da
 
 export const generateVelocityData = (tasks: Task[], weeks: number = 8): VelocityData[] => {
     const data: VelocityData[] = [];
-    const tasksPerWeek = tasks.length / weeks;
+    const tasksPerWeek = Math.max(1, Math.floor(tasks.length / weeks));
+    const now = new Date();
 
+    // Calculate completed tasks per week based on actual updatedAt dates
     for (let i = 0; i < weeks; i++) {
-        // In real implementation, this would count actual completions per week
-        const completed = Math.floor(Math.random() * tasksPerWeek * 1.5); // Simulated
+        const weekStart = new Date(now.getTime() - (weeks - i) * 7 * 24 * 60 * 60 * 1000);
+        const weekEnd = new Date(now.getTime() - (weeks - i - 1) * 7 * 24 * 60 * 60 * 1000);
+
+        // Count tasks completed in this specific week
+        const completedInWeek = tasks.filter((t) => {
+            if (t.status !== TaskStatus.DONE) return false;
+            const completedDate = new Date(t.updatedAt || t.createdAt);
+            return completedDate >= weekStart && completedDate < weekEnd;
+        }).length;
 
         data.push({
             week: `W${i + 1}`,
-            completed,
-            target: Math.floor(tasksPerWeek)
+            completed: completedInWeek,
+            target: tasksPerWeek,
         });
     }
 
     return data;
 };
 
-export const calculateTimeToCompletion = (
-    remainingTasks: number,
-    averageVelocity: number
-): number => {
+export const calculateTimeToCompletion = (remainingTasks: number, averageVelocity: number): number => {
     if (averageVelocity === 0) return Infinity;
     return Math.ceil(remainingTasks / averageVelocity);
 };
 
-export const generateRiskScore = (initiative: FullInitiative): {
+export const generateRiskScore = (
+    initiative: FullInitiative,
+): {
     score: number;
     level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
     factors: string[];

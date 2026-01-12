@@ -1,18 +1,39 @@
-const jwt = require('jsonwebtoken');
-const config = require('../config');
-const db = require('../database');
+import defaultJwt from 'jsonwebtoken';
+import defaultConfig from '../config.js';
+import { getDatabase } from '../src/database/index.js';
+const defaultDb = getDatabase();
+import * as PermissionServiceModule from '../services/permissionService.js';
+const defaultPermissionService = PermissionServiceModule.default || PermissionServiceModule;
 
-function verifyToken(req, res, next) {
-    const token = req.headers['x-access-token'] || req.headers['authorization'];
+// Dependencies object to allow injection
+const deps = {
+    jwt: defaultJwt,
+    config: defaultConfig,
+    db: defaultDb,
+    PermissionService: defaultPermissionService
+};
+
+const verifyToken = (req, res, next) => {
+    // console.log(`[DEBUG] authMiddleware called for ${req.method} ${req.url}`);
+    const authHeader = req.headers['authorization'];
+    const token = (authHeader && authHeader.split(' ')[1]) || (req.body && req.body.token) || (req.query && req.query.token);
 
     if (!token) {
+        // Only bypass if explicitly requested (legacy test support)
+        if (process.env.NODE_ENV === 'test' && process.env.ENABLE_TEST_AUTH_BYPASS === 'true') {
+            // console.log('[DEBUG] Bypassing token check in test mode');
+            req.user = { id: 'test-user-id', organizationId: 'test-org-id', role: 'client' };
+            req.userId = 'test-user-id';
+            req.organizationId = 'test-org-id';
+            return next();
+        }
         return res.status(403).json({ error: 'No token provided' });
     }
 
     // Remove 'Bearer ' if present
-    const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+    const cleanToken = token && token.startsWith('Bearer ') ? token.slice(7) : token;
 
-    jwt.verify(cleanToken, config.JWT_SECRET, (err, decoded) => {
+    deps.jwt.verify(cleanToken, deps.config.JWT_SECRET, (err, decoded) => {
         if (err) {
             if (err.name === 'TokenExpiredError') {
                 return res.status(401).json({ error: 'Token expired' });
@@ -22,7 +43,7 @@ function verifyToken(req, res, next) {
 
         // Check if token has been revoked (if it has a jti)
         if (decoded.jti) {
-            db.get(
+            deps.db.get(
                 'SELECT jti FROM revoked_tokens WHERE jti = ?',
                 [decoded.jti],
                 (dbErr, row) => {
@@ -36,7 +57,7 @@ function verifyToken(req, res, next) {
                     }
 
                     // Check for "revoke-all" marker for this user
-                    db.get(
+                    deps.db.get(
                         "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > datetime('now')",
                         [decoded.id],
                         (dbErr2, revokeAllRow) => {
@@ -69,10 +90,28 @@ function verifyToken(req, res, next) {
 
 function attachUser(decoded, req, next) {
     req.userId = decoded.id;
-    req.userRole = decoded.role;
+    req.userRole = decoded.role || decoded.userRole; // Handle both variants
+    req.organizationId = decoded.organizationId || decoded.organization_id;
     req.user = decoded;
+
+    // Attach Permissions Helper
+    // This allows routes to do: if (!req.can('manage_users')) ...
+    req.can = (capability) => {
+        return deps.PermissionService.can(req.user, capability, {
+            organizationId: req.organizationId
+        });
+    };
+
     next();
 }
 
-module.exports = verifyToken;
+/**
+ * Inject dependencies for testing
+ * @param {Object} newDeps 
+ */
+verifyToken.setDependencies = (newDeps) => {
+    Object.assign(deps, newDeps);
+};
+
+export default verifyToken;
 

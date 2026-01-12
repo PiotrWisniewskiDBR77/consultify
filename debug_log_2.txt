@@ -1,0 +1,88 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+[90mstdout[2m | tests/unit/backend/notificationService.test.js
+[22m[39m[Database] Mocking database for tests
+
+[90mstdout[2m | tests/unit/backend/notificationService.test.js
+[22m[39m[DB:a8kw6ch] Initializing database at :memory:
+[DB:a8kw6ch] Connected to the SQLite database.
+[DB:a8kw6ch] WAL mode, Busy Timeout (10s), and Synchronous=NORMAL enabled.
+Created billing tables and seeded default subscription plans.
+Created professional billing system enhancement tables.
+Enterprise Customers Module tables created.
+Advanced IAM, Security, Analytics, Customer Management, and Revenue Management tables created.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/unit/backend/notificationService.test.js[2m > [22m[2mBackend Service Test: NotificationService
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/unit/backend/notificationService.test.js[2m > [22m[2mBackend Service Test: NotificationService
+[22m[39mDatabase initialization complete.
+
+ [31m❯[39m tests/unit/backend/notificationService.test.js [2m([22m[2m8 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 219[2mms[22m[39m
+       [32m✓[39m creates a basic notification[32m 2[2mms[22m[39m
+[31m       [31m×[31m prevents duplicates within 1 hour[39m[32m 4[2mms[22m[39m
+[31m       [31m×[31m triggers Slack system alert for SYSTEM_ALERT type[39m[32m 2[2mms[22m[39m
+       [32m✓[39m fetches all notifications for user[32m 12[2mms[22m[39m
+       [32m✓[39m filters by unread[32m 1[2mms[22m[39m
+       [32m✓[39m delivers to in_app and slack channels[32m 1[2mms[22m[39m
+       [32m✓[39m respects quiet hours[32m 0[2mms[22m[39m
+       [32m✓[39m handles missing preferences service (fallback to create)[32m 0[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/notificationService.test.js[2m > [22mBackend Service Test: NotificationService[2m > [22mcreate[2m > [22mprevents duplicates within 1 hour
+[31m[1mAssertionError[22m: expected [] to have a length of 1 but got +0[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+[36m [2m❯[22m tests/unit/backend/notificationService.test.js:[2m81:27[22m[39m
+    [90m 79| [39m            [90m// Verify it exists in DB with correct data[39m
+    [90m 80| [39m            const check = await dbAll('SELECT * FROM notifications WHE…
+    [90m 81| [39m            [34mexpect[39m(check)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m   | [39m                          [31m^[39m
+    [90m 82| [39m
+    [90m 83| [39m            [90m// Wait slightly just in case[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/notificationService.test.js[2m > [22mBackend Service Test: NotificationService[2m > [22mcreate[2m > [22mtriggers Slack system alert for SYSTEM_ALERT type
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ 'System Down', 'Panic', 'INFO' ][90m
+
+Received: 
+
+[1m  1st vi.fn() call:
+
+[22m[2m  [[22m
+[2m    "System Down",[22m
+[2m    "Panic",[22m
+[32m-   "INFO",[90m
+[31m+   "CRITICAL",[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m tests/unit/backend/notificationService.test.js:[2m108:54[22m[39m
+    [90m106| [39m            })[33m;[39m
+    [90m107| [39m
+    [90m108| [39m            expect(mockSlackService.sendSystemAlert).toHaveBeenCalledW…
+    [90m   | [39m                                                     [31m^[39m
+    [90m109| [39m        })[33m;[39m
+    [90m110| [39m    })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[90m (8)[39m
+[2m   Start at [22m 12:06:51
+[2m   Duration [22m 1.02s[2m (transform 38ms, setup 119ms, import 54ms, tests 219ms, environment 464ms)[22m
+
+JUNIT report written to /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/junit.xml

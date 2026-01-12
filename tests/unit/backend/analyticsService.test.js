@@ -1,19 +1,22 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createMockDb } from '../../helpers/dependencyInjector.js';
+import AnalyticsService from '../../../server/services/analyticsService.js';
 
 /**
- * Integration tests for AnalyticsService
- * Uses real database - production-ready tests
+ * Unit tests for AnalyticsService
  */
-describe('AnalyticsService - Integration', () => {
-    let AnalyticsService;
+describe('AnalyticsService', () => {
+    let mockDb;
+    let mockUuid;
 
-    beforeAll(async () => {
-        // Clear any mock flags
-        delete process.env.MOCK_DB;
+    beforeEach(() => {
+        mockDb = createMockDb();
+        mockUuid = vi.fn(() => 'test-uuid-123');
 
-        // Import the real service (no mocks)
-        const mod = await import('../../../server/services/analyticsService.js');
-        AnalyticsService = mod.default;
+        AnalyticsService.setDependencies({
+            db: mockDb,
+            uuidv4: mockUuid
+        });
     });
 
     describe('logUsage', () => {

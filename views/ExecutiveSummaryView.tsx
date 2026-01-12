@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { FullSession, Initiative } from '../types';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+
+import { AxisAssessment, FullInitiative, FullSession } from '../types';
 
 interface ExecutiveSummaryViewProps {
     session: FullSession;
@@ -12,20 +13,26 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
         const completedIds = session.assessment.completedAxes || [];
         if (completedIds.length === 0) return 0;
 
-        // Map ID to score, handle undefined
-        const scores = completedIds.map(id => (session.assessment[id] as any)?.score || 0);
-        const total = scores.reduce((sum, score) => sum + score, 0);
+        // Map ID to score, calculate from actual maturity level
+        const scores = completedIds.map((id: string) => {
+            const axisData = session.assessment[id as keyof typeof session.assessment] as AxisAssessment | undefined;
+            return axisData ? (axisData.actual * 100) / 7 : 0; // Convert 1-7 scale to 0-100
+        });
+        const total = scores.reduce((sum: number, score: number) => sum + score, 0);
 
         return (total / completedIds.length).toFixed(1);
     };
 
     const financials = useMemo(() => {
         const inits = session.initiatives || [];
-        const capex = inits.reduce((sum, i) => sum + (i.costCapex || 0), 0);
-        const opex = inits.reduce((sum, i) => sum + (i.costOpex || 0), 0);
+        const capex = inits.reduce((sum: number, i: FullInitiative) => sum + (i.costCapex || 0), 0);
+        const opex = inits.reduce((sum: number, i: FullInitiative) => sum + (i.costOpex || 0), 0);
         // Weighted ROI
-        const totalCost = capex + (opex * 3); // 3 year horizon
-        const totalGain = inits.reduce((sum, i) => sum + ((i.costCapex || 0) * (i.expectedRoi || 0)), 0);
+        const totalCost = capex + opex * 3; // 3 year horizon
+        const totalGain = inits.reduce(
+            (sum: number, i: FullInitiative) => sum + (i.costCapex || 0) * (i.expectedRoi || 0),
+            0,
+        );
         const avgRoi = totalCost > 0 ? (totalGain / totalCost).toFixed(1) : 0;
 
         return { capex, opex, avgRoi, count: inits.length };
@@ -39,18 +46,28 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
         })
         .slice(0, 5);
 
-    const maturityData = (session.assessment.completedAxes || []).map(axisId => ({
-        name: axisId.substring(0, 10), // Short name
-        score: (session.assessment[axisId] as any)?.score || 0
-    }));
+    const maturityData = (session.assessment.completedAxes || []).map((axisId) => {
+        const axisData = session.assessment[axisId as keyof typeof session.assessment] as AxisAssessment | undefined;
+        // Calculate score from actual and target maturity levels
+        const score = axisData ? (axisData.actual * 100) / 7 : 0; // Convert 1-7 scale to 0-100
+        return {
+            name: axisId.substring(0, 10), // Short name
+            score: score,
+        };
+    });
 
     return (
-        <div id="executive-summary-content" className="w-[210mm] min-h-[297mm] bg-white text-slate-900 p-8 mx-auto shadow-2xl overflow-hidden">
+        <div
+            id="executive-summary-content"
+            className="w-[210mm] min-h-[297mm] bg-white text-slate-900 p-8 mx-auto shadow-2xl overflow-hidden"
+        >
             {/* Header */}
             <div className="border-b-4 border-blue-900 pb-4 mb-8 flex justify-between items-end">
                 <div>
                     <h1 className="text-3xl font-serif font-bold text-blue-900">Digital Transformation Strategy</h1>
-                    <p className="text-slate-500 uppercase tracking-widest text-sm mt-1">Executive Summary • {new Date().toLocaleDateString()}</p>
+                    <p className="text-slate-500 uppercase tracking-widest text-sm mt-1">
+                        Executive Summary • {new Date().toLocaleDateString()}
+                    </p>
                 </div>
                 <div className="text-right">
                     <div className="text-4xl font-bold text-blue-600">{calculateOverallScore()}/5.0</div>
@@ -62,7 +79,9 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
             <div className="grid grid-cols-2 gap-8 mb-8">
                 {/* Left: Financial Case */}
                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">Business Case</h3>
+                    <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">
+                        Business Case
+                    </h3>
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
                             <span className="text-slate-600 text-sm">Total Investment (Capex)</span>
@@ -78,7 +97,8 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
                         </div>
                         <div className="mt-4 pt-4 border-t border-slate-200">
                             <p className="text-xs text-slate-500 italic">
-                                "The portfolio consists of {financials.count} strategic initiatives targeting a {financials.avgRoi}x return over 3 years."
+                                "The portfolio consists of {financials.count} strategic initiatives targeting a{' '}
+                                {financials.avgRoi}x return over 3 years."
                             </p>
                         </div>
                     </div>
@@ -100,7 +120,9 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
 
             {/* Strategic Initiatives Table */}
             <div className="mb-8">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">Strategic Priority Initiatives</h3>
+                <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">
+                    Strategic Priority Initiatives
+                </h3>
                 <table className="w-full text-sm text-left">
                     <thead className="bg-slate-100 text-slate-600 uppercase text-xs">
                         <tr>
@@ -115,16 +137,25 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
                             <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                                 <td className="px-4 py-3 font-medium text-slate-800">
                                     {init.name}
-                                    <div className="text-xs text-slate-500 font-normal mt-0.5 line-clamp-1">{init.summary}</div>
+                                    <div className="text-xs text-slate-500 font-normal mt-0.5 line-clamp-1">
+                                        {init.summary}
+                                    </div>
                                 </td>
                                 <td className="px-4 py-3 text-slate-600 capitalize">{init.axis}</td>
                                 <td className="px-4 py-3">
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${init.businessValue === 'High' ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-600'
-                                        }`}>
+                                    <span
+                                        className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                            init.businessValue === 'High'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-blue-50 text-blue-600'
+                                        }`}
+                                    >
                                         {init.businessValue}
                                     </span>
                                 </td>
-                                <td className="px-4 py-3 text-right font-mono text-slate-600">${(init.costCapex || 0).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-right font-mono text-slate-600">
+                                    ${(init.costCapex || 0).toLocaleString()}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -133,9 +164,9 @@ export const ExecutiveSummaryView: React.FC<ExecutiveSummaryViewProps> = ({ sess
 
             {/* Footer / Disclaimers */}
             <div className="mt-auto border-t border-slate-200 pt-6 flex justify-between items-center text-xs text-slate-400">
-                <p>Generated by Consultify Enterprise • Confidential</p>
+                <p>Generated by TechnoLex Enterprise • Confidential</p>
                 <div className="flex gap-4">
-                    <span>consultify.io</span>
+                    <span>technolex.io</span>
                     <span>Page 1 of 1</span>
                 </div>
             </div>

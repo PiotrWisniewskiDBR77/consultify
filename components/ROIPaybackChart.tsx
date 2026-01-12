@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import { EconomicsSummary, Language } from '../types';
+
+import { EconomicsSummary } from '../types';
 
 interface Props {
     economics: EconomicsSummary;
-    language: Language;
 }
 
-export const ROIPaybackChart: React.FC<Props> = ({ economics, language }) => {
+export const ROIPaybackChart: React.FC<Props> = ({ economics }) => {
     const { totalCost, totalAnnualBenefit } = economics;
 
     // Generate data points for 5 years
@@ -53,7 +53,15 @@ export const ROIPaybackChart: React.FC<Props> = ({ economics, language }) => {
             <h3 className="text-sm font-semibold text-slate-400 mb-2">Cumulative Cash Flow (5 Years)</h3>
             <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
                 {/* Grid Lines */}
-                <line x1={padding} y1={zeroY} x2={width - padding} y2={zeroY} stroke="#94a3b8" strokeWidth="2" strokeDasharray="4 4" />
+                <line
+                    x1={padding}
+                    y1={zeroY}
+                    x2={width - padding}
+                    y2={zeroY}
+                    stroke="#94a3b8"
+                    strokeWidth="2"
+                    strokeDasharray="4 4"
+                />
 
                 {/* Y-Axis Line */}
                 <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#334155" strokeWidth="1" />
@@ -87,13 +95,7 @@ export const ROIPaybackChart: React.FC<Props> = ({ economics, language }) => {
                         </text>
 
                         {/* X-Axis Labels */}
-                        <text
-                            x={getX(point.year)}
-                            y={height - 10}
-                            textAnchor="middle"
-                            fill="#94a3b8"
-                            fontSize="10"
-                        >
+                        <text x={getX(point.year)} y={height - 10} textAnchor="middle" fill="#94a3b8" fontSize="10">
                             Y{point.year}
                         </text>
                     </g>

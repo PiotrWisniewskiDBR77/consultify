@@ -1,7 +1,16 @@
+/**
+ * DEPRECATED: This file is kept for reference only.
+ * 
+ * Use database.sqlite.active.js instead, which is the current active implementation.
+ * This file may be removed in a future version.
+ * 
+ * @deprecated Use database.sqlite.active.js
+ */
+
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+import path from 'path';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 const dbPath = path.resolve(__dirname, 'consultify.db');
 
@@ -233,7 +242,7 @@ function initDb() {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Activity Logs (Audit Trail)
+        // Activity Logs (Audit Trail) - Extended for Enterprise System Module
         db.run(`CREATE TABLE IF NOT EXISTS activity_logs (
             id TEXT PRIMARY KEY,
             organization_id TEXT NOT NULL,
@@ -251,6 +260,36 @@ function initDb() {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
+        // Extended Audit Logs Table (Enterprise System Module)
+        db.run(`CREATE TABLE IF NOT EXISTS audit_logs (
+            id TEXT PRIMARY KEY,
+            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            user_id TEXT,
+            user_email TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            action_type TEXT NOT NULL,
+            resource_type TEXT,
+            resource_id TEXT,
+            before_data TEXT, -- JSON
+            after_data TEXT, -- JSON
+            risk_level TEXT, -- LOW, MEDIUM, HIGH, CRITICAL
+            compliance_tags TEXT, -- JSON array
+            request_id TEXT,
+            organization_id TEXT,
+            metadata TEXT, -- JSON
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Add indexes for audit_logs
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_action_type ON audit_logs(action_type)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs(resource_type, resource_id)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_risk_level ON audit_logs(risk_level)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_audit_logs_org_id ON audit_logs(organization_id)`, (err) => {});
+
         // User Token Quota (Add columns to users - we'll use ALTER TABLE to add if not exists)
         db.run(`ALTER TABLE users ADD COLUMN token_limit INTEGER DEFAULT 100000`, (err) => {
             // Ignore error if column already exists
@@ -263,6 +302,34 @@ function initDb() {
         });
         db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`, (err) => {
             // Ignore error if column already exists
+        });
+        db.run(`ALTER TABLE users ADD COLUMN title TEXT`, (err) => {
+            // Ignore error if column already exists
+        });
+
+        // GAP-03: Add rag_enabled column to projects
+        db.run(`ALTER TABLE projects ADD COLUMN rag_enabled INTEGER DEFAULT 1`, (err) => {
+            // Ignore error if column already exists
+        });
+
+        // MED-04: Project Notification Settings table
+        db.run(`CREATE TABLE IF NOT EXISTS project_notification_settings (
+            id TEXT PRIMARY KEY,
+            project_id TEXT UNIQUE NOT NULL,
+            task_overdue_enabled INTEGER DEFAULT 1,
+            task_due_today_enabled INTEGER DEFAULT 1,
+            blocker_detected_enabled INTEGER DEFAULT 1,
+            gate_ready_enabled INTEGER DEFAULT 1,
+            decision_required_enabled INTEGER DEFAULT 1,
+            escalation_enabled INTEGER DEFAULT 1,
+            escalation_days INTEGER DEFAULT 3,
+            email_notifications INTEGER DEFAULT 0,
+            in_app_notifications INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        )`, (err) => {
+            // Table creation - ignore if exists
         });
 
         // ==========================================
@@ -433,7 +500,7 @@ function initDb() {
             FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
-        // Access Code Usage Tracking
+        // Usage Tracking for Access Codes
         db.run(`CREATE TABLE IF NOT EXISTS access_code_usage (
             id TEXT PRIMARY KEY,
             code_id TEXT NOT NULL,
@@ -441,6 +508,55 @@ function initDb() {
             used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(code_id) REFERENCES access_codes(id) ON DELETE CASCADE,
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // ==========================================
+        // PHASE 4: COMPOSABLE REPORTS SYSTEM
+        // ==========================================
+
+        // 1. REPORTS TABLE (Container)
+        db.run(`CREATE TABLE IF NOT EXISTS reports (
+            id TEXT PRIMARY KEY,
+            project_id TEXT,
+            organization_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            status TEXT DEFAULT 'draft', -- draft, final, archived
+            version INTEGER DEFAULT 1,
+            block_order TEXT, -- JSON array of blockIds ["block_1", "block_2"]
+            sources TEXT, -- JSON metadata about input sources
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // 2. REPORT BLOCKS TABLE (Content)
+        db.run(`CREATE TABLE IF NOT EXISTS report_blocks (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            type TEXT NOT NULL, -- text, table, cards, matrix, evidence_list, recommendation, image
+            title TEXT,
+            module TEXT, -- Origin module (e.g. "ChallengeMap")
+            anchor TEXT, -- Anchor link
+            editable INTEGER DEFAULT 1,
+            ai_regeneratable INTEGER DEFAULT 1,
+            locked INTEGER DEFAULT 0,
+            content TEXT, -- JSON content specific to block type
+            meta TEXT, -- JSON metadata (confidence, tags, etc.)
+            position INTEGER DEFAULT 0, -- Sort order (redundant with block_order but good for recovery)
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
+        )`);
+
+        // 3. REPORT SNAPSHOTS (Versioning)
+        db.run(`CREATE TABLE IF NOT EXISTS report_snapshots (
+            id TEXT PRIMARY KEY,
+            report_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            snapshot_data TEXT, -- Full JSON dump of report + blocks at this version
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE
         )`);
 
         // ==========================================
@@ -573,6 +689,11 @@ function initDb() {
             });
         });
 
+        // Add report_id for traceability
+        db.run(`ALTER TABLE initiatives ADD COLUMN report_id TEXT`, (err) => {
+            // Ignore if exists - Link to assessment_reports
+        });
+
         // Task Dependencies
         db.run(`CREATE TABLE IF NOT EXISTS task_dependencies (
             id TEXT PRIMARY KEY,
@@ -621,6 +742,27 @@ function initDb() {
             is_active INTEGER DEFAULT 1,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
+
+        // Migration: Ensure new columns exist for subscription_plans (if table already existed)
+        const planCols = ['token_overage_rate REAL', 'storage_overage_rate REAL', 'stripe_price_id TEXT'];
+        planCols.forEach(col => {
+            db.run(`ALTER TABLE subscription_plans ADD COLUMN ${col}`, (err) => { /* ignore error if exists */ });
+        });
+
+        // Seed Default Subscription Plans
+        const defaultPlans = [
+            { id: 'plan_free', name: 'Free', price_monthly: 0, token_limit: 50000, storage_limit_gb: 1, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' },
+            { id: 'plan_basic', name: 'Basic', price_monthly: 20, token_limit: 500000, storage_limit_gb: 10, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' },
+            { id: 'plan_standard', name: 'Standard', price_monthly: 100, token_limit: 5000000, storage_limit_gb: 50, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' },
+            { id: 'plan_premium', name: 'Premium', price_monthly: 500, token_limit: 30000000, storage_limit_gb: 500, token_overage_rate: 0.015, storage_overage_rate: 0.1, stripe_price_id: '' }
+        ];
+
+        const insertPlan = db.prepare(`INSERT OR IGNORE INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate, stripe_price_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+
+        defaultPlans.forEach(p => {
+            insertPlan.run(p.id, p.name, p.price_monthly, p.token_limit, p.storage_limit_gb, p.token_overage_rate, p.storage_overage_rate, p.stripe_price_id);
+        });
+        insertPlan.finalize();
 
         // 2. ORGANIZATION BILLING (per tenant)
         db.run(`CREATE TABLE IF NOT EXISTS organization_billing (
@@ -791,6 +933,207 @@ function initDb() {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
 
+        // ==========================================
+        // PHASE: SYSTEM MODULE - ENTERPRISE TABLES
+        // ==========================================
+
+        // Feature Flags Table
+        db.run(`CREATE TABLE IF NOT EXISTS feature_flags (
+            id TEXT PRIMARY KEY,
+            flag_key TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            enabled INTEGER DEFAULT 0,
+            flag_type TEXT NOT NULL, -- boolean, percentage, targeting, ab_test
+            targeting_rules TEXT, -- JSON
+            rollout_percentage INTEGER DEFAULT 0,
+            environment TEXT NOT NULL DEFAULT 'production', -- development, staging, production
+            organization_id TEXT, -- NULL for global flags
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_by TEXT,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Feature Flag History Table
+        db.run(`CREATE TABLE IF NOT EXISTS feature_flag_history (
+            id TEXT PRIMARY KEY,
+            feature_flag_id TEXT NOT NULL,
+            change_type TEXT NOT NULL, -- created, updated, enabled, disabled
+            old_value TEXT, -- JSON
+            new_value TEXT, -- JSON
+            changed_by TEXT,
+            changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(feature_flag_id) REFERENCES feature_flags(id) ON DELETE CASCADE,
+            FOREIGN KEY(changed_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Webhook Deliveries Table
+        db.run(`CREATE TABLE IF NOT EXISTS webhook_deliveries (
+            id TEXT PRIMARY KEY,
+            webhook_id TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            payload TEXT NOT NULL, -- JSON
+            status TEXT NOT NULL, -- pending, success, failed, retrying
+            response_code INTEGER,
+            response_body TEXT,
+            attempts INTEGER DEFAULT 0,
+            delivered_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
+        )`);
+
+        // Add indexes for webhook_deliveries
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook_id ON webhook_deliveries(webhook_id)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status ON webhook_deliveries(status)`, (err) => {});
+        db.run(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_created_at ON webhook_deliveries(created_at DESC)`, (err) => {});
+
+        // Extend existing webhooks table with missing columns
+        db.run(`ALTER TABLE webhooks ADD COLUMN retry_policy TEXT`, (err) => {
+            // Ignore error if column already exists
+        });
+        db.run(`ALTER TABLE webhooks ADD COLUMN headers TEXT`, (err) => {
+            // Ignore error if column already exists
+        });
+        db.run(`ALTER TABLE webhooks ADD COLUMN payload_template TEXT`, (err) => {
+            // Ignore error if column already exists
+        });
+
+        // Integrations Table
+        db.run(`CREATE TABLE IF NOT EXISTS integrations (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            type TEXT NOT NULL, -- slack, jira, google_workspace, microsoft_365, github, etc.
+            name TEXT NOT NULL,
+            config TEXT NOT NULL, -- JSON
+            auth_config TEXT NOT NULL, -- JSON
+            enabled INTEGER DEFAULT 1,
+            sync_config TEXT, -- JSON
+            last_sync_at DATETIME,
+            last_sync_status TEXT, -- success, failed, partial
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        // Integration Sync Logs Table
+        db.run(`CREATE TABLE IF NOT EXISTS integration_sync_logs (
+            id TEXT PRIMARY KEY,
+            integration_id TEXT NOT NULL,
+            sync_type TEXT NOT NULL, -- full, incremental
+            status TEXT NOT NULL, -- success, failed, partial
+            records_processed INTEGER DEFAULT 0,
+            errors TEXT, -- JSON
+            started_at DATETIME NOT NULL,
+            completed_at DATETIME,
+            FOREIGN KEY(integration_id) REFERENCES integrations(id) ON DELETE CASCADE
+        )`);
+
+        // System Metrics Table
+        db.run(`CREATE TABLE IF NOT EXISTS system_metrics (
+            id TEXT PRIMARY KEY,
+            metric_name TEXT NOT NULL,
+            metric_value REAL NOT NULL,
+            metric_type TEXT NOT NULL, -- gauge, counter, histogram
+            tags TEXT, -- JSON
+            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Add indexes for system_metrics
+        db.run(`CREATE INDEX IF NOT EXISTS idx_system_metrics_name_time ON system_metrics(metric_name, timestamp DESC)`, (err) => {});
+
+        // Security Events Table
+        db.run(`CREATE TABLE IF NOT EXISTS security_events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            severity TEXT NOT NULL, -- low, medium, high, critical
+            user_id TEXT,
+            ip_address TEXT,
+            details TEXT, -- JSON
+            resolved INTEGER DEFAULT 0,
+            resolved_at DATETIME,
+            resolved_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY(resolved_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // Compliance Records Table
+        db.run(`CREATE TABLE IF NOT EXISTS compliance_records (
+            id TEXT PRIMARY KEY,
+            framework TEXT NOT NULL, -- GDPR, SOC2, ISO27001, HIPAA, PCI_DSS
+            control_id TEXT,
+            control_name TEXT,
+            status TEXT NOT NULL, -- compliant, non_compliant, not_applicable
+            evidence TEXT, -- JSON
+            last_verified_at DATETIME,
+            verified_by TEXT,
+            notes TEXT,
+            FOREIGN KEY(verified_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // System Configuration Table
+        db.run(`CREATE TABLE IF NOT EXISTS system_config (
+            id TEXT PRIMARY KEY,
+            config_key TEXT UNIQUE NOT NULL,
+            config_value TEXT NOT NULL, -- JSON
+            config_type TEXT NOT NULL, -- string, number, boolean, json
+            environment TEXT, -- development, staging, production, NULL for all
+            description TEXT,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_by TEXT,
+            FOREIGN KEY(updated_by) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
+        // API Keys Table
+        db.run(`CREATE TABLE IF NOT EXISTS api_keys (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            user_id TEXT,
+            key_hash TEXT UNIQUE NOT NULL,
+            key_prefix TEXT NOT NULL,
+            name TEXT,
+            permissions TEXT, -- JSON
+            rate_limit INTEGER,
+            expires_at DATETIME,
+            last_used_at DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            revoked_at DATETIME,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`);
+
+        // Backup Records Table
+        db.run(`CREATE TABLE IF NOT EXISTS backup_records (
+            id TEXT PRIMARY KEY,
+            backup_type TEXT NOT NULL, -- full, incremental
+            status TEXT NOT NULL, -- in_progress, completed, failed
+            size_bytes INTEGER,
+            storage_location TEXT,
+            started_at DATETIME NOT NULL,
+            completed_at DATETIME,
+            verified_at DATETIME,
+            metadata TEXT -- JSON
+        )`);
+
+        // Migrate existing activity_logs to audit_logs (one-time migration)
+        db.run(`INSERT OR IGNORE INTO audit_logs (
+            id, timestamp, user_id, organization_id, action_type, resource_type, resource_id,
+            before_data, after_data, ip_address, user_agent, risk_level
+        )
+        SELECT 
+            id, created_at, user_id, organization_id, action, entity_type, entity_id,
+            old_value, new_value, ip_address, user_agent, 'LOW'
+        FROM activity_logs
+        WHERE NOT EXISTS (SELECT 1 FROM audit_logs WHERE audit_logs.id = activity_logs.id)`, (err) => {
+            if (err) {
+                console.log('[Migration] Activity logs migration note:', err.message);
+            } else {
+                console.log('[Migration] Migrated activity_logs to audit_logs');
+            }
+        });
+
         // Seed Default Billing Margins
         const defaultMargins = [
             { id: 'margin-platform', source_type: 'platform', display_name: 'Platform Tokens', base_cost: 0.010, margin: 40 },
@@ -818,22 +1161,55 @@ function initDb() {
         });
         insertPackage.finalize();
 
-        console.log('Created 3-tier token billing tables and seeded defaults.');
 
-        // Seed Default Subscription Plans
-        const defaultPlans = [
-            { id: 'plan-starter', name: 'Starter', price: 20, tokens: 100000, storage: 5, tokenOverage: 0.015, storageOverage: 0.10 },
-            { id: 'plan-growth', name: 'Growth', price: 100, tokens: 1000000, storage: 50, tokenOverage: 0.012, storageOverage: 0.08 },
-            { id: 'plan-payg', name: 'Pay As You Go', price: 0, tokens: 0, storage: 0, tokenOverage: 0.020, storageOverage: 0.12 }
-        ];
+        // AI Ideas Board
+        db.run(`CREATE TABLE IF NOT EXISTS ai_ideas (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT,
+            status TEXT DEFAULT 'new',
+            priority TEXT DEFAULT 'medium',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
 
-        const insertPlan = db.prepare(`INSERT OR IGNORE INTO subscription_plans (id, name, price_monthly, token_limit, storage_limit_gb, token_overage_rate, storage_overage_rate) VALUES (?, ?, ?, ?, ?, ?, ?)`);
-        defaultPlans.forEach(p => {
-            insertPlan.run(p.id, p.name, p.price, p.tokens, p.storage, p.tokenOverage, p.storageOverage);
-        });
-        insertPlan.finalize();
+        // AI System Observations
+        db.run(`CREATE TABLE IF NOT EXISTS ai_observations (
+            id TEXT PRIMARY KEY,
+            content TEXT NOT NULL,
+            category TEXT,
+            confidence_score REAL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
 
-        console.log('Created billing tables and seeded default subscription plans.');
+        // ==========================================
+        // PHASE 5: MEGATREND SCANNER
+        // ==========================================
+
+        // Megatrends (Baseline Data)
+        db.run(`CREATE TABLE IF NOT EXISTS megatrends (
+            id TEXT PRIMARY KEY,
+            industry TEXT NOT NULL,
+            type TEXT NOT NULL,          -- Technology, Business, Societal
+            label TEXT NOT NULL,
+            description TEXT,
+            base_impact_score REAL,
+            initial_ring TEXT DEFAULT 'Watch Closely'
+        )`);
+
+        // Custom Trends (Company Specific)
+        db.run(`CREATE TABLE IF NOT EXISTS custom_trends (
+            id TEXT PRIMARY KEY,
+            company_id TEXT NOT NULL,
+            industry TEXT,
+            type TEXT,
+            label TEXT NOT NULL,
+            description TEXT,
+            ring TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(company_id) REFERENCES organizations(id) ON DELETE CASCADE
+        )`);
+
+        console.log('Database initialized successfully');
 
         // Seed Super Admin & Default Organization
         const superAdminOrgId = 'org-dbr77-system';
@@ -883,9 +1259,32 @@ function initDb() {
                 insertProject.finalize();
 
                 console.log('Seeded DBR77 Organization with Admin (piotr.wisniewski@dbr77.com) and User (justyna.laskowska@dbr77.com).');
+
+                // --- SEED DEMO ORGANIZATION: Legolex Demo ---
+                const demoOrgId = 'org-legolex-demo';
+                const demoAdminId = 'user-demo-admin';
+
+                // Create Demo Organization
+                const insertDemoOrg = db.prepare(`INSERT INTO organizations(id, name, plan, status) VALUES(?, ?, ?, ?)`);
+                insertDemoOrg.run(demoOrgId, 'Legolex Demo Corp', 'enterprise', 'active');
+                insertDemoOrg.finalize();
+
+                // Create Demo Admin user
+                const demoPassword = bcrypt.hashSync('Demo123!', 8);
+                const insertDemoAdmin = db.prepare(`INSERT INTO users(id, organization_id, email, password, first_name, last_name, role, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`);
+                insertDemoAdmin.run(demoAdminId, demoOrgId, 'demo@legolex.com', demoPassword, 'Demo', 'User', 'ADMIN', 'active');
+                insertDemoAdmin.finalize();
+
+                // Create a sample project for Demo
+                const demoProjectId = 'project-demo-001';
+                const insertDemoProject = db.prepare(`INSERT INTO projects(id, organization_id, name, status, owner_id) VALUES(?, ?, ?, ?, ?)`);
+                insertDemoProject.run(demoProjectId, demoOrgId, 'Strategic Transformation Demo', 'active', demoAdminId);
+                insertDemoProject.finalize();
+
+                console.log('Seeded Demo Organization with Admin (demo@legolex.com).');
             }
         });
     });
 }
 
-module.exports = db;
+export default db;

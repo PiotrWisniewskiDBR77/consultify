@@ -1,75 +1,201 @@
-import React, { useState, useEffect } from 'react';
-import { Api } from '../../services/api';
-import { User, UserRole, Language, AppView } from '../../types';
-import { useAppStore } from '../../store/useAppStore';
+/**
+ * AdminView - Main Admin Panel with 7-Module Tab Structure
+ *
+ * Modules: Overview | Organization | Team | Workspace | AI | Billing | Security
+ *
+ * Best practices from: ClickUp, HubSpot, Replit, Notion
+ * - Owner/Billing Admin role management
+ * - Organization profile & branding
+ * - User groups & permissions
+ * - Spending controls & alerts
+ */
+
 import {
-    Users, Search, Layers, Plus, Trash2, Edit, Shield, TrendingUp, Activity,
-    DollarSign, X, Check, Briefcase
+    Activity,
+    BarChart3,
+    Bell,
+    BookOpen,
+    Brain,
+    Briefcase,
+    Building2,
+    CreditCard,
+    Crown,
+    Download,
+    FileText,
+    Globe,
+    HelpCircle,
+    History,
+    Key,
+    Layers,
+    LayoutDashboard,
+    Lock,
+    MessageSquare,
+    Palette,
+    PlayCircle,
+    Settings,
+    Shield,
+    TrendingUp,
+    UserPlus,
+    Users,
+    UsersRound,
+    Zap,
 } from 'lucide-react';
-import { AdminLLMView } from './AdminLLMView';
-import { AdminKnowledgeView } from './AdminKnowledgeView';
-import { AdminAnalyticsView } from './AdminAnalyticsView';
-import { toast } from 'react-hot-toast';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+// New AI Admin Components (6-tab structure)
+// New AI Admin Components (6-tab structure) - Lazy Loaded
+const AccessLimitsTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.AccessLimitsTab })));
+const AuditComplianceTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.AuditComplianceTab })));
+const FeaturesPrivacyTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.FeaturesPrivacyTab })));
+const HealthMonitoringTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.HealthMonitoringTab })));
+const ModelsProvidersTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.ModelsProvidersTab })));
+const PolicyGovernanceTab = React.lazy(() => import('../../components/Admin/AI').then(m => ({ default: m.PolicyGovernanceTab })));
+
+const AIMissionControl = React.lazy(() => import('../../components/Admin/AIMissionControl').then(m => ({ default: m.AIMissionControl })));
+const AuditLogViewer = React.lazy(() => import('../../components/Admin/AuditLogViewer').then(m => ({ default: m.AuditLogViewer })));
+const SecuritySettings = React.lazy(() => import('../../components/Admin/SecuritySettings').then(m => ({ default: m.SecuritySettings })));
+const WorkModeSettings = React.lazy(() => import('../../components/Admin/WorkModeSettings').then(m => ({ default: m.WorkModeSettings })));
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { AppView, Project, User } from '../../types';
+
+// Lazy load views
+const AdminAnalyticsView = React.lazy(() => import('./AdminAnalyticsView').then(m => ({ default: m.AdminAnalyticsView })));
+const AdminBillingManagement = React.lazy(() => import('./AdminBillingManagement').then(m => ({ default: m.AdminBillingManagement })));
+const AdminDashboard = React.lazy(() => import('./AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminFeedbackView = React.lazy(() => import('./AdminFeedbackView').then(m => ({ default: m.AdminFeedbackView })));
+const AdminKnowledgeView = React.lazy(() => import('./AdminKnowledgeView').then(m => ({ default: m.AdminKnowledgeView })));
+const AdminLLMView = React.lazy(() => import('./AdminLLMView').then(m => ({ default: m.AdminLLMView })));
+const AdminMetricsDashboardView = React.lazy(() => import('./AdminMetricsDashboardView').then(m => ({ default: m.AdminMetricsDashboardView })));
+const AdminProjectManagement = React.lazy(() => import('./AdminProjectManagement').then(m => ({ default: m.AdminProjectManagement })));
+const AdminSecuritySettings = React.lazy(() => import('./AdminSecuritySettings').then(m => ({ default: m.AdminSecuritySettings })));
+const AdminSettingsConsultants = React.lazy(() => import('./AdminSettingsConsultants').then(m => ({ default: m.AdminSettingsConsultants })));
+const AdminTokenPackages = React.lazy(() => import('./AdminTokenPackages').then(m => ({ default: m.AdminTokenPackages })));
+const AdminUserManagement = React.lazy(() => import('./AdminUserManagement').then(m => ({ default: m.AdminUserManagement })));
+const ApiKeysManagementView = React.lazy(() => import('./ApiKeysManagementView').then(m => ({ default: m.ApiKeysManagementView })));
+const AuditLogView = React.lazy(() => import('./AuditLogView').then(m => ({ default: m.AuditLogView })));
+const BillingSettingsView = React.lazy(() => import('./BillingSettingsView').then(m => ({ default: m.BillingSettingsView })));
+const BulkOperationsView = React.lazy(() => import('./BulkOperationsView').then(m => ({ default: m.BulkOperationsView })));
+const CostAllocationView = React.lazy(() => import('./CostAllocationView').then(m => ({ default: m.CostAllocationView })));
+const DataManagementView = React.lazy(() => import('./DataManagementView').then(m => ({ default: m.DataManagementView })));
+const HelpAnalyticsDashboard = React.lazy(() => import('./HelpAnalyticsDashboard').then(m => ({ default: m.HelpAnalyticsDashboard })));
+const InvitationsManagement = React.lazy(() => import('./InvitationsManagement').then(m => ({ default: m.InvitationsManagement })));
+const InvoicesView = React.lazy(() => import('./InvoicesView').then(m => ({ default: m.InvoicesView })));
+const OrgAISettingsView = React.lazy(() => import('./OrgAISettingsView').then(m => ({ default: m.OrgAISettingsView })));
+const OrganizationProfileView = React.lazy(() => import('./OrganizationProfileView').then(m => ({ default: m.OrganizationProfileView })));
+const OwnershipManagementView = React.lazy(() => import('./OwnershipManagementView').then(m => ({ default: m.OwnershipManagementView })));
+const PaymentMethodsView = React.lazy(() => import('./PaymentMethodsView').then(m => ({ default: m.PaymentMethodsView })));
+const PlaybookRunsView = React.lazy(() => import('./PlaybookRunsView').then(m => ({ default: m.PlaybookRunsView })));
+const ProjectDetailsView = React.lazy(() => import('./ProjectDetailsView').then(m => ({ default: m.ProjectDetailsView })));
+const RolesPermissionsView = React.lazy(() => import('./RolesPermissionsView').then(m => ({ default: m.RolesPermissionsView })));
+const SpendingAlertsView = React.lazy(() => import('./SpendingAlertsView').then(m => ({ default: m.SpendingAlertsView })));
+const UsageDashboardView = React.lazy(() => import('./UsageDashboardView').then(m => ({ default: m.UsageDashboardView })));
+const UserGroupsView = React.lazy(() => import('./UserGroupsView').then(m => ({ default: m.UserGroupsView })));
+
+// Admin section type - expanded to 8 modules (with dedicated Feedback module)
+type AdminSection = 'overview' | 'organization' | 'team' | 'workspace' | 'ai' | 'billing' | 'security' | 'feedback';
+
+// Map AppView to AdminSection
+const getAdminSection = (view: AppView): AdminSection => {
+    // New module-based navigation (8 modules)
+    if (view === AppView.ADMIN_OVERVIEW) return 'overview';
+    if (view === AppView.ADMIN_ORGANIZATION) return 'organization';
+    if (view === AppView.ADMIN_TEAM) return 'team';
+    if (view === AppView.ADMIN_WORKSPACE) return 'workspace';
+    if (view === AppView.ADMIN_AI) return 'ai';
+    if (view === AppView.ADMIN_BILLING) return 'billing';
+    if (view === AppView.ADMIN_SECURITY) return 'security';
+    if (view === AppView.ADMIN_FEEDBACK) return 'feedback';
+    if (view === AppView.ADMIN_SETTINGS) return 'security'; // Legacy redirect
+
+    // Legacy views mapping
+    if (view === AppView.ADMIN_DASHBOARD || view === AppView.ADMIN_METRICS || view === AppView.ADMIN_ANALYTICS) {
+        return 'overview';
+    }
+    // Organization module
+    if (view === AppView.ADMIN_ORGANIZATION_SETTINGS) {
+        return 'organization';
+    }
+    // Team module
+    if (
+        view === AppView.ADMIN_USERS ||
+        view === AppView.ADMIN_INVITATIONS ||
+        view === AppView.ADMIN_WORK_MODE ||
+        view === AppView.ADMIN_SETTINGS_CONSULTANTS
+    ) {
+        return 'team';
+    }
+    // Workspace module
+    if (
+        view === AppView.ADMIN_PROJECTS ||
+        view === AppView.ADMIN_PROJECT_DETAILS ||
+        view === AppView.ADMIN_KNOWLEDGE ||
+        view === AppView.ADMIN_PLAYBOOK_RUNS ||
+        view === AppView.ADMIN_BULK_OPERATIONS
+    ) {
+        return 'workspace';
+    }
+    // AI module
+    if (
+        view === AppView.ADMIN_LLM ||
+        view === AppView.ADMIN_AI_HEALTH ||
+        view === AppView.HELP_ANALYTICS ||
+        view === AppView.ADMIN_TOKEN_MANAGEMENT
+    ) {
+        return 'ai';
+    }
+    return 'overview';
+};
 
 interface AdminViewProps {
     currentUser: User;
-    onNavigate: (view: any) => void;
-    language: Language;
+    onNavigate: (view: AppView) => void;
 }
 
-interface Project {
-    id: string;
-    name: string;
-    status: string;
-    owner_first_name?: string;
-    owner_last_name?: string;
-    created_at: string;
-}
-
-export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, language }) => {
-    const { currentView } = useAppStore();
-    // const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'USERS' | 'PROJECTS'>('DASHBOARD'); // Removed internal state
+export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate }) => {
+    const { currentView, setCurrentView } = useAppStore();
+    const { t } = useTranslation();
     const [users, setUsers] = useState<User[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
 
-    // Modals
-    const [showAddUserModal, setShowAddUserModal] = useState(false);
-    const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [showAddProjectModal, setShowAddProjectModal] = useState(false);
-    const [newProjectName, setNewProjectName] = useState('');
-
-    // User Form State
-    const [formData, setFormData] = useState({
-        firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active'
-    });
-
-    const loadUsers = async () => {
-        try {
-            const data = await Api.getUsers();
-            setUsers(data);
-        } catch (e) {
-            console.error(e);
-            toast.error('Failed to load users');
+    // Handle URL module parameter on mount
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const moduleParam = params.get('module');
+        if (moduleParam) {
+            const moduleMap: Record<string, AppView> = {
+                dashboard: AppView.ADMIN_OVERVIEW,
+                overview: AppView.ADMIN_OVERVIEW,
+                organization: AppView.ADMIN_ORGANIZATION,
+                team: AppView.ADMIN_TEAM,
+                workspace: AppView.ADMIN_WORKSPACE,
+                ai: AppView.ADMIN_AI,
+                billing: AppView.ADMIN_BILLING,
+                security: AppView.ADMIN_SECURITY,
+                feedback: AppView.ADMIN_FEEDBACK,
+            };
+            const targetView = moduleMap[moduleParam.toLowerCase()];
+            if (targetView && currentView !== targetView) {
+                setCurrentView(targetView);
+            }
         }
-    };
+    }, []); // Run only on mount
 
-    const loadProjects = async () => {
-        try {
-            const data = await Api.getProjects();
-            setProjects(data);
-        } catch (e) {
-            console.error(e);
-            toast.error('Failed to load projects');
-        }
-    };
+    // Derive active section from currentView
+    const activeSection = useMemo<AdminSection>(() => {
+        return getAdminSection(currentView);
+    }, [currentView]);
 
+    // Load initial data
     useEffect(() => {
         const initData = async () => {
             try {
                 const [u, p] = await Promise.all([Api.getUsers(), Api.getProjects()]);
                 setUsers(u);
-                setProjects(p);
+                setProjects(p as any);
             } catch (e) {
                 console.error('Failed to load initial admin data', e);
             }
@@ -77,273 +203,516 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate, l
         initData();
     }, []);
 
-    const handleDeleteUser = async (id: string) => {
-        if (window.confirm('Are you sure you want to delete this user?')) {
-            try {
-                await Api.deleteUser(id);
-                toast.success('User deleted');
-                loadUsers();
-            } catch (e) { toast.error('Failed to delete user'); }
+    // Handle section change - using new module AppView values (8 modules)
+    const handleSectionChange = (section: string) => {
+        switch (section) {
+            case 'overview':
+                setCurrentView(AppView.ADMIN_OVERVIEW);
+                break;
+            case 'organization':
+                setCurrentView(AppView.ADMIN_ORGANIZATION);
+                break;
+            case 'team':
+                setCurrentView(AppView.ADMIN_TEAM);
+                break;
+            case 'workspace':
+                setCurrentView(AppView.ADMIN_WORKSPACE);
+                break;
+            case 'ai':
+                setCurrentView(AppView.ADMIN_AI);
+                break;
+            case 'billing':
+                setCurrentView(AppView.ADMIN_BILLING);
+                break;
+            case 'security':
+                setCurrentView(AppView.ADMIN_SECURITY);
+                break;
+            case 'feedback':
+                setCurrentView(AppView.ADMIN_FEEDBACK);
+                break;
+            case 'settings': // Legacy redirect
+                setCurrentView(AppView.ADMIN_SECURITY);
+                break;
         }
     };
 
-    const handleDeleteProject = async (id: string) => {
-        if (window.confirm('Are you sure you want to delete this project?')) {
-            try {
-                await Api.deleteProject(id);
-                toast.success('Project deleted');
-                loadProjects();
-            } catch (e) { toast.error('Failed to delete project'); }
+    // Get section title and subtitle
+    const getSectionInfo = () => {
+        switch (activeSection) {
+            case 'overview':
+                return {
+                    title: t('admin.overview.title', 'Overview'),
+                    subtitle: t('admin.overview.subtitle', 'Dashboard, metrics, and analytics for your organization'),
+                };
+            case 'organization':
+                return {
+                    title: t('admin.organization.title', 'Organization'),
+                    subtitle: t('admin.organization.subtitle', 'Profile, branding, ownership, and regional settings'),
+                };
+            case 'team':
+                return {
+                    title: t('admin.team.title', 'Team'),
+                    subtitle: t('admin.team.subtitle', 'Manage users, groups, invitations, and permissions'),
+                };
+            case 'workspace':
+                return {
+                    title: t('admin.workspace.title', 'Workspace'),
+                    subtitle: t('admin.workspace.subtitle', 'Projects, knowledge base, and playbooks'),
+                };
+            case 'ai':
+                return {
+                    title: t('admin.ai.title', 'AI & Intelligence'),
+                    subtitle: t('admin.ai.subtitle', 'AI configuration, health monitoring, and analytics'),
+                };
+            case 'billing':
+                return {
+                    title: t('admin.billing.title', 'Billing & Subscription'),
+                    subtitle: t('admin.billing.subtitle', 'Plans, payments, invoices, and spending controls'),
+                };
+            case 'security':
+                return {
+                    title: t('admin.security.title', 'Security & Compliance'),
+                    subtitle: t(
+                        'admin.security.subtitle',
+                        'Authentication, access control, audit logs, and data management',
+                    ),
+                };
+            case 'feedback':
+                return {
+                    title: t('admin.feedback.title', 'Feedback & Support'),
+                    subtitle: t('admin.feedback.subtitle', 'Review user feedback, feature requests, and bug reports'),
+                };
+            default:
+                return { title: 'Admin', subtitle: '' };
         }
     };
 
-    const handleCreateProject = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await Api.createProject({ name: newProjectName });
-            toast.success('Project created');
-            setNewProjectName('');
-            setShowAddProjectModal(false);
-            loadProjects();
-        } catch (e) { toast.error('Failed to create project'); }
-    };
+    const sectionInfo = getSectionInfo();
 
-    const handleSaveUser = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            if (editingUser) {
-                await Api.updateUser(editingUser.id, formData);
-                toast.success('User updated');
-            } else {
-                await Api.addUser({ ...formData, password: 'welcome123' });
-                toast.success('User created');
-            }
-            setShowAddUserModal(false);
-            setEditingUser(null);
-            loadUsers();
-        } catch (err: any) {
-            toast.error(err.message || 'Error saving user');
-        }
-    };
-
-    const openEditModal = (user: User) => {
-        setEditingUser(user);
-        setFormData({
-            firstName: user.firstName, lastName: user.lastName, email: user.email,
-            role: (user.role as UserRole) || UserRole.OTHER, status: user.status || 'active'
-        });
-        setShowAddUserModal(true);
-    };
-
-    const openAddModal = () => {
-        setEditingUser(null);
-        setFormData({ firstName: '', lastName: '', email: '', role: UserRole.OTHER, status: 'active' });
-        setShowAddUserModal(true);
-    };
-
-    const filteredUsers = users.filter(u =>
-        u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.lastName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const getRoleBadgeColor = (role?: string) => {
-        if (role === UserRole.ADMIN) return 'bg-purple-500/20 text-purple-400 border-purple-500/50';
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/50';
-    };
-
-    // --- RENDERERS ---
-
-    const renderDashboard = () => (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-navy-900 border border-white/5 rounded-xl p-6 flex items-center justify-between">
-                    <div>
-                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Total Users</p>
-                        <h3 className="text-2xl font-bold text-white">{users.length}</h3>
-                    </div>
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-500/20 text-blue-400"><Users size={24} /></div>
-                </div>
-                <div className="bg-navy-900 border border-white/5 rounded-xl p-6 flex items-center justify-between">
-                    <div>
-                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Active Projects</p>
-                        <h3 className="text-2xl font-bold text-white">{projects.length}</h3>
-                    </div>
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-green-500/20 text-green-400"><Briefcase size={24} /></div>
-                </div>
-                <div className="bg-navy-900 border border-white/5 rounded-xl p-6 flex items-center justify-between">
-                    <div>
-                        <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Est. Revenue</p>
-                        <h3 className="text-2xl font-bold text-white">$0.00</h3>
-                    </div>
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-500/20 text-purple-400"><DollarSign size={24} /></div>
+    // Render content based on active section
+    const renderContent = () => {
+        const FallbackLoader = () => (
+            <div className="flex h-64 items-center justify-center">
+                <div className="flex flex-col items-center gap-2 text-slate-400">
+                    <Activity className="h-6 w-6 animate-spin" />
+                    <span className="text-sm">Loading module...</span>
                 </div>
             </div>
-        </div>
-    );
+        );
 
-    const renderProjects = () => (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-white">Active Projects</h2>
-                <button
-                    onClick={() => setShowAddProjectModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors text-sm font-medium"
-                >
-                    <Plus size={16} /> New Project
-                </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {projects.map(p => (
-                    <div key={p.id} className="bg-navy-900 border border-white/5 rounded-xl p-6 hover:bg-navy-800 transition-colors group relative">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="w-10 h-10 rounded bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                                <Layers size={20} />
-                            </div>
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleDeleteProject(p.id)} className="text-slate-500 hover:text-red-400"><Trash2 size={16} /></button>
-                            </div>
-                        </div>
-                        <h3 className="font-semibold text-white mb-1">{p.name}</h3>
-                        <p className="text-xs text-slate-400 mb-4">Owner: {p.owner_first_name || 'Unknown'} {p.owner_last_name || ''}</p>
-                        <div className="flex justify-between items-center text-xs">
-                            <span className="bg-green-500/10 text-green-400 px-2 py-0.5 rounded capitalize">{p.status}</span>
-                            <span className="text-slate-600">{new Date(p.created_at).toLocaleDateString()}</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+        return (
+            <React.Suspense fallback={<FallbackLoader />}>
+                {(() => {
+                    switch (activeSection) {
+                        case 'overview':
+                            return (
+                                <Tabs defaultValue="dashboard" className="w-full">
+                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto">
+                                        <TabsTrigger
+                                            value="dashboard"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <LayoutDashboard size={14} />
+                                            {t('admin.overview.tabs.dashboard', 'Dashboard')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="metrics"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <TrendingUp size={14} />
+                                            {t('admin.overview.tabs.metrics', 'Metrics')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="analytics"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <BarChart3 size={14} />
+                                            {t('admin.overview.tabs.analytics', 'Analytics')}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="dashboard" className="mt-6">
+                                        <AdminDashboard users={users} projects={projects} />
+                                    </TabsContent>
+                                    <TabsContent value="metrics" className="mt-6">
+                                        <AdminMetricsDashboardView />
+                                    </TabsContent>
+                                    <TabsContent value="analytics" className="mt-6">
+                                        <AdminAnalyticsView />
+                                    </TabsContent>
+                                </Tabs>
+                            );
 
-    const renderUsers = () => (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center mb-6">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                    <input
-                        placeholder="Search users..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-white focus:border-purple-500 outline-none w-64"
-                    />
-                </div>
-                <button
-                    onClick={openAddModal}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20"
-                >
-                    <Plus size={16} /> Add User
-                </button>
-            </div>
+                        case 'organization':
+                            return (
+                                <Tabs defaultValue="profile" className="w-full">
+                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto">
+                                        <TabsTrigger
+                                            value="profile"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Building2 size={14} />
+                                            {t('admin.organization.tabs.profile', 'Profile & Branding')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="ownership"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Crown size={14} />
+                                            {t('admin.organization.tabs.ownership', 'Ownership')}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="profile" className="mt-6">
+                                        <OrganizationProfileView />
+                                    </TabsContent>
+                                    <TabsContent value="ownership" className="mt-6">
+                                        <OwnershipManagementView />
+                                    </TabsContent>
+                                </Tabs>
+                            );
 
-            <div className="bg-navy-900 border border-white/5 rounded-xl overflow-hidden">
-                <table className="w-full text-left text-sm text-slate-400">
-                    <thead className="bg-navy-950 text-slate-200 uppercase text-xs font-semibold">
-                        <tr>
-                            <th className="px-6 py-4">User</th>
-                            <th className="px-6 py-4">Role</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                        {filteredUsers.map((user) => (
-                            <tr key={user.id} className="hover:bg-white/5 transition-colors">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white font-medium">
-                                            {user.firstName[0]}
-                                        </div>
-                                        <div>
-                                            <div className="text-white font-medium">{user.firstName} {user.lastName}</div>
-                                            <div className="text-xs">{user.email}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2 py-1 rounded-full text-xs border ${getRoleBadgeColor(user.role)}`}>
-                                        {user.role || 'USER'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`capitalize ${user.status === 'active' ? 'text-green-400' : 'text-red-400'}`}>{user.status}</span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <button onClick={() => openEditModal(user)} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white"><Edit size={16} /></button>
-                                        <button onClick={() => handleDeleteUser(user.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
+                        case 'team':
+                            return (
+                                <Tabs defaultValue="users" className="w-full">
+                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
+                                        <TabsTrigger
+                                            value="users"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Users size={14} />
+                                            {t('admin.team.tabs.users', 'Users')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="groups"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <UsersRound size={14} />
+                                            {t('admin.team.tabs.groups', 'Teams')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="invitations"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <UserPlus size={14} />
+                                            {t('admin.team.tabs.invitations', 'Invitations')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="roles"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Key size={14} />
+                                            {t('admin.team.tabs.roles', 'Roles')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="consultants"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Briefcase size={14} />
+                                            {t('admin.team.tabs.consultants', 'Consultants')}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="users" className="mt-6">
+                                        <AdminUserManagement initialUsers={users} />
+                                    </TabsContent>
+                                    <TabsContent value="groups" className="mt-6">
+                                        <UserGroupsView />
+                                    </TabsContent>
+                                    <TabsContent value="invitations" className="mt-6">
+                                        <InvitationsManagement />
+                                    </TabsContent>
+                                    <TabsContent value="roles" className="mt-6">
+                                        <RolesPermissionsView />
+                                    </TabsContent>
+                                    <TabsContent value="consultants" className="mt-6">
+                                        <AdminSettingsConsultants />
+                                    </TabsContent>
+                                </Tabs>
+                            );
+
+                        case 'workspace':
+                            if (currentView === AppView.ADMIN_PROJECT_DETAILS) {
+                                return (
+                                    <ProjectDetailsView
+                                        projectId={useAppStore.getState().currentProjectId || ''}
+                                        onBack={() => setCurrentView(AppView.ADMIN_PROJECTS)}
+                                    />
+                                );
+                            }
+                            return (
+                                <Tabs defaultValue="projects" className="w-full">
+                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto">
+                                        <TabsTrigger
+                                            value="projects"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Briefcase size={14} />
+                                            {t('admin.workspace.tabs.projects', 'Projects')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="knowledge"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <BookOpen size={14} />
+                                            {t('admin.workspace.tabs.knowledge', 'Knowledge')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="playbooks"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <PlayCircle size={14} />
+                                            {t('admin.workspace.tabs.playbooks', 'Playbooks')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="bulk-ops"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Layers size={14} />
+                                            {t('admin.workspace.tabs.bulkOps', 'Bulk Operations')}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="projects" className="mt-6">
+                                        <AdminProjectManagement initialProjects={projects} />
+                                    </TabsContent>
+                                    <TabsContent value="knowledge" className="mt-6">
+                                        <AdminKnowledgeView />
+                                    </TabsContent>
+                                    <TabsContent value="playbooks" className="mt-6">
+                                        <PlaybookRunsView />
+                                    </TabsContent>
+                                    <TabsContent value="bulk-ops" className="mt-6">
+                                        <BulkOperationsView />
+                                    </TabsContent>
+                                </Tabs>
+                            );
+
+                        case 'ai':
+                            return (
+                                <Tabs defaultValue="models" className="w-full">
+                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
+                                        <TabsTrigger
+                                            value="models"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Brain size={14} />
+                                            {t('admin.ai.tabs.models', 'Models & Providers')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="health"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Activity size={14} />
+                                            {t('admin.ai.tabs.health', 'Health & Monitoring')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="policy"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Shield size={14} />
+                                            {t('admin.ai.tabs.policy', 'Policy & Governance')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="access"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Users size={14} />
+                                            {t('admin.ai.tabs.access', 'Access & Limits')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="features"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Settings size={14} />
+                                            {t('admin.ai.tabs.features', 'Features & Privacy')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="audit"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <History size={14} />
+                                            {t('admin.ai.tabs.audit', 'Audit & Compliance')}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="models" className="mt-6">
+                                        <ModelsProvidersTab />
+                                    </TabsContent>
+                                    <TabsContent value="health" className="mt-6">
+                                        <HealthMonitoringTab />
+                                    </TabsContent>
+                                    <TabsContent value="policy" className="mt-6">
+                                        <PolicyGovernanceTab />
+                                    </TabsContent>
+                                    <TabsContent value="access" className="mt-6">
+                                        <AccessLimitsTab />
+                                    </TabsContent>
+                                    <TabsContent value="features" className="mt-6">
+                                        <FeaturesPrivacyTab />
+                                    </TabsContent>
+                                    <TabsContent value="audit" className="mt-6">
+                                        <AuditComplianceTab />
+                                    </TabsContent>
+                                </Tabs>
+                            );
+
+                        case 'billing':
+                            return (
+                                <Tabs defaultValue="usage" className="w-full">
+                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
+                                        <TabsTrigger
+                                            value="usage"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Activity size={14} />
+                                            {t('admin.billing.tabs.usage', 'Usage Dashboard')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="plan"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <CreditCard size={14} />
+                                            {t('admin.billing.tabs.plan', 'Plan & Subscription')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="payment"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <CreditCard size={14} />
+                                            {t('admin.billing.tabs.payment', 'Payment Methods')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="invoices"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <FileText size={14} />
+                                            {t('admin.billing.tabs.invoices', 'Invoices')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="alerts"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Bell size={14} />
+                                            {t('admin.billing.tabs.alerts', 'Spending Alerts')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="settings"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Settings size={14} />
+                                            {t('admin.billing.tabs.settings', 'Billing Settings')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="cost-allocation"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Building2 size={14} />
+                                            {t('admin.billing.tabs.costAllocation', 'Cost Allocation')}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="usage" className="mt-6">
+                                        <UsageDashboardView />
+                                    </TabsContent>
+                                    <TabsContent value="plan" className="mt-6">
+                                        <AdminBillingManagement />
+                                    </TabsContent>
+                                    <TabsContent value="payment" className="mt-6">
+                                        <PaymentMethodsView />
+                                    </TabsContent>
+                                    <TabsContent value="invoices" className="mt-6">
+                                        <InvoicesView />
+                                    </TabsContent>
+                                    <TabsContent value="alerts" className="mt-6">
+                                        <SpendingAlertsView />
+                                    </TabsContent>
+                                    <TabsContent value="settings" className="mt-6">
+                                        <BillingSettingsView />
+                                    </TabsContent>
+                                    <TabsContent value="cost-allocation" className="mt-6">
+                                        <CostAllocationView />
+                                    </TabsContent>
+                                </Tabs>
+                            );
+
+                        case 'security':
+                            return (
+                                <Tabs defaultValue="security-settings" className="w-full">
+                                    <TabsList className="admin-tabs bg-transparent p-0 h-auto flex-wrap">
+                                        <TabsTrigger
+                                            value="security-settings"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Shield size={14} />
+                                            {t('admin.security.tabs.settings', 'Security Settings')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="authentication"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Lock size={14} />
+                                            {t('admin.security.tabs.authentication', 'SSO & Auth')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="access"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Key size={14} />
+                                            {t('admin.security.tabs.access', 'API Keys')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="audit"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <History size={14} />
+                                            {t('admin.security.tabs.audit', 'Audit Log')}
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="data"
+                                            className="admin-tab data-[state=active]:admin-tab-active flex items-center gap-2 rounded-none bg-transparent shadow-none"
+                                        >
+                                            <Download size={14} />
+                                            {t('admin.security.tabs.data', 'Data Management')}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="security-settings" className="mt-6">
+                                        <SecuritySettings />
+                                    </TabsContent>
+                                    <TabsContent value="authentication" className="mt-6">
+                                        <AdminSecuritySettings />
+                                    </TabsContent>
+                                    <TabsContent value="access" className="mt-6">
+                                        <ApiKeysManagementView />
+                                    </TabsContent>
+                                    <TabsContent value="audit" className="mt-6">
+                                        <AuditLogView />
+                                    </TabsContent>
+                                    <TabsContent value="data" className="mt-6">
+                                        <DataManagementView />
+                                    </TabsContent>
+                                </Tabs>
+                            );
+
+                        case 'feedback':
+                            return <AdminFeedbackView />;
+
+                        default:
+                            return null;
+                    }
+                })()}
+            </React.Suspense>
+        );
+    };
 
     return (
-        <div className="flex flex-col h-full bg-navy-950">
-            {/* Admin Header */}
-            <div className="h-14 border-b border-white/5 bg-navy-950 flex items-center justify-between px-6 shrink-0">
-                <div>
-                    <h1 className="text-sm font-bold text-white flex items-center gap-2">
-                        <Shield className="text-purple-500" size={18} />
-                        Admin Panel: {currentUser.companyName}
-                    </h1>
+        <div className="h-full overflow-auto">
+            <div className="p-6">
+                {/* Header - Clean minimal */}
+                <div className="mb-6 pb-4 border-b border-slate-200 dark:border-[var(--admin-border)]">
+                    <h1 className="text-lg font-medium text-navy-900 dark:text-white">{sectionInfo.title}</h1>
+                    <p className="text-sm text-slate-600 dark:text-slate-500 mt-0.5">{sectionInfo.subtitle}</p>
                 </div>
 
+                {/* Content with tabs */}
+                {renderContent()}
             </div>
-
-            <div className="flex-1 overflow-auto p-6">
-                {currentView === AppView.ADMIN_DASHBOARD && renderDashboard()}
-                {currentView === AppView.ADMIN_USERS && renderUsers()}
-                {currentView === AppView.ADMIN_PROJECTS && renderProjects()}
-                {currentView === AppView.ADMIN_LLM && <AdminLLMView />}
-                {currentView === AppView.ADMIN_KNOWLEDGE && <AdminKnowledgeView />}
-                {currentView === AppView.ADMIN_ANALYTICS && <AdminAnalyticsView />}
-            </div>
-
-            {/* Add User Modal */}
-            {showAddUserModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-md shadow-2xl">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white">{editingUser ? 'Edit User' : 'Add New User'}</h2>
-                            <button onClick={() => setShowAddUserModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
-                        </div>
-                        <form onSubmit={handleSaveUser} className="space-y-4">
-                            <input required placeholder="First Name" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                            <input required placeholder="Last Name" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                            <input required placeholder="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white" />
-                            <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value as any })} className="w-full bg-navy-950 border border-white/10 rounded p-2 text-white">
-                                <option value="USER">User</option>
-                                <option value="MANAGER">Manager</option>
-                                <option value="ADMIN">Admin</option>
-                            </select>
-                            <button type="submit" className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold mt-4">Save</button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Add Project Modal */}
-            {showAddProjectModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-navy-900 border border-white/10 rounded-xl p-8 w-full max-w-md shadow-2xl">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white">Create New Project</h2>
-                            <button onClick={() => setShowAddProjectModal(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
-                        </div>
-                        <form onSubmit={handleCreateProject} className="space-y-4">
-                            <div>
-                                <label className="block text-xs text-slate-400 mb-1">Project Name (e.g. "Digital Transformation 2025")</label>
-                                <input required value={newProjectName} onChange={e => setNewProjectName(e.target.value)} className="w-full bg-navy-950 border border-white/10 rounded p-3 text-white focus:border-purple-500 outline-none" placeholder="Enter project name..." />
-                            </div>
-                            <button type="submit" className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold mt-4">Create Project</button>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
+
+export default AdminView;

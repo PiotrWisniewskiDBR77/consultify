@@ -4,12 +4,13 @@
  * API endpoints for 3-tier token billing system
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const TokenBillingService = require('../services/tokenBillingService');
-const authenticateToken = require('../middleware/authMiddleware');
-const { verifyAdmin: requireAdmin } = require('../middleware/adminMiddleware');
-const requireSuperAdmin = require('../middleware/superAdminMiddleware');
+import * as TokenBillingServiceModule from '../dist/services/tokenBillingService.js';
+const TokenBillingService = TokenBillingServiceModule.default || TokenBillingServiceModule;
+import authenticateToken from '../middleware/authMiddleware.js';
+import { verifyAdmin: requireAdmin } from '../middleware/adminMiddleware.js';
+import requireSuperAdmin from '../middleware/superAdminMiddleware.js';
 
 // ==========================================
 // PUBLIC ROUTES (Authenticated Users)
@@ -222,7 +223,8 @@ router.get('/costs', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
         // Lazily require usageService to avoid circular dependency issues if any
-        const UsageService = require('../services/usageService');
+        const UsageServiceModule = await import('../services/usageService.js');
+        const UsageService = UsageServiceModule.default || UsageServiceModule;
         const costs = await UsageService.getOperationalCosts(startDate, endDate);
         res.json({ success: true, costs });
     } catch (error) {
@@ -241,4 +243,4 @@ router.post('/packages', authenticateToken, requireSuperAdmin, async (req, res) 
     }
 });
 
-module.exports = router;
+export default router;

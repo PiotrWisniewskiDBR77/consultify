@@ -1,0 +1,234 @@
+/**
+ * Security Headers Middleware Tests
+ * Enterprise SaaS Architecture - TypeScript Backend
+ * ETAP 10.4: Testy dla Middleware - 95%+ coverage
+ */
+
+import type { NextFunction, Request, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+    createRateLimiter,
+    rateLimitPresets,
+    securityHeaders,
+    validateRequest,
+} from '../../../../src/middleware/securityHeaders.middleware.js';
+
+describe('Security Headers Middleware', () => {
+    let mockReq: Partial<Request>;
+    let mockRes: Partial<Response>;
+    let mockNext: NextFunction;
+    let originalEnv: string | undefined;
+
+    beforeEach(() => {
+        mockNext = vi.fn();
+        mockRes = {
+            setHeader: vi.fn(),
+        };
+        mockReq = {
+            ip: '127.0.0.1',
+            path: '/test',
+            body: {},
+        };
+        originalEnv = process.env.NODE_ENV;
+    });
+
+    afterEach(() => {
+        if (originalEnv) {
+            process.env.NODE_ENV = originalEnv;
+        }
+    });
+
+    describe('securityHeaders', () => {
+        it('should set all security headers', () => {
+            securityHeaders(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.setHeader).toHaveBeenCalledWith('X-Content-Type-Options', 'nosniff');
+            expect(mockRes.setHeader).toHaveBeenCalledWith('X-Frame-Options', 'DENY');
+            expect(mockRes.setHeader).toHaveBeenCalledWith('X-XSS-Protection', '1; mode=block');
+            expect(mockRes.setHeader).toHaveBeenCalledWith('Referrer-Policy', 'strict-origin-when-cross-origin');
+            expect(mockRes.setHeader).toHaveBeenCalledWith(
+                'Permissions-Policy',
+                'geolocation=(), microphone=(self), camera=()',
+            );
+            expect(mockNext).toHaveBeenCalled();
+        });
+
+        it('should set HSTS header in production', () => {
+            process.env.NODE_ENV = 'production';
+            securityHeaders(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.setHeader).toHaveBeenCalledWith(
+                'Strict-Transport-Security',
+                'max-age=31536000; includeSubDomains',
+            );
+        });
+
+        it('should not set HSTS header in development', () => {
+            process.env.NODE_ENV = 'development';
+            securityHeaders(mockReq as Request, mockRes as Response, mockNext);
+
+            const setHeaderCalls = (mockRes.setHeader as ReturnType<typeof vi.fn>).mock.calls;
+            const hstsCall = setHeaderCalls.find((call: unknown[]) => call[0] === 'Strict-Transport-Security');
+            expect(hstsCall).toBeUndefined();
+        });
+
+        it('should set Content-Security-Policy header', () => {
+            securityHeaders(mockReq as Request, mockRes as Response, mockNext);
+
+            const setHeaderCalls = (mockRes.setHeader as ReturnType<typeof vi.fn>).mock.calls;
+            const cspCall = setHeaderCalls.find((call: unknown[]) => call[0] === 'Content-Security-Policy');
+            expect(cspCall).toBeDefined();
+            expect(cspCall[1]).toContain("default-src 'self'");
+        });
+    });
+
+    describe('createRateLimiter', () => {
+        it('should allow requests within limit', () => {
+            const limiter = createRateLimiter({ windowMs: 1000, max: 5 });
+            limiter(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockNext).toHaveBeenCalled();
+            expect(mockRes.setHeader).toHaveBeenCalledWith('X-RateLimit-Limit', '5');
+        });
+
+        it('should block requests exceeding limit', () => {
+            const limiter = createRateLimiter({ windowMs: 1000, max: 2 });
+            mockRes.status = vi.fn().mockReturnThis();
+            mockRes.json = vi.fn();
+
+            // Make 2 requests (within limit)
+            limiter(mockReq as Request, mockRes as Response, mockNext);
+            limiter(mockReq as Request, mockRes as Response, mockNext);
+
+            // Third request should be blocked
+            limiter(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(429);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Too many requests',
+                retryAfter: expect.any(Number),
+                code: 'RATE_LIMITED',
+            });
+        });
+
+        it('should use custom message', () => {
+            const limiter = createRateLimiter({ windowMs: 1000, max: 1, message: 'Custom message' });
+            mockRes.status = vi.fn().mockReturnThis();
+            mockRes.json = vi.fn();
+
+            limiter(mockReq as Request, mockRes as Response, mockNext);
+            limiter(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Custom message' }));
+        });
+    });
+
+    describe('rateLimitPresets', () => {
+        it('should have admin preset', () => {
+            expect(rateLimitPresets.admin).toBeDefined();
+            expect(typeof rateLimitPresets.admin).toBe('function');
+        });
+
+        it('should have auth preset', () => {
+            expect(rateLimitPresets.auth).toBeDefined();
+        });
+
+        it('should have breakGlass preset', () => {
+            expect(rateLimitPresets.breakGlass).toBeDefined();
+        });
+
+        it('should have export preset', () => {
+            expect(rateLimitPresets.export).toBeDefined();
+        });
+
+        it('should have api preset', () => {
+            expect(rateLimitPresets.api).toBeDefined();
+        });
+    });
+
+    describe('validateRequest', () => {
+        it('should pass validation for valid data', () => {
+            const schema = {
+                name: { required: true, type: 'string' as const },
+                age: { required: true, type: 'number' as const },
+            };
+            mockReq.body = { name: 'John', age: 30 };
+            const validator = validateRequest(schema);
+            validator(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockNext).toHaveBeenCalled();
+        });
+
+        it('should fail validation for missing required field', () => {
+            const schema = {
+                name: { required: true, type: 'string' as const },
+            };
+            mockReq.body = {};
+            mockRes.status = vi.fn().mockReturnThis();
+            mockRes.json = vi.fn();
+            const validator = validateRequest(schema);
+            validator(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Validation failed',
+                code: 'VALIDATION_ERROR',
+                details: expect.arrayContaining([expect.objectContaining({ field: 'name' })]),
+            });
+        });
+
+        it('should validate type constraints', () => {
+            const schema = {
+                age: { required: true, type: 'number' as const },
+            };
+            mockReq.body = { age: 'not-a-number' };
+            mockRes.status = vi.fn().mockReturnThis();
+            mockRes.json = vi.fn();
+            const validator = validateRequest(schema);
+            validator(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+        });
+
+        it('should validate enum constraints', () => {
+            const schema = {
+                status: { required: true, enum: ['active', 'inactive'] },
+            };
+            mockReq.body = { status: 'invalid' };
+            mockRes.status = vi.fn().mockReturnThis();
+            mockRes.json = vi.fn();
+            const validator = validateRequest(schema);
+            validator(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+        });
+
+        it('should validate minLength constraint', () => {
+            const schema = {
+                password: { required: true, type: 'string' as const, minLength: 8 },
+            };
+            mockReq.body = { password: 'short' };
+            mockRes.status = vi.fn().mockReturnThis();
+            mockRes.json = vi.fn();
+            const validator = validateRequest(schema);
+            validator(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+        });
+
+        it('should validate pattern constraint', () => {
+            const schema = {
+                email: { required: true, type: 'string' as const, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+            };
+            mockReq.body = { email: 'invalid-email' };
+            mockRes.status = vi.fn().mockReturnThis();
+            mockRes.json = vi.fn();
+            const validator = validateRequest(schema);
+            validator(mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+        });
+    });
+});
+

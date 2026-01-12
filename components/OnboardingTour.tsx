@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import React, { useLayoutEffect, useState } from 'react';
 
 interface TourStep {
     target: string;
@@ -15,12 +15,7 @@ interface OnboardingTourProps {
     onComplete?: () => void;
 }
 
-export const OnboardingTour: React.FC<OnboardingTourProps> = ({
-    steps,
-    isOpen,
-    onClose,
-    onComplete
-}) => {
+export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, isOpen, onClose, onComplete }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [position, setPosition] = useState({ top: 0, left: 0 });
 
@@ -32,7 +27,8 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
             const rect = targetElement.getBoundingClientRect();
             const placement = steps[currentStep].placement || 'bottom';
 
-            let top = 0, left = 0;
+            let top = 0,
+                left = 0;
 
             switch (placement) {
                 case 'bottom':
@@ -53,10 +49,11 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
                     break;
             }
 
-            setPosition({ top, left });
-
-            // Highlight target
-            targetElement.classList.add('tour-highlight');
+            setTimeout(() => {
+                setPosition({ top, left });
+                // Highlight target
+                targetElement.classList.add('tour-highlight');
+            }, 0);
         }
 
         return () => {
@@ -105,7 +102,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
                 style={{
                     top: `${position.top}px`,
                     left: `${position.left}px`,
-                    transform: 'translate(-50%, 0)'
+                    transform: 'translate(-50%, 0)',
                 }}
             >
                 <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-6 max-w-md">
@@ -115,9 +112,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
                             <div className="text-xs font-bold text-purple-500 uppercase tracking-wider mb-1">
                                 Step {currentStep + 1} of {steps.length}
                             </div>
-                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                                {step.title}
-                            </h3>
+                            <h3 className="text-lg font-bold text-navy-900 dark:text-white">{step.title}</h3>
                         </div>
                         <button
                             onClick={onClose}
@@ -128,9 +123,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
                     </div>
 
                     {/* Content */}
-                    <p className="text-sm text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                        {step.content}
-                    </p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">{step.content}</p>
 
                     {/* Footer */}
                     <div className="flex justify-between items-center">
@@ -147,10 +140,11 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
                             {steps.map((_, idx) => (
                                 <div
                                     key={idx}
-                                    className={`h-1.5 rounded-full transition-all ${idx === currentStep
-                                        ? 'w-6 bg-purple-500'
-                                        : 'w-1.5 bg-slate-300 dark:bg-slate-600'
-                                        }`}
+                                    className={`h-1.5 rounded-full transition-all ${
+                                        idx === currentStep
+                                            ? 'w-6 bg-purple-500'
+                                            : 'w-1.5 bg-slate-300 dark:bg-slate-600'
+                                    }`}
                                 />
                             ))}
                         </div>

@@ -1,0 +1,159 @@
+---
+description: Rules for PMO Standards Compliance - ISO 21500, PMBOK 7, PRINCE2
+globs:
+  - "**/*pmo*"
+  - "**/*PMO*"
+  - "**/governance/**"
+  - "**/services/project*.js"
+  - "**/services/workstream*.js"
+  - "**/services/task*.js"
+  - "**/routes/project*.js"
+  - "**/routes/workstream*.js"
+  - "**/components/PMO/**"
+alwaysApply: false
+---
+
+# PMO Standards Compliance Rules
+
+## Core Standards
+
+Consultify implements a Meta-PMO Framework aligned with:
+1. **ISO 21500:2021** - International PM Standard (foundation)
+2. **PMI PMBOK® Guide 7th Edition** - Detailed practices
+3. **PRINCE2®** - Governance and control
+
+## Documentation Reference
+
+Primary documentation: `docs/00_foundation/PMO_STANDARDS_COMPLIANCE.md`
+
+## 7 PMO Domains
+
+Always map functionality to one of these domains:
+- `GOVERNANCE_DECISION_MAKING` - Decisions, escalations, stage gates
+- `SCOPE_CHANGE_CONTROL` - Initiatives, tasks, baselines, change requests
+- `SCHEDULE_MILESTONES` - Phases, roadmaps, waves
+- `RISK_ISSUE_MANAGEMENT` - Risks, issues, blockers
+- `RESOURCE_RESPONSIBILITY` - Team, assignments, workstreams, capacity
+- `PERFORMANCE_MONITORING` - KPIs, health, variance, reports
+- `BENEFITS_REALIZATION` - Value hypothesis, financials, closure
+
+## Terminology Rules
+
+### DO use neutral PMO terminology:
+- Phase (not Sprint, Iteration)
+- Initiative (not Epic)
+- Task (not Story, Ticket)
+- Stage Gate (not Milestone, Checkpoint)
+- Decision (not Approval)
+- Work Package (not Backlog Item)
+- Project Member (not Resource)
+- Workstream (not Team, Squad)
+
+### DO NOT use methodology-specific terms:
+- ❌ Sprint, Epic, Story, Backlog (Agile/Scrum)
+- ❌ WBS element (PMI-specific)
+- ❌ RAID log (use separate Risk, Issue tracking)
+- ❌ Kanban board (use Task Board)
+
+## Project Roles
+
+Use these standardized roles:
+```typescript
+enum ProjectRole {
+  SPONSOR = 'SPONSOR',           // Strategic decisions
+  DECISION_OWNER = 'DECISION_OWNER', // Final authority
+  PMO_LEAD = 'PMO_LEAD',         // Project coordination
+  WORKSTREAM_OWNER = 'WORKSTREAM_OWNER', // Workstream delivery
+  INITIATIVE_OWNER = 'INITIATIVE_OWNER', // Initiative delivery
+  TASK_ASSIGNEE = 'TASK_ASSIGNEE', // Task execution
+  SME = 'SME',                   // Domain expertise
+  REVIEWER = 'REVIEWER',         // Assessment review
+  OBSERVER = 'OBSERVER',         // Read-only
+  CONSULTANT = 'CONSULTANT',     // External advisor
+  STAKEHOLDER = 'STAKEHOLDER'    // Notifications only
+}
+```
+
+## RACI Matrix
+
+For any new functionality involving responsibilities:
+- **R**esponsible - Who does the work
+- **A**ccountable - Who approves/owns the outcome
+- **C**onsulted - Who provides input
+- **I**nformed - Who receives updates
+
+## Audit Trail Requirements
+
+Every governance action MUST be logged with:
+```javascript
+{
+  pmo_domain_id: 'GOVERNANCE_DECISION_MAKING', // Which domain
+  pmo_phase: 'Roadmap',                        // Current phase
+  object_type: 'DECISION',                     // Object type
+  action: 'APPROVED',                          // Action taken
+  iso21500_mapping: 'Governance Decision (Clause 4.3.4)',
+  pmbok_mapping: 'Project Decision / Authorization',
+  prince2_mapping: 'Project Board Decision'
+}
+```
+
+## Standards Mapping Service
+
+Use `pmoStandardsMapping.js` to get correct terminology:
+```javascript
+const PMOStandardsMapping = require('./pmoStandardsMapping');
+
+// Get mapping for any object type
+const mapping = PMOStandardsMapping.getMapping('TASK');
+// Returns: { iso21500: 'Activity (4.4.5)', pmbok: 'Activity', prince2: 'Activity' }
+```
+
+## Task Workflow
+
+Tasks follow this lifecycle with SLA and escalation:
+1. CREATED → Assignment required
+2. TODO → SLA timer starts (default 24h)
+3. IN_PROGRESS → Active work
+4. BLOCKED → Auto-escalate, log reason
+5. DONE → Update KPIs, notify stakeholders
+
+Escalation levels:
+- Level 0→1: To INITIATIVE_OWNER (after 24h)
+- Level 1→2: To PMO_LEAD (after 48h)
+- Level 2→3: To SPONSOR (after 72h)
+
+## UI Components
+
+When creating PMO-related UI:
+1. Show user's project role clearly
+2. Use neutral terminology in labels
+3. Optionally show standards mapping in tooltips
+4. Support configurable phase/gate labels
+5. Display SLA status for tasks
+
+## Database Conventions
+
+PMO-related tables:
+- `pmo_domains` - Domain definitions
+- `project_pmo_domains` - Per-project domain config
+- `pmo_audit_trail` - Audit with standards mapping
+- `project_members` - Team with roles
+- `workstreams` - Workstream definitions
+- `task_escalations` - Escalation history
+
+## API Conventions
+
+PMO endpoints follow this pattern:
+- `GET /api/projects/:id/members` - Team management
+- `GET /api/projects/:id/workstreams` - Workstreams
+- `GET /api/projects/:id/raci-matrix` - RACI view
+- `POST /api/tasks/:id/assign` - Task assignment
+- `POST /api/tasks/:id/escalate` - Manual escalation
+
+## Testing
+
+All PMO functionality must have:
+1. Unit tests for services
+2. Integration tests for API
+3. Audit trail verification in tests
+4. RBAC permission tests

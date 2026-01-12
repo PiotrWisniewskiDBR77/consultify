@@ -1,0 +1,3450 @@
+{
+  "totalLegacyFiles": 437,
+  "filesWithWrappers": 282,
+  "filesWithoutWrappers": 155,
+  "wrappers": [
+    {
+      "file": "EmailVerificationService.ts",
+      "lines": 13
+    },
+    {
+      "file": "EscalationService.ts",
+      "lines": 11
+    },
+    {
+      "file": "MFAService.ts",
+      "lines": 13
+    },
+    {
+      "file": "NotificationService.ts",
+      "lines": 11
+    },
+    {
+      "file": "WhatsAppService.ts",
+      "lines": 11
+    },
+    {
+      "file": "adminAuditService.ts",
+      "lines": 13
+    },
+    {
+      "file": "adminSessionService.ts",
+      "lines": 13
+    },
+    {
+      "file": "ai/abTesting.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/actionExecutor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/adaptiveResponseService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/agents/agentCoordinator.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/agents/baseAgent.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/agents/changeAgent.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/agents/financeAgent.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/agents/index.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/agents/pmoAgent.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/agents/riskAgent.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/agents/strategyAgent.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/aiContext.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/aiGateway.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/aiHealthAlertService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/aiHealthService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/aiMemoryMetricsService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/bcgReportGenerator.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/cacheService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/citationExtractor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/citationVerifier.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/coThinker/index.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/coThinkerPrompts.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/comprehensiveReportGenerator.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/consultingFlowEngine.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/conversationStateMachine.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/conversationTracker.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/docIndexer.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/draftService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/enhancedContextBuilder.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/enterpriseSecurity.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/frameworks/consultingFrameworks.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/frameworks/frameworkEngine.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/frameworks/index.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/frameworks/strategicRecommendationService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/harvardConsultantPrompts.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/healthMonitor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/intelligence/benchmarkDataService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/intelligence/index.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/intelligence/industryIntelligenceService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/intelligentResearch.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/intentEngine.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/learningSystem.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/llmHealthMonitor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/magicWandService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/mediaIngestionService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/memoryManager.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/metrics.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/observability.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/performanceOptimizer.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/persistentSessionStore.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/personalizationEngine.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/pipeline/index.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/pipeline/reportAgents.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/pipeline/reportPipeline.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/proactiveNudges.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/proactiveSuggestionsService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/processors/audioProcessor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/processors/docxProcessor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/processors/imageProcessor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/processors/index.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/processors/pptxProcessor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/processors/spreadsheetProcessor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/processors/urlProcessor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/processors/videoProcessor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/processors/youtubeProcessor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/projectMemoryStore.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/promptAssembler.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/promptAssistant.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/promptBlockLibrary.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/promptTemplateService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/qualityChecker.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/quotaService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/ragMetricsService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/rateLimiter.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/redisClient.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/reportContentGenerator.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/reportGeneratorService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/reportParserService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/reportTemplates.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/responseQualityService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/smartSuggestions.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/socraticEngine.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/speechToTextService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/startupValidator.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/summarizationService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/taskAdvisorService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/textToSpeechService.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/titleGenerator.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/variableResolver.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/voiceHealthMonitor.ts",
+      "lines": 15
+    },
+    {
+      "file": "ai/webResearchService.ts",
+      "lines": 15
+    },
+    {
+      "file": "aiAnalyticsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiAssessmentFormHelper.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiAssessmentPartnerService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiAssessmentReportGenerator.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiBudgetService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiCharterGeneratorService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiContextValidator.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiDecisionGovernance.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiExecutiveReporting.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiExplainabilityService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiExternalDataControl.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiFailureHandler.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiIntegrationService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiKnowledgeManager.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiMaturityMonitor.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiModeEnforcer.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiModeResolver.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiProactivityEngine.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiPromptHierarchy.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiRecommendationService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiReplayService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiRoleGuard.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiSettingsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "aiWorkloadIntelligence.ts",
+      "lines": 13
+    },
+    {
+      "file": "apiKeyService.ts",
+      "lines": 13
+    },
+    {
+      "file": "approvalPatternService.ts",
+      "lines": 13
+    },
+    {
+      "file": "areaContentTemplates.ts",
+      "lines": 13
+    },
+    {
+      "file": "assessmentOverviewService.ts",
+      "lines": 13
+    },
+    {
+      "file": "assessmentReportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "assessmentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "assessmentWorkflowService.ts",
+      "lines": 13
+    },
+    {
+      "file": "auditIntegrityService.ts",
+      "lines": 13
+    },
+    {
+      "file": "automationEngineService.ts",
+      "lines": 13
+    },
+    {
+      "file": "backupService.ts",
+      "lines": 13
+    },
+    {
+      "file": "baselineService.ts",
+      "lines": 13
+    },
+    {
+      "file": "benchmarkingService.ts",
+      "lines": 13
+    },
+    {
+      "file": "brandingService.ts",
+      "lines": 13
+    },
+    {
+      "file": "breakGlassService.ts",
+      "lines": 13
+    },
+    {
+      "file": "budgetService.ts",
+      "lines": 13
+    },
+    {
+      "file": "capacityService.ts",
+      "lines": 13
+    },
+    {
+      "file": "cohortService.ts",
+      "lines": 13
+    },
+    {
+      "file": "collaborationAIService.ts",
+      "lines": 13
+    },
+    {
+      "file": "complianceService.ts",
+      "lines": 13
+    },
+    {
+      "file": "connectorHealthService.ts",
+      "lines": 13
+    },
+    {
+      "file": "connectorRegistry.ts",
+      "lines": 13
+    },
+    {
+      "file": "connectorService.ts",
+      "lines": 13
+    },
+    {
+      "file": "consentManagementService.ts",
+      "lines": 13
+    },
+    {
+      "file": "contextService.ts",
+      "lines": 13
+    },
+    {
+      "file": "creditNoteService.ts",
+      "lines": 13
+    },
+    {
+      "file": "criticalPathService.ts",
+      "lines": 13
+    },
+    {
+      "file": "customerSuccessService.ts",
+      "lines": 13
+    },
+    {
+      "file": "dashboardBuilderService.ts",
+      "lines": 13
+    },
+    {
+      "file": "dataRetentionService.ts",
+      "lines": 13
+    },
+    {
+      "file": "decisionTriggerService.ts",
+      "lines": 13
+    },
+    {
+      "file": "demoService.ts",
+      "lines": 13
+    },
+    {
+      "file": "demoSessionService.ts",
+      "lines": 13
+    },
+    {
+      "file": "dependencyService.ts",
+      "lines": 13
+    },
+    {
+      "file": "deviceManagementService.ts",
+      "lines": 13
+    },
+    {
+      "file": "dlpService.ts",
+      "lines": 13
+    },
+    {
+      "file": "documentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "economicsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "emailCampaignService.ts",
+      "lines": 13
+    },
+    {
+      "file": "emailTemplateService.ts",
+      "lines": 13
+    },
+    {
+      "file": "enterpriseReportTemplates.ts",
+      "lines": 13
+    },
+    {
+      "file": "evidenceLedgerService.ts",
+      "lines": 13
+    },
+    {
+      "file": "evidenceService.ts",
+      "lines": 13
+    },
+    {
+      "file": "evmMetricsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "excelExportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "excelImportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "executionMonitorService.ts",
+      "lines": 13
+    },
+    {
+      "file": "executionService.ts",
+      "lines": 13
+    },
+    {
+      "file": "experimentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "externalAssessmentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "facilityUserService.ts",
+      "lines": 13
+    },
+    {
+      "file": "featureFlagService.ts",
+      "lines": 13
+    },
+    {
+      "file": "financialCalculatorService.ts",
+      "lines": 13
+    },
+    {
+      "file": "financialService.ts",
+      "lines": 13
+    },
+    {
+      "file": "focusService.ts",
+      "lines": 13
+    },
+    {
+      "file": "frameworkAssessmentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "frameworkBenchmarkService.ts",
+      "lines": 13
+    },
+    {
+      "file": "frameworkRBACService.ts",
+      "lines": 13
+    },
+    {
+      "file": "frameworkScoreCalculators.ts",
+      "lines": 13
+    },
+    {
+      "file": "gamificationService.ts",
+      "lines": 13
+    },
+    {
+      "file": "gdprService.ts",
+      "lines": 13
+    },
+    {
+      "file": "genericReportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "governanceService.ts",
+      "lines": 13
+    },
+    {
+      "file": "helpAnalyticsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "helpChatService.ts",
+      "lines": 13
+    },
+    {
+      "file": "helpService.ts",
+      "lines": 13
+    },
+    {
+      "file": "inboxService.ts",
+      "lines": 13
+    },
+    {
+      "file": "industryAIModelsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "ingestionService.ts",
+      "lines": 13
+    },
+    {
+      "file": "initiativeGeneratorService.ts",
+      "lines": 13
+    },
+    {
+      "file": "initiativeStatusService.ts",
+      "lines": 13
+    },
+    {
+      "file": "initiativeTemplateService.ts",
+      "lines": 13
+    },
+    {
+      "file": "integrationAnalyticsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "integrations/clickupUserIntegration.ts",
+      "lines": 15
+    },
+    {
+      "file": "integrations/jiraUserIntegration.ts",
+      "lines": 15
+    },
+    {
+      "file": "integrations/slackUserIntegration.ts",
+      "lines": 15
+    },
+    {
+      "file": "integrations/teamsUserIntegration.ts",
+      "lines": 15
+    },
+    {
+      "file": "invoiceTemplateService.ts",
+      "lines": 13
+    },
+    {
+      "file": "ipWhitelistService.ts",
+      "lines": 13
+    },
+    {
+      "file": "journeyAnalytics.ts",
+      "lines": 13
+    },
+    {
+      "file": "knowledgeGraphService.ts",
+      "lines": 13
+    },
+    {
+      "file": "knowledgeService.ts",
+      "lines": 13
+    },
+    {
+      "file": "legalEventLogger.ts",
+      "lines": 13
+    },
+    {
+      "file": "legalExportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "legalService.ts",
+      "lines": 13
+    },
+    {
+      "file": "llmFallbackService.ts",
+      "lines": 13
+    },
+    {
+      "file": "managementReportsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "metricsAggregator.ts",
+      "lines": 13
+    },
+    {
+      "file": "metricsPersistenceService.ts",
+      "lines": 13
+    },
+    {
+      "file": "metricsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "multiFrameworkAssessmentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "multiFrameworkAuditService.ts",
+      "lines": 13
+    },
+    {
+      "file": "multiFrameworkReportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "myWorkService.ts",
+      "lines": 13
+    },
+    {
+      "file": "narrativeService.ts",
+      "lines": 13
+    },
+    {
+      "file": "notificationBatchingService.ts",
+      "lines": 13
+    },
+    {
+      "file": "notificationOutboxService.ts",
+      "lines": 13
+    },
+    {
+      "file": "oauthService.ts",
+      "lines": 13
+    },
+    {
+      "file": "organizationAnalyticsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "organizationEventService.ts",
+      "lines": 13
+    },
+    {
+      "file": "organizationHealthService.ts",
+      "lines": 13
+    },
+    {
+      "file": "organizationMetadataService.ts",
+      "lines": 13
+    },
+    {
+      "file": "organizationRelationshipService.ts",
+      "lines": 13
+    },
+    {
+      "file": "organizationSegmentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "organizationTagService.ts",
+      "lines": 13
+    },
+    {
+      "file": "outcomeService.ts",
+      "lines": 13
+    },
+    {
+      "file": "passwordPolicyService.ts",
+      "lines": 13
+    },
+    {
+      "file": "patternRecognitionService.ts",
+      "lines": 13
+    },
+    {
+      "file": "pdfExportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "pdfGeneratorService.ts",
+      "lines": 13
+    },
+    {
+      "file": "pdfParserService.ts",
+      "lines": 13
+    },
+    {
+      "file": "periodComparisonService.ts",
+      "lines": 13
+    },
+    {
+      "file": "permissionsMatrixService.ts",
+      "lines": 13
+    },
+    {
+      "file": "platformEcosystemService.ts",
+      "lines": 13
+    },
+    {
+      "file": "playbookResolver.ts",
+      "lines": 13
+    },
+    {
+      "file": "pmoAnalysisService.ts",
+      "lines": 13
+    },
+    {
+      "file": "pmoRoleService.ts",
+      "lines": 13
+    },
+    {
+      "file": "portfolioService.ts",
+      "lines": 13
+    },
+    {
+      "file": "pptxExportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "pptxGeneratorService.ts",
+      "lines": 13
+    },
+    {
+      "file": "predictiveService.ts",
+      "lines": 13
+    },
+    {
+      "file": "premiumPdfService.ts",
+      "lines": 13
+    },
+    {
+      "file": "premiumReportAIService.ts",
+      "lines": 13
+    },
+    {
+      "file": "pricingService.ts",
+      "lines": 13
+    },
+    {
+      "file": "progressService.ts",
+      "lines": 13
+    },
+    {
+      "file": "promptService.ts",
+      "lines": 13
+    },
+    {
+      "file": "promptVersionService.ts",
+      "lines": 13
+    },
+    {
+      "file": "qualityAssessmentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "ragEnhancedService.ts",
+      "lines": 13
+    },
+    {
+      "file": "rapidLeanObservationMapper.ts",
+      "lines": 13
+    },
+    {
+      "file": "rapidLeanReportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "rapidLeanService.ts",
+      "lines": 13
+    },
+    {
+      "file": "rbacService.ts",
+      "lines": 13
+    },
+    {
+      "file": "realtimeService.ts",
+      "lines": 13
+    },
+    {
+      "file": "recommendationsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "referralService.ts",
+      "lines": 13
+    },
+    {
+      "file": "regulatoryModeGuard.ts",
+      "lines": 13
+    },
+    {
+      "file": "reportApprovalService.ts",
+      "lines": 13
+    },
+    {
+      "file": "reportAuditService.ts",
+      "lines": 13
+    },
+    {
+      "file": "reportCacheService.ts",
+      "lines": 13
+    },
+    {
+      "file": "reportCommentsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "reportContentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "reportEmailService.ts",
+      "lines": 13
+    },
+    {
+      "file": "reportTemplateService.ts",
+      "lines": 13
+    },
+    {
+      "file": "reportVersionService.ts",
+      "lines": 13
+    },
+    {
+      "file": "reportingService.ts",
+      "lines": 13
+    },
+    {
+      "file": "retentionPolicyService.ts",
+      "lines": 13
+    },
+    {
+      "file": "roadmapService.ts",
+      "lines": 13
+    },
+    {
+      "file": "roiService.ts",
+      "lines": 13
+    },
+    {
+      "file": "scenarioService.ts",
+      "lines": 13
+    },
+    {
+      "file": "scheduledReportsService.ts",
+      "lines": 13
+    },
+    {
+      "file": "scimService.ts",
+      "lines": 13
+    },
+    {
+      "file": "secretManager.ts",
+      "lines": 13
+    },
+    {
+      "file": "secretsVault.ts",
+      "lines": 13
+    },
+    {
+      "file": "securityEventService.ts",
+      "lines": 13
+    },
+    {
+      "file": "securityIncidentService.ts",
+      "lines": 13
+    },
+    {
+      "file": "securityPolicyService.ts",
+      "lines": 13
+    },
+    {
+      "file": "securityService.ts",
+      "lines": 13
+    },
+    {
+      "file": "settlementService.ts",
+      "lines": 13
+    },
+    {
+      "file": "shareLinkService.ts",
+      "lines": 13
+    },
+    {
+      "file": "siemService.ts",
+      "lines": 13
+    },
+    {
+      "file": "ssoService.ts",
+      "lines": 13
+    },
+    {
+      "file": "stakeholderPerspectiveService.ts",
+      "lines": 13
+    },
+    {
+      "file": "statusReportService.ts",
+      "lines": 13
+    },
+    {
+      "file": "statusService.ts",
+      "lines": 13
+    },
+    {
+      "file": "steeringCommitteeAggregator.ts",
+      "lines": 13
+    },
+    {
+      "file": "storageReconciliationService.ts",
+      "lines": 13
+    },
+    {
+      "file": "storageService.ts",
+      "lines": 13
+    },
+    {
+      "file": "studioAIService.ts",
+      "lines": 13
+    },
+    {
+      "file": "supportTicketService.ts",
+      "lines": 13
+    },
+    {
+      "file": "systemConfigService.ts",
+      "lines": 13
+    },
+    {
+      "file": "systemIntegrity.ts",
+      "lines": 13
+    },
+    {
+      "file": "teamMeetingAggregator.ts",
+      "lines": 13
+    },
+    {
+      "file": "threatIntelligenceService.ts",
+      "lines": 13
+    },
+    {
+      "file": "trialService.ts",
+      "lines": 13
+    },
+    {
+      "file": "userGoals.ts",
+      "lines": 13
+    },
+    {
+      "file": "userGroupService.ts",
+      "lines": 13
+    },
+    {
+      "file": "userIntegrationService.ts",
+      "lines": 13
+    },
+    {
+      "file": "userLicenseService.ts",
+      "lines": 13
+    },
+    {
+      "file": "userNotificationPreferencesService.ts",
+      "lines": 13
+    },
+    {
+      "file": "userPreferencesService.ts",
+      "lines": 13
+    },
+    {
+      "file": "userProfileExtendedService.ts",
+      "lines": 13
+    },
+    {
+      "file": "userSessionService.ts",
+      "lines": 13
+    },
+    {
+      "file": "userStateMachine.ts",
+      "lines": 13
+    },
+    {
+      "file": "versioningService.ts",
+      "lines": 13
+    },
+    {
+      "file": "voiceCommandParser.ts",
+      "lines": 13
+    },
+    {
+      "file": "webSearchService.ts",
+      "lines": 13
+    },
+    {
+      "file": "webauthnService.ts",
+      "lines": 13
+    },
+    {
+      "file": "webhookDeliveryService.ts",
+      "lines": 13
+    },
+    {
+      "file": "workModeService.ts",
+      "lines": 13
+    },
+    {
+      "file": "workqueueService.ts",
+      "lines": 13
+    },
+    {
+      "file": "workstreamService.ts",
+      "lines": 13
+    }
+  ],
+  "analysis": [
+    {
+      "legacyFile": "BaseService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/BaseService.ts"
+    },
+    {
+      "legacyFile": "accessCodeService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/accessCodeService.ts"
+    },
+    {
+      "legacyFile": "accessPolicyService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/accessPolicyService.ts"
+    },
+    {
+      "legacyFile": "activityService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/activityService.ts"
+    },
+    {
+      "legacyFile": "adkarService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adkarService.ts"
+    },
+    {
+      "legacyFile": "adminAlertService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adminAlertService.ts"
+    },
+    {
+      "legacyFile": "adminAuditService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adminAuditService.ts"
+    },
+    {
+      "legacyFile": "adminSessionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adminSessionService.ts"
+    },
+    {
+      "legacyFile": "ai/abTesting.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/actionExecutor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/adaptiveResponseService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/agentCoordinator 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/agentCoordinator.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/baseAgent 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/baseAgent.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/changeAgent 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/changeAgent.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/financeAgent 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/financeAgent.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/index 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/index.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/pmoAgent 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/pmoAgent.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/riskAgent 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/riskAgent.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/strategyAgent 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/agents/strategyAgent.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/aiContext.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/aiGateway.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/aiHealthAlertService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/aiHealthService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/aiMemoryMetricsService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/aiPipeline.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/alerting.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/bcgReportGenerator.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/cacheService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/circuitBreaker.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/citationExtractor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/citationVerifier.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/coThinker/index.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/coThinkerPrompts.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/comprehensiveReportGenerator.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/consultingFlowEngine.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/conversationStateMachine.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/conversationTracker.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/docIndexer.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/draftService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/embeddingService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/enhancedContextBuilder.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/enterpriseSecurity.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/enterpriseSecurity.test.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/frameworks/consultingFrameworks 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/frameworks/consultingFrameworks.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/frameworks/frameworkEngine 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/frameworks/frameworkEngine.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/frameworks/index 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/frameworks/index.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/frameworks/strategicRecommendationService 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/frameworks/strategicRecommendationService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/harvardConsultantPrompts.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/healthMonitor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/ingestionPipeline.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/intelligence/benchmarkDataService 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/intelligence/benchmarkDataService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/intelligence/index 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/intelligence/index.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/intelligence/industryIntelligenceService 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/intelligence/industryIntelligenceService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/intelligentResearch.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/intentEngine.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/knowledgeIndexer.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/learningSystem.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/learningSystem.test.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/legacy/aiLLMService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/legacy/aiQueueService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/llmConfigService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/llmHealthMonitor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/llmService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/logger.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/magicWandService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/mcpServer.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/mediaIngestionService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/memoryManager.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/memoryManager.test.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/metrics.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/modelRouter.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/observability.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/organizationMemoryStore.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/performanceOptimizer.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/persistentSessionStore.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/personalizationEngine.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/pipeline/index 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/pipeline/index.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/pipeline/reportAgents 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/pipeline/reportAgents.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/pipeline/reportPipeline 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/pipeline/reportPipeline.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/proactiveNudges.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/proactiveSuggestionsService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/audioProcessor 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/audioProcessor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/docxProcessor 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/docxProcessor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/imageProcessor 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/imageProcessor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/index 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/index.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/pptxProcessor 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/pptxProcessor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/spreadsheetProcessor 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/spreadsheetProcessor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/urlProcessor 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/urlProcessor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/videoProcessor 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/videoProcessor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/youtubeProcessor 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/processors/youtubeProcessor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/projectMemoryStore.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/promptAssembler.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/promptAssistant.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/promptBlockLibrary.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/promptTemplateService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/qualityChecker.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/qualityChecker.test.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/quotaService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/ragMetricsService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/rateLimiter.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/redisClient.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/reportContentGenerator.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/reportGeneratorPhases.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/reportGeneratorSchemas.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/reportGeneratorService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/reportParserService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/reportTemplates.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/rerankerService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/responseQualityService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/smartSuggestions.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/socraticEngine.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/speechToTextService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/startupValidator.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/summarizationService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/taskAdvisorService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/textToSpeechService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/titleGenerator.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/tools/calculateRoiDraft 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/tools/calculateRoiDraft.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/tools/createInitiative 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/tools/createInitiative.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/tools/getProjectDetails.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/tools/index.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/tools/searchKnowledgeBase.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/tools/updateAssessmentScore 2.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/tools/updateAssessmentScore.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/variableResolver.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/voiceHealthMonitor.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "ai/webResearchService.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "aiActionExecutor.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiActionExecutor.ts"
+    },
+    {
+      "legacyFile": "aiAnalyticsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAnalyticsService.ts"
+    },
+    {
+      "legacyFile": "aiAssessmentFormHelper.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAssessmentFormHelper.ts"
+    },
+    {
+      "legacyFile": "aiAssessmentPartnerService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAssessmentPartnerService.ts"
+    },
+    {
+      "legacyFile": "aiAssessmentReportGenerator.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAssessmentReportGenerator.ts"
+    },
+    {
+      "legacyFile": "aiAuditLogger.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAuditLogger.ts"
+    },
+    {
+      "legacyFile": "aiBudgetService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiBudgetService.ts"
+    },
+    {
+      "legacyFile": "aiCharterGeneratorService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiCharterGeneratorService.ts"
+    },
+    {
+      "legacyFile": "aiContextBuilder.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiContextBuilder.ts"
+    },
+    {
+      "legacyFile": "aiContextValidator.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiContextValidator.ts"
+    },
+    {
+      "legacyFile": "aiCostControlService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiCostControlService.ts"
+    },
+    {
+      "legacyFile": "aiDecisionGovernance.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiDecisionGovernance.ts"
+    },
+    {
+      "legacyFile": "aiExecutiveReporting.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiExecutiveReporting.ts"
+    },
+    {
+      "legacyFile": "aiExplainabilityService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiExplainabilityService.ts"
+    },
+    {
+      "legacyFile": "aiExternalDataControl.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiExternalDataControl.ts"
+    },
+    {
+      "legacyFile": "aiFailureHandler.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiFailureHandler.ts"
+    },
+    {
+      "legacyFile": "aiIntegrationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiIntegrationService.ts"
+    },
+    {
+      "legacyFile": "aiKnowledgeManager.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiKnowledgeManager.ts"
+    },
+    {
+      "legacyFile": "aiMaturityMonitor.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiMaturityMonitor.ts"
+    },
+    {
+      "legacyFile": "aiMemoryManager.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiMemoryManager.ts"
+    },
+    {
+      "legacyFile": "aiModeEnforcer.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiModeEnforcer.ts"
+    },
+    {
+      "legacyFile": "aiModeResolver.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiModeResolver.ts"
+    },
+    {
+      "legacyFile": "aiOrchestrator.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiOrchestrator.ts"
+    },
+    {
+      "legacyFile": "aiPolicyEngine.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiPolicyEngine.ts"
+    },
+    {
+      "legacyFile": "aiProactivityEngine.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiProactivityEngine.ts"
+    },
+    {
+      "legacyFile": "aiPromptHierarchy.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiPromptHierarchy.ts"
+    },
+    {
+      "legacyFile": "aiRecommendationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiRecommendationService.ts"
+    },
+    {
+      "legacyFile": "aiReplayService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiReplayService.ts"
+    },
+    {
+      "legacyFile": "aiResponsePostProcessor.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiResponsePostProcessor.ts"
+    },
+    {
+      "legacyFile": "aiRiskChangeControl.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiRiskChangeControl.ts"
+    },
+    {
+      "legacyFile": "aiRoleGuard.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiRoleGuard.ts"
+    },
+    {
+      "legacyFile": "aiService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiService.ts"
+    },
+    {
+      "legacyFile": "aiSettingsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiSettingsService.ts"
+    },
+    {
+      "legacyFile": "aiWorkloadIntelligence.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiWorkloadIntelligence.ts"
+    },
+    {
+      "legacyFile": "alertService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/alertService.ts"
+    },
+    {
+      "legacyFile": "analyticsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/analyticsService.ts"
+    },
+    {
+      "legacyFile": "apiKeyService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/apiKeyService.ts"
+    },
+    {
+      "legacyFile": "approvalPatternService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/approvalPatternService.ts"
+    },
+    {
+      "legacyFile": "areaContentTemplates.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/areaContentTemplates.ts"
+    },
+    {
+      "legacyFile": "assessment/assessmentAnalysis.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "assessment/assessmentStorage.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "assessment/assessmentWorkflow.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "assessmentOverviewService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/assessmentOverviewService.ts"
+    },
+    {
+      "legacyFile": "assessmentReportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/assessmentReportService.ts"
+    },
+    {
+      "legacyFile": "assessmentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/assessmentService.ts"
+    },
+    {
+      "legacyFile": "assessmentWorkflowService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/assessmentWorkflowService.ts"
+    },
+    {
+      "legacyFile": "attributionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/attributionService.ts"
+    },
+    {
+      "legacyFile": "auditIntegrityService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/auditIntegrityService.ts"
+    },
+    {
+      "legacyFile": "auditLogService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/auditLogService.ts"
+    },
+    {
+      "legacyFile": "auditService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/auditService.ts"
+    },
+    {
+      "legacyFile": "automationEngineService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/automationEngineService.ts"
+    },
+    {
+      "legacyFile": "backupService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/backupService.ts"
+    },
+    {
+      "legacyFile": "baselineService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/baselineService.ts"
+    },
+    {
+      "legacyFile": "benchmarkingService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/benchmarkingService.ts"
+    },
+    {
+      "legacyFile": "billingService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/billingService.ts"
+    },
+    {
+      "legacyFile": "brandingService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/brandingService.ts"
+    },
+    {
+      "legacyFile": "breakGlassService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/breakGlassService.ts"
+    },
+    {
+      "legacyFile": "budgetService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/budgetService.ts"
+    },
+    {
+      "legacyFile": "capacityService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/capacityService.ts"
+    },
+    {
+      "legacyFile": "circuitBreakerService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/circuitBreakerService.ts"
+    },
+    {
+      "legacyFile": "cohortService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/cohortService.ts"
+    },
+    {
+      "legacyFile": "collaborationAIService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/collaborationAIService.ts"
+    },
+    {
+      "legacyFile": "competitiveIntelligenceService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/competitiveIntelligenceService.ts"
+    },
+    {
+      "legacyFile": "complianceService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/complianceService.ts"
+    },
+    {
+      "legacyFile": "connectorHealthService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/connectorHealthService.ts"
+    },
+    {
+      "legacyFile": "connectorRegistry.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/connectorRegistry.ts"
+    },
+    {
+      "legacyFile": "connectorService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/connectorService.ts"
+    },
+    {
+      "legacyFile": "consentManagementService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/consentManagementService.ts"
+    },
+    {
+      "legacyFile": "consultantService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/consultantService.ts"
+    },
+    {
+      "legacyFile": "contentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/contentService.ts"
+    },
+    {
+      "legacyFile": "contextService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/contextService.ts"
+    },
+    {
+      "legacyFile": "creditNoteService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/creditNoteService.ts"
+    },
+    {
+      "legacyFile": "criticalPathService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/criticalPathService.ts"
+    },
+    {
+      "legacyFile": "currencyService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/currencyService.ts"
+    },
+    {
+      "legacyFile": "customerSuccessService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/customerSuccessService.ts"
+    },
+    {
+      "legacyFile": "dashboardBuilderService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/dashboardBuilderService.ts"
+    },
+    {
+      "legacyFile": "dataRetentionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/dataRetentionService.ts"
+    },
+    {
+      "legacyFile": "decisionTriggerService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/decisionTriggerService.ts"
+    },
+    {
+      "legacyFile": "demoService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/demoService.ts"
+    },
+    {
+      "legacyFile": "demoSessionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/demoSessionService.ts"
+    },
+    {
+      "legacyFile": "dependencyService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/dependencyService.ts"
+    },
+    {
+      "legacyFile": "deviceManagementService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/deviceManagementService.ts"
+    },
+    {
+      "legacyFile": "dlpService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/dlpService.ts"
+    },
+    {
+      "legacyFile": "documentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/documentService.ts"
+    },
+    {
+      "legacyFile": "economicsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/economicsService.ts"
+    },
+    {
+      "legacyFile": "emailCampaignService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailCampaignService.ts"
+    },
+    {
+      "legacyFile": "emailService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailService.ts"
+    },
+    {
+      "legacyFile": "emailTemplateService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailTemplateService.ts"
+    },
+    {
+      "legacyFile": "emailVerificationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailVerificationService.ts"
+    },
+    {
+      "legacyFile": "enterpriseReportTemplates.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/enterpriseReportTemplates.ts"
+    },
+    {
+      "legacyFile": "escalationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/escalationService.ts"
+    },
+    {
+      "legacyFile": "evidenceLedgerService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/evidenceLedgerService.ts"
+    },
+    {
+      "legacyFile": "evidenceService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/evidenceService.ts"
+    },
+    {
+      "legacyFile": "evmMetricsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/evmMetricsService.ts"
+    },
+    {
+      "legacyFile": "excelExportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/excelExportService.ts"
+    },
+    {
+      "legacyFile": "excelImportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/excelImportService.ts"
+    },
+    {
+      "legacyFile": "executionMonitorService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/executionMonitorService.ts"
+    },
+    {
+      "legacyFile": "executionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/executionService.ts"
+    },
+    {
+      "legacyFile": "experimentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/experimentService.ts"
+    },
+    {
+      "legacyFile": "externalAssessmentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/externalAssessmentService.ts"
+    },
+    {
+      "legacyFile": "facilityUserService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/facilityUserService.ts"
+    },
+    {
+      "legacyFile": "featureFlagService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/featureFlagService.ts"
+    },
+    {
+      "legacyFile": "feedbackService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/feedbackService.ts"
+    },
+    {
+      "legacyFile": "financialCalculatorService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/financialCalculatorService.ts"
+    },
+    {
+      "legacyFile": "financialService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/financialService.ts"
+    },
+    {
+      "legacyFile": "focusService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/focusService.ts"
+    },
+    {
+      "legacyFile": "frameworkAssessmentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/frameworkAssessmentService.ts"
+    },
+    {
+      "legacyFile": "frameworkBenchmarkService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/frameworkBenchmarkService.ts"
+    },
+    {
+      "legacyFile": "frameworkRBACService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/frameworkRBACService.ts"
+    },
+    {
+      "legacyFile": "frameworkScoreCalculators.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/frameworkScoreCalculators.ts"
+    },
+    {
+      "legacyFile": "gamificationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/gamificationService.ts"
+    },
+    {
+      "legacyFile": "gdprService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/gdprService.ts"
+    },
+    {
+      "legacyFile": "genericReportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/genericReportService.ts"
+    },
+    {
+      "legacyFile": "governanceAuditService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/governanceAuditService.ts"
+    },
+    {
+      "legacyFile": "governanceService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/governanceService.ts"
+    },
+    {
+      "legacyFile": "helpAnalyticsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/helpAnalyticsService.ts"
+    },
+    {
+      "legacyFile": "helpChatService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/helpChatService.ts"
+    },
+    {
+      "legacyFile": "helpService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/helpService.ts"
+    },
+    {
+      "legacyFile": "inboxService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/inboxService.ts"
+    },
+    {
+      "legacyFile": "industryAIModelsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/industryAIModelsService.ts"
+    },
+    {
+      "legacyFile": "ingestionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ingestionService.ts"
+    },
+    {
+      "legacyFile": "initiativeGeneratorService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeGeneratorService.ts"
+    },
+    {
+      "legacyFile": "initiativeService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeService.ts"
+    },
+    {
+      "legacyFile": "initiativeStatusService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeStatusService.ts"
+    },
+    {
+      "legacyFile": "initiativeTemplateService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeTemplateService.ts"
+    },
+    {
+      "legacyFile": "integrationAnalyticsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/integrationAnalyticsService.ts"
+    },
+    {
+      "legacyFile": "integrationHubService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/integrationHubService.ts"
+    },
+    {
+      "legacyFile": "integrationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/integrationService.ts"
+    },
+    {
+      "legacyFile": "integrations/clickupUserIntegration.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "integrations/jiraUserIntegration.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "integrations/slackUserIntegration.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "integrations/teamsUserIntegration.js",
+      "hasWrapper": false,
+      "wrapperPath": null
+    },
+    {
+      "legacyFile": "invitationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/invitationService.ts"
+    },
+    {
+      "legacyFile": "invoiceTemplateService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/invoiceTemplateService.ts"
+    },
+    {
+      "legacyFile": "ipWhitelistService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ipWhitelistService.ts"
+    },
+    {
+      "legacyFile": "journeyAnalytics.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/journeyAnalytics.ts"
+    },
+    {
+      "legacyFile": "knowledgeGraphService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/knowledgeGraphService.ts"
+    },
+    {
+      "legacyFile": "knowledgeService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/knowledgeService.ts"
+    },
+    {
+      "legacyFile": "legalEventLogger.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/legalEventLogger.ts"
+    },
+    {
+      "legacyFile": "legalExportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/legalExportService.ts"
+    },
+    {
+      "legacyFile": "legalService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/legalService.ts"
+    },
+    {
+      "legacyFile": "llmFallbackService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/llmFallbackService.ts"
+    },
+    {
+      "legacyFile": "managementReportsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/managementReportsService.ts"
+    },
+    {
+      "legacyFile": "metricsAggregator.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsAggregator.ts"
+    },
+    {
+      "legacyFile": "metricsCollector.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsCollector.ts"
+    },
+    {
+      "legacyFile": "metricsPersistenceService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsPersistenceService.ts"
+    },
+    {
+      "legacyFile": "metricsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsService.ts"
+    },
+    {
+      "legacyFile": "mfaService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/mfaService.ts"
+    },
+    {
+      "legacyFile": "multiFrameworkAssessmentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/multiFrameworkAssessmentService.ts"
+    },
+    {
+      "legacyFile": "multiFrameworkAuditService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/multiFrameworkAuditService.ts"
+    },
+    {
+      "legacyFile": "multiFrameworkReportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/multiFrameworkReportService.ts"
+    },
+    {
+      "legacyFile": "myWorkService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/myWorkService.ts"
+    },
+    {
+      "legacyFile": "narrativeService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/narrativeService.ts"
+    },
+    {
+      "legacyFile": "notificationBatchingService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/notificationBatchingService.ts"
+    },
+    {
+      "legacyFile": "notificationOutboxService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/notificationOutboxService.ts"
+    },
+    {
+      "legacyFile": "notificationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/notificationService.ts"
+    },
+    {
+      "legacyFile": "oauthService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/oauthService.ts"
+    },
+    {
+      "legacyFile": "onboardingService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/onboardingService.ts"
+    },
+    {
+      "legacyFile": "organizationAnalyticsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationAnalyticsService.ts"
+    },
+    {
+      "legacyFile": "organizationEventService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationEventService.ts"
+    },
+    {
+      "legacyFile": "organizationHealthService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationHealthService.ts"
+    },
+    {
+      "legacyFile": "organizationMetadataService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationMetadataService.ts"
+    },
+    {
+      "legacyFile": "organizationRelationshipService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationRelationshipService.ts"
+    },
+    {
+      "legacyFile": "organizationSegmentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationSegmentService.ts"
+    },
+    {
+      "legacyFile": "organizationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationService.ts"
+    },
+    {
+      "legacyFile": "organizationTagService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationTagService.ts"
+    },
+    {
+      "legacyFile": "outcomeService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/outcomeService.ts"
+    },
+    {
+      "legacyFile": "partnerService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/partnerService.ts"
+    },
+    {
+      "legacyFile": "passwordPolicyService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/passwordPolicyService.ts"
+    },
+    {
+      "legacyFile": "patternRecognitionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/patternRecognitionService.ts"
+    },
+    {
+      "legacyFile": "payAsYouGoService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/payAsYouGoService.ts"
+    },
+    {
+      "legacyFile": "pdfExportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pdfExportService.ts"
+    },
+    {
+      "legacyFile": "pdfGeneratorService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pdfGeneratorService.ts"
+    },
+    {
+      "legacyFile": "pdfParserService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pdfParserService.ts"
+    },
+    {
+      "legacyFile": "periodComparisonService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/periodComparisonService.ts"
+    },
+    {
+      "legacyFile": "permissionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/permissionService.ts"
+    },
+    {
+      "legacyFile": "permissionsMatrixService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/permissionsMatrixService.ts"
+    },
+    {
+      "legacyFile": "platformEcosystemService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/platformEcosystemService.ts"
+    },
+    {
+      "legacyFile": "playbookResolver.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/playbookResolver.ts"
+    },
+    {
+      "legacyFile": "pmoAnalysisService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoAnalysisService.ts"
+    },
+    {
+      "legacyFile": "pmoDomainRegistry.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoDomainRegistry.ts"
+    },
+    {
+      "legacyFile": "pmoHealthService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoHealthService.ts"
+    },
+    {
+      "legacyFile": "pmoRoleService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoRoleService.ts"
+    },
+    {
+      "legacyFile": "pmoStandardsMapping.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoStandardsMapping.ts"
+    },
+    {
+      "legacyFile": "portfolioService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/portfolioService.ts"
+    },
+    {
+      "legacyFile": "pptxExportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pptxExportService.ts"
+    },
+    {
+      "legacyFile": "pptxGeneratorService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pptxGeneratorService.ts"
+    },
+    {
+      "legacyFile": "predictiveService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/predictiveService.ts"
+    },
+    {
+      "legacyFile": "premiumPdfService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/premiumPdfService.ts"
+    },
+    {
+      "legacyFile": "premiumReportAIService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/premiumReportAIService.ts"
+    },
+    {
+      "legacyFile": "pricingService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pricingService.ts"
+    },
+    {
+      "legacyFile": "progressService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/progressService.ts"
+    },
+    {
+      "legacyFile": "projectMemberService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/projectMemberService.ts"
+    },
+    {
+      "legacyFile": "promoCodeService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/promoCodeService.ts"
+    },
+    {
+      "legacyFile": "promptService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/promptService.ts"
+    },
+    {
+      "legacyFile": "promptVersionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/promptVersionService.ts"
+    },
+    {
+      "legacyFile": "qualityAssessmentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/qualityAssessmentService.ts"
+    },
+    {
+      "legacyFile": "ragEnhancedService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ragEnhancedService.ts"
+    },
+    {
+      "legacyFile": "ragService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ragService.ts"
+    },
+    {
+      "legacyFile": "rapidLeanObservationMapper.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/rapidLeanObservationMapper.ts"
+    },
+    {
+      "legacyFile": "rapidLeanReportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/rapidLeanReportService.ts"
+    },
+    {
+      "legacyFile": "rapidLeanService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/rapidLeanService.ts"
+    },
+    {
+      "legacyFile": "rbacService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/rbacService.ts"
+    },
+    {
+      "legacyFile": "realtimeService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/realtimeService.ts"
+    },
+    {
+      "legacyFile": "recommendationsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/recommendationsService.ts"
+    },
+    {
+      "legacyFile": "referralService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/referralService.ts"
+    },
+    {
+      "legacyFile": "refreshTokenService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/refreshTokenService.ts"
+    },
+    {
+      "legacyFile": "regulatoryModeGuard.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/regulatoryModeGuard.ts"
+    },
+    {
+      "legacyFile": "reportApprovalService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportApprovalService.ts"
+    },
+    {
+      "legacyFile": "reportAuditService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportAuditService.ts"
+    },
+    {
+      "legacyFile": "reportCacheService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportCacheService.ts"
+    },
+    {
+      "legacyFile": "reportCommentsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportCommentsService.ts"
+    },
+    {
+      "legacyFile": "reportContentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportContentService.ts"
+    },
+    {
+      "legacyFile": "reportEmailService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportEmailService.ts"
+    },
+    {
+      "legacyFile": "reportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportService.ts"
+    },
+    {
+      "legacyFile": "reportTemplateService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportTemplateService.ts"
+    },
+    {
+      "legacyFile": "reportVersionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportVersionService.ts"
+    },
+    {
+      "legacyFile": "reportingService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportingService.ts"
+    },
+    {
+      "legacyFile": "retentionPolicyService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/retentionPolicyService.ts"
+    },
+    {
+      "legacyFile": "roadmapService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/roadmapService.ts"
+    },
+    {
+      "legacyFile": "roiService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/roiService.ts"
+    },
+    {
+      "legacyFile": "scenarioService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/scenarioService.ts"
+    },
+    {
+      "legacyFile": "scheduledReportsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/scheduledReportsService.ts"
+    },
+    {
+      "legacyFile": "scimService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/scimService.ts"
+    },
+    {
+      "legacyFile": "seatManagementService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/seatManagementService.ts"
+    },
+    {
+      "legacyFile": "secretManager.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/secretManager.ts"
+    },
+    {
+      "legacyFile": "secretsVault.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/secretsVault.ts"
+    },
+    {
+      "legacyFile": "securityEventService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/securityEventService.ts"
+    },
+    {
+      "legacyFile": "securityIncidentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/securityIncidentService.ts"
+    },
+    {
+      "legacyFile": "securityPolicyService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/securityPolicyService.ts"
+    },
+    {
+      "legacyFile": "securityService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/securityService.ts"
+    },
+    {
+      "legacyFile": "settlementService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/settlementService.ts"
+    },
+    {
+      "legacyFile": "shareLinkService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/shareLinkService.ts"
+    },
+    {
+      "legacyFile": "siemService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/siemService.ts"
+    },
+    {
+      "legacyFile": "slaService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/slaService.ts"
+    },
+    {
+      "legacyFile": "slackService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/slackService.ts"
+    },
+    {
+      "legacyFile": "smsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/smsService.ts"
+    },
+    {
+      "legacyFile": "ssoService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ssoService.ts"
+    },
+    {
+      "legacyFile": "stabilizationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/stabilizationService.ts"
+    },
+    {
+      "legacyFile": "stageGateService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/stageGateService.ts"
+    },
+    {
+      "legacyFile": "stakeholderPerspectiveService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/stakeholderPerspectiveService.ts"
+    },
+    {
+      "legacyFile": "statusMachine.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/statusMachine.ts"
+    },
+    {
+      "legacyFile": "statusReportService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/statusReportService.ts"
+    },
+    {
+      "legacyFile": "statusService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/statusService.ts"
+    },
+    {
+      "legacyFile": "steeringCommitteeAggregator.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/steeringCommitteeAggregator.ts"
+    },
+    {
+      "legacyFile": "storageReconciliationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/storageReconciliationService.ts"
+    },
+    {
+      "legacyFile": "storageService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/storageService.ts"
+    },
+    {
+      "legacyFile": "studioAIService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/studioAIService.ts"
+    },
+    {
+      "legacyFile": "subscriptionAnalyticsService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/subscriptionAnalyticsService.ts"
+    },
+    {
+      "legacyFile": "supportTicketService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/supportTicketService.ts"
+    },
+    {
+      "legacyFile": "systemConfigService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/systemConfigService.ts"
+    },
+    {
+      "legacyFile": "systemHealthService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/systemHealthService.ts"
+    },
+    {
+      "legacyFile": "systemIntegrity.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/systemIntegrity.ts"
+    },
+    {
+      "legacyFile": "taskAssignmentService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/taskAssignmentService.ts"
+    },
+    {
+      "legacyFile": "taxService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/taxService.ts"
+    },
+    {
+      "legacyFile": "teamMeetingAggregator.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/teamMeetingAggregator.ts"
+    },
+    {
+      "legacyFile": "threatIntelligenceService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/threatIntelligenceService.ts"
+    },
+    {
+      "legacyFile": "tokenBillingService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/tokenBillingService.ts"
+    },
+    {
+      "legacyFile": "trialService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/trialService.ts"
+    },
+    {
+      "legacyFile": "usageService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/usageService.ts"
+    },
+    {
+      "legacyFile": "userActivityService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userActivityService.ts"
+    },
+    {
+      "legacyFile": "userAdoptionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userAdoptionService.ts"
+    },
+    {
+      "legacyFile": "userGoals.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userGoals.ts"
+    },
+    {
+      "legacyFile": "userGroupService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userGroupService.ts"
+    },
+    {
+      "legacyFile": "userIntegrationService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userIntegrationService.ts"
+    },
+    {
+      "legacyFile": "userLicenseService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userLicenseService.ts"
+    },
+    {
+      "legacyFile": "userNotificationPreferencesService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userNotificationPreferencesService.ts"
+    },
+    {
+      "legacyFile": "userPreferencesService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userPreferencesService.ts"
+    },
+    {
+      "legacyFile": "userProfileExtendedService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userProfileExtendedService.ts"
+    },
+    {
+      "legacyFile": "userSessionService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userSessionService.ts"
+    },
+    {
+      "legacyFile": "userStateMachine.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userStateMachine.ts"
+    },
+    {
+      "legacyFile": "versioningService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/versioningService.ts"
+    },
+    {
+      "legacyFile": "voiceCommandParser.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/voiceCommandParser.ts"
+    },
+    {
+      "legacyFile": "webSearchService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/webSearchService.ts"
+    },
+    {
+      "legacyFile": "webauthnService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/webauthnService.ts"
+    },
+    {
+      "legacyFile": "webhookDeliveryService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/webhookDeliveryService.ts"
+    },
+    {
+      "legacyFile": "webhookService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/webhookService.ts"
+    },
+    {
+      "legacyFile": "whatsappService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/whatsappService.ts"
+    },
+    {
+      "legacyFile": "workModeService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/workModeService.ts"
+    },
+    {
+      "legacyFile": "workqueueService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/workqueueService.ts"
+    },
+    {
+      "legacyFile": "workstreamService.js",
+      "hasWrapper": true,
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/workstreamService.ts"
+    }
+  ]
+}

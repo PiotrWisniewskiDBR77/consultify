@@ -1,0 +1,54 @@
+{
+  "AI_MATURITY_MATRIX": [
+    {
+      "Axis": "AI Maturity",
+      "Area": "AI Foundations",
+      "Level": 1,
+      "Level_Name": "Basic",
+      "Level_Description": "AI is not used in the organization. Data is fragmented, mostly unstructured, and not prepared for analytical or AI use. Decisions are based on experience rather than data.",
+      "Assessment_Guidance": "Verify absence of AI tools and assess data availability and digital readiness.",
+      "Typical_Evidence": "Spreadsheets, emails, manual reports, no AI tools.",
+      "AI_Recommendation_Logic": "Block AI recommendations. Focus on data digitalization and foundations."
+    },
+    {
+      "Axis": "AI Maturity",
+      "Area": "AI Foundations",
+      "Level": 2,
+      "Level_Name": "Intermediate",
+      "Level_Description": "The organization experiments with AI tools on an ad-hoc basis. Data exists but lacks governance, quality standards, and ownership.",
+      "Assessment_Guidance": "Identify isolated AI experiments and assess data quality and ownership.",
+      "Typical_Evidence": "Single AI tools, pilots, shadow IT solutions.",
+      "AI_Recommendation_Logic": "Allow supervised AI pilots only. Recommend data governance."
+    },
+    {
+      "Axis": "AI Maturity",
+      "Area": "AI Foundations",
+      "Level": 3,
+      "Level_Name": "Advanced",
+      "Level_Description": "AI is used in selected business processes with defined goals. Data pipelines and basic governance are in place.",
+      "Assessment_Guidance": "Confirm repeatability of AI use cases and responsible roles.",
+      "Typical_Evidence": "Documented AI use cases, dashboards, defined data owners.",
+      "AI_Recommendation_Logic": "Recommend scaling AI use cases and formal governance."
+    },
+    {
+      "Axis": "AI Maturity",
+      "Area": "AI Foundations",
+      "Level": 4,
+      "Level_Name": "Interactive",
+      "Level_Description": "AI supports decision-making across multiple areas. Human-in-the-loop mechanisms and performance monitoring are implemented.",
+      "Assessment_Guidance": "Check AI integration into workflows and monitoring.",
+      "Typical_Evidence": "AI-assisted workflows, monitoring dashboards, feedback loops.",
+      "AI_Recommendation_Logic": "Allow semi-autonomous AI agents with escalation paths."
+    },
+    {
+      "Axis": "AI Maturity",
+      "Area": "AI Foundations",
+      "Level": 5,
+      "Level_Name": "Expert",
+      "Level_Description": "AI is a core organizational capability. Autonomous AI agents operate under governance frameworks, continuously optimized and audited.",
+      "Assessment_Guidance": "Confirm enterprise AI strategy and audit mechanisms.",
+      "Typical_Evidence": "Autonomous agents, AI KPIs, audits.",
+      "AI_Recommendation_Logic": "Enable autonomous AI orchestration and innovation."
+    }
+  ]
+}

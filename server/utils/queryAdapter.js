@@ -5,7 +5,7 @@
  * This is used by services that need database-agnostic queries
  */
 
-const dbConfig = require('../config/database.config');
+import dbConfig from '../config/database.config.js';
 
 class QueryAdapter {
     constructor(db, type = 'sqlite') {
@@ -143,4 +143,4 @@ class QueryAdapter {
     }
 }
 
-module.exports = QueryAdapter;
+export default QueryAdapter;

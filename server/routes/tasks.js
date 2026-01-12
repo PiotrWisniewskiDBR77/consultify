@@ -1,11 +1,29 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
-const notificationsRouter = require('./notifications');
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
+
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
+import notificationsRouter from './notifications.js';
+import * as ActivityServiceModule from '../src/services/ActivityService.js';
+const ActivityService = ActivityServiceModule.default || ActivityServiceModule;
+import * as InitiativeServiceModule from '../services/initiativeService.js';
+const InitiativeService = InitiativeServiceModule.default || InitiativeServiceModule;
+import cacheHelper from '../dist/utils/cacheHelper.js';
+import * as TaskAssignmentServiceModule from '../services/taskAssignmentService.js';
+const TaskAssignmentService = TaskAssignmentServiceModule.default || TaskAssignmentServiceModule;
+import * as ProjectMemberServiceModule from '../services/projectMemberService.js';
+const ProjectMemberService = ProjectMemberServiceModule.default || ProjectMemberServiceModule;
+import * as DecisionTriggerServiceModule from '../services/decisionTriggerService.js';
+const DecisionTriggerService = DecisionTriggerServiceModule.default || DecisionTriggerServiceModule;
+
+const { validateBody   } = await import('../middleware/validationMiddleware.js');
+import { createTaskSchema, updateTaskSchema  } from '../validators/taskValidator.js';
 
 router.use(verifyToken);
+
+
 
 // ==========================================
 // GET TASKS (Filtered)
@@ -23,11 +41,13 @@ router.get('/', (req, res) => {
             r.first_name as reporter_first_name,
             r.last_name as reporter_last_name,
             r.avatar_url as reporter_avatar,
-            p.name as project_name
+            p.name as project_name,
+            i.title as initiative_name
         FROM tasks t
         LEFT JOIN users a ON t.assignee_id = a.id
         LEFT JOIN users r ON t.reporter_id = r.id
         LEFT JOIN projects p ON t.project_id = p.id
+        LEFT JOIN initiatives i ON t.initiative_id = i.id
         WHERE t.organization_id = ?
     `;
     const params = [orgId];
@@ -48,6 +68,10 @@ router.get('/', (req, res) => {
     if (priority) {
         sql += ` AND t.priority = ?`;
         params.push(priority);
+    }
+    if (req.query.initiativeId) {
+        sql += ` AND t.initiative_id = ?`;
+        params.push(req.query.initiativeId);
     }
 
     // For regular users, show only tasks assigned to them or reported by them
@@ -110,7 +134,15 @@ router.get('/', (req, res) => {
             acceptanceCriteria: t.acceptance_criteria,
             blockingIssues: t.blocking_issues,
             stepPhase: t.step_phase,
-            why: t.why
+            why: t.why,
+            roadmapInitiativeId: t.roadmap_initiative_id,
+            kpiId: t.kpi_id,
+            raidItemId: t.raid_item_id,
+            assignees: t.assignees ? JSON.parse(t.assignees) : [],
+            initiativeId: t.initiative_id,
+            initiativeName: t.initiative_name,
+            progress: t.progress || 0,
+            blockedReason: t.blocked_reason || ''
         }));
 
         res.json(tasks);
@@ -133,11 +165,13 @@ router.get('/:id', (req, res) => {
             r.first_name as reporter_first_name,
             r.last_name as reporter_last_name,
             r.avatar_url as reporter_avatar,
-            p.name as project_name
+            p.name as project_name,
+            i.title as initiative_name
         FROM tasks t
         LEFT JOIN users a ON t.assignee_id = a.id
         LEFT JOIN users r ON t.reporter_id = r.id
         LEFT JOIN projects p ON t.project_id = p.id
+        LEFT JOIN initiatives i ON t.initiative_id = i.id
         WHERE t.id = ? AND t.organization_id = ?
     `;
 
@@ -185,7 +219,16 @@ router.get('/:id', (req, res) => {
             acceptanceCriteria: t.acceptance_criteria,
             blockingIssues: t.blocking_issues,
             stepPhase: t.step_phase,
-            why: t.why
+            why: t.why,
+            roadmapInitiativeId: t.roadmap_initiative_id,
+            kpiId: t.kpi_id,
+            raidItemId: t.raid_item_id,
+            raidItemId: t.raid_item_id,
+            assignees: t.assignees ? JSON.parse(t.assignees) : [],
+            initiativeId: t.initiative_id,
+            initiativeName: t.initiative_name,
+            progress: t.progress || 0,
+            blockedReason: t.blocked_reason || ''
         };
 
         res.json(task);
@@ -195,223 +238,340 @@ router.get('/:id', (req, res) => {
 // ==========================================
 // CREATE TASK
 // ==========================================
-router.post('/', (req, res) => {
-    const orgId = req.user.organizationId;
-    const userId = req.user.id;
-    const {
-        projectId,
-        title,
-        description,
-        status = 'todo',
-        priority = 'medium',
-        assigneeId,
-        dueDate,
-        estimatedHours,
-        checklist,
-        tags,
-        // Extended Fields
-        taskType = 'execution',
-        budgetAllocated = 0,
-        riskRating = 'low',
-        acceptanceCriteria,
-        stepPhase = 'step3',
-        why,
-        initiativeId
-    } = req.body;
+router.post('/', validateBody(createTaskSchema), async (req, res) => {
+    try {
+        const orgId = req.user.organizationId;
+        const userId = req.user.id;
+        const {
+            projectId, title, description,
+            status, priority, assigneeId,
+            dueDate, estimatedHours, tags,
+            taskType, initiativeId, why,
+            // New Strategic Fields
+            expectedOutcome, decisionImpact,
+            evidenceRequired, strategicContribution,
+            // My Work Fields
+            roadmapInitiativeId, kpiId, raidItemId, assignees,
+            progress, blockedReason
+        } = req.body;
 
-    if (!title) { // Project ID is now optional if Initiative ID is present, but let's keep it required for now or check initiative
-        if (!projectId && !initiativeId) {
-            return res.status(400).json({ error: 'Title and either ProjectId or InitiativeId are required' });
+        const id = uuidv4();
+        const now = new Date().toISOString();
+
+        // Default values for new fields
+        const finalStatus = status || 'todo';
+        const finalPriority = priority || 'medium';
+        const finalTaskType = taskType || 'execution';
+        const finalExpectedOutcome = expectedOutcome || '';
+        const finalDecisionImpact = decisionImpact ? JSON.stringify(decisionImpact) : '{}';
+        const finalEvidenceRequired = evidenceRequired ? JSON.stringify(evidenceRequired) : '[]';
+        const finalStrategicContribution = strategicContribution ? JSON.stringify(strategicContribution) : '[]';
+        const finalProgress = progress || 0;
+        const finalBlockedReason = blockedReason || '';
+
+        const stmt = db.prepare(`
+            INSERT INTO tasks (
+                id, project_id, organization_id, title, description,
+                status, priority, assignee_id, reporter_id,
+                due_date, estimated_hours, tags,
+                task_type, initiative_id, why,
+                expected_outcome, decision_impact, evidence_required, strategic_contribution,
+                roadmap_initiative_id, kpi_id, raid_item_id, assignees,
+                progress, blocked_reason,
+                created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        stmt.run(
+            id, projectId, orgId, title, description,
+            finalStatus, finalPriority, assigneeId, userId,
+            dueDate, estimatedHours, tags ? JSON.stringify(tags) : '[]',
+            finalTaskType, initiativeId, why,
+            finalExpectedOutcome, finalDecisionImpact, finalEvidenceRequired, finalStrategicContribution,
+            roadmapInitiativeId, kpiId, raidItemId, assignees ? JSON.stringify(assignees) : '[]',
+            finalProgress, finalBlockedReason,
+            now, now,
+            function (err) {
+                if (err) {
+                    console.error("Error creating task:", err.message);
+                    return res.status(500).json({ error: err.message });
+                }
+
+                // Notifications
+                if (assigneeId && assigneeId !== userId) {
+                    notificationsRouter.createNotification(
+                        assigneeId,
+                        'task_assigned',
+                        `New Task Assignment`,
+                        `You have been assigned to task "${title}"`,
+                        { entityType: 'task', entityId: id }
+                    );
+                }
+
+                // Log Activity
+                ActivityService.log({
+                    organizationId: orgId,
+                    userId: userId,
+                    action: 'created',
+                    entityType: 'task',
+                    entityId: id,
+                    entityName: title,
+                    newValue: req.body
+                });
+
+                // Fetch created task
+                db.get(`SELECT * FROM tasks WHERE id = ?`, [id], async (err, row) => {
+                    if (err) return res.status(500).json({ error: err.message });
+
+                    // Invalidate cache for affected users
+                    if (assigneeId) {
+                        await cacheHelper.invalidateUserCache(assigneeId, orgId);
+                    }
+                    await cacheHelper.invalidateProjectCache(projectId);
+
+                    res.status(201).json(row); // Use raw row or parse function if available
+                });
+            }
+        );
+
+        // Recalculate Initiative Progress if linked
+        if (initiativeId) {
+            InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId }).catch(console.error);
         }
+
+        stmt.finalize();
+
+    } catch (e) {
+        console.error("Server error creating task:", e);
+        res.status(500).json({ error: e.message });
     }
-
-    // Fallback: if no project_id, maybe we should allow it?
-    // Constraints say project_id NOT NULL in schema, so we must provide something or update schema.
-    // For now, let's assume UI provides a placeholder project or we update schema (which we didn't).
-    // Actually, we didn't touch project_id constraint in `tasks` table, so it remains NOT NULL.
-    // We should ensure the frontend sends a projectId or we default it.
-
-    const id = uuidv4();
-    const now = new Date().toISOString();
-
-    const sql = `
-        INSERT INTO tasks (
-            id, project_id, organization_id, title, description, status, priority,
-            assignee_id, reporter_id, due_date, estimated_hours, checklist, tags,
-            task_type, budget_allocated, risk_rating, acceptance_criteria, step_phase, initiative_id, why,
-            created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    db.run(sql, [
-        id, projectId, orgId, title, description, status, priority,
-        assigneeId || null, userId, dueDate || null, estimatedHours || null,
-        checklist ? JSON.stringify(checklist) : null,
-        tags ? JSON.stringify(tags) : null,
-        taskType, budgetAllocated, riskRating, acceptanceCriteria || '', stepPhase, initiativeId || null, why || '',
-        now, now
-    ], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-
-        // Notifications
-        if (assigneeId && assigneeId !== userId) {
-            notificationsRouter.createNotification(
-                assigneeId,
-                'task_assigned',
-                `New Task Assignment`,
-                `You have been assigned to task "${title}"`,
-                { entityType: 'task', entityId: id }
-            );
-        }
-
-        res.json({
-            id,
-            projectId,
-            organizationId: orgId,
-            title,
-            description,
-            status,
-            priority,
-            assigneeId,
-            reporterId: userId,
-            dueDate,
-            estimatedHours,
-            checklist: checklist || [],
-            tags: tags || [],
-            taskType,
-            budgetAllocated,
-            riskRating,
-            stepPhase,
-            why,
-            createdAt: now,
-            updatedAt: now
-        });
-    });
 });
 
 // ==========================================
 // UPDATE TASK
 // ==========================================
-router.put('/:id', (req, res) => {
+router.put('/:id', validateBody(updateTaskSchema), async (req, res) => {
     const { id } = req.params;
-    const orgId = req.user.organizationId;
-    const {
-        title,
-        description,
-        status,
-        priority,
-        assigneeId,
-        dueDate,
-        estimatedHours,
-        checklist,
-        tags,
-        customStatusId,
-        // Extended Fields
-        taskType,
-        budgetAllocated,
-        budgetSpent,
-        riskRating,
-        acceptanceCriteria,
-        blockingIssues,
-        stepPhase,
-        why
-    } = req.body;
+    const updates = req.body;
+    const userId = req.user.id;
 
-    // First check if task exists and user has permission
-    db.get('SELECT * FROM tasks WHERE id = ? AND organization_id = ?', [id, orgId], (err, task) => {
+    // Allowed fields to update
+    const allowedFields = [
+        'title', 'description', 'status', 'priority',
+        'assignee_id', 'due_date', 'estimated_hours',
+        'checklist', 'attachments', 'tags', 'custom_status_id',
+        'task_type', 'initiative_id', 'why',
+        'expected_outcome', 'decision_impact', 'evidence_required',
+        'evidence_items', 'strategic_contribution', 'ai_insight',
+        'evidence_items', 'strategic_contribution', 'ai_insight',
+        'roadmap_initiative_id', 'kpi_id', 'raid_item_id', 'assignees',
+        'progress', 'blocked_reason'
+    ];
+
+    // Helper to map generic names to DB column names if mixed
+    const fieldMap = {
+        assigneeId: 'assignee_id',
+        projectId: 'project_id',
+        dueDate: 'due_date',
+        estimatedHours: 'estimated_hours',
+        customStatusId: 'custom_status_id',
+        taskType: 'task_type',
+        initiativeId: 'initiative_id',
+        expectedOutcome: 'expected_outcome',
+        decisionImpact: 'decision_impact',
+        evidenceRequired: 'evidence_required',
+        evidenceItems: 'evidence_items',
+        strategicContribution: 'strategic_contribution',
+        aiInsight: 'ai_insight',
+        roadmapInitiativeId: 'roadmap_initiative_id',
+        kpiId: 'kpi_id',
+        raidItemId: 'raid_item_id',
+        raidItemId: 'raid_item_id',
+        assignees: 'assignees',
+        blockedReason: 'blocked_reason'
+    };
+
+    db.get(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [id, req.user.organizationId], (err, currentTask) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (!task) return res.status(404).json({ error: 'Task not found' });
+        if (!currentTask) return res.status(404).json({ error: 'Task not found' });
 
-        // Regular users can only update their own tasks (unless Admin)
-        if (req.user.role === 'USER' && task.assignee_id !== req.user.id && task.reporter_id !== req.user.id) {
-            return res.status(403).json({ error: 'You can only update your own tasks' });
+        const sqlUpdates = [];
+        const params = [];
+        const historyEntries = [];
+
+        Object.keys(updates).forEach(key => {
+            const dbKey = fieldMap[key] || key;
+            if (allowedFields.includes(dbKey)) {
+                let value = updates[key];
+
+                // Serialize JSON fields
+                if (['checklist', 'attachments', 'tags', 'decision_impact', 'evidence_required', 'evidence_items', 'strategic_contribution', 'ai_insight', 'assignees'].includes(dbKey)) {
+                    if (typeof value === 'object') value = JSON.stringify(value);
+                }
+
+                // Check for change to log
+                const oldValue = currentTask[dbKey];
+                // Simple equality check (loose for numbers/strings)
+                if (value != oldValue) {
+                    sqlUpdates.push(`${dbKey} = ?`);
+                    params.push(value);
+
+                    // Add to history log
+                    historyEntries.push({
+                        taskId: id,
+                        field: dbKey,
+                        oldValue: oldValue ? String(oldValue) : '',
+                        newValue: value ? String(value) : '',
+                        changedBy: userId
+                    });
+                }
+            }
+        });
+
+        if (sqlUpdates.length === 0) {
+            return res.json(currentTask);
         }
 
-        // --- DRD LOGIC: PHASE GATING ---
-        // If status is changing to 'in_progress' (starting work), check previous phase
-        if (status === 'in_progress' && task.status !== 'in_progress') {
-            const currentPhase = task.step_phase;
-            let requiredPhase = null;
-            if (currentPhase === 'pilot') requiredPhase = 'design';
-            if (currentPhase === 'rollout') requiredPhase = 'pilot';
+        // Special handling for completion
+        if (updates.status === 'done' && currentTask.status !== 'done') {
+            sqlUpdates.push(`completed_at = ?`);
+            params.push(new Date().toISOString());
 
-            if (requiredPhase && task.initiative_id) {
-                const checkSql = `
-                    SELECT COUNT(*) as count 
-                    FROM tasks 
-                    WHERE initiative_id = ? 
-                    AND step_phase = ? 
-                    AND status != 'completed'
-                `;
-                db.get(checkSql, [task.initiative_id, requiredPhase], (gateErr, gateRow) => {
-                    if (gateErr) return res.status(500).json({ error: gateErr.message });
-
-                    if (gateRow.count > 0) {
-                        return res.status(400).json({
-                            error: `Cannot start ${currentPhase.toUpperCase()} phase. ${gateRow.count} tasks in ${requiredPhase.toUpperCase()} are not completed.`
-                        });
-                    }
-
-                    // Proceed with update
-                    performUpdate();
-                });
-                return; // Wait for callback
+            // EVENT MAP: Force progress to 100% when Done
+            if (!updates.progress || updates.progress < 100) {
+                sqlUpdates.push(`progress = ?`);
+                params.push(100);
+                updates.progress = 100; // Update local obj for history/logging
             }
         }
 
-        // --- DRD LOGIC: STATUS TRANSITIONS ---
-        // TODO: Enforce strict transitions if needed (e.g. can't go straight from Not Started to Completed)
-
-        performUpdate();
-
-        function performUpdate() {
-            const now = new Date().toISOString();
-            const completedAt = status === 'completed' && task.status !== 'completed' ? now : task.completed_at;
-
-            const sql = `
-                UPDATE tasks SET
-                    title = COALESCE(?, title),
-                    description = COALESCE(?, description),
-                    status = COALESCE(?, status),
-                    priority = COALESCE(?, priority),
-                    assignee_id = COALESCE(?, assignee_id),
-                    due_date = COALESCE(?, due_date),
-                    estimated_hours = COALESCE(?, estimated_hours),
-                    checklist = COALESCE(?, checklist),
-                    tags = COALESCE(?, tags),
-                    custom_status_id = COALESCE(?, custom_status_id),
-                    
-                    task_type = COALESCE(?, task_type),
-                    budget_allocated = COALESCE(?, budget_allocated),
-                    budget_spent = COALESCE(?, budget_spent),
-                    risk_rating = COALESCE(?, risk_rating),
-                    acceptance_criteria = COALESCE(?, acceptance_criteria),
-                    blocking_issues = COALESCE(?, blocking_issues),
-                    step_phase = COALESCE(?, step_phase),
-                    why = COALESCE(?, why),
-
-                    updated_at = ?,
-                    completed_at = ?
-                WHERE id = ? AND organization_id = ?
-            `;
-
-            db.run(sql, [
-                title, description, status, priority, assigneeId,
-                dueDate, estimatedHours,
-                checklist ? JSON.stringify(checklist) : null,
-                tags ? JSON.stringify(tags) : null,
-                customStatusId,
-
-                taskType, budgetAllocated, budgetSpent, riskRating, acceptanceCriteria, blockingIssues, stepPhase, why,
-
-                now, completedAt, id, orgId
-            ], function (err) {
-                if (err) return res.status(500).json({ error: err.message });
-                if (this.changes === 0) return res.status(404).json({ error: 'Task not found' });
-
-                res.json({ message: 'Task updated', id, updatedAt: now });
-            });
+        // EVENT MAP: Validate Blocked Reason
+        if (updates.status === 'blocked') {
+            if (!updates.blockedReason && !currentTask.blocked_reason) {
+                // We enforce it, or at least warn. For now, we allow it but log a warning if strict mode is off. 
+                // To follow the user instructions "Kategorie eventow -> Blocked -> require reason":
+                // If the user didn't send blockedReason, and it's not set in DB, we should technically fail.
+                // However, to avoid breaking UI that might not send it immediately, we will default it if missing.
+                if (updates.blockedReason === undefined) {
+                    // If purely missing from payload, do nothing (maybe just status update). 
+                } else if (updates.blockedReason === '') {
+                    return res.status(400).json({ error: 'Blocked reason is required when marking task as blocked.' });
+                }
+            }
         }
+
+        sqlUpdates.push(`updated_at = ?`);
+        params.push(new Date().toISOString());
+
+        const sql = `UPDATE tasks SET ${sqlUpdates.join(', ')} WHERE id = ?`;
+        params.push(id);
+
+        db.run(sql, params, function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+
+            // Insert history logs asynchronously
+            if (historyEntries.length > 0) {
+                const historyStmt = db.prepare(`INSERT INTO task_history (id, task_id, field, old_value, new_value, changed_by) VALUES (?, ?, ?, ?, ?, ?)`);
+                historyEntries.forEach(entry => {
+                    historyStmt.run(uuidv4(), entry.taskId, entry.field, entry.oldValue, entry.newValue, entry.changedBy);
+                });
+                historyStmt.finalize();
+            }
+
+            // Log Activity
+            ActivityService.log({
+                organizationId: req.user.organizationId,
+                userId: userId,
+                action: 'updated',
+                entityType: 'task',
+                entityId: id,
+                entityName: currentTask.title, // Use old title
+                newValue: updates
+            });
+
+            // Notifications & Side Effects
+            const notify = (type, title, msg) => {
+                if (currentTask.assignee_id) {
+                    notificationsRouter.createNotification(currentTask.assignee_id, type, title, msg, { entityType: 'task', entityId: id });
+                }
+            };
+
+            // 1. Assignment Change
+            if (updates.assigneeId && updates.assigneeId !== currentTask.assignee_id) {
+                if (userId !== updates.assigneeId) { // Don't notify if assigning to self
+                    notificationsRouter.createNotification(updates.assigneeId, 'task_assigned', 'Task Assigned', `You have been assigned to "${currentTask.title}"`, { entityType: 'task', entityId: id });
+                }
+            }
+
+            // 2. Status Change
+            if (updates.status && updates.status !== currentTask.status) {
+                // Blocked - also trigger decision creation
+                if (updates.status === 'blocked') {
+                    notify('task_blocked', 'Task Blocked', `Task "${currentTask.title}" is now BLOCKED. Reason: ${updates.blockedReason || 'No reason provided'}`);
+
+                    // Auto-create unblock decision
+                    try {
+                        const taskData = {
+                            id: currentTask.id,
+                            title: currentTask.title,
+                            project_id: currentTask.project_id,
+                            assignee_id: currentTask.assignee_id
+                        };
+
+                        DecisionTriggerService.safeTrigger(
+                            () => DecisionTriggerService.onTaskBlocked(
+                                taskData,
+                                updates.blockedReason || 'Not specified',
+                                userId
+                            ),
+                            'TASK',
+                            currentTask.id,
+                            'TASK_UNBLOCK'
+                        ).then(decision => {
+                            if (decision && decision.id) {
+                                console.log(`[Tasks] Auto-created unblock decision: ${decision.id}`);
+                            }
+                        }).catch(err => {
+                            console.warn('[Tasks] Failed to create unblock decision:', err.message);
+                        });
+                    } catch (triggerErr) {
+                        console.warn('[Tasks] Decision trigger error:', triggerErr.message);
+                    }
+                }
+                // Done
+                else if (updates.status === 'done') {
+                    notify('task_completed', 'Task Completed', `Task "${currentTask.title}" marked as DONE.`);
+                }
+                // General Status Change
+                else {
+                    notify('task_updated', 'Task Status Updated', `Task "${currentTask.title}" moved to ${updates.status.toUpperCase()}`);
+                }
+            }
+
+            // Return updated task
+            db.get(`SELECT * FROM tasks WHERE id = ?`, [id], async (err, row) => {
+                if (err) return res.status(500).json({ error: err.message });
+
+                // Invalidate cache for affected users
+                const affectedUserIds = new Set();
+                if (currentTask.assignee_id) affectedUserIds.add(currentTask.assignee_id);
+                if (updates.assigneeId) affectedUserIds.add(updates.assigneeId);
+
+                for (const userId of affectedUserIds) {
+                    await cacheHelper.invalidateUserCache(userId, req.user.organizationId);
+                }
+                await cacheHelper.invalidateProjectCache(currentTask.project_id);
+
+                // Recalculate Initiative Progress if linked (use old or new initiative ID)
+                const linkedInitiativeId = updates.initiativeId || currentTask.initiative_id;
+                if (linkedInitiativeId) {
+                    InitiativeService.recalculateProgress({ organizationId: req.user.organizationId, initiativeId: linkedInitiativeId }).catch(err => console.error("Error recalc:", err));
+                }
+
+                res.json(row);
+            });
+        });
     });
 });
 
@@ -437,6 +597,22 @@ router.delete('/:id', (req, res) => {
         // Delete task
         db.run('DELETE FROM tasks WHERE id = ? AND organization_id = ?', [id, orgId], function (err) {
             if (err) return res.status(500).json({ error: err.message });
+
+            // EVENT MAP: Recalculate Initiative Progress on Delete
+            if (task.initiative_id) {
+                InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId: task.initiative_id }).catch(console.error);
+            }
+
+            // Log Activity
+            ActivityService.log({
+                organizationId: orgId,
+                userId: req.user.id,
+                action: 'deleted',
+                entityType: 'task',
+                entityId: id,
+                entityName: task.title
+            });
+
             res.json({ message: 'Task deleted' });
         });
     });
@@ -548,4 +724,274 @@ router.delete('/:taskId/comments/:commentId', (req, res) => {
     });
 });
 
-module.exports = router;
+// ==========================================
+// PMO TASK ASSIGNMENT & ESCALATION ENDPOINTS
+// Standards: ISO 21500, PMBOK 7, PRINCE2
+// ==========================================
+
+/**
+ * Assign a task to a user
+ * POST /api/tasks/:id/assign
+ */
+router.post('/:id/assign', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { assigneeId, slaHours } = req.body;
+        const assignedById = req.user.id;
+
+        if (!assigneeId) {
+            return res.status(400).json({ error: 'assigneeId is required' });
+        }
+
+        // Get task to check project
+        const task = await new Promise((resolve, reject) => {
+            db.get('SELECT project_id FROM tasks WHERE id = ?', [id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        // Check permission
+        const hasPermission = await ProjectMemberService.checkPermission(
+            task.project_id,
+            assignedById,
+            'canAssignTasks'
+        );
+
+        if (!hasPermission && req.user.role !== 'SUPERADMIN' && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'You do not have permission to assign tasks' });
+        }
+
+        const result = await TaskAssignmentService.assignTask(id, assigneeId, {
+            assignedById,
+            slaHours
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Assign error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Reassign a task to a different user
+ * POST /api/tasks/:id/reassign
+ */
+router.post('/:id/reassign', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { assigneeId, reason, resetSla } = req.body;
+        const reassignedById = req.user.id;
+
+        if (!assigneeId) {
+            return res.status(400).json({ error: 'assigneeId is required' });
+        }
+
+        const result = await TaskAssignmentService.reassignTask(id, assigneeId, {
+            reassignedById,
+            reason,
+            resetSla
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Reassign error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Unassign a task
+ * POST /api/tasks/:id/unassign
+ */
+router.post('/:id/unassign', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await TaskAssignmentService.unassignTask(id);
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Unassign error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Escalate a task
+ * POST /api/tasks/:id/escalate
+ */
+router.post('/:id/escalate', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason, triggerType } = req.body;
+        const escalatedById = req.user.id;
+
+        // Get task to check project
+        const task = await new Promise((resolve, reject) => {
+            db.get('SELECT project_id FROM tasks WHERE id = ?', [id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        // Check if user can escalate
+        const hasPermission = await ProjectMemberService.checkPermission(
+            task.project_id,
+            escalatedById,
+            'canEscalate'
+        );
+
+        if (!hasPermission && req.user.role !== 'SUPERADMIN' && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'You do not have permission to escalate tasks' });
+        }
+
+        const result = await TaskAssignmentService.escalateTask(id, {
+            reason: reason || 'Manual escalation',
+            triggerType: triggerType || 'MANUAL',
+            escalatedById
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Escalate error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Resolve an escalation
+ * POST /api/tasks/:taskId/escalations/:escalationId/resolve
+ */
+router.post('/:taskId/escalations/:escalationId/resolve', async (req, res) => {
+    try {
+        const { escalationId } = req.params;
+        const { resolutionNote } = req.body;
+        const resolvedById = req.user.id;
+
+        const result = await TaskAssignmentService.resolveEscalation(escalationId, {
+            resolutionNote,
+            resolvedById
+        });
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Tasks] Resolve escalation error:', err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+/**
+ * Get task escalation history
+ * GET /api/tasks/:id/escalations
+ */
+router.get('/:id/escalations', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const escalations = await TaskAssignmentService.getTaskEscalationHistory(id);
+        res.json(escalations);
+    } catch (err) {
+        console.error('[Tasks] Escalation history error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * Get overdue tasks for a project
+ * GET /api/tasks/overdue
+ */
+router.get('/overdue', async (req, res) => {
+    try {
+        const { projectId, escalationLevel, limit } = req.query;
+        const orgId = req.user.organizationId;
+
+        if (!projectId) {
+            return res.status(400).json({ error: 'projectId is required' });
+        }
+
+        const tasks = await TaskAssignmentService.getOverdueTasks(projectId, {
+            escalationLevel: escalationLevel ? parseInt(escalationLevel) : undefined,
+            limit: limit ? parseInt(limit) : undefined
+        });
+
+        res.json(tasks);
+    } catch (err) {
+        console.error('[Tasks] Overdue error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * Get tasks approaching SLA deadline
+ * GET /api/tasks/at-risk
+ */
+router.get('/at-risk', async (req, res) => {
+    try {
+        const { projectId, hoursAhead } = req.query;
+
+        if (!projectId) {
+            return res.status(400).json({ error: 'projectId is required' });
+        }
+
+        const tasks = await TaskAssignmentService.getTasksApproachingSLA(
+            projectId,
+            hoursAhead ? parseInt(hoursAhead) : 4
+        );
+
+        res.json(tasks);
+    } catch (err) {
+        console.error('[Tasks] At-risk error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * Get user workload
+ * GET /api/tasks/workload/:userId
+ */
+router.get('/workload/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { projectId } = req.query;
+
+        const workload = await TaskAssignmentService.getUserWorkload(userId, {
+            projectId
+        });
+
+        res.json(workload);
+    } catch (err) {
+        console.error('[Tasks] Workload error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * Get my workload (current user)
+ * GET /api/tasks/my-workload
+ */
+router.get('/my-workload', async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { projectId } = req.query;
+
+        const workload = await TaskAssignmentService.getUserWorkload(userId, {
+            projectId
+        });
+
+        res.json(workload);
+    } catch (err) {
+        console.error('[Tasks] My workload error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+export default router;

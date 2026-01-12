@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-01-04T12:09:46.327Z",
+  "structural": {
+    "coverage": 32.98136645962733,
+    "migratedFiles": 531,
+    "missingMigrations": 1079
+  },
+  "imports": {
+    "totalIssues": 32,
+    "filesWithIssues": 14
+  },
+  "duplicates": {
+    "total": 75,
+    "withCommonFunctions": 15
+  },
+  "overall": {
+    "status": "needs_attention",
+    "score": 34
+  }
+}

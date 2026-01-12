@@ -1,17 +1,26 @@
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_change_this_in_production';
+import defaultJwt from 'jsonwebtoken';
+import config from '../config.js';
+const JWT_SECRET = config.JWT_SECRET;
+import { getDatabase } from '../src/database/index.js';
+const defaultDb = getDatabase();
+
+// Dependencies object to allow injection
+const deps = {
+    jwt: defaultJwt
+};
 
 /**
  * Admin Middleware - Verifies user is an ADMIN or SUPERADMIN for their organization
  * Use this for organization-scoped admin actions (user management, team creation, etc.)
  */
 const verifyAdmin = (req, res, next) => {
-    const token = req.headers['authorization'] || req.headers['x-access-token'];
+    const headers = req.headers || {};
+    const token = headers['authorization'] || headers['x-access-token'];
     if (!token) return res.status(403).json({ error: 'No token provided' });
 
     const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
 
-    jwt.verify(cleanToken, JWT_SECRET, (err, decoded) => {
+    deps.jwt.verify(cleanToken, JWT_SECRET, (err, decoded) => {
         if (err) return res.status(401).json({ error: 'Unauthorized' });
 
         // Check if user is ADMIN or SUPERADMIN
@@ -19,9 +28,10 @@ const verifyAdmin = (req, res, next) => {
             return res.status(403).json({ error: 'Admin privileges required' });
         }
 
-        req.user = decoded;
         req.userId = decoded.id;
         req.userRole = decoded.role;
+        req.organizationId = decoded.organizationId || decoded.organization_id;
+        req.user = decoded;
         next();
     });
 };
@@ -41,14 +51,16 @@ const checkPermission = (requiredPermission) => {
                 'project:create', 'project:read', 'project:update', 'project:delete',
                 'task:create', 'task:read', 'task:update', 'task:delete', 'task:assign',
                 'team:create', 'team:read', 'team:update', 'team:delete',
-                'settings:global', 'analytics:global'
+                'settings:global', 'analytics:global',
+                'connectors:manage' // Step 17: Connector management
             ],
             ADMIN: [
                 'user:create', 'user:read', 'user:update', 'user:delete',
                 'project:create', 'project:read', 'project:update', 'project:delete',
                 'task:create', 'task:read', 'task:update', 'task:delete', 'task:assign',
                 'team:create', 'team:read', 'team:update', 'team:delete',
-                'settings:org', 'analytics:org'
+                'settings:org', 'analytics:org',
+                'connectors:manage' // Step 17: Connector management
             ],
             USER: [
                 'project:read',
@@ -83,4 +95,16 @@ const checkPermission = (requiredPermission) => {
     };
 };
 
-module.exports = { verifyAdmin, checkPermission };
+/**
+ * Inject dependencies for testing
+ * @param {Object} newDeps 
+ */
+function setDependencies(newDeps) {
+    Object.assign(deps, newDeps);
+}
+
+export {
+    verifyAdmin,
+    checkPermission,
+    setDependencies
+};

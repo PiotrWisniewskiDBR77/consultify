@@ -1,45 +1,51 @@
+import { motion } from 'framer-motion';
 import React from 'react';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  fullWidth?: boolean;
-  icon?: React.ReactNode;
+interface ButtonProps extends Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart'
+> {
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'glass';
+    size?: 'sm' | 'md' | 'lg';
+    fullWidth?: boolean;
+    icon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = 'primary',
-  size = 'md',
-  fullWidth = false,
-  icon,
-  className = '',
-  ...props
+    children,
+    variant = 'primary',
+    size = 'md',
+    fullWidth = false,
+    icon,
+    className = '',
+    ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed";
+    const variants = {
+        primary: 'btn-primary',
+        secondary: 'btn-secondary',
+        outline: 'btn-outline',
+        ghost: 'btn-ghost',
+        danger: 'btn-danger',
+        glass: 'btn-glass',
+    };
 
-  const variants = {
-    primary: "btn-primary",
-    secondary: "bg-navy-800 hover:bg-navy-700 text-white border border-white/10 shadow-lg hover:shadow-xl active:scale-[0.98]",
-    outline: "btn-glass bg-transparent border-slate-200 dark:border-white/10 hover:border-brand/50 text-slate-600 dark:text-slate-200 hover:text-brand dark:hover:text-white",
-    ghost: "bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white active:scale-[0.98]"
-  };
+    const sizes = {
+        sm: 'px-3.5 py-1.5 text-xs',
+        md: 'px-5 py-2.5 text-sm',
+        lg: 'px-7 py-3.5 text-base',
+    };
 
-  const sizes = {
-    sm: "px-3 py-1.5 text-xs",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base"
-  };
+    const widthClass = fullWidth ? 'w-full' : '';
 
-  const widthClass = fullWidth ? "w-full" : "";
-
-  return (
-    <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
-      {...props}
-    >
-      {icon && <span className="mr-2">{icon}</span>}
-      {children}
-    </button>
-  );
+    return (
+        <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            className={`${variants[variant]} ${sizes[size]} ${widthClass} ${className} btn-base shadow-sm hover:shadow-md active:shadow-inner`}
+            {...(props as any)}
+        >
+            {icon && <span className="mr-2.5 flex items-center">{icon}</span>}
+            <span className="relative z-10">{children}</span>
+        </motion.button>
+    );
 };

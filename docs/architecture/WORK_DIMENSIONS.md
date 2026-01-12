@@ -1,0 +1,434 @@
+# Work Dimensions System Architecture
+
+## Overview
+
+The Work Dimensions System allows organizations to configure how work is structured across locations, projects, and teams. This flexibility supports various organizational models from simple single-team setups to complex matrix organizations.
+
+## Work Modes
+
+### 1. SIMPLE Mode
+
+**Configuration:** `work_mode = 'SIMPLE'`, `has_locations = false`, `has_projects = false`
+
+The simplest organizational model:
+- Single team environment
+- All users see all tasks and initiatives
+- No location or project segregation
+- Ideal for small teams or startups
+
+```
+┌─────────────────────────────────────┐
+│           Organization              │
+│  ┌─────────────────────────────┐   │
+│  │      Single Team            │   │
+│  │  - All users                │   │
+│  │  - All tasks                │   │
+│  │  - All initiatives          │   │
+│  └─────────────────────────────┘   │
+└─────────────────────────────────────┘
+```
+
+### 2. LOCATION_BASED Mode
+
+**Configuration:** `work_mode = 'LOCATION_BASED'`, `has_locations = true`, `has_projects = false`
+
+For organizations with multiple physical locations or business units:
+- Users are assigned to one or more facilities
+- Tasks are scoped to facilities
+- Users see tasks from their assigned facilities
+- Supports headquarters and branch structure
+
+```
+┌─────────────────────────────────────────────────┐
+│                 Organization                    │
+│  ┌──────────────┐  ┌──────────────┐            │
+│  │ Location A   │  │ Location B   │            │
+│  │ (HQ)         │  │ (Branch)     │            │
+│  │  - Team A    │  │  - Team B    │            │
+│  │  - Tasks A   │  │  - Tasks B   │            │
+│  └──────────────┘  └──────────────┘            │
+└─────────────────────────────────────────────────┘
+```
+
+**Facility Roles:**
+- `manager` - Full control over facility, can manage users
+- `lead` - Can assign tasks, view all facility tasks
+- `member` - Standard team member
+- `viewer` - Read-only access
+
+### 3. PROJECT_BASED Mode
+
+**Configuration:** `work_mode = 'PROJECT_BASED'`, `has_locations = false`, `has_projects = true`
+
+For project-centric organizations:
+- Users are assigned to projects with PMO roles
+- Tasks belong to projects
+- PMO-compliant role structure (PRINCE2/PMBOK)
+- Supports multiple concurrent projects
+
+```
+┌─────────────────────────────────────────────────┐
+│                 Organization                    │
+│  ┌──────────────┐  ┌──────────────┐            │
+│  │ Project X    │  │ Project Y    │            │
+│  │  - PM        │  │  - PM        │            │
+│  │  - Team      │  │  - Team      │            │
+│  │  - Tasks     │  │  - Tasks     │            │
+│  └──────────────┘  └──────────────┘            │
+└─────────────────────────────────────────────────┘
+```
+
+### 4. FULL (Matrix) Mode
+
+**Configuration:** `work_mode = 'FULL'`, `has_locations = true`, `has_projects = true`
+
+Full matrix organization:
+- Users can be assigned to both locations AND projects
+- Dual reporting structure
+- Most flexible but most complex
+- Task visibility based on both facility and project assignments
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Organization                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │                  Locations                       │   │
+│  │  ┌───────────┐  ┌───────────┐  ┌───────────┐   │   │
+│  │  │ Location A│  │ Location B│  │ Location C│   │   │
+│  │  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘   │   │
+│  └────────┼──────────────┼──────────────┼─────────┘   │
+│           │              │              │              │
+│  ┌────────┼──────────────┼──────────────┼─────────┐   │
+│  │        │   Projects   │              │         │   │
+│  │  ┌─────┴─────┐  ┌─────┴─────┐  ┌─────┴─────┐  │   │
+│  │  │ Project X │  │ Project Y │  │ Project Z │  │   │
+│  │  └───────────┘  └───────────┘  └───────────┘  │   │
+│  └────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Database Schema
+
+### Organizations Table Extensions
+
+```sql
+ALTER TABLE organizations ADD COLUMN work_mode TEXT DEFAULT 'SIMPLE';
+ALTER TABLE organizations ADD COLUMN has_projects INTEGER DEFAULT 0;
+ALTER TABLE organizations ADD COLUMN has_locations INTEGER DEFAULT 0;
+ALTER TABLE organizations ADD COLUMN project_label TEXT DEFAULT 'Project';
+ALTER TABLE organizations ADD COLUMN location_label TEXT DEFAULT 'Location';
+ALTER TABLE organizations ADD COLUMN team_label TEXT DEFAULT 'Team';
+```
+
+### Facility Users Table
+
+```sql
+CREATE TABLE facility_users (
+    facility_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    assignment_type TEXT DEFAULT 'primary',  -- primary, secondary, temporary
+    role TEXT DEFAULT 'member',              -- manager, lead, member, viewer
+    can_view_all_tasks INTEGER DEFAULT 0,
+    can_manage_users INTEGER DEFAULT 0,
+    can_edit_facility INTEGER DEFAULT 0,
+    assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    assigned_by TEXT,
+    valid_until DATETIME,
+    notes TEXT,
+    PRIMARY KEY(facility_id, user_id)
+);
+```
+
+### PMO Role Definitions Table
+
+```sql
+CREATE TABLE pmo_role_definitions (
+    id TEXT PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    name_pl TEXT,
+    prince2_role TEXT,
+    pmbok_role TEXT,
+    iso21500_reference TEXT,
+    level INTEGER DEFAULT 0,      -- 0=Executive, 1=Manager, 2=Lead, 3=Member, 4=Stakeholder
+    reports_to_code TEXT,
+    default_capabilities TEXT,    -- JSON array
+    is_required INTEGER DEFAULT 0,
+    max_per_project INTEGER,
+    can_be_external INTEGER DEFAULT 0,
+    description TEXT,
+    description_pl TEXT,
+    is_system INTEGER DEFAULT 1,
+    created_at DATETIME
+);
+```
+
+### Capabilities Table
+
+```sql
+CREATE TABLE capabilities (
+    id TEXT PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    name_pl TEXT,
+    category TEXT,
+    description TEXT
+);
+```
+
+### PMO Role Capabilities Table
+
+```sql
+CREATE TABLE pmo_role_capabilities (
+    pmo_role_id TEXT NOT NULL,
+    capability_id TEXT NOT NULL,
+    scope TEXT DEFAULT 'assigned',  -- assigned, project, all
+    PRIMARY KEY(pmo_role_id, capability_id)
+);
+```
+
+## PMO Role Hierarchy
+
+Aligned with PRINCE2 and PMBOK standards:
+
+| Level | Code | Name (EN) | Name (PL) | PRINCE2 | PMBOK |
+|-------|------|-----------|-----------|---------|-------|
+| 0 | PROJECT_EXECUTIVE | Project Executive | Dyrektor Projektu | Executive | Project Sponsor |
+| 0 | SENIOR_USER | Senior User | Właściciel Biznesowy | Senior User | Business Owner |
+| 0 | SENIOR_SUPPLIER | Senior Supplier | Główny Dostawca | Senior Supplier | Resource Manager |
+| 1 | PROJECT_MANAGER | Project Manager | Kierownik Projektu | Project Manager | Project Manager |
+| 1 | PMO_SUPPORT | PMO Support | Wsparcie PMO | Project Support | PMO Analyst |
+| 2 | TECHNICAL_LEAD | Technical Lead | Lider Techniczny | Team Manager | Technical Lead |
+| 2 | BUSINESS_ANALYST | Business Analyst | Analityk Biznesowy | Project Assurance | Business Analyst |
+| 2 | CHANGE_AUTHORITY | Change Authority | Organ Zmian | Change Authority | CCB |
+| 3 | TEAM_MEMBER | Team Member | Członek Zespołu | Team Member | Team Member |
+| 3 | QUALITY_ASSURANCE | Quality Assurance | Kontrola Jakości | Project Assurance | Quality Analyst |
+| 4 | STAKEHOLDER | Stakeholder | Interesariusz | N/A | Stakeholder |
+
+## Capabilities
+
+Organized by category:
+
+### Project Capabilities
+- `project:create` - Create new projects
+- `project:edit` - Edit project settings
+- `project:delete` - Delete projects
+- `project:archive` - Archive projects
+- `project:assign_users` - Assign users to projects
+
+### Task Capabilities
+- `task:create` - Create tasks
+- `task:edit_own` - Edit own assigned tasks
+- `task:edit_all` - Edit any task
+- `task:delete` - Delete tasks
+- `task:assign` - Assign tasks to users
+- `task:change_status` - Change task status
+- `task:approve` - Approve completed tasks
+
+### Initiative Capabilities
+- `initiative:create` - Create initiatives
+- `initiative:edit` - Edit initiatives
+- `initiative:delete` - Delete initiatives
+- `initiative:approve` - Approve initiatives
+- `initiative:prioritize` - Change initiative priority
+
+### Governance Capabilities
+- `stagegate:create` - Create stage gates
+- `stagegate:approve` - Approve stage gate reviews
+- `stagegate:reject` - Reject stage gate reviews
+
+### Risk & Issue Capabilities
+- `risk:create` - Create risk entries
+- `risk:manage` - Manage and update risks
+- `issue:create` - Create issue entries
+- `issue:resolve` - Resolve issues
+
+### Document Capabilities
+- `document:create` - Create documents
+- `document:edit` - Edit documents
+- `document:delete` - Delete documents
+- `document:approve` - Approve documents
+
+### Report Capabilities
+- `report:view` - View reports
+- `report:create` - Create reports
+- `report:export` - Export reports
+
+## Task Visibility Rules
+
+### SIMPLE Mode
+```javascript
+// All tasks visible to all users
+filter: {}
+```
+
+### LOCATION_BASED Mode
+```javascript
+// Only tasks from user's assigned facilities
+filter: {
+  facility_id: IN (user's facility assignments)
+}
+```
+
+### PROJECT_BASED Mode
+```javascript
+// Only tasks from user's projects
+filter: {
+  project_id: IN (user's project assignments)
+}
+```
+
+### FULL Mode
+```javascript
+// Tasks from user's facilities OR projects
+filter: {
+  OR: [
+    { facility_id: IN (user's facilities) },
+    { project_id: IN (user's projects) }
+  ]
+}
+```
+
+## API Endpoints
+
+### Work Mode
+
+```
+GET  /api/org/work-mode           - Get current work mode configuration
+PUT  /api/org/work-mode           - Update work mode (Admin only)
+```
+
+### Facility Users
+
+```
+GET  /api/facilities/:id/users         - Get users in facility
+POST /api/facilities/:id/users         - Assign user to facility
+DELETE /api/facilities/:id/users/:uid  - Remove user from facility
+GET  /api/users/:id/facilities         - Get user's facility assignments
+```
+
+### PMO Roles
+
+```
+GET  /api/pmo-roles                    - Get all role definitions
+GET  /api/pmo-roles/:id                - Get role with capabilities
+GET  /api/projects/:id/team            - Get project team
+POST /api/projects/:id/team            - Assign user with PMO role
+PUT  /api/projects/:id/team/:userId    - Update role/allocation
+DELETE /api/projects/:id/team/:userId  - Remove from project
+GET  /api/projects/:id/team/stats      - Get team statistics
+```
+
+## Standards Compliance
+
+### ISO 21500:2021
+
+| Clause | Domain | Implementation |
+|--------|--------|----------------|
+| 4.3.2 | Governance | PROJECT_EXECUTIVE role |
+| 4.3.3 | Management | PROJECT_MANAGER role |
+| 4.6.2 | Team | project_members table |
+| 4.6.4 | Resources | facility_users table |
+
+### PMI PMBOK 7th Edition
+
+| Domain | Implementation |
+|--------|----------------|
+| Team Performance | PMO roles with capabilities |
+| Stakeholder | STAKEHOLDER role level |
+| Planning | Task assignment & visibility |
+| Measurement | Team statistics |
+
+### PRINCE2
+
+| Theme | Implementation |
+|-------|----------------|
+| Organization | Role hierarchy (Executive → Manager → Team) |
+| Plans | Workstream grouping |
+| Progress | Allocation tracking |
+| Change | CHANGE_AUTHORITY role |
+
+## Configuration UI
+
+### Admin Settings → Work Mode
+
+1. **Mode Selection**
+   - Visual cards for each mode
+   - Description of implications
+   - Warning when changing from complex to simple
+
+2. **Custom Labels**
+   - Project label (e.g., "Campaign", "Engagement")
+   - Location label (e.g., "Office", "Department", "Unit")
+   - Team label (e.g., "Squad", "Pod")
+
+3. **Preview**
+   - Show current assignments that may be affected
+   - Confirmation dialog for mode changes
+
+### User Management → Assignments
+
+1. **Location Assignments**
+   - Multi-select facilities
+   - Role per facility
+   - Primary/Secondary/Temporary toggle
+   - Expiration date for temporary
+
+2. **Project Assignments**
+   - Project list with PMO role dropdown
+   - Allocation percentage slider
+   - Responsibilities text area
+   - Start/End date pickers
+
+3. **Effective Capabilities**
+   - Computed from all sources
+   - Grouped by category
+   - Scope indication (assigned/project/all)
+
+### Project Team Management
+
+1. **Board View**
+   - Columns by role level
+   - Drag-drop to reassign
+   - Avatar cards with allocation
+
+2. **Role Assignment Modal**
+   - Role selector with descriptions
+   - Standards mapping display
+   - Allocation and dates
+
+3. **Statistics Panel**
+   - Total allocation (should not exceed 100% ideally)
+   - Missing required roles warning
+   - Level distribution chart
+
+## Migration Guide
+
+### From SIMPLE to LOCATION_BASED
+
+1. Create facilities for each unit
+2. Assign users to their primary facility
+3. Optionally assign facility to existing tasks
+4. Change work_mode to LOCATION_BASED
+
+### From SIMPLE to PROJECT_BASED
+
+1. Ensure projects exist
+2. Assign users to projects with appropriate PMO roles
+3. Change work_mode to PROJECT_BASED
+
+### From PROJECT_BASED/LOCATION_BASED to FULL
+
+1. Add missing assignments (facilities or projects)
+2. Change work_mode to FULL
+3. Review task visibility rules
+
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,8 @@
 // Simple WebSocket implementation without external dependencies
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+
+
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_change_this_in_production';
 
 class RealtimeServiceSimple {
@@ -240,6 +242,23 @@ class RealtimeServiceSimple {
         console.log(`[WS] User ${userId} disconnected`);
     }
 
+    getGlobalStats() {
+        let totalUsers = 0;
+        const orgStats = {};
+
+        for (const [orgId, users] of this.presence.entries()) {
+            const count = users.size;
+            totalUsers += count;
+            orgStats[orgId] = count;
+        }
+
+        return {
+            total_active_connections: totalUsers,
+            active_organizations: this.presence.size,
+            organization_breakdown: orgStats
+        };
+    }
+
     // External API
     notifyUpdate(organizationId, eventType, data) {
         this.broadcastToOrganization(organizationId, {
@@ -247,6 +266,58 @@ class RealtimeServiceSimple {
             data
         });
     }
+
+    // Cost Update Broadcasting
+    broadcastCostUpdate(userId, organizationId, costData) {
+        // Send to the specific user
+        const userClient = this.clients.get(userId);
+        if (userClient) {
+            this.sendMessage(userClient.socket, {
+                type: 'cost_update',
+                data: costData
+            });
+        }
+
+        // Also broadcast to organization for admin dashboards
+        this.broadcastToOrganization(organizationId, {
+            type: 'org_cost_update',
+            data: {
+                ...costData,
+                userId
+            }
+        }, userId); // Exclude the user who triggered it (they already got it)
+    }
+
+    // Budget Alert Broadcasting
+    broadcastBudgetAlert(organizationId, alertData) {
+        this.broadcastToOrganization(organizationId, {
+            type: 'budget_alert',
+            data: alertData
+        });
+    }
+
+    // Send cost summary to a specific user on connect
+    sendCostSummary(userId, summaryData) {
+        const client = this.clients.get(userId);
+        if (client) {
+            this.sendMessage(client.socket, {
+                type: 'cost_summary',
+                data: summaryData
+            });
+        }
+    }
+
+    // Broadcast SLA breach alerts to SuperAdmins
+    broadcastSLAAlert(alertData) {
+        // Broadcast to all connected clients (filter by role on client side)
+        for (const [userId, client] of this.clients.entries()) {
+            this.sendMessage(client.socket, {
+                type: 'sla_alert',
+                data: alertData
+            });
+        }
+    }
 }
 
-module.exports = new RealtimeServiceSimple();
+const realtimeServiceSimpleInstance = new RealtimeServiceSimple();
+export default realtimeServiceSimpleInstance;

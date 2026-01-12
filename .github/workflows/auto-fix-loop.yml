@@ -1,0 +1,414 @@
+name: Auto-Fix Loop
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch: # Pozwala na ręczne uruchomienie
+
+env:
+  NODE_VERSION: '20'
+  AUTO_FIX_TAG: '[AUTO-FIX]' # Tag w wiadomości commit, który identyfikuje automatyczne poprawki
+
+jobs:
+  # ============================================
+  # Sprawdzenie czy commit nie jest już z auto-fix
+  # ============================================
+  check-auto-fix:
+    name: Check if commit is auto-fix
+    runs-on: ubuntu-latest
+    outputs:
+      is_auto_fix: ${{ steps.check.outputs.is_auto_fix }}
+      should_skip: ${{ steps.check.outputs.should_skip }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Potrzebujemy historii do sprawdzenia ostatniego commita
+      
+      - name: Check commit message
+        id: check
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+          
+          if echo "$COMMIT_MSG" | grep -q "${{ env.AUTO_FIX_TAG }}"; then
+            echo "is_auto_fix=true" >> $GITHUB_OUTPUT
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Commit jest już z automatycznej poprawki - pomijamy pętlę"
+          else
+            echo "is_auto_fix=false" >> $GITHUB_OUTPUT
+            echo "should_skip=false" >> $GITHUB_OUTPUT
+            echo "✅ Commit nie jest z auto-fix - kontynuujemy"
+          fi
+
+  # ============================================
+  # Testy - uruchamiamy zawsze
+  # ============================================
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: check-auto-fix
+    if: needs.check-auto-fix.outputs.should_skip == false
+    
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    outputs:
+      tests_failed: ${{ steps.test.outputs.failed }}
+      test_output: ${{ steps.test.outputs.output }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd server && npm ci || true
+      
+      - name: Run tests
+        id: test
+        continue-on-error: true
+        run: |
+          set +e
+          npm run test:all 2>&1 | tee test-output.log
+          TEST_EXIT_CODE=${PIPESTATUS[0]}
+          
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Testy nie przeszły - exit code: $TEST_EXIT_CODE"
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+            echo "✅ Wszystkie testy przeszły"
+          fi
+          
+          # Zapisz output testów do zmiennej (ograniczona długość - ostatnie 100KB)
+          # Używamy tail -c zamiast head, żeby mieć najnowsze błędy
+          OUTPUT=$(tail -c 100000 test-output.log 2>/dev/null || cat test-output.log)
+          # GitHub Actions ma limit ~1MB na output, więc ograniczamy do 50KB
+          OUTPUT=$(echo "$OUTPUT" | tail -c 50000)
+          {
+            echo "output<<EOF"
+            echo "$OUTPUT"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+        env:
+          DB_TYPE: sqlite
+          REDIS_URL: redis://localhost:6379
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          Z_API_KEY: ${{ secrets.Z_API_KEY }}
+      
+      - name: Upload test output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output-${{ github.run_id }}
+          path: test-output.log
+          retention-days: 1
+
+  # ============================================
+  # Lint Check - również sprawdzamy
+  # ============================================
+  lint-check:
+    name: Lint Check
+    runs-on: ubuntu-latest
+    needs: check-auto-fix
+    if: needs.check-auto-fix.outputs.should_skip == false
+    
+    outputs:
+      lint_failed: ${{ steps.lint.outputs.failed }}
+      lint_output: ${{ steps.lint.outputs.output }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        id: lint
+        continue-on-error: true
+        run: |
+          set +e
+          npm run lint 2>&1 | tee lint-output.log
+          LINT_EXIT_CODE=${PIPESTATUS[0]}
+          
+          if [ $LINT_EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Lint nie przeszedł - exit code: $LINT_EXIT_CODE"
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+            echo "✅ Lint przeszedł"
+          fi
+          
+          OUTPUT=$(tail -c 100000 lint-output.log 2>/dev/null || cat lint-output.log)
+          OUTPUT=$(echo "$OUTPUT" | tail -c 50000)
+          {
+            echo "output<<EOF"
+            echo "$OUTPUT"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+      
+      - name: Upload lint output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-output-${{ github.run_id }}
+          path: lint-output.log
+          retention-days: 1
+
+  # ============================================
+  # Type Check
+  # ============================================
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    needs: check-auto-fix
+    if: needs.check-auto-fix.outputs.should_skip == false
+    
+    outputs:
+      typecheck_failed: ${{ steps.typecheck.outputs.failed }}
+      typecheck_output: ${{ steps.typecheck.outputs.output }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd server && npm ci || true
+      
+      - name: TypeScript check
+        id: typecheck
+        continue-on-error: true
+        run: |
+          set +e
+          npm run type-check 2>&1 | tee typecheck-output.log
+          TYPECHECK_EXIT_CODE=${PIPESTATUS[0]}
+          
+          if [ $TYPECHECK_EXIT_CODE -ne 0 ]; then
+            echo "failed=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Type check nie przeszedł - exit code: $TYPECHECK_EXIT_CODE"
+          else
+            echo "failed=false" >> $GITHUB_OUTPUT
+            echo "✅ Type check przeszedł"
+          fi
+          
+          OUTPUT=$(tail -c 100000 typecheck-output.log 2>/dev/null || cat typecheck-output.log)
+          OUTPUT=$(echo "$OUTPUT" | tail -c 50000)
+          {
+            echo "output<<EOF"
+            echo "$OUTPUT"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+      
+      - name: Upload typecheck output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typecheck-output-${{ github.run_id }}
+          path: typecheck-output.log
+          retention-days: 1
+
+  # ============================================
+  # Automatyczna poprawa błędów
+  # ============================================
+  auto-fix:
+    name: Auto-Fix Errors
+    runs-on: ubuntu-latest
+    needs: [test, lint-check, type-check]
+    if: |
+      needs.check-auto-fix.outputs.should_skip == false &&
+      (needs.test.outputs.tests_failed == 'true' || 
+       needs.lint-check.outputs.lint_failed == 'true' || 
+       needs.type-check.outputs.typecheck_failed == 'true')
+    
+    permissions:
+      contents: write # Potrzebne do commitowania zmian
+      pull-requests: write # Potrzebne do komentowania PR
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # Pełna historia dla git operations
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd server && npm ci || true
+      
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+      
+      - name: Download test artifacts
+        uses: actions/download-artifact@v4
+        if: needs.test.outputs.tests_failed == 'true'
+        continue-on-error: true
+        with:
+          pattern: test-output-*
+          merge-multiple: true
+          path: ./artifacts/
+      
+      - name: Download lint artifacts
+        uses: actions/download-artifact@v4
+        if: needs.lint-check.outputs.lint_failed == 'true'
+        continue-on-error: true
+        with:
+          pattern: lint-output-*
+          merge-multiple: true
+          path: ./artifacts/
+      
+      - name: Download typecheck artifacts
+        uses: actions/download-artifact@v4
+        if: needs.type-check.outputs.typecheck_failed == 'true'
+        continue-on-error: true
+        with:
+          pattern: typecheck-output-*
+          merge-multiple: true
+          path: ./artifacts/
+      
+      - name: Prepare artifacts directory
+        run: |
+          mkdir -p ./artifacts
+          # Jeśli artifacty nie zostały pobrane, stwórz puste pliki
+          [ -f ./artifacts/test-output.log ] || touch ./artifacts/test-output.log
+          [ -f ./artifacts/lint-output.log ] || touch ./artifacts/lint-output.log
+          [ -f ./artifacts/typecheck-output.log ] || touch ./artifacts/typecheck-output.log
+      
+      - name: Run auto-fix script
+        id: fix
+        continue-on-error: true
+        timeout-minutes: 15
+        run: |
+          echo "🔧 Uruchamiam skrypt auto-fix..."
+          echo "Testy nie przeszły: ${{ needs.test.outputs.tests_failed }}"
+          echo "Lint nie przeszedł: ${{ needs.lint-check.outputs.lint_failed }}"
+          echo "TypeCheck nie przeszedł: ${{ needs.type-check.outputs.typecheck_failed }}"
+          
+          # Przygotuj outputy - mogą być puste lub bardzo długie
+          TEST_OUT="${{ needs.test.outputs.test_output }}"
+          LINT_OUT="${{ needs.lint-check.outputs.lint_output }}"
+          TYPECHECK_OUT="${{ needs.type-check.outputs.typecheck_output }}"
+          
+          # Jeśli output jest za długi lub pusty, użyjemy plików jako fallback
+          if [ -z "$TEST_OUT" ] || [ ${#TEST_OUT} -lt 100 ]; then
+            if [ -f ./artifacts/test-output.log ] && [ -s ./artifacts/test-output.log ]; then
+              TEST_OUT=$(cat ./artifacts/test-output.log | tail -c 100000)
+            fi
+          fi
+          if [ -z "$LINT_OUT" ] || [ ${#LINT_OUT} -lt 100 ]; then
+            if [ -f ./artifacts/lint-output.log ] && [ -s ./artifacts/lint-output.log ]; then
+              LINT_OUT=$(cat ./artifacts/lint-output.log | tail -c 100000)
+            fi
+          fi
+          if [ -z "$TYPECHECK_OUT" ] || [ ${#TYPECHECK_OUT} -lt 100 ]; then
+            if [ -f ./artifacts/typecheck-output.log ] && [ -s ./artifacts/typecheck-output.log ]; then
+              TYPECHECK_OUT=$(cat ./artifacts/typecheck-output.log | tail -c 100000)
+            fi
+          fi
+          
+          node scripts/auto-fix.js \
+            --test-output="$TEST_OUT" \
+            --lint-output="$LINT_OUT" \
+            --typecheck-output="$TYPECHECK_OUT" \
+            --test-failed="${{ needs.test.outputs.tests_failed }}" \
+            --lint-failed="${{ needs.lint-check.outputs.lint_failed }}" \
+            --typecheck-failed="${{ needs.type-check.outputs.typecheck_failed }}" || {
+              echo "⚠️  Skrypt auto-fix zakończył się błędem, ale kontynuujemy"
+              exit 0
+            }
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTO_FIX_TAG: ${{ env.AUTO_FIX_TAG }}
+      
+      - name: Check if fixes were applied
+        id: check-fixes
+        run: |
+          if [ -f .auto-fix-applied ]; then
+            echo "applied=true" >> $GITHUB_OUTPUT
+            echo "✅ Poprawki zostały zastosowane"
+          else
+            echo "applied=false" >> $GITHUB_OUTPUT
+            echo "⚠️  Brak zmian do commitowania"
+          fi
+      
+      - name: Commit and push fixes
+        if: steps.check-fixes.outputs.applied == 'true'
+        run: |
+          git add -A
+          git commit -m "${{ env.AUTO_FIX_TAG }} Automatyczna poprawa błędów z testów/lint/typecheck
+
+          - Testy: ${{ needs.test.outputs.tests_failed }}
+          - Lint: ${{ needs.lint-check.outputs.lint_failed }}
+          - TypeCheck: ${{ needs.type-check.outputs.typecheck_failed }}
+          
+          Poprawki wygenerowane przez GitHub Actions workflow."
+          
+          git push origin HEAD:${{ github.ref_name }}
+          echo "✅ Poprawki zostały zacommitowane i wypushowane"
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.check-fixes.outputs.applied == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🤖 **Automatyczna poprawa błędów**\n\n' +
+                    'Zastosowałem automatyczne poprawki dla wykrytych błędów:\n' +
+                    '- Testy: ${{ needs.test.outputs.tests_failed }}\n' +
+                    '- Lint: ${{ needs.lint-check.outputs.lint_failed }}\n' +
+                    '- TypeCheck: ${{ needs.type-check.outputs.typecheck_failed }}\n\n' +
+                    'Zmiany zostały zacommitowane z tagiem `${{ env.AUTO_FIX_TAG }}`.'
+            })
+      
+      - name: Re-run workflow trigger
+        if: steps.check-fixes.outputs.applied == 'true'
+        run: |
+          # Workflow automatycznie się uruchomi ponownie przez push,
+          # ale dzięki check-auto-fix job, nie zapętli się
+          echo "🔄 Workflow zostanie uruchomiony ponownie przez push, ale nie zapętli się dzięki sprawdzeniu tagu"
+

@@ -1,14 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { SplitLayout } from '../components/SplitLayout';
-import { useAppStore } from '../store/useAppStore';
-import { Api } from '../services/api';
-import { translations } from '../translations';
+// import { translations } from '../translations';
 import {
-    BarChart3, Users, DollarSign, TrendingUp,
-    Activity, ArrowUpRight, ArrowDownRight, PieChart
+    Activity,
+    ArrowDownRight,
+    ArrowUpRight,
+    BarChart3,
+    DollarSign,
+    PieChart,
+    TrendingUp,
+    Users,
 } from 'lucide-react';
-import { sendMessageToAI } from '../services/ai/gemini';
+import React, { useEffect, useState } from 'react';
 
+import { SplitLayout } from '../components/SplitLayout';
+import { sendMessageToAI } from '../services/ai/gemini';
+import { Api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
+
+interface HealthData {
+    initiativesByStatus?: Array<{ status: string; count: number }>;
+    overdueTasks?: number;
+}
+interface EconomicsData {
+    total_cost?: number;
+    expected_benefit?: number;
+    actualSpend?: number;
+}
+interface PerformanceUser {
+    id: string;
+    first_name: string;
+    last_name: string;
+    completed_tasks: number;
+    total_tasks: number;
+    overdue_tasks: number;
+}
 interface MetricCardProps {
     title: string;
     value: string | number;
@@ -18,7 +42,6 @@ interface MetricCardProps {
     icon: React.ReactNode;
     color: string;
 }
-
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, subValue, trend, trendUp, icon, color }) => (
     <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-5 relative overflow-hidden group hover:border-blue-500/30 dark:hover:border-white/10 transition-colors shadow-sm dark:shadow-none">
         <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}>
@@ -44,69 +67,51 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, subValue, trend, 
         </div>
     </div>
 );
-
 export const LeadershipDashboardView: React.FC = () => {
-    const {
-        currentUser, addChatMessage: addMessage
-    } = useAppStore();
-
+    const { currentUser, addChatMessage: addMessage } = useAppStore();
     // State for dashboard data
-    const [healthData, setHealthData] = useState<any>(null);
-    const [performanceData, setPerformanceData] = useState<any[]>([]);
-    const [economicsData, setEconomicsData] = useState<any>(null);
+    const [healthData, setHealthData] = useState<HealthData | null>(null);
+    const [performanceData, setPerformanceData] = useState<PerformanceUser[]>([]);
+    const [economicsData, setEconomicsData] = useState<EconomicsData | null>(null);
     const [loading, setLoading] = useState(true);
-
     const language = currentUser?.preferredLanguage || 'EN';
-
     useEffect(() => {
         const loadAnalytics = async () => {
             if (!currentUser?.organizationId) return;
             try {
-                // Fetch data from our new Analytics API
-                // Note: We need to implement Api.getAnalytics() in frontend service
-                // For now, I will use raw fetch or add it to Api service.
-                // Since I cannot easily edit Api service sequentially here, I will do a raw fetch wrapper
-                const token = localStorage.getItem('token');
-                const headers = { 'Authorization': `Bearer ${token}` };
-                const API_URL = 'http://127.0.0.1:3001/api'; // Hardcoded for now based on Api.ts
-
+                // Use Api service for analytics endpoints
                 const [healthRes, perfRes, ecoRes] = await Promise.all([
-                    fetch(`${API_URL}/analytics/health`, { headers }).then(r => r.json()),
-                    fetch(`${API_URL}/analytics/performance`, { headers }).then(r => r.json()),
-                    fetch(`${API_URL}/analytics/economics`, { headers }).then(r => r.json())
+                    Api.getAnalyticsHealth(),
+                    Api.getAnalyticsPerformance(),
+                    Api.getAnalyticsEconomics(),
                 ]);
-
                 setHealthData(healthRes);
                 setPerformanceData(perfRes);
                 setEconomicsData(ecoRes);
             } catch (error) {
-                console.error("Failed to load analytics", error);
+                console.error('Failed to load analytics', error);
             } finally {
                 setLoading(false);
             }
         };
         loadAnalytics();
     }, [currentUser]);
-
     const handleAiChat = (text: string) => {
         addMessage({ id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() });
     };
-
     if (loading) {
         return (
-            <SplitLayout title="Leadership Dashboard" onSendMessage={handleAiChat}>
+            <SplitLayout title="Leadership Dashboard">
                 <div className="w-full h-full bg-gray-50 dark:bg-navy-900 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                 </div>
             </SplitLayout>
         );
     }
-
     return (
-        <SplitLayout title="Leadership Dashboard" onSendMessage={handleAiChat}>
+        <SplitLayout title="Leadership Dashboard">
             <div className="w-full h-full bg-gray-50 dark:bg-navy-900 overflow-y-auto p-8">
                 <div className="max-w-7xl mx-auto space-y-8">
-
                     {/* Section 1: Economic Impact (The "CFO View") */}
                     <div>
                         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
@@ -126,7 +131,8 @@ export const LeadershipDashboardView: React.FC = () => {
                                 key="roi"
                                 value={`${(economicsData?.expected_benefit || 0) / 1000}k`}
                                 subValue="Annual Benefit"
-                                trend="+24%" trendUp={true}
+                                trend="+24%"
+                                trendUp={true}
                                 icon={<TrendingUp size={16} />}
                                 color="text-green-400"
                             />
@@ -148,7 +154,6 @@ export const LeadershipDashboardView: React.FC = () => {
                             />
                         </div>
                     </div>
-
                     {/* Section 2: Initiative Health (The "COO View") */}
                     <div>
                         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
@@ -156,47 +161,65 @@ export const LeadershipDashboardView: React.FC = () => {
                         </h2>
                         <div className="bg-white dark:bg-navy-950/50 border border-slate-200 dark:border-white/5 rounded-xl p-6 shadow-sm dark:shadow-none">
                             <div className="flex items-center justify-around text-center">
-                                {healthData?.initiativesByStatus?.map((statusItem: any) => (
-                                    <div key={statusItem.status} className="flex flex-col gap-2">
-                                        <div className="text-3xl font-bold text-navy-900 dark:text-white">{statusItem.count}</div>
-                                        <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">{statusItem.status.replace('_', ' ')}</div>
-                                        <div className="h-1 w-12 bg-blue-500/20 rounded-full mx-auto overflow-hidden">
-                                            <div className="h-full bg-blue-500 w-full"></div>
+                                {healthData?.initiativesByStatus?.map(
+                                    (statusItem: { status: string; count: number }) => (
+                                        <div key={statusItem.status} className="flex flex-col gap-2">
+                                            <div className="text-3xl font-bold text-navy-900 dark:text-white">
+                                                {statusItem.count}
+                                            </div>
+                                            <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">
+                                                {statusItem.status.replace('_', ' ')}
+                                            </div>
+                                            <div className="h-1 w-12 bg-blue-500/20 rounded-full mx-auto overflow-hidden">
+                                                <div className="h-full bg-blue-500 w-full"></div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                                {(!healthData?.initiativesByStatus?.length) && (
+                                    ),
+                                )}
+                                {!healthData?.initiativesByStatus?.length && (
                                     <div className="text-slate-500">No active initiatives found.</div>
                                 )}
-
                                 <div className="w-px h-16 bg-white/10"></div>
-
                                 <div className="flex flex-col gap-2">
-                                    <div className="text-3xl font-bold text-red-400">{healthData?.overdueTasks || 0}</div>
-                                    <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">Overdue Tasks</div>
+                                    <div className="text-3xl font-bold text-red-400">
+                                        {healthData?.overdueTasks || 0}
+                                    </div>
+                                    <div className="text-xs uppercase text-slate-500 font-bold tracking-wider">
+                                        Overdue Tasks
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     {/* Section 3: People & Teams (The "CHRO View") */}
                     <div>
                         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-4 flex items-center gap-2">
                             <Users className="text-purple-400" /> Team Performance
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {performanceData.map((user: any) => (
-                                <div key={user.id} className="bg-white dark:bg-navy-950/30 border border-slate-200 dark:border-white/5 rounded-xl p-4 flex items-center gap-4 shadow-sm dark:shadow-none">
+                            {performanceData.map((user: PerformanceUser) => (
+                                <div
+                                    key={user.id}
+                                    className="bg-white dark:bg-navy-950/30 border border-slate-200 dark:border-white/5 rounded-xl p-4 flex items-center gap-4 shadow-sm dark:shadow-none"
+                                >
                                     <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white">
-                                        {user.first_name[0]}{user.last_name[0]}
+                                        {user.first_name[0]}
+                                        {user.last_name[0]}
                                     </div>
                                     <div className="flex-1">
-                                        <div className="font-bold text-navy-900 dark:text-white">{user.first_name} {user.last_name}</div>
-                                        <div className="text-xs text-slate-500 mb-2">Completion Rate: {Math.round((user.completed_tasks / (user.total_tasks || 1)) * 100)}%</div>
+                                        <div className="font-bold text-navy-900 dark:text-white">
+                                            {user.first_name} {user.last_name}
+                                        </div>
+                                        <div className="text-xs text-slate-500 mb-2">
+                                            Completion Rate:{' '}
+                                            {Math.round((user.completed_tasks / (user.total_tasks || 1)) * 100)}%
+                                        </div>
                                         <div className="w-full h-1.5 bg-navy-900 rounded-full overflow-hidden">
                                             <div
                                                 className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-                                                style={{ width: `${Math.min(100, Math.round((user.completed_tasks / (user.total_tasks || 1)) * 100))}%` }}
+                                                style={{
+                                                    width: `${Math.min(100, Math.round((user.completed_tasks / (user.total_tasks || 1)) * 100))}%`,
+                                                }}
                                             ></div>
                                         </div>
                                     </div>
@@ -209,7 +232,6 @@ export const LeadershipDashboardView: React.FC = () => {
                             ))}
                         </div>
                     </div>
-
                 </div>
             </div>
         </SplitLayout>

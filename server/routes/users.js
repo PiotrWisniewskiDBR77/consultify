@@ -1,9 +1,13 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
-const verifyToken = require('../middleware/authMiddleware');
+import * as AccessPolicyServiceModule from '../services/accessPolicyService.js';
+const AccessPolicyService = AccessPolicyServiceModule.default || AccessPolicyServiceModule;
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
+
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
+import verifyToken from '../middleware/authMiddleware.js';
 
 router.use(verifyToken);
 
@@ -12,7 +16,20 @@ router.get('/', (req, res) => {
     // SuperAdmin sees all? Or we keep strict tenant separation even for him unless impersonating.
     // For now: Admin sees own org users.
 
-    db.all('SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config FROM users WHERE organization_id = ? ORDER BY first_name, last_name', [req.user.organizationId], (err, rows) => {
+    const { canReview } = req.query;
+
+    // Build SQL based on filters - include is_owner for Owner badge display
+    let sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner, phone, linkedin_id FROM users WHERE organization_id = ?';
+    const params = [req.user.organizationId];
+
+    // If canReview=true, filter to users with review permissions (Admin, Manager, or specific role)
+    if (canReview === 'true') {
+        sql += ` AND (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER') OR status = 'ACTIVE')`;
+    }
+
+    sql += ' ORDER BY is_owner DESC, first_name, last_name'; // Owner first
+
+    db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
 
         const users = rows.map(u => ({
@@ -23,16 +40,23 @@ router.get('/', (req, res) => {
             role: u.role,
             status: u.status,
             avatarUrl: u.avatar_url,
-            lastLogin: u.last_login
+            lastLogin: u.last_login,
+            aiConfig: u.ai_config ? JSON.parse(u.ai_config) : {},
+            licensePlanId: u.license_plan_id,
+            isOwner: u.is_owner === 1 || u.is_owner === true,
+            phone: u.phone,
+            linkedinId: u.linkedin_id
         }));
-        res.json(users);
+
+        // Return in format expected by modal
+        res.json({ users, total: users.length });
     });
 });
 
 // Configure Multer for Avatar Uploads
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -51,7 +75,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|webp/;
         const mimetype = filetypes.test(file.mimetype);
@@ -91,6 +115,35 @@ router.post('/:id/avatar', upload.single('avatar'), (req, res) => {
     });
 });
 
+// GET SINGLE USER
+router.get('/:id', (req, res) => {
+    const { id } = req.params;
+    const organizationId = req.user.organizationId;
+
+    const sql = 'SELECT id, email, first_name, last_name, role, status, avatar_url, last_login, license_plan_id, ai_config, is_owner, phone, linkedin_id FROM users WHERE id = ? AND organization_id = ?';
+
+    db.get(sql, [id, organizationId], (err, u) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!u) return res.status(404).json({ error: 'User not found' });
+
+        res.json({
+            id: u.id,
+            firstName: u.first_name,
+            lastName: u.last_name,
+            email: u.email,
+            role: u.role,
+            status: u.status,
+            avatarUrl: u.avatar_url,
+            lastLogin: u.last_login,
+            aiConfig: u.ai_config ? JSON.parse(u.ai_config) : {},
+            licensePlanId: u.license_plan_id,
+            isOwner: u.is_owner === 1 || u.is_owner === true,
+            phone: u.phone,
+            linkedinId: u.linkedin_id
+        });
+    });
+});
+
 // ADD USER (To Organization)
 router.post('/', (req, res) => {
     const { firstName, lastName, email, role, status, password } = req.body;
@@ -100,45 +153,127 @@ router.post('/', (req, res) => {
     const hashedPassword = bcrypt.hashSync(finalPassword, 8);
     const id = uuidv4();
 
-    const sql = `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
-
-    db.run(sql, [id, organizationId, email, hashedPassword, firstName, lastName, role || 'USER', status || 'active'], function (err) {
-        if (err) {
-            if (err.message.includes('UNIQUE constraint failed')) {
-                return res.status(400).json({ error: 'Email already exists' });
+    // CHECK ACCESS POLICY
+    AccessPolicyService.checkAccess(orgId, 'invite_user')
+        .then(accessCheck => {
+            if (!accessCheck.allowed) {
+                return res.status(403).json({ error: accessCheck.reason, errorCode: accessCheck.errorCode });
             }
-            return res.status(500).json({ error: err.message });
-        }
-        res.json({ id, email, firstName, lastName, role, status });
-    });
+
+            const sql = `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+
+            db.run(sql, [id, organizationId, email, hashedPassword, firstName, lastName, role || 'USER', status || 'active'], function (err) {
+                if (err) {
+                    if (err.message.includes('UNIQUE constraint failed')) {
+                        return res.status(400).json({ error: 'Email already exists' });
+                    }
+                    return res.status(500).json({ error: err.message });
+                }
+
+                // Track Usage
+                AccessPolicyService.incrementUsage(orgId, 'users').catch(console.error);
+
+                res.json({ id, email, firstName, lastName, role, status });
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            res.status(500).json({ error: 'Failed to verify invite permissions' });
+        });
 });
 
-// UPDATE USER
+// UPDATE USER (Protected: Cannot change Owner role without Transfer)
 router.put('/:id', (req, res) => {
     const { id } = req.params;
-    const { firstName, lastName, email, role, status } = req.body;
+    const { firstName, lastName, email, role, status, aiConfig, licensePlanId, phone, linkedinId } = req.body;
     const organizationId = req.user.organizationId;
 
-    // Ensure we only update user in OUR org
-    const sql = `UPDATE users SET first_name = ?, last_name = ?, email = ?, role = ?, status = ? WHERE id = ? AND organization_id = ?`;
+    // First check if user is Owner and if role change is attempted
+    db.get('SELECT id, is_owner, role FROM users WHERE id = ? AND organization_id = ?',
+        [id, organizationId],
+        (err, user) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!user) return res.status(404).json({ error: 'User not found or access denied' });
 
-    db.run(sql, [firstName, lastName, email, role, status, id, organizationId], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
-        res.json({ message: 'Updated successfully' });
-    });
+            // OWNER PROTECTION: Cannot change Owner's role or deactivate
+            const isOwner = user.is_owner === 1 || user.is_owner === true || user.role === 'OWNER';
+
+            if (isOwner) {
+                // Block role changes for Owner
+                if (role !== undefined && role !== user.role && role !== 'OWNER') {
+                    return res.status(403).json({
+                        error: 'Cannot change Account Owner role. Use Transfer Ownership instead.',
+                        code: 'OWNER_ROLE_PROTECTED'
+                    });
+                }
+                // Block deactivation of Owner
+                if (status !== undefined && status !== 'active') {
+                    return res.status(403).json({
+                        error: 'Cannot deactivate Account Owner. Transfer ownership first.',
+                        code: 'OWNER_STATUS_PROTECTED'
+                    });
+                }
+            }
+
+            // Build update query
+            let fields = [];
+            let params = [];
+
+            if (firstName !== undefined) { fields.push('first_name = ?'); params.push(firstName); }
+            if (lastName !== undefined) { fields.push('last_name = ?'); params.push(lastName); }
+            if (email !== undefined) { fields.push('email = ?'); params.push(email); }
+            if (role !== undefined) { fields.push('role = ?'); params.push(role); }
+            if (status !== undefined) { fields.push('status = ?'); params.push(status); }
+            if (aiConfig !== undefined) { fields.push('ai_config = ?'); params.push(JSON.stringify(aiConfig)); }
+            if (licensePlanId !== undefined) { fields.push('license_plan_id = ?'); params.push(licensePlanId); }
+            if (phone !== undefined) { fields.push('phone = ?'); params.push(phone); }
+            if (linkedinId !== undefined) { fields.push('linkedin_id = ?'); params.push(linkedinId); }
+
+            if (fields.length === 0) {
+                return res.json({ message: 'No changes provided' });
+            }
+
+            const sql = `UPDATE users SET ${fields.join(', ')} WHERE id = ? AND organization_id = ?`;
+            params.push(id, organizationId);
+
+            db.run(sql, params, function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
+                res.json({ message: 'Updated successfully' });
+            });
+        }
+    );
 });
 
-// DELETE USER
+// DELETE USER (Protected: Cannot delete Owner)
 router.delete('/:id', (req, res) => {
     const { id } = req.params;
     const organizationId = req.user.organizationId;
 
-    db.run('DELETE FROM users WHERE id = ? AND organization_id = ?', [id, organizationId], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
-        res.json({ message: 'Deleted successfully' });
-    });
+    // First check if user is Owner - Owners cannot be deleted
+    db.get('SELECT id, is_owner, role, first_name, last_name FROM users WHERE id = ? AND organization_id = ?',
+        [id, organizationId],
+        (err, user) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!user) return res.status(404).json({ error: 'User not found or access denied' });
+
+            // OWNER PROTECTION: Cannot delete account owner
+            if (user.is_owner === 1 || user.is_owner === true || user.role === 'OWNER') {
+                return res.status(403).json({
+                    error: 'Cannot delete Account Owner. Transfer ownership first.',
+                    code: 'OWNER_PROTECTED',
+                    message: `${user.first_name} ${user.last_name} is the Account Owner and cannot be deleted. Use "Transfer Ownership" to assign ownership to another admin first.`
+                });
+            }
+
+            // Safe to delete
+            db.run('DELETE FROM users WHERE id = ? AND organization_id = ?', [id, organizationId], function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                if (this.changes === 0) return res.status(404).json({ error: 'User not found or access denied' });
+                res.json({ message: 'Deleted successfully' });
+            });
+        }
+    );
 });
 
-module.exports = router;
+export default router;

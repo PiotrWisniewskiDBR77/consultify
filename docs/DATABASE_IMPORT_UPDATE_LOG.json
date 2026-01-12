@@ -1,0 +1,2651 @@
+{
+  "updated": [],
+  "skipped": [
+    {
+      "file": "services/BaseService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/accessCodeService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/accessPolicyService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/adkarService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/adminAlertService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/adminAuditService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/adminSessionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/abTesting.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/actionExecutor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/adaptiveResponseService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/agents/agentCoordinator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/agents/baseAgent.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/agents/changeAgent.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/agents/financeAgent.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/agents/index.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/agents/pmoAgent.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/agents/riskAgent.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/agents/strategyAgent.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/aiContext.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/aiGateway.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/aiHealthAlertService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/aiHealthService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/aiMemoryMetricsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/aiPipeline.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/alerting.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/bcgReportGenerator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/cacheService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/circuitBreaker.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/citationExtractor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/citationVerifier.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/coThinker/index.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/coThinkerPrompts.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/comprehensiveReportGenerator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/consultingFlowEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/conversationStateMachine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/conversationTracker.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/docIndexer.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/draftService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/embeddingService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/enhancedContextBuilder.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/enterpriseSecurity.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/enterpriseSecurity.test.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/frameworks/consultingFrameworks.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/frameworks/frameworkEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/frameworks/index.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/frameworks/strategicRecommendationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/harvardConsultantPrompts.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/healthMonitor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/ingestionPipeline.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/intelligence/benchmarkDataService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/intelligence/index.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/intelligence/industryIntelligenceService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/intelligentResearch.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/intentEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/knowledgeIndexer.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/learningSystem.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/learningSystem.test.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/legacy/aiLLMService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/legacy/aiQueueService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/llmConfigService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/llmHealthMonitor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/llmService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/logger.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/magicWandService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/mcpServer.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/mediaIngestionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/memoryManager.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/memoryManager.test.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/metrics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/modelRouter.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/observability.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/organizationMemoryStore.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/performanceOptimizer.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/persistentSessionStore.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/personalizationEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/pipeline/index.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/pipeline/reportAgents.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/pipeline/reportPipeline.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/proactiveNudges.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/proactiveSuggestionsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/processors/audioProcessor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/processors/docxProcessor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/processors/imageProcessor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/processors/index.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/processors/pptxProcessor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/processors/spreadsheetProcessor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/processors/urlProcessor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/processors/videoProcessor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/processors/youtubeProcessor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/projectMemoryStore.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/promptAssembler.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/promptAssistant.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/promptBlockLibrary.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/promptTemplateService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/qualityChecker.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/qualityChecker.test.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/quotaService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/ragMetricsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/rateLimiter.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/redisClient.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/reportContentGenerator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/reportGeneratorPhases.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/reportGeneratorSchemas.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/reportGeneratorService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/reportParserService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/reportTemplates.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/rerankerService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/responseQualityService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/smartSuggestions.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/socraticEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/speechToTextService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/startupValidator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/summarizationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/taskAdvisorService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/textToSpeechService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/titleGenerator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/tools/calculateRoiDraft.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/tools/createInitiative.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/tools/getProjectDetails.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/tools/index.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/tools/searchKnowledgeBase.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/tools/updateAssessmentScore.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/variableResolver.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/voiceHealthMonitor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ai/webResearchService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiActionExecutor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiAnalyticsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiAssessmentFormHelper.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiAssessmentPartnerService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiAssessmentReportGenerator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiAuditLogger.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiBudgetService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiCharterGeneratorService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiContextBuilder.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiContextValidator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiCostControlService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiDecisionGovernance.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiExecutiveReporting.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiExplainabilityService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiExternalDataControl.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiFailureHandler.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiIntegrationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiKnowledgeManager.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiMaturityMonitor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiMemoryManager.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiModeEnforcer.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiModeResolver.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiOrchestrator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiPolicyEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiProactivityEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiPromptHierarchy.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiRecommendationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiReplayService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiResponsePostProcessor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiRiskChangeControl.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiRoleGuard.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiSettingsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/aiWorkloadIntelligence.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/alertService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/analyticsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/apiKeyService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/approvalPatternService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/areaContentTemplates.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/assessment/assessmentAnalysis.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/assessment/assessmentStorage.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/assessment/assessmentWorkflow.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/assessmentOverviewService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/assessmentReportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/assessmentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/assessmentWorkflowService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/attributionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/auditIntegrityService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/auditLogService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/auditService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/automationEngineService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/backupService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/baselineService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/benchmarkingService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/billingService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/brandingService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/breakGlassService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/budgetService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/capacityService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/circuitBreakerService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/cohortService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/collaborationAIService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/competitiveIntelligenceService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/complianceService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/connectorHealthService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/connectorRegistry.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/connectorService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/consentManagementService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/consultantService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/contentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/contextService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/creditNoteService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/criticalPathService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/currencyService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/customerSuccessService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/dashboardBuilderService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/dataRetentionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/decisionTriggerService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/demoService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/demoSessionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/dependencyService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/deviceManagementService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/dlpService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/documentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/economicsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/emailCampaignService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/emailService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/emailTemplateService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/emailVerificationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/enterpriseReportTemplates.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/escalationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/evidenceLedgerService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/evidenceService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/evmMetricsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/excelExportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/excelImportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/executionMonitorService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/executionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/experimentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/externalAssessmentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/facilityUserService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/featureFlagService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/feedbackService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/financialCalculatorService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/financialService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/focusService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/frameworkAssessmentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/frameworkBenchmarkService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/frameworkRBACService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/frameworkScoreCalculators.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/gamificationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/gdprService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/genericReportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/governanceAuditService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/governanceService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/helpAnalyticsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/helpChatService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/helpService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/inboxService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/industryAIModelsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ingestionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/initiativeGeneratorService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/initiativeService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/initiativeStatusService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/initiativeTemplateService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/integrationAnalyticsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/integrationHubService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/integrationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/integrations/clickupUserIntegration.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/integrations/jiraUserIntegration.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/integrations/slackUserIntegration.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/integrations/teamsUserIntegration.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/invitationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/invoiceTemplateService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ipWhitelistService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/journeyAnalytics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/knowledgeGraphService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/knowledgeService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/legalEventLogger.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/legalExportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/legalService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/llmFallbackService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/managementReportsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/metricsAggregator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/metricsCollector.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/metricsPersistenceService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/metricsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/mfaService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/multiFrameworkAssessmentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/multiFrameworkAuditService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/multiFrameworkReportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/myWorkService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/narrativeService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/notificationBatchingService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/notificationOutboxService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/notificationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/oauthService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/onboardingService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/organizationAnalyticsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/organizationEventService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/organizationHealthService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/organizationMetadataService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/organizationRelationshipService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/organizationSegmentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/organizationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/organizationTagService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/outcomeService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/partnerService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/passwordPolicyService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/patternRecognitionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/payAsYouGoService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pdfExportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pdfGeneratorService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pdfParserService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/periodComparisonService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/permissionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/permissionsMatrixService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/platformEcosystemService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/playbookResolver.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pmoAnalysisService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pmoDomainRegistry.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pmoHealthService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pmoRoleService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pmoStandardsMapping.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/portfolioService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pptxExportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pptxGeneratorService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/predictiveService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/premiumPdfService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/premiumReportAIService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/pricingService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/progressService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/projectMemberService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/promoCodeService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/promptService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/promptVersionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/qualityAssessmentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ragEnhancedService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ragService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/rapidLeanObservationMapper.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/rapidLeanReportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/rapidLeanService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/rbacService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/realtimeService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/recommendationsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/referralService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/refreshTokenService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/regulatoryModeGuard.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportApprovalService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportAuditService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportCacheService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportCommentsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportContentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportEmailService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportTemplateService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportVersionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/reportingService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/retentionPolicyService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/roadmapService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/roiService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/scenarioService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/scheduledReportsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/scimService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/seatManagementService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/secretManager.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/secretsVault.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/securityEventService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/securityIncidentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/securityPolicyService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/securityService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/settlementService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/shareLinkService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/siemService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/slaService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/slackService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/smsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/ssoService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/stabilizationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/stageGateService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/stakeholderPerspectiveService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/statusMachine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/statusReportService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/statusService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/steeringCommitteeAggregator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/storageReconciliationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/storageService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/studioAIService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/subscriptionAnalyticsService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/supportTicketService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/systemConfigService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/systemHealthService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/systemIntegrity.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/taskAssignmentService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/taxService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/teamMeetingAggregator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/threatIntelligenceService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/tokenBillingService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/trialService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/usageService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userActivityService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userAdoptionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userGoals.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userGroupService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userIntegrationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userLicenseService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userNotificationPreferencesService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userPreferencesService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userProfileExtendedService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userSessionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/userStateMachine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/versioningService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/voiceCommandParser.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/webSearchService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/webauthnService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/webhookDeliveryService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/webhookService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/whatsappService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/workModeService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/workqueueService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "services/workstreamService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/access-control.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/accessCodes.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/actionDecisions.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/admin-data.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/adminAlerts.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/agents.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-ab-testing.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-analytics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-budgets.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-development.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-drafts.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-feedback.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-infrastructure.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-memory.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-nudges.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-operations.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-preferences-extended.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-prompts.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-security.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-settings.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai-training.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/ai.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/aiActions.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/aiAnalytics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/aiAsync.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/aiCoach.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/aiExplain.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/aiLearning.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/aiMemory.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/aiPlaybooks.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/analytics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/analyticsAdvanced.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/api-keys.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/apiKeys.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/assessment-hub.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/assessment-level-attachments.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/assessment-reports.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/assessment-workflow.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/assessment.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/assessments.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/audit.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/auditLog.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/auth.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/backup.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/baselines.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/benchmark.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/billing.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/branding.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/budget.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/budgets.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/calendarIntegrations.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/capacity.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/chat-projects.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/connectors.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/consultant-project-access.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/consultants.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/content.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/context.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/conversations.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/daily-brief.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/dataExport.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/dbr77.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/decisions.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/demo.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/documents.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/economics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/execution.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/external-assessments.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/featureFlags.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/feedback.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/framework-rbac.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/gamification.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/gdpr.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/generic-reports.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/governance.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/governanceAdmin.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/help.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/helpAnalytics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/helpChat.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/helpFeedback.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/initiative-generator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/initiatives.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/integrations.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/intelligence.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/invitations.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/journeyAnalytics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/knowledge.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/legal.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/llm.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/llmHealth.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/locations.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/loginHistory.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/managementReports.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/managementReportsAnalytics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/mcp.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/media-ingestion.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/megatrend.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/metrics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/mfa.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/multi-framework-assessment.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/multi-framework-workflow.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/my-work.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/myWork.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/notification-rules.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/notificationSettings.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/notifications.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/oauthRoutes.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/onboarding.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/organization-data.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/organization-limits.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/organization-profiles.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/organizations.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/partners.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/pdf-import.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/performance-metrics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/permissionRequests.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/pinned-prompts.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/pmo-analysis.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/pmo-context.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/pmo.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/pmoDomains.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/pmoRoles.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/preferences.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/premiumReports.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/pricing.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/project-members.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/projects.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/promo.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/prompt-assistant.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/raid.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/rapidlean.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/rbac.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/referrals.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/report-comments.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/reports.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/roadmap.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/scenarios.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/scim.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/security.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/securityPolicies.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/sessions.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/settings.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/settlements.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/sso.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/stabilization.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/stage-gates.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/status-reports.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/status.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/studio.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/superadmin.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/systemConfig.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/systemHealth.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/task-advisor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/tasks.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/teams.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/tokenBilling.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/trial.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-appearance.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-availability.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-contact.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-data-controls.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-keyboard-shortcuts.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-privacy-extended.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-professional-profile.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-profile-completeness.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-profile-extended.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-security-advanced.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-settings-history.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/user-settings-templates.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/userGoals.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/userIntegrations.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/userOrgs.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/users.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/verify.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/videos.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/voice.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/webauthn.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/webhookSubscriptions.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/webhooks/stripe.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/webhooks.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/workMode.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/workqueue.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/workspace-defaults.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "routes/workstreams.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/adminAuditMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/adminMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/alertWatchdog.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/assessmentRBAC.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/auditLog.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/authMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/demoGuard.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/economicsValidation.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/featureGate.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/fileUploadMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/invitationRateLimiter.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/legalComplianceMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/orgContextMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/performanceMetrics.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/permissionMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/planLimits.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/pmoValidation.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/projectQuotaMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/quotaMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/rapidLeanUploadMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/rbac.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/securityHeadersMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/superAdminMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/trialEntryGuard.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/userStateGuard.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "middleware/validationMiddleware.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/aiSchemaValidator.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/assessmentAuditLogger.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/auditLogger.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/benchmarkCache.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/cacheHelper.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/dbPromise.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/errorHandler.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/logger.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/orgColumn.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/piiRedactor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/queryAdapter.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/queryHelpers.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/redisClient.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/redisRateLimitStore.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/requestContext.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/requestStore.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "utils/validation.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "controllers/authController.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "controllers/superAdminController.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/actionDecisionService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/actionErrors.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/actionExecutionAdapter.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/actionExecutors/meetingExecutor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/actionExecutors/playbookExecutor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/actionExecutors/taskExecutor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/actionProposalEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/actionProposalMapper.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/aiCoach.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/aiContextBuilder.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/aiPlaybookEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/aiPlaybookExecutor.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/aiPlaybookRoutingEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/aiPlaybookService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/asyncJobService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/auditExport.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/connectorAdapter.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/policyEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/recommendationEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/signalEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/simulationEngine.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/templateGraphService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "ai/templateValidationService.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "mcp/mcpServer.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "repositories/ManagementReportRepository.js",
+      "reason": "No old database import found"
+    },
+    {
+      "file": "repositories/ReportRepository.js",
+      "reason": "No old database import found"
+    }
+  ],
+  "errors": [],
+  "total": 661
+}

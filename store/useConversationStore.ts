@@ -1,0 +1,727 @@
+/**
+ * Conversation Store
+ *
+ * Zustand store for managing AI Chat conversation history.
+ * Handles conversation CRUD, message management, and UI state.
+ *
+ * Extended for Unified AI Chat System:
+ * - displayMode: Manages full/split/collapsed chat modes
+ * - workspaceContext: Tracks what's displayed in split-screen workspace
+ */
+
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { Api } from '../services/api';
+import { AppView, ChatMessage } from '../types';
+import {
+    ChatDisplayMode,
+    createWorkspaceContext,
+    getDefaultWorkspaceType,
+    WorkspaceContext,
+    WorkspaceType,
+} from '../types/workspace';
+
+// ==================== TYPES ====================
+
+export interface Conversation {
+    id: string;
+    title: string;
+    titleSource: 'auto' | 'user';
+    projectId?: string;
+    chatProjectId?: string | null; // Chat organization folder (like Claude projects)
+    organizationId?: string;
+    starred: boolean;
+    archived: boolean;
+    tags: string[];
+    pmoContext?: {
+        assessmentId?: string;
+        initiativeIds?: string[];
+        roadmapId?: string;
+    };
+    messageCount: number;
+    lastMessagePreview?: string;
+    lastMessageAt?: Date;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface ConversationMessage {
+    id: string;
+    conversationId: string;
+    role: 'user' | 'ai';
+    content: string;
+    messageType: 'text' | 'action_request' | 'summary' | 'file' | 'tool_call' | 'voice';
+    metadata?: {
+        citations?: Citation[];
+        actions?: ResponseAction[];
+        toolCalls?: any[];
+        // AI reasoning and artifacts
+        thinkingSteps?: Array<{
+            id: string;
+            title: string;
+            content: string;
+            status: 'pending' | 'active' | 'completed';
+        }>;
+        artifacts?: Array<{ id: string; type: string; title: string; content: string; language?: string }>;
+        // Voice-specific metadata
+        audioUrl?: string;
+        audioDuration?: number;
+        voiceProvider?: string;
+        voiceId?: string;
+        transcribedFrom?: 'whisper' | 'web';
+    };
+    tokenCount?: number;
+    modelUsed?: string;
+    createdAt: Date;
+}
+
+export interface Citation {
+    id: string;
+    type: 'assessment' | 'initiative' | 'report' | 'external';
+    title: string;
+    reference: string;
+    link?: string;
+    excerpt?: string;
+}
+
+export interface ResponseAction {
+    id: string;
+    type: 'navigate' | 'execute' | 'expand';
+    label: string;
+    icon: string;
+    payload: {
+        view?: string;
+        apiCall?: string;
+        data?: Record<string, unknown>;
+    };
+}
+
+// ==================== GROUPING HELPERS ====================
+
+type ConversationGroup = 'pinned' | 'today' | 'yesterday' | 'thisWeek' | 'lastMonth' | 'older' | 'archived';
+
+function getConversationGroup(conv: Conversation): ConversationGroup {
+    if (conv.archived) return 'archived';
+    if (conv.starred) return 'pinned';
+
+    const now = new Date();
+    const convDate = new Date(conv.lastMessageAt || conv.updatedAt);
+    const diffDays = Math.floor((now.getTime() - convDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'today';
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays <= 7) return 'thisWeek';
+    if (diffDays <= 30) return 'lastMonth';
+    return 'older';
+}
+
+export function groupConversations(conversations: Conversation[]): Record<ConversationGroup, Conversation[]> {
+    const groups: Record<ConversationGroup, Conversation[]> = {
+        pinned: [],
+        today: [],
+        yesterday: [],
+        thisWeek: [],
+        lastMonth: [],
+        older: [],
+        archived: [],
+    };
+
+    for (const conv of conversations) {
+        const group = getConversationGroup(conv);
+        groups[group].push(conv);
+    }
+
+    // Sort each group by last activity (newest first)
+    for (const key of Object.keys(groups) as ConversationGroup[]) {
+        groups[key].sort((a, b) => {
+            const dateA = new Date(a.lastMessageAt || a.updatedAt).getTime();
+            const dateB = new Date(b.lastMessageAt || b.updatedAt).getTime();
+            return dateB - dateA;
+        });
+    }
+
+    return groups;
+}
+
+// ==================== STORE INTERFACE ====================
+
+interface ConversationState {
+    // Data
+    conversations: Conversation[];
+    activeConversationId: string | null;
+    activeMessages: ConversationMessage[];
+
+    // UI State
+    isLoading: boolean;
+    isSidebarOpen: boolean;
+    searchQuery: string;
+    showArchived: boolean;
+
+    // Derived data (computed)
+    groupedConversations: Record<ConversationGroup, Conversation[]>;
+
+    // ==================== UNIFIED CHAT SYSTEM ====================
+    // Display mode for chat interface (full-screen vs split-screen)
+    displayMode: ChatDisplayMode;
+
+    // Context about what's displayed in workspace (for split mode)
+    workspaceContext: WorkspaceContext | null;
+
+    // Previous view for "back" functionality
+    previousView: AppView | null;
+
+    // Actions - Fetch
+    fetchConversations: (options?: { archived?: boolean; projectId?: string }) => Promise<void>;
+    fetchConversation: (id: string) => Promise<void>;
+
+    // Actions - CRUD
+    createConversation: (options?: { title?: string; projectId?: string }) => Promise<Conversation>;
+    updateConversation: (id: string, updates: Partial<Conversation>) => Promise<void>;
+    deleteConversation: (id: string) => Promise<void>;
+
+    // Actions - Messages
+    addMessage: (message: Omit<ConversationMessage, 'id' | 'createdAt'>) => Promise<ConversationMessage>;
+    updateLastMessage: (content: string) => void;
+
+    // Actions - Organization
+    starConversation: (id: string) => Promise<void>;
+    unstarConversation: (id: string) => Promise<void>;
+    archiveConversation: (id: string) => Promise<void>;
+    unarchiveConversation: (id: string) => Promise<void>;
+
+    // Actions - UI
+    setActiveConversation: (id: string | null) => void;
+    toggleSidebar: () => void;
+    setSearchQuery: (query: string) => void;
+    toggleShowArchived: () => void;
+    clearActiveChat: () => void;
+
+    // Actions - Title
+    generateTitle: (id: string) => Promise<void>;
+    renameConversation: (id: string, title: string) => Promise<void>;
+
+    // Actions - Bulk
+    bulkOperation: (ids: string[], action: 'archive' | 'unarchive' | 'delete' | 'star' | 'unstar') => Promise<void>;
+
+    // Actions - Migration
+    migrateFromLocalStorage: () => Promise<void>;
+
+    // Helpers
+    searchConversations: (query: string) => Conversation[];
+    getConversationsByProject: (projectId: string) => Conversation[];
+
+    // ==================== UNIFIED CHAT ACTIONS ====================
+    /**
+     * Set the display mode (full/split/collapsed)
+     */
+    setDisplayMode: (mode: ChatDisplayMode) => void;
+
+    /**
+     * Set workspace context for split mode
+     */
+    setWorkspaceContext: (context: WorkspaceContext | null) => void;
+
+    /**
+     * Update workspace context with view info (convenience method)
+     */
+    updateWorkspaceFromView: (view: AppView, entityId?: string, entityData?: Record<string, unknown>) => void;
+
+    /**
+     * Expand chat to full screen mode
+     */
+    expandToFullScreen: () => void;
+
+    /**
+     * Collapse to split screen with given workspace context
+     */
+    collapseToSplit: (workspaceContext?: Partial<WorkspaceContext>) => void;
+
+    /**
+     * Store previous view for navigation back
+     */
+    setPreviousView: (view: AppView | null) => void;
+
+    /**
+     * Check if we're in a split-screen view
+     */
+    isSplitMode: () => boolean;
+}
+
+// ==================== STORE IMPLEMENTATION ====================
+
+export const useConversationStore = create<ConversationState>()(
+    persist(
+        (set, get) => ({
+            // Initial state
+            conversations: [],
+            activeConversationId: null,
+            activeMessages: [],
+            isLoading: false,
+            isSidebarOpen: true,
+            searchQuery: '',
+            showArchived: false,
+            groupedConversations: {
+                pinned: [],
+                today: [],
+                yesterday: [],
+                thisWeek: [],
+                lastMonth: [],
+                older: [],
+                archived: [],
+            },
+
+            // Unified Chat System state
+            displayMode: 'full' as ChatDisplayMode,
+            workspaceContext: null,
+            previousView: null,
+
+            // ==================== FETCH ====================
+
+            fetchConversations: async (options) => {
+                set({ isLoading: true });
+                try {
+                    const result = await Api.getConversations({
+                        archived: options?.archived,
+                        projectId: options?.projectId,
+                    });
+
+                    const conversations = result.conversations.map(mapApiConversation);
+                    set({
+                        conversations,
+                        groupedConversations: groupConversations(conversations),
+                        isLoading: false,
+                    });
+                } catch (err) {
+                    console.error('[ConversationStore] Fetch error:', err);
+                    set({ isLoading: false });
+                }
+            },
+
+            fetchConversation: async (id: string) => {
+                set({ isLoading: true });
+                try {
+                    const result = await Api.getConversation(id);
+                    const messages = result.messages.map(mapApiMessage);
+                    set({
+                        activeConversationId: id,
+                        activeMessages: messages,
+                        isLoading: false,
+                    });
+                } catch (err) {
+                    console.error('[ConversationStore] Fetch conversation error:', err);
+                    set({ isLoading: false });
+                }
+            },
+
+            // ==================== CRUD ====================
+
+            createConversation: async (options) => {
+                try {
+                    const result = await Api.createConversation({
+                        title: options?.title,
+                        projectId: options?.projectId,
+                    });
+
+                    const conversation = mapApiConversation(result);
+
+                    set((state) => {
+                        const newConversations = [conversation, ...state.conversations];
+                        return {
+                            conversations: newConversations,
+                            groupedConversations: groupConversations(newConversations),
+                            activeConversationId: conversation.id,
+                            activeMessages: [],
+                        };
+                    });
+
+                    return conversation;
+                } catch (err) {
+                    console.error('[ConversationStore] Create error:', err);
+                    throw err;
+                }
+            },
+
+            updateConversation: async (id, updates) => {
+                try {
+                    await Api.updateConversation(id, updates);
+
+                    set((state) => {
+                        const newConversations = state.conversations.map((c) =>
+                            c.id === id ? { ...c, ...updates, updatedAt: new Date() } : c,
+                        );
+                        return {
+                            conversations: newConversations,
+                            groupedConversations: groupConversations(newConversations),
+                        };
+                    });
+                } catch (err) {
+                    console.error('[ConversationStore] Update error:', err);
+                    throw err;
+                }
+            },
+
+            deleteConversation: async (id) => {
+                try {
+                    await Api.deleteConversation(id);
+
+                    set((state) => {
+                        const newConversations = state.conversations.filter((c) => c.id !== id);
+                        return {
+                            conversations: newConversations,
+                            groupedConversations: groupConversations(newConversations),
+                            activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
+                            activeMessages: state.activeConversationId === id ? [] : state.activeMessages,
+                        };
+                    });
+                } catch (err) {
+                    console.error('[ConversationStore] Delete error:', err);
+                    throw err;
+                }
+            },
+
+            // ==================== MESSAGES ====================
+
+            addMessage: async (message) => {
+                const { activeConversationId, activeMessages } = get();
+
+                if (!activeConversationId) {
+                    throw new Error('No active conversation');
+                }
+
+                try {
+                    const result = await Api.addConversationMessage(activeConversationId, {
+                        role: message.role,
+                        content: message.content,
+                        messageType: message.messageType,
+                        metadata: message.metadata,
+                        tokenCount: message.tokenCount,
+                        modelUsed: message.modelUsed,
+                    });
+
+                    const newMessage = mapApiMessage(result);
+
+                    set((state) => ({
+                        activeMessages: [...state.activeMessages, newMessage],
+                        conversations: state.conversations.map((c) =>
+                            c.id === activeConversationId
+                                ? {
+                                      ...c,
+                                      messageCount: c.messageCount + 1,
+                                      lastMessagePreview: message.content.slice(0, 200),
+                                      lastMessageAt: new Date(),
+                                      updatedAt: new Date(),
+                                  }
+                                : c,
+                        ),
+                    }));
+
+                    // Trigger title generation after first exchange
+                    if (activeMessages.length === 1 && message.role === 'ai') {
+                        get().generateTitle(activeConversationId);
+                    }
+
+                    return newMessage;
+                } catch (err) {
+                    console.error('[ConversationStore] Add message error:', err);
+                    throw err;
+                }
+            },
+
+            updateLastMessage: (content: string) => {
+                set((state) => {
+                    const messages = [...state.activeMessages];
+                    if (messages.length > 0) {
+                        const lastMsg = messages[messages.length - 1];
+                        if (lastMsg.role === 'ai') {
+                            messages[messages.length - 1] = { ...lastMsg, content };
+                        }
+                    }
+                    return { activeMessages: messages };
+                });
+            },
+
+            // ==================== ORGANIZATION ====================
+
+            starConversation: async (id) => {
+                await get().updateConversation(id, { starred: true });
+            },
+
+            unstarConversation: async (id) => {
+                await get().updateConversation(id, { starred: false });
+            },
+
+            archiveConversation: async (id) => {
+                await get().updateConversation(id, { archived: true });
+            },
+
+            unarchiveConversation: async (id) => {
+                await get().updateConversation(id, { archived: false });
+            },
+
+            // ==================== UI ====================
+
+            setActiveConversation: (id) => {
+                if (id) {
+                    get().fetchConversation(id);
+                } else {
+                    set({ activeConversationId: null, activeMessages: [] });
+                }
+            },
+
+            toggleSidebar: () => {
+                set((state) => ({ isSidebarOpen: !state.isSidebarOpen }));
+            },
+
+            setSearchQuery: (query) => {
+                set({ searchQuery: query });
+            },
+
+            toggleShowArchived: () => {
+                set((state) => ({ showArchived: !state.showArchived }));
+            },
+
+            clearActiveChat: () => {
+                set({ activeConversationId: null, activeMessages: [] });
+            },
+
+            // ==================== TITLE ====================
+
+            generateTitle: async (id) => {
+                try {
+                    const result = await Api.generateConversationTitle(id);
+                    if (result.title) {
+                        set((state) => ({
+                            conversations: state.conversations.map((c) =>
+                                c.id === id ? { ...c, title: result.title!, titleSource: 'auto' as const } : c,
+                            ),
+                        }));
+                    }
+                } catch (err) {
+                    console.error('[ConversationStore] Generate title error:', err);
+                }
+            },
+
+            renameConversation: async (id, title) => {
+                await get().updateConversation(id, { title } as any);
+            },
+
+            // ==================== BULK ====================
+
+            bulkOperation: async (ids, action) => {
+                try {
+                    await Api.bulkConversationOperation(ids, action);
+
+                    set((state) => {
+                        let newConversations = [...state.conversations];
+
+                        switch (action) {
+                            case 'delete':
+                                newConversations = newConversations.filter((c) => !ids.includes(c.id));
+                                break;
+                            case 'archive':
+                                newConversations = newConversations.map((c) =>
+                                    ids.includes(c.id) ? { ...c, archived: true } : c,
+                                );
+                                break;
+                            case 'unarchive':
+                                newConversations = newConversations.map((c) =>
+                                    ids.includes(c.id) ? { ...c, archived: false } : c,
+                                );
+                                break;
+                            case 'star':
+                                newConversations = newConversations.map((c) =>
+                                    ids.includes(c.id) ? { ...c, starred: true } : c,
+                                );
+                                break;
+                            case 'unstar':
+                                newConversations = newConversations.map((c) =>
+                                    ids.includes(c.id) ? { ...c, starred: false } : c,
+                                );
+                                break;
+                        }
+
+                        return {
+                            conversations: newConversations,
+                            groupedConversations: groupConversations(newConversations),
+                        };
+                    });
+                } catch (err) {
+                    console.error('[ConversationStore] Bulk operation error:', err);
+                    throw err;
+                }
+            },
+
+            // ==================== MIGRATION ====================
+
+            migrateFromLocalStorage: async () => {
+                try {
+                    // Get old chat messages from useAppStore
+                    const storageData = localStorage.getItem('consultify-storage');
+                    if (!storageData) return;
+
+                    const parsed = JSON.parse(storageData);
+                    const { projectChatMessages } = parsed.state || {};
+
+                    if (!projectChatMessages || Object.keys(projectChatMessages).length === 0) {
+                        console.log('[ConversationStore] No messages to migrate');
+                        return;
+                    }
+
+                    const conversations = Object.entries(projectChatMessages)
+                        .filter(([_, messages]) => Array.isArray(messages) && messages.length > 0)
+                        .map(([projectId, messages]) => ({
+                            projectId: projectId === 'global' ? undefined : projectId,
+                            messages: (messages as ChatMessage[]).map((m) => ({
+                                role: m.role,
+                                content: m.content,
+                                timestamp: m.timestamp,
+                            })),
+                        }));
+
+                    if (conversations.length > 0) {
+                        await Api.migrateConversations(conversations);
+                        console.log('[ConversationStore] Migration complete:', conversations.length, 'conversations');
+
+                        // Refresh conversations
+                        await get().fetchConversations();
+                    }
+                } catch (err) {
+                    console.error('[ConversationStore] Migration error:', err);
+                }
+            },
+
+            // ==================== HELPERS ====================
+
+            searchConversations: (query) => {
+                const { conversations } = get();
+                const lowerQuery = query.toLowerCase();
+                return conversations.filter(
+                    (c) =>
+                        c.title.toLowerCase().includes(lowerQuery) ||
+                        c.lastMessagePreview?.toLowerCase().includes(lowerQuery),
+                );
+            },
+
+            getConversationsByProject: (projectId) => {
+                const { conversations } = get();
+                return conversations.filter((c) => c.projectId === projectId);
+            },
+
+            // ==================== UNIFIED CHAT ACTIONS ====================
+
+            setDisplayMode: (mode: ChatDisplayMode) => {
+                console.log('[ConversationStore] setDisplayMode:', mode);
+                set({ displayMode: mode });
+            },
+
+            setWorkspaceContext: (context: WorkspaceContext | null) => {
+                console.log('[ConversationStore] setWorkspaceContext:', context?.type, context?.entityId);
+                set({ workspaceContext: context });
+            },
+
+            updateWorkspaceFromView: (view: AppView, entityId?: string, entityData?: Record<string, unknown>) => {
+                const workspaceType = getDefaultWorkspaceType(view);
+                const context = createWorkspaceContext(view, workspaceType, {
+                    entityId,
+                    entityData,
+                });
+                set({
+                    workspaceContext: context,
+                    displayMode: 'split',
+                });
+                console.log('[ConversationStore] updateWorkspaceFromView:', view, workspaceType);
+            },
+
+            expandToFullScreen: () => {
+                const { workspaceContext } = get();
+                console.log('[ConversationStore] expandToFullScreen from:', workspaceContext?.view);
+                set({
+                    displayMode: 'full',
+                    previousView: workspaceContext?.view || null,
+                });
+            },
+
+            collapseToSplit: (partialContext?: Partial<WorkspaceContext>) => {
+                const current = get().workspaceContext;
+                let newContext: WorkspaceContext | null = null;
+
+                if (partialContext) {
+                    newContext = {
+                        view: partialContext.view || current?.view || AppView.MY_WORK,
+                        type: partialContext.type || current?.type || 'empty',
+                        timestamp: new Date(),
+                        entityId: partialContext.entityId || current?.entityId,
+                        entityName: partialContext.entityName || current?.entityName,
+                        entityData: partialContext.entityData || current?.entityData,
+                        projectId: partialContext.projectId || current?.projectId,
+                        projectName: partialContext.projectName || current?.projectName,
+                    };
+                } else if (current) {
+                    newContext = { ...current, timestamp: new Date() };
+                }
+
+                console.log('[ConversationStore] collapseToSplit:', newContext?.view);
+                set({
+                    displayMode: 'split',
+                    workspaceContext: newContext,
+                });
+            },
+
+            setPreviousView: (view: AppView | null) => {
+                set({ previousView: view });
+            },
+
+            isSplitMode: () => {
+                return get().displayMode === 'split';
+            },
+        }),
+        {
+            name: 'consultify-conversations',
+            storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({
+                isSidebarOpen: state.isSidebarOpen,
+                showArchived: state.showArchived,
+                displayMode: state.displayMode,
+            }),
+        },
+    ),
+);
+
+// ==================== API MAPPERS ====================
+
+function mapApiConversation(api: any): Conversation {
+    return {
+        id: api.id,
+        title: api.title,
+        titleSource: api.title_source || 'auto',
+        projectId: api.project_id,
+        chatProjectId: api.chat_project_id || null,
+        organizationId: api.organization_id,
+        starred: api.starred || false,
+        archived: api.archived || false,
+        tags: api.tags || [],
+        pmoContext: api.pmo_context,
+        messageCount: api.message_count || 0,
+        lastMessagePreview: api.last_message_preview,
+        lastMessageAt: api.last_message_at ? new Date(api.last_message_at) : undefined,
+        createdAt: new Date(api.created_at),
+        updatedAt: new Date(api.updated_at),
+    };
+}
+
+function mapApiMessage(api: any): ConversationMessage {
+    return {
+        id: api.id,
+        conversationId: api.conversation_id,
+        role: api.role,
+        content: api.content,
+        messageType: api.message_type || 'text',
+        metadata: api.metadata,
+        tokenCount: api.token_count,
+        modelUsed: api.model_used,
+        createdAt: new Date(api.created_at),
+    };
+}
+
+export default useConversationStore;

@@ -1,0 +1,43 @@
+# 📨 NOWE WIADOMOŚCI - BEZ CURSOR
+
+## 🚨 PILNE - CURSOR NIE DZIAŁA
+
+┌─────────────────────────────────────────────────────────────┐
+│ 📋 DLA ANTIGRAVITY #2 - NATYCHMIAST!                        │
+└─────────────────────────────────────────────────────────────┘
+
+Cześć Antigravity #2!
+
+**PILNE**: Cursor nie działa, przejmij jego zadania!
+
+📁 Instrukcje: cursor_zadania/INSTRUKCJE_ANTIGRAVITY2.md
+🎯 Cel: Napraw 50 błędów TypeScript w 10 plikach
+⏱️ Czas: 1h
+📊 Raportuj: cursor_zadania/ANTIGRAVITY2_PROGRESS.txt
+
+**ZACZNIJ NATYCHMIAST!** Mamy 188 błędów do naprawy!
+
+═══════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────┐
+│ 📋 DLA CODEX - KONTYNUUJ                                     │
+└─────────────────────────────────────────────────────────────┘
+
+Cześć Codex!
+
+Kontynuuj service refactoring - bez zmian w planie.
+
+📁 Instrukcje: cursor_zadania/INSTRUKCJE_CODEX.md
+🎯 Cel: BillingService split + DI
+⏱️ Czas: 2h
+📊 Raportuj: cursor_zadania/CODEX_PROGRESS.txt
+
+**KONTYNUUJ PRACĘ!**
+
+═══════════════════════════════════════════════════════════════
+
+📌 NOWY PLAN: cursor_zadania/NOWY_PLAN.md
+📊 Status: 188 błędów TypeScript pozostało
+🎯 Cel: 0 błędów do 23:30
+
+**DZIAŁAJMY SZYBKO!** 🚀

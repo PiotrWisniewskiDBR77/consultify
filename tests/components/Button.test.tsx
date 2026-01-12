@@ -20,6 +20,6 @@ describe('Component Test: Button', () => {
     it('renders with correct variant class', () => {
         render(<Button variant="secondary">Secondary</Button>);
         const button = screen.getByText('Secondary').closest('button');
-        expect(button).toHaveClass('bg-navy-800');
+        expect(button).toHaveClass('btn-secondary');
     });
 });

@@ -1,272 +1,596 @@
-import React, { useState, useEffect } from 'react';
-import { User, Language, AIProviderType } from '../types';
-import { Api } from '../services/api';
-import { UserCircle, Globe, Lock, Bell, CreditCard, Check, Cpu, Moon, Sun, Monitor } from 'lucide-react';
-import { BillingSettings } from './settings/BillingSettings';
-import { AIConfigSettings } from './settings/AIConfigSettings';
+/**
+ * SettingsView - Main Settings Panel with 6-Module Tab Structure
+ *
+ * Modules: Profile | AI Preferences | Notifications | Security | Integrations | Appearance
+ *
+ * Uses tabs within the content area - NO separate sidebar.
+ * Navigation is handled via the main Sidebar floating menu.
+ */
+
+import {
+    Accessibility,
+    Bell,
+    Brain,
+    Calendar,
+    ClipboardList,
+    Clock,
+    CreditCard,
+    Database,
+    EyeOff,
+    Fingerprint,
+    Globe,
+    History,
+    Image,
+    Key,
+    LayoutGrid,
+    Link,
+    Mail,
+    MessageSquare,
+    Mic,
+    Monitor,
+    Moon,
+    Palette,
+    Settings,
+    Shield,
+    Sliders,
+    Smartphone,
+    Sun,
+    Trash2,
+    User as UserIcon,
+    UserCircle,
+    Volume2,
+    Webhook,
+    Zap,
+} from 'lucide-react';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { MFASetup } from '../components/Profile/MFASetup';
+import { AccessibilitySettings } from '../components/settings/AccessibilitySettings';
+import AccountManagementSettings from '../components/settings/AccountManagementSettings';
+import { ActiveSessionsSettings } from '../components/settings/ActiveSessionsSettings';
+import { AIAutoCompleteSettings } from '../components/settings/AIAutoCompleteSettings';
+import { AIInstructionsSettings } from '../components/settings/AIInstructionsSettings';
+import { AIIntegrationsSettings } from '../components/settings/AIIntegrationsSettings';
+import { AIMemorySettings } from '../components/settings/AIMemorySettings';
+import { AIModelSelectionSettings } from '../components/settings/AIModelSelectionSettings';
+import { AIParametersSettings } from '../components/settings/AIParametersSettings';
+import { AIPersonalitySettings } from '../components/settings/AIPersonalitySettings';
+import { APIAccessSettings } from '../components/settings/APIAccessSettings';
+import { AppearanceSettings } from '../components/settings/AppearanceSettings';
+import { AvatarUploader } from '../components/settings/AvatarUploader';
+import { BillingSettings } from '../components/settings/BillingSettings';
+import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
+import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
+import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
+import { DashboardPreferencesSettings } from '../components/settings/DashboardPreferencesSettings';
+import { DataControlsSettings } from '../components/settings/DataControlsSettings';
+import { DNDModeSettings } from '../components/settings/DNDModeSettings';
+import { EmailNotificationsSettings } from '../components/settings/EmailNotificationsSettings';
+import { KeyboardShortcutsSettings } from '../components/settings/KeyboardShortcutsSettings';
+import { LanguageSettings } from '../components/settings/LanguageSettings';
+import { LoginHistorySettings } from '../components/settings/LoginHistorySettings';
+import { NotificationDigestSettings } from '../components/settings/NotificationDigestSettings';
+import { NotificationGroupingSettings } from '../components/settings/NotificationGroupingSettings';
+import { NotificationScheduleSettings } from '../components/settings/NotificationScheduleSettings';
+import { NotificationSettings } from '../components/settings/NotificationSettings';
+import { PasswordSettings } from '../components/settings/PasswordSettings';
+import { PrivacySettings } from '../components/settings/PrivacySettings';
+// Import settings components
+import { ProfileSettings } from '../components/settings/ProfileSettings';
+import { PushNotificationsSettings } from '../components/settings/PushNotificationsSettings';
+import { QuietHoursSettings } from '../components/settings/QuietHoursSettings';
+import { RegionalSettings } from '../components/settings/RegionalSettings';
+import { ResponseStyleSettings } from '../components/settings/ResponseStyleSettings';
+import { SoundNotificationsSettings } from '../components/settings/SoundNotificationsSettings';
+import { ThemeSettings } from '../components/settings/ThemeSettings';
+import { VoiceSettings } from '../components/settings/VoiceSettings';
+import { WebhooksSettings } from '../components/settings/WebhooksSettings';
+import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesSettings';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { useAppStore } from '../store/useAppStore';
+import { AppView, User } from '../types';
+
+// Settings section type
+type SettingsSection = 'profile' | 'ai-preferences' | 'notifications' | 'security' | 'integrations' | 'appearance';
+
+// Map AppView to SettingsSection
+const getSettingsSection = (view: AppView): SettingsSection => {
+    // New module-based navigation
+    if (view === AppView.SETTINGS_PROFILE_MODULE) return 'profile';
+    if (view === AppView.SETTINGS_AI_MODULE) return 'ai-preferences';
+    if (view === AppView.SETTINGS_NOTIFICATIONS_MODULE) return 'notifications';
+    if (view === AppView.SETTINGS_SECURITY_MODULE) return 'security';
+    if (view === AppView.SETTINGS_INTEGRATIONS_MODULE) return 'integrations';
+    if (view === AppView.SETTINGS_APPEARANCE_MODULE) return 'appearance';
+
+    // Legacy views mapping
+    if (view === AppView.SETTINGS_PROFILE || view === AppView.SETTINGS_BILLING) {
+        return 'profile';
+    }
+    if (
+        view === AppView.SETTINGS_AI ||
+        view === AppView.SETTINGS_AI_MEMORY ||
+        view === AppView.SETTINGS_AI_RESPONSE_STYLE ||
+        view === AppView.SETTINGS_AI_CHAT_HISTORY ||
+        view === AppView.SETTINGS_AI_VOICE
+    ) {
+        return 'ai-preferences';
+    }
+    if (view === AppView.SETTINGS_NOTIFICATIONS) {
+        return 'notifications';
+    }
+    if (
+        view === AppView.SETTINGS_SECURITY ||
+        view === AppView.SETTINGS_MFA ||
+        view === AppView.SETTINGS_ACTIVE_SESSIONS ||
+        view === AppView.SETTINGS_LOGIN_HISTORY ||
+        view === AppView.SETTINGS_DATA_CONTROLS ||
+        view === AppView.SETTINGS_PRIVACY
+    ) {
+        return 'security';
+    }
+    if (
+        view === AppView.SETTINGS_INTEGRATIONS ||
+        view === AppView.SETTINGS_API_ACCESS ||
+        view === AppView.SETTINGS_WEBHOOKS ||
+        view === AppView.SETTINGS_CALENDAR_SYNC
+    ) {
+        return 'integrations';
+    }
+    if (
+        view === AppView.SETTINGS_APPEARANCE ||
+        view === AppView.SETTINGS_REGIONALIZATION ||
+        view === AppView.SETTINGS_ACCESSIBILITY ||
+        view === AppView.SETTINGS_WORK_PREFERENCES ||
+        view === AppView.SETTINGS_DASHBOARD_PREFERENCES
+    ) {
+        return 'appearance';
+    }
+    return 'profile';
+};
 
 interface SettingsViewProps {
     currentUser: User;
-    language: Language;
     onUpdateUser: (updates: Partial<User>) => void;
-    theme: 'light' | 'dark';
-    toggleTheme: () => void;
-    setLanguage: (lang: Language) => void;
+    theme: 'light' | 'dark' | 'system';
+    toggleTheme: (newTheme?: 'light' | 'dark' | 'system') => void;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, language, onUpdateUser, theme, toggleTheme, setLanguage }) => {
-    const [activeTab, setActiveTab] = useState<'PROFILE' | 'BILLING' | 'AI'>('PROFILE');
-    const [formData, setFormData] = useState({
-        firstName: currentUser.firstName || '',
-        lastName: currentUser.lastName || '',
-        role: currentUser.role || '',
-        companyName: currentUser.companyName || '',
-    });
+export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onUpdateUser, theme, toggleTheme }) => {
+    const { currentView, setCurrentView } = useAppStore();
+    const { t } = useTranslation();
 
-    const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl);
+    // Derive active section from currentView
+    const activeSection = useMemo<SettingsSection>(() => {
+        return getSettingsSection(currentView);
+    }, [currentView]);
 
-    // Sync state with currentUser changes
-    React.useEffect(() => {
-        setFormData({
-            firstName: currentUser.firstName || '',
-            lastName: currentUser.lastName || '',
-            role: currentUser.role || '',
-            companyName: currentUser.companyName || '',
-        });
-        setAvatarUrl(currentUser.avatarUrl);
-    }, [currentUser]);
-
-    const [isSaved, setIsSaved] = useState(false);
-
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await Api.updateUser(currentUser.id, formData);
-            onUpdateUser(formData); // Optimistic update
-            setIsSaved(true);
-            setTimeout(() => setIsSaved(false), 2000);
-        } catch (err) {
-            alert('Failed to save settings');
+    // Handle section change - using new module AppView values
+    const handleSectionChange = (section: string) => {
+        switch (section) {
+            case 'profile':
+                setCurrentView(AppView.SETTINGS_PROFILE_MODULE);
+                break;
+            case 'ai-preferences':
+                setCurrentView(AppView.SETTINGS_AI_MODULE);
+                break;
+            case 'notifications':
+                setCurrentView(AppView.SETTINGS_NOTIFICATIONS_MODULE);
+                break;
+            case 'security':
+                setCurrentView(AppView.SETTINGS_SECURITY_MODULE);
+                break;
+            case 'integrations':
+                setCurrentView(AppView.SETTINGS_INTEGRATIONS_MODULE);
+                break;
+            case 'appearance':
+                setCurrentView(AppView.SETTINGS_APPEARANCE_MODULE);
+                break;
         }
     };
 
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-    const handleAvatarClick = () => {
-        fileInputRef.current?.click();
+    // Get section title and subtitle
+    const getSectionInfo = () => {
+        switch (activeSection) {
+            case 'profile':
+                return {
+                    title: t('settings.profile.title', 'Profile'),
+                    subtitle: t('settings.profile.subtitle', 'Manage your personal information and account settings'),
+                };
+            case 'ai-preferences':
+                return {
+                    title: t('settings.aiPreferences.title', 'AI Preferences'),
+                    subtitle: t('settings.aiPreferences.subtitle', 'Customize how AI responds to you'),
+                };
+            case 'notifications':
+                return {
+                    title: t('settings.notifications.title', 'Notifications'),
+                    subtitle: t('settings.notifications.subtitle', 'Control how and when you receive notifications'),
+                };
+            case 'security':
+                return {
+                    title: t('settings.security.title', 'Security & Privacy'),
+                    subtitle: t('settings.security.subtitle', 'Manage your security settings and data'),
+                };
+            case 'integrations':
+                return {
+                    title: t('settings.integrations.title', 'Integrations'),
+                    subtitle: t(
+                        'settings.integrations.subtitle',
+                        'Connect apps, manage API keys, and configure webhooks',
+                    ),
+                };
+            case 'appearance':
+                return {
+                    title: t('settings.appearance.title', 'Appearance & Regional'),
+                    subtitle: t(
+                        'settings.appearance.subtitle',
+                        'Customize your visual preferences and regional settings',
+                    ),
+                };
+            default:
+                return { title: 'Settings', subtitle: '' };
+        }
     };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const sectionInfo = getSectionInfo();
 
-        // Basic validation
-        if (file.size > 2 * 1024 * 1024) {
-            alert('File size must be less than 2MB');
-            return;
-        }
+    // Render content based on active section
+    const renderContent = () => {
+        switch (activeSection) {
+            case 'profile':
+                return (
+                    <Tabs defaultValue="personal" className="w-full">
+                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg">
+                            <TabsTrigger value="personal" className="flex items-center gap-2">
+                                <UserIcon size={16} />
+                                {t('settings.profile.tabs.personal', 'Personal Info')}
+                            </TabsTrigger>
+                            <TabsTrigger value="avatar" className="flex items-center gap-2">
+                                <Image size={16} />
+                                {t('settings.profile.tabs.avatar', 'Avatar')}
+                            </TabsTrigger>
+                            <TabsTrigger value="password" className="flex items-center gap-2">
+                                <Key size={16} />
+                                {t('settings.profile.tabs.password', 'Password')}
+                            </TabsTrigger>
+                            <TabsTrigger value="billing" className="flex items-center gap-2">
+                                <CreditCard size={16} />
+                                {t('settings.profile.tabs.billing', 'Billing')}
+                            </TabsTrigger>
+                            <TabsTrigger value="account" className="flex items-center gap-2">
+                                <Trash2 size={16} />
+                                {t('settings.profile.tabs.account', 'Account')}
+                            </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="personal" className="mt-6">
+                            <ProfileSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="avatar" className="mt-6">
+                            <AvatarUploader currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="password" className="mt-6">
+                            <PasswordSettings />
+                        </TabsContent>
+                        <TabsContent value="billing" className="mt-6">
+                            <BillingSettings currentUser={currentUser} />
+                        </TabsContent>
+                        <TabsContent value="account" className="mt-6">
+                            <AccountManagementSettings />
+                        </TabsContent>
+                    </Tabs>
+                );
 
-        try {
-            const result = await Api.uploadAvatar(currentUser.id, file);
-            // Construct full URL if returned relative
-            const fullUrl = result.avatarUrl.startsWith('http') ? result.avatarUrl : `http://localhost:3001${result.avatarUrl}`;
-            setAvatarUrl(fullUrl);
-            onUpdateUser({ avatarUrl: fullUrl }); // Update parent state immediately
-        } catch (err: any) {
-            alert(err.message || 'Failed to upload avatar'); // Corrected typo here, but keeping message same
+            case 'ai-preferences':
+                return (
+                    <Tabs defaultValue="instructions" className="w-full">
+                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
+                            <TabsTrigger value="instructions" className="flex items-center gap-2">
+                                <MessageSquare size={16} />
+                                {t('settings.ai.tabs.instructions', 'Instructions')}
+                            </TabsTrigger>
+                            <TabsTrigger value="model" className="flex items-center gap-2">
+                                <Brain size={16} />
+                                {t('settings.ai.tabs.model', 'Model')}
+                            </TabsTrigger>
+                            <TabsTrigger value="parameters" className="flex items-center gap-2">
+                                <Sliders size={16} />
+                                {t('settings.ai.tabs.parameters', 'Parameters')}
+                            </TabsTrigger>
+                            <TabsTrigger value="personality" className="flex items-center gap-2">
+                                <UserIcon size={16} />
+                                {t('settings.ai.tabs.personality', 'Personality')}
+                            </TabsTrigger>
+                            <TabsTrigger value="autocomplete" className="flex items-center gap-2">
+                                <Zap size={16} />
+                                {t('settings.ai.tabs.autocomplete', 'Auto-Complete')}
+                            </TabsTrigger>
+                            <TabsTrigger value="memory" className="flex items-center gap-2">
+                                <Brain size={16} />
+                                {t('settings.ai.tabs.memory', 'Memory')}
+                            </TabsTrigger>
+                            <TabsTrigger value="style" className="flex items-center gap-2">
+                                <Settings size={16} />
+                                {t('settings.ai.tabs.style', 'Response Style')}
+                            </TabsTrigger>
+                            <TabsTrigger value="history" className="flex items-center gap-2">
+                                <History size={16} />
+                                {t('settings.ai.tabs.history', 'Chat History')}
+                            </TabsTrigger>
+                            <TabsTrigger value="voice" className="flex items-center gap-2">
+                                <Mic size={16} />
+                                {t('settings.ai.tabs.voice', 'Voice')}
+                            </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="instructions" className="mt-6">
+                            <AIInstructionsSettings />
+                        </TabsContent>
+                        <TabsContent value="model" className="mt-6">
+                            <AIModelSelectionSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="parameters" className="mt-6">
+                            <AIParametersSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="personality" className="mt-6">
+                            <AIPersonalitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="autocomplete" className="mt-6">
+                            <AIAutoCompleteSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="memory" className="mt-6">
+                            <AIMemorySettings />
+                        </TabsContent>
+                        <TabsContent value="style" className="mt-6">
+                            <ResponseStyleSettings />
+                        </TabsContent>
+                        <TabsContent value="history" className="mt-6">
+                            <ChatHistorySettings />
+                        </TabsContent>
+                        <TabsContent value="voice" className="mt-6">
+                            <VoiceSettings />
+                        </TabsContent>
+                    </Tabs>
+                );
+
+            case 'notifications':
+                return (
+                    <Tabs defaultValue="all" className="w-full">
+                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
+                            <TabsTrigger value="all" className="flex items-center gap-2">
+                                <Bell size={16} />
+                                {t('settings.notifications.tabs.all', 'All')}
+                            </TabsTrigger>
+                            <TabsTrigger value="email" className="flex items-center gap-2">
+                                <Mail size={16} />
+                                {t('settings.notifications.tabs.email', 'Email')}
+                            </TabsTrigger>
+                            <TabsTrigger value="push" className="flex items-center gap-2">
+                                <Smartphone size={16} />
+                                {t('settings.notifications.tabs.push', 'Push')}
+                            </TabsTrigger>
+                            <TabsTrigger value="sounds" className="flex items-center gap-2">
+                                <Volume2 size={16} />
+                                {t('settings.notifications.tabs.sounds', 'Sounds')}
+                            </TabsTrigger>
+                            <TabsTrigger value="grouping" className="flex items-center gap-2">
+                                <LayoutGrid size={16} />
+                                {t('settings.notifications.tabs.grouping', 'Grouping')}
+                            </TabsTrigger>
+                            <TabsTrigger value="digest" className="flex items-center gap-2">
+                                <Mail size={16} />
+                                {t('settings.notifications.tabs.digest', 'Digest')}
+                            </TabsTrigger>
+                            <TabsTrigger value="quiet-hours" className="flex items-center gap-2">
+                                <Clock size={16} />
+                                {t('settings.notifications.tabs.quietHours', 'Quiet Hours')}
+                            </TabsTrigger>
+                            <TabsTrigger value="dnd" className="flex items-center gap-2">
+                                <Moon size={16} />
+                                {t('settings.notifications.tabs.dnd', 'DND')}
+                            </TabsTrigger>
+                            <TabsTrigger value="schedule" className="flex items-center gap-2">
+                                <Clock size={16} />
+                                {t('settings.notifications.tabs.schedule', 'Schedule')}
+                            </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="all" className="mt-6">
+                            <NotificationSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="email" className="mt-6">
+                            <EmailNotificationsSettings />
+                        </TabsContent>
+                        <TabsContent value="push" className="mt-6">
+                            <PushNotificationsSettings />
+                        </TabsContent>
+                        <TabsContent value="sounds" className="mt-6">
+                            <SoundNotificationsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="grouping" className="mt-6">
+                            <NotificationGroupingSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="digest" className="mt-6">
+                            <NotificationDigestSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="quiet-hours" className="mt-6">
+                            <QuietHoursSettings currentUser={currentUser} onUpdate={() => onUpdateUser({})} />
+                        </TabsContent>
+                        <TabsContent value="dnd" className="mt-6">
+                            <DNDModeSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="schedule" className="mt-6">
+                            <NotificationScheduleSettings />
+                        </TabsContent>
+                    </Tabs>
+                );
+
+            case 'security':
+                return (
+                    <Tabs defaultValue="mfa" className="w-full">
+                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg">
+                            <TabsTrigger value="mfa" className="flex items-center gap-2">
+                                <Fingerprint size={16} />
+                                {t('settings.security.tabs.mfa', 'MFA')}
+                            </TabsTrigger>
+                            <TabsTrigger value="sessions" className="flex items-center gap-2">
+                                <Monitor size={16} />
+                                {t('settings.security.tabs.sessions', 'Sessions')}
+                            </TabsTrigger>
+                            <TabsTrigger value="history" className="flex items-center gap-2">
+                                <History size={16} />
+                                {t('settings.security.tabs.history', 'Login History')}
+                            </TabsTrigger>
+                            <TabsTrigger value="data" className="flex items-center gap-2">
+                                <Database size={16} />
+                                {t('settings.security.tabs.data', 'Data Controls')}
+                            </TabsTrigger>
+                            <TabsTrigger value="privacy" className="flex items-center gap-2">
+                                <EyeOff size={16} />
+                                {t('settings.security.tabs.privacy', 'Privacy')}
+                            </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="mfa" className="mt-6">
+                            <MFASetup isEnabled={currentUser?.mfaEnabled || false} onUpdate={() => onUpdateUser({})} />
+                        </TabsContent>
+                        <TabsContent value="sessions" className="mt-6">
+                            <ActiveSessionsSettings />
+                        </TabsContent>
+                        <TabsContent value="history" className="mt-6">
+                            <LoginHistorySettings />
+                        </TabsContent>
+                        <TabsContent value="data" className="mt-6">
+                            <DataControlsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="privacy" className="mt-6">
+                            <PrivacySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                    </Tabs>
+                );
+
+            case 'integrations':
+                return (
+                    <Tabs defaultValue="apps" className="w-full">
+                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
+                            <TabsTrigger value="apps" className="flex items-center gap-2">
+                                <LayoutGrid size={16} />
+                                {t('settings.integrations.tabs.apps', 'Apps')}
+                            </TabsTrigger>
+                            <TabsTrigger value="ai" className="flex items-center gap-2">
+                                <Brain size={16} />
+                                {t('settings.integrations.tabs.ai', 'AI')}
+                            </TabsTrigger>
+                            <TabsTrigger value="api" className="flex items-center gap-2">
+                                <Key size={16} />
+                                {t('settings.integrations.tabs.api', 'API Keys')}
+                            </TabsTrigger>
+                            <TabsTrigger value="webhooks" className="flex items-center gap-2">
+                                <Webhook size={16} />
+                                {t('settings.integrations.tabs.webhooks', 'Webhooks')}
+                            </TabsTrigger>
+                            <TabsTrigger value="calendar" className="flex items-center gap-2">
+                                <Calendar size={16} />
+                                {t('settings.integrations.tabs.calendar', 'Calendar')}
+                            </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="apps" className="mt-6">
+                            <ConnectedAppsSettings />
+                        </TabsContent>
+                        <TabsContent value="ai" className="mt-6">
+                            <AIIntegrationsSettings currentUser={currentUser} />
+                        </TabsContent>
+                        <TabsContent value="api" className="mt-6">
+                            <APIAccessSettings currentUser={currentUser} />
+                        </TabsContent>
+                        <TabsContent value="webhooks" className="mt-6">
+                            <WebhooksSettings currentUser={currentUser} />
+                        </TabsContent>
+                        <TabsContent value="calendar" className="mt-6">
+                            <CalendarSyncSettings />
+                        </TabsContent>
+                    </Tabs>
+                );
+
+            case 'appearance':
+                return (
+                    <Tabs defaultValue="general" className="w-full">
+                        <TabsList className="bg-slate-100 dark:bg-navy-800/50 p-1 rounded-lg flex-wrap">
+                            <TabsTrigger value="general" className="flex items-center gap-2">
+                                <Palette size={16} />
+                                {t('settings.appearance.tabs.general', 'General')}
+                            </TabsTrigger>
+                            <TabsTrigger value="theme" className="flex items-center gap-2">
+                                <Sun size={16} />
+                                {t('settings.appearance.tabs.theme', 'Theme')}
+                            </TabsTrigger>
+                            <TabsTrigger value="regional" className="flex items-center gap-2">
+                                <Clock size={16} />
+                                {t('settings.appearance.tabs.regional', 'Regional')}
+                            </TabsTrigger>
+                            <TabsTrigger value="accessibility" className="flex items-center gap-2">
+                                <Accessibility size={16} />
+                                {t('settings.appearance.tabs.accessibility', 'Accessibility')}
+                            </TabsTrigger>
+                            <TabsTrigger value="shortcuts" className="flex items-center gap-2">
+                                <Settings size={16} />
+                                {t('settings.appearance.tabs.shortcuts', 'Shortcuts')}
+                            </TabsTrigger>
+                            <TabsTrigger value="work" className="flex items-center gap-2">
+                                <ClipboardList size={16} />
+                                {t('settings.appearance.tabs.work', 'Work')}
+                            </TabsTrigger>
+                            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                                <LayoutGrid size={16} />
+                                {t('settings.appearance.tabs.dashboard', 'Dashboard')}
+                            </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="general" className="mt-6">
+                            <AppearanceSettings
+                                currentUser={currentUser}
+                                onUpdateUser={onUpdateUser}
+                                theme={theme}
+                                toggleTheme={toggleTheme}
+                            />
+                        </TabsContent>
+                        <TabsContent value="theme" className="mt-6">
+                            <ThemeSettings />
+                        </TabsContent>
+                        <TabsContent value="regional" className="mt-6">
+                            <RegionalSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="accessibility" className="mt-6">
+                            <AccessibilitySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="shortcuts" className="mt-6">
+                            <KeyboardShortcutsSettings currentUser={currentUser} />
+                        </TabsContent>
+                        <TabsContent value="work" className="mt-6">
+                            <WorkPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                        <TabsContent value="dashboard" className="mt-6">
+                            <DashboardPreferencesSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
+                        </TabsContent>
+                    </Tabs>
+                );
+
+            default:
+                return null;
         }
     };
-
-    const renderProfile = () => (
-        <div className="max-w-2xl">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">Personal Information</h2>
-
-            <form onSubmit={handleSave} className="space-y-6">
-                <div className="flex items-center gap-6 mb-8">
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        accept="image/png, image/jpeg, image/webp"
-                        className="hidden"
-                    />
-                    <div
-                        onClick={handleAvatarClick}
-                        className="w-20 h-20 rounded-full bg-slate-100 dark:bg-navy-800 border-2 border-dashed border-slate-300 dark:border-white/20 flex items-center justify-center text-slate-500 cursor-pointer hover:border-purple-500 hover:text-purple-400 transition-colors overflow-hidden relative group"
-                    >
-                        {avatarUrl ? (
-                            <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                            <UserCircle size={40} />
-                        )}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs text-white font-medium">
-                            Change
-                        </div>
-                    </div>
-                    <div>
-                        <h3 className="text-slate-900 dark:text-white font-medium">Profile Photo</h3>
-                        <p className="text-xs text-slate-500 mt-1">Accepts JPG, PNG up to 2MB</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-300">First Name</label>
-                        <input
-                            value={formData.firstName}
-                            onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                            className="w-full px-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-all text-sm"
-                        />
-                    </div>
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-slate-500 dark:text-slate-300">Last Name</label>
-                        <input
-                            value={formData.lastName}
-                            onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                            className="w-full px-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-all text-sm"
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-slate-500 dark:text-slate-300">Role / Job Title</label>
-                    <input
-                        value={formData.role}
-                        onChange={e => setFormData({ ...formData, role: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none transition-all text-sm"
-                    />
-                </div>
-
-                <div className="space-y-1.5 opacity-50 cursor-not-allowed">
-                    <label className="text-xs font-medium text-slate-500 dark:text-slate-300">Email Address (Managed by Admin)</label>
-                    <input
-                        value={currentUser.email}
-                        disabled
-                        className="w-full px-4 py-2.5 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 dark:text-slate-400 outline-none text-sm"
-                    />
-                </div>
-
-                {/* Preference Section */}
-                <div className="pt-6 mt-6 border-t border-slate-200 dark:border-white/10">
-                    <h3 className="text-md font-semibold text-slate-900 dark:text-white mb-4">Preferences</h3>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-slate-500 dark:text-slate-300">Interface Theme</label>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => theme === 'dark' && toggleTheme()}
-                                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm transition-all ${theme === 'light'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    <Sun size={16} />
-                                    Light
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => theme === 'light' && toggleTheme()}
-                                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm transition-all ${theme === 'dark'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    <Moon size={16} />
-                                    Dark
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-slate-500 dark:text-slate-300">Language</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setLanguage('EN')}
-                                    className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${language === 'EN'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    English
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setLanguage('PL')}
-                                    className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${language === 'PL'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    Polski
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setLanguage('DE')}
-                                    className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${language === 'DE'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    Deutsch
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setLanguage('AR')}
-                                    className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${language === 'AR'
-                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md'
-                                        : 'bg-white dark:bg-navy-900 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    العربية
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/5">
-                    <button className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                        {isSaved ? <Check size={16} /> : null}
-                        {isSaved ? 'Saved!' : 'Save Changes'}
-                    </button>
-                </div>
-            </form>
-        </div>
-    );
 
     return (
-        <div className="flex h-full bg-slate-50 dark:bg-navy-950 transition-colors duration-300">
-            {/* Settings Navigation */}
-            <div className="w-64 border-r border-slate-200 dark:border-white/5 bg-white dark:bg-navy-900 p-6 flex flex-col gap-1 transition-colors duration-300">
-                <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 px-3">Settings</h2>
+        <div className="h-full overflow-auto">
+            <div className="p-6">
+                {/* Header */}
+                <div className="mb-6">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{sectionInfo.title}</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">{sectionInfo.subtitle}</p>
+                </div>
 
-                <button
-                    onClick={() => setActiveTab('PROFILE')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'PROFILE' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <UserCircle size={18} />
-                    My Profile
-                </button>
-                <button
-                    onClick={() => setActiveTab('BILLING')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'BILLING' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <CreditCard size={18} />
-                    Billing & Plans
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('AI')}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${activeTab === 'AI' ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                    <Cpu size={18} />
-                    AI Configuration
-                </button>
-            </div>
-
-            {/* Content Area */}
-            <div className="flex-1 overflow-auto p-6 lg:p-8">
-                {activeTab === 'PROFILE' && renderProfile()}
-                {activeTab === 'BILLING' && <BillingSettings currentUser={currentUser} />}
-                {activeTab === 'AI' && <AIConfigSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />}
+                {/* Content with tabs */}
+                {renderContent()}
             </div>
         </div>
     );
 };
+
+export default SettingsView;

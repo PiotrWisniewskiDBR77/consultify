@@ -1,0 +1,47 @@
+# Staging overlay
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: staging
+
+resources:
+  - ../../base
+
+namePrefix: staging-
+
+commonLabels:
+  environment: staging
+
+replicas:
+  - name: consultify-api
+    count: 2
+  - name: consultify-frontend
+    count: 1
+
+images:
+  - name: consultify/api
+    newTag: develop
+  - name: consultify/frontend
+    newTag: develop
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "1000m"
+    target:
+      kind: Deployment
+      name: consultify-api
+
+configMapGenerator:
+  - name: consultify-config
+    behavior: merge
+    literals:
+      - NODE_ENV=staging
+      - LOG_LEVEL=debug
+      - ENABLE_METRICS=true
+      - MOCK_EXTERNAL_SERVICES=false
+

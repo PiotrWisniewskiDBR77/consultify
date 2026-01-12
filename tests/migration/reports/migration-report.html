@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Migration Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        h1 { color: #333; }
+        .score { font-size: 48px; font-weight: bold; color: #FF9800; }
+        .section { margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 4px; }
+        .metric { display: inline-block; margin: 10px 20px 10px 0; }
+        .metric-label { font-weight: bold; color: #666; }
+        .metric-value { font-size: 24px; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #4CAF50; color: white; }
+        .good { color: #4CAF50; }
+        .warning { color: #FF9800; }
+        .error { color: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Migration Test Report</h1>
+        <p>Generated: 2026-01-04T12:09:46.327Z</p>
+        
+        <div class="section">
+            <h2>Overall Score</h2>
+            <div class="score">34/100</div>
+            <p>Status: <span class="warning">needs_attention</span></p>
+        </div>
+
+        <div class="section">
+            <h2>Structural Coverage</h2>
+            <div class="metric">
+                <div class="metric-label">Coverage</div>
+                <div class="metric-value">32.98%</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Migrated Files</div>
+                <div class="metric-value">531</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Missing Migrations</div>
+                <div class="metric-value">1079</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Import/Export Issues</h2>
+            <div class="metric">
+                <div class="metric-label">Total Issues</div>
+                <div class="metric-value">32</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Files with Issues</div>
+                <div class="metric-value">14</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Duplicates</h2>
+            <div class="metric">
+                <div class="metric-label">Potential Duplicates</div>
+                <div class="metric-value">75</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">With Common Functions</div>
+                <div class="metric-value">15</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Recommendations</h2>
+            <ul>
+                <li>Complete missing migrations</li>
+                
+                <li>Review and remove duplicate files</li>
+                
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

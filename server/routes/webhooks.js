@@ -1,150 +1,207 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const verifyToken = require('../middleware/authMiddleware');
-const { v4: uuidv4 } = require('uuid');
+import * as DunningServiceModule from '../dist/services/dunningService.js';
+const DunningService = DunningServiceModule.default || DunningServiceModule;
+import * as InvoiceServiceModule from 'invoiceService.js';
+const InvoiceService = InvoiceServiceModule.default || InvoiceServiceModule;
+import * as webhookServiceModule from '../services/webhookService.js';
+const webhookService = webhookServiceModule.default || webhookServiceModule;
+import authMiddleware from '../middleware/authMiddleware.js';
+import verifySuperAdmin from '../middleware/superAdminMiddleware.js';
 
-// GET all webhooks for organization
-router.get('/', verifyToken, (req, res) => {
-    const { organizationId } = req.user;
-
-    db.all(
-        'SELECT * FROM webhooks WHERE organization_id = ? ORDER BY created_at DESC',
-        [organizationId],
-        (err, rows) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json(rows || []);
+/**
+ * GET /api/webhooks
+ * Get all webhooks for organization
+ */
+router.get('/', authMiddleware, async (req, res) => {
+    try {
+        const orgId = req.user.organizationId || req.query.organizationId;
+        if (!orgId) {
+            return res.status(400).json({ error: 'Organization ID required' });
         }
-    );
-});
 
-// CREATE webhook
-router.post('/', verifyToken, (req, res) => {
-    const { organizationId, userId } = req.user;
-    const { url, events, name, description, isActive = true } = req.body;
-
-    if (!url || !events || !Array.isArray(events)) {
-        return res.status(400).json({ error: 'URL and events array required' });
+        const { enabled } = req.query;
+        const filters = { enabled: enabled === 'true' ? true : enabled === 'false' ? false : undefined };
+        const webhooks = await webhookService.getWebhooks(orgId, filters);
+        res.json(webhooks);
+    } catch (error) {
+        console.error('[Webhook] Error fetching webhooks:', error);
+        res.status(500).json({ error: 'Failed to fetch webhooks' });
     }
-
-    const id = uuidv4();
-    const secret = uuidv4(); // Webhook secret for signature verification
-
-    db.run(
-        `INSERT INTO webhooks (id, organization_id, name, description, url, events, secret, is_active, created_by) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, organizationId, name, description, url, JSON.stringify(events), secret, isActive ? 1 : 0, userId],
-        (err) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({
-                id,
-                organizationId,
-                name,
-                url,
-                events,
-                secret,
-                isActive,
-                message: 'Webhook created successfully'
-            });
-        }
-    );
 });
 
-// UPDATE webhook
-router.put('/:id', verifyToken, (req, res) => {
-    const { id } = req.params;
-    const { organizationId } = req.user;
-    const { url, events, name, description, isActive } = req.body;
+/**
+ * GET /api/webhooks/:id
+ * Get webhook by ID
+ */
+router.get('/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const webhook = await webhookService.getWebhookById(id);
 
-    db.run(
-        `UPDATE webhooks 
-         SET url = COALESCE(?, url),
-             events = COALESCE(?, events),
-             name = COALESCE(?, name),
-             description = COALESCE(?, description),
-             is_active = COALESCE(?, is_active),
-             updated_at = datetime('now')
-         WHERE id = ? AND organization_id = ?`,
-        [url, events ? JSON.stringify(events) : null, name, description, isActive !== undefined ? (isActive ? 1 : 0) : null, id, organizationId],
-        function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            if (this.changes === 0) return res.status(404).json({ error: 'Webhook not found' });
-            res.json({ success: true, message: 'Webhook updated' });
+        if (!webhook) {
+            return res.status(404).json({ error: 'Webhook not found' });
         }
-    );
+
+        res.json(webhook);
+    } catch (error) {
+        console.error('[Webhook] Error fetching webhook:', error);
+        res.status(500).json({ error: 'Failed to fetch webhook' });
+    }
 });
 
-// DELETE webhook
-router.delete('/:id', verifyToken, (req, res) => {
-    const { id } = req.params;
-    const { organizationId } = req.user;
-
-    db.run(
-        'DELETE FROM webhooks WHERE id = ? AND organization_id = ?',
-        [id, organizationId],
-        function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            if (this.changes === 0) return res.status(404).json({ error: 'Webhook not found' });
-            res.json({ success: true, message: 'Webhook deleted' });
+/**
+ * POST /api/webhooks
+ * Create a new webhook
+ */
+router.post('/', authMiddleware, async (req, res) => {
+    try {
+        const orgId = req.user.organizationId || req.body.organization_id;
+        if (!orgId) {
+            return res.status(400).json({ error: 'Organization ID required' });
         }
-    );
+
+        const webhookData = {
+            ...req.body,
+            organization_id: orgId,
+            created_by: req.user.id
+        };
+
+        const webhook = await webhookService.createWebhook(webhookData);
+        res.status(201).json(webhook);
+    } catch (error) {
+        console.error('[Webhook] Error creating webhook:', error);
+        res.status(500).json({ error: error.message || 'Failed to create webhook' });
+    }
 });
 
-// TEST webhook (send test payload)
-router.post('/:id/test', verifyToken, async (req, res) => {
-    const { id } = req.params;
-    const { organizationId } = req.user;
+/**
+ * PUT /api/webhooks/:id
+ * Update a webhook
+ */
+router.put('/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const webhook = await webhookService.updateWebhook(id, req.body);
+        res.json(webhook);
+    } catch (error) {
+        console.error('[Webhook] Error updating webhook:', error);
+        res.status(500).json({ error: error.message || 'Failed to update webhook' });
+    }
+});
 
-    db.get(
-        'SELECT * FROM webhooks WHERE id = ? AND organization_id = ?',
-        [id, organizationId],
-        async (err, webhook) => {
-            if (err) return res.status(500).json({ error: err.message });
-            if (!webhook) return res.status(404).json({ error: 'Webhook not found' });
+/**
+ * DELETE /api/webhooks/:id
+ * Delete a webhook
+ */
+router.delete('/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await webhookService.deleteWebhook(id);
+        res.json(result);
+    } catch (error) {
+        console.error('[Webhook] Error deleting webhook:', error);
+        res.status(500).json({ error: error.message || 'Failed to delete webhook' });
+    }
+});
 
-            const testPayload = {
-                event: 'webhook.test',
-                timestamp: new Date().toISOString(),
-                data: {
-                    message: 'This is a test webhook from Consultify',
-                    webhookId: id,
-                    organizationId
-                }
-            };
+/**
+ * POST /api/webhooks/:id/test
+ * Test a webhook
+ */
+router.post('/:id/test', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { payload } = req.body;
 
-            try {
-                const fetch = (await import('node-fetch')).default;
-                const crypto = require('crypto');
+        const result = await webhookService.testWebhook(id, payload);
+        res.json(result);
+    } catch (error) {
+        console.error('[Webhook] Error testing webhook:', error);
+        res.status(500).json({ error: error.message || 'Failed to test webhook' });
+    }
+});
 
-                // Create signature
-                const signature = crypto
-                    .createHmac('sha256', webhook.secret)
-                    .update(JSON.stringify(testPayload))
-                    .digest('hex');
+/**
+ * GET /api/webhooks/:id/deliveries
+ * Get webhook delivery history
+ */
+router.get('/:id/deliveries', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, eventType, page = 1, pageSize = 50 } = req.query;
 
-                const response = await fetch(webhook.url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Consultify-Signature': signature,
-                        'X-Consultify-Event': 'webhook.test'
-                    },
-                    body: JSON.stringify(testPayload)
+        const filters = { status, eventType };
+        const pagination = { page: parseInt(page), pageSize: parseInt(pageSize) };
+
+        const deliveries = await webhookService.getDeliveries(id, filters, pagination);
+        res.json(deliveries);
+    } catch (error) {
+        console.error('[Webhook] Error fetching deliveries:', error);
+        res.status(500).json({ error: 'Failed to fetch webhook deliveries' });
+    }
+});
+
+/**
+ * POST /api/webhooks/:id/retry
+ * Retry a failed webhook delivery
+ */
+router.post('/:id/retry', authMiddleware, async (req, res) => {
+    try {
+        const { deliveryId } = req.body;
+        if (!deliveryId) {
+            return res.status(400).json({ error: 'Delivery ID required' });
+        }
+
+        const result = await webhookService.retryDelivery(deliveryId);
+        res.json(result);
+    } catch (error) {
+        console.error('[Webhook] Error retrying delivery:', error);
+        res.status(500).json({ error: error.message || 'Failed to retry webhook delivery' });
+    }
+});
+
+// Stripe webhook handler (existing functionality)
+router.post('/stripe', async (req, res) => {
+    const event = req.body;
+    const type = event.type;
+    const data = event.data?.object;
+
+    console.log(`[Webhook] Received Stripe event: ${type}`);
+
+    try {
+        switch (type) {
+            case 'invoice.payment_failed':
+                // Handle payment failure in Dunning Service
+                await DunningService.processPaymentFailure({
+                    subscriptionId: data.subscription,
+                    customerId: data.customer,
+                    invoiceId: data.id,
+                    amountDue: data.amount_due,
+                    currency: data.currency,
+                    failureReason: data.last_payment_error?.message || 'Unknown error'
                 });
+                break;
 
-                res.json({
-                    success: response.ok,
-                    status: response.status,
-                    statusText: response.statusText
-                });
-            } catch (error) {
-                res.status(500).json({
-                    success: false,
-                    error: error.message
-                });
-            }
+            case 'invoice.payment_succeeded':
+                // Handle success (recover dunning if active)
+                await DunningService.processPaymentSuccess(data.subscription);
+
+                // Create/Update local invoice
+                await InvoiceService.createFromStripe(data);
+                break;
+
+            case 'customer.subscription.deleted':
+                // Handle cancellation
+                console.log(`[Webhook] Subscription canceled: ${data.id}`);
+                break;
         }
-    );
+
+        res.json({ received: true });
+    } catch (error) {
+        console.error('[Webhook] Error processing event:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
 });
 
-module.exports = router;
+export default router;

@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
-import { useAppStore } from '../store/useAppStore';
-import { FullSession, FullInitiative, Language } from '../types';
-import { translations } from '../translations';
+// import { translations } from '../translations';
 import {
-    LayoutDashboard, ListChecks, Activity, TrendingUp,
-    AlertTriangle, Bot, FileText, ArrowRight, Download, BarChart3, PieChart,
-    Calendar, CheckCircle2, Clock, Zap
+    Activity,
+    AlertTriangle,
+    ArrowRight,
+    BarChart3,
+    Bot,
+    CheckCircle2,
+    Clock,
+    Download,
+    FileText,
+    LayoutDashboard,
+    ListChecks,
+    TrendingUp,
+    Zap,
 } from 'lucide-react';
-import { exportReportToPDF } from '../services/pdf/pdfExport';
+import React, { useState } from 'react';
+
+import { useAppStore } from '../store/useAppStore';
+import { FullInitiative, FullSession, Language } from '../types';
+// import { exportReportToPDF } from '../services/pdf/pdfExport';
 import { AIInsightFeed } from './AIInsightFeed';
 import { Button } from './Button';
 
@@ -23,7 +34,7 @@ type DashboardTab = 'overview' | 'progress' | 'kpi' | 'roi' | 'risks' | 'ai' | '
 export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWorkspaceProps> = ({
     fullSession,
     onGenerateReport,
-    language
+    language: _language,
 }) => {
     const { currentUser } = useAppStore();
     const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
@@ -34,20 +45,30 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
 
     // --- Components ---
 
-    const StatCard = ({ title, value, subtext, icon: Icon, color }: any) => (
+    interface StatCardProps {
+        title: string;
+        value: string | number;
+        subtext?: string;
+        icon: React.ElementType; // Icon component type
+        color: string;
+    }
+
+    const StatCard = ({ title, value, subtext, icon: Icon, color }: StatCardProps) => (
         <div className="glass-card p-6 flex flex-col justify-between relative overflow-hidden group">
-            <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-${color}-500 group-hover:scale-110 duration-500`}>
+            <div
+                className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-${color}-500 group-hover:scale-110 duration-500`}
+            >
                 <Icon size={64} />
             </div>
             <div>
                 <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                     {title}
                 </div>
-                <div className={`text-3xl font-black text-navy-900 dark:text-white tracking-tight`}>
-                    {value}
-                </div>
+                <div className={`text-3xl font-black text-navy-900 dark:text-white tracking-tight`}>{value}</div>
             </div>
-            <div className={`mt-4 text-xs font-medium flex items-center gap-1 text-${color}-600 dark:text-${color}-400`}>
+            <div
+                className={`mt-4 text-xs font-medium flex items-center gap-1 text-${color}-600 dark:text-${color}-400`}
+            >
                 <div className={`w-1.5 h-1.5 rounded-full bg-${color}-500 animate-pulse`} />
                 {subtext}
             </div>
@@ -68,7 +89,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                 <StatCard
                     title="Active Initiatives"
                     value={fullSession.initiatives.length.toString()}
-                    subtext={`${fullSession.initiatives.filter(i => i.status === 'In Progress').length} In Progress`}
+                    subtext={`${fullSession.initiatives.filter((i) => (i.status as string) === 'In Progress' || i.status === 'EXECUTING').length} In Progress`}
                     icon={ListChecks}
                     color="blue"
                 />
@@ -79,21 +100,13 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                     icon={TrendingUp}
                     color="purple"
                 />
-                <StatCard
-                    title="Critical Risks"
-                    value="3"
-                    subtext="Need Attention"
-                    icon={AlertTriangle}
-                    color="red"
-                />
+                <StatCard title="Critical Risks" value="3" subtext="Need Attention" icon={AlertTriangle} color="red" />
             </div>
 
             {/* Bento Grid Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-
                 {/* Main Content - 2 Cols */}
                 <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-
                     {/* Charts Area */}
                     <div className="flex-1 glass-card p-6 relative flex flex-col">
                         <div className="flex justify-between items-center mb-6">
@@ -102,15 +115,21 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                                 Value Realization Trajectory
                             </h3>
                             <div className="flex gap-2">
-                                <span className="px-2 py-1 rounded bg-slate-100 dark:bg-white/5 text-[10px] uppercase font-bold text-slate-500">Milestone 1</span>
-                                <span className="px-2 py-1 rounded bg-brand/10 text-[10px] uppercase font-bold text-brand">Current</span>
+                                <span className="px-2 py-1 rounded bg-slate-100 dark:bg-white/5 text-[10px] uppercase font-bold text-slate-500">
+                                    Milestone 1
+                                </span>
+                                <span className="px-2 py-1 rounded bg-brand/10 text-[10px] uppercase font-bold text-brand">
+                                    Current
+                                </span>
                             </div>
                         </div>
 
                         {/* Placeholder Chart */}
                         <div className="flex-1 w-full bg-slate-50 dark:bg-navy-900/50 rounded-xl border border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center relative overflow-hidden group">
                             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-brand/20 to-transparent opacity-50 group-hover:h-full transition-all duration-1000" />
-                            <p className="text-slate-400 text-sm font-medium z-10">Use Recharts for real data visualization here</p>
+                            <p className="text-slate-400 text-sm font-medium z-10">
+                                Use Recharts for real data visualization here
+                            </p>
                         </div>
                     </div>
 
@@ -119,12 +138,10 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                         <div className="absolute top-0 left-0 w-1 h-full bg-brand" />
                         <AIInsightFeed session={fullSession} />
                     </div>
-
                 </div>
 
                 {/* Right Panel - 1 Col */}
                 <div className="lg:col-span-1 flex flex-col gap-6 h-full">
-
                     {/* Recent Activity */}
                     <div className="flex-1 glass-card p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10">
                         <h3 className="font-bold text-sm uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
@@ -132,18 +149,22 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                         </h3>
                         <div className="space-y-4">
                             {[
-                                { text: "Pilot 1 'Smart Factory' Completed", time: "2h ago", color: "green" },
-                                { text: "Risk #4 'Data Privacy' Updated to High", time: "5h ago", color: "red" },
-                                { text: "New Initiative 'AI Customer Support' Added", time: "1d ago", color: "blue" },
-                                { text: "Budget approved for Phase 2", time: "2d ago", color: "purple" },
+                                { text: "Pilot 1 'Smart Factory' Completed", time: '2h ago', color: 'green' },
+                                { text: "Risk #4 'Data Privacy' Updated to High", time: '5h ago', color: 'red' },
+                                { text: "New Initiative 'AI Customer Support' Added", time: '1d ago', color: 'blue' },
+                                { text: 'Budget approved for Phase 2', time: '2d ago', color: 'purple' },
                             ].map((evt, i) => (
                                 <div key={i} className="flex gap-3 group">
                                     <div className="flex flex-col items-center">
-                                        <div className={`w-2 h-2 rounded-full bg-${evt.color}-500 ring-4 ring-${evt.color}-500/20 group-hover:ring-8 transition-all duration-300`} />
+                                        <div
+                                            className={`w-2 h-2 rounded-full bg-${evt.color}-500 ring-4 ring-${evt.color}-500/20 group-hover:ring-8 transition-all duration-300`}
+                                        />
                                         <div className="w-px h-full bg-slate-200 dark:bg-white/10 mt-2" />
                                     </div>
                                     <div className="pb-4">
-                                        <p className="text-sm font-medium text-navy-900 dark:text-white leading-tight">{evt.text}</p>
+                                        <p className="text-sm font-medium text-navy-900 dark:text-white leading-tight">
+                                            {evt.text}
+                                        </p>
                                         <p className="text-[10px] text-slate-400 mt-1">{evt.time}</p>
                                     </div>
                                 </div>
@@ -152,7 +173,10 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                     </div>
 
                     {/* Quick Action */}
-                    <div className="h-32 bg-gradient-to-br from-brand to-brand-hover rounded-xl p-5 shadow-lg shadow-brand/20 text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer border border-white/10" onClick={() => setActiveTab('report')}>
+                    <div
+                        className="h-32 bg-gradient-to-br from-brand to-brand-hover rounded-xl p-5 shadow-lg shadow-brand/20 text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer border border-white/10"
+                        onClick={() => setActiveTab('report')}
+                    >
                         <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 group-hover:scale-125 transition-all duration-500">
                             <FileText size={80} />
                         </div>
@@ -162,7 +186,6 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     );
@@ -174,8 +197,12 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                     <ListChecks className="text-blue-500" size={20} /> Initiative Tracking
                 </h3>
                 <div className="flex gap-2">
-                    <span className="text-xs font-medium px-2 py-1 rounded bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">12 On Track</span>
-                    <span className="text-xs font-medium px-2 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">3 At Risk</span>
+                    <span className="text-xs font-medium px-2 py-1 rounded bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+                        12 On Track
+                    </span>
+                    <span className="text-xs font-medium px-2 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                        3 At Risk
+                    </span>
                 </div>
             </div>
             <div className="overflow-x-auto">
@@ -190,8 +217,11 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-                        {fullSession.initiatives.map(init => (
-                            <tr key={init.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
+                        {fullSession.initiatives.map((init) => (
+                            <tr
+                                key={init.id}
+                                className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
+                            >
                                 <td className="p-4 pl-6 font-semibold text-navy-900 dark:text-white group-hover:text-brand transition-colors">
                                     {init.name}
                                 </td>
@@ -204,24 +234,34 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                                     </div>
                                 </td>
                                 <td className="p-4">
-                                    <span className={`px-2 py-1 rounded text-xs font-medium border
-                                        ${init.status === 'Done' ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20' :
-                                            init.status === 'In Progress' ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' :
-                                                'bg-slate-100 dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/10'}`}>
+                                    <span
+                                        className={`px-2 py-1 rounded text-xs font-medium border
+                                        ${
+                                            (init.status as string) === 'Done' || init.status === 'DONE'
+                                                ? 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-500/20'
+                                                : (init.status as string) === 'In Progress' ||
+                                                    init.status === 'EXECUTING'
+                                                  ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
+                                                  : 'bg-slate-100 dark:bg-white/5 text-slate-500 border-slate-200 dark:border-white/10'
+                                        }`}
+                                    >
                                         {init.status.replace('_', ' ')}
                                     </span>
                                 </td>
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-900 rounded-full overflow-hidden">
-                                            <div className="h-full bg-gradient-to-r from-brand to-blue-500 rounded-full" style={{ width: '65%' }}></div>
+                                            <div
+                                                className="h-full bg-gradient-to-r from-brand to-blue-500 rounded-full"
+                                                style={{ width: '65%' }}
+                                            ></div>
                                         </div>
-                                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">65%</span>
+                                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                                            65%
+                                        </span>
                                     </div>
                                 </td>
-                                <td className="p-4 text-slate-500 dark:text-slate-400 text-xs font-mono">
-                                    Dec 2025
-                                </td>
+                                <td className="p-4 text-slate-500 dark:text-slate-400 text-xs font-mono">Dec 2025</td>
                             </tr>
                         ))}
                     </tbody>
@@ -246,7 +286,8 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                 </div>
                 <h3 className="text-2xl font-bold mb-2 text-navy-900 dark:text-white">AI Command Center</h3>
                 <p className="text-slate-500 mb-8 max-w-sm leading-relaxed">
-                    Ask complex questions about your transformation data. The AI has access to your KPIs, Risks, and Roadmap.
+                    Ask complex questions about your transformation data. The AI has access to your KPIs, Risks, and
+                    Roadmap.
                 </p>
 
                 <div className="w-full max-w-md relative group">
@@ -268,9 +309,12 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
             <div className="space-y-4 relative">
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-blue-500/20 blur-3xl rounded-full" />
                 <FileText className="w-24 h-24 text-blue-500 mx-auto relative z-10 drop-shadow-lg" />
-                <h2 className="text-4xl font-black text-navy-900 dark:text-white tracking-tight relative z-10">Use The Final Report</h2>
+                <h2 className="text-4xl font-black text-navy-900 dark:text-white tracking-tight relative z-10">
+                    Use The Final Report
+                </h2>
                 <p className="text-slate-500 text-lg max-w-xl mx-auto relative z-10">
-                    Generate a comprehensive, board-ready PDF report encapsulating your entire Digital Transformation Strategy.
+                    Generate a comprehensive, board-ready PDF report encapsulating your entire Digital Transformation
+                    Strategy.
                 </p>
             </div>
 
@@ -280,7 +324,13 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                         <CheckCircle2 size={18} className="text-green-500" /> Sections
                     </h4>
                     <ul className="text-sm text-slate-500 dark:text-slate-400 space-y-3">
-                        {['Executive Summary', 'Maturity Assessment Results', 'Strategic Initiatives Roadmap', 'Financial Case (ROI, NPV)', 'Risk & Change Management'].map(item => (
+                        {[
+                            'Executive Summary',
+                            'Maturity Assessment Results',
+                            'Strategic Initiatives Roadmap',
+                            'Financial Case (ROI, NPV)',
+                            'Risk & Change Management',
+                        ].map((item) => (
                             <li key={item} className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" /> {item}
                             </li>
@@ -293,12 +343,20 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                     </h4>
                     <ul className="text-sm text-slate-500 dark:text-slate-400 space-y-3">
                         <li className="flex items-center justify-between">
-                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> PDF Document</span>
-                            <span className="text-[10px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded font-bold">READY</span>
+                            <span className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> PDF Document
+                            </span>
+                            <span className="text-[10px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded font-bold">
+                                READY
+                            </span>
                         </li>
                         <li className="flex items-center justify-between opacity-60">
-                            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-300" /> PowerPoint</span>
-                            <span className="text-[10px] bg-slate-100 dark:bg-white/10 text-slate-500 px-2 py-0.5 rounded font-bold">SOON</span>
+                            <span className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-slate-300" /> PowerPoint
+                            </span>
+                            <span className="text-[10px] bg-slate-100 dark:bg-white/10 text-slate-500 px-2 py-0.5 rounded font-bold">
+                                SOON
+                            </span>
                         </li>
                     </ul>
                 </div>
@@ -318,14 +376,34 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'overview': return renderOverview();
-            case 'progress': return renderProgress();
-            case 'kpi': return <div className="p-20 text-center text-slate-400 font-mono text-sm bg-white/5 border border-dashed border-white/10 rounded-xl">KPI Widgets Coming Soon</div>;
-            case 'roi': return <div className="p-20 text-center text-slate-400 font-mono text-sm bg-white/5 border border-dashed border-white/10 rounded-xl">ROI Widgets Coming Soon</div>;
-            case 'risks': return <div className="p-20 text-center text-slate-400 font-mono text-sm bg-white/5 border border-dashed border-white/10 rounded-xl">Risk Matrix Coming Soon</div>;
-            case 'ai': return renderAI();
-            case 'report': return renderReport();
-            default: return null;
+            case 'overview':
+                return renderOverview();
+            case 'progress':
+                return renderProgress();
+            case 'kpi':
+                return (
+                    <div className="p-20 text-center text-slate-400 font-mono text-sm bg-white/5 border border-dashed border-white/10 rounded-xl">
+                        KPI Widgets Coming Soon
+                    </div>
+                );
+            case 'roi':
+                return (
+                    <div className="p-20 text-center text-slate-400 font-mono text-sm bg-white/5 border border-dashed border-white/10 rounded-xl">
+                        ROI Widgets Coming Soon
+                    </div>
+                );
+            case 'risks':
+                return (
+                    <div className="p-20 text-center text-slate-400 font-mono text-sm bg-white/5 border border-dashed border-white/10 rounded-xl">
+                        Risk Matrix Coming Soon
+                    </div>
+                );
+            case 'ai':
+                return renderAI();
+            case 'report':
+                return renderReport();
+            default:
+                return null;
         }
     };
 
@@ -340,7 +418,9 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                         </div>
                         Execution Dashboard
                     </h1>
-                    <p className="text-slate-500 text-sm mt-1 ml-1">{currentUser?.companyName || 'Client'} Transformation Program</p>
+                    <p className="text-slate-500 text-sm mt-1 ml-1">
+                        {currentUser?.companyName || 'Client'} Transformation Program
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -359,15 +439,17 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                         { id: 'progress', label: 'Progress', icon: ListChecks },
                         { id: 'ai', label: 'AI Command', icon: Bot },
                         { id: 'report', label: 'Report', icon: FileText },
-                    ].map(tab => (
+                    ].map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as DashboardTab)}
                             className={`
                                 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all duration-200
-                                ${activeTab === tab.id
-                                    ? 'bg-white dark:bg-navy-800 text-brand shadow-sm scale-105'
-                                    : 'text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}
+                                ${
+                                    activeTab === tab.id
+                                        ? 'bg-white dark:bg-navy-800 text-brand shadow-sm scale-105'
+                                        : 'text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                                }
                             `}
                         >
                             <tab.icon size={16} className={activeTab === tab.id ? 'text-brand' : 'opacity-70'} />
@@ -379,9 +461,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
 
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto px-8 pb-8 custom-scrollbar">
-                <div className="max-w-[1600px] mx-auto animate-fade-up">
-                    {renderContent()}
-                </div>
+                <div className="max-w-[1600px] mx-auto animate-fade-up">{renderContent()}</div>
             </div>
         </div>
     );

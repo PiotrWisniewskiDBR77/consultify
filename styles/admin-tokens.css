@@ -1,0 +1,499 @@
+/**
+ * Admin Module Design Tokens
+ * 
+ * Elegant Technological Minimalism
+ * - Monochromatic palette with single accent
+ * - Typography-driven hierarchy
+ * - Subtle borders and interactions
+ */
+
+:root {
+  /* ================================
+     BACKGROUND COLORS
+     ================================ */
+  --admin-bg-primary: #0F172A;
+  /* navy-950 - Main background */
+  --admin-bg-secondary: #1E293B;
+  /* slate-800 - Cards/sections */
+  --admin-bg-tertiary: #334155;
+  /* slate-700 - Hover states */
+  --admin-bg-elevated: rgba(30, 41, 59, 0.5);
+  /* slate-800/50 - Subtle elevation */
+
+  /* ================================
+     TEXT COLORS
+     ================================ */
+  --admin-text-primary: #F8FAFC;
+  /* slate-50 - Headlines, important */
+  --admin-text-secondary: #CBD5E1;
+  /* slate-300 - Body text */
+  --admin-text-tertiary: #94A3B8;
+  /* slate-400 - Muted text */
+  --admin-text-muted: #64748B;
+  /* slate-500 - Labels, captions */
+  --admin-text-disabled: #475569;
+  /* slate-600 - Disabled */
+
+  /* ================================
+     BORDER COLORS
+     ================================ */
+  --admin-border: rgba(255, 255, 255, 0.06);
+  --admin-border-subtle: rgba(255, 255, 255, 0.04);
+  --admin-border-emphasis: rgba(255, 255, 255, 0.10);
+  --admin-border-focus: rgba(59, 130, 246, 0.50);
+
+  /* ================================
+     ACCENT COLORS (Use sparingly)
+     ================================ */
+  --admin-accent: #3B82F6;
+  /* blue-500 - Primary actions */
+  --admin-accent-hover: #2563EB;
+  /* blue-600 - Hover state */
+  --admin-accent-subtle: rgba(59, 130, 246, 0.10);
+  --admin-accent-ring: rgba(59, 130, 246, 0.20);
+
+  /* ================================
+     SEMANTIC COLORS (Status only)
+     ================================ */
+  --admin-success: #10B981;
+  /* emerald-500 */
+  --admin-success-subtle: rgba(16, 185, 129, 0.10);
+  --admin-warning: #F59E0B;
+  /* amber-500 */
+  --admin-warning-subtle: rgba(245, 158, 11, 0.10);
+  --admin-error: #EF4444;
+  /* red-500 */
+  --admin-error-subtle: rgba(239, 68, 68, 0.10);
+  --admin-info: #3B82F6;
+  /* blue-500 */
+  --admin-info-subtle: rgba(59, 130, 246, 0.10);
+
+  /* ================================
+     HOVER/INTERACTION STATES
+     ================================ */
+  --admin-hover-bg: rgba(255, 255, 255, 0.02);
+  --admin-active-bg: rgba(255, 255, 255, 0.04);
+  --admin-selected-bg: rgba(59, 130, 246, 0.10);
+
+  /* ================================
+     SHADOWS
+     ================================ */
+  --admin-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --admin-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --admin-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+
+  /* ================================
+     SPACING SCALE (for reference)
+     ================================ */
+  --admin-space-1: 4px;
+  --admin-space-2: 8px;
+  --admin-space-3: 12px;
+  --admin-space-4: 16px;
+  --admin-space-5: 20px;
+  --admin-space-6: 24px;
+  --admin-space-8: 32px;
+  --admin-space-10: 40px;
+
+  /* ================================
+     BORDER RADIUS
+     ================================ */
+  --admin-radius-sm: 4px;
+  --admin-radius-md: 6px;
+  --admin-radius-lg: 8px;
+  --admin-radius-xl: 12px;
+
+  /* ================================
+     TYPOGRAPHY
+     ================================ */
+  --admin-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --admin-font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  /* Font sizes */
+  --admin-text-xs: 0.75rem;
+  /* 12px */
+  --admin-text-sm: 0.8125rem;
+  /* 13px */
+  --admin-text-base: 0.875rem;
+  /* 14px */
+  --admin-text-md: 1rem;
+  /* 16px */
+  --admin-text-lg: 1.125rem;
+  /* 18px */
+  --admin-text-xl: 1.25rem;
+  /* 20px */
+  --admin-text-2xl: 1.5rem;
+  /* 24px */
+
+  /* Line heights */
+  --admin-leading-tight: 1.25;
+  --admin-leading-normal: 1.5;
+  --admin-leading-relaxed: 1.625;
+
+  /* ================================
+     TRANSITIONS
+     ================================ */
+  --admin-transition-fast: 100ms ease-out;
+  --admin-transition-base: 150ms ease-out;
+  --admin-transition-slow: 200ms ease-out;
+
+  /* Legacy support - map to new tokens */
+  --admin-card: var(--admin-bg-secondary);
+}
+
+/* ================================
+   LIGHT MODE OVERRIDES
+   ================================ */
+html:not(.dark) {
+  /* Backgrounds */
+  --admin-bg-primary: #F8FAFC;
+  --admin-bg-secondary: #FFFFFF;
+  --admin-bg-tertiary: #F1F5F9;
+  --admin-bg-elevated: #FFFFFF;
+
+  /* Text */
+  --admin-text-primary: #0F172A;
+  --admin-text-secondary: #334155;
+  --admin-text-tertiary: #64748B;
+  --admin-text-muted: #94A3B8;
+
+  /* Borders */
+  --admin-border: #E2E8F0;
+  --admin-border-subtle: #F1F5F9;
+  --admin-border-emphasis: #CBD5E1;
+
+  /* Hover */
+  --admin-hover-bg: #F1F5F9;
+  --admin-active-bg: #E2E8F0;
+
+  /* Shadows */
+  --admin-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --admin-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --admin-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* ================================
+   COMPONENT BASE STYLES
+   ================================ */
+
+/* Metric Card */
+.admin-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-1);
+}
+
+.admin-metric-label {
+  font-size: var(--admin-text-xs);
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-metric-value {
+  font-size: var(--admin-text-2xl);
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--admin-leading-tight);
+}
+
+.admin-metric-subtitle {
+  font-size: var(--admin-text-xs);
+  color: var(--admin-text-muted);
+}
+
+/* Data Table */
+.admin-table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+}
+
+.admin-table thead tr {
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table th {
+  padding: var(--admin-space-3) var(--admin-space-4);
+  font-size: var(--admin-text-xs);
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+}
+
+.admin-table tbody tr {
+  border-bottom: 1px solid var(--admin-border-subtle);
+  transition: background-color var(--admin-transition-fast);
+}
+
+.admin-table tbody tr:hover {
+  background-color: var(--admin-hover-bg);
+}
+
+.admin-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.admin-table td {
+  padding: var(--admin-space-3) var(--admin-space-4);
+  font-size: var(--admin-text-sm);
+  color: var(--admin-text-secondary);
+}
+
+/* Status Badge */
+.admin-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  font-size: var(--admin-text-xs);
+  font-weight: 500;
+  border-radius: var(--admin-radius-sm);
+}
+
+.admin-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* Card */
+.admin-card {
+  background: var(--admin-bg-elevated);
+  border-radius: var(--admin-radius-xl);
+  padding: var(--admin-space-5);
+}
+
+.admin-card-bordered {
+  background: transparent;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-xl);
+  padding: var(--admin-space-5);
+}
+
+.admin-card-elevated {
+  background: var(--admin-bg-secondary);
+  border-radius: var(--admin-radius-xl);
+  padding: var(--admin-space-5);
+  box-shadow: var(--admin-shadow-lg);
+}
+
+/* Page Header */
+.admin-page-header {
+  margin-bottom: var(--admin-space-8);
+}
+
+.admin-page-title {
+  font-size: var(--admin-text-xl);
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  letter-spacing: -0.01em;
+  line-height: var(--admin-leading-tight);
+}
+
+.admin-page-subtitle {
+  font-size: var(--admin-text-sm);
+  color: var(--admin-text-muted);
+  margin-top: 2px;
+}
+
+/* Section Title */
+.admin-section-title {
+  font-size: var(--admin-text-lg);
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin-bottom: var(--admin-space-4);
+}
+
+/* Buttons */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--admin-space-2);
+  padding: var(--admin-space-2) var(--admin-space-4);
+  font-size: var(--admin-text-sm);
+  font-weight: 500;
+  border-radius: var(--admin-radius-lg);
+  transition: all var(--admin-transition-base);
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.admin-btn:focus-visible {
+  outline: 2px solid var(--admin-border-focus);
+  outline-offset: 2px;
+}
+
+.admin-btn-primary {
+  background: var(--admin-accent);
+  color: white;
+}
+
+.admin-btn-primary:hover {
+  background: var(--admin-accent-hover);
+}
+
+.admin-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-btn-secondary {
+  background: transparent;
+  color: var(--admin-text-secondary);
+  border: 1px solid var(--admin-border-emphasis);
+}
+
+.admin-btn-secondary:hover {
+  background: var(--admin-hover-bg);
+  border-color: var(--admin-border-emphasis);
+  color: var(--admin-text-primary);
+}
+
+.admin-btn-ghost {
+  background: transparent;
+  color: var(--admin-text-tertiary);
+}
+
+.admin-btn-ghost:hover {
+  background: var(--admin-hover-bg);
+  color: var(--admin-text-secondary);
+}
+
+.admin-btn-icon {
+  padding: var(--admin-space-2);
+}
+
+/* Form Inputs */
+.admin-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--admin-bg-elevated);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  color: var(--admin-text-primary);
+  /* Changed to primary for better contrast */
+  font-size: var(--admin-text-sm);
+  transition: all var(--admin-transition-base);
+}
+
+.admin-input::placeholder {
+  color: var(--admin-text-muted);
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: var(--admin-border-focus);
+  box-shadow: 0 0 0 3px var(--admin-accent-ring);
+}
+
+.admin-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394A3B8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 10px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+/* Toggle Switch */
+.admin-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.admin-toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.admin-toggle-track {
+  width: 36px;
+  height: 20px;
+  background: var(--admin-bg-tertiary);
+  border-radius: 10px;
+  transition: background var(--admin-transition-base);
+}
+
+.admin-toggle-input:checked+.admin-toggle-track {
+  background: var(--admin-accent);
+}
+
+.admin-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--admin-transition-base);
+}
+
+.admin-toggle-input:checked~.admin-toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* Tab Navigation */
+.admin-tabs {
+  display: flex;
+  gap: var(--admin-space-1);
+  padding: var(--admin-space-1);
+  background: var(--admin-bg-secondary);
+  border-radius: var(--admin-radius-lg);
+}
+
+.admin-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-space-2);
+  padding: var(--admin-space-2) var(--admin-space-4);
+  font-size: var(--admin-text-sm);
+  font-weight: 500;
+  color: var(--admin-text-tertiary);
+  background: transparent;
+  border: none;
+  border-radius: var(--admin-radius-md);
+  cursor: pointer;
+  transition: all var(--admin-transition-base);
+  white-space: nowrap;
+}
+
+.admin-tab:hover {
+  color: var(--admin-text-primary);
+}
+
+.admin-tab.active {
+  background: var(--admin-accent);
+  color: white;
+}
+
+/* Label */
+.admin-label {
+  display: block;
+  font-size: var(--admin-text-xs);
+  font-weight: 500;
+  color: var(--admin-text-muted);
+  margin-bottom: var(--admin-space-2);
+}
+
+
+
+
+
+

@@ -1,0 +1,112 @@
+{
+  "compilerOptions": {
+    // Build settings
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": [
+      "ES2022"
+    ],
+    "outDir": "./dist",
+    "rootDir": ".",
+    // TypeScript strictness (Enterprise Standard)
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+    "alwaysStrict": true,
+    // Code quality (strict mode - re-enabled after migration)
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    // Module interop
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "allowJs": false,
+    // Output settings
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    // Performance optimizations
+    "skipLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "composite": false, // Set to true if using project references
+    // Decorators (for DI/ORM if needed)
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    // Types
+    "types": [
+      "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
+    // Paths
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@services/*": [
+        "./src/services/*"
+      ],
+      "@routes/*": [
+        "./src/routes/*"
+      ],
+      "@middleware/*": [
+        "./src/middleware/*"
+      ],
+      "@types/*": [
+        "./src/types/*"
+      ],
+      "@utils/*": [
+        "./src/utils/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "utils/**/*",
+    "services/**/*",
+    "middleware/**/*",
+    "routes/**/*",
+    "controllers/**/*",
+    "ai/**/*",
+    "mcp/**/*",
+    "repositories/**/*",
+    "cron/**/*",
+    "config/**/*",
+    "types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "src/utils/lazyServiceLoader.js",
+    "src/database/Database.js",
+    "src/config/DatabaseConfig.js",
+    "src/database/PostgresDatabase.js",
+    "src/config/ConfigValidator.js",
+    "src/utils/Logger.js",
+    "src/utils/DbPromise.js",
+    "src/config/Config.js",
+    "src/Gateway.js",
+    "src/utils/RequestStore.js",
+    "src/utils/RedisRateLimitStore.js",
+    "src/utils/ShutdownManager.js",
+    "src/database/index.js",
+    "src/utils/auditLogger.js",
+    "src/services/ActivityService.js"
+  ]
+}

@@ -1,49 +1,98 @@
 import request from 'supertest';
-import { describe, it, expect, beforeAll } from 'vitest';
-import db from '../../server/database.js';
-import app from '../../server/index.js';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 
-// Helper to wait for DB to sync
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// Ensure consistent JWT secret for tests (relies on tests/setup.ts)
+// process.env.JWT_SECRET = 'test-jwt-secret-key-123';
+
+// Unmock auth middleware to test real authentication flow
+
+// Unmock auth middleware to test real authentication flow
+vi.unmock('../../server/src/middleware/auth.middleware.js');
+vi.unmock('jsonwebtoken');
+vi.unmock('../../server/src/services/RefreshTokenService.js');
+import { TestDatabaseFactory } from '../utils/TestDatabaseFactory.js';
+import bcrypt from 'bcryptjs';
+
+// We delay importing app/db until after we set up the mock DB
+let app;
+let db;
 
 describe('Auth Integration', () => {
-    const testId = Date.now() + Math.floor(Math.random() * 10000);
-    const orgId = `org-auth-${testId}`;
-    const userId = `user-auth-${testId}`;
+    let token;
+    const testId = Date.now();
     const email = `auth-${testId}@dbr77.com`;
-    const password = '123456';
+    const password = 'password123';
+
+    // Explicitly mock Sentry here to survive resetModules or ensure it's picked up
+    vi.mock('@sentry/node', () => ({
+        init: vi.fn(),
+        Handlers: { requestHandler: () => (req, res, next) => next(), errorHandler: () => (items, req, res, next) => next() },
+        captureException: vi.fn(),
+    }));
+
+    // Mock Gateway to only load auth routes (Vertical Slice)
+    vi.mock('../../server/src/Gateway.ts', async () => {
+        const authRoutes = await import('../../server/src/routes/auth.routes.js');
+        return {
+            apiGateway: {
+                initializeRoutes: (app) => {
+                    console.log('[MockGateway] Initializing Auth routes only...');
+                    app.use('/api/auth', authRoutes.default);
+                }
+            }
+        };
+    });
 
     beforeAll(async () => {
-        const bcrypt = require('bcryptjs');
-        const hash = bcrypt.hashSync(password, 8);
+        try {
+            console.log('Starting auth.test.js setup...');
+            // 1. Create a fresh in-memory DB with schema
+            const testDb = await TestDatabaseFactory.create();
+            console.log('DB created');
 
-        // Create org first
-        await new Promise((resolve) => {
-            db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                [orgId, 'Auth Test Org', 'free', 'active'], (err) => {
-                    if (err) console.error('Auth org error:', err.message);
-                    resolve();
+            // 2. Inject it into the global mock slot (which server/database.js uses when MOCK_DB=true)
+            // Note: tests/setup.ts sets MOCK_DB=true
+            global.__TEST_DB_MOCK__ = testDb;
+
+            // 3. Reset modules to ensure server/database.js is re-evaluated and picks up the new global mock
+            vi.resetModules();
+            console.log('Modules reset');
+
+            // 4. Import the app and db (using dynamic import to ensure freshness)
+            const dbModule = await import('../../server/database.js');
+            db = dbModule.default;
+            console.log('DB Imported');
+
+            const appModule = await import('../../server/src/index.ts');
+            app = appModule.default || appModule; // Handle CJS/ESM interop
+            console.log('App Imported');
+
+            const hash = bcrypt.hashSync(password, 8);
+            const orgId = `org-auth-${testId}`;
+            const userId = `user-auth-${testId}`;
+
+            // 5. Seed data using the testDb directly (or the imported db wrapper, they should be the same now)
+            await new Promise((resolve, reject) => {
+                testDb.serialize(() => {
+                    // Create org
+                    testDb.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
+                        [orgId, 'Auth Test Org', 'free', 'active'], (err) => {
+                            if (err) console.error('Auth org error:', err.message);
+                        });
+
+                    // Create user
+                    testDb.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+                        [userId, orgId, email, hash, 'AuthTester', 'ADMIN'], (err) => {
+                            if (err) console.error('Auth user error:', err.message);
+                            resolve();
+                        });
                 });
-        });
-
-        // Wait for DB sync
-        await sleep(100);
-
-        // Create user
-        await new Promise((resolve, reject) => {
-            db.run('INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                [userId, orgId, email, hash, 'Test', 'ADMIN'], (err) => {
-                    if (err) {
-                        console.error('Auth user error:', err.message);
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
-                });
-        });
-
-        // Wait for DB sync
-        await sleep(100);
+            });
+            console.log('Auth setup complete');
+        } catch (error) {
+            console.error('FATAL SETUP ERROR in auth.test.js:', error);
+            throw error;
+        }
     });
 
     it('should login successfully with valid credentials', async () => {
@@ -72,6 +121,7 @@ describe('Auth Integration', () => {
 
         expect([400, 401, 404]).toContain(res.status);
     });
+
     it('should validate token via /api/auth/me', async () => {
         // First login to get token
         const loginRes = await request(app)
@@ -89,5 +139,87 @@ describe('Auth Integration', () => {
         expect(res.status).toBe(200);
         expect(res.body).toHaveProperty('user');
         expect(res.body.user).toHaveProperty('email', email);
+    });
+
+    it('should reject invalid token', async () => {
+        const res = await request(app)
+            .get('/api/auth/me')
+            .set('Authorization', 'Bearer invalid-token');
+
+        expect([401, 403]).toContain(res.status);
+    });
+
+    it('should reject request without token', async () => {
+        const res = await request(app)
+            .get('/api/auth/me');
+
+        expect([401, 403]).toContain(res.status);
+    });
+
+    describe('Multi-Tenant Isolation', () => {
+        let org1Token;
+        let org2Token;
+        const testId2 = Date.now();
+        const org1Id = `auth-org1-${testId2}`;
+        const org2Id = `auth-org2-${testId2}`;
+        const user1Email = `auth-user1-${testId2}@test.com`;
+        const user2Email = `auth-user2-${testId2}@test.com`;
+
+        beforeAll(async () => {
+            const hash = bcrypt.hashSync('test123', 8);
+
+            await new Promise((resolve) => {
+                db.serialize(() => {
+                    db.run(
+                        'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
+                        [org1Id, 'Auth Org 1', 'free', 'active']
+                    );
+                    db.run(
+                        'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
+                        [org2Id, 'Auth Org 2', 'free', 'active']
+                    );
+                    db.run(
+                        'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+                        [`user1-${testId2}`, org1Id, user1Email, hash, 'User1', 'USER'],
+                        () => { }
+                    );
+                    db.run(
+                        'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+                        [`user2-${testId2}`, org2Id, user2Email, hash, 'User2', 'USER'],
+                        resolve
+                    );
+                });
+            });
+
+            const res1 = await request(app)
+                .post('/api/auth/login')
+                .send({ email: user1Email, password: 'test123' });
+            org1Token = res1.body.token;
+
+            const res2 = await request(app)
+                .post('/api/auth/login')
+                .send({ email: user2Email, password: 'test123' });
+            org2Token = res2.body.token;
+        });
+
+        it('should return correct organizationId in /me endpoint', async () => {
+            // Need to verify tokens were actually obtained
+            expect(org1Token).toBeDefined();
+            expect(org2Token).toBeDefined();
+
+            const res1 = await request(app)
+                .get('/api/auth/me')
+                .set('Authorization', `Bearer ${org1Token}`);
+
+            const res2 = await request(app)
+                .get('/api/auth/me')
+                .set('Authorization', `Bearer ${org2Token}`);
+
+            expect(res1.status).toBe(200);
+            expect(res2.status).toBe(200);
+            expect(res1.body.user.organizationId).toBe(org1Id);
+            expect(res2.body.user.organizationId).toBe(org2Id);
+            expect(res1.body.user.organizationId).not.toBe(res2.body.user.organizationId);
+        });
     });
 });

@@ -1,0 +1,738 @@
+/**
+ * Content Module API Routes Tests
+ * Tests for /api/content/* endpoints
+ */
+
+const { describe, it, expect, beforeEach, vi, beforeAll, afterAll } = require('vitest');
+
+// Mock dependencies
+vi.mock('../../../server/middleware/authMiddleware', () => {
+    return {
+        default: (req, res, next) => {
+            req.user = {
+                id: 'test-user-id',
+                role: 'ADMIN',
+                organizationId: 'test-org-id'
+            };
+            next();
+        }
+    };
+});
+
+vi.mock('../../../server/services/emailTemplateService', () => ({
+    default: {
+        listTemplates: vi.fn().mockResolvedValue([]),
+        getTemplateById: vi.fn().mockResolvedValue(null),
+        createTemplate: vi.fn().mockResolvedValue({ id: 'new-template' }),
+        updateTemplate: vi.fn().mockResolvedValue({ id: 'updated' }),
+        deleteTemplate: vi.fn().mockResolvedValue(true),
+        publishTemplate: vi.fn().mockResolvedValue({ status: 'PUBLISHED' }),
+        deprecateTemplate: vi.fn().mockResolvedValue({ status: 'DEPRECATED' }),
+        cloneTemplate: vi.fn().mockResolvedValue({ id: 'cloned' }),
+        previewTemplate: vi.fn().mockResolvedValue({ html: '<p>Preview</p>' }),
+        sendTestEmail: vi.fn().mockResolvedValue({ success: true }),
+        getVersionHistory: vi.fn().mockResolvedValue([]),
+        restoreVersion: vi.fn().mockResolvedValue({ version: 1 }),
+        getTemplateStats: vi.fn().mockResolvedValue({}),
+        getTemplateAnalytics: vi.fn().mockResolvedValue([]),
+        getTemplateSends: vi.fn().mockResolvedValue([]),
+        addTag: vi.fn().mockResolvedValue(true),
+        removeTag: vi.fn().mockResolvedValue(true),
+        logAnalyticsEvent: vi.fn().mockResolvedValue({})
+    }
+}));
+
+vi.mock('../../../server/services/contentService', () => ({
+    default: {
+        createCategory: vi.fn().mockResolvedValue({ id: 'cat-123' }),
+        getCategoryById: vi.fn().mockResolvedValue({ id: 'cat-123', name: 'Test' }),
+        listCategories: vi.fn().mockResolvedValue([]),
+        getCategoryTree: vi.fn().mockResolvedValue([]),
+        updateCategory: vi.fn().mockResolvedValue({ id: 'cat-123' }),
+        deleteCategory: vi.fn().mockResolvedValue(true),
+        createTag: vi.fn().mockResolvedValue({ id: 'tag-123' }),
+        getTagById: vi.fn().mockResolvedValue({ id: 'tag-123', name: 'Test' }),
+        listTags: vi.fn().mockResolvedValue([]),
+        updateTag: vi.fn().mockResolvedValue({ id: 'tag-123' }),
+        deleteTag: vi.fn().mockResolvedValue(true),
+        createComment: vi.fn().mockResolvedValue({ id: 'cmt-123' }),
+        getCommentById: vi.fn().mockResolvedValue({ id: 'cmt-123', userId: 'test-user-id' }),
+        getContentComments: vi.fn().mockResolvedValue([]),
+        updateComment: vi.fn().mockResolvedValue({ id: 'cmt-123' }),
+        resolveComment: vi.fn().mockResolvedValue({ isResolved: true }),
+        deleteComment: vi.fn().mockResolvedValue(true),
+        createReview: vi.fn().mockResolvedValue({ id: 'rev-123' }),
+        getReviewById: vi.fn().mockResolvedValue({ id: 'rev-123' }),
+        getContentReviews: vi.fn().mockResolvedValue([]),
+        getPendingReviews: vi.fn().mockResolvedValue([]),
+        updateReviewStatus: vi.fn().mockResolvedValue({ status: 'APPROVED' }),
+        approveReview: vi.fn().mockResolvedValue({ status: 'APPROVED' }),
+        rejectReview: vi.fn().mockResolvedValue({ status: 'REJECTED' }),
+        requestChanges: vi.fn().mockResolvedValue({ status: 'CHANGES_REQUESTED' }),
+        addFavorite: vi.fn().mockResolvedValue({ id: 'fav-123' }),
+        removeFavorite: vi.fn().mockResolvedValue(true),
+        getUserFavorites: vi.fn().mockResolvedValue([]),
+        isFavorited: vi.fn().mockResolvedValue(true),
+        searchContent: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+        getAnalyticsDashboard: vi.fn().mockResolvedValue({})
+    }
+}));
+
+vi.mock('../../../server/ai/aiPlaybookService', () => ({
+    default: {
+        getTemplateById: vi.fn().mockResolvedValue({ id: 'pb-123', version: 1 }),
+        getTemplateVersionHistory: vi.fn().mockResolvedValue([]),
+        restoreTemplateVersion: vi.fn().mockResolvedValue({ version: 1 }),
+        cloneTemplate: vi.fn().mockResolvedValue({ id: 'cloned' }),
+        getTemplateStats: vi.fn().mockResolvedValue({}),
+        getTemplateAnalytics: vi.fn().mockResolvedValue([]),
+        searchTemplates: vi.fn().mockResolvedValue([]),
+        bulkUpdateTemplates: vi.fn().mockResolvedValue({ success: [], failed: [] }),
+        publishTemplate: vi.fn().mockResolvedValue({ status: 'PUBLISHED' }),
+        deprecateTemplate: vi.fn().mockResolvedValue({ status: 'DEPRECATED' }),
+        addTemplateTag: vi.fn().mockResolvedValue(true),
+        removeTemplateTag: vi.fn().mockResolvedValue(true)
+    }
+}));
+
+const request = require('supertest');
+const express = require('express');
+
+// Create test app
+let app;
+
+beforeAll(() => {
+    app = express();
+    app.use(express.json());
+    
+    // Import and use routes
+    const contentRoutes = require('../../../server/routes/content');
+    app.use('/api/content', contentRoutes);
+});
+
+describe('Content API Routes', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    describe('Categories', () => {
+        describe('GET /api/content/categories', () => {
+            it('should return list of categories', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.listCategories.mockResolvedValue([
+                    { id: 'cat-1', name: 'Category 1' },
+                    { id: 'cat-2', name: 'Category 2' }
+                ]);
+
+                const res = await request(app)
+                    .get('/api/content/categories')
+                    .expect(200);
+
+                expect(res.body.categories).toHaveLength(2);
+            });
+
+            it('should return category tree when tree=true', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.getCategoryTree.mockResolvedValue([
+                    { id: 'cat-1', name: 'Parent', children: [] }
+                ]);
+
+                const res = await request(app)
+                    .get('/api/content/categories?tree=true')
+                    .expect(200);
+
+                expect(ContentService.getCategoryTree).toHaveBeenCalled();
+                expect(res.body.categories).toBeDefined();
+            });
+        });
+
+        describe('POST /api/content/categories', () => {
+            it('should create a category', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.createCategory.mockResolvedValue({
+                    id: 'cat-new',
+                    name: 'New Category',
+                    slug: 'new-category'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/categories')
+                    .send({
+                        name: 'New Category',
+                        description: 'Test description',
+                        contentType: 'PLAYBOOK'
+                    })
+                    .expect(201);
+
+                expect(res.body.category.name).toBe('New Category');
+            });
+        });
+
+        describe('GET /api/content/categories/:id', () => {
+            it('should return category by id', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.getCategoryById.mockResolvedValue({
+                    id: 'cat-123',
+                    name: 'Test Category'
+                });
+
+                const res = await request(app)
+                    .get('/api/content/categories/cat-123')
+                    .expect(200);
+
+                expect(res.body.category.id).toBe('cat-123');
+            });
+
+            it('should return 404 if category not found', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.getCategoryById.mockResolvedValue(null);
+
+                await request(app)
+                    .get('/api/content/categories/non-existent')
+                    .expect(404);
+            });
+        });
+
+        describe('PUT /api/content/categories/:id', () => {
+            it('should update category', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.updateCategory.mockResolvedValue({
+                    id: 'cat-123',
+                    name: 'Updated'
+                });
+
+                const res = await request(app)
+                    .put('/api/content/categories/cat-123')
+                    .send({ name: 'Updated' })
+                    .expect(200);
+
+                expect(res.body.category.name).toBe('Updated');
+            });
+        });
+    });
+
+    describe('Tags', () => {
+        describe('GET /api/content/tags', () => {
+            it('should return list of tags', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.listTags.mockResolvedValue([
+                    { id: 'tag-1', name: 'Tag 1', color: '#FF0000' }
+                ]);
+
+                const res = await request(app)
+                    .get('/api/content/tags')
+                    .expect(200);
+
+                expect(res.body.tags).toHaveLength(1);
+            });
+
+            it('should support search query', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                
+                await request(app)
+                    .get('/api/content/tags?search=test')
+                    .expect(200);
+
+                expect(ContentService.listTags).toHaveBeenCalledWith(
+                    expect.objectContaining({ search: 'test' })
+                );
+            });
+        });
+
+        describe('POST /api/content/tags', () => {
+            it('should create a tag', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.createTag.mockResolvedValue({
+                    id: 'tag-new',
+                    name: 'New Tag',
+                    color: '#00FF00'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/tags')
+                    .send({
+                        name: 'New Tag',
+                        color: '#00FF00',
+                        contentType: 'ALL'
+                    })
+                    .expect(201);
+
+                expect(res.body.tag.name).toBe('New Tag');
+            });
+        });
+    });
+
+    describe('Comments', () => {
+        describe('GET /api/content/playbooks/templates/:id/comments', () => {
+            it('should return comments for playbook', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.getContentComments.mockResolvedValue([
+                    { id: 'cmt-1', commentText: 'Test comment' }
+                ]);
+
+                const res = await request(app)
+                    .get('/api/content/playbooks/templates/pb-123/comments')
+                    .expect(200);
+
+                expect(res.body.comments).toBeDefined();
+            });
+        });
+
+        describe('POST /api/content/playbooks/templates/:id/comments', () => {
+            it('should create a comment', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.createComment.mockResolvedValue({
+                    id: 'cmt-new',
+                    commentText: 'New comment'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/playbooks/templates/pb-123/comments')
+                    .send({
+                        commentText: 'New comment'
+                    })
+                    .expect(201);
+
+                expect(res.body.comment.commentText).toBe('New comment');
+            });
+        });
+
+        describe('PUT /api/content/comments/:id', () => {
+            it('should update comment', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.updateComment.mockResolvedValue({
+                    id: 'cmt-123',
+                    commentText: 'Updated'
+                });
+
+                const res = await request(app)
+                    .put('/api/content/comments/cmt-123')
+                    .send({ commentText: 'Updated' })
+                    .expect(200);
+
+                expect(res.body.comment.commentText).toBe('Updated');
+            });
+        });
+
+        describe('POST /api/content/comments/:id/resolve', () => {
+            it('should resolve comment', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.resolveComment.mockResolvedValue({
+                    id: 'cmt-123',
+                    isResolved: true
+                });
+
+                const res = await request(app)
+                    .post('/api/content/comments/cmt-123/resolve')
+                    .expect(200);
+
+                expect(res.body.comment.isResolved).toBe(true);
+            });
+        });
+    });
+
+    describe('Reviews', () => {
+        describe('GET /api/content/reviews/pending', () => {
+            it('should return pending reviews', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.getPendingReviews.mockResolvedValue([
+                    { id: 'rev-1', status: 'PENDING' }
+                ]);
+
+                const res = await request(app)
+                    .get('/api/content/reviews/pending')
+                    .expect(200);
+
+                expect(res.body.reviews).toHaveLength(1);
+            });
+        });
+
+        describe('POST /api/content/playbooks/templates/:id/reviews', () => {
+            it('should create review request', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.createReview.mockResolvedValue({
+                    id: 'rev-new',
+                    status: 'PENDING'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/playbooks/templates/pb-123/reviews')
+                    .send({
+                        reviewerId: 'reviewer-id',
+                        priority: 'HIGH'
+                    })
+                    .expect(201);
+
+                expect(res.body.review.status).toBe('PENDING');
+            });
+        });
+
+        describe('POST /api/content/reviews/:id/approve', () => {
+            it('should approve review', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.approveReview.mockResolvedValue({
+                    id: 'rev-123',
+                    status: 'APPROVED'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/reviews/rev-123/approve')
+                    .send({ reviewNotes: 'Looks good!' })
+                    .expect(200);
+
+                expect(res.body.review.status).toBe('APPROVED');
+            });
+        });
+
+        describe('POST /api/content/reviews/:id/reject', () => {
+            it('should reject review with notes', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.rejectReview.mockResolvedValue({
+                    id: 'rev-123',
+                    status: 'REJECTED'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/reviews/rev-123/reject')
+                    .send({ reviewNotes: 'Needs improvements' })
+                    .expect(200);
+
+                expect(res.body.review.status).toBe('REJECTED');
+            });
+
+            it('should require reviewNotes for rejection', async () => {
+                await request(app)
+                    .post('/api/content/reviews/rev-123/reject')
+                    .send({})
+                    .expect(400);
+            });
+        });
+    });
+
+    describe('Favorites', () => {
+        describe('GET /api/content/favorites', () => {
+            it('should return user favorites', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.getUserFavorites.mockResolvedValue([
+                    { id: 'fav-1', contentId: 'pb-123' }
+                ]);
+
+                const res = await request(app)
+                    .get('/api/content/favorites')
+                    .expect(200);
+
+                expect(res.body.favorites).toHaveLength(1);
+            });
+        });
+
+        describe('POST /api/content/favorites', () => {
+            it('should add to favorites', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.addFavorite.mockResolvedValue({
+                    id: 'fav-new',
+                    contentId: 'pb-123'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/favorites')
+                    .send({
+                        contentId: 'pb-123',
+                        contentType: 'PLAYBOOK_TEMPLATE'
+                    })
+                    .expect(201);
+
+                expect(res.body.favorite.contentId).toBe('pb-123');
+            });
+        });
+
+        describe('DELETE /api/content/favorites/:contentType/:contentId', () => {
+            it('should remove from favorites', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.removeFavorite.mockResolvedValue(true);
+
+                const res = await request(app)
+                    .delete('/api/content/favorites/PLAYBOOK_TEMPLATE/pb-123')
+                    .expect(200);
+
+                expect(res.body.success).toBe(true);
+            });
+        });
+
+        describe('GET /api/content/favorites/check/:contentType/:contentId', () => {
+            it('should check if content is favorited', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.isFavorited.mockResolvedValue(true);
+
+                const res = await request(app)
+                    .get('/api/content/favorites/check/PLAYBOOK_TEMPLATE/pb-123')
+                    .expect(200);
+
+                expect(res.body.isFavorited).toBe(true);
+            });
+        });
+    });
+
+    describe('Search', () => {
+        describe('GET /api/content/search', () => {
+            it('should search content', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.searchContent.mockResolvedValue({
+                    items: [{ id: 'pb-1', title: 'Test' }],
+                    total: 1,
+                    page: 1,
+                    limit: 20,
+                    hasMore: false
+                });
+
+                const res = await request(app)
+                    .get('/api/content/search?query=test')
+                    .expect(200);
+
+                expect(res.body.items).toHaveLength(1);
+                expect(res.body.total).toBe(1);
+            });
+
+            it('should support multiple filters', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                
+                await request(app)
+                    .get('/api/content/search?query=test&contentTypes=PLAYBOOK_TEMPLATE,EMAIL_TEMPLATE&statuses=PUBLISHED')
+                    .expect(200);
+
+                expect(ContentService.searchContent).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        query: 'test',
+                        contentTypes: ['PLAYBOOK_TEMPLATE', 'EMAIL_TEMPLATE'],
+                        statuses: ['PUBLISHED']
+                    })
+                );
+            });
+        });
+    });
+
+    describe('Analytics Dashboard', () => {
+        describe('GET /api/content/analytics/dashboard', () => {
+            it('should return analytics dashboard', async () => {
+                const ContentService = require('../../../server/services/contentService').default;
+                ContentService.getAnalyticsDashboard.mockResolvedValue({
+                    totalPlaybookTemplates: 10,
+                    totalEmailTemplates: 5,
+                    avgPlaybookSuccessRate: 85
+                });
+
+                const res = await request(app)
+                    .get('/api/content/analytics/dashboard')
+                    .expect(200);
+
+                expect(res.body.totalPlaybookTemplates).toBe(10);
+                expect(res.body.avgPlaybookSuccessRate).toBe(85);
+            });
+        });
+    });
+
+    describe('Bulk Actions', () => {
+        describe('POST /api/content/bulk-action', () => {
+            it('should perform bulk publish', async () => {
+                const EmailTemplateService = require('../../../server/services/emailTemplateService').default;
+                EmailTemplateService.publishTemplate.mockResolvedValue({ status: 'PUBLISHED' });
+
+                const res = await request(app)
+                    .post('/api/content/bulk-action')
+                    .send({
+                        action: 'PUBLISH',
+                        contentIds: ['et-1', 'et-2'],
+                        contentType: 'EMAIL_TEMPLATE'
+                    })
+                    .expect(200);
+
+                expect(res.body.processed).toBe(2);
+                expect(res.body.success).toBe(true);
+            });
+
+            it('should require contentIds', async () => {
+                await request(app)
+                    .post('/api/content/bulk-action')
+                    .send({
+                        action: 'PUBLISH',
+                        contentType: 'EMAIL_TEMPLATE'
+                    })
+                    .expect(400);
+            });
+
+            it('should handle partial failures', async () => {
+                const EmailTemplateService = require('../../../server/services/emailTemplateService').default;
+                let callCount = 0;
+                EmailTemplateService.publishTemplate.mockImplementation(() => {
+                    callCount++;
+                    if (callCount === 2) {
+                        throw new Error('Failed');
+                    }
+                    return { status: 'PUBLISHED' };
+                });
+
+                const res = await request(app)
+                    .post('/api/content/bulk-action')
+                    .send({
+                        action: 'PUBLISH',
+                        contentIds: ['et-1', 'et-2', 'et-3'],
+                        contentType: 'EMAIL_TEMPLATE'
+                    })
+                    .expect(200);
+
+                expect(res.body.processed).toBe(2);
+                expect(res.body.failed).toBe(1);
+                expect(res.body.success).toBe(false);
+            });
+        });
+    });
+
+    describe('Playbook Extensions', () => {
+        describe('GET /api/content/playbooks/templates/:id/versions', () => {
+            it('should return version history', async () => {
+                const AIPlaybookService = require('../../../server/ai/aiPlaybookService').default;
+                AIPlaybookService.getTemplateVersionHistory.mockResolvedValue([
+                    { version: 2, updatedAt: '2024-01-02' },
+                    { version: 1, updatedAt: '2024-01-01' }
+                ]);
+
+                const res = await request(app)
+                    .get('/api/content/playbooks/templates/pb-123/versions')
+                    .expect(200);
+
+                expect(res.body.versions).toHaveLength(2);
+            });
+        });
+
+        describe('POST /api/content/playbooks/templates/:id/clone', () => {
+            it('should clone playbook template', async () => {
+                const AIPlaybookService = require('../../../server/ai/aiPlaybookService').default;
+                AIPlaybookService.cloneTemplate.mockResolvedValue({
+                    id: 'pb-cloned',
+                    key: 'cloned-key',
+                    title: 'Cloned Title'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/playbooks/templates/pb-123/clone')
+                    .send({
+                        key: 'cloned-key',
+                        title: 'Cloned Title'
+                    })
+                    .expect(201);
+
+                expect(res.body.template.id).toBe('pb-cloned');
+            });
+        });
+
+        describe('GET /api/content/playbooks/templates/search', () => {
+            it('should search playbook templates', async () => {
+                const AIPlaybookService = require('../../../server/ai/aiPlaybookService').default;
+                AIPlaybookService.searchTemplates.mockResolvedValue([
+                    { id: 'pb-1', title: 'Test Playbook' }
+                ]);
+
+                const res = await request(app)
+                    .get('/api/content/playbooks/templates/search?query=test')
+                    .expect(200);
+
+                expect(res.body.templates).toHaveLength(1);
+            });
+        });
+
+        describe('POST /api/content/playbooks/templates/bulk-action', () => {
+            it('should perform bulk update on playbook templates', async () => {
+                const AIPlaybookService = require('../../../server/ai/aiPlaybookService').default;
+                AIPlaybookService.bulkUpdateTemplates.mockResolvedValue({
+                    success: ['pb-1', 'pb-2'],
+                    failed: []
+                });
+
+                const res = await request(app)
+                    .post('/api/content/playbooks/templates/bulk-action')
+                    .send({
+                        templateIds: ['pb-1', 'pb-2'],
+                        action: 'PUBLISH'
+                    })
+                    .expect(200);
+
+                expect(res.body.success).toBe(true);
+                expect(res.body.processed).toBe(2);
+            });
+        });
+    });
+
+    describe('Email Templates', () => {
+        describe('GET /api/content/emails/templates', () => {
+            it('should return list of email templates', async () => {
+                const EmailTemplateService = require('../../../server/services/emailTemplateService').default;
+                EmailTemplateService.listTemplates.mockResolvedValue([
+                    { id: 'et-1', name: 'Welcome Email' }
+                ]);
+
+                const res = await request(app)
+                    .get('/api/content/emails/templates')
+                    .expect(200);
+
+                expect(res.body.templates).toBeDefined();
+            });
+        });
+
+        describe('POST /api/content/emails/templates', () => {
+            it('should create email template', async () => {
+                const EmailTemplateService = require('../../../server/services/emailTemplateService').default;
+                EmailTemplateService.createTemplate.mockResolvedValue({
+                    id: 'et-new',
+                    templateKey: 'new-template',
+                    name: 'New Template'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/emails/templates')
+                    .send({
+                        templateKey: 'new-template',
+                        name: 'New Template',
+                        subject: 'Subject',
+                        htmlContent: '<p>Content</p>'
+                    })
+                    .expect(201);
+
+                expect(res.body.template.name).toBe('New Template');
+            });
+        });
+
+        describe('POST /api/content/emails/templates/:id/test-send', () => {
+            it('should send test email', async () => {
+                const EmailTemplateService = require('../../../server/services/emailTemplateService').default;
+                EmailTemplateService.sendTestEmail.mockResolvedValue({
+                    success: true,
+                    messageId: 'msg-123'
+                });
+
+                const res = await request(app)
+                    .post('/api/content/emails/templates/et-123/test-send')
+                    .send({
+                        recipientEmails: ['test@example.com'],
+                        testData: { name: 'Test User' }
+                    })
+                    .expect(200);
+
+                expect(res.body.success).toBe(true);
+            });
+
+            it('should require recipient emails', async () => {
+                await request(app)
+                    .post('/api/content/emails/templates/et-123/test-send')
+                    .send({})
+                    .expect(400);
+            });
+        });
+    });
+});
+
+
+
+
+
+
+
+

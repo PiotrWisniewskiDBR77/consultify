@@ -1,0 +1,27 @@
+╔══════════════════════════════════════════════════════════════╗
+║          QUICK START - INSTRUKCJE DLA AGENTÓW                ║
+╚══════════════════════════════════════════════════════════════╝
+
+📋 CURSOR - TypeScript Errors
+   Plik: cursor_zadania/INSTRUKCJE_CURSOR.md
+   Start: EnterpriseSecurityPanel.tsx (9 errors)
+   
+📋 CODEX - Service Refactoring  
+   Plik: cursor_zadania/INSTRUKCJE_CODEX.md
+   Start: BillingQueryService.ts (split billingService)
+   
+📋 ANTIGRAVITY #2 - TypeScript Errors
+   Plik: cursor_zadania/INSTRUKCJE_ANTIGRAVITY2.md
+   Start: EnterpriseSecurityPanel.tsx (9 errors)
+
+📊 RAPORTOWANIE
+   Szablon: cursor_zadania/SZABLON_KOMUNIKACJI.md
+   
+═══════════════════════════════════════════════════════════════
+
+KROK 1: Przeczytaj swój plik INSTRUKCJE_[NAZWA].md
+KROK 2: Zacznij od pierwszego zadania
+KROK 3: Raportuj postęp w [NAZWA]_PROGRESS.txt
+KROK 4: Aktualizuj MASTER_PLAN.md po każdym pliku
+
+═══════════════════════════════════════════════════════════════

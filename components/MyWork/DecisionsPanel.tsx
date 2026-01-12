@@ -1,0 +1,1253 @@
+/**
+ * DecisionsPanel - Enhanced decision management
+ * Part of My Work Module PMO Upgrade
+ *
+ * Features:
+ * - View toggle: My Decisions vs Awaiting Others
+ * - Filters and sorting
+ * - New decision creation
+ * - Quick actions: OK, Not OK, Delegate
+ * - Overdue alerts with animations
+ * - Escalation system
+ */
+
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+    AlertTriangle,
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    Bell,
+    Calendar,
+    CalendarClock,
+    CheckCheck,
+    CheckCircle2,
+    ChevronRight,
+    Clock,
+    FileQuestion,
+    Filter,
+    Flag,
+    FolderKanban,
+    Hourglass,
+    Loader2,
+    MapPin,
+    Plus,
+    Search,
+    Tag,
+    Timer,
+    TrendingUp,
+    User,
+    UserPlus,
+    Users,
+    X,
+    XCircle,
+    Zap,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+
+interface Decision {
+    id: string;
+    title: string;
+    description?: string;
+    decisionType: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DEFERRED';
+    decisionOwnerId?: string;
+    ownerName?: string;
+    requestedById?: string;
+    requestedByName?: string;
+    projectId?: string;
+    projectName?: string;
+    locationId?: string;
+    locationName?: string;
+    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    createdAt: string;
+    dueDate?: string;
+    daysWaiting?: number;
+    daysUntilDue?: number;
+    isOverdue?: boolean;
+    daysOverdue?: number;
+    escalationLevel?: number;
+    blockedItemsCount?: number;
+}
+
+type ViewMode = 'my' | 'awaiting';
+type SortOrder = 'newest' | 'oldest' | 'urgency' | 'priority';
+type FilterType = 'all' | 'overdue' | 'thisWeek' | 'blocking' | 'critical' | 'high';
+
+interface DecisionsPanelProps {
+    onDecisionClick?: (id: string) => void;
+}
+
+/**
+ * Overdue Badge Component with animation
+ */
+const OverdueBadge: React.FC<{ days: number }> = ({ days }) => {
+    const { t } = useTranslation();
+
+    const getBadgeStyle = () => {
+        if (days > 7) {
+            return 'bg-red-500 text-white animate-pulse';
+        } else if (days > 3) {
+            return 'bg-orange-500 text-white';
+        } else {
+            return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+        }
+    };
+
+    return (
+        <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${getBadgeStyle()}`}
+        >
+            <AlertTriangle size={12} />
+            {days}d
+        </span>
+    );
+};
+
+/**
+ * New Decision Modal
+ */
+const NewDecisionModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (data: Partial<Decision>) => void;
+}> = ({ isOpen, onClose, onSubmit }) => {
+    const { t } = useTranslation();
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [decisionType, setDecisionType] = useState('GENERAL');
+    const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>('MEDIUM');
+    const [dueDate, setDueDate] = useState('');
+    const [assigneeId, setAssigneeId] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
+        if (!title.trim()) {
+            toast.error(t('decisions.titleRequired', 'Title is required'));
+            return;
+        }
+        setSubmitting(true);
+        try {
+            await onSubmit({
+                title,
+                description,
+                decisionType,
+                priority,
+                dueDate: dueDate || undefined,
+                decisionOwnerId: assigneeId || undefined,
+            });
+            setTitle('');
+            setDescription('');
+            setDecisionType('GENERAL');
+            setPriority('MEDIUM');
+            setDueDate('');
+            setAssigneeId('');
+            onClose();
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Get minimum date (today)
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="relative bg-white dark:bg-navy-900 rounded-2xl shadow-2xl w-full max-w-xl p-6 m-4 border border-slate-200 dark:border-white/10 max-h-[90vh] overflow-y-auto"
+            >
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                            <FileQuestion size={20} className="text-white" />
+                        </div>
+                        <h3 className="text-lg font-bold text-navy-900 dark:text-white">
+                            {t('decisions.newDecision', 'New Decision Request')}
+                        </h3>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="space-y-4">
+                    {/* Title */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            {t('decisions.field.title', 'Title')} *
+                        </label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder={t('decisions.field.titlePlaceholder', 'What needs to be decided?')}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            {t('decisions.field.description', 'Description')}
+                        </label>
+                        <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder={t('decisions.field.descriptionPlaceholder', 'Add context or details...')}
+                            rows={3}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                        />
+                    </div>
+
+                    {/* Type & Priority Row */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                {t('decisions.field.type', 'Type')}
+                            </label>
+                            <select
+                                value={decisionType}
+                                onChange={(e) => setDecisionType(e.target.value)}
+                                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="GENERAL">📋 General</option>
+                                <option value="INITIATIVE_APPROVAL">🎯 Initiative Approval</option>
+                                <option value="PHASE_TRANSITION">🚀 Phase Transition</option>
+                                <option value="BUDGET">💰 Budget</option>
+                                <option value="SCOPE_CHANGE">📐 Scope Change</option>
+                                <option value="UNBLOCK">🔓 Unblock</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                {t('decisions.field.priority', 'Priority')}
+                            </label>
+                            <select
+                                value={priority}
+                                onChange={(e) => setPriority(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')}
+                                className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="LOW">🟢 Low</option>
+                                <option value="MEDIUM">🟡 Medium</option>
+                                <option value="HIGH">🟠 High</option>
+                                <option value="CRITICAL">🔴 Critical</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Due Date */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <span className="flex items-center gap-2">
+                                <CalendarClock size={14} />
+                                {t('decisions.field.dueDate', 'Decision Needed By')}
+                            </span>
+                        </label>
+                        <input
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                            min={today}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                        <p className="text-xs text-slate-400 mt-1">
+                            {t('decisions.field.dueDateHint', 'Leave empty if no specific deadline')}
+                        </p>
+                    </div>
+
+                    {/* Assignee */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            <span className="flex items-center gap-2">
+                                <User size={14} />
+                                {t('decisions.field.assignee', 'Decision Maker (optional)')}
+                            </span>
+                        </label>
+                        <input
+                            type="text"
+                            value={assigneeId}
+                            onChange={(e) => setAssigneeId(e.target.value)}
+                            placeholder={t(
+                                'decisions.field.assigneePlaceholder',
+                                'Enter email or leave empty for auto-assign',
+                            )}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                    </div>
+                </div>
+
+                {/* Priority indicator */}
+                {priority === 'CRITICAL' && (
+                    <div className="mt-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/20">
+                        <div className="flex items-center gap-2 text-red-700 dark:text-red-300 text-sm">
+                            <Zap size={16} className="animate-pulse" />
+                            <span className="font-medium">
+                                {t(
+                                    'decisions.criticalWarning',
+                                    'Critical priority will trigger immediate notifications',
+                                )}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex gap-3 mt-6">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 font-medium transition-colors"
+                    >
+                        {t('decisions.cancel', 'Cancel')}
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={submitting || !title.trim()}
+                        className="flex-1 px-4 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {submitting ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                        {t('decisions.create', 'Create')}
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
+/**
+ * Delegate Modal
+ */
+const DelegateModal: React.FC<{
+    isOpen: boolean;
+    decision: Decision | null;
+    onClose: () => void;
+    onDelegate: (decisionId: string, toUserId: string, note: string) => void;
+}> = ({ isOpen, decision, onClose, onDelegate }) => {
+    const { t } = useTranslation();
+    const [toUserId, setToUserId] = useState('');
+    const [note, setNote] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleDelegate = async () => {
+        if (!toUserId.trim()) {
+            toast.error(t('decisions.selectUser', 'Please select a user'));
+            return;
+        }
+        if (!decision) return;
+
+        setSubmitting(true);
+        try {
+            await onDelegate(decision.id, toUserId, note);
+            setToUserId('');
+            setNote('');
+            onClose();
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (!isOpen || !decision) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="relative bg-white dark:bg-navy-900 rounded-2xl shadow-2xl w-full max-w-md p-6 m-4 border border-slate-200 dark:border-white/10"
+            >
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                        <UserPlus size={20} className="text-purple-500" />
+                        {t('decisions.delegate', 'Delegate Decision')}
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                    {t('decisions.delegatingDecision', 'Delegating')}: <strong>{decision.title}</strong>
+                </p>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            {t('decisions.delegateTo', 'Delegate to')} *
+                        </label>
+                        <input
+                            type="text"
+                            value={toUserId}
+                            onChange={(e) => setToUserId(e.target.value)}
+                            placeholder={t('decisions.enterUserId', 'Enter user email or ID')}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                            {t('decisions.note', 'Note (optional)')}
+                        </label>
+                        <textarea
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            placeholder={t('decisions.notePlaceholder', 'Add a message for the new assignee...')}
+                            rows={2}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 font-medium transition-colors"
+                    >
+                        {t('decisions.cancel', 'Cancel')}
+                    </button>
+                    <button
+                        onClick={handleDelegate}
+                        disabled={submitting || !toUserId.trim()}
+                        className="flex-1 px-4 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {submitting ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
+                        {t('decisions.delegateBtn', 'Delegate')}
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
+/**
+ * Priority Badge Component
+ */
+const PriorityBadge: React.FC<{ priority?: string }> = ({ priority }) => {
+    const { t } = useTranslation();
+
+    const config = {
+        CRITICAL: {
+            bg: 'bg-red-500',
+            text: 'text-white',
+            icon: Zap,
+            label: t('priority.critical', 'Critical'),
+            animate: true,
+        },
+        HIGH: {
+            bg: 'bg-orange-500',
+            text: 'text-white',
+            icon: Flag,
+            label: t('priority.high', 'High'),
+            animate: false,
+        },
+        MEDIUM: {
+            bg: 'bg-amber-100 dark:bg-amber-900/30',
+            text: 'text-amber-700 dark:text-amber-300',
+            icon: Flag,
+            label: t('priority.medium', 'Medium'),
+            animate: false,
+        },
+        LOW: {
+            bg: 'bg-slate-100 dark:bg-slate-800',
+            text: 'text-slate-500 dark:text-slate-400',
+            icon: Flag,
+            label: t('priority.low', 'Low'),
+            animate: false,
+        },
+    };
+
+    const cfg = config[priority as keyof typeof config] || config.MEDIUM;
+    const Icon = cfg.icon;
+
+    return (
+        <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.bg} ${cfg.text} ${cfg.animate ? 'animate-pulse' : ''}`}
+        >
+            <Icon size={10} />
+            {cfg.label}
+        </span>
+    );
+};
+
+/**
+ * Status Timeline Badge
+ */
+const StatusTimeline: React.FC<{
+    dueDate?: string;
+    createdAt: string;
+    isOverdue: boolean;
+    daysOverdue: number;
+    daysUntilDue: number;
+}> = ({ dueDate, createdAt, isOverdue, daysOverdue, daysUntilDue }) => {
+    const { t } = useTranslation();
+
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
+    };
+
+    if (isOverdue && daysOverdue > 0) {
+        return (
+            <div
+                className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${
+                    daysOverdue > 7
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 animate-pulse'
+                        : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                }`}
+            >
+                <AlertTriangle size={14} className="shrink-0" />
+                <div className="text-xs">
+                    <span className="font-bold">{daysOverdue}d</span>
+                    <span className="ml-1 opacity-80">{t('decisions.overdue', 'overdue')}</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (dueDate) {
+        const isUrgent = daysUntilDue <= 2;
+        const isSoon = daysUntilDue <= 5;
+
+        return (
+            <div
+                className={`flex items-center gap-2 px-2.5 py-1 rounded-lg ${
+                    isUrgent
+                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                        : isSoon
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300'
+                          : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300'
+                }`}
+            >
+                {isUrgent ? <Timer size={14} /> : <CalendarClock size={14} />}
+                <div className="text-xs">
+                    {isUrgent ? (
+                        <>
+                            <span className="font-bold">{daysUntilDue}d</span>
+                            <span className="ml-1 opacity-80">{t('decisions.left', 'left')}</span>
+                        </>
+                    ) : (
+                        <>
+                            <span className="font-medium">{formatDate(dueDate)}</span>
+                            <span className="ml-1 opacity-60">({daysUntilDue}d)</span>
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400">
+            <Clock size={14} />
+            <span className="text-xs">{formatDate(createdAt)}</span>
+        </div>
+    );
+};
+
+/**
+ * Decision Card Component - Enhanced with full details
+ */
+const DecisionCard: React.FC<{
+    decision: Decision;
+    viewMode: ViewMode;
+    onApprove: (id: string) => void;
+    onReject: (id: string) => void;
+    onDelegate: (decision: Decision) => void;
+    onEscalate: (id: string) => void;
+    onClick?: (id: string) => void;
+}> = ({ decision, viewMode, onApprove, onReject, onDelegate, onEscalate, onClick }) => {
+    const { t } = useTranslation();
+
+    const isOverdue = decision.isOverdue || (decision.daysWaiting && decision.daysWaiting > 7);
+    const daysOverdue = decision.daysOverdue || Math.max(0, (decision.daysWaiting || 0) - 7);
+    const daysUntilDue =
+        decision.daysUntilDue ||
+        (decision.dueDate
+            ? Math.ceil((new Date(decision.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+            : 999);
+
+    const getCardStyle = () => {
+        if (isOverdue && daysOverdue > 7) {
+            return 'border-l-red-500 bg-gradient-to-r from-red-50 to-white dark:from-red-900/20 dark:to-navy-900 ring-1 ring-red-200 dark:ring-red-500/20';
+        } else if (isOverdue) {
+            return 'border-l-orange-500 bg-gradient-to-r from-orange-50 to-white dark:from-orange-900/20 dark:to-navy-900';
+        } else if (decision.priority === 'CRITICAL') {
+            return 'border-l-red-500 bg-white dark:bg-navy-900';
+        } else if (decision.priority === 'HIGH') {
+            return 'border-l-orange-500 bg-white dark:bg-navy-900';
+        }
+        return 'border-l-purple-500 bg-white dark:bg-navy-900';
+    };
+
+    const getTypeLabel = (decisionType: string) => {
+        const types: Record<string, { icon: string; label: string; color: string }> = {
+            INITIATIVE_APPROVAL: { icon: '🎯', label: 'Initiative', color: 'text-blue-600' },
+            PHASE_TRANSITION: { icon: '🚀', label: 'Phase Gate', color: 'text-purple-600' },
+            UNBLOCK: { icon: '🔓', label: 'Unblock', color: 'text-green-600' },
+            CANCEL: { icon: '❌', label: 'Cancel', color: 'text-red-600' },
+            BUDGET: { icon: '💰', label: 'Budget', color: 'text-amber-600' },
+            SCOPE_CHANGE: { icon: '📐', label: 'Scope', color: 'text-cyan-600' },
+            GENERAL: { icon: '📋', label: 'General', color: 'text-slate-600' },
+        };
+        return types[decisionType] || types['GENERAL'];
+    };
+
+    const typeInfo = getTypeLabel(decision.decisionType);
+
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className={`rounded-xl border border-slate-200 dark:border-white/10 border-l-4 ${getCardStyle()} cursor-pointer hover:shadow-lg transition-all overflow-hidden`}
+        >
+            {/* Main Content */}
+            <div className="p-4" onClick={() => onClick?.(decision.id)}>
+                {/* Top Row: Type + Priority + Status */}
+                <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {/* Type Badge */}
+                        <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-white/10 ${typeInfo.color} dark:text-slate-200`}
+                        >
+                            <span>{typeInfo.icon}</span>
+                            {typeInfo.label}
+                        </span>
+
+                        {/* Priority */}
+                        <PriorityBadge priority={decision.priority} />
+                    </div>
+
+                    {/* Status Timeline */}
+                    <StatusTimeline
+                        dueDate={decision.dueDate}
+                        createdAt={decision.createdAt}
+                        isOverdue={isOverdue || false}
+                        daysOverdue={daysOverdue}
+                        daysUntilDue={daysUntilDue}
+                    />
+                </div>
+
+                {/* Title */}
+                <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-2 line-clamp-2">
+                    {decision.title}
+                </h4>
+
+                {/* Description */}
+                {decision.description && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">
+                        {decision.description}
+                    </p>
+                )}
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                    {/* Project */}
+                    {decision.projectName && (
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-6 h-6 rounded-md bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+                                <FolderKanban size={12} className="text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <span className="text-slate-700 dark:text-slate-300 truncate" title={decision.projectName}>
+                                {decision.projectName}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Location */}
+                    {decision.locationName && (
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-6 h-6 rounded-md bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                                <MapPin size={12} className="text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <span className="text-slate-700 dark:text-slate-300 truncate" title={decision.locationName}>
+                                {decision.locationName}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Owner/Assignee */}
+                    {viewMode === 'awaiting' && decision.ownerName && (
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                                {decision.ownerName.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-slate-700 dark:text-slate-300 truncate">{decision.ownerName}</span>
+                        </div>
+                    )}
+
+                    {/* Blocked Items */}
+                    {(decision.blockedItemsCount || 0) > 0 && (
+                        <div className="flex items-center gap-2 text-xs">
+                            <div className="w-6 h-6 rounded-md bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                                <AlertTriangle size={12} className="text-red-600 dark:text-red-400" />
+                            </div>
+                            <span className="text-red-600 dark:text-red-400 font-medium">
+                                {decision.blockedItemsCount} {t('decisions.blocked', 'blocked')}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Waiting Time Bar */}
+                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-white/5">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                        <span>{t('decisions.waitingFor', 'Waiting for')}</span>
+                        <span className="font-medium">
+                            {decision.daysWaiting || 0} {t('decisions.days', 'days')}
+                        </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(100, ((decision.daysWaiting || 0) / 14) * 100)}%` }}
+                            className={`h-full rounded-full ${
+                                (decision.daysWaiting || 0) > 10
+                                    ? 'bg-red-500'
+                                    : (decision.daysWaiting || 0) > 5
+                                      ? 'bg-orange-500'
+                                      : 'bg-green-500'
+                            }`}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Action Bar */}
+            <div
+                className={`px-4 py-3 border-t flex items-center gap-2 ${
+                    isOverdue
+                        ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-500/10'
+                        : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5'
+                }`}
+            >
+                {viewMode === 'my' ? (
+                    <>
+                        {/* OK Button */}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onApprove(decision.id);
+                            }}
+                            className="flex-1 px-3 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
+                        >
+                            <CheckCircle2 size={14} />
+                            {t('decisions.approve', 'Approve')}
+                        </button>
+                        {/* Not OK Button */}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onReject(decision.id);
+                            }}
+                            className="flex-1 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
+                        >
+                            <XCircle size={14} />
+                            {t('decisions.reject', 'Reject')}
+                        </button>
+                        {/* Delegate Button */}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelegate(decision);
+                            }}
+                            className="px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
+                            title={t('decisions.delegate', 'Delegate')}
+                        >
+                            <UserPlus size={14} />
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        {/* View Details */}
+                        <button
+                            onClick={() => onClick?.(decision.id)}
+                            className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
+                        >
+                            {t('decisions.viewDetails', 'View Details')}
+                            <ChevronRight size={14} />
+                        </button>
+
+                        {/* Escalate Button - only for overdue */}
+                        {isOverdue && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEscalate(decision.id);
+                                }}
+                                className="px-4 py-2 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                            >
+                                <TrendingUp size={14} />
+                                {t('decisions.escalate', 'Escalate')}
+                            </button>
+                        )}
+                    </>
+                )}
+            </div>
+        </motion.div>
+    );
+};
+
+/**
+ * Decisions Panel - Main Export
+ */
+export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ onDecisionClick }) => {
+    const { t } = useTranslation();
+    const [decisions, setDecisions] = useState<Decision[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<ViewMode>('my');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+    const [filterType, setFilterType] = useState<FilterType>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
+    const [showNewModal, setShowNewModal] = useState(false);
+    const [delegateDecision, setDelegateDecision] = useState<Decision | null>(null);
+
+    const currentProjectId = useAppStore((state) => state.currentProjectId);
+    const currentUserId = useAppStore((state) => state.currentUser?.id);
+
+    useEffect(() => {
+        fetchDecisions();
+    }, [currentProjectId]);
+
+    const fetchDecisions = async () => {
+        try {
+            setLoading(true);
+            const url = currentProjectId
+                ? `/decisions?projectId=${currentProjectId}&includeAll=true`
+                : `/decisions?includeAll=true`;
+            const data = await Api.get(url);
+
+            const enhanced = (data || []).map((d: Decision) => {
+                const daysWaiting =
+                    d.daysWaiting || Math.floor((Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                const isOverdue = daysWaiting > 7;
+                const daysOverdue = Math.max(0, daysWaiting - 7);
+                return {
+                    ...d,
+                    daysWaiting,
+                    isOverdue,
+                    daysOverdue,
+                    escalationLevel: d.escalationLevel || 0,
+                };
+            });
+
+            setDecisions(enhanced);
+        } catch (error) {
+            console.error('Failed to fetch decisions:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleApprove = async (id: string) => {
+        try {
+            await Api.put(`/decisions/${id}/decide`, { status: 'APPROVED', outcome: '' });
+            toast.success(t('decisions.approved', 'Decision approved'));
+            fetchDecisions();
+        } catch (error) {
+            console.error('Failed to approve:', error);
+            toast.error(t('decisions.error', 'Failed to update decision'));
+        }
+    };
+
+    const handleReject = async (id: string) => {
+        try {
+            await Api.put(`/decisions/${id}/decide`, { status: 'REJECTED', outcome: '' });
+            toast.success(t('decisions.rejected', 'Decision rejected'));
+            fetchDecisions();
+        } catch (error) {
+            console.error('Failed to reject:', error);
+            toast.error(t('decisions.error', 'Failed to update decision'));
+        }
+    };
+
+    const handleDelegate = async (decisionId: string, toUserId: string, note: string) => {
+        try {
+            await Api.put(`/decisions/${decisionId}`, {
+                decisionOwnerId: toUserId,
+                delegationNote: note,
+            });
+            toast.success(t('decisions.delegated', 'Decision delegated'));
+            fetchDecisions();
+        } catch (error) {
+            console.error('Failed to delegate:', error);
+            toast.error(t('decisions.delegateError', 'Failed to delegate'));
+        }
+    };
+
+    const handleEscalate = async (id: string) => {
+        try {
+            await Api.post(`/decisions/${id}/escalate`, {});
+            toast.success(t('decisions.escalated', 'Decision escalated to manager'));
+            fetchDecisions();
+        } catch (error) {
+            console.error('Failed to escalate:', error);
+            toast.error(t('decisions.escalateError', 'Failed to escalate'));
+        }
+    };
+
+    const handleCreateDecision = async (data: Partial<Decision>) => {
+        try {
+            await Api.post('/decisions', {
+                ...data,
+                projectId: currentProjectId,
+                relatedObjectType: 'PROJECT',
+                relatedObjectId: currentProjectId,
+                requestedById: currentUserId,
+            });
+            toast.success(t('decisions.created', 'Decision request created'));
+            fetchDecisions();
+        } catch (error) {
+            console.error('Failed to create decision:', error);
+            toast.error(t('decisions.createError', 'Failed to create decision'));
+        }
+    };
+
+    // Filter and sort decisions
+    const getFilteredDecisions = () => {
+        let filtered = decisions.filter((d) => d.status === 'PENDING');
+
+        // View mode filter
+        if (viewMode === 'my') {
+            filtered = filtered.filter((d) => d.decisionOwnerId === currentUserId);
+        } else {
+            filtered = filtered.filter((d) => d.requestedById === currentUserId && d.decisionOwnerId !== currentUserId);
+        }
+
+        // Type filter
+        switch (filterType) {
+            case 'overdue':
+                filtered = filtered.filter((d) => d.isOverdue);
+                break;
+            case 'thisWeek':
+                filtered = filtered.filter((d) => (d.daysWaiting || 0) <= 7);
+                break;
+            case 'blocking':
+                filtered = filtered.filter((d) => (d.blockedItemsCount || 0) > 0);
+                break;
+            case 'critical':
+                filtered = filtered.filter((d) => d.priority === 'CRITICAL');
+                break;
+            case 'high':
+                filtered = filtered.filter((d) => d.priority === 'HIGH' || d.priority === 'CRITICAL');
+                break;
+        }
+
+        // Search filter
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(
+                (d) =>
+                    d.title.toLowerCase().includes(query) ||
+                    d.description?.toLowerCase().includes(query) ||
+                    d.projectName?.toLowerCase().includes(query),
+            );
+        }
+
+        // Sort
+        // Priority order mapping for sorting
+        const priorityOrder: Record<string, number> = {
+            CRITICAL: 4,
+            HIGH: 3,
+            MEDIUM: 2,
+            LOW: 1,
+        };
+
+        filtered.sort((a, b) => {
+            switch (sortOrder) {
+                case 'oldest':
+                    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                case 'urgency':
+                    return (b.daysOverdue || 0) - (a.daysOverdue || 0);
+                case 'priority':
+                    return (priorityOrder[b.priority || 'MEDIUM'] || 2) - (priorityOrder[a.priority || 'MEDIUM'] || 2);
+                case 'newest':
+                default:
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            }
+        });
+
+        return filtered;
+    };
+
+    const filteredDecisions = getFilteredDecisions();
+    const myDecisionsCount = decisions.filter(
+        (d) => d.status === 'PENDING' && d.decisionOwnerId === currentUserId,
+    ).length;
+    const awaitingCount = decisions.filter(
+        (d) => d.status === 'PENDING' && d.requestedById === currentUserId && d.decisionOwnerId !== currentUserId,
+    ).length;
+    const urgentCount = decisions.filter((d) => d.status === 'PENDING' && d.isOverdue).length;
+
+    if (loading) {
+        return (
+            <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 p-8 flex items-center justify-center">
+                <Loader2 className="animate-spin text-purple-500" size={24} />
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm h-full flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-200 dark:border-white/5">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-lg shadow-sm">
+                            <FileQuestion size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-navy-900 dark:text-white">
+                                {t('decisions.title', 'Decisions')}
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {myDecisionsCount + awaitingCount} {t('decisions.pending', 'pending')}
+                                {urgentCount > 0 && <span className="text-red-500 ml-1">• {urgentCount} urgent</span>}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* New Button */}
+                    <button
+                        onClick={() => setShowNewModal(true)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm flex items-center gap-2"
+                    >
+                        <Plus size={16} />
+                        {t('decisions.new', 'New')}
+                    </button>
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg">
+                    <button
+                        onClick={() => setViewMode('my')}
+                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                            viewMode === 'my'
+                                ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+                        }`}
+                    >
+                        <User size={16} />
+                        {t('decisions.myDecisions', 'My Decisions')}
+                        <span
+                            className={`px-2 py-0.5 rounded-full text-xs ${
+                                viewMode === 'my'
+                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                    : 'bg-slate-200 dark:bg-white/10'
+                            }`}
+                        >
+                            {myDecisionsCount}
+                        </span>
+                    </button>
+                    <button
+                        onClick={() => setViewMode('awaiting')}
+                        className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                            viewMode === 'awaiting'
+                                ? 'bg-white dark:bg-navy-700 text-navy-900 dark:text-white shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
+                        }`}
+                    >
+                        <Hourglass size={16} />
+                        {t('decisions.awaiting', 'Awaiting Others')}
+                        <span
+                            className={`px-2 py-0.5 rounded-full text-xs ${
+                                viewMode === 'awaiting'
+                                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                    : 'bg-slate-200 dark:bg-white/10'
+                            }`}
+                        >
+                            {awaitingCount}
+                        </span>
+                    </button>
+                </div>
+
+                {/* Filters & Sort Row */}
+                <div className="flex items-center gap-2 mt-3">
+                    {/* Search */}
+                    <div className="flex-1 relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={t('decisions.search', 'Search...')}
+                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                    </div>
+
+                    {/* Filter Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`px-3 py-2 rounded-lg border text-sm font-medium flex items-center gap-2 transition-colors ${
+                                filterType !== 'all'
+                                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+                                    : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                            }`}
+                        >
+                            <Filter size={16} />
+                            {filterType === 'all'
+                                ? t('decisions.filter', 'Filter')
+                                : filterType === 'overdue'
+                                  ? t('decisions.filterOverdue', 'Overdue')
+                                  : filterType === 'thisWeek'
+                                    ? t('decisions.filterThisWeek', 'This Week')
+                                    : filterType === 'blocking'
+                                      ? t('decisions.filterBlocking', 'Blocking')
+                                      : filterType === 'critical'
+                                        ? t('decisions.filterCritical', 'Critical')
+                                        : t('decisions.filterHigh', 'High+')}
+                        </button>
+
+                        {showFilters && (
+                            <div className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-white/10 py-1 z-20">
+                                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                                    {t('decisions.filterByStatus', 'By Status')}
+                                </div>
+                                {(['all', 'overdue', 'thisWeek', 'blocking'] as FilterType[]).map((filter) => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => {
+                                            setFilterType(filter);
+                                            setShowFilters(false);
+                                        }}
+                                        className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
+                                            filterType === filter
+                                                ? 'text-purple-600 dark:text-purple-400 font-medium'
+                                                : 'text-slate-700 dark:text-slate-300'
+                                        }`}
+                                    >
+                                        {filter === 'all' && <Tag size={14} />}
+                                        {filter === 'overdue' && <AlertTriangle size={14} className="text-red-500" />}
+                                        {filter === 'thisWeek' && <Calendar size={14} className="text-blue-500" />}
+                                        {filter === 'blocking' && <Bell size={14} className="text-orange-500" />}
+                                        {filter === 'all'
+                                            ? t('decisions.filterAll', 'All')
+                                            : filter === 'overdue'
+                                              ? t('decisions.filterOverdue', 'Overdue')
+                                              : filter === 'thisWeek'
+                                                ? t('decisions.filterThisWeek', 'This Week')
+                                                : t('decisions.filterBlocking', 'Blocking Items')}
+                                    </button>
+                                ))}
+                                <div className="border-t border-slate-100 dark:border-white/5 my-1" />
+                                <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                                    {t('decisions.filterByPriority', 'By Priority')}
+                                </div>
+                                {(['critical', 'high'] as FilterType[]).map((filter) => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => {
+                                            setFilterType(filter);
+                                            setShowFilters(false);
+                                        }}
+                                        className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center gap-2 ${
+                                            filterType === filter
+                                                ? 'text-purple-600 dark:text-purple-400 font-medium'
+                                                : 'text-slate-700 dark:text-slate-300'
+                                        }`}
+                                    >
+                                        {filter === 'critical' && <Zap size={14} className="text-red-500" />}
+                                        {filter === 'high' && <Flag size={14} className="text-orange-500" />}
+                                        {filter === 'critical'
+                                            ? t('decisions.filterCritical', 'Critical Only')
+                                            : t('decisions.filterHigh', 'High & Critical')}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Sort Dropdown */}
+                    <select
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                        className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 text-sm text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                        <option value="newest">↓ {t('decisions.sortNewest', 'Newest')}</option>
+                        <option value="oldest">↑ {t('decisions.sortOldest', 'Oldest')}</option>
+                        <option value="urgency">⚠️ {t('decisions.sortUrgency', 'Urgency')}</option>
+                        <option value="priority">🚨 {t('decisions.sortPriority', 'Priority')}</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <AnimatePresence mode="popLayout">
+                    {filteredDecisions.length > 0 ? (
+                        filteredDecisions.map((decision) => (
+                            <DecisionCard
+                                key={decision.id}
+                                decision={decision}
+                                viewMode={viewMode}
+                                onApprove={handleApprove}
+                                onReject={handleReject}
+                                onDelegate={(d) => setDelegateDecision(d)}
+                                onEscalate={handleEscalate}
+                                onClick={onDecisionClick}
+                            />
+                        ))
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-center py-12 text-slate-400"
+                        >
+                            {viewMode === 'my' ? (
+                                <>
+                                    <CheckCircle2 size={32} className="mx-auto mb-2 text-green-500" />
+                                    <p className="text-sm font-medium">
+                                        {t('decisions.noMyDecisions', 'No decisions awaiting your action')}
+                                    </p>
+                                    <p className="text-xs">{t('decisions.allCaughtUp', 'All caught up!')}</p>
+                                </>
+                            ) : (
+                                <>
+                                    <Hourglass size={32} className="mx-auto mb-2 text-slate-400" />
+                                    <p className="text-sm font-medium">
+                                        {t('decisions.noAwaitingOthers', 'No decisions pending from others')}
+                                    </p>
+                                </>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            {/* Modals */}
+            <NewDecisionModal
+                isOpen={showNewModal}
+                onClose={() => setShowNewModal(false)}
+                onSubmit={handleCreateDecision}
+            />
+
+            <DelegateModal
+                isOpen={!!delegateDecision}
+                decision={delegateDecision}
+                onClose={() => setDelegateDecision(null)}
+                onDelegate={handleDelegate}
+            />
+        </div>
+    );
+};
+
+export default DecisionsPanel;

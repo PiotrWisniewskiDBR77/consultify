@@ -1,0 +1,107 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+[90mstdout[2m | tests/unit/backend/notificationService.test.js
+[22m[39m[Database] Mocking database for tests
+
+[90mstdout[2m | tests/unit/backend/notificationService.test.js
+[22m[39m[DB:3bh7r5] Initializing database at :memory:
+[DB:3bh7r5] Connected to the SQLite database.
+[DB:3bh7r5] WAL mode, Busy Timeout (10s), and Synchronous=NORMAL enabled.
+Created billing tables and seeded default subscription plans.
+Created professional billing system enhancement tables.
+Enterprise Customers Module tables created.
+Advanced IAM, Security, Analytics, Customer Management, and Revenue Management tables created.
+Seeded SuperAdmin and DBR77 Users.
+
+[90mstdout[2m | tests/unit/backend/notificationService.test.js[2m > [22m[2mBackend Service Test: NotificationService
+[22m[39mProjects table created successfully (or already exists).
+
+[90mstdout[2m | tests/unit/backend/notificationService.test.js[2m > [22m[2mBackend Service Test: NotificationService
+[22m[39mDatabase initialization complete.
+
+[90mstdout[2m | tests/unit/backend/notificationService.test.js[2m > [22m[2mBackend Service Test: NotificationService[2m > [22m[2mdebug[2m > [22m[2mverifies notifications table exists
+[22m[39mTables found: [ { name: [32m'notifications'[39m } ]
+
+[90mstderr[2m | tests/unit/backend/notificationService.test.js[2m > [22m[2mBackend Service Test: NotificationService[2m > [22m[2mUser-Level Delivery (V2)[2m > [22m[2mrespects quiet hours
+[22m[39m[NotificationService] deliverNotification error: TypeError: Cannot read properties of undefined (reading 'length')
+    at Object.deliverNotification [90m(/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mserver/services/notificationService.js:388:26[90m)[39m
+    at [90m/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mtests/unit/backend/notificationService.test.js:204:28
+    at [90mfile:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+
+ [31m❯[39m tests/unit/backend/notificationService.test.js [2m([22m[2m9 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 213[2mms[22m[39m
+       [32m✓[39m verifies notifications table exists[32m 2[2mms[22m[39m
+       [32m✓[39m creates a basic notification[32m 1[2mms[22m[39m
+[31m       [31m×[31m prevents duplicates within 1 hour[39m[32m 4[2mms[22m[39m
+[31m       [31m×[31m triggers Slack system alert for SYSTEM_ALERT type[39m[32m 1[2mms[22m[39m
+       [32m✓[39m fetches all notifications for user[32m 12[2mms[22m[39m
+       [32m✓[39m filters by unread[32m 1[2mms[22m[39m
+       [32m✓[39m delivers to in_app and slack channels[32m 1[2mms[22m[39m
+[31m       [31m×[31m respects quiet hours[39m[32m 2[2mms[22m[39m
+       [32m✓[39m handles missing preferences service (fallback to create)[32m 0[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/notificationService.test.js[2m > [22mBackend Service Test: NotificationService[2m > [22mcreate[2m > [22mprevents duplicates within 1 hour
+[31m[1mAssertionError[22m: expected { …(4) } to be null[39m
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+{
+  "id": "fd1ae438-0c38-411f-94b1-0b68a14a7f8d",
+  "severity": undefined,
+  "title": "Title",
+  "type": "DUPE_CHECK",
+}
+
+[36m [2m❯[22m tests/unit/backend/notificationService.test.js:[2m106:29[22m[39m
+    [90m104| [39m            })[33m;[39m
+    [90m105| [39m
+    [90m106| [39m            [34mexpect[39m(result2)[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                            [31m^[39m
+    [90m107| [39m        })[33m;[39m
+    [90m108| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/notificationService.test.js[2m > [22mBackend Service Test: NotificationService[2m > [22mcreate[2m > [22mtriggers Slack system alert for SYSTEM_ALERT type
+[31m[1mTypeError[22m: [AsyncFunction sendSystemAlert] is not a spy or a call to a spy![39m
+[36m [2m❯[22m tests/unit/backend/notificationService.test.js:[2m118:50[22m[39m
+    [90m116| [39m            })[33m;[39m
+    [90m117| [39m
+    [90m118| [39m            expect(SlackService.sendSystemAlert).toHaveBeenCalledWith(…
+    [90m   | [39m                                                 [31m^[39m
+    [90m119| [39m        })[33m;[39m
+    [90m120| [39m    })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/unit/backend/notificationService.test.js[2m > [22mBackend Service Test: NotificationService[2m > [22mUser-Level Delivery (V2)[2m > [22mrespects quiet hours
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m tests/unit/backend/notificationService.test.js:[2m210:35[22m[39m
+    [90m208| [39m            })[33m;[39m
+    [90m209| [39m
+    [90m210| [39m            [34mexpect[39m(result[33m.[39mqueued)[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                                  [31m^[39m
+    [90m211| [39m            [34mexpect[39m(result[33m.[39mreason)[33m.[39m[34mtoBe[39m([32m'quiet_hours'[39m)[33m;[39m
+    [90m212| [39m        })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m6 passed[39m[22m[90m (9)[39m
+[2m   Start at [22m 12:05:10
+[2m   Duration [22m 819ms[2m (transform 34ms, setup 83ms, import 47ms, tests 213ms, environment 316ms)[22m
+
+JUNIT report written to /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/junit.xml

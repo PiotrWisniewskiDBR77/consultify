@@ -1,0 +1,9 @@
+/**
+ * Chart Components for My Work Module
+ * BCG/McKinsey style data visualizations
+ */
+
+export { GaugeChart } from './GaugeChart';
+export { RiskRadar } from './RiskRadar';
+export { TrendAreaChart } from './TrendAreaChart';
+

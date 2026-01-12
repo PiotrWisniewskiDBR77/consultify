@@ -1,0 +1,17 @@
+{
+    "http_req_duration": [
+        "p(95)<50"
+    ],
+    "errors": [
+        "rate<0.01"
+    ],
+    "health_check_duration": [
+        "p(95)<100"
+    ],
+    "auth_duration": [
+        "p(95)<1000"
+    ],
+    "api_duration": [
+        "p(95)<500"
+    ]
+}

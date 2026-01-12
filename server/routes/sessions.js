@@ -1,72 +1,175 @@
-const express = require('express');
+/**
+ * Sessions Routes
+ * 
+ * Manages active user sessions across devices.
+ */
+
+import express from 'express';
 const router = express.Router();
-const db = require('../database');
-const { v4: uuidv4 } = require('uuid');
+import requireAuth from '../middleware/authMiddleware.js';
+import { getDatabase } from '../src/database/index.js';
+const db = getDatabase();
 
-// GET SESSION
-router.get('/:userId', (req, res) => {
-    const { userId } = req.params;
-    const { type, projectId } = req.query; // 'FREE' or 'FULL', optional projectId
+import { v4 as uuidv4 } from 'uuid';
 
-    let sql = 'SELECT data FROM sessions WHERE user_id = ? AND type = ?';
-    let params = [userId, type];
+/**
+ * GET /api/sessions
+ * Get all active sessions for current user
+ */
+router.get('/', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const currentSessionId = req.sessionId; // From auth middleware
 
-    if (projectId) {
-        sql += ' AND project_id = ?';
-        params.push(projectId);
-    } else {
-        // If no project specified, maybe find one with NULL project_id or ANY?
-        // For backward compatibility, we might want to just get the most recent one or strictly NULL.
-        // Let's assume strict NULL if not provided for now, or ignore if FREE mode (which might not have project).
-        sql += ' AND project_id IS NULL';
+        const sessions = await new Promise((resolve, reject) => {
+            db.all(
+                `SELECT id, device, ip_address, last_active, created_at
+                 FROM active_sessions 
+                 WHERE user_id = ?
+                 ORDER BY last_active DESC`,
+                [userId],
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                }
+            );
+        });
+
+        // Mark current session
+        const sessionsWithCurrent = sessions.map(s => ({
+            ...s,
+            isCurrent: s.id === currentSessionId
+        }));
+
+        res.json({
+            success: true,
+            data: sessionsWithCurrent
+        });
+    } catch (error) {
+        console.error('Error fetching sessions:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch sessions' });
     }
-
-    db.get(sql, params, (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!row) return res.json({ data: null });
-
-        try {
-            res.json({ data: JSON.parse(row.data) });
-        } catch (e) {
-            res.json({ data: null });
-        }
-    });
 });
 
-// SAVE SESSION
-router.post('/', (req, res) => {
-    const { userId, type, data, projectId } = req.body;
-    const dataStr = JSON.stringify(data);
+/**
+ * POST /api/sessions
+ * Create a new session (called on login)
+ */
+router.post('/', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { device, ipAddress } = req.body;
 
-    let checkSql = 'SELECT id FROM sessions WHERE user_id = ? AND type = ?';
-    let checkParams = [userId, type];
+        const id = uuidv4();
+        await new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO active_sessions (id, user_id, device, ip_address, last_active, created_at)
+                 VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
+                [id, userId, device || 'Unknown Device', ipAddress || req.ip],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve(this.lastID);
+                }
+            );
+        });
 
-    if (projectId) {
-        checkSql += ' AND project_id = ?';
-        checkParams.push(projectId);
-    } else {
-        checkSql += ' AND project_id IS NULL';
+        res.json({
+            success: true,
+            data: { sessionId: id }
+        });
+    } catch (error) {
+        console.error('Error creating session:', error);
+        res.status(500).json({ success: false, error: 'Failed to create session' });
     }
-
-    // Check if exists
-    db.get(checkSql, checkParams, (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
-
-        if (row) {
-            // Update
-            db.run('UPDATE sessions SET data = ?, updated_at = datetime("now") WHERE id = ?', [dataStr, row.id], (err) => {
-                if (err) return res.status(500).json({ error: err.message });
-                res.json({ success: true });
-            });
-        } else {
-            // Insert
-            const id = uuidv4();
-            db.run('INSERT INTO sessions (id, user_id, project_id, type, data) VALUES (?, ?, ?, ?, ?)', [id, userId, projectId || null, type, dataStr], (err) => {
-                if (err) return res.status(500).json({ error: err.message });
-                res.json({ success: true });
-            });
-        }
-    });
 });
 
-module.exports = router;
+/**
+ * PUT /api/sessions/:id/activity
+ * Update session last_active timestamp
+ */
+router.put('/:id/activity', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        await new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE active_sessions 
+                 SET last_active = datetime('now')
+                 WHERE id = ? AND user_id = ?`,
+                [id, userId],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve(this.changes);
+                }
+            );
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error updating session activity:', error);
+        res.status(500).json({ success: false, error: 'Failed to update session' });
+    }
+});
+
+/**
+ * DELETE /api/sessions/:id
+ * Terminate a specific session
+ */
+router.delete('/:id', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        await new Promise((resolve, reject) => {
+            db.run(
+                `DELETE FROM active_sessions WHERE id = ? AND user_id = ?`,
+                [id, userId],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve(this.changes);
+                }
+            );
+        });
+
+        res.json({
+            success: true,
+            message: 'Session terminated'
+        });
+    } catch (error) {
+        console.error('Error terminating session:', error);
+        res.status(500).json({ success: false, error: 'Failed to terminate session' });
+    }
+});
+
+/**
+ * DELETE /api/sessions
+ * Terminate all sessions except current
+ */
+router.delete('/', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const currentSessionId = req.sessionId;
+
+        await new Promise((resolve, reject) => {
+            db.run(
+                `DELETE FROM active_sessions WHERE user_id = ? AND id != ?`,
+                [userId, currentSessionId || ''],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve(this.changes);
+                }
+            );
+        });
+
+        res.json({
+            success: true,
+            message: 'All other sessions terminated'
+        });
+    } catch (error) {
+        console.error('Error terminating sessions:', error);
+        res.status(500).json({ success: false, error: 'Failed to terminate sessions' });
+    }
+});
+
+export default router;

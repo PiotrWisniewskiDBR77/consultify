@@ -21,7 +21,7 @@ export const exportReportToPDF = async (elementId: string, fileName: string) => 
             scale: 2,
             useCORS: true,
             logging: false,
-            backgroundColor: '#ffffff'
+            backgroundColor: '#ffffff',
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -57,7 +57,7 @@ export const exportReportToPDF = async (elementId: string, fileName: string) => 
         return true;
     } catch (error) {
         if (process.env.NODE_ENV !== 'production') {
-            console.error("PDF Export failed:", error);
+            console.error('PDF Export failed:', error);
         }
         return false;
     }
@@ -94,11 +94,7 @@ export const exportDashboardToPDF = async (options: ExportOptions) => {
         let yPosition = 50;
 
         // Capture and add charts
-        const chartElements = [
-            'analytics-summary',
-            'burn-down-chart',
-            'velocity-chart'
-        ];
+        const chartElements = ['analytics-summary', 'burn-down-chart', 'velocity-chart'];
 
         for (const elementId of chartElements) {
             const element = document.getElementById(elementId);
@@ -108,7 +104,7 @@ export const exportDashboardToPDF = async (options: ExportOptions) => {
                 scale: 1.5,
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
             });
 
             const imgData = canvas.toDataURL('image/png');
@@ -140,13 +136,13 @@ export const exportDashboardToPDF = async (options: ExportOptions) => {
         return true;
     } catch (error) {
         if (process.env.NODE_ENV !== 'production') {
-            console.error("Dashboard PDF Export failed:", error);
+            console.error('Dashboard PDF Export failed:', error);
         }
         return false;
     }
 };
 
-export const exportToCSV = (data: any[], filename: string) => {
+export const exportToCSV = <T extends Record<string, unknown>>(data: T[], filename: string): boolean => {
     if (data.length === 0) return false;
 
     try {
@@ -156,16 +152,18 @@ export const exportToCSV = (data: any[], filename: string) => {
         // Create CSV content
         const csvContent = [
             headers.join(','),
-            ...data.map(row =>
-                headers.map(header => {
-                    const value = row[header];
-                    // Escape commas and quotes
-                    if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-                        return `"${value.replace(/"/g, '""')}"`;
-                    }
-                    return value;
-                }).join(',')
-            )
+            ...data.map((row) =>
+                headers
+                    .map((header) => {
+                        const value = row[header];
+                        // Escape commas and quotes
+                        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+                            return `"${value.replace(/"/g, '""')}"`;
+                        }
+                        return value;
+                    })
+                    .join(','),
+            ),
         ].join('\n');
 
         // Create blob and download
@@ -179,7 +177,7 @@ export const exportToCSV = (data: any[], filename: string) => {
         return true;
     } catch (error) {
         if (process.env.NODE_ENV !== 'production') {
-            console.error("CSV Export failed:", error);
+            console.error('CSV Export failed:', error);
         }
         return false;
     }

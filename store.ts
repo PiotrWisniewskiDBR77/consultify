@@ -1,16 +1,16 @@
 import { create } from 'zustand';
+
 import {
     AppView,
-    SessionMode,
-    User,
     AuthStep,
-    Language,
+    ChatMessage,
     FreeSession,
     FullSession,
-    ChatMessage,
-    UserRole
+    Language,
+    SessionMode,
+    User,
+    UserRole,
 } from './types';
-
 
 interface AppState {
     // Navigation & UI
@@ -71,7 +71,7 @@ const initialFullSession: FullSession = {
         culture: { actual: 1, target: 1, justification: '', notes: '' },
         cybersecurity: { actual: 1, target: 1, justification: '', notes: '' },
         aiMaturity: { actual: 1, target: 1, justification: '', notes: '' },
-        completedAxes: []
+        completedAxes: [],
     },
     audits: [],
     roadmap: [],
@@ -81,7 +81,7 @@ const initialFullSession: FullSession = {
     step2Completed: false,
     step3Completed: false,
     step4Completed: false,
-    step5Completed: false
+    step5Completed: false,
 };
 
 export const useStore = create<AppState>((set) => ({
@@ -96,7 +96,9 @@ export const useStore = create<AppState>((set) => ({
     fullSessionData: initialFullSession,
     messages: [],
     isTyping: false,
-    chatHandler: () => { /* Default no-op handler */ },
+    chatHandler: () => {
+        /* Default no-op handler */
+    },
 
     // Actions
     setAppView: (view) => set({ currentView: view }),
@@ -108,27 +110,31 @@ export const useStore = create<AppState>((set) => ({
     setCurrentUser: (user) => set({ currentUser: user }),
     setAuthInitialStep: (step) => set({ authInitialStep: step }),
 
-    updateFreeSession: (data) => set((state) => ({
-        freeSessionData: { ...state.freeSessionData, ...data }
-    })),
+    updateFreeSession: (data) =>
+        set((state) => ({
+            freeSessionData: { ...state.freeSessionData, ...data },
+        })),
 
-    updateFullSession: (data) => set((state) => ({
-        fullSessionData: { ...state.fullSessionData, ...data }
-    })),
+    updateFullSession: (data) =>
+        set((state) => ({
+            fullSessionData: { ...state.fullSessionData, ...data },
+        })),
 
-    addMessage: (message) => set((state) => ({
-        messages: [...state.messages, message]
-    })),
+    addMessage: (message) =>
+        set((state) => ({
+            messages: [...state.messages, message],
+        })),
 
     setTyping: (isTyping) => set({ isTyping }),
     setChatHandler: (handler) => set({ chatHandler: handler }),
 
-    resetSession: () => set({
-        currentUser: null,
-        currentView: AppView.WELCOME,
-        isSidebarOpen: false,
-        freeSessionData: initialFreeSession,
-        fullSessionData: initialFullSession,
-        messages: []
-    })
+    resetSession: () =>
+        set({
+            currentUser: null,
+            currentView: AppView.WELCOME,
+            isSidebarOpen: false,
+            freeSessionData: initialFreeSession,
+            fullSessionData: initialFullSession,
+            messages: [],
+        }),
 }));

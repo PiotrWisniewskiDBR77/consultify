@@ -1,8 +1,9 @@
+import { AlertTriangle, Lightbulb, RefreshCw, Sparkles, TrendingUp } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { FullSession } from '../types';
+
 import { Agent } from '../services/ai/agent';
-import { Lightbulb, AlertTriangle, TrendingUp, Sparkles, RefreshCw } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { FullSession } from '../types';
 
 interface AIInsightFeedProps {
     session: FullSession;
@@ -19,40 +20,47 @@ export const AIInsightFeed: React.FC<AIInsightFeedProps> = ({ session }) => {
     const [loading, setLoading] = useState(false);
     const { currentUser } = useAppStore();
 
-    const generateInsights = async () => {
+    const generateInsights = React.useCallback(async () => {
         setLoading(true);
         try {
             // Call the Agent to analyze the full session state
             const results = await Agent.analyzeSessionForInsights(session, currentUser?.companyName || 'Client');
             setInsights(results);
         } catch (e) {
-            console.error("Failed to generate insights", e);
+            console.error('Failed to generate insights', e);
         } finally {
             setLoading(false);
         }
-    };
+    }, [session, currentUser?.companyName]);
 
     useEffect(() => {
         // Generate on mount if empty
         if (insights.length === 0) {
             generateInsights();
         }
-    }, []);
+    }, [generateInsights, insights.length]);
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'risk': return <AlertTriangle className="text-red-500" size={18} />;
-            case 'opportunity': return <TrendingUp className="text-green-500" size={18} />;
-            case 'anomaly': return <Lightbulb className="text-amber-500" size={18} />;
-            default: return <Sparkles className="text-blue-500" size={18} />;
+            case 'risk':
+                return <AlertTriangle className="text-red-500" size={18} />;
+            case 'opportunity':
+                return <TrendingUp className="text-green-500" size={18} />;
+            case 'anomaly':
+                return <Lightbulb className="text-amber-500" size={18} />;
+            default:
+                return <Sparkles className="text-blue-500" size={18} />;
         }
     };
 
     const getBg = (type: string) => {
         switch (type) {
-            case 'risk': return 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30';
-            case 'opportunity': return 'bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30';
-            default: return 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30';
+            case 'risk':
+                return 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30';
+            case 'opportunity':
+                return 'bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30';
+            default:
+                return 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30';
         }
     };
 
@@ -75,7 +83,7 @@ export const AIInsightFeed: React.FC<AIInsightFeedProps> = ({ session }) => {
             <div className="p-4 space-y-3 overflow-y-auto flex-1">
                 {loading && insights.length === 0 ? (
                     <div className="space-y-3">
-                        {[1, 2, 3].map(i => (
+                        {[1, 2, 3].map((i) => (
                             <div key={i} className="h-20 bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" />
                         ))}
                     </div>
@@ -98,9 +106,7 @@ export const AIInsightFeed: React.FC<AIInsightFeedProps> = ({ session }) => {
                 )}
 
                 {!loading && insights.length === 0 && (
-                    <div className="text-center py-8 text-slate-400 text-sm">
-                        No critical alerts at this time.
-                    </div>
+                    <div className="text-center py-8 text-slate-400 text-sm">No critical alerts at this time.</div>
                 )}
             </div>
         </div>

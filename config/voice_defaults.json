@@ -1,0 +1,11 @@
+{
+  "inputMode": "click-to-talk",
+  "autoSendDelay": 1.5,
+  "ttsVoice": "nova",
+  "ttsSpeed": 1,
+  "ttsProvider": "openai",
+  "sttProvider": "whisper",
+  "autoSpeakResponses": true,
+  "language": "pl",
+  "showLiveTranscript": true
+}

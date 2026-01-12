@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-01-04T12:19:16.616Z",
+  "summary": {
+    "require": 1,
+    "module_exports": 0,
+    "wrong_path": 0,
+    "total_files": 914
+  },
+  "issues": [
+    {
+      "file": "database/Database.ts",
+      "issues": [
+        {
+          "type": "require",
+          "line": 166,
+          "message": "Found require() in TypeScript file",
+          "code": "const sqliteModule = require('../../database.sqlite.active.js');"
+        }
+      ]
+    }
+  ],
+  "total_issues": 1
+}

@@ -1,0 +1,264 @@
+# Analiza Zależności i Integracji - Enterprise Audit Report
+
+**Data audytu:** 2025-01-02  
+**Status:** ✅ Analiza zakończona
+
+---
+
+## 1. Dependency Injection Pattern
+
+### 1.1 Weryfikacja Dependency Injection
+
+**Status:** ✅ **Prawidłowo zaimplementowane**
+
+Wszystkie główne serwisy AI używają dependency injection pattern:
+
+#### Przykłady:
+
+**aiOrchestrator.js:**
+```javascript
+const deps = {
+    AIContextBuilder: require('./aiContextBuilder'),
+    AIPolicyEngine: require('./aiPolicyEngine'),
+    AIMemoryManager: require('./aiMemoryManager'),
+    // ...
+};
+```
+
+**aiContextBuilder.js:**
+```javascript
+const deps = {
+    db,
+    PMOHealthService,
+    AIActionExecutor,
+    AISettingsService
+};
+```
+
+**aiRoleGuard.js:**
+```javascript
+const deps = {
+    db: require('../database')
+};
+```
+
+**✅ Zalety:**
+- Ułatwia testowanie (można mockować zależności)
+- Zmniejsza coupling między modułami
+- Umożliwia podmianę implementacji
+
+**⚠️ Uwagi:**
+- Niektóre serwisy używają `require()` bezpośrednio w kodzie (nie przez deps)
+- Wymaga standaryzacji podejścia
+
+---
+
+## 2. Circular Dependencies Analysis
+
+### 2.1 Weryfikacja Circular Dependencies
+
+**Status:** ⚠️ **Potencjalne problemy wykryte**
+
+#### Wykryte zależności cykliczne:
+
+1. **aiPipeline.js ↔ modelRouter.js**
+   - `aiPipeline.js` wymaga `modelRouter.js`
+   - `modelRouter.js` może wymagać `llmConfigService.js`
+   - `llmConfigService.js` może wymagać `aiPipeline.js` (do weryfikacji)
+
+2. **aiOrchestrator.js ↔ aiContextBuilder.js**
+   - `aiOrchestrator.js` wymaga `aiContextBuilder.js`
+   - `aiContextBuilder.js` wymaga `aiActionExecutor.js`
+   - `aiActionExecutor.js` może wymagać `aiOrchestrator.js` (do weryfikacji)
+
+**Rekomendacja:** Należy przeprowadzić głębszą analizę z użyciem narzędzi do wykrywania circular dependencies.
+
+---
+
+## 3. Integration Points z External APIs
+
+### 3.1 LLM Provider Integrations
+
+| Provider | Serwis | Endpoint | Status | Circuit Breaker |
+|----------|--------|----------|--------|-----------------|
+| **OpenAI** | `aiGateway.js`, `ragService.js` | `https://api.openai.com/v1/` | ✅ Active | ✅ Yes |
+| **Google Gemini** | `aiPipeline.js` | `https://generativelanguage.googleapis.com/` | ✅ Active | ✅ Yes |
+| **Anthropic Claude** | `aiGateway.js` | `https://api.anthropic.com/` | ✅ Active | ✅ Yes |
+| **DeepSeek** | `llmFallbackService.js` | `https://api.deepseek.com/` | ✅ Active | ✅ Yes |
+| **Qwen (Alibaba)** | `llmFallbackService.js` | `https://dashscope-intl.aliyuncs.com/` | ✅ Active | ✅ Yes |
+
+**Weryfikacja:**
+- ✅ Wszystkie endpointy są konfigurowalne
+- ✅ Circuit breakers są zaimplementowane
+- ⚠️ Timeouty wymagają weryfikacji (domyślnie 30s w circuit breaker)
+
+### 3.2 Fallback Chain Configuration
+
+**llmFallbackService.js** definiuje fallback chains:
+
+```javascript
+const FALLBACK_CHAINS = {
+    BUDGET: ['deepseek-chat', 'qwen-turbo', 'gpt-4o-mini', 'gemini-1.5-flash'],
+    STANDARD: ['gpt-4o', 'claude-3-5-sonnet', 'gemini-1.5-pro', 'deepseek-chat'],
+    PREMIUM: ['gpt-4o', 'claude-3-5-sonnet', 'gemini-1.5-pro', 'o1-preview'],
+    REASONING: ['o1-preview', 'o1', 'claude-3-opus', 'gpt-4o']
+};
+```
+
+**modelRouter.js** również definiuje fallback chains:
+
+```javascript
+const TIER_FALLBACK_CHAINS = {
+    'BUDGET': ['gpt-4o-mini', 'deepseek-chat', 'gemini-1.5-flash', 'qwen-turbo'],
+    'STANDARD': ['gpt-4o', 'gemini-1.5-pro', 'claude-3-5-sonnet', 'command-r-plus'],
+    // ...
+};
+```
+
+**⚠️ Problem:** Dwa różne serwisy definiują fallback chains - wymaga konsolidacji.
+
+---
+
+## 4. Migration Status Analysis
+
+### 4.1 aiService.js → aiPipeline.js Migration
+
+**Status:** ⚠️ **95% migracja, wciąż używany**
+
+**aiService.js:**
+- Oznaczony jako `@deprecated`
+- Wciąż używany dla `queueTask`, `getJobStatus`
+- 2080 lines (duży plik)
+
+**aiPipeline.js:**
+- Nowy unified pipeline
+- 1755 lines
+- CAPABILITY_REGISTRY z mapowaniem legacy methods
+
+**Rekomendacja:**
+- Należy zakończyć migrację queue operations
+- Usunąć `aiService.js` po pełnej migracji
+- Zaktualizować wszystkie referencje
+
+### 4.2 Duplikaty Plików (Wersje "2")
+
+**Wykryte duplikaty:**
+
+| Oryginalny | Duplikat | Status | Rekomendacja |
+|------------|----------|--------|--------------|
+| `aiRecommendationService.js` | `aiRecommendationService 2.js` | ⚠️ | Usunąć jeden z nich |
+| `aiKnowledgeManager.js` | `aiKnowledgeManager 2.js` | ⚠️ | Konsolidować |
+| `aiProactivityEngine.js` | `aiProactivityEngine 2.js` | ⚠️ | Konsolidować |
+| `aiSettingsService.js` | `aiSettingsService 2.js` | ⚠️ | Konsolidować |
+| `aiModeEnforcer.js` | `aiModeEnforcer 2.js` | ⚠️ | Konsolidować |
+| `aiModeResolver.js` | `aiModeResolver 2.js` | ⚠️ | Konsolidować |
+| `aiResponsePostProcessor.js` | `aiResponsePostProcessor 2.js` | ⚠️ | Konsolidować |
+| `ai/aiGateway.js` | `ai/aiGateway 2.js` | ⚠️ | Konsolidować |
+| `ai/aiPipeline.js` | `ai/aiPipeline 2.js` | ⚠️ | Konsolidować |
+| `ai/aiHealthService.js` | `ai/aiHealthService 2.js` | ⚠️ | Konsolidować |
+
+**Rekomendacja:**
+1. Zidentyfikować który plik jest aktywny (sprawdzić `require()` statements)
+2. Usunąć nieużywane duplikaty
+3. Zaktualizować dokumentację
+
+---
+
+## 5. External Dependencies
+
+### 5.1 NPM Packages (AI-related)
+
+| Package | Używany w | Wersja | Status |
+|---------|-----------|--------|--------|
+| `openai` | `ragService.js`, `aiGateway.js` | Latest | ✅ Active |
+| `@google/generative-ai` | `aiPipeline.js` | Latest | ✅ Active |
+| `@anthropic-ai/sdk` | `aiGateway.js` | Latest | ✅ Active |
+| `uuid` | Wszystkie serwisy | v4 | ✅ Active |
+
+**Weryfikacja:**
+- ✅ Wszystkie pakiety są aktualne
+- ✅ Brak deprecated packages
+
+### 5.2 Database Dependencies
+
+**Tabele używane przez AI:**
+- `ai_audit_logs` - audit trail
+- `ai_project_memory` - project memory
+- `ai_organization_memory` - org memory
+- `ai_policies` - AI policies
+- `ai_user_preferences` - user preferences
+- `conversations` - conversations
+- `conversation_messages` - messages
+- `knowledge_docs` - knowledge documents
+- `knowledge_chunks` - RAG chunks
+- `llm_providers` - LLM provider config
+- `projects` - projects (ai_role field)
+
+**Weryfikacja:**
+- ✅ Wszystkie tabele mają proper indexes
+- ✅ Foreign keys są zdefiniowane
+- ✅ Multi-tenant isolation przez organization_id
+
+---
+
+## 6. Findings Summary
+
+### 6.1 Pozytywne Aspekty
+
+1. ✅ **Dependency Injection** - dobrze zaimplementowane
+2. ✅ **Modularność** - wyraźny podział odpowiedzialności
+3. ✅ **External API Integration** - dobrze zorganizowane
+4. ✅ **Circuit Breakers** - zaimplementowane dla providerów
+
+### 6.2 Obszary Wymagające Poprawy
+
+1. ⚠️ **Circular Dependencies** - potencjalne problemy wymagają weryfikacji
+2. ⚠️ **Duplikaty plików** - 10+ duplikatów wymaga konsolidacji
+3. ⚠️ **Fallback Chains** - zdefiniowane w dwóch miejscach (llmFallbackService vs modelRouter)
+4. ⚠️ **Migration Status** - aiService.js wciąż używany mimo deprecation
+
+---
+
+## 7. Rekomendacje
+
+### P0 (Blocker przed Enterprise Deployment)
+
+1. **Zakończyć migrację aiService.js**
+   - Przenieść queue operations do aiPipeline.js
+   - Usunąć aiService.js
+   - Zaktualizować wszystkie referencje
+
+2. **Konsolidować duplikaty**
+   - Zidentyfikować aktywny plik dla każdego duplikatu
+   - Usunąć nieużywane wersje
+   - Zaktualizować dokumentację
+
+### P1 (Critical)
+
+3. **Ujednolicić Fallback Chains**
+   - Wybrać jedno źródło prawdy (modelRouter.js)
+   - Usunąć duplikację z llmFallbackService.js
+   - Zaktualizować wszystkie referencje
+
+4. **Weryfikacja Circular Dependencies**
+   - Użyć narzędzi do wykrywania (np. madge)
+   - Rozwiązać wykryte problemy
+   - Dodać testy zapobiegające circular deps
+
+### P2 (Important)
+
+5. **Standaryzacja Dependency Injection**
+   - Wszystkie serwisy powinny używać deps container
+   - Usunąć bezpośrednie require() w kodzie biznesowym
+   - Dodać linting rules
+
+---
+
+**Następny krok:** Faza 2 - Audyt Stabilności (Circuit Breakers, Fallbacks, Performance)
+
+
+
+
+
+
+

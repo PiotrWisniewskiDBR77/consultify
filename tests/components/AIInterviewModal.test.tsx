@@ -1,0 +1,135 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { AIInterviewModal } from '../../components/AIInterviewModal';
+import { Agent } from '../../../services/ai/agent';
+
+vi.mock('../../../services/ai/agent', () => ({
+    Agent: {
+        conductAssessmentInterview: vi.fn()
+    }
+}));
+
+describe('AIInterviewModal Component', () => {
+    const user = userEvent.setup();
+    const mockOnClose = vi.fn();
+    const mockOnComplete = vi.fn();
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        (Agent.conductAssessmentInterview as any).mockResolvedValue({
+            isFinished: false,
+            nextQuestion: 'What is your current process?'
+        });
+    });
+
+    it('renders modal when open', () => {
+        render(<AIInterviewModal isOpen={true} axis="Process Maturity" onClose={mockOnClose} onComplete={mockOnComplete} />);
+
+        expect(screen.getByText(/Process Maturity/i) || screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('does not render when closed', () => {
+        const { container } = render(<AIInterviewModal isOpen={false} axis="Test" onClose={mockOnClose} onComplete={mockOnComplete} />);
+        expect(container.firstChild).toBeNull();
+    });
+
+    it('displays first question on mount', async () => {
+        render(<AIInterviewModal isOpen={true} axis="Process Maturity" onClose={mockOnClose} onComplete={mockOnComplete} />);
+
+        await waitFor(() => {
+            expect(Agent.conductAssessmentInterview).toHaveBeenCalled();
+        });
+
+        await waitFor(() => {
+            expect(screen.getByText(/What is your current process/i)).toBeInTheDocument();
+        });
+    });
+
+    it('allows answering question', async () => {
+        render(<AIInterviewModal isOpen={true} axis="Process Maturity" onClose={mockOnClose} onComplete={mockOnComplete} />);
+
+        await waitFor(() => {
+            const input = screen.getByRole('textbox') || screen.getByPlaceholderText(/answer/i);
+            expect(input).toBeInTheDocument();
+        });
+
+        const input = screen.getByRole('textbox') || screen.getByPlaceholderText(/answer/i);
+        await user.type(input, 'We use manual processes');
+        expect(input).toHaveValue('We use manual processes');
+    });
+
+    it('submits answer and gets next question', async () => {
+        (Agent.conductAssessmentInterview as any).mockResolvedValueOnce({
+            isFinished: false,
+            nextQuestion: 'What is your current process?'
+        }).mockResolvedValueOnce({
+            isFinished: false,
+            nextQuestion: 'How many people are involved?'
+        });
+
+        render(<AIInterviewModal isOpen={true} axis="Process Maturity" onClose={mockOnClose} onComplete={mockOnComplete} />);
+
+        await waitFor(() => {
+            const input = screen.getByRole('textbox') || screen.getByPlaceholderText(/answer/i);
+            expect(input).toBeInTheDocument();
+        });
+
+        const input = screen.getByRole('textbox') || screen.getByPlaceholderText(/answer/i);
+        await user.type(input, 'Manual');
+
+        const submitButton = screen.getByRole('button', { name: /submit/i }) || screen.getByRole('button', { name: /send/i });
+        await user.click(submitButton);
+
+        await waitFor(() => {
+            expect(screen.getByText(/How many people/i)).toBeInTheDocument();
+        });
+    });
+
+    it('completes interview and shows conclusion', async () => {
+        (Agent.conductAssessmentInterview as any).mockResolvedValue({
+            isFinished: true,
+            conclusion: { score: 3.5, reasoning: 'Basic processes in place' }
+        });
+
+        render(<AIInterviewModal isOpen={true} axis="Process Maturity" onClose={mockOnClose} onComplete={mockOnComplete} />);
+
+        await waitFor(() => {
+            const input = screen.getByRole('textbox') || screen.getByPlaceholderText(/answer/i);
+            expect(input).toBeInTheDocument();
+        });
+
+        const input = screen.getByRole('textbox') || screen.getByPlaceholderText(/answer/i);
+        await user.type(input, 'Answer');
+
+        const submitButton = screen.getByRole('button', { name: /submit/i }) || screen.getByRole('button', { name: /send/i });
+        await user.click(submitButton);
+
+        await waitFor(() => {
+            expect(screen.getByText(/3.5/i) || screen.getByText(/Basic processes/i)).toBeInTheDocument();
+            expect(mockOnComplete).toHaveBeenCalled();
+        });
+    });
+
+    it('closes when close button clicked', async () => {
+        render(<AIInterviewModal isOpen={true} axis="Process Maturity" onClose={mockOnClose} onComplete={mockOnComplete} />);
+
+        const closeButton = screen.getByRole('button', { name: /close/i });
+        await user.click(closeButton);
+
+        expect(mockOnClose).toHaveBeenCalled();
+    });
+});
+
+
+
+
+
+
+
+
+
+

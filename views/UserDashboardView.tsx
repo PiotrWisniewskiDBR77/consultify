@@ -1,85 +1,181 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { DashboardExecutionSnapshot } from '../components/dashboard/DashboardExecutionSnapshot';
+import { DashboardOverview } from '../components/dashboard/DashboardOverview';
+import { TaskDetailModal } from '../components/MyWork/TaskDetailModal';
+import { GateStatus } from '../components/PMO/GateStatus'; // CRIT-01
+import { PMOHealthSection } from '../components/PMO/PMOHealthSection'; // Step A: PMO Health
+import { SplitLayout } from '../components/SplitLayout';
+import { useDashboardShortcuts } from '../hooks/useDashboardShortcuts';
+import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
-import { OnboardingDashboard } from '../components/dashboard/OnboardingDashboard';
-import { LiveDashboard } from '../components/dashboard/LiveDashboard';
-import { LayoutDashboard, LogOut, Map, BarChart3 } from 'lucide-react';
 
 interface UserDashboardViewProps {
     currentUser: any;
     onNavigate: (view: AppView) => void;
 }
 
+import { useScreenContext } from '../hooks/useScreenContext';
+
 export const UserDashboardView: React.FC<UserDashboardViewProps> = ({ currentUser, onNavigate }) => {
-    const { logout, fullSessionData } = useAppStore();
+    const {
+        fullSessionData,
+        currentView,
+        addChatMessage: addMessage,
+        activeChatMessages: messages,
+        setIsBotTyping: setTyping,
+        currentProjectId,
+    } = useAppStore();
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const { t } = useTranslation();
 
-    // Determine Phase
-    const isEarlyPhase = !fullSessionData?.step3Completed; // Phase 1-2 (Step 1, Step 2)
+    // Simple Render Logic based on currentView
+    // Default to Overview if generic dashboard view
+    const isSnapshot = currentView === AppView.DASHBOARD_SNAPSHOT;
 
-    // Default Tab State
-    const [manualTab, setManualTab] = useState<'overview' | 'live'>('live');
-    const activeTab = isEarlyPhase ? 'overview' : manualTab;
+    // Register Context for AI
+    const screenContextData = useMemo(
+        () => ({
+            mode: isSnapshot ? 'Snapshot' : 'Overview',
+            projectStatus: fullSessionData?.step5Completed
+                ? 'Execution'
+                : fullSessionData?.step3Completed
+                  ? 'Roadmap'
+                  : 'Planning',
+            keyMetrics: fullSessionData?.kpiResults || {},
+        }),
+        [isSnapshot, fullSessionData?.step5Completed, fullSessionData?.step3Completed, fullSessionData?.kpiResults],
+    );
 
-    const handleStartTransformation = () => {
+    useScreenContext(
+        'user_dashboard',
+        isSnapshot ? 'Execution Snapshot' : 'Executive Dashboard',
+        screenContextData,
+        'User is reviewing their transformation progress and high-level KPIs.',
+    );
+
+    const handleStartTransformation = useCallback(() => {
         onNavigate(AppView.FULL_STEP1_CONTEXT);
-    };
+    }, [onNavigate]);
+
+    const handleCreateTask = useCallback(() => {
+        setSelectedTaskId(null);
+        setIsCreateModalOpen(true);
+    }, []);
+
+    const handleEditTask = useCallback((taskId: string) => {
+        setSelectedTaskId(taskId);
+        setIsCreateModalOpen(true);
+    }, []);
+
+    const handleCloseModal = useCallback(() => {
+        setIsCreateModalOpen(false);
+    }, []);
+
+    const handleTaskSaved = useCallback(() => {
+        setRefreshTrigger((prev) => prev + 1);
+        setIsCreateModalOpen(false);
+    }, []);
+
+    // Keyboard Shortcuts Handlers
+    const handleMarkAllRead = useCallback(async () => {
+        try {
+            await Api.markAllNotificationsRead();
+            toast.success(t('dashboard.shortcuts.allMarkedRead', 'Wszystkie powiadomienia oznaczone jako przeczytane'));
+        } catch (error) {
+            console.error('Failed to mark all as read', error);
+            toast.error(t('dashboard.shortcuts.error', 'Wystąpił błąd'));
+        }
+    }, [t]);
+
+    const handleEscapeKey = useCallback(() => {
+        if (isCreateModalOpen) {
+            setIsCreateModalOpen(false);
+        }
+    }, [isCreateModalOpen]);
+
+    // Register keyboard shortcuts
+    useDashboardShortcuts({
+        onNewTask: handleCreateTask,
+        onMarkAllRead: handleMarkAllRead,
+        onEscape: handleEscapeKey,
+    });
+
+    // NOTE: We pass undefined to let SplitLayout use its default AI handler
+    // The default handler in SplitLayout properly calls startStream() which sends to backend
+
+    // Step C: Handle "Explain This" click from PMO Health section
+    const handleExplainPMO = useCallback(
+        (snapshot: any) => {
+            const prompt = `Explain the current PMO situation for project "${snapshot.projectName}":
+
+**Current Phase:** ${snapshot.phase.name} (${snapshot.phase.number}/6)
+**Gate Status:** ${snapshot.stageGate.isReady ? 'Ready' : `Not Ready - ${snapshot.stageGate.missingCriteria.length} criteria missing`}
+**Blockers:** ${snapshot.blockers.length} items blocking progress
+**Overdue Tasks:** ${snapshot.tasks.overdueCount}
+**Pending Decisions:** ${snapshot.decisions.pendingCount}
+
+Please explain:
+1. What is blocking progress (bullets)
+2. What to do next (ordered steps)
+3. Who should act on each item`;
+
+            addMessage({ id: Date.now().toString(), role: 'user', content: prompt, timestamp: new Date() });
+        },
+        [addMessage],
+    );
+
+    const handleProceed = useCallback(() => setRefreshTrigger((prev) => prev + 1), []);
 
     return (
-        <div className="flex h-full flex-col bg-slate-50 dark:bg-navy-950">
-            {/* Header */}
-            <div className="h-12 px-4 lg:px-6 flex items-center justify-between bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10 shrink-0 sticky top-0 z-50">
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-3 text-navy-900 dark:text-white font-semibold text-lg">
-                        <LayoutDashboard className="text-purple-600" />
-                        Transformation Dashboard
-                    </div>
+        <SplitLayout
+            title={t('dashboard.chatTitle', 'Executive Assistant')}
+            subtitle={t('dashboard.chatSubtitle', 'Strategic guidance & insights')}
+        >
+            <div className="flex h-full flex-col bg-slate-50 dark:bg-navy-950">
+                <div className="flex-1 p-2 lg:p-4 overflow-auto">
+                    {/* Step A: PMO Health Section - canonical health snapshot */}
+                    {currentProjectId && (
+                        <div className="mb-4">
+                            <PMOHealthSection projectId={currentProjectId} onExplainClick={handleExplainPMO} />
+                        </div>
+                    )}
 
-                    {/* Tabs - Defined in Header "Minimalist Overview" */}
-                    <div className="hidden md:flex bg-slate-100 dark:bg-navy-950/50 p-1 rounded-lg border border-slate-200 dark:border-white/5">
-                        <button
-                            onClick={() => setManualTab('overview')}
-                            disabled={isEarlyPhase}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'overview'
-                                ? 'bg-white dark:bg-navy-800 text-purple-600 dark:text-purple-400 shadow-sm'
-                                : 'text-slate-500 hover:text-navy-900 dark:hover:text-white'
-                                } ${isEarlyPhase ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <Map size={16} />
-                            Overview
-                        </button>
-                        <button
-                            onClick={() => setManualTab('live')}
-                            disabled={isEarlyPhase}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'live'
-                                ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 shadow-sm'
-                                : 'text-slate-500 hover:text-navy-900 dark:hover:text-white'
-                                } ${isEarlyPhase ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <BarChart3 size={16} />
-                            Cockpit
-                        </button>
-                    </div>
+                    {/* CRIT-01: Gate Status - shows progression blockers */}
+                    {currentProjectId && (
+                        <div className="mb-4">
+                            <GateStatus projectId={currentProjectId} compact={false} onProceed={handleProceed} />
+                        </div>
+                    )}
+
+                    {isSnapshot ? (
+                        <DashboardExecutionSnapshot session={fullSessionData} onNavigate={onNavigate} />
+                    ) : (
+                        <DashboardOverview
+                            onStartModule1={handleStartTransformation}
+                            session={fullSessionData}
+                            onCreateTask={handleCreateTask}
+                            onEditTask={handleEditTask}
+                            refreshTrigger={refreshTrigger}
+                        />
+                    )}
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="text-right hidden sm:block">
-                        <div className="text-sm font-medium text-navy-900 dark:text-white">{currentUser.firstName} {currentUser.lastName}</div>
-                        <div className="text-xs text-slate-500">{currentUser.companyName}</div>
-                    </div>
-                    <button onClick={() => logout()} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-400 hover:text-navy-900 dark:hover:text-white transition-colors">
-                        <LogOut size={20} />
-                    </button>
-                </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 p-4 lg:p-6 overflow-auto">
-                {activeTab === 'overview' ? (
-                    <OnboardingDashboard onStartModule1={handleStartTransformation} session={fullSessionData} />
-                ) : (
-                    <LiveDashboard session={fullSessionData} onNavigate={onNavigate} />
+                {/* Task Create/Edit Modal */}
+                {isCreateModalOpen && (
+                    <TaskDetailModal
+                        taskId={selectedTaskId}
+                        isOpen={isCreateModalOpen}
+                        onClose={handleCloseModal}
+                        onTaskSaved={handleTaskSaved}
+                    />
                 )}
             </div>
-        </div>
+        </SplitLayout>
     );
 };

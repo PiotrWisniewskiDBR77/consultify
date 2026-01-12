@@ -1,360 +1,877 @@
-import React, { useState, useEffect } from 'react';
-import { AppView, SessionMode, UserRole } from '../types';
-import { translations } from '../translations';
-import { useAppStore } from '../store/useAppStore';
-
 import {
-  Shield,
-  LayoutDashboard,
-  Settings,
-  LogOut,
-  ChevronDown,
-  ChevronRight,
-  Zap,
-  Layers,
-  BookOpen,
-  Box,
-  CheckCircle2,
-  Lock,
-  X,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Rocket,
-  Map
+    Accessibility, // Accessibility settings
+    Activity,
+    Bell, // Notifications
+    BookOpen,
+    Bot, // AI/Cyber?
+    Brain, // AI
+    Briefcase, // My Work
+    Building2, // Projects
+    Calculator, // Economics module
+    Calendar, // Roadmap
+    CheckCircle2,
+    ChevronRight,
+    ClipboardList, // Work preferences
+    Cpu, // Digital (M2_2)
+    CreditCard, // Billing
+    Database, // Data (M2_4)
+    Eye, // Step D: Executive View
+    EyeOff, // Privacy settings
+    Factory, // Organization
+    FileOutput, // Reports export
+    FileText, // Reports
+    Fingerprint, // Cyber
+    Globe, // Megatrends
+    Layers,
+    LayoutDashboard,
+    LayoutGrid, // Dashboard preferences
+    Lightbulb, // Initiatives
+    Link, // Integrations
+    Lock,
+    LogOut,
+    Map,
+    MessageSquare, // Feedback
+    Palette, // Studio
+    PanelLeftClose,
+    Pin,
+    Rocket,
+    Scale, // Challenges
+    Settings,
+    Shield,
+    Sparkles,
+    Target, // Goals
+    TrendingUp,
+    UserCircle, // Profile
+    Users, // Culture (M2_5) / Users
+    Workflow, // Processes (M2_1)
+    Wrench, // Tools
+    Zap, // Strategy/Quick
 } from 'lucide-react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
+
+import { useDeviceType } from '../hooks/useDeviceType';
+import { useAppStore } from '../store/useAppStore';
+import { useConversationStore } from '../store/useConversationStore';
+import { AppView, UserRole } from '../types';
+import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
+import { PhaseIndicator } from './PMO/PhaseIndicator';
 
 interface MenuItem {
-  id: string;
-  label: string;
-  icon?: React.ReactNode;
-  viewId?: AppView;
-  subItems?: MenuItem[];
-  requiresView?: AppView;
+    id: string;
+    label: string;
+    icon?: React.ReactNode;
+    viewId?: AppView;
+    subItems?: MenuItem[];
+    requiresView?: AppView;
+    isFloating?: boolean; // Deprecated but kept for compatibility logic if needed (we default to true now)
 }
 
-export const Sidebar: React.FC = () => {
-  const {
+// ---------------------------------------------------------------------------
+// Floating Submenu Portal Component
+// ---------------------------------------------------------------------------
+
+interface FloatingMenuProps {
+    parentRect: DOMRect;
+    items: MenuItem[];
+    onClose: () => void;
+    onNavigate: (viewId: AppView) => void;
+    currentView: AppView;
+    onMouseEnter: () => void;
+    onMouseLeave: () => void;
+    theme: 'light' | 'dark' | 'system';
+    title?: string;
+}
+
+const FloatingMenu: React.FC<FloatingMenuProps> = ({
+    parentRect,
+    items,
+    onNavigate,
     currentView,
-    setCurrentView,
-    logout,
-    language,
-    isSidebarOpen,
-    setIsSidebarOpen,
-    currentUser,
-    freeSessionData,
-    fullSessionData,
+    onMouseEnter,
+    onMouseLeave,
     theme,
-    toggleTheme,
-    isSidebarCollapsed,
-    toggleSidebarCollapse
-  } = useAppStore();
+    title,
+}) => {
+    const menuRef = useRef<HTMLDivElement>(null);
+    const [position, setPosition] = useState({ top: 0, left: 0 });
 
-  const t = translations.sidebar;
+    useLayoutEffect(() => {
+        if (!menuRef.current) return;
 
-  // Calculate completed views logic moved here
-  const completedViews = React.useMemo(() => {
-    const completed: AppView[] = [];
+        // Initial position: to the right of the parent, aligned with top
+        let top = parentRect.top;
+        const left = parentRect.right + 8; // 8px gap
 
-    // Quick Assessment
-    if (freeSessionData.step1Completed) completed.push(AppView.QUICK_STEP1_PROFILE);
-    if (freeSessionData.step2Completed) completed.push(AppView.QUICK_STEP2_USER_CONTEXT);
-    if (freeSessionData.step3Completed) completed.push(AppView.QUICK_STEP3_EXPECTATIONS);
+        // Adjust for viewport height
+        const menuHeight = menuRef.current.offsetHeight;
+        const windowHeight = window.innerHeight;
 
-    // Full Transformation
-    if (fullSessionData.step1Completed) completed.push(AppView.FULL_STEP1_ASSESSMENT);
-    if (fullSessionData.step2Completed) completed.push(AppView.FULL_STEP2_INITIATIVES);
-    if (fullSessionData.step3Completed) completed.push(AppView.FULL_STEP3_ROADMAP);
-    if (fullSessionData.step4Completed) completed.push(AppView.FULL_STEP4_ROI);
-    if (fullSessionData.step5Completed) completed.push(AppView.FULL_STEP5_EXECUTION);
+        // If menu goes below viewport, shift it up
+        if (top + menuHeight > windowHeight - 20) {
+            top = windowHeight - menuHeight - 20;
+        }
 
-    return completed;
-  }, [freeSessionData, fullSessionData]);
+        // Ensure it doesn't go above top
+        if (top < 10) top = 10;
 
-  // State for expanded sections
-  const [expandedItems, setExpandedItems] = useState<string[]>(['QUICK', 'FULL', 'FULL_STEP1']);
+        setPosition({ top, left });
+    }, [parentRect]);
 
-  const toggleExpand = (id: string) => {
-    setExpandedItems(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    const bgColor = theme === 'dark' ? 'bg-navy-900' : 'bg-white';
+    const borderColor = theme === 'dark' ? 'border-white/10' : 'border-slate-200';
+    const textColor = theme === 'dark' ? 'text-slate-300' : 'text-slate-600';
+    const hoverBg = theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-slate-50';
+    const hoverText = theme === 'dark' ? 'hover:text-white' : 'hover:text-navy-900';
+    const activeBg = theme === 'dark' ? 'bg-purple-900/20' : 'bg-purple-50';
+    const activeText = theme === 'dark' ? 'text-purple-300' : 'text-purple-600';
+
+    const hasItems = items && items.length > 0;
+
+    // Determine position style
+    // Use opacity 0 until position is set (checked by top !== 0) to avoid "jump" from 0,0
+    const isPositioned = position.top !== 0;
+
+    return createPortal(
+        <div
+            ref={menuRef}
+            className={`fixed z-[9999] w-64 py-2 rounded-xl shadow-2xl border ${bgColor} ${borderColor} transition-opacity duration-200 ease-out ${isPositioned ? 'opacity-100' : 'opacity-0'}`}
+            style={{ top: position.top, left: position.left }}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+        >
+            <div className="flex flex-col">
+                {title && (
+                    <div
+                        className={`px-4 py-3 text-sm font-bold ${hasItems ? 'border-b mb-1' : ''} ${theme === 'dark' ? 'border-white/10 text-white' : 'border-slate-100 text-slate-800'}`}
+                    >
+                        {title}
+                    </div>
+                )}
+                {items.map((sub) => {
+                    const isActive = sub.viewId === currentView;
+                    return (
+                        <button
+                            key={sub.id}
+                            onClick={() => sub.viewId && onNavigate(sub.viewId)}
+                            className={`
+                 w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-left transition-colors
+                 ${isActive ? `${activeBg} ${activeText}` : `${textColor} ${hoverBg} ${hoverText}`}
+               `}
+                        >
+                            {sub.icon &&
+                                React.cloneElement(sub.icon as React.ReactElement<{ size: number }>, { size: 16 })}
+                            {sub.label}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>,
+        document.body,
     );
-  };
+};
 
-  const menuStructure: MenuItem[] = [
-    {
-      id: 'DASHBOARD',
-      label: t.dashboard[language], // Module 0
-      icon: <LayoutDashboard size={18} />,
-      viewId: AppView.DASHBOARD
-    },
-    {
-      id: 'MODULE_1',
-      label: language === 'PL' ? '1. Oczekiwania & Wyzwania' : '1. Expectations & Challenges',
-      icon: <Zap size={18} />,
-      subItems: [
-        { id: 'M1_1', label: language === 'PL' ? 'Profil Firmy' : 'Company Profile', viewId: AppView.QUICK_STEP1_PROFILE },
-        { id: 'M1_2', label: language === 'PL' ? 'Cele Strategiczne' : 'Goals & Expectations', viewId: AppView.QUICK_STEP2_USER_CONTEXT, requiresView: AppView.QUICK_STEP1_PROFILE }, // Assuming STEP2 maps to Context/Goals
-        { id: 'M1_3', label: language === 'PL' ? 'Mapa Wyzwań' : 'Challenges Map', viewId: AppView.QUICK_STEP3_EXPECTATIONS, requiresView: AppView.QUICK_STEP2_USER_CONTEXT },
-      ]
-    },
-    {
-      id: 'MODULE_2',
-      label: language === 'PL' ? '2. Ocena DrD & Audyty' : '2. Assessment (DRD)',
-      icon: <CheckCircle2 size={18} />,
-      subItems: [
-        { id: 'M2_1', label: t.fullStep1_proc[language], viewId: AppView.FULL_STEP1_PROCESSES },
-        { id: 'M2_2', label: t.fullStep1_prod[language], viewId: AppView.FULL_STEP1_DIGITAL },
-        { id: 'M2_3', label: t.fullStep1_model[language], viewId: AppView.FULL_STEP1_MODELS },
-        { id: 'M2_4', label: t.fullStep1_data[language], viewId: AppView.FULL_STEP1_DATA },
-        { id: 'M2_5', label: t.fullStep1_cult[language], viewId: AppView.FULL_STEP1_CULTURE },
-        { id: 'M2_6', label: t.fullStep1_ai[language], viewId: AppView.FULL_STEP1_AI },
-      ]
-    },
-    {
-      id: 'MODULE_3',
-      label: language === 'PL' ? '3. Inicjatywy & Roadmapa' : '3. Initiatives & Roadmap',
-      icon: <Layers size={18} />,
-      subItems: [
-        { id: 'M3_1', label: language === 'PL' ? 'Generator & Lista' : 'Initiatives List', viewId: AppView.FULL_STEP2_INITIATIVES, requiresView: AppView.FULL_STEP1_ASSESSMENT },
-        { id: 'M3_2', label: language === 'PL' ? 'Roadmapa' : 'Roadmap Builder', viewId: AppView.FULL_STEP3_ROADMAP, requiresView: AppView.FULL_STEP2_INITIATIVES },
-      ]
-    },
-    {
-      id: 'MODULE_4',
-      label: language === 'PL' ? '4. Pilot Execution' : '4. Pilot Execution',
-      icon: <Rocket size={18} />, // Need to import Rocket if not present
-      viewId: AppView.FULL_PILOT_EXECUTION,
-      requiresView: AppView.FULL_STEP3_ROADMAP
-    },
-    {
-      id: 'MODULE_5',
-      label: language === 'PL' ? '5. Full Rollout' : '5. Full Rollout',
-      icon: <Map size={18} />, // Need to import Map if not present
-      viewId: AppView.FULL_ROLLOUT,
-      requiresView: AppView.FULL_STEP3_ROADMAP
-    },
-    {
-      id: 'MODULE_6',
-      label: language === 'PL' ? '6. Ekonomia & ROI' : '6. Economics & ROI',
-      icon: <Box size={18} />, // Using specific icon for ROI
-      viewId: AppView.FULL_STEP4_ROI,
-      requiresView: AppView.FULL_STEP2_INITIATIVES
-    },
-    {
-      id: 'MODULE_7',
-      label: language === 'PL' ? '7. Raporty' : '7. Execution Reports',
-      icon: <BookOpen size={18} />,
-      viewId: AppView.FULL_STEP6_REPORTS,
-      requiresView: AppView.FULL_STEP5_EXECUTION
-    }
-  ];
+// ---------------------------------------------------------------------------
+// Main Sidebar Component
+// ---------------------------------------------------------------------------
 
-  const adminMenuItem: MenuItem = {
-    id: 'ADMIN',
-    label: language === 'PL' ? 'Panel Administratora' : 'Admin Panel',
-    icon: <Shield size={18} />,
-    subItems: [
-      { id: 'ADMIN_DASHBOARD', label: t.dashboard[language], viewId: AppView.ADMIN_DASHBOARD },
-      { id: 'ADMIN_USERS', label: language === 'PL' ? 'Użytkownicy' : 'Users', viewId: AppView.ADMIN_USERS },
-      { id: 'ADMIN_PROJECTS', label: language === 'PL' ? 'Projekty' : 'Projects', viewId: AppView.ADMIN_PROJECTS },
-      { id: 'ADMIN_LLM', label: language === 'PL' ? 'Zarządzanie LLM' : 'LLM Management', viewId: AppView.ADMIN_LLM },
-      { id: 'ADMIN_KNOWLEDGE', label: language === 'PL' ? 'Baza Wiedzy' : 'Knowledge Base', viewId: AppView.ADMIN_KNOWLEDGE },
-      { id: 'ADMIN_FEEDBACK', label: language === 'PL' ? 'Feedback' : 'User Feedback', viewId: AppView.ADMIN_FEEDBACK },
-    ]
-  };
+export const Sidebar: React.FC = () => {
+    const {
+        currentView,
+        setCurrentView,
+        logout,
+        isSidebarOpen,
+        setIsSidebarOpen,
+        currentUser,
+        freeSessionData,
+        fullSessionData,
+        theme,
+        isSidebarCollapsed,
+        toggleSidebarCollapse,
+        isChatSlidingPanelOpen,
+        toggleChatSlidingPanel,
+        navigateWithChatContext,
+        currentProjectId,
+    } = useAppStore();
 
-  // Auto-expand sidebar based on currentView
-  useEffect(() => {
-    if (isSidebarCollapsed) {
-      setTimeout(() => setExpandedItems([]), 0);
-      return;
-    }
-    const allItems = [...menuStructure, ...(currentUser?.role === UserRole.ADMIN ? [adminMenuItem] : [])];
-    const findParentIds = (items: MenuItem[], targetView: AppView): string[] | null => {
-      for (const item of items) {
-        if (item.viewId === targetView) {
-          return [];
-        }
-        if (item.subItems) {
-          const result = findParentIds(item.subItems, targetView);
-          if (result !== null) {
-            return [item.id, ...result];
-          }
-        }
-      }
-      return null;
+    // Unified Chat System: Conversation store for display mode management
+    const {
+        displayMode,
+        setDisplayMode,
+        setWorkspaceContext,
+        expandToFullScreen,
+        collapseToSplit,
+        activeConversationId,
+    } = useConversationStore();
+
+    const { t } = useTranslation();
+    const { isTablet, isMobile, isTouchDevice } = useDeviceType();
+
+    // On tablet: default to collapsed sidebar unless manually expanded
+    // Derived state: Show full content if Pinned (not collapsed)
+    // On tablet, we force mini mode unless user explicitly expands
+    const showFull = !isSidebarCollapsed && !isTablet;
+
+    // Floating Menu State
+    const [activeFloating, setActiveFloating] = useState<{
+        id: string;
+        rect: DOMRect;
+        items: MenuItem[];
+        title: string;
+    } | null>(null);
+    const closeTimeoutRef = useRef<NodeJS.Timeout>(undefined);
+
+    // =========================================================================
+    // UNIFIED CHAT SYSTEM: Navigation Handlers
+    // =========================================================================
+
+    /**
+     * Navigate to AI Chat full-screen mode
+     * - Sets display mode to 'full'
+     * - Opens the chat sliding panel
+     */
+    const navigateToFullChat = useCallback(() => {
+        setDisplayMode('full');
+        setCurrentView(AppView.AI_CHAT);
+        toggleChatSlidingPanel();
+    }, [setDisplayMode, setCurrentView, toggleChatSlidingPanel]);
+
+    /**
+     * Navigate to a view while preserving chat context
+     * - Sets display mode to 'split'
+     * - Updates workspace context for AI awareness
+     * - Preserves active conversation
+     */
+    const navigateToViewWithChat = useCallback(
+        (viewId: AppView) => {
+            // Update display mode to split
+            setDisplayMode('split');
+
+            // Create workspace context for the target view
+            const workspaceType = getDefaultWorkspaceType(viewId);
+            const context = createWorkspaceContext(viewId, workspaceType, {
+                projectId: currentProjectId || undefined,
+            });
+            setWorkspaceContext(context);
+
+            // Navigate using the app store
+            navigateWithChatContext(viewId, {
+                preserveChat: true,
+                workspaceContext: context,
+            });
+        },
+        [setDisplayMode, setWorkspaceContext, navigateWithChatContext, currentProjectId],
+    );
+
+    // Calculate completed views logic
+    const completedViews = React.useMemo(() => {
+        const completed: AppView[] = [];
+        if (freeSessionData.step1Completed) completed.push(AppView.QUICK_STEP1_PROFILE);
+        if (freeSessionData.step2Completed) completed.push(AppView.QUICK_STEP2_USER_CONTEXT);
+        if (freeSessionData.step3Completed) completed.push(AppView.QUICK_STEP3_EXPECTATIONS);
+        if (fullSessionData.step1Completed) completed.push(AppView.FULL_STEP1_ASSESSMENT);
+        if (fullSessionData.step2Completed) completed.push(AppView.FULL_STEP2_INITIATIVES);
+        if (fullSessionData.step3Completed) completed.push(AppView.FULL_STEP3_ROADMAP);
+        if (fullSessionData.step4Completed) completed.push(AppView.FULL_STEP4_ROI);
+        if (fullSessionData.step5Completed) completed.push(AppView.FULL_STEP5_EXECUTION);
+        return completed;
+    }, [freeSessionData, fullSessionData]);
+
+    // Menu Definition
+    const menuStructure: MenuItem[] = [
+        {
+            id: 'AI_CHAT',
+            label: t('sidebar.aiChat', 'AI Chat'),
+            icon: <MessageSquare size={20} />,
+            viewId: AppView.AI_CHAT,
+            // onClick is handled specially in renderMenuItem for chat panel toggle
+        },
+        {
+            id: 'MY_WORK',
+            label: t('myWork.title', 'My Work'),
+            icon: <Briefcase size={20} />,
+            viewId: AppView.MY_WORK,
+        },
+        {
+            id: 'PROJECT_INTELLIGENCE',
+            label: t('sidebar.projectIntelligence', 'Project Intelligence'),
+            icon: <Brain size={20} />,
+            viewId: AppView.PROJECT_INTELLIGENCE,
+        },
+        // Phase G: Ecosystem Affiliate Dashboard
+        ...(currentUser?.journeyState === 'ECOSYSTEM_NODE'
+            ? [
+                  {
+                      id: 'AFFILIATE_DASHBOARD',
+                      label: t('sidebar.affiliateDashboard', 'Ecosystem Impact'),
+                      icon: <TrendingUp size={20} />,
+                      viewId: AppView.AFFILIATE_DASHBOARD,
+                  },
+              ]
+            : []),
+        {
+            id: 'MODULE_2',
+            label: t('sidebar.assessment'),
+            icon: <CheckCircle2 size={20} />,
+            subItems: [
+                // Assessment Frameworks - each opens AssessmentModuleHub with 4 tabs
+                {
+                    id: 'M2_DRD',
+                    label: t('sidebar.assessmentDRD'),
+                    viewId: AppView.ASSESSMENT_DRD,
+                    icon: <Activity size={16} />,
+                },
+                {
+                    id: 'M2_SIRI',
+                    label: t('sidebar.assessmentSIRI'),
+                    viewId: AppView.ASSESSMENT_SIRI,
+                    icon: <Cpu size={16} />,
+                },
+                {
+                    id: 'M2_ADMA',
+                    label: t('sidebar.assessmentADMA'),
+                    viewId: AppView.ASSESSMENT_ADMA,
+                    icon: <Database size={16} />,
+                },
+                {
+                    id: 'M2_CMMI',
+                    label: t('sidebar.assessmentCMMI'),
+                    viewId: AppView.ASSESSMENT_CMMI,
+                    icon: <Layers size={16} />,
+                },
+                {
+                    id: 'M2_LEAN',
+                    label: t('sidebar.assessmentLean'),
+                    viewId: AppView.ASSESSMENT_LEAN,
+                    icon: <Workflow size={16} />,
+                },
+            ],
+        },
+        // Inicjatywy - Unified Initiative Management + Roadmap
+        {
+            id: 'MODULE_PORTFOLIO',
+            label: t('sidebar.portfolioRoadmap', 'Initiatives'),
+            icon: <Lightbulb size={20} />,
+            viewId: AppView.PORTFOLIO_ROADMAP,
+            requiresView: AppView.FULL_STEP1_ASSESSMENT,
+        },
+        // Wdrożenie (Implementation)
+        {
+            id: 'MODULE_4',
+            label: t('sidebar.implementation'),
+            icon: <Rocket size={20} />,
+            viewId: AppView.IMPLEMENTATION,
+            requiresView: AppView.PORTFOLIO_ROADMAP,
+        },
+        // Realizacja / Benefits Tracking
+        {
+            id: 'MODULE_BENEFITS',
+            label: t('sidebar.benefitsRealization'),
+            icon: <Map size={20} />,
+            viewId: AppView.BENEFITS_REALIZATION,
+            requiresView: AppView.IMPLEMENTATION,
+        },
+        {
+            id: 'MODULE_ECONOMICS',
+            label: t('sidebar.economics'),
+            icon: <Calculator size={20} />,
+            viewId: AppView.ECONOMICS,
+            requiresView: AppView.FULL_STEP5_EXECUTION,
+        },
+        // Raporty - simplified to single item
+        {
+            id: 'MODULE_7',
+            label: t('sidebar.module7'),
+            icon: <BookOpen size={20} />,
+            viewId: AppView.FULL_STEP6_REPORTS,
+            requiresView: AppView.FULL_STEP5_EXECUTION,
+        },
+        // Tools Section with AI Advisor, Automation Scheme and Studio
+        {
+            id: 'MODULE_TOOLS',
+            label: t('sidebar.tools'),
+            icon: <Wrench size={20} />,
+            subItems: [
+                {
+                    id: 'TOOLS_AI_ADVISOR',
+                    label: t('sidebar.aiAdvisor', 'AI Advisor'),
+                    viewId: AppView.AI_ACTION_PROPOSALS,
+                    requiresView: AppView.MY_WORK,
+                    icon: <Sparkles size={16} />,
+                },
+                {
+                    id: 'TOOLS_AUTOMATION',
+                    label: t('sidebar.automationScheme', 'Schemat automatyzacji'),
+                    viewId: AppView.KPI_OKR_DASHBOARD,
+                    requiresView: AppView.MY_WORK,
+                    icon: <Workflow size={16} />,
+                },
+                {
+                    id: 'TOOLS_STUDIO',
+                    label: t('sidebar.studio', 'Studio'),
+                    viewId: AppView.STUDIO,
+                    requiresView: AppView.MY_WORK,
+                    icon: <Palette size={16} />,
+                },
+            ],
+        },
+    ];
+
+    const adminMenuItem: MenuItem = {
+        id: 'ADMIN',
+        label: t('sidebar.adminPanel'),
+        icon: <Shield size={20} />,
+        subItems: [
+            {
+                id: 'ADMIN_OVERVIEW',
+                label: t('admin.modules.overview', 'Overview'),
+                viewId: AppView.ADMIN_OVERVIEW,
+                icon: <LayoutDashboard size={16} />,
+            },
+            {
+                id: 'ADMIN_ORGANIZATION',
+                label: t('admin.modules.organization', 'Organization'),
+                viewId: AppView.ADMIN_ORGANIZATION,
+                icon: <Building2 size={16} />,
+            },
+            {
+                id: 'ADMIN_TEAM',
+                label: t('admin.modules.team', 'Team'),
+                viewId: AppView.ADMIN_TEAM,
+                icon: <Users size={16} />,
+            },
+            {
+                id: 'ADMIN_WORKSPACE',
+                label: t('admin.modules.workspace', 'Workspace'),
+                viewId: AppView.ADMIN_WORKSPACE,
+                icon: <Briefcase size={16} />,
+            },
+            { id: 'ADMIN_AI', label: t('admin.modules.ai', 'AI'), viewId: AppView.ADMIN_AI, icon: <Brain size={16} /> },
+            {
+                id: 'ADMIN_BILLING',
+                label: t('admin.modules.billing', 'Billing'),
+                viewId: AppView.ADMIN_BILLING,
+                icon: <CreditCard size={16} />,
+            },
+            {
+                id: 'ADMIN_SECURITY',
+                label: t('admin.modules.security', 'Security'),
+                viewId: AppView.ADMIN_SECURITY,
+                icon: <Lock size={16} />,
+            },
+        ],
     };
 
-    const parentsToExpand = findParentIds(allItems, currentView);
-    if (parentsToExpand && parentsToExpand.length > 0) {
-      setExpandedItems(prev => {
-        const next = new Set([...prev, ...parentsToExpand]);
-        return Array.from(next);
-      });
-    }
-  }, [currentView, currentUser, isSidebarCollapsed]);
-
-  const renderMenuItem = (item: MenuItem, level: number = 0) => {
-    const isExpanded = expandedItems.includes(item.id);
-    const hasSubItems = item.subItems && item.subItems.length > 0;
-    const isActive = item.viewId === currentView;
-    const isCompleted = item.viewId && completedViews.includes(item.viewId);
-
-    // Determine if locked
-    const isLocked = item.requiresView && !completedViews.includes(item.requiresView) && !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
-
-    // Check if any child is active to highlight parent
-    const isChildActive = (i: MenuItem): boolean => {
-      if (i.viewId === currentView) return true;
-      if (i.subItems) return i.subItems.some(sub => isChildActive(sub));
-      return false;
+    const organizationMenuItem: MenuItem = {
+        id: 'ORGANIZATION',
+        label: t('sidebar.organization'),
+        icon: <Factory size={20} />,
+        subItems: [
+            {
+                id: 'CTX_1',
+                label: t('sidebar.context.profile'),
+                viewId: AppView.CONTEXT_BUILDER_PROFILE,
+                icon: <Target size={16} />,
+            },
+            {
+                id: 'CTX_2',
+                label: t('sidebar.context.goals'),
+                viewId: AppView.CONTEXT_BUILDER_GOALS,
+                icon: <Target size={16} />,
+            },
+            {
+                id: 'CTX_3',
+                label: t('sidebar.context.challenges'),
+                viewId: AppView.CONTEXT_BUILDER_CHALLENGES,
+                icon: <Scale size={16} />,
+            },
+            {
+                id: 'CTX_4',
+                label: t('sidebar.context.megatrends'),
+                viewId: AppView.CONTEXT_BUILDER_MEGATRENDS,
+                icon: <Globe size={16} />,
+            },
+            {
+                id: 'CTX_5',
+                label: t('sidebar.context.strategy'),
+                viewId: AppView.CONTEXT_BUILDER_STRATEGY,
+                icon: <Zap size={16} />,
+            },
+        ],
     };
-    const isParentActive = hasSubItems && isChildActive(item);
 
-    const paddingLeft = isSidebarCollapsed ? 'justify-center px-2' : level === 0 ? 'px-2.5' : level === 1 ? 'px-5' : 'px-8';
+    const settingsMenuItem: MenuItem = {
+        id: 'SETTINGS',
+        label: t('sidebar.settings'),
+        icon: <Settings size={20} />,
+        subItems: [
+            {
+                id: 'SETTINGS_PROFILE_MODULE',
+                label: t('settings.modules.profile', 'Profile'),
+                viewId: AppView.SETTINGS_PROFILE_MODULE,
+                icon: <UserCircle size={16} />,
+            },
+            {
+                id: 'SETTINGS_AI_MODULE',
+                label: t('settings.modules.aiPreferences', 'AI Preferences'),
+                viewId: AppView.SETTINGS_AI_MODULE,
+                icon: <Brain size={16} />,
+            },
+            {
+                id: 'SETTINGS_NOTIFICATIONS_MODULE',
+                label: t('settings.modules.notifications', 'Notifications'),
+                viewId: AppView.SETTINGS_NOTIFICATIONS_MODULE,
+                icon: <Bell size={16} />,
+            },
+            {
+                id: 'SETTINGS_SECURITY_MODULE',
+                label: t('settings.modules.security', 'Security'),
+                viewId: AppView.SETTINGS_SECURITY_MODULE,
+                icon: <Shield size={16} />,
+            },
+            {
+                id: 'SETTINGS_INTEGRATIONS_MODULE',
+                label: t('settings.modules.integrations', 'Integrations'),
+                viewId: AppView.SETTINGS_INTEGRATIONS_MODULE,
+                icon: <Link size={16} />,
+            },
+            {
+                id: 'SETTINGS_APPEARANCE_MODULE',
+                label: t('settings.modules.appearance', 'Appearance'),
+                viewId: AppView.SETTINGS_APPEARANCE_MODULE,
+                icon: <Globe size={16} />,
+            },
+        ],
+    };
 
-    return (
-      <div key={item.id} className="w-full">
-        <button
-          onClick={() => {
-            if (isLocked) return;
-            if (hasSubItems) {
-              toggleExpand(item.id);
-            } else if (item.viewId) {
-              setCurrentView(item.viewId);
-              setIsSidebarOpen(false);
+    // Hover Handlers
+    const handleItemMouseEnter = (e: React.MouseEvent<HTMLDivElement>, item: MenuItem) => {
+        if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+
+        // Logic:
+        // 1. If has subItems -> ALWAYS show flyout (items + header)
+        // 2. If NO subItems BUT Sidebar is Collapsed (!showFull) -> show flyout (Tooltip style: Header only)
+
+        const hasSubItems = item.subItems && item.subItems.length > 0;
+        const shouldShow = hasSubItems || !showFull;
+
+        if (shouldShow) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const itemsToShow = item.subItems || [];
+
+            setActiveFloating({
+                id: item.id,
+                rect,
+                items: itemsToShow,
+                title: item.label,
+            });
+        } else {
+            // If full sidebar and no subitems, we rely on rendering the label inline; so close any other flyouts
+            if (activeFloating && activeFloating.id !== item.id) {
+                setActiveFloating(null);
             }
-          }}
-          disabled={isLocked}
-          className={`
-            w-full flex items-center justify-between py-1 text-xs transition-all relative group
+        }
+    };
+
+    const handleMouseLeave = () => {
+        closeTimeoutRef.current = setTimeout(() => {
+            setActiveFloating(null);
+        }, 150); // Short delay to allow moving to the flyout
+    };
+
+    const handleFlyoutMouseEnter = () => {
+        if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+
+    const handleFlyoutMouseLeave = () => {
+        closeTimeoutRef.current = setTimeout(() => {
+            setActiveFloating(null);
+        }, 150);
+    };
+
+    const renderMenuItem = (item: MenuItem) => {
+        const hasSubItems = item.subItems && item.subItems.length > 0;
+        const isActive = item.viewId === currentView;
+        const isCompleted = item.viewId && completedViews.includes(item.viewId);
+
+        // Check if locked
+        const isLocked =
+            item.requiresView &&
+            !completedViews.includes(item.requiresView) &&
+            !(currentUser?.role === UserRole.ADMIN || currentUser?.role === 'SUPERADMIN');
+
+        // Get human-readable name for required view
+        const getViewName = (view: AppView): string => {
+            const viewNames: Record<string, string> = {
+                [AppView.FULL_STEP1_ASSESSMENT]: t('sidebar.assessmentDRD'),
+                [AppView.FULL_STEP2_INITIATIVES]: t('sidebar.module3_1'),
+                [AppView.PORTFOLIO_ROADMAP]: t('sidebar.portfolioRoadmap', 'Portfolio & Roadmap'),
+                [AppView.FULL_STEP5_EXECUTION]: t('sidebar.realization'),
+                [AppView.MY_WORK]: t('myWork.title', 'My Work'),
+            };
+            return viewNames[view] || t('common.previousStep');
+        };
+
+        // Check if child active (for highlighting parent)
+        const isChildActive = (i: MenuItem): boolean => {
+            if (i.viewId === currentView) return true;
+            if (i.subItems) return i.subItems.some((sub) => isChildActive(sub));
+            return false;
+        };
+        const isParentActive = hasSubItems && isChildActive(item);
+
+        // Padding logic
+        const paddingLeft = showFull ? 'px-3' : 'px-0 justify-center';
+
+        // Generate tooltip
+        const getTooltip = () => {
+            if (isLocked && item.requiresView) {
+                return `${t('common.locked')}: ${t('common.complete')} ${getViewName(item.requiresView)} ${t('common.first')}`;
+            }
+            if (!showFull) {
+                return item.label;
+            }
+            return undefined;
+        };
+
+        return (
+            <div
+                key={item.id}
+                className="relative w-full"
+                onMouseEnter={(e) => handleItemMouseEnter(e, item)}
+                onMouseLeave={handleMouseLeave}
+            >
+                <button
+                    data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
+                    onClick={() => {
+                        if (isLocked) return;
+
+                        // =====================================================
+                        // UNIFIED CHAT SYSTEM: Smart Navigation
+                        // =====================================================
+
+                        // AI Chat button: Navigate to full-screen chat
+                        if (item.id === 'AI_CHAT') {
+                            // If already in AI Chat, just toggle the sliding panel
+                            if (currentView === AppView.AI_CHAT) {
+                                toggleChatSlidingPanel();
+                            } else {
+                                // Navigate to full-screen AI Chat
+                                navigateToFullChat();
+                            }
+                            return;
+                        }
+
+                        if (item.viewId) {
+                            // Check if we have an active conversation
+                            // If yes, navigate with chat context preserved (split mode)
+                            // If no, navigate normally
+                            if (activeConversationId) {
+                                navigateToViewWithChat(item.viewId);
+                            } else {
+                                setCurrentView(item.viewId);
+                            }
+
+                            // Close on mobile/tablet after navigation
+                            if (isMobile || (isTablet && isSidebarOpen)) {
+                                setIsSidebarOpen(false);
+                            }
+                        }
+                    }}
+                    disabled={isLocked}
+                    className={`
+            w-full flex items-center text-sm transition-all relative group touch-ripple
+            ${isTouchDevice ? 'py-3 min-h-[44px]' : 'py-2.5'}
             ${paddingLeft}
             ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-            ${isSidebarCollapsed ? '' : ''}
-            ${isActive
-              ? 'bg-gradient-to-r from-purple-600/10 to-transparent ltr:border-l-2 rtl:border-r-2 border-purple-500 text-purple-700 dark:text-white dark:from-purple-600/20'
-              : isParentActive
-                ? 'text-navy-900 dark:text-white font-medium ltr:border-l-2 rtl:border-r-2 border-transparent'
-                : 'text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 ltr:border-l-2 rtl:border-r-2 border-transparent'}
+            ${
+                isActive || (item.id === 'AI_CHAT' && isChatSlidingPanelOpen)
+                    ? 'bg-purple-600/10 text-purple-600 dark:text-purple-400 border-r-2 border-purple-600'
+                    : isParentActive
+                      ? 'text-navy-900 dark:text-white font-medium bg-slate-50 dark:bg-white/5'
+                      : 'text-slate-500 dark:text-slate-400 active:text-navy-900 dark:active:text-white active:bg-slate-100 dark:active:bg-white/10 hover:text-navy-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
+            }
           `}
-        >
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            {item.icon && <span className={`${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>{React.cloneElement(item.icon as React.ReactElement<{ size: number }>, { size: 16 })}</span>}
-            {(!isSidebarCollapsed) && (
-              <span className="truncate tracking-wide">
-                {item.label}
-              </span>
+                    title={getTooltip()}
+                >
+                    <div className={`flex items-center gap-3 ${!showFull ? 'justify-center w-full' : ''} `}>
+                        {item.icon && (
+                            <span
+                                className={`transition-colors ${isActive || isParentActive ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+                            >
+                                {React.cloneElement(item.icon as React.ReactElement<{ size: number }>, { size: 20 })}
+                            </span>
+                        )}
+
+                        {showFull && <span className="truncate tracking-wide flex-1 text-left">{item.label}</span>}
+                    </div>
+
+                    {showFull && (
+                        <div className="flex items-center gap-2">
+                            {isCompleted && !isActive && <CheckCircle2 size={14} className="text-green-500/80" />}
+                            {isLocked && <Lock size={12} className="text-slate-400 dark:text-slate-500" />}
+                            {hasSubItems && (
+                                <span
+                                    className={`text-slate-400 dark:text-slate-600 transition-transform ${activeFloating?.id === item.id ? 'translate-x-1' : ''}`}
+                                >
+                                    <div className="rtl:rotate-180">
+                                        <ChevronRight size={14} />
+                                    </div>
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </button>
+            </div>
+        );
+    };
+
+    // Width class:
+    // - Mobile: full width when open, hidden when closed
+    // - Tablet: mini mode (64px) by default
+    // - Desktop: full (256px) or mini based on user preference
+    const sidebarWidthClass = showFull ? 'w-64' : 'w-16';
+
+    return (
+        <>
+            {/* Mobile/Tablet Overlay - shown when sidebar is open on touch devices */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
             )}
-          </div>
 
-          {!isSidebarCollapsed && (
-            <div className="flex items-center gap-2">
-              {isCompleted && !isActive && (
-                <CheckCircle2 size={14} className="text-green-500/80" />
-              )}
-              {isLocked && (
-                <Lock size={12} className="text-slate-400 dark:text-slate-500" />
-              )}
-              {hasSubItems && (
-                <span className="text-slate-400 dark:text-slate-600">
-                  {isExpanded ? <ChevronDown size={14} /> : <div className="rtl:rotate-180"><ChevronRight size={14} /></div>}
-                </span>
-              )}
-            </div>
-          )}
-        </button>
+            {/* SIDEBAR CONTAINER */}
+            <div
+                data-tour="sidebar-nav"
+                className={`
+          fixed inset-y-0 left-0 z-50
+          bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
+          border-r border-slate-200 dark:border-white/5 shadow-2xl
+          flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)]
+          ${sidebarWidthClass}
+          ${
+              isSidebarOpen
+                  ? 'translate-x-0'
+                  : isMobile
+                    ? '-translate-x-full'
+                    : isTablet
+                      ? 'translate-x-0' /* Tablet: always visible as mini */
+                      : 'lg:translate-x-0 -translate-x-full' /* Desktop: visible from lg breakpoint */
+          }
+          safe-area-pt safe-area-pb
+        `}
+            >
+                {/* Header */}
+                <div
+                    className={`flex items-center ${showFull ? 'justify-between px-4 h-16' : 'flex-col justify-center gap-4 py-6'} relative shrink-0 transition-all duration-300`}
+                >
+                    {showFull ? (
+                        <>
+                            <div className="flex items-center overflow-hidden">
+                                <img
+                                    src={
+                                        theme === 'dark'
+                                            ? '/assets/logos/logo-dark.png'
+                                            : '/assets/logos/logo-light.png'
+                                    }
+                                    alt="DBR77 Consultify"
+                                    className="h-8 w-auto object-contain"
+                                />
+                            </div>
 
-        {hasSubItems && isExpanded && !isSidebarCollapsed && (
-          <div className="w-full bg-slate-50/50 dark:bg-navy-900/20 ltr:border-l rtl:border-r border-slate-200 dark:border-white/5 ltr:ml-4 rtl:mr-4 my-1">
-            {item.subItems!.map(sub => renderMenuItem(sub, level + 1))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <>
-      {/* Mobile Overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Container - Floating Dock Style */}
-      <div className={`
-        fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 
-        my-3 ml-3 rounded-xl border border-white/20 dark:border-white/5
-        ${isSidebarCollapsed ? 'w-14' : 'w-56'} 
-        bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl shadow-2xl dark:shadow-black/50
-        flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] shrink-0
-        ${isSidebarOpen
-          ? 'translate-x-0'
-          : language === 'AR' ? 'translate-x-full lg:translate-x-0 lg:relative' : '-translate-x-full lg:translate-x-0 lg:relative'}
-      `}>
-        {/* Header / Logo */}
-        <div className="h-12 flex items-center px-3 mb-1 relative">
-          <button onClick={toggleSidebarCollapse} className="flex items-center gap-3 w-full group">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand to-brand-hover flex items-center justify-center shadow-lg shadow-brand/20 group-hover:scale-105 transition-transform duration-300">
-              <span className="text-white font-black text-xs tracking-tighter">DBR</span>
-            </div>
-            {!isSidebarCollapsed && (
-              <div className="flex items-center justify-between flex-1 animate-fade-in">
-                <div className="flex flex-col items-start leading-none">
-                  <span className="font-bold text-base tracking-tight text-navy-900 dark:text-white">CONSULTIFY</span>
-                  <span className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Enterprise</span>
+                            <button
+                                onClick={toggleSidebarCollapse}
+                                className={`
+                  p-2 rounded-lg transition-colors
+                  text-slate-400 hover:text-navy-900 hover:bg-slate-100 
+                  dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10
+                `}
+                                title={t('sidebar.collapse', 'Collapse')}
+                            >
+                                <PanelLeftClose size={20} className="" />
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <span className="text-2xl font-bold tracking-tighter text-purple-600 dark:text-purple-400">
+                                77
+                            </span>
+                            <button
+                                onClick={toggleSidebarCollapse}
+                                className={`
+                  p-2 rounded-lg transition-colors flex justify-center items-center
+                  text-slate-400 hover:text-navy-900 hover:bg-slate-100 
+                  dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10
+                `}
+                                title={t('sidebar.expand', 'Expand')}
+                            >
+                                <PanelLeftClose size={20} className="rotate-180" />
+                            </button>
+                        </>
+                    )}
                 </div>
-              </div>
-            )}
-          </button>
 
-          {/* Mobile Close Button */}
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden absolute right-4 text-slate-400 hover:text-navy-900 dark:hover:text-white"
-          >
-            <X size={24} />
-          </button>
-        </div>
+                {/* Scrollable Navigation */}
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent">
+                    {/* PMO Phase Indicator - Always visible */}
+                    <div className={`${showFull ? 'px-3 pt-4' : 'px-2 pt-4'}`}>
+                        <PhaseIndicator compact={!showFull} />
+                    </div>
 
-        {/* Scrollable Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2 py-1.5 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent space-y-0.5">
-          {menuStructure.map(item => renderMenuItem(item))}
-        </nav>
+                    <div className={`space-y-1 pb-2 ${showFull ? 'pt-4' : 'pt-4'}`}>
+                        {menuStructure.map((item) => renderMenuItem(item))}
+                    </div>
+                </nav>
 
-        {/* Bottom Actions */}
-        <div className="mt-auto px-3 pb-4">
-          {currentUser?.role === UserRole.ADMIN && (
-            <div className="mb-2 pb-2 border-b border-slate-200/50 dark:border-white/5">
-              {renderMenuItem(adminMenuItem)}
+                {/* Bottom Actions */}
+                <div className="p-3 border-t border-slate-200 dark:border-white/5 shrink-0">
+                    <div className="space-y-1">
+                        <div className="my-1 border-t border-slate-200 dark:border-white/5" />
+
+                        {currentUser?.role === UserRole.ADMIN && renderMenuItem(organizationMenuItem)}
+                        {currentUser?.role === UserRole.ADMIN && renderMenuItem(adminMenuItem)}
+                        {renderMenuItem(settingsMenuItem)}
+
+                        <button
+                            onClick={logout}
+                            className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-sm font-medium btn-base transition-all duration-200
+                text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400
+                ${!showFull ? 'justify-center px-0' : 'px-3'} `}
+                            title={t('sidebar.logOut')}
+                        >
+                            <LogOut size={18} />
+                            {showFull && <span>{t('sidebar.logOut')}</span>}
+                        </button>
+                    </div>
+                </div>
             </div>
-          )}
 
-          <div className="flex flex-col gap-1">
-            <button
-              onClick={() => setCurrentView(AppView.SETTINGS_PROFILE as AppView)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-200
-                ${currentView.startsWith('SETTINGS')
-                  ? 'bg-brand/10 text-brand dark:text-purple-300'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-navy-900 dark:hover:text-white'} 
-                ${isSidebarCollapsed ? 'justify-center px-0' : ''}`}
-            >
-              <Settings size={18} />
-              {!isSidebarCollapsed && t.settings[language]}
-            </button>
-            <button
-              onClick={logout}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-200
-               text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400
-               ${isSidebarCollapsed ? 'justify-center px-0' : ''}`}
-            >
-              <LogOut size={18} />
-              {!isSidebarCollapsed && t.logOut[language]}
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+            {/* Render Active Flyout Menu */}
+            {activeFloating && (
+                <FloatingMenu
+                    parentRect={activeFloating.rect}
+                    items={activeFloating.items}
+                    title={activeFloating.title}
+                    onClose={() => setActiveFloating(null)}
+                    onNavigate={(viewId) => {
+                        // Use smart navigation with chat context preservation
+                        if (activeConversationId) {
+                            navigateToViewWithChat(viewId);
+                        } else {
+                            setCurrentView(viewId);
+                        }
+                        setActiveFloating(null);
+                        if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                    }}
+                    currentView={currentView}
+                    onMouseEnter={handleFlyoutMouseEnter}
+                    onMouseLeave={handleFlyoutMouseLeave}
+                    theme={theme}
+                />
+            )}
+        </>
+    );
 };

@@ -1,0 +1,316 @@
+<testsuites id="" name="" tests="5" failures="5" skipped="0" errors="0" time="32.759031">
+<testsuite name="aiPlaybooks.spec.ts" timestamp="2025-12-29T05:50:07.386Z" hostname="chromium" tests="5" failures="5" skipped="0" time="151.309" errors="0">
+<testcase name="AI Playbooks Flow › SuperAdmin - Playbook Templates › should display playbook templates list" classname="aiPlaybooks.spec.ts" time="30.321">
+<failure message="aiPlaybooks.spec.ts:23:5 should display playbook templates list" type="FAILURE">
+<![CDATA[  [chromium] › aiPlaybooks.spec.ts:23:5 › AI Playbooks Flow › SuperAdmin - Playbook Templates › should display playbook templates list 
+
+    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+
+       9 |
+      10 |     test.describe('SuperAdmin - Playbook Templates', () => {
+    > 11 |         test.beforeEach(async ({ page }) => {
+         |              ^
+      12 |             // Login as SuperAdmin
+      13 |             await page.goto('/login');
+      14 |             await page.fill('input[type="email"]', 'admin@dbr77.com');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:11:14
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=Playbook Templates')
+        - locator resolved to <span class="flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 w-0 opacity-0">Playbook Templates</span>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+          - waiting 100ms
+        56 × waiting for element to be visible, enabled and stable
+           - element is not visible
+         - retrying click action
+           - waiting 500ms
+
+
+      18 |             // Navigate to Playbook Templates
+      19 |             // Since we added it to the sidebar, we can click it
+    > 20 |             await page.click('text=Playbook Templates');
+         |                        ^
+      21 |         });
+      22 |
+      23 |         test('should display playbook templates list', async ({ page }) => {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:20:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-6246c-lay-playbook-templates-list-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/aiPlaybooks-AI-Playbooks-F-6246c-lay-playbook-templates-list-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-6246c-lay-playbook-templates-list-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/aiPlaybooks-AI-Playbooks-F-6246c-lay-playbook-templates-list-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-6246c-lay-playbook-templates-list-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-6246c-lay-playbook-templates-list-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-6246c-lay-playbook-templates-list-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="AI Playbooks Flow › SuperAdmin - Playbook Templates › should filter templates by status" classname="aiPlaybooks.spec.ts" time="30.341">
+<failure message="aiPlaybooks.spec.ts:32:5 should filter templates by status" type="FAILURE">
+<![CDATA[  [chromium] › aiPlaybooks.spec.ts:32:5 › AI Playbooks Flow › SuperAdmin - Playbook Templates › should filter templates by status 
+
+    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+
+       9 |
+      10 |     test.describe('SuperAdmin - Playbook Templates', () => {
+    > 11 |         test.beforeEach(async ({ page }) => {
+         |              ^
+      12 |             // Login as SuperAdmin
+      13 |             await page.goto('/login');
+      14 |             await page.fill('input[type="email"]', 'admin@dbr77.com');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:11:14
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=Playbook Templates')
+        - locator resolved to <span class="flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 w-0 opacity-0">Playbook Templates</span>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+          - waiting 100ms
+        56 × waiting for element to be visible, enabled and stable
+           - element is not visible
+         - retrying click action
+           - waiting 500ms
+
+
+      18 |             // Navigate to Playbook Templates
+      19 |             // Since we added it to the sidebar, we can click it
+    > 20 |             await page.click('text=Playbook Templates');
+         |                        ^
+      21 |         });
+      22 |
+      23 |         test('should display playbook templates list', async ({ page }) => {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:20:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-0f397--filter-templates-by-status-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/aiPlaybooks-AI-Playbooks-F-0f397--filter-templates-by-status-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-0f397--filter-templates-by-status-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/aiPlaybooks-AI-Playbooks-F-0f397--filter-templates-by-status-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-0f397--filter-templates-by-status-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-0f397--filter-templates-by-status-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-0f397--filter-templates-by-status-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="AI Playbooks Flow › SuperAdmin - Playbook Templates › should allow exporting templates" classname="aiPlaybooks.spec.ts" time="30.327">
+<failure message="aiPlaybooks.spec.ts:45:5 should allow exporting templates" type="FAILURE">
+<![CDATA[  [chromium] › aiPlaybooks.spec.ts:45:5 › AI Playbooks Flow › SuperAdmin - Playbook Templates › should allow exporting templates 
+
+    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+
+       9 |
+      10 |     test.describe('SuperAdmin - Playbook Templates', () => {
+    > 11 |         test.beforeEach(async ({ page }) => {
+         |              ^
+      12 |             // Login as SuperAdmin
+      13 |             await page.goto('/login');
+      14 |             await page.fill('input[type="email"]', 'admin@dbr77.com');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:11:14
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=Playbook Templates')
+        - locator resolved to <span class="flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 w-0 opacity-0">Playbook Templates</span>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is not visible
+        - retrying click action
+          - waiting 100ms
+        56 × waiting for element to be visible, enabled and stable
+           - element is not visible
+         - retrying click action
+           - waiting 500ms
+
+
+      18 |             // Navigate to Playbook Templates
+      19 |             // Since we added it to the sidebar, we can click it
+    > 20 |             await page.click('text=Playbook Templates');
+         |                        ^
+      21 |         });
+      22 |
+      23 |         test('should display playbook templates list', async ({ page }) => {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:20:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-e2441-d-allow-exporting-templates-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/aiPlaybooks-AI-Playbooks-F-e2441-d-allow-exporting-templates-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-e2441-d-allow-exporting-templates-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/aiPlaybooks-AI-Playbooks-F-e2441-d-allow-exporting-templates-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-e2441-d-allow-exporting-templates-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-e2441-d-allow-exporting-templates-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-e2441-d-allow-exporting-templates-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="AI Playbooks Flow › Admin - Playbook Runs › should display playbook runs history" classname="aiPlaybooks.spec.ts" time="30.143">
+<failure message="aiPlaybooks.spec.ts:75:5 should display playbook runs history" type="FAILURE">
+<![CDATA[  [chromium] › aiPlaybooks.spec.ts:75:5 › AI Playbooks Flow › Admin - Playbook Runs › should display playbook runs history 
+
+    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+
+      53 |
+      54 |     test.describe('Admin - Playbook Runs', () => {
+    > 55 |         test.beforeEach(async ({ page }) => {
+         |              ^
+      56 |             // Login as Admin
+      57 |             await page.goto('/login');
+      58 |             await page.fill('input[type="email"]', 'test@example.com');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:55:14
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=Playbook Runs')
+
+
+      66 |                 await adminPanelMenu.click();
+      67 |             }
+    > 68 |             await page.click('text=Playbook Runs');
+         |                        ^
+      69 |         });
+      70 |
+      71 |         test('should display playbook runs history', async ({ page }) => {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:68:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-d877d-splay-playbook-runs-history-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/aiPlaybooks-AI-Playbooks-F-d877d-splay-playbook-runs-history-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-d877d-splay-playbook-runs-history-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/aiPlaybooks-AI-Playbooks-F-d877d-splay-playbook-runs-history-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-d877d-splay-playbook-runs-history-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-d877d-splay-playbook-runs-history-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-d877d-splay-playbook-runs-history-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="AI Playbooks Flow › Admin - Playbook Runs › should show available templates to start a run" classname="aiPlaybooks.spec.ts" time="30.177">
+<failure message="aiPlaybooks.spec.ts:82:5 should show available templates to start a run" type="FAILURE">
+<![CDATA[  [chromium] › aiPlaybooks.spec.ts:82:5 › AI Playbooks Flow › Admin - Playbook Runs › should show available templates to start a run 
+
+    Test timeout of 30000ms exceeded while running "beforeEach" hook.
+
+      53 |
+      54 |     test.describe('Admin - Playbook Runs', () => {
+    > 55 |         test.beforeEach(async ({ page }) => {
+         |              ^
+      56 |             // Login as Admin
+      57 |             await page.goto('/login');
+      58 |             await page.fill('input[type="email"]', 'test@example.com');
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:55:14
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for locator('text=Playbook Runs')
+
+
+      66 |                 await adminPanelMenu.click();
+      67 |             }
+    > 68 |             await page.click('text=Playbook Runs');
+         |                        ^
+      69 |         });
+      70 |
+      71 |         test('should display playbook runs history', async ({ page }) => {
+        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/aiPlaybooks.spec.ts:68:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-fff6b-le-templates-to-start-a-run-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../test-results/aiPlaybooks-AI-Playbooks-F-fff6b-le-templates-to-start-a-run-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../test-results/aiPlaybooks-AI-Playbooks-F-fff6b-le-templates-to-start-a-run-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../test-results/aiPlaybooks-AI-Playbooks-F-fff6b-le-templates-to-start-a-run-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-fff6b-le-templates-to-start-a-run-chromium/test-failed-1.png]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-fff6b-le-templates-to-start-a-run-chromium/error-context.md]]
+
+[[ATTACHMENT|test-results/aiPlaybooks-AI-Playbooks-F-fff6b-le-templates-to-start-a-run-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>
