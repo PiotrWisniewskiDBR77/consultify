@@ -39,7 +39,7 @@ export const AdminAccessControlView: React.FC<AdminAccessControlViewProps> = ({ 
     const loadCodes = async () => {
         try {
             setLoading(true);
-            const data = await Api.getAccessCodes(organizationId);
+            const data = await Api.getAccessCodes();
             setCodes(data);
         } catch (err) {
             console.error('Failed to load access codes:', err);

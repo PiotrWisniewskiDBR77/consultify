@@ -35,7 +35,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
     const loadRequests = async () => {
         try {
             setLoading(true);
-            const data = await Api.getAccessRequests(statusFilter);
+            const data = await Api.getAccessRequests();
             setRequests(data);
         } catch (err) {
             console.error('Failed to load access requests:', err);

@@ -73,10 +73,11 @@ export const AccessControlService = {
         return res.json();
     },
 
-    approveAccessRequest: async (id: string): Promise<void> => {
+    approveAccessRequest: async (id: string, password?: string, role?: string): Promise<void> => {
         const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/approve`, {
             method: 'POST',
             headers: getHeaders(),
+            body: JSON.stringify({ password, role }),
         });
         if (!res.ok) throw new Error('Failed to approve request');
     },

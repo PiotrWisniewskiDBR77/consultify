@@ -77,11 +77,11 @@ export const PilotExecutionView: React.FC = () => {
             projectId: selectedInitiative?.id || 'default', // Fallback
             organizationId: currentUser!.organizationId!,
             title: '',
-            status: 'todo',
+            status: TaskStatus.TODO,
             priority: 'medium',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            taskType: 'execution',
+            taskType: 'task',
             initiativeId: selectedInitiative?.id
         };
         setEditingTask(newTask);
@@ -101,8 +101,8 @@ export const PilotExecutionView: React.FC = () => {
         }
     };
 
-    const renderKanbanColumn = (status: TaskStatus, label: string) => {
-        const columnTasks = tasks.filter(t => t.status === status);
+    const renderKanbanColumn = (status: TaskStatus | string, label: string) => {
+        const columnTasks = tasks.filter(t => t.status === status || String(t.status).toLowerCase() === String(status).toLowerCase());
         return (
             <div className="flex-1 min-w-[280px] bg-navy-950/50 rounded-xl border border-white/5 flex flex-col h-full">
                 <div className="p-4 border-b border-white/5 flex justify-between items-center bg-navy-900/50 rounded-t-xl">
@@ -311,10 +311,10 @@ export const PilotExecutionView: React.FC = () => {
                     {/* Kanban Board */}
                     {selectedInitiative && (
                         <div className="flex-1 flex gap-4 overflow-x-auto pb-4">
-                            {renderKanbanColumn('todo', 'Backlog')}
-                            {renderKanbanColumn('in_progress', 'In Progress')}
-                            {renderKanbanColumn('review', 'Review / QA')}
-                            {renderKanbanColumn('done', 'Completed')}
+                            {renderKanbanColumn(TaskStatus.TODO, 'Backlog')}
+                            {renderKanbanColumn(TaskStatus.IN_PROGRESS, 'In Progress')}
+                            {renderKanbanColumn(TaskStatus.BLOCKED, 'Review / QA')}
+                            {renderKanbanColumn(TaskStatus.DONE, 'Completed')}
                         </div>
                     )}
 
