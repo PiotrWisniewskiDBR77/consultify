@@ -24,12 +24,13 @@ RUN cd server && npm ci --omit=dev
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 
-# Copy package files and install all dependencies (including dev)
+# Copy package files and workspace structure for npm workspaces
 COPY package.json package-lock.json ./
+COPY packages/ ./packages/
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 RUN npm ci || (echo "Lock file out of sync, updating..." && npm install)
 
-# Copy source and build
+# Copy remaining source and build
 COPY . .
 RUN npm run build
 
@@ -42,6 +43,8 @@ WORKDIR /app
 # Copy package files and install all dependencies (including dev)
 COPY server/package.json server/package-lock.json ./
 RUN npm ci
+# Ensure TypeScript is available (in case it's not in package.json)
+RUN npm list typescript || npm install --save-dev typescript@~5.8.2
 
 # Copy source and build
 COPY server/ .
