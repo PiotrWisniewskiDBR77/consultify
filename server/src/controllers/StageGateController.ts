@@ -30,8 +30,10 @@ export class StageGateController {
      */
     static evaluateGate = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId, gateType } = req.params;
+        const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
+        const gateTypeStr = Array.isArray(gateType) ? gateType[0] : gateType;
 
-        const result = await evaluateGate(projectId, gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES]);
+        const result = await evaluateGate(projectIdStr, gateTypeStr as (typeof GATE_TYPES)[keyof typeof GATE_TYPES]);
 
         res.json(result);
     });
@@ -41,10 +43,11 @@ export class StageGateController {
      */
     static getCurrentGate = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId } = req.params;
+        const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
 
         const project = await DbPromise.get<{ current_phase?: string }>(
             `SELECT current_phase FROM projects WHERE id = ?`,
-            [projectId],
+            [projectIdStr],
         );
 
         if (!project) {
@@ -94,14 +97,18 @@ export class StageGateController {
             return;
         }
 
-        // Check permission
-        if (!req.can || !req.can('manage_stage_gates')) {
+        // Check permission - using PermissionService if available
+        const PermissionService = (await import('../services/permissionService.js')).default;
+        if (!PermissionService.can || !PermissionService.can(req.user!, 'manage_stage_gates')) {
             res.status(403).json({ error: 'Permission denied' });
             return;
         }
 
+        const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
+        const gateTypeStr = Array.isArray(gateType) ? gateType[0] : gateType;
+        
         // First evaluate
-        const evaluation = await evaluateGate(projectId, gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES]);
+        const evaluation = await evaluateGate(projectIdStr, gateTypeStr as (typeof GATE_TYPES)[keyof typeof GATE_TYPES]);
 
         if (evaluation.status !== 'READY') {
             res.status(400).json({
@@ -113,8 +120,8 @@ export class StageGateController {
 
         // Pass the gate
         const result = await passGate(
-            projectId,
-            gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES],
+            projectIdStr,
+            gateTypeStr as (typeof GATE_TYPES)[keyof typeof GATE_TYPES],
             userId,
             notes,
         );

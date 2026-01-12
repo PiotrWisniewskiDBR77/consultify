@@ -157,10 +157,10 @@ export async function escalateAssignment(
     }
 
     auditLogger.warn('APPROVAL_ESCALATED', {
-        assignment_id: assignmentId,
         escalated_to: toUserId,
         reason,
-    });
+        metadata: { assignment_id: assignmentId } as any,
+    } as any);
 
     return { assignmentId, escalatedTo: toUserId, reason };
 }
@@ -251,7 +251,7 @@ export async function runSlaCheck(): Promise<SLACheckSummary> {
     } catch (err: unknown) {
         const error = err as Error;
         console.error('[SLAService] SLA check failed:', error);
-        auditLogger.error('SLA_CHECK_FAILED', { error: error.message });
+        auditLogger.error('SLA_CHECK_FAILED', { metadata: { error: error.message } } as any);
         throw err;
     }
 }

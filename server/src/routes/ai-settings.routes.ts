@@ -163,8 +163,7 @@ router.get(
         }
 
         try {
-            const { orgId } = req.params;
-            const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
+            const { orgId } = req.params; const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
             const userRole = req.user?.role;
             const userOrgId = req.user?.organizationId;
 
@@ -199,8 +198,7 @@ router.put(
         }
 
         try {
-            const { orgId } = req.params;
-            const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
+            const { orgId } = req.params; const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
             const userRole = req.user?.role;
             const userOrgId = req.user?.organizationId;
 
@@ -493,10 +491,10 @@ router.get(
                 offset: parseInt(offset as string),
             };
 
-            if (userRole === 'superadmin' || userRole === 'owner') {
+            if (userRole === 'owner') {
                 if (level) filters.level = level as string;
                 if (targetId) filters.targetId = targetId as string;
-            } else if (userRole === 'admin' || userRole === 'administrator') {
+            } else if (userRole === 'administrator') {
                 // Admins see only their org
                 filters.targetId = organizationId;
                 if (level) filters.level = level as string;
@@ -530,13 +528,13 @@ router.get(
         }
 
         try {
-            const { orgId } = req.params;
+            const { orgId } = req.params; const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
             const { limit = 100, offset = 0 } = req.query;
             const userRole = req.user?.role;
             const userOrgId = req.user?.organizationId || req.user?.organizationId;
 
             // Check access
-            if (userRole !== 'superadmin' && userRole !== 'owner' && userOrgId !== orgId) {
+            if (userRole !== 'owner' && userOrgId !== orgIdStr) {
                 return res.status(403).json({ error: 'Access denied' });
             }
 
@@ -611,21 +609,21 @@ router.get(
         }
 
         try {
-            const { orgId } = req.params;
+            const { orgId } = req.params; const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
             const userRole = req.user?.role;
             const userOrgId = req.user?.organizationId || req.user?.organizationId;
 
             // Check if user is admin for this org
             const isAdmin =
-                userRole === 'superadmin' ||
                 userRole === 'owner' ||
-                (userOrgId === orgId && (userRole === 'admin' || userRole === 'administrator'));
+                userRole === 'owner' ||
+                (userOrgId === orgIdStr && (userRole === 'administrator'));
 
             if (!isAdmin) {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 
-            const tiers = await AISettingsService.getOrgUserTiers(orgId);
+            const tiers = await AISettingsService.getOrgUserTiers(orgIdStr);
             res.json(tiers);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting user tiers:', error);
@@ -651,7 +649,7 @@ router.put(
         }
 
         try {
-            const { orgId, userId } = req.params;
+            const { orgId, userId } = req.params; const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId; const userIdStr = Array.isArray(userId) ? userId[0] : userId;
             const { tier } = req.body;
             const userRole = req.user?.role;
             const userOrgId = req.user?.organizationId || req.user?.organizationId;
@@ -667,15 +665,15 @@ router.put(
 
             // Check if user is admin for this org
             const isAdmin =
-                userRole === 'superadmin' ||
                 userRole === 'owner' ||
-                (userOrgId === orgId && (userRole === 'admin' || userRole === 'administrator'));
+                userRole === 'owner' ||
+                (userOrgId === orgIdStr && (userRole === 'administrator'));
 
             if (!isAdmin) {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 
-            const result = await AISettingsService.assignUserTier(orgId, userId, tier);
+            const result = await AISettingsService.assignUserTier(orgIdStr, userIdStr, tier);
             res.json(result);
         } catch (error: unknown) {
             console.error('[AI Settings] Error assigning user tier:', error);
@@ -705,22 +703,22 @@ router.get(
         }
 
         try {
-            const { orgId } = req.params;
+            const { orgId } = req.params; const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
             const { period = '7d' } = req.query;
             const userRole = req.user?.role;
             const userOrgId = req.user?.organizationId || req.user?.organizationId;
 
             // Check if user is admin for this org
             const isAdmin =
-                userRole === 'superadmin' ||
                 userRole === 'owner' ||
-                (userOrgId === orgId && (userRole === 'admin' || userRole === 'administrator'));
+                userRole === 'owner' ||
+                (userOrgId === orgIdStr && (userRole === 'administrator'));
 
             if (!isAdmin) {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 
-            const costs = await AISettingsService.getOrgCostAttribution(orgId, period as string);
+            const costs = await AISettingsService.getOrgCostAttribution(orgIdStr, period as string);
             res.json(costs);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting cost attribution:', error);
@@ -775,9 +773,9 @@ router.get(
 
             // Check admin access
             if (
-                userRole !== 'superadmin' &&
                 userRole !== 'owner' &&
-                userRole !== 'admin' &&
+                userRole !== 'owner' &&
+                userRole !== 'administrator' &&
                 userRole !== 'administrator'
             ) {
                 return res.status(403).json({ error: 'Admin access required' });
@@ -787,7 +785,8 @@ router.get(
                 return res.status(400).json({ error: 'Organization ID required' });
             }
 
-            const report = await AISettingsService.generateComplianceReport(orgId, standard as string, format);
+            const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
+            const report = await AISettingsService.generateComplianceReport(orgIdStr, standard as string, format);
 
             // Set appropriate headers based on format
             if (format === 'csv') {
@@ -833,9 +832,9 @@ router.post(
 
             // Check admin access
             if (
-                userRole !== 'superadmin' &&
                 userRole !== 'owner' &&
-                userRole !== 'admin' &&
+                userRole !== 'owner' &&
+                userRole !== 'administrator' &&
                 userRole !== 'administrator'
             ) {
                 return res.status(403).json({ error: 'Admin access required' });
@@ -845,7 +844,7 @@ router.post(
                 return res.status(400).json({ error: 'Organization ID required' });
             }
 
-            const report = await AISettingsService.generateComplianceReport(orgId, standard, 'json');
+            const report = await AISettingsService.generateComplianceReport(orgIdStr, standard, 'json');
             res.json(report);
         } catch (error: unknown) {
             console.error('[AI Settings] Error generating compliance report:', error);

@@ -237,7 +237,7 @@ router.get(
         try {
             // RBAC CHECK
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -404,7 +404,7 @@ router.get(
         try {
             // RBAC check
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -458,7 +458,7 @@ router.get(
         try {
             // RBAC check
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -515,14 +515,14 @@ router.get(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
             const organizationId = req.user?.organizationId;
 
             let rules;
-            if (userRole === 'owner' || userRole === 'owner') {
+            if (userRole === 'owner') {
                 rules = await PolicyEngine.getAllRules();
             } else {
                 if (!organizationId) {
@@ -555,7 +555,7 @@ router.patch(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -593,7 +593,7 @@ router.post(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -658,7 +658,7 @@ router.get(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: SuperAdmin access required' });
             }
 
@@ -687,7 +687,7 @@ router.patch(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: SuperAdmin access required' });
             }
 
@@ -727,7 +727,7 @@ router.post(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -818,8 +818,9 @@ router.post(
 
             // Enqueue the job
             const correlationId = decision.correlation_id || `corr-${uuidv4()}`;
+            const idStr = Array.isArray(id) ? id[0] : id;
             const result = await AsyncJobService.enqueueActionExecution({
-                decisionId: id,
+                decisionId: idStr,
                 organizationId: decision.organization_id || organizationId,
                 correlationId,
                 priority,
@@ -853,7 +854,7 @@ router.get(
             const userRole = req.user?.role;
             const organizationId = req.user?.organizationId;
 
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -897,7 +898,7 @@ router.post(
             const userRole = req.user?.role;
             const organizationId = req.user?.organizationId;
 
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -943,7 +944,7 @@ router.post(
             const userRole = req.user?.role;
             const organizationId = req.user?.organizationId;
 
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -986,7 +987,7 @@ router.get(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -1029,7 +1030,7 @@ router.get(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 

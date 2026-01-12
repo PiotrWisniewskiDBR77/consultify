@@ -165,7 +165,7 @@ class TaxServiceClass {
         this.stripe =
             deps?.stripe ||
             (process.env.STRIPE_SECRET_KEY
-                ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' })
+                ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' as any })
                 : null);
     }
 
@@ -176,7 +176,7 @@ class TaxServiceClass {
         return new Promise((resolve, reject) => {
             this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as T[]) || []);
             });
         });
     }
@@ -188,7 +188,7 @@ class TaxServiceClass {
         return new Promise((resolve, reject) => {
             this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row || null);
+                else resolve((row as T) || null);
             });
         });
     }
@@ -422,6 +422,7 @@ class TaxServiceClass {
                     taxRate: (taxCalc.tax_breakdown?.[0]?.tax_rate_details?.percentage_decimal || 0) * 100,
                     taxType: taxCalc.tax_breakdown?.[0]?.tax_rate_details?.tax_type || 'sales_tax',
                     taxBehavior: 'exclusive',
+                    description: taxCalc.tax_breakdown?.[0]?.tax_rate_details?.display_name || 'Tax',
                     stripeTaxCalculationId: taxCalc.id,
                     breakdown: (taxCalc.tax_breakdown || []).map((tb) => ({
                         name: tb.tax_rate_details?.display_name,
@@ -543,7 +544,7 @@ class TaxServiceClass {
                 await this.cacheValidation(cleanedNumber, countryCode, result);
                 return result;
             } catch (e: unknown) {
-                logger.warn('[Tax] Stripe validation failed:', e instanceof Error ? e.message : String(e));
+                logger.warn('[Tax] Stripe validation failed:', { message: e instanceof Error ? e.message : String(e) } as any);
             }
         }
 
@@ -554,7 +555,7 @@ class TaxServiceClass {
                 await this.cacheValidation(cleanedNumber, countryCode, viesResult);
                 return viesResult;
             } catch (e: unknown) {
-                logger.warn('[Tax] VIES validation failed:', e instanceof Error ? e.message : String(e));
+                logger.warn('[Tax] VIES validation failed:', { message: e instanceof Error ? e.message : String(e) } as any);
             }
         }
 
@@ -572,7 +573,7 @@ class TaxServiceClass {
     private async validateWithVIES(vatNumber: string, countryCode: string): Promise<VATValidationResult> {
         // In production, this would call the actual VIES SOAP service
         // For now, return a mock response
-        logger.info(`[Tax] VIES validation for ${countryCode}${vatNumber}`);
+        logger.info(`[Tax] VIES validation for ${countryCode}${vatNumber}`, {} as any);
 
         // Basic format validation
         const formatValid = /^[A-Z0-9]{8,12}$/.test(vatNumber);

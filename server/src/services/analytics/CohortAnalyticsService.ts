@@ -30,7 +30,7 @@ export class CohortAnalyticsService {
         const { cohortMonths = 6, retentionMonths = 12 } = options;
 
         // Get cohorts (customers grouped by signup month)
-        const orgs = await this.db.all<{
+        const orgs = (await this.db.all<{
             cohort: string;
             org_id: string;
             created_at: string;
@@ -58,7 +58,8 @@ export class CohortAnalyticsService {
             }
         > = {};
 
-        (orgs || []).forEach((org) => {
+        const orgsArray = (orgs || []) as Array<{ cohort: string; org_id: string; created_at: string; current_status: string }>;
+        orgsArray.forEach((org) => {
             if (!cohorts[org.cohort]) {
                 cohorts[org.cohort] = {
                     cohort: org.cohort,

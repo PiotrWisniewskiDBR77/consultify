@@ -540,7 +540,8 @@ export class ProjectController {
             }
 
             // Audit the change
-            await AIAuditLogger.logInteraction({
+            const auditLoggerInstance = (AIAuditLogger as any).default || AIAuditLogger;
+            await (auditLoggerInstance as any).logInteraction({
                 userId,
                 organizationId: orgId,
                 projectId,
@@ -556,7 +557,8 @@ export class ProjectController {
             });
 
             // Get updated status
-            const newStatus = await RegulatoryModeGuard.getStatus(projectId);
+            const regulatoryGuardInstance = (RegulatoryModeGuard as any).default || RegulatoryModeGuard;
+            const newStatus = await (regulatoryGuardInstance as any).getStatus?.(projectId) || {};
 
             res.json({
                 success: true,

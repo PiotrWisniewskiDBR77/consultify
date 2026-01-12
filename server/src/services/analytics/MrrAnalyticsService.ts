@@ -84,7 +84,7 @@ export class MrrAnalyticsService {
      * Get current MRR and breakdown
      */
     async getCurrentMRR(): Promise<MRRData> {
-        const row = await this.db.get<{ total_mrr: number; active_subscriptions: number }>(
+        const row = (await this.db.get<{ total_mrr: number; active_subscriptions: number }>(
             `SELECT 
                 COALESCE(SUM(sp.price_monthly), 0) as total_mrr,
                 COUNT(ob.id) as active_subscriptions
@@ -132,7 +132,7 @@ export class MrrAnalyticsService {
     async getMRRTrend(options: MRRTrendOptions = {}): Promise<MRRTrendData> {
         const { days = 30, granularity = 'daily' } = options;
 
-        const rows = await this.db.all<{
+        const rows = (await this.db.all<{
             date: string;
             mrr: number;
             new_mrr: number;
@@ -188,7 +188,7 @@ export class MrrAnalyticsService {
      * Calculate MRR movement (new, expansion, churn, etc.)
      */
     async calculateMRRMovement(startDate: string, endDate: string): Promise<MRRMovement> {
-        const rows = await this.db.all<{
+        const rows = (await this.db.all<{
             event_type: string;
             total_change: number;
             event_count: number;
@@ -256,7 +256,7 @@ export class MrrAnalyticsService {
     async getExpansionRevenue(options: ExpansionRevenueOptions = {}): Promise<ExpansionRevenueData> {
         const { months = 6 } = options;
 
-        const rows = await this.db.all<{
+        const rows = (await this.db.all<{
             month: string;
             expansion_mrr: number;
             contraction_mrr: number;

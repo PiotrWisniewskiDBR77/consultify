@@ -5,6 +5,7 @@
  * Generate and store vector embeddings using OpenAI text-embedding-3-small.
  */
 
+// @ts-ignore - Missing type definitions for @ai-sdk/openai
 import { createOpenAI } from '@ai-sdk/openai';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';

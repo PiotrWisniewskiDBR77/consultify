@@ -39,10 +39,10 @@ export class ChurnAnalyticsService {
      * Get churn rate and analysis
      */
     async getChurnRate(options: ChurnRateOptions = {}): Promise<ChurnRateData> {
-        const { _period = 'monthly', months = 6 } = options;
+        const { months = 6 } = options;
 
         // Get churn events
-        const churnData = await this.db.all<{
+        const churnData = (await this.db.all<{
             month: string;
             churned_count: number;
             churned_mrr: number;
@@ -57,10 +57,10 @@ export class ChurnAnalyticsService {
              GROUP BY month
              ORDER BY month ASC`,
             [],
-        );
+        )) as Array<{ month: string; churned_count: number; churned_mrr: number }>;
 
         // Get starting MRR for each month
-        const mrrData = await this.db.all<{
+        const mrrData = (await this.db.all<{
             snapshot_date: string;
             total_mrr: number;
             total_customers: number;
@@ -74,11 +74,13 @@ export class ChurnAnalyticsService {
              AND strftime('%d', snapshot_date) = '01'
              ORDER BY snapshot_date ASC`,
             [],
-        );
+        )) as Array<{ snapshot_date: string; total_mrr: number; total_customers: number }>;
 
         // Calculate churn rates
-        const results = (churnData || []).map((churn) => {
-            const monthStart = mrrData?.find((m) => m.snapshot_date?.startsWith(churn.month));
+        const churnDataArray = churnData || [];
+        const mrrDataArray = mrrData || [];
+        const results = churnDataArray.map((churn) => {
+            const monthStart = mrrDataArray.find((m) => m.snapshot_date?.startsWith(churn.month));
             const startingMRR = monthStart?.total_mrr || 1;
             const startingCustomers = monthStart?.total_customers || 1;
 
@@ -134,8 +136,9 @@ export class ChurnAnalyticsService {
             [],
         );
 
-        const total = (rows || []).reduce((sum, r) => sum + r.count, 0);
-        const enriched = (rows || []).map((r) => ({
+        const rowsArray = (rows || []) as Array<{ reason: string; count: number }>;
+        const total = rowsArray.reduce((sum, r) => sum + r.count, 0);
+        const enriched = rowsArray.map((r) => ({
             ...r,
             percentage: total > 0 ? ((r.count / total) * 100).toFixed(1) : '0',
         }));

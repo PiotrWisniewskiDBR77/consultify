@@ -110,7 +110,8 @@ const Scheduler = {
         const job11 = cron.schedule('0 */6 * * *', async () => {
             console.log('[Scheduler] Running AI Pattern Extraction');
             try {
-                const result = await learningSystem.extractAllPatterns();
+                const ls = await learningSystem;
+                const result = await ls.extractAllPatterns();
                 console.log(
                     `[Scheduler] AI Pattern Extraction completed: ${result.patternsExtracted} patterns from ${result.recordsProcessed} records`,
                 );
@@ -125,7 +126,8 @@ const Scheduler = {
         const job12 = cron.schedule('30 4 * * *', async () => {
             console.log('[Scheduler] Running AI Learning Consolidation');
             try {
-                const result = await learningSystem.consolidateLearnings();
+                const ls = await learningSystem;
+                const result = await ls.consolidateLearnings();
                 console.log(
                     `[Scheduler] AI Learning Consolidation completed: ${result.strategiesCreated} strategies created`,
                 );
@@ -140,7 +142,8 @@ const Scheduler = {
         const job13 = cron.schedule('0 5 * * 1', async () => {
             console.log('[Scheduler] Running AI Learning Data Cleanup');
             try {
-                const result = await learningSystem.cleanupOldData();
+                const ls = await learningSystem;
+                const result = await ls.cleanupOldData();
                 console.log(`[Scheduler] AI Learning Cleanup completed: ${result.deleted} old records deleted`);
             } catch (err: unknown) {
                 const error = err as Error;

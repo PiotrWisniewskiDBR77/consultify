@@ -105,9 +105,12 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
         settings[r.key] = r.value;
     });
 
+    const portValue = settings['smtp_port'] || process.env.SMTP_PORT || '587';
+    const portNumber = typeof portValue === 'string' ? parseInt(portValue, 10) : portValue;
+    
     const smtpConfig: SMTPConfig = {
         host: settings['smtp_host'] || process.env.SMTP_HOST,
-        port: parseInt(settings['smtp_port'] || process.env.SMTP_PORT || '587', 10),
+        port: Number(portNumber),
         secure: false, // true for 465, false for other ports
         auth: {
             user: settings['smtp_user'] || process.env.SMTP_USER,

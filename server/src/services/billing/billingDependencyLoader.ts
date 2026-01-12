@@ -25,7 +25,8 @@ export class BillingDependencyLoader {
                 console.log('[BillingDependencyLoader] MOCK_BILLING enabled. Skipping Stripe initialization.');
             } else if (config.STRIPE_SECRET_KEY) {
                 try {
-                    stripe = new Stripe(config.STRIPE_SECRET_KEY, {
+                    const StripeClass = Stripe as any;
+                    stripe = new StripeClass(config.STRIPE_SECRET_KEY, {
                         apiVersion: '2025-12-15.clover' as any,
                     });
                 } catch (error: unknown) {

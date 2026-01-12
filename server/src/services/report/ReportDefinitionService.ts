@@ -118,7 +118,7 @@ export class ReportDefinitionService {
             params.push(filters.limit);
         }
 
-        const rows = await this.deps.db.all<any[]>(query, params);
+        const rows = (await this.deps.db.all<any[]>(query, params)) as any[] | null;
 
         return (rows || []).map((row: any) => this._mapReportRow(row));
     }

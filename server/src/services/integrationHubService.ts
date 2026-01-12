@@ -628,8 +628,8 @@ class IntegrationHubServiceClass {
 // Create singleton instance
 const integrationHubServiceInstance = new IntegrationHubServiceClass();
 
-// Export constants
-export { CATEGORIES, CONNECTORS, STATUS };
+// Export constants (already exported above, so just re-export for clarity)
+// Note: CATEGORIES, CONNECTORS, and STATUS are already exported above
 
 // Export individual functions for backward compatibility
 export const getAvailableConnectors = (category?: IntegrationCategory | null) =>

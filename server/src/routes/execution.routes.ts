@@ -42,7 +42,8 @@ router.get(
         }
 
         try {
-            const summary = await ExecutionService.getExecutionSummary(req.params.projectId);
+            const projectId = Array.isArray(req.params.projectId) ? req.params.projectId[0] : req.params.projectId;
+            const summary = await ExecutionService.getExecutionSummary(projectId);
             res.json(summary);
         } catch (err: unknown) {
             return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
@@ -87,7 +88,8 @@ router.post(
 
         try {
             const { targetPhase } = req.body;
-            const result = await ExecutionService.checkDecisionGate(req.params.projectId, targetPhase);
+            const projectId = Array.isArray(req.params.projectId) ? req.params.projectId[0] : req.params.projectId;
+            const result = await ExecutionService.checkDecisionGate(projectId, targetPhase);
             res.json(result);
         } catch (err: unknown) {
             return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });

@@ -314,10 +314,10 @@ export class InvitationServiceClass {
             throw new Error('Invalid email format');
         }
 
-        const project = await this.deps.db.get<{ id: string; name: string }>(
+        const project = (await this.deps.db.get<{ id: string; name: string }>(
             `SELECT id, name FROM projects WHERE id = ? AND organization_id = ?`,
             [projectId, organizationId],
-        );
+        )) as { id: string; name: string } | null;
         if (!project) throw new Error('Project not found in this organization');
 
         const permissionCheck = await this.checkInvitePermission(organizationId, invitedByUserId);
@@ -426,10 +426,10 @@ export class InvitationServiceClass {
         }
 
         // Check user
-        const existingUser = await this.deps.db.get<{ id: string; organization_id: string }>(
+        const existingUser = (await this.deps.db.get<{ id: string; organization_id: string }>(
             `SELECT id, organization_id FROM users WHERE email = ?`,
             [email.toLowerCase()],
-        );
+        )) as { id: string; organization_id: string } | null;
 
         if (existingUser) {
             if (existingUser.organization_id === invitation.organization_id) {

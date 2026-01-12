@@ -295,7 +295,7 @@ export function can(user: User | null | undefined, capability: Capability, _cont
     const allowedCaps = ROLE_CAPABILITIES[user.role as Role] || [];
     if (!allowedCaps.includes(capability)) return false;
 
-    if ([CAPABILITIES.MANAGE_USERS, CAPABILITIES.MANAGE_ORG_SETTINGS].includes(capability)) {
+    if ([CAPABILITIES.MANAGE_USERS, CAPABILITIES.MANAGE_ORG_SETTINGS].includes(capability as any)) {
         if (user.role !== ROLES.ADMIN) return false;
     }
 

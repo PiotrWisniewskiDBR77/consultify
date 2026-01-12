@@ -27,6 +27,7 @@ interface BillingServiceInterface {
     cancelSubscription?: (subscriptionId: string) => Promise<void>;
     createInvoice?: (invoiceData: unknown) => Promise<void>;
     upsertOrganizationBilling?: (orgId: string, data: unknown) => Promise<void>;
+    recordInvoice?: (orgId: string, invoice: Stripe.Invoice | any) => Promise<void>;
 }
 
 // Dynamic import for billingService (may not be migrated yet)
@@ -50,7 +51,7 @@ router.post(
     '/stripe',
     express.raw({ type: 'application/json' }) as RequestHandler,
     asyncHandler(async (req: Request, res: Response) => {
-        let event: Stripe.Event;
+        let event: Stripe.Event | any;
 
         // Verify webhook signature if secret is configured
         if (endpointSecret) {
@@ -66,7 +67,7 @@ router.post(
             }
         } else {
             // For development without signature verification
-            event = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as Stripe.Event;
+            event = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as Stripe.Event | any;
         }
 
         console.log('Stripe webhook received:', event.type);
@@ -112,7 +113,7 @@ router.post(
 /**
  * Handle subscription created event
  */
-async function handleSubscriptionCreated(subscription: Stripe.Subscription): Promise<void> {
+async function handleSubscriptionCreated(subscription: Stripe.Subscription | any): Promise<void> {
     const customerId = subscription.customer;
     const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -144,7 +145,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription): Pro
 /**
  * Handle subscription updated event
  */
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription | any): Promise<void> {
     const customerId = subscription.customer;
     const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -190,7 +191,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
 /**
  * Handle invoice paid event
  */
-async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
+async function handleInvoicePaid(invoice: Stripe.Invoice | any): Promise<void> {
     const customerId = invoice.customer;
     const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -221,7 +222,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
 /**
  * Handle invoice payment failed event
  */
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice | any): Promise<void> {
     const customerId = invoice.customer;
     const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -248,7 +249,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void
 /**
  * Handle invoice created event
  */
-async function handleInvoiceCreated(invoice: Stripe.Invoice): Promise<void> {
+async function handleInvoiceCreated(invoice: Stripe.Invoice | any): Promise<void> {
     const customerId = invoice.customer;
     const orgId = await getOrgIdFromCustomer(customerId);
 

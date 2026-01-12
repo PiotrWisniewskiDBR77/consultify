@@ -91,7 +91,7 @@ const AlertService = {
         if (!alerts || alerts.length === 0) return;
 
         // Lazy import to avoid circular dependencies
-        const { default: NotificationService } = await import('./NotificationService.js');
+        const { default: NotificationService } = await import('./notificationService.js');
 
         for (const alert of alerts) {
             if (alert.type === 'CRITICAL') {

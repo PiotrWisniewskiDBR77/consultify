@@ -23,14 +23,14 @@ import {
 const router = Router();
 import Stripe from 'stripe';
 
-import type { DunningService } from '../services/dunningService.js';
+import type { DunningService as DunningServiceType } from '../services/dunningService.js';
 import type { InvoiceServiceClass } from '../services/InvoiceService.js';
 import webhookService from '../services/WebhookService.js';
 
 // Type definitions for lazy-loaded services
 interface DunningServiceInstance {
-    handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void>;
-    handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void>;
+    handlePaymentFailed(paymentIntent: Stripe.PaymentIntent | any): Promise<void>;
+    handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent | any): Promise<void>;
     processScheduledRetries(): Promise<void>;
     getDunningStatus(orgId: string): Promise<{
         inDunning: boolean;
@@ -47,7 +47,7 @@ interface DunningServiceInstance {
 }
 
 interface InvoiceServiceInstance {
-    createFromStripe(stripeInvoice: Stripe.Invoice): Promise<{
+    createFromStripe(stripeInvoice: Stripe.Invoice | any): Promise<{
         id: string;
         invoiceNumber: string;
         total: number;
@@ -74,7 +74,7 @@ async function getDunningService(): Promise<DunningServiceInstance> {
 async function getInvoiceService(): Promise<InvoiceServiceInstance> {
     if (!InvoiceService) {
         const module = await import('../services/InvoiceService.js');
-        InvoiceService = (module.default || module) as InvoiceServiceInstance;
+        InvoiceService = (module.default || module) as unknown as InvoiceServiceInstance;
     }
     return InvoiceService;
 }
@@ -234,7 +234,7 @@ router.get(
         const { status, eventType, page = '1', pageSize = '50' } = req.query;
 
         const filters = { 
-            status: typeof status === 'string' ? status : undefined,
+            status: typeof status === 'string' && (status === 'pending' || status === 'failed' || status === 'success') ? status as 'pending' | 'failed' | 'success' : undefined,
             eventType: typeof eventType === 'string' ? eventType : undefined
         };
         const pagination = {
@@ -344,7 +344,7 @@ router.post(
             res.json({ received: true });
         } catch (error: unknown) {
             console.error('[Webhook] Error processing event:', error);
-            return res.status(500).json({ error: 'Webhook processing failed' });
+            res.status(500).json({ error: 'Webhook processing failed' });
         }
     }),
 );

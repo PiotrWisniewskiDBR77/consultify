@@ -11,7 +11,7 @@
  * - Account deletion (right to be forgotten)
  */
 
-import { type _Request, type Response, Router } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';

@@ -112,8 +112,8 @@ class RedisClient {
                 return res;
             }
             return 0;
-        } catch (error) {
-            logger.error('[Redis] Failed to delete pattern', error);
+        } catch (error: unknown) {
+            logger.error('[Redis] Failed to delete pattern', error instanceof Error ? error : new Error(String(error)));
             return 0;
         }
     }

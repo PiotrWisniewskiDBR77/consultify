@@ -209,8 +209,8 @@ export class ReportGeneratorService {
 
         query += ' ORDER BY al.created_at DESC LIMIT 1000';
 
-        const rows = await this.deps.db.all<any[]>(query, params);
-        const safeRows = rows || [];
+        const rows = (await this.deps.db.all<any[]>(query, params)) as any[] | null;
+        const safeRows = (rows || []) as any[];
         const totalTokens = safeRows.reduce((sum: number, r: any) => sum + (r.tokens_used || 0), 0);
         const totalCost = safeRows.reduce((sum: number, r: any) => sum + (r.cost || 0), 0);
 

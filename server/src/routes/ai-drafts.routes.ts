@@ -317,8 +317,8 @@ router.patch(
             }
 
             // Fetch the updated draft to return full details
-            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const draft = await draftService.getDraft(id);
+            const draftId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const draft = await draftService.getDraft(draftId);
 
             res.json({
                 success: true,

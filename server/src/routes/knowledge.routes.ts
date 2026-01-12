@@ -132,14 +132,14 @@ let StorageService: IStorageService | null = null;
 
 try {
     const knowledgeModule = await import('../../services/knowledgeService.js');
-    KnowledgeService = knowledgeModule.default || knowledgeModule;
+    KnowledgeService = (knowledgeModule.default || knowledgeModule) as any as IKnowledgeService;
 } catch {
     console.warn('[Knowledge] KnowledgeService not available');
 }
 
 try {
     const storageModule = await import('../../services/storageService.js');
-    StorageService = (storageModule.default || storageModule) as typeof StorageService;
+    StorageService = (storageModule.default || storageModule) as any as IStorageService;
 } catch {
     console.warn('[Knowledge] StorageService not available');
 }
@@ -173,8 +173,8 @@ let recordStorageAfterUpload: ((req: AuthRequest, size: number, type: string) =>
 let enforceProjectQuota: any = null;
 
 try {
-    const quotaModule = await import('../../middleware/quota.middleware.js');
-    enforceStorageQuota = quotaModule.enforceStorageQuota;
+    const quotaModule = await import('../../middleware/projectQuota.middleware.js');
+    enforceStorageQuota = (quotaModule as any).enforceStorageQuota;
     recordStorageAfterUpload = quotaModule.recordStorageAfterUpload;
 } catch {
     console.warn('[Knowledge] Quota middleware not available');
@@ -402,7 +402,8 @@ router.get(
         try {
             // Use unified AI pipeline for observation generation
             const aiPipelineModule = await import('../../services/ai/aiPipeline.js');
-            const pipeline = aiPipelineModule.aiPipeline || aiPipelineModule.AIPipeline.getInstance();
+            const AIPipeline = aiPipelineModule.AIPipeline || aiPipelineModule.default;
+            const pipeline = (AIPipeline as any).getInstance ? (AIPipeline as any).getInstance() : (aiPipelineModule.aiPipeline || AIPipeline);
             const userId = req.user?.id;
             const organizationId = req.user?.organizationId;
             if (!userId || !organizationId) {
@@ -749,9 +750,9 @@ router.post(
             try {
                 if (mimetype === 'application/pdf') {
                     const pdfParseMod = await import('pdf-parse');
-                    const pdf = pdfParseMod.default || pdfParseMod;
+                    const pdf = (pdfParseMod.default || pdfParseMod) as any;
                     const dataBuffer = fs.readFileSync(finalPath);
-                    const pdfData = await pdf(dataBuffer);
+                    const pdfData = typeof pdf === 'function' ? await pdf(dataBuffer) : await pdf.default(dataBuffer);
                     text = pdfData.text;
                 } else {
                     text = fs.readFileSync(finalPath, 'utf8');

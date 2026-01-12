@@ -127,7 +127,7 @@ class FeedbackServiceClass {
         return new Promise((resolve, reject) => {
             this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as T[]) || []);
             });
         });
     }
@@ -193,7 +193,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
             return examples;
         } catch (err: unknown) {
             // Don't fail if DB error, just return empty learning
-            logger.warn('[FeedbackService] Error getting learning examples:', err);
+            logger.warn('[FeedbackService] Error getting learning examples:', err instanceof Error ? err : { message: String(err) } as any);
             return '';
         }
     }
@@ -285,7 +285,7 @@ ${r.correction ? `Correction to apply: ${r.correction}` : ''}
                     logger.info(`[GlobalLearning] Learned new strategy: ${strategy.title}`);
                 }
             } catch (e: unknown) {
-                logger.error('[GlobalLearning] Error processing context:', contextType, e);
+                logger.error('[GlobalLearning] Error processing context:', { contextType, error: e instanceof Error ? e : new Error(String(e)) } as any);
             }
         }
         return { status: 'completed', contextsAnalyzed: contexts.length };

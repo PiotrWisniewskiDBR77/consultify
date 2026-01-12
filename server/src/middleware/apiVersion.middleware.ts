@@ -155,7 +155,8 @@ export function apiVersionMiddleware(req: VersionedRequest, res: Response, next:
 
         next();
     } catch (error) {
-        logger.error('[APIVersion] Version extraction error:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('[APIVersion] Version extraction error:', err);
         next();
     }
 }

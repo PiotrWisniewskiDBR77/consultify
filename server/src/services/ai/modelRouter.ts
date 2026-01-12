@@ -181,7 +181,7 @@ export class ModelRouter {
         const override = await this.getOrgOverride(organizationId, capability);
         if (override) {
             aiLogger.info('ModelRouter', `Using org override for ${capability}: ${override.model_id}`);
-            return this.getProviderConfig(override.model_id, override.tier || tier);
+            return this.getProviderConfig(override.model_id, (override.tier || tier) as any);
         }
 
         const availableModels = await this.getModelsForTier(tier, organizationId);

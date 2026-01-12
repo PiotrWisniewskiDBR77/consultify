@@ -153,7 +153,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
             // Handle case where default export is a Promise (async module init)
             if (!validateOnStartup && startupValidatorModule.default instanceof Promise) {
                 const resolvedDefault = await startupValidatorModule.default;
-                validateOnStartup = resolvedDefault.validateOnStartup;
+                validateOnStartup = (resolvedDefault as any)?.validateOnStartup;
             }
 
             if (typeof validateOnStartup === 'function') {
@@ -208,7 +208,7 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         // Handle case where default export is a Promise (async module init)
         if (!healthMonitor && healthMonitorModule.default instanceof Promise) {
             const resolvedDefault = await healthMonitorModule.default;
-            healthMonitor = resolvedDefault.healthMonitor;
+            healthMonitor = (resolvedDefault as any)?.healthMonitor;
         }
 
         if (healthMonitor) {
@@ -341,7 +341,7 @@ const apiLimiter = rateLimit({
         if ((req as any).user?.id) {
             return `api:user:${(req as any).user.id}`;
         }
-        return `api:ip:${ipKeyGenerator(req)}`;
+        return `api:ip:${ipKeyGenerator(req as any)}`;
     },
 });
 
@@ -366,7 +366,7 @@ const authLimiter = rateLimit({
             return `auth:${email.toLowerCase().trim()}`;
         }
 
-        return `auth:ip:${ipKeyGenerator(req)}`;
+        return `auth:ip:${ipKeyGenerator(req as any)}`;
     },
 });
 
@@ -519,7 +519,7 @@ if (!isTest) {
 
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
-        logger.error('[Server] Unhandled Rejection:', { reason, promise });
+        logger.error('[Server] Unhandled Rejection:', { reason: String(reason), promise: String(promise) } as any);
         if (isProduction) {
             console.error('[Server] Unhandled Rejection (not exiting):', reason);
         } else {
@@ -529,7 +529,7 @@ if (!isTest) {
 
     // Handle warnings
     process.on('warning', (warning: Error) => {
-        logger.warn('[Server] Warning:', warning);
+        logger.warn('[Server] Warning:', { message: warning.message, name: warning.name, stack: warning.stack } as any);
     });
 }
 
@@ -559,12 +559,13 @@ if (startServer && !isTest) {
             const realtimeServiceModule = await import('../services/realtimeService.js');
             const realtimeServicePromise = realtimeServiceModule.default || realtimeServiceModule;
             const realtimeService = await realtimeServicePromise;
-            if (realtimeService && typeof realtimeService.initializeSimple === 'function') {
-                realtimeService.initializeSimple(server);
+            const serviceInstance = (realtimeService as any).default || realtimeService;
+            if (serviceInstance && typeof serviceInstance.initializeSimple === 'function') {
+                serviceInstance.initializeSimple(server);
             }
         } catch (err: unknown) {
             const error = err as Error;
-            logger.warn('[Server] Realtime service not available:', error.message);
+            logger.warn('[Server] Realtime service not available:', { message: error.message } as any);
         }
     })();
 
@@ -596,17 +597,27 @@ if (startServer && !isTest) {
     // Init AI Services (Redis, Cache, Rate Limiter)
     (async () => {
         try {
-            const { initRedis, _getRedisClient } = await import('../services/ai/redisClient.js');
+            const redisModule = await import('../services/ai/redisClient.js');
+            const initRedis = redisModule.initRedis || (redisModule as any).default?.initRedis;
+            const _getRedisClient = (redisModule as any)._getRedisClient || (redisModule as any).getRedisClient;
             const redisUrl = process.env.REDIS_URL;
 
-            initRedis(redisUrl)
-                .then(async (redisClient: unknown) => {
-                    if (redisClient) {
-                        const { cacheService } = await import('../services/ai/cacheService.js');
-                        cacheService.connectRedis(redisClient);
+            if (initRedis && typeof initRedis === 'function') {
+                initRedis(redisUrl)
+                    .then(async (redisClient: unknown) => {
+                        if (redisClient && typeof redisClient === 'object') {
+                            const { cacheService } = await import('../services/ai/cacheService.js');
+                            cacheService.connectRedis(redisClient);
 
-                        const { rateLimiter } = await import('../services/ai/rateLimiter.js');
-                        rateLimiter.connectRedis(redisClient);
+                            const { rateLimiter } = await import('../services/ai/rateLimiter.js');
+                            rateLimiter.connectRedis(redisClient);
+                        }
+                    })
+                    .catch((err: unknown) => {
+                        const error = err instanceof Error ? err : new Error(String(err));
+                        logger.warn('[Server] Redis initialization failed:', { message: error.message } as any);
+                    });
+            }
 
                         console.log('[AI Services] Redis connected for cache and rate limiting');
                     } else {
@@ -639,14 +650,15 @@ if (startServer && !isTest) {
             try {
                 const systemIntegrityModule = await import('../services/systemIntegrity.js');
                 const SystemIntegrity = systemIntegrityModule.default || systemIntegrityModule;
-                if (SystemIntegrity && typeof SystemIntegrity.check === 'function') {
+                const integrityInstance = (SystemIntegrity as any).default || SystemIntegrity;
+                if (integrityInstance && typeof integrityInstance.check === 'function') {
                     setTimeout(() => {
-                        SystemIntegrity.check();
+                        integrityInstance.check();
                     }, 2000);
                 }
             } catch (err: unknown) {
                 const error = err as Error;
-                logger.warn('[Server] System Integrity check failed:', error.message);
+                logger.warn('[Server] System Integrity check failed:', { message: error.message } as any);
             }
         }
     })();
@@ -674,7 +686,7 @@ if (startServer && !isTest) {
             logger.info('[Shutdown] Database connections closed');
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
-            logger.error('[Shutdown] Error closing database:', err.message);
+            logger.error('[Shutdown] Error closing database:', { message: err.message } as any);
         }
     });
 
@@ -691,7 +703,7 @@ if (startServer && !isTest) {
             logger.info('[Shutdown] Redis connections closed');
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
-            logger.error('[Shutdown] Error closing Redis:', err.message);
+            logger.error('[Shutdown] Error closing Redis:', { message: err.message } as any);
         }
     });
 
@@ -704,7 +716,7 @@ if (startServer && !isTest) {
             logger.info('[Shutdown] Cron jobs stopped');
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
-            logger.error('[Shutdown] Error stopping scheduler:', err.message);
+            logger.error('[Shutdown] Error stopping scheduler:', { message: err.message } as any);
         }
     });
 
@@ -721,7 +733,7 @@ if (startServer && !isTest) {
             logger.info('[Shutdown] WebSocket connections closed');
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
-            logger.error('[Shutdown] Error closing WebSocket:', err.message);
+            logger.error('[Shutdown] Error closing WebSocket:', { message: err.message } as any);
         }
     });
 
@@ -736,7 +748,7 @@ if (startServer && !isTest) {
             })
             .catch((error: unknown) => {
                 const err = error instanceof Error ? error : new Error(String(error));
-                logger.error('[Shutdown] Error during shutdown:', err.message);
+                logger.error('[Shutdown] Error during shutdown:', { message: err.message } as any);
                 process.exit(1);
             });
     };

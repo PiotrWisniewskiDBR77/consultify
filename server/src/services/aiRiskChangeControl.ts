@@ -102,7 +102,7 @@ const parseJsonArray = (value: string | null | undefined): AffectedEntity[] => {
 const dbAll = <T>(sql: string, params: unknown[]): Promise<T[]> => {
     const db = getDb();
     if (db) {
-        return DbPromise.all<T>(db, sql, params);
+        return DbPromise.all<T>(db as any, sql, params);
     }
     return DbPromise.all<T>(sql, params);
 };
@@ -110,7 +110,7 @@ const dbAll = <T>(sql: string, params: unknown[]): Promise<T[]> => {
 const dbGet = <T>(sql: string, params: unknown[]): Promise<T | null> => {
     const db = getDb();
     if (db) {
-        return DbPromise.get<T>(db, sql, params);
+        return DbPromise.get<T>(db as any, sql, params);
     }
     return DbPromise.get<T>(sql, params);
 };
@@ -118,7 +118,7 @@ const dbGet = <T>(sql: string, params: unknown[]): Promise<T | null> => {
 const dbRun = (sql: string, params: unknown[]): Promise<DbPromise.RunResult> => {
     const db = getDb();
     if (db) {
-        return DbPromise.run(db, sql, params, { fallback: false });
+        return DbPromise.run(db as any, sql, params, { fallback: false });
     }
     return DbPromise.run(sql, params, { fallback: false });
 };
@@ -742,11 +742,14 @@ const AIRiskChangeControl = {
             [projectId],
         );
 
-        return (rows || []).map((row) => ({
-            ...row,
-            affected_entities: parseJsonArray(row.affected_entities),
-            ownerName: row.owner_first ? `${row.owner_first} ${row.owner_last}` : 'Unassigned',
-        }));
+        return ((rows || []) as RiskRow[]).map((row) => {
+            const parsed = {
+                ...row,
+                affected_entities: parseJsonArray(row.affected_entities || null) as AffectedEntity[],
+                ownerName: row.owner_first ? `${row.owner_first} ${row.owner_last}` : 'Unassigned',
+            };
+            return parsed as RiskRow & { affected_entities: AffectedEntity[]; ownerName: string };
+        });
     },
 
     updateRiskStatus: async (

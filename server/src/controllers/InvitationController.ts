@@ -53,9 +53,9 @@ export class InvitationController {
                 email,
                 role,
                 organizationId,
-                invitedById: userId,
+                invitedByUserId: userId,
                 message,
-            });
+            } as any);
 
             res.status(201).json(invitation);
         },

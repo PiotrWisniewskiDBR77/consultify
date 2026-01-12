@@ -108,7 +108,7 @@ class GenericReportService {
             await this.updateReportContent(reportId, {
                 ocrText: extractedText.substring(0, 10000), // Limit to 10k chars
                 aiSummary,
-                keyFindings: parsed.findings,
+                keyFindings: (parsed as any).findings || [],
                 suggestedTags,
             });
 

@@ -177,7 +177,7 @@ class RefreshTokenService {
                 jti,
             },
             config.JWT_SECRET as string,
-            { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY },
+            { expiresIn: String(CONFIG.ACCESS_TOKEN_EXPIRY || '15m') },
         );
 
         // Store refresh token
@@ -267,7 +267,7 @@ class RefreshTokenService {
                                 jti,
                             },
                             config.JWT_SECRET as string,
-                            { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY },
+                            { expiresIn: String(CONFIG.ACCESS_TOKEN_EXPIRY || '15m') },
                         );
 
                         // Return the existing refresh token from localStorage (client should still have it)
@@ -320,7 +320,7 @@ class RefreshTokenService {
                 jti,
             },
             config.JWT_SECRET as string,
-            { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY },
+            { expiresIn: String(CONFIG.ACCESS_TOKEN_EXPIRY || '15m') },
         );
 
         // Store new refresh token (same family)

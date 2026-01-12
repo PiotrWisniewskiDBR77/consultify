@@ -8,9 +8,9 @@
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { _verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
-import NotificationService from '../services/NotificationService.js';
-import WhatsAppService from '../services/WhatsAppService.js';
+import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import NotificationService from '../services/notificationService.js';
+import WhatsAppService from '../services/whatsappService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 

@@ -99,7 +99,7 @@ export class SnapshotService {
             [],
         );
 
-        return row || { total: 0, new: 0, churned: 0 };
+        return (row as { total: number; new: number; churned: number }) || { total: 0, new: 0, churned: 0 };
     }
 
     /**

@@ -71,7 +71,8 @@ export function encryptRequestPII(req: Request, _res: Response, next: NextFuncti
 
         next();
     } catch (error) {
-        logger.error('[PIIEncryption] Request encryption error:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('[PIIEncryption] Request encryption error:', err);
         next(); // Continue without encryption on error
     }
 }
@@ -104,7 +105,8 @@ export function decryptResponsePII(req: Request, res: Response, next: NextFuncti
                 }
             }
         } catch (error) {
-            logger.error('[PIIEncryption] Response decryption error:', error);
+            const err = error instanceof Error ? error : new Error(String(error));
+            logger.error('[PIIEncryption] Response decryption error:', err);
             // Send original body on error
         }
         

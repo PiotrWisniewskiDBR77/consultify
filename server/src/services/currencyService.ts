@@ -49,11 +49,11 @@ interface CurrencyServiceDependencies {
 // ==========================================
 
 const DEFAULT_CURRENCIES: Record<string, CurrencyInfo> = {
-    USD: { name: 'US Dollar', symbol: '$', decimals: 2 },
-    EUR: { name: 'Euro', symbol: '€', decimals: 2 },
-    GBP: { name: 'British Pound', symbol: '£', decimals: 2 },
-    PLN: { name: 'Polish Złoty', symbol: 'zł', decimals: 2 },
-    CHF: { name: 'Swiss Franc', symbol: 'CHF', decimals: 2 },
+    USD: { code: 'USD', name: 'US Dollar', symbol: '$', decimals: 2 },
+    EUR: { code: 'EUR', name: 'Euro', symbol: '€', decimals: 2 },
+    GBP: { code: 'GBP', name: 'British Pound', symbol: '£', decimals: 2 },
+    PLN: { code: 'PLN', name: 'Polish Złoty', symbol: 'zł', decimals: 2 },
+    CHF: { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', decimals: 2 },
 };
 
 const _BASE_CURRENCY = 'USD';

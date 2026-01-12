@@ -123,7 +123,7 @@ class BillingServiceClass {
         return this.#queryService.getInvoices(orgId);
     }
 
-    async recordInvoice(orgId: string, stripeInvoice: Stripe.Invoice) {
+    async recordInvoice(orgId: string, stripeInvoice: Stripe.Invoice | any) {
         await this.#ensureInitialized();
         return this.#commandService.recordInvoice(orgId, stripeInvoice);
     }
@@ -244,7 +244,7 @@ export const createSubscription = (
 export const cancelSubscription = (orgId: string) => billingServiceInstance.cancelSubscription(orgId);
 export const changePlan = (orgId: string, newPlanId: string) => billingServiceInstance.changePlan(orgId, newPlanId);
 export const getInvoices = (orgId: string) => billingServiceInstance.getInvoices(orgId);
-export const recordInvoice = (orgId: string, stripeInvoice: Stripe.Invoice) =>
+export const recordInvoice = (orgId: string, stripeInvoice: Stripe.Invoice | any) =>
     billingServiceInstance.recordInvoice(orgId, stripeInvoice);
 export const getRevenueStats = () => billingServiceInstance.getRevenueStats();
 export const getPaymentMethods = (orgId: string) => billingServiceInstance.getPaymentMethods(orgId);

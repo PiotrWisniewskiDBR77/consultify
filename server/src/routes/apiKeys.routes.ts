@@ -118,10 +118,11 @@ router.post(
     requireOrgRole(['OWNER', 'ADMIN']),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         const { keyId } = req.params;
+        const keyIdStr = Array.isArray(keyId) ? keyId[0] : keyId;
         const { gracePeriodHours } = req.body;
 
         const { newKey, plainTextKey } = await ApiKeyService.rotateKey({
-            keyId,
+            keyId: keyIdStr,
             gracePeriodHours,
             userId: req.user!.id,
         });
@@ -152,8 +153,9 @@ router.delete(
     requireOrgRole(['OWNER', 'ADMIN']),
     asyncHandler(async (req: AuthRequest, res: Response) => {
         const { keyId } = req.params;
+        const keyIdStr = Array.isArray(keyId) ? keyId[0] : keyId;
 
-        await ApiKeyService.revokeKey(keyId, req.user!.id);
+        await ApiKeyService.revokeKey(keyIdStr, req.user!.id);
 
         res.json({
             message: 'API key revoked successfully',

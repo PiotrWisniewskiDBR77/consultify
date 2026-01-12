@@ -90,7 +90,7 @@ class PartnerServiceClass {
         return new Promise((resolve, reject) => {
             this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as T[]) || []);
             });
         });
     }
@@ -102,7 +102,7 @@ class PartnerServiceClass {
         return new Promise((resolve, reject) => {
             this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row || null);
+                else resolve((row as T) || null);
             });
         });
     }
@@ -171,14 +171,14 @@ class PartnerServiceClass {
             email,
             contact_name: contactName,
             default_revenue_share_percent: defaultRevenueSharePercent,
-            metadata: JSON.stringify(metadata),
+            metadata: JSON.stringify(metadata) as any,
             is_active: 1,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             isActive: true,
             createdAt: new Date().toISOString(),
         };
-        return { ...createdPartner, metadata };
+        return { ...createdPartner, metadata: metadata as any };
     }
 
     /**

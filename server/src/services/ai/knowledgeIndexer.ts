@@ -281,7 +281,7 @@ export class KnowledgeIndexer {
             success: results.success.length,
             failed: results.failed.length,
             skipped: results.skipped.length,
-        });
+        } as any);
 
         return results;
     }

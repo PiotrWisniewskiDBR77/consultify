@@ -68,8 +68,8 @@ const getDeps = async (): Promise<Dependencies> => {
 
         deps = {
             jwt: defaultJwt,
-            config: defaultConfig,
-            PermissionService: defaultPermissionService,
+            config: (defaultConfig as any).config || defaultConfig,
+            PermissionService: (defaultPermissionService as any).default || defaultPermissionService,
             dbGet: dbGet,
         };
     }

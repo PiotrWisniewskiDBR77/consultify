@@ -223,7 +223,7 @@ class SMSServiceClass {
 
             return { success: true, messageSid: result.sid };
         } catch (error: unknown) {
-            logger.error('[SMS] Send failed:', error);
+            logger.error('[SMS] Send failed:', error instanceof Error ? error : new Error(String(error)));
 
             // Update log with error
             await this.dbRun(
@@ -300,7 +300,7 @@ class SMSServiceClass {
 
             return { success: true, expiresAt };
         } catch (error: unknown) {
-            logger.error('[SMS] Send OTP failed:', error);
+            logger.error('[SMS] Send OTP failed:', error instanceof Error ? error : new Error(String(error)));
             return { success: false, error: 'Failed to send verification code' };
         }
     }
@@ -428,7 +428,7 @@ class SMSServiceClass {
                 [MessageStatus, ErrorCode || null, ErrorMessage || null, MessageSid],
             );
         } catch (error: unknown) {
-            logger.error('[SMS] Status callback update failed:', error);
+            logger.error('[SMS] Status callback update failed:', error instanceof Error ? error : new Error(String(error)));
         }
     }
 

@@ -88,7 +88,7 @@ export class IngestionPipeline {
             const extension = path.extname(filePath).toLowerCase();
 
             const docType = Object.entries(DOCUMENT_TYPES).find(([, config]) => 
-                config.extensions.includes(extension as '.md' | '.mdx' | '.txt' | '.json')
+                (config.extensions as readonly string[]).includes(extension)
             );
 
             if (!docType) {

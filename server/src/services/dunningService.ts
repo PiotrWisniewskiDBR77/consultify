@@ -113,11 +113,11 @@ export class DunningService {
         if (!secret) {
             throw new Error('Stripe API key is not configured');
         }
-        this.stripeClient = new Stripe(secret, { apiVersion: '2024-11-20.acacia' });
+        this.stripeClient = new Stripe(secret, { apiVersion: '2024-11-20.acacia' as any });
         return this.stripeClient;
     }
 
-    public async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+    public async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent | any): Promise<void> {
         const orgId = (paymentIntent.metadata as Record<string, string | undefined>)?.organization_id;
         if (!orgId) {
             logger.error('[Dunning] Missing organization_id in payment metadata');
@@ -155,7 +155,7 @@ export class DunningService {
         await this.startDunning(orgId);
     }
 
-    public async handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+    public async handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent | any): Promise<void> {
         const orgId = (paymentIntent.metadata as Record<string, string | undefined>)?.organization_id;
         if (!orgId) return;
 
@@ -180,7 +180,7 @@ export class DunningService {
 
     public async processScheduledRetries(): Promise<void> {
         logger.info('[Dunning] Processing scheduled retries...');
-        const orgs = await this.db.all<OrganizationRecord & { days_since_start: number }>(
+        const orgs = (await this.db.all<OrganizationRecord & { days_since_start: number }>(
             `SELECT o.*, 
                     julianday('now') - julianday(o.dunning_started_at) as days_since_start
              FROM organizations o
@@ -188,7 +188,7 @@ export class DunningService {
                AND o.dunning_stage < ?
                AND o.status = 'active'`,
             [DUNNING_STAGES.SUSPENDED],
-        );
+        )) as Array<OrganizationRecord & { days_since_start: number }>;
 
         for (const org of orgs) {
             try {
@@ -379,10 +379,10 @@ export class DunningService {
 
     private async sendDunningEmail(orgId: string, notificationType: string): Promise<void> {
         try {
-            const admin = await this.db.get<{ email: string; first_name?: string }>(
+            const admin = (await this.db.get<{ email: string; first_name?: string }>(
                 `SELECT email, first_name FROM users WHERE organization_id = ? AND role IN ('ADMIN', 'OWNER') LIMIT 1`,
                 [orgId],
-            );
+            )) as { email: string; first_name?: string } | null;
             if (!admin) {
                 logger.warn(`[Dunning] No admin found for org ${orgId}`);
                 return;
@@ -413,7 +413,7 @@ export class DunningService {
                 [uuidv4(), orgId, notificationType, admin.email],
             );
         } catch (error: unknown) {
-            logger.error('[Dunning] Email send failed:', (error as Error).message);
+            logger.error('[Dunning] Email send failed:', error instanceof Error ? error : new Error(String(error)));
         }
     }
 
@@ -462,7 +462,7 @@ export class DunningService {
     }
 
     private async getOrganization(orgId: string): Promise<OrganizationRecord | null> {
-        return this.db.get<OrganizationRecord>(`SELECT * FROM organizations WHERE id = ?`, [orgId]);
+        return (await this.db.get<OrganizationRecord>(`SELECT * FROM organizations WHERE id = ?`, [orgId])) as OrganizationRecord | null;
     }
 }
 

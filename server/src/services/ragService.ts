@@ -368,7 +368,7 @@ const RagService = {
         for (const chunk of chunks) {
             try {
                 const embedding = await deps.embeddingService.generateEmbedding(chunk.content);
-                await deps.embeddingService.storeChunk(chunk, embedding);
+                await deps.embeddingService.storeChunk({ ...chunk, documentId: documentId } as any, embedding);
                 successCount++;
             } catch (error: unknown) {
                 const err = error as Error;
@@ -511,6 +511,8 @@ const RagService = {
                     ) => Promise<RerankableChunk[]>;
                 };
                 finalResults = await reranker.rerankDocuments(query, finalResults, limit);
+                // Ensure all results have hybridScore
+                finalResults = finalResults.map(r => ({ ...r, hybridScore: r.hybridScore ?? 0 })) as any;
                 aiLogger.info('RagService', `Re-ranked ${finalResults.length} results`);
             } catch (error: unknown) {
                 const err = error as Error;

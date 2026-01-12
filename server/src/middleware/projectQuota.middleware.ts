@@ -28,7 +28,7 @@ interface FileRequest extends Request {
     file?: {
         path?: string;
     };
-    body?: {
+    body: {
         project_id?: string;
     };
     query?: {

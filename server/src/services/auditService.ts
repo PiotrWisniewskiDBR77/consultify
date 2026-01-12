@@ -144,6 +144,7 @@ interface AuditServiceDependencies {
 }
 
 interface ExpressRequestWithUser extends Request {
+    method: string; // Required by Request interface
     user?: {
         id: string;
         organization_id?: string;
@@ -318,7 +319,8 @@ class AuditServiceClass {
                 entityId,
             };
         } catch (err: unknown) {
-            logger.error('[AuditService] Failed to log event:', err instanceof Error ? err.message : String(err));
+            const error = err instanceof Error ? err : new Error(String(err));
+            logger.error('[AuditService] Failed to log event:', error);
             // Fail-silent: audit failures should not break main flow
             return {
                 success: false,

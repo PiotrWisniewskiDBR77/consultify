@@ -131,7 +131,8 @@ export async function apiKeyAuth(
 
         next();
     } catch (error) {
-        logger.error('[APIKeyAuth] Authentication error:', error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error('[APIKeyAuth] Authentication error:', err);
         res.status(500).json({ error: 'Authentication error' });
     }
 }

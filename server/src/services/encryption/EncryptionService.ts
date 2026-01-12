@@ -207,8 +207,8 @@ export function encrypt(plaintext: string): string {
         const version = key.version.toString().padStart(KEY_VERSION_LENGTH, '0');
         
         return `${ENCRYPTION_PREFIX}${version}:${iv.toString('hex')}:${authTag.toString('hex')}:${ciphertext}`;
-    } catch (error) {
-        logger.error('[Encryption] Encryption failed:', error);
+    } catch (error: unknown) {
+        logger.error('[Encryption] Encryption failed:', error instanceof Error ? error : new Error(String(error)));
         throw new Error('Encryption failed');
     }
 }
@@ -247,8 +247,8 @@ export function decrypt(encrypted: string): string {
         plaintext += decipher.final('utf8');
         
         return plaintext;
-    } catch (error) {
-        logger.error('[Encryption] Decryption failed:', error);
+    } catch (error: unknown) {
+        logger.error('[Encryption] Decryption failed:', error instanceof Error ? error : new Error(String(error)));
         throw new Error('Decryption failed');
     }
 }
@@ -284,8 +284,8 @@ export function encryptDeterministic(plaintext: string): string {
         const version = key.version.toString().padStart(KEY_VERSION_LENGTH, '0');
         
         return `${ENCRYPTION_PREFIX}d${version}:${iv.toString('hex')}:${authTag.toString('hex')}:${ciphertext}`;
-    } catch (error) {
-        logger.error('[Encryption] Deterministic encryption failed:', error);
+    } catch (error: unknown) {
+        logger.error('[Encryption] Deterministic encryption failed:', error instanceof Error ? error : new Error(String(error)));
         throw new Error('Deterministic encryption failed');
     }
 }

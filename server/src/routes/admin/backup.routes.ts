@@ -105,8 +105,8 @@ router.get('/:id/status', async (req, res) => {
         // Check if file exists locally
         const fs = await import('fs');
         const path = await import('path');
-        const BackupServiceModule = await import('../../../services/backupService.js');
-        const CONFIG = (BackupServiceModule as any).CONFIG || {
+        const BackupServiceModule2 = await import('../../../services/backupService.js');
+        const CONFIG = (BackupServiceModule2 as any).CONFIG || {
             BACKUP_DIR: process.env.BACKUP_DIR || './backups',
         };
 

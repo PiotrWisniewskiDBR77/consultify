@@ -30,6 +30,7 @@ export {
 } from './CleanupRevokedTokens.js';
 export { default as DunningCron, getDunningCron, startDunningJob, stopDunningJob } from './DunningCron.js';
 export { getHealthCheckJob, default as HealthCheckJob, startHealthCheck } from './HealthCheckJob.js';
+import Scheduler from './Scheduler.js';
 export { default as Scheduler } from './Scheduler.js';
 export const initScheduler = () => Scheduler.init();
 export const getScheduler = () => Scheduler;

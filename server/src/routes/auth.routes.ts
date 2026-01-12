@@ -292,13 +292,13 @@ router.post(
                 jti: jti,
             },
             config.JWT_SECRET as string,
-            { expiresIn: config.JWT_EXPIRES_IN as string | number },
+            { expiresIn: String(config.JWT_EXPIRES_IN || '24h') },
         );
 
         // Log the reversion
         ActivityService.log({
             userId: adminUser.id,
-            organizationId: adminUser.organization_id || adminUser.organizationId,
+            organizationId: adminUser.organization_id,
             action: 'impersonate_end',
             entityType: 'user',
             entityId: req.user!.id,
@@ -363,7 +363,7 @@ router.post(
 
             ActivityService.log({
                 userId: user.id,
-                organizationId: user.organization_id || user.organizationId,
+                organizationId: user.organization_id,
                 action: 'demo_login',
                 entityType: 'user',
                 entityId: user.id,
@@ -536,8 +536,8 @@ router.post(
                         organizationId: orgId,
                         jti: jti,
                     },
-                    config.JWT_SECRET,
-                    { expiresIn: config.JWT_EXPIRES_IN },
+                    config.JWT_SECRET as string,
+                    { expiresIn: String(config.JWT_EXPIRES_IN || '24h') },
                 );
 
                 ActivityService.log({

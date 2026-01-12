@@ -331,7 +331,7 @@ export async function getAISettings(orgId: string): Promise<AISettings> {
     );
 
     return (
-        row || {
+        (row as AISettings | null) || {
             ai_assertiveness_level: 'MEDIUM',
             ai_autonomy_level: 'SUGGEST_ONLY',
         }
@@ -388,11 +388,11 @@ export async function getMemberRole(organizationId: string, userId: string): Pro
     const row = await DbPromise.get<{ role: OrganizationRole }>(
         db,
         `SELECT role FROM organization_members 
-         WHERE organization_id = ? AND user_id = ?`,
+        WHERE organization_id = ? AND user_id = ?`,
         [organizationId, userId],
     );
 
-    return row ? row.role : null;
+    return (row as { role: OrganizationRole } | null)?.role || null;
 }
 
 // Default export for backward compatibility
