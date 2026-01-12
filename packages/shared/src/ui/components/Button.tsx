@@ -30,6 +30,8 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
     iconRight?: React.ReactNode;
     /** Loading state - shows spinner and disables button */
     loading?: boolean;
+    /** Disabled state */
+    disabled?: boolean;
     /** Additional CSS classes */
     className?: string;
     /** Button content */
@@ -111,6 +113,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         return (
             <motion.button
                 ref={ref}
+                {...(props as any)}
                 disabled={isDisabled}
                 className={`
           inline-flex items-center justify-center
@@ -128,7 +131,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     .replace(/\s+/g, ' ')}
                 whileTap={!isDisabled ? { scale: 0.97 } : undefined}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                {...props}
             >
                 {loading ? (
                     <Loader2 size={iconSize} className="animate-spin" />

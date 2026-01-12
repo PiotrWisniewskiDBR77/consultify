@@ -99,7 +99,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
                     initial="initial"
                     whileHover="hover"
                     variants={hoverVariants as any}
-                    {...props}
+                    {...(props as any)}
                 >
                     {children}
                 </motion.div>
