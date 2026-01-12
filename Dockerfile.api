@@ -14,9 +14,9 @@ RUN apk update && apk upgrade --no-cache
 COPY package.json package-lock.json ./
 COPY server/package.json server/package-lock.json ./server/
 
-# Install dependencies
-RUN npm ci --omit=dev
-RUN cd server && npm ci --omit=dev
+# Install dependencies (ignore scripts as they're not needed in Docker builds)
+RUN npm ci --omit=dev --ignore-scripts
+RUN cd server && npm ci --omit=dev --ignore-scripts
 
 # ==========================================
 # STAGE 2: Frontend Builder
@@ -28,7 +28,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/ ./packages/
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
-RUN npm ci || (echo "Lock file out of sync, updating..." && npm install)
+# Ignore scripts (like husky) as they're not needed in Docker builds
+RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
 
 # Copy remaining source and build
 COPY . .
@@ -43,7 +44,8 @@ WORKDIR /app
 # Copy package files and install all dependencies (including dev)
 COPY server/package.json server/package-lock.json ./
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
-RUN npm ci || (echo "Lock file out of sync, updating..." && npm install)
+# Ignore scripts (like husky) as they're not needed in Docker builds
+RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
 
 # Copy source and build
 COPY server/ .
