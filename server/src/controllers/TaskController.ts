@@ -9,7 +9,7 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import ActivityService from '../services/ActivityService.js';
-import NotificationService from '../services/NotificationService.js';
+import NotificationService from '../services/notificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -682,7 +682,8 @@ export class TaskController {
         params.push(now);
 
         const sql = `UPDATE tasks SET ${sqlUpdates.join(', ')} WHERE id = ?`;
-        params.push(id);
+        const taskId = Array.isArray(id) ? id[0] : id;
+        params.push(taskId);
 
         await DbPromise.run(sql, params);
 
@@ -729,8 +730,8 @@ export class TaskController {
         const initiativeId = updates.initiativeId || currentTask.initiative_id;
         if (initiativeId) {
             const InitiativeService = await import('../services/initiativeService.js').then((m) => m.default || m);
-            if (InitiativeService && InitiativeService.recalculateProgress) {
-                InitiativeService.recalculateProgress({ organizationId: orgId, initiativeId }).catch((err: Error | null) =>
+            if (InitiativeService && (InitiativeService as any).recalculateProgress) {
+                (InitiativeService as any).recalculateProgress({ organizationId: orgId, initiativeId }).catch((err: Error | null) =>
                     console.error('[TaskController] Recalc failed:', err),
                 );
             }
@@ -949,7 +950,8 @@ export class TaskController {
         const { id: taskId } = req.params;
         const { assigneeId, slaHours } = req.body as AssignTaskRequest;
 
-        const result = await TaskAssignmentService.assignTask(taskId, assigneeId, {
+        const taskIdStr = Array.isArray(taskId) ? taskId[0] : taskId;
+        const result = await TaskAssignmentService.assignTask(taskIdStr, assigneeId, {
             assignedById: req.user?.id,
             slaHours,
         });
@@ -964,7 +966,8 @@ export class TaskController {
         const { id: taskId } = req.params;
         const { toAssigneeId, reason } = req.body as ReassignTaskRequest;
 
-        const result = await TaskAssignmentService.reassignTask(taskId, toAssigneeId, {
+        const taskIdStr = Array.isArray(taskId) ? taskId[0] : taskId;
+        const result = await TaskAssignmentService.reassignTask(taskIdStr, toAssigneeId, {
             reassignedById: req.user?.id,
             reason,
             resetSla: true,
@@ -979,7 +982,8 @@ export class TaskController {
     static unassignTask = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
 
-        const result = await TaskAssignmentService.unassignTask(id);
+        const taskIdStr = Array.isArray(id) ? id[0] : id;
+        const result = await TaskAssignmentService.unassignTask(taskIdStr);
 
         res.json(result);
     });
@@ -991,7 +995,8 @@ export class TaskController {
         const { id: taskId } = req.params;
         const { reason } = req.body as EscalateTaskRequest;
 
-        const result = await TaskAssignmentService.escalateTask(taskId, {
+        const taskIdStr = Array.isArray(taskId) ? taskId[0] : taskId;
+        const result = await TaskAssignmentService.escalateTask(taskIdStr, {
             reason: reason || 'Manual escalation',
             triggerType: ESCALATION_TRIGGERS.MANUAL,
             escalatedById: req.user?.id,
@@ -1007,7 +1012,8 @@ export class TaskController {
         const { escalationId } = req.params;
         const { resolution } = req.body as ResolveEscalationRequest;
 
-        const result = await TaskAssignmentService.resolveEscalation(escalationId, {
+        const escalationIdStr = Array.isArray(escalationId) ? escalationId[0] : escalationId;
+        const result = await TaskAssignmentService.resolveEscalation(escalationIdStr, {
             resolutionNote: resolution,
             resolvedById: req.user?.id,
         });
@@ -1021,7 +1027,8 @@ export class TaskController {
     static getTaskEscalations = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
 
-        const escalations = await TaskAssignmentService.getTaskEscalationHistory(id);
+        const taskIdStr = Array.isArray(id) ? id[0] : id;
+        const escalations = await TaskAssignmentService.getTaskEscalationHistory(taskIdStr);
 
         res.json(escalations);
     });

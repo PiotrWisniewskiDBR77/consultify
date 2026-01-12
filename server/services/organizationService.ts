@@ -149,17 +149,16 @@ const OrganizationService: OrganizationServiceInterface = {
     createOrganization: async ({
         userId,
         name,
-        _email,
+        email,
         attribution = null,
     }: CreateOrganizationParams): Promise<CreateOrganizationResult> => {
-        await initDeps();
         const orgId = deps.uuidv4();
         const now = new Date().toISOString();
         const attributionJson = attribution ? JSON.stringify(attribution) : null;
 
         return new Promise((resolve, reject) => {
             deps.db.serialize(() => {
-                deps.db.run('BEGIN TRANSACTION');
+                deps.db.run('BEGIN TRANSACTION', []);
 
                 // 1. Create Organization
                 deps.db.run(
@@ -171,7 +170,7 @@ const OrganizationService: OrganizationServiceInterface = {
                     [orgId, name, userId, now, attributionJson],
                     function (err) {
                         if (err) {
-                            deps.db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK', []);
                             return reject(err);
                         }
                     },
@@ -184,11 +183,11 @@ const OrganizationService: OrganizationServiceInterface = {
                     [deps.uuidv4(), orgId, userId, 'OWNER', now],
                     function (err) {
                         if (err) {
-                            deps.db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK', []);
                             return reject(err);
                         }
 
-                        deps.db.run('COMMIT', (commitErr) => {
+                        deps.db.run('COMMIT', [], (commitErr) => {
                             if (commitErr) return reject(commitErr);
                             resolve({ id: orgId, name, role: 'OWNER' });
                         });
@@ -202,7 +201,6 @@ const OrganizationService: OrganizationServiceInterface = {
      * Get organization details including billing and tokens
      */
     getOrganization: async (orgId: string): Promise<OrganizationDetails> => {
-        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(
                 `SELECT id, name, status, billing_status, token_balance, created_at 
@@ -211,7 +209,7 @@ const OrganizationService: OrganizationServiceInterface = {
                 (err, row) => {
                     if (err) return reject(err);
                     if (!row) return reject(new Error('Organization not found'));
-                    resolve(row);
+                    resolve(row as OrganizationDetails);
                 },
             );
         });
@@ -221,7 +219,6 @@ const OrganizationService: OrganizationServiceInterface = {
      * Add a member to the organization
      */
     addMember: async ({ organizationId, userId, role, invitedBy }: AddMemberParams): Promise<AddMemberResult> => {
-        await initDeps();
         if (!Object.values(OrganizationService.ROLES).includes(role)) {
             throw new Error('Invalid role');
         }
@@ -250,7 +247,6 @@ const OrganizationService: OrganizationServiceInterface = {
      * Get members of an organization
      */
     getMembers: async (orgId: string): Promise<OrganizationMember[]> => {
-        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.all(
                 `SELECT m.id, m.user_id, m.role, m.status, m.created_at, u.first_name, u.last_name, u.email
@@ -260,7 +256,7 @@ const OrganizationService: OrganizationServiceInterface = {
                 [orgId],
                 (err, rows) => {
                     if (err) return reject(err);
-                    resolve(rows || []);
+                    resolve((rows || []) as OrganizationMember[]);
                 },
             );
         });
@@ -270,7 +266,6 @@ const OrganizationService: OrganizationServiceInterface = {
      * Get organizations for a user
      */
     getUserOrganizations: async (userId: string): Promise<UserOrganization[]> => {
-        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.all(
                 `SELECT o.id, o.name, o.billing_status, m.role
@@ -280,7 +275,7 @@ const OrganizationService: OrganizationServiceInterface = {
                 [userId],
                 (err, rows) => {
                     if (err) return reject(err);
-                    resolve(rows || []);
+                    resolve((rows || []) as UserOrganization[]);
                 },
             );
         });
@@ -291,12 +286,11 @@ const OrganizationService: OrganizationServiceInterface = {
      * Sets billing_status = ACTIVE, organization_type = PAID, and grants initial tokens
      */
     activateBilling: async (orgId: string): Promise<BillingActivationResult> => {
-        await initDeps();
         const INITIAL_TOKENS = 100000; // Configurable initial pack
 
         return new Promise((resolve, reject) => {
             deps.db.serialize(() => {
-                deps.db.run('BEGIN TRANSACTION');
+                deps.db.run('BEGIN TRANSACTION', []);
 
                 // Update Organization
                 // - Set billing_status -> ACTIVE
@@ -313,11 +307,11 @@ const OrganizationService: OrganizationServiceInterface = {
                     [INITIAL_TOKENS, orgId],
                     function (err) {
                         if (err) {
-                            deps.db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK', []);
                             return reject(err);
                         }
                         if (this.changes === 0) {
-                            deps.db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK', []);
                             return reject(new Error('Organization not found'));
                         }
                     },
@@ -330,7 +324,7 @@ const OrganizationService: OrganizationServiceInterface = {
                     [orgId],
                     function (err) {
                         if (err) {
-                            deps.db.run('ROLLBACK');
+                            deps.db.run('ROLLBACK', []);
                             return reject(err);
                         }
 
@@ -343,7 +337,7 @@ const OrganizationService: OrganizationServiceInterface = {
                         // Since creditTokens has its own transaction logic often, let's keep it simple here:
                         // We updated balance directly above. Just log it.
 
-                        deps.db.run('COMMIT', async (commitErr) => {
+                        deps.db.run('COMMIT', [], async (commitErr) => {
                             if (commitErr) return reject(commitErr);
 
                             // Log the credit via TokenBillingService (post-commit)
@@ -390,7 +384,6 @@ const OrganizationService: OrganizationServiceInterface = {
      * Update AI settings for an organization
      */
     updateAISettings: async (orgId: string, settings: Partial<AISettings>): Promise<void> => {
-        await initDeps();
         const updates = [];
         const params = [];
 
@@ -419,7 +412,6 @@ const OrganizationService: OrganizationServiceInterface = {
      * Get AI settings for an organization
      */
     getAISettings: async (orgId: string): Promise<AISettings> => {
-        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(
                 `SELECT ai_assertiveness_level, ai_autonomy_level 
@@ -442,7 +434,6 @@ const OrganizationService: OrganizationServiceInterface = {
      * Remove a member from the organization
      */
     removeMember: async ({ organizationId, userId }: { organizationId: string; userId: string }): Promise<void> => {
-        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.run(
                 `DELETE FROM organization_members 
@@ -467,7 +458,6 @@ const OrganizationService: OrganizationServiceInterface = {
         userId,
         role,
     }: UpdateMemberRoleParams): Promise<UpdateMemberRoleResult> => {
-        await initDeps();
         if (!Object.values(OrganizationService.ROLES).includes(role)) {
             throw new Error('Invalid role');
         }
@@ -493,7 +483,6 @@ const OrganizationService: OrganizationServiceInterface = {
      * Get a member's role in the organization
      */
     getMemberRole: async (organizationId: string, userId: string): Promise<string | null> => {
-        await initDeps();
         return new Promise((resolve, reject) => {
             deps.db.get(
                 `SELECT role FROM organization_members 

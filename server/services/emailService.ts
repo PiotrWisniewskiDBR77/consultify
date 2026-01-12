@@ -75,16 +75,14 @@ const EmailService: EmailServiceInterface = {
      * Send an email
      */
     send: async (options: EmailOptions): Promise<boolean> => {
-        await initDeps();
-
         const { to, subject, html, template, data, attachments = [] } = options;
 
         // 1. Fetch SMTP Settings from DB
-        const settings = await new Promise((resolve) => {
+        const settings = await new Promise<Record<string, string>>((resolve) => {
             deps.db.all("SELECT key, value FROM settings WHERE key LIKE 'smtp_%'", [], (err, rows) => {
                 if (err || !rows) return resolve({});
-                const s = {};
-                rows.forEach((r) => (s[r.key] = r.value));
+                const s: Record<string, string> = {};
+                (rows as Array<{ key: string; value: string }>).forEach((r) => (s[r.key] = r.value));
                 resolve(s);
             });
         });
@@ -119,11 +117,12 @@ const EmailService: EmailServiceInterface = {
                     html:
                         html ||
                         `<h1>${subject}</h1><p>Template: ${template}</p><pre>${JSON.stringify(data, null, 2)}</pre>`,
-                    attachments,
+                    attachments: attachments as Array<{ [key: string]: unknown; filename?: string; path?: string; content?: string | Buffer; contentType?: string }>,
                 });
                 console.log('[EMAIL SERVICE] Sent successfully via SMTP');
             } catch (e) {
-                console.error('[EMAIL SERVICE] SMTP Failed:', e.message);
+                const error = e as Error;
+                console.error('[EMAIL SERVICE] SMTP Failed:', error.message);
             }
         }
 

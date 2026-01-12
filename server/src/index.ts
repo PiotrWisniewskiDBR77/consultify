@@ -11,7 +11,7 @@ import 'dotenv/config';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import express, { type _NextFunction, type Express, type Request, type Response } from 'express';
+import express, { type NextFunction, type Express, type Request, type Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import helmet from 'helmet';
 import http from 'http';

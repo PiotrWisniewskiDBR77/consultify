@@ -10,7 +10,7 @@ import type { Response } from 'express';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import type {
-    _CreateAccessCodeRequest,
+    CreateAccessCodeRequest,
     CreateUserAdminRequest,
     ImpersonateUserRequest,
     UpdateOrganizationAdminRequest,
@@ -29,7 +29,7 @@ export class SuperAdminController {
         const superAdminController = await import('../../controllers/superAdminController.js').then(
             (m) => m.default || m,
         );
-        const orgs = await superAdminController.getOrganizations(req, res);
+        const orgs = await (superAdminController as any).getOrganizations?.(req, res);
         res.json(orgs);
     });
 
@@ -40,7 +40,7 @@ export class SuperAdminController {
         const superAdminController = await import('../../controllers/superAdminController.js').then(
             (m) => m.default || m,
         );
-        const stats = await superAdminController.getDashboardStats(req, res);
+        const stats = await (superAdminController as any).getDashboardStats?.(req, res);
         res.json(stats);
     });
 
@@ -51,7 +51,7 @@ export class SuperAdminController {
         const superAdminController = await import('../../controllers/superAdminController.js').then(
             (m) => m.default || m,
         );
-        const activities = await superAdminController.getActivities(req, res);
+        const activities = await (superAdminController as any).getActivities?.(req, res);
         res.json(activities);
     });
 
@@ -66,7 +66,7 @@ export class SuperAdminController {
             const superAdminController = await import('../../controllers/superAdminController.js').then(
                 (m) => m.default || m,
             );
-            await superAdminController.updateOrganization({ ...req, params: { id }, body: updates }, res);
+            await (superAdminController as any).updateOrganization({ ...req, params: { id }, body: updates }, res);
         },
     );
 
@@ -79,7 +79,7 @@ export class SuperAdminController {
         const superAdminController = await import('../../controllers/superAdminController.js').then(
             (m) => m.default || m,
         );
-        await superAdminController.deleteOrganization({ ...req, params: { id } }, res);
+            await (superAdminController as any).deleteOrganization({ ...req, params: { id } }, res);
     });
 
     /**
@@ -91,7 +91,7 @@ export class SuperAdminController {
         const superAdminController = await import('../../controllers/superAdminController.js').then(
             (m) => m.default || m,
         );
-        const billing = await superAdminController.getOrgBilling({ ...req, params: { id } }, res);
+        const billing = await (superAdminController as any).getOrgBilling({ ...req, params: { id } }, res);
         res.json(billing);
     });
 
@@ -102,7 +102,7 @@ export class SuperAdminController {
         const superAdminController = await import('../../controllers/superAdminController.js').then(
             (m) => m.default || m,
         );
-        const users = await superAdminController.getUsers(req, res);
+        const users = await (superAdminController as any).getUsers(req, res);
         res.json(users);
     });
 
@@ -114,7 +114,7 @@ export class SuperAdminController {
             const superAdminController = await import('../../controllers/superAdminController.js').then(
                 (m) => m.default || m,
             );
-            await superAdminController.createUser(req, res);
+            await (superAdminController as any).createUser(req, res);
         },
     );
 
@@ -128,7 +128,7 @@ export class SuperAdminController {
             const superAdminController = await import('../../controllers/superAdminController.js').then(
                 (m) => m.default || m,
             );
-            await superAdminController.updateUser({ ...req, params: { id } }, res);
+            await (superAdminController as any).updateUser({ ...req, params: { id } }, res);
         },
     );
 
@@ -140,7 +140,7 @@ export class SuperAdminController {
             const superAdminController = await import('../../controllers/superAdminController.js').then(
                 (m) => m.default || m,
             );
-            await superAdminController.impersonateUser(req, res);
+            await (superAdminController as any).impersonateUser(req, res);
         },
     );
 
@@ -151,7 +151,7 @@ export class SuperAdminController {
         const superAdminController = await import('../../controllers/superAdminController.js').then(
             (m) => m.default || m,
         );
-        const health = await superAdminController.getSystemHealth(req, res);
+        const health = await (superAdminController as any).getSystemHealth(req, res);
         res.json(health);
     });
 }

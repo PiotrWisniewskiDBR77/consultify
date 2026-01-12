@@ -303,7 +303,7 @@ export const requireOwnerOrSuperadmin = () => {
         }
 
         // Global superadmin always allowed
-        if (req.user.role === 'SUPERADMIN') {
+        if (req.user.role === 'owner' || req.user.role === 'administrator') {
             next();
             return;
         }

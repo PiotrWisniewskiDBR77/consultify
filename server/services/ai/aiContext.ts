@@ -579,7 +579,8 @@ class ContextBuilder {
         const industry = (merged.industry as string) || this._inferIndustry(orgRow?.name, merged);
 
         // Determine company size
-        const size = this._determineCompanySize(merged.employees || merged.companySize);
+        const employees = (merged.employees as number | undefined) || (merged.companySize as number | undefined);
+        const size = this._determineCompanySize(employees as string | number | undefined);
 
         return {
             industry,
@@ -942,8 +943,8 @@ class ContextBuilder {
 
     private async _fetchFullAssessment(assessmentId: string): Promise<AssessmentRow | null> {
         // Helper to wait for database to be ready and schema initialized
-        const waitForDb = () =>
-            new Promise((resolve) => {
+        const waitForDb = (): Promise<void> =>
+            new Promise<void>((resolve: () => void) => {
                 const check = (attempts = 0) => {
                     if (!db || typeof db.get !== 'function') {
                         if (attempts < 50) {
@@ -1035,11 +1036,12 @@ class ContextBuilder {
     // PRIVATE: Utilities
     // =========================================================================
 
-    private _parseJSON(str: unknown): unknown {
+    private _parseJSON(str: unknown): Record<string, unknown> | null {
         if (!str) return null;
-        if (typeof str === 'object') return str;
+        if (typeof str === 'object') return str as Record<string, unknown>;
         try {
-            return JSON.parse(str);
+            const strValue = typeof str === 'string' ? str : String(str);
+            return JSON.parse(strValue);
         } catch {
             return null;
         }

@@ -140,19 +140,19 @@ router.post(
             let createdByConsultantId: string | null = null;
 
             if (type === AccessCodeService.CODE_TYPES.CONSULTANT || type === AccessCodeService.CODE_TYPES.TRIAL) {
-                if (!['SUPERADMIN', 'ADMIN', 'CONSULTANT'].includes(userRole)) {
+                if (!['owner', 'administrator', 'team_member'].includes(userRole)) {
                     return res.status(403).json({ error: 'Insufficient permissions' });
                 }
-                if (userRole === 'CONSULTANT') {
+                if (userRole === 'team_member') {
                     createdByConsultantId = userId;
                 }
             } else if (type === AccessCodeService.CODE_TYPES.INVITE) {
-                if (!['SUPERADMIN', 'ADMIN'].includes(userRole)) {
+                if (!['owner', 'administrator'].includes(userRole)) {
                     return res.status(403).json({ error: 'Only Admins can generate team invites' });
                 }
                 // Org scoping
-                const userOrgId = req.user?.organizationId || req.user?.organization_id;
-                if (userRole === 'ADMIN' && organizationId && organizationId !== userOrgId) {
+                const userOrgId = req.user?.organizationId;
+                if (userRole === 'administrator' && organizationId && organizationId !== userOrgId) {
                     return res.status(403).json({ error: 'Cannot generate invite for another organization' });
                 }
             }
@@ -163,7 +163,7 @@ router.post(
                 createdByConsultantId,
                 organizationId:
                     organizationId ||
-                    (type === 'INVITE' ? req.user?.organizationId || req.user?.organization_id : null),
+                    (type === 'INVITE' ? req.user?.organizationId : null),
                 targetEmail: targetEmail || null,
                 maxUses,
                 expiresInDays,
@@ -202,7 +202,8 @@ router.get(
         }
 
         try {
-            const result = await AccessCodeService.validatePublic(req.params.code);
+            const code = Array.isArray(req.params.code) ? req.params.code[0] : req.params.code;
+            const result = await AccessCodeService.validatePublic(code);
             res.json(result);
         } catch (err: unknown) {
             // Always return same shape for privacy
@@ -289,7 +290,7 @@ router.get(
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const codes = await AccessCodeService.listCodes(userId, userRole === 'CONSULTANT' ? 'CONSULTANT' : 'USER');
+            const codes = await AccessCodeService.listCodes(userId, userRole === 'team_member' ? 'CONSULTANT' : 'USER');
 
             // Sanitize: remove code_hash from response
             const sanitized = codes.map((c) => ({
@@ -327,7 +328,8 @@ router.post(
 
         try {
             // TODO: Add ownership verification
-            await AccessCodeService.revokeCode(req.params.id);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            await AccessCodeService.revokeCode(id);
             res.json({ success: true });
         } catch (err: unknown) {
             return res.status(500).json({

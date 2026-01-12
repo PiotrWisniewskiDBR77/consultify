@@ -5,7 +5,7 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
-import { _AuthenticationError, _AuthorizationError, _NotFoundError, AppError, ValidationError } from '../types.js';
+import { AppError, ValidationError } from '../types/index.js';
 
 interface ErrorResponse {
     success: false;
@@ -44,10 +44,11 @@ export const errorHandler = (err: Error, req: Request, res: Response, _next: Nex
         };
     } else if (err.name === 'ValidationError' || err.message.includes('validation')) {
         statusCode = 400;
+        const errWithCode = err as Error & { code?: string };
         response = {
             success: false,
             error: err.message,
-            code: 'VALIDATION_ERROR',
+            code: errWithCode.code || 'VALIDATION_ERROR',
         };
     } else if (err.name === 'JsonWebTokenError') {
         statusCode = 401;

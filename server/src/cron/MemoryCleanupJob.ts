@@ -46,7 +46,7 @@ export async function runMemoryCleanup(): Promise<CleanupResult> {
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
             result.errors.push(`Cache cleanup failed: ${err.message}`);
-            logger.warn('[MemoryCleanup] Cache cleanup failed:', err.message);
+            logger.warn('[MemoryCleanup] Cache cleanup failed:', { error: err.message });
         }
 
         // 2. Clean up old temporary data
@@ -57,7 +57,7 @@ export async function runMemoryCleanup(): Promise<CleanupResult> {
         } catch (error: unknown) {
             const err = error instanceof Error ? error : new Error(String(error));
             result.errors.push(`Temporary data cleanup failed: ${err.message}`);
-            logger.warn('[MemoryCleanup] Temporary data cleanup failed:', err.message);
+            logger.warn('[MemoryCleanup] Temporary data cleanup failed:', { error: err.message });
         }
 
         // 3. Reset memory monitor baseline if growth is significant
@@ -130,7 +130,7 @@ async function cleanupCache(): Promise<{ itemsCleaned: number; memoryFreed: numb
         return { itemsCleaned, memoryFreed };
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logger.warn('[MemoryCleanup] Cache cleanup error:', err.message);
+        logger.warn('[MemoryCleanup] Cache cleanup error:', { error: err.message });
         return { itemsCleaned, memoryFreed };
     }
 }
@@ -150,7 +150,7 @@ async function cleanupTemporaryData(): Promise<{ itemsCleaned: number; memoryFre
         return { itemsCleaned, memoryFreed };
     } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logger.warn('[MemoryCleanup] Temporary data cleanup error:', err.message);
+        logger.warn('[MemoryCleanup] Temporary data cleanup error:', { error: err.message });
         return { itemsCleaned, memoryFreed };
     }
 }

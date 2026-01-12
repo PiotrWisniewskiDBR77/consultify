@@ -37,9 +37,8 @@ class SnapshotMetricsCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.metricsPersistenceService) {
-            this.deps.metricsPersistenceService = await import('../../services/metricsPersistenceService.js').then(
-                (m) => m.default || m,
-            );
+            const module = await import('../../services/metricsPersistenceService.js');
+            this.deps.metricsPersistenceService = (module.default || module) as any;
         }
         return this.deps as Dependencies;
     }

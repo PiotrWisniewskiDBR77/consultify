@@ -114,7 +114,7 @@ export class UserController {
             }
 
             // Check permission - only admins can change roles
-            if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPERADMIN') {
+            if (req.user?.role !== 'administrator' && req.user?.role !== 'owner') {
                 res.status(403).json({ error: 'Only admins can change user roles' });
                 return;
             }

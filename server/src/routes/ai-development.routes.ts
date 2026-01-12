@@ -499,7 +499,8 @@ router.get(
         }
 
         try {
-            const stats = await abTestingService.getExperimentStats(req.params.id);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const stats = await abTestingService.getExperimentStats(id);
             res.json({ success: true, data: stats });
         } catch (error: unknown) {
             console.error('[AI Development] Error getting experiment:', error);
@@ -530,7 +531,8 @@ router.post(
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const result = await abTestingService.startExperiment(req.params.id, userId);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await abTestingService.startExperiment(id, userId);
             res.json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AI Development] Error starting experiment:', error);
@@ -557,7 +559,8 @@ router.post(
 
         try {
             const { reason = 'manual' } = req.body;
-            const result = await abTestingService.stopExperiment(req.params.id, reason);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await abTestingService.stopExperiment(id, reason);
             res.json({ success: true, data: result });
         } catch (error: unknown) {
             console.error('[AI Development] Error stopping experiment:', error);
@@ -641,7 +644,8 @@ router.put(
 
         try {
             const { status, adminComment } = req.body;
-            await KnowledgeService.updateCandidateStatus(req.params.id, status, adminComment);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            await KnowledgeService.updateCandidateStatus(id, status, adminComment);
             res.json({ success: true, message: 'Status updated' });
         } catch (error: unknown) {
             console.error('[AI Development] Error updating candidate status:', error);

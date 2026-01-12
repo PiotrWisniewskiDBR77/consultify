@@ -18,8 +18,7 @@ let aiLogger: { error?: (category: string, message: string) => void } | null = n
 
 try {
     const loggerModule = await import('../../services/ai/logger.js');
-    const module = loggerModule.default || loggerModule;
-    aiLogger = module.aiLogger || module;
+    aiLogger = (loggerModule as any).aiLogger || (loggerModule as any).default || loggerModule;
 } catch {
     console.warn('[AI Analytics Routes] aiLogger not available');
 }
@@ -451,7 +450,7 @@ router.post(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const userRole = req.user?.role;
-            if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
+            if (userRole !== 'administrator' && userRole !== 'owner') {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 

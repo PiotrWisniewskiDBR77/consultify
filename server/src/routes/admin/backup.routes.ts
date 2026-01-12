@@ -29,8 +29,9 @@ router.use(verifyAdmin);
  */
 router.get('/', async (req, res) => {
     try {
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
-        const backups = await BackupService.listBackups({
+        const BackupServiceModule = await import('../../../services/backupService.js');
+        const BackupService = BackupServiceModule.default || BackupServiceModule;
+        const backups = await (BackupService as any).listBackups({
             includeExpired: req.query.includeExpired === 'true',
         });
 
@@ -55,11 +56,12 @@ router.get('/', async (req, res) => {
  */
 router.get('/status', async (req, res) => {
     try {
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
-        const BackupCron = await import('../../cron/BackupCron.js').then((m) => m.default || m);
+        const BackupServiceModule = await import('../../../services/backupService.js');
+        const BackupService = BackupServiceModule.default || BackupServiceModule;
+        const { getBackupCron } = await import('../../cron/BackupCron.js');
         
-        const status = await BackupService.getBackupStatus();
-        const cron = BackupCron.getBackupCron();
+        const status = await (BackupService as any).getBackupStatus();
+        const cron = getBackupCron();
         const metrics = cron.getMetrics();
 
         res.json({
@@ -89,8 +91,9 @@ router.get('/status', async (req, res) => {
 router.get('/:id/status', async (req, res) => {
     try {
         const { id } = req.params;
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
-        const backups = await BackupService.listBackups({ includeExpired: true });
+        const BackupServiceModule = await import('../../../services/backupService.js');
+        const BackupService = BackupServiceModule.default || BackupServiceModule;
+        const backups = await (BackupService as any).listBackups({ includeExpired: true });
         const backup = backups.find((b) => b.id === id);
 
         if (!backup) {
@@ -144,8 +147,9 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
             });
         }
 
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
-        const result = await BackupService.restoreBackup(backupId, {
+        const BackupServiceModule = await import('../../../services/backupService.js');
+        const BackupService = BackupServiceModule.default || BackupServiceModule;
+        const result = await (BackupService as any).restoreBackup(backupId, {
             createPreRestoreBackup,
         });
 
@@ -172,8 +176,9 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
 router.delete('/:id', verifySuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const BackupService = await import('../../../services/backupService.js').then((m) => m.default || m);
-        await BackupService.deleteBackup(id);
+        const BackupServiceModule = await import('../../../services/backupService.js');
+        const BackupService = BackupServiceModule.default || BackupServiceModule;
+        await (BackupService as any).deleteBackup(id);
 
         res.json({
             success: true,
@@ -197,8 +202,8 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
 router.post('/manual', verifySuperAdmin, async (req, res) => {
     try {
         const { reason = 'manual' } = req.body;
-        const BackupCron = await import('../../cron/BackupCron.js').then((m) => m.default || m);
-        const cron = BackupCron.getBackupCron();
+        const { getBackupCron } = await import('../../cron/BackupCron.js');
+        const cron = getBackupCron();
         const result = await cron.triggerManualBackup(reason);
 
         res.json({

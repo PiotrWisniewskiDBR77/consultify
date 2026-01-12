@@ -60,7 +60,7 @@ const StorageReconciliationService: StorageReconciliationServiceInterface = {
                         );
                     });
 
-                    const reportedBytes = projectRow ? projectRow.storage_used_bytes : 0;
+                    const reportedBytes = projectRow ? (projectRow as { storage_used_bytes: number }).storage_used_bytes : 0;
 
                     if (Math.abs(actualSizeBytes - reportedBytes) > 1024 * 1024) {
                         // > 1MB difference
@@ -81,6 +81,7 @@ const StorageReconciliationService: StorageReconciliationServiceInterface = {
         (db as Database).run(
             `INSERT INTO storage_audit_logs (id, organization_id, action, files_scanned, discrepancies_found) VALUES (?, 'system', 'daily_reconciliation', ?, ?)`,
             [id, scandFiles, discrepancies],
+            () => {},
         );
 
         console.log(`[Reconciliation] Completed. Discrepancies found: ${discrepancies}`);

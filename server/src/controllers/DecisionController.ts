@@ -49,15 +49,15 @@ export class DecisionController {
 
         if (projectId) {
             sql += ` AND d.project_id = ?`;
-            params.push(Array.isArray(projectId) ? projectId[0] : projectId);
+            params.push(Array.isArray(projectId) ? (projectId[0] as SQLParam) : (projectId as SQLParam));
         }
         if (status) {
             sql += ` AND d.status = ?`;
-            params.push(Array.isArray(status) ? status[0] : status);
+            params.push(Array.isArray(status) ? (status[0] as SQLParam) : (status as SQLParam));
         }
         if (relatedObjectId) {
             sql += ` AND d.related_object_id = ?`;
-            params.push(Array.isArray(relatedObjectId) ? relatedObjectId[0] : relatedObjectId);
+            params.push(Array.isArray(relatedObjectId) ? (relatedObjectId[0] as SQLParam) : (relatedObjectId as SQLParam));
         }
 
         sql += ` ORDER BY d.created_at DESC`;
@@ -144,8 +144,8 @@ export class DecisionController {
                 return;
             }
 
-            // Check permission
-            if (!req.can || !req.can('approve_changes')) {
+            // Check permission (assuming middleware adds can method)
+            if (!(req as any).can || !(req as any).can('approve_changes')) {
                 res.status(403).json({ error: 'Permission denied' });
                 return;
             }
@@ -224,10 +224,10 @@ export class DecisionController {
         }
 
         // Get decision first
-        const currentDecision = await queryHelpers.queryOne<{
+        const currentDecision = (await queryHelpers.queryOne(`SELECT * FROM decisions WHERE id = ?`, [id])) as {
             decision_owner_id?: string;
             audit_trail?: string;
-        }>(`SELECT * FROM decisions WHERE id = ?`, [id]);
+        } | null;
 
         if (!currentDecision) {
             res.status(404).json({ error: 'Decision not found' });
@@ -237,8 +237,8 @@ export class DecisionController {
         // Check if user is decision owner
         if (
             currentDecision.decision_owner_id !== userId &&
-            req.user?.role !== 'ADMIN' &&
-            req.user?.role !== 'SUPERADMIN'
+            req.user?.role !== 'administrator' &&
+            req.user?.role !== 'owner'
         ) {
             res.status(403).json({ error: 'Only decision owner can decide' });
             return;

@@ -53,7 +53,7 @@ router.get(
             const errorRatePercent =
                 errorRate.total && errorRate.total > 0
                     ? (((errorRate.errors || 0) / errorRate.total) * 100).toFixed(2)
-                    : 0;
+                    : '0';
 
             res.json({
                 success: true,

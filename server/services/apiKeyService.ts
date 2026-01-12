@@ -330,7 +330,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
             ],
         );
 
-        AuditService.logSystemEvent('API_KEY_CREATED', 'api_key', keyId, organizationId, {
+        AuditService.logSystemEvent('API_KEY_CREATED', 'api_key', keyId, organizationId as any, {
             name,
             keyType,
             scopes,
@@ -499,10 +499,10 @@ const ApiKeyService: ApiKeyServiceInterface = {
         const keys = (await dbAll(query, params)) as Array<Record<string, unknown>>;
         return keys.map((k) => ({
             ...k,
-            scopes: JSON.parse(k.scopes || '[]'),
-            allowedIps: JSON.parse(k.allowed_ips || '[]'),
+            scopes: JSON.parse((k.scopes as string) || '[]'),
+            allowedIps: JSON.parse((k.allowed_ips as string) || '[]'),
             isActive: !!k.is_active,
-        }));
+        })) as ApiKeyRecord[];
     },
 
     /**
@@ -511,7 +511,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
     async getKeyUsage(keyId: string, days: number = 30): Promise<UsageStatistics> {
         const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-        const usage = await dbAll(
+        const usage = (await dbAll(
             `SELECT 
                 date(created_at) as date,
                 COUNT(*) as requests,
@@ -523,9 +523,9 @@ const ApiKeyService: ApiKeyServiceInterface = {
              GROUP BY date(created_at)
              ORDER BY date DESC`,
             [keyId, since],
-        );
+        )) as Array<{ date: string; requests: number; avg_response_time: number; successful: number; failed: number }>;
 
-        const totals = await dbGet(
+        const totals = (await dbGet(
             `SELECT 
                 COUNT(*) as total_requests,
                 AVG(response_time_ms) as avg_response_time,
@@ -533,9 +533,9 @@ const ApiKeyService: ApiKeyServiceInterface = {
              FROM api_key_usage 
              WHERE api_key_id = ? AND created_at >= ?`,
             [keyId, since],
-        );
+        )) as { total_requests: number; avg_response_time: number; total_errors: number } | null;
 
-        const endpoints = await dbAll(
+        const endpoints = (await dbAll(
             `SELECT endpoint, method, COUNT(*) as count
              FROM api_key_usage 
              WHERE api_key_id = ? AND created_at >= ?
@@ -543,9 +543,9 @@ const ApiKeyService: ApiKeyServiceInterface = {
              ORDER BY count DESC
              LIMIT 10`,
             [keyId, since],
-        );
+        )) as Array<{ endpoint: string; method: string; count: number }>;
 
-        return { usage, totals, endpoints };
+        return { usage, totals: totals || { total_requests: 0, avg_response_time: 0, total_errors: 0 }, endpoints };
     },
 
     /**
@@ -608,8 +608,8 @@ const ApiKeyService: ApiKeyServiceInterface = {
 
         await dbRun(`UPDATE api_keys SET ${fields.join(', ')} WHERE id = ?`, params);
 
-        const key = await dbGet(`SELECT organization_id FROM api_keys WHERE id = ?`, [keyId]);
-        AuditService.logSystemEvent('API_KEY_UPDATED', 'api_key', keyId, key?.organization_id, {
+        const key = (await dbGet(`SELECT organization_id FROM api_keys WHERE id = ?`, [keyId])) as { organization_id: string } | null;
+        AuditService.logSystemEvent('API_KEY_UPDATED', 'api_key', keyId, (key?.organization_id as any) || null, {
             updatedFields: Object.keys(updates),
             updatedBy,
         });
@@ -621,7 +621,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
      * Revoke an API key
      */
     async revokeKey(keyId: string, revokedBy: string, reason: string | null = null): Promise<{ success: boolean }> {
-        const key = await dbGet(`SELECT organization_id, name FROM api_keys WHERE id = ?`, [keyId]);
+        const key = (await dbGet(`SELECT organization_id, name FROM api_keys WHERE id = ?`, [keyId])) as { organization_id: string; name: string } | null;
         if (!key) {
             throw new Error('Key not found');
         }
@@ -632,7 +632,7 @@ const ApiKeyService: ApiKeyServiceInterface = {
             [revokedBy, reason, keyId],
         );
 
-        AuditService.logSystemEvent('API_KEY_REVOKED', 'api_key', keyId, key.organization_id, {
+        AuditService.logSystemEvent('API_KEY_REVOKED', 'api_key', keyId, (key.organization_id as any) || null, {
             name: key.name,
             revokedBy,
             reason,
@@ -645,7 +645,18 @@ const ApiKeyService: ApiKeyServiceInterface = {
      * Regenerate an API key (creates new key, revokes old one)
      */
     async regenerateKey(keyId: string, regeneratedBy: string): Promise<ApiKeyResult> {
-        const oldKey = await dbGet(`SELECT * FROM api_keys WHERE id = ?`, [keyId]);
+        const oldKey = (await dbGet(`SELECT * FROM api_keys WHERE id = ?`, [keyId])) as {
+            organization_id: string;
+            user_id: string | null;
+            name: string;
+            description: string;
+            scopes: string;
+            key_type: string;
+            rate_limit_per_minute: number;
+            rate_limit_per_day: number;
+            allowed_ips: string;
+            expires_at: string | null;
+        } | null;
         if (!oldKey) {
             throw new Error('Key not found');
         }

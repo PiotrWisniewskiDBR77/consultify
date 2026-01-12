@@ -59,7 +59,8 @@ class WhatsappService implements WhatsappServiceInterface {
             });
             console.log('[WhatsappService] Feedback alert sent');
         } catch (error) {
-            console.error('[WhatsappService] Failed to send alert:', error.message);
+            const err = error as Error;
+            console.error('[WhatsappService] Failed to send alert:', err.message);
         }
     }
 }

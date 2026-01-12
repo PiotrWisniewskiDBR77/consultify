@@ -164,15 +164,16 @@ router.get(
 
         try {
             const { orgId } = req.params;
+            const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
             const userRole = req.user?.role;
-            const userOrgId = req.user?.organizationId || req.user?.organization_id;
+            const userOrgId = req.user?.organizationId;
 
             // Check if user has access to this org
-            if (userRole !== 'superadmin' && userRole !== 'SUPERADMIN' && userOrgId !== orgId) {
+            if (userRole !== 'owner' && userRole !== 'administrator' && userOrgId !== orgIdStr) {
                 return res.status(403).json({ error: 'Access denied to this organization' });
             }
 
-            const settings = await AISettingsService.getOrgSettings(orgId);
+            const settings = await AISettingsService.getOrgSettings(orgIdStr);
             res.json(settings);
         } catch (error: unknown) {
             console.error('[AI Settings] Error getting org settings:', error);
@@ -199,14 +200,14 @@ router.put(
 
         try {
             const { orgId } = req.params;
+            const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
             const userRole = req.user?.role;
-            const userOrgId = req.user?.organizationId || req.user?.organization_id;
+            const userOrgId = req.user?.organizationId;
 
             // Check if user is admin for this org
             const isAdmin =
-                userRole === 'superadmin' ||
-                userRole === 'SUPERADMIN' ||
-                (userOrgId === orgId && (userRole === 'admin' || userRole === 'ADMIN'));
+                userRole === 'owner' ||
+                (userOrgId === orgIdStr && (userRole === 'administrator'));
 
             if (!isAdmin) {
                 return res.status(403).json({ error: 'Admin access required' });
@@ -223,7 +224,7 @@ router.put(
             }
 
             const updated = await AISettingsService.updateOrgSettings(
-                orgId,
+                orgIdStr,
                 settings,
                 actorId,
                 actorRole,
@@ -290,7 +291,7 @@ router.put(
 
         try {
             const userId = req.user?.id;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
             const settings = req.body as { proactivityMode?: string; [key: string]: unknown };
 
             if (!userId || !organizationId) {
@@ -343,7 +344,7 @@ router.get(
 
         try {
             const userId = req.user?.id;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
 
             if (!userId || !organizationId) {
                 return res.status(400).json({ error: 'User must belong to an organization' });
@@ -380,7 +381,7 @@ router.get(
 
         try {
             const userId = req.user?.id;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
 
             if (!userId || !organizationId) {
                 return res.status(401).json({ error: 'Unauthorized' });
@@ -416,7 +417,7 @@ router.get(
 
         try {
             const userId = req.user?.id;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
 
             if (!userId || !organizationId) {
                 return res.status(401).json({ error: 'Unauthorized' });
@@ -479,7 +480,7 @@ router.get(
         try {
             const { level, targetId, limit = 100, offset = 0 } = req.query;
             const userRole = req.user?.role;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
 
             // Non-superadmins can only see their org's audit log
             const filters: {
@@ -492,10 +493,10 @@ router.get(
                 offset: parseInt(offset as string),
             };
 
-            if (userRole === 'superadmin' || userRole === 'SUPERADMIN') {
+            if (userRole === 'superadmin' || userRole === 'owner') {
                 if (level) filters.level = level as string;
                 if (targetId) filters.targetId = targetId as string;
-            } else if (userRole === 'admin' || userRole === 'ADMIN') {
+            } else if (userRole === 'admin' || userRole === 'administrator') {
                 // Admins see only their org
                 filters.targetId = organizationId;
                 if (level) filters.level = level as string;
@@ -532,10 +533,10 @@ router.get(
             const { orgId } = req.params;
             const { limit = 100, offset = 0 } = req.query;
             const userRole = req.user?.role;
-            const userOrgId = req.user?.organizationId || req.user?.organization_id;
+            const userOrgId = req.user?.organizationId || req.user?.organizationId;
 
             // Check access
-            if (userRole !== 'superadmin' && userRole !== 'SUPERADMIN' && userOrgId !== orgId) {
+            if (userRole !== 'superadmin' && userRole !== 'owner' && userOrgId !== orgId) {
                 return res.status(403).json({ error: 'Access denied' });
             }
 
@@ -612,13 +613,13 @@ router.get(
         try {
             const { orgId } = req.params;
             const userRole = req.user?.role;
-            const userOrgId = req.user?.organizationId || req.user?.organization_id;
+            const userOrgId = req.user?.organizationId || req.user?.organizationId;
 
             // Check if user is admin for this org
             const isAdmin =
                 userRole === 'superadmin' ||
-                userRole === 'SUPERADMIN' ||
-                (userOrgId === orgId && (userRole === 'admin' || userRole === 'ADMIN'));
+                userRole === 'owner' ||
+                (userOrgId === orgId && (userRole === 'admin' || userRole === 'administrator'));
 
             if (!isAdmin) {
                 return res.status(403).json({ error: 'Admin access required' });
@@ -653,7 +654,7 @@ router.put(
             const { orgId, userId } = req.params;
             const { tier } = req.body;
             const userRole = req.user?.role;
-            const userOrgId = req.user?.organizationId || req.user?.organization_id;
+            const userOrgId = req.user?.organizationId || req.user?.organizationId;
 
             // Validate tier
             const validTiers = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'];
@@ -667,8 +668,8 @@ router.put(
             // Check if user is admin for this org
             const isAdmin =
                 userRole === 'superadmin' ||
-                userRole === 'SUPERADMIN' ||
-                (userOrgId === orgId && (userRole === 'admin' || userRole === 'ADMIN'));
+                userRole === 'owner' ||
+                (userOrgId === orgId && (userRole === 'admin' || userRole === 'administrator'));
 
             if (!isAdmin) {
                 return res.status(403).json({ error: 'Admin access required' });
@@ -707,13 +708,13 @@ router.get(
             const { orgId } = req.params;
             const { period = '7d' } = req.query;
             const userRole = req.user?.role;
-            const userOrgId = req.user?.organizationId || req.user?.organization_id;
+            const userOrgId = req.user?.organizationId || req.user?.organizationId;
 
             // Check if user is admin for this org
             const isAdmin =
                 userRole === 'superadmin' ||
-                userRole === 'SUPERADMIN' ||
-                (userOrgId === orgId && (userRole === 'admin' || userRole === 'ADMIN'));
+                userRole === 'owner' ||
+                (userOrgId === orgId && (userRole === 'admin' || userRole === 'administrator'));
 
             if (!isAdmin) {
                 return res.status(403).json({ error: 'Admin access required' });
@@ -751,7 +752,7 @@ router.get(
         try {
             const { format } = req.params;
             const { standard = 'ISO21500' } = req.query;
-            const orgId = req.user?.organizationId || req.user?.organization_id;
+            const orgId = req.user?.organizationId || req.user?.organizationId;
             const userRole = req.user?.role;
 
             // Validate format
@@ -775,9 +776,9 @@ router.get(
             // Check admin access
             if (
                 userRole !== 'superadmin' &&
-                userRole !== 'SUPERADMIN' &&
+                userRole !== 'owner' &&
                 userRole !== 'admin' &&
-                userRole !== 'ADMIN'
+                userRole !== 'administrator'
             ) {
                 return res.status(403).json({ error: 'Admin access required' });
             }
@@ -827,15 +828,15 @@ router.post(
 
         try {
             const { standard = 'ISO21500' } = req.body;
-            const orgId = req.user?.organizationId || req.user?.organization_id;
+            const orgId = req.user?.organizationId || req.user?.organizationId;
             const userRole = req.user?.role;
 
             // Check admin access
             if (
                 userRole !== 'superadmin' &&
-                userRole !== 'SUPERADMIN' &&
+                userRole !== 'owner' &&
                 userRole !== 'admin' &&
-                userRole !== 'ADMIN'
+                userRole !== 'administrator'
             ) {
                 return res.status(403).json({ error: 'Admin access required' });
             }

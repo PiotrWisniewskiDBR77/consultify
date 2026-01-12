@@ -66,7 +66,7 @@ const fileFilter = (
         return cb(null, true);
     }
 
-    cb(new Error('Only PDF, Excel, and Word documents are allowed'));
+    cb(new Error('Only PDF, Excel, and Word documents are allowed'), false);
 };
 
 /**

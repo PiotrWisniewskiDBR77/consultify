@@ -94,9 +94,10 @@ export class InvitationController {
      */
     static cancelInvitation = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
+        const invitationId = Array.isArray(id) ? id[0] : id;
 
         const InvitationService = (await import('../services/invitationService.js')).default;
-        await InvitationService.cancelInvitation(id, req.user?.id);
+        await InvitationService.cancelInvitation(invitationId, req.user?.id);
 
         res.json({ message: 'Invitation cancelled' });
     });

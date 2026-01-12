@@ -11,7 +11,7 @@
  * - Access dashboard features
  */
 
-import { _Request, NextFunction, Response } from 'express';
+import { Request, NextFunction, Response } from 'express';
 
 import { get as dbGet } from '../utils/DbPromise.js';
 import type { AuthRequest } from './auth.middleware.js';

@@ -93,7 +93,8 @@ class SiemService implements SiemServiceInterface {
                 logger.debug('[SIEM] Would stream batch of logs', { count: batch.length });
             }
         } catch (error) {
-            console.warn(`[SIEM] Delivery failed: ${error.message}`);
+            const err = error as Error;
+            console.warn(`[SIEM] Delivery failed: ${err.message}`);
             // Re-buffer for a future retry (limited depth to prevent memory leak)
             if (this.buffer.length < 100) {
                 this.buffer.unshift(...batch);

@@ -10,7 +10,7 @@ import type { Response } from 'express';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import type {
-    _InviteMemberRequest,
+    InviteMemberRequest,
     AddMemberRequest,
     CreateOrganizationRequest,
     UpdateMemberRoleRequest,
@@ -67,6 +67,7 @@ export class OrganizationController {
      */
     static getOrganizationById = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
+        const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: 'Unauthorized' });
@@ -76,14 +77,14 @@ export class OrganizationController {
         const { getMembers, getOrganization } = await import('../services/organizationService.js');
 
         // Security check: User must be member
-        const members = await getMembers(orgId);
+        const members = await getMembers(orgIdStr);
         const isMember = members.some((m) => m.user_id === userId);
-        if (!isMember && req.user?.role !== 'SUPERADMIN') {
+        if (!isMember && req.user?.role !== 'owner' && req.user?.role !== 'administrator') {
             res.status(403).json({ error: 'Access denied' });
             return;
         }
 
-        const org = await getOrganization(orgId);
+        const org = await getOrganization(orgIdStr);
         res.json(org);
     });
 
@@ -105,6 +106,7 @@ export class OrganizationController {
      */
     static getMembers = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { orgId } = req.params;
+        const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
         const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({ error: 'Unauthorized' });
@@ -114,9 +116,9 @@ export class OrganizationController {
         const { getMembers } = await import('../services/organizationService.js');
 
         // Security check
-        const members = await getMembers(orgId);
+        const members = await getMembers(orgIdStr);
         const isMember = members.some((m) => m.user_id === userId);
-        if (!isMember && req.user?.role !== 'SUPERADMIN') {
+        if (!isMember && req.user?.role !== 'owner' && req.user?.role !== 'administrator') {
             res.status(403).json({ error: 'Access denied' });
             return;
         }
@@ -130,6 +132,7 @@ export class OrganizationController {
     static addMember = asyncHandler(
         async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { orgId } = req.params;
+            const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
             const { targetUserId, role } = req.body;
             const userId = req.user?.id;
             if (!userId) {
@@ -140,18 +143,18 @@ export class OrganizationController {
             const { getMembers, addMember: addMemberService } = await import('../services/organizationService.js');
 
             // Security check: Only OWNER or ADMIN can add members
-            const members = await getMembers(orgId);
+            const members = await getMembers(orgIdStr);
             const currentUserMember = members.find((m) => m.user_id === userId);
 
             if (!currentUserMember || !['OWNER', 'ADMIN'].includes(currentUserMember.role)) {
-                if (req.user?.role !== 'SUPERADMIN') {
+                if (req.user?.role !== 'owner' && req.user?.role !== 'administrator') {
                     res.status(403).json({ error: 'Only Admins can add members' });
                     return;
                 }
             }
 
             const result = await addMemberService({
-                organizationId: orgId,
+                organizationId: orgIdStr,
                 userId: targetUserId,
                 role: (role || 'MEMBER') as 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
                 invitedBy: userId,
@@ -167,6 +170,8 @@ export class OrganizationController {
     static updateMemberRole = asyncHandler(
         async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { orgId, memberId } = req.params;
+            const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
+            const memberIdStr = Array.isArray(memberId) ? memberId[0] : memberId;
             const { role } = req.body;
             const userId = req.user?.id;
 
@@ -177,8 +182,8 @@ export class OrganizationController {
 
             const { updateMemberRole } = await import('../services/organizationService.js');
             const result = await updateMemberRole({
-                organizationId: orgId,
-                userId: memberId,
+                organizationId: orgIdStr,
+                userId: memberIdStr,
                 role: role as 'OWNER' | 'ADMIN' | 'MEMBER' | 'CONSULTANT',
             });
 
@@ -191,6 +196,8 @@ export class OrganizationController {
      */
     static removeMember = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { orgId, memberId } = req.params;
+        const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
+        const memberIdStr = Array.isArray(memberId) ? memberId[0] : memberId;
         const userId = req.user?.id;
 
         if (!userId) {
@@ -200,8 +207,8 @@ export class OrganizationController {
 
         const { removeMember } = await import('../services/organizationService.js');
         await removeMember({
-            organizationId: orgId,
-            userId: memberId,
+            organizationId: orgIdStr,
+            userId: memberIdStr,
         });
 
         res.json({ message: 'Member removed' });

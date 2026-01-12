@@ -164,7 +164,7 @@ router.put(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const userId = req.user?.id || req.user?.userId;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
             const { key } = req.params;
             const { value, source = 'explicit', confidence = 1.0, context } = req.body;
 
@@ -277,7 +277,7 @@ router.post(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const userId = req.user?.id || req.user?.userId;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
             const { memories } = req.body;
 
             if (!userId) {

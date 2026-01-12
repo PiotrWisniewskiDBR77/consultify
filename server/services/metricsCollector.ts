@@ -126,6 +126,8 @@ export interface OrganizationEventOptions {
 
 export interface TimeSeriesOptions {
     days?: number;
+    startDate?: string;
+    endDate?: string;
 }
 
 export interface TimeSeriesRecord {
@@ -235,7 +237,7 @@ const MetricsCollector: MetricsCollector = {
                     resolve(
                         (rows as EventRecord[]).map((row) => ({
                             ...row,
-                            context: row.context ? JSON.parse(row.context as string) : {},
+                            context: row.context ? JSON.parse(row.context as unknown as string) : {},
                         })),
                     );
                 }
@@ -281,7 +283,7 @@ const MetricsCollector: MetricsCollector = {
                     resolve(
                         (rows as EventRecord[]).map((row) => ({
                             ...row,
-                            context: row.context ? JSON.parse(row.context as string) : {},
+                            context: row.context ? JSON.parse(row.context as unknown as string) : {},
                         })),
                     );
                 }

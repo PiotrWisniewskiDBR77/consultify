@@ -100,7 +100,7 @@ router.get(
 
         try {
             const { includeUserBudgets } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
 
             if (!organizationId) {
                 return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -152,7 +152,7 @@ router.post(
                 rolloverPercentage,
             } = req.body;
 
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
             const userId_created = req.user?.id;
 
             if (!organizationId || !userId_created) {
@@ -209,7 +209,8 @@ router.get(
         }
 
         try {
-            const budget = await aiBudgetService.getBudget(req.params.id);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const budget = await aiBudgetService.getBudget(id);
 
             if (!budget) {
                 return res.status(404).json({
@@ -246,7 +247,8 @@ router.put(
         }
 
         try {
-            const result = await aiBudgetService.updateBudget(req.params.id, req.body);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await aiBudgetService.updateBudget(id, req.body);
 
             if (!result.updated) {
                 return res.status(404).json({
@@ -283,7 +285,8 @@ router.delete(
         }
 
         try {
-            const result = await aiBudgetService.deleteBudget(req.params.id);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await aiBudgetService.deleteBudget(id);
 
             if (!result.deleted) {
                 return res.status(404).json({
@@ -320,7 +323,8 @@ router.post(
         }
 
         try {
-            const result = await aiBudgetService.resetBudgetUsage(req.params.id);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await aiBudgetService.resetBudgetUsage(id);
 
             if (!result.reset) {
                 return res.status(404).json({
@@ -360,7 +364,7 @@ router.get(
 
         try {
             const { tokens, cost } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
             const userId = req.user?.id;
 
             if (!organizationId || !userId) {
@@ -400,7 +404,7 @@ router.post(
 
         try {
             const { model, inputTokens, outputTokens, requestCount } = req.body;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
             const userId = req.user?.id;
 
             if (!organizationId || !userId) {
@@ -443,7 +447,7 @@ router.get(
 
         try {
             const { startDate, endDate, groupBy } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
 
             if (!organizationId) {
                 return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -486,7 +490,7 @@ router.get(
 
         try {
             const { status, alertType, limit, offset } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
 
             if (!organizationId) {
                 return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -532,7 +536,8 @@ router.post(
                 return res.status(401).json({ success: false, error: 'Unauthorized' });
             }
 
-            const result = await aiBudgetService.acknowledgeAlert(req.params.id, userId);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await aiBudgetService.acknowledgeAlert(id, userId);
 
             if (!result.acknowledged) {
                 return res.status(404).json({
@@ -569,7 +574,8 @@ router.post(
         }
 
         try {
-            const result = await aiBudgetService.dismissAlert(req.params.id);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await aiBudgetService.dismissAlert(id);
 
             if (!result.dismissed) {
                 return res.status(404).json({
@@ -609,7 +615,7 @@ router.get(
 
         try {
             const { scopeType, scopeId } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
 
             if (!organizationId) {
                 return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -660,7 +666,7 @@ router.post(
                 priority,
             } = req.body;
 
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
             const userId = req.user?.id;
 
             if (!organizationId || !userId) {
@@ -715,7 +721,7 @@ router.get(
 
         try {
             const { modelId } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
             const userId = req.user?.id;
             const userRole = req.user?.role;
 
@@ -760,7 +766,8 @@ router.delete(
         }
 
         try {
-            const result = await aiBudgetService.deleteModelPermission(req.params.id);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await aiBudgetService.deleteModelPermission(id);
 
             if (!result.deleted) {
                 return res.status(404).json({

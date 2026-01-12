@@ -7,12 +7,11 @@
 
 import cron from 'node-cron';
 
-import kls from '../services/ai/learningSystem.js';
+import { learningSystem } from '../services/ai/learningSystem.js';
 import aiCostControlService from '../services/aiCostControlService.js';
 import slaService from '../services/slaService.js';
 import storageReconciliationService from '../services/storageReconciliationService.js';
 import * as trialCron from './TrialCron.js';
-const { learningSystem } = kls;
 import aiMemoryMetricsService from '../services/ai/aiMemoryMetricsService.js';
 import aiMemoryManager from '../services/aiMemoryManager.js';
 import feedbackService from '../services/feedbackService.js';
@@ -27,28 +26,28 @@ const Scheduler = {
             console.log('[Scheduler] Running Daily Retention Cleanup');
             // retentionPolicyService.runCleanup();
         });
-        this.jobs.push(job1);
+        Scheduler.jobs.push(job1);
 
         // 2. Storage Reconciliation - Run every Sunday at 4:00 AM
         const job2 = cron.schedule('0 4 * * 0', () => {
             console.log('[Scheduler] Running Weekly Storage Reconciliation Audit');
             storageReconciliationService.runReconciliation();
         });
-        this.jobs.push(job2);
+        Scheduler.jobs.push(job2);
 
         // 3. Trial/Demo Daily Tasks - Run every day at 2:30 AM
         const job3 = cron.schedule('30 2 * * *', () => {
             console.log('[Scheduler] Running Daily Trial/Demo Tasks');
             trialCron.runDailyTrialTasks();
         });
-        this.jobs.push(job3);
+        Scheduler.jobs.push(job3);
 
         // 4. Usage Counter Cleanup - Run weekly on Sunday at 2:00 AM
         const job4 = cron.schedule('0 2 * * 0', () => {
             console.log('[Scheduler] Running Weekly Usage Counter Cleanup');
             trialCron.cleanupOldUsageCounters();
         });
-        this.jobs.push(job4);
+        Scheduler.jobs.push(job4);
 
         // 5. Metrics Snapshot Generation - Run every day at 2:45 AM
         const job5 = cron.schedule('45 2 * * *', () => {
@@ -57,7 +56,7 @@ const Scheduler = {
             //     console.error('[Scheduler] Metrics Snapshot Generation failed:', err.message);
             // });
         });
-        this.jobs.push(job5);
+        Scheduler.jobs.push(job5);
 
         // 6. SLA Check & Escalation - Run every 10 minutes
         const job6 = cron.schedule('*/10 * * * *', () => {
@@ -66,7 +65,7 @@ const Scheduler = {
                 console.error('[Scheduler] SLA Check failed:', err.message);
             });
         });
-        this.jobs.push(job6);
+        Scheduler.jobs.push(job6);
 
         // 8. AI Monthly Budget Reset - Run on the 1st of every month at midnight
         const job8 = cron.schedule('0 0 1 * *', () => {
@@ -80,7 +79,7 @@ const Scheduler = {
                     console.error('[Scheduler] AI Monthly Budget Reset failed:', err.message);
                 });
         });
-        this.jobs.push(job8);
+        Scheduler.jobs.push(job8);
 
         // 9. Scheduled Management Reports - Run every hour at minute 0
         const job9 = cron.schedule('0 * * * *', () => {
@@ -93,7 +92,7 @@ const Scheduler = {
             //     console.error('[Scheduler] Scheduled Reports processing failed:', err.message);
             // });
         });
-        this.jobs.push(job9);
+        Scheduler.jobs.push(job9);
 
         // 10. Scheduled Emails - Run every 15 minutes
         const job10 = cron.schedule('*/15 * * * *', () => {
@@ -101,7 +100,7 @@ const Scheduler = {
             //     console.error('[Scheduler] Scheduled Emails processing failed:', err.message);
             // });
         });
-        this.jobs.push(job10);
+        Scheduler.jobs.push(job10);
 
         // ============================================================
         // AI SELF-LEARNING SYSTEM JOBS
@@ -120,7 +119,7 @@ const Scheduler = {
                 console.error('[Scheduler] AI Pattern Extraction failed:', error.message);
             }
         });
-        this.jobs.push(job11);
+        Scheduler.jobs.push(job11);
 
         // 12. AI Learning Consolidation - Run daily at 4:30 AM
         const job12 = cron.schedule('30 4 * * *', async () => {
@@ -135,7 +134,7 @@ const Scheduler = {
                 console.error('[Scheduler] AI Learning Consolidation failed:', error.message);
             }
         });
-        this.jobs.push(job12);
+        Scheduler.jobs.push(job12);
 
         // 13. AI Learning Data Cleanup - Run weekly on Monday at 5:00 AM
         const job13 = cron.schedule('0 5 * * 1', async () => {
@@ -148,7 +147,7 @@ const Scheduler = {
                 console.error('[Scheduler] AI Learning Cleanup failed:', error.message);
             }
         });
-        this.jobs.push(job13);
+        Scheduler.jobs.push(job13);
 
         // 14. AI Memory Cleanup - Run weekly on Sunday at 2:00 AM
         // Cleans up old project memory, partial responses, and feedback
@@ -167,7 +166,7 @@ const Scheduler = {
                 console.error('[Scheduler] AI Memory Cleanup failed:', error.message);
             }
         });
-        this.jobs.push(job14);
+        Scheduler.jobs.push(job14);
 
         // 15. Partial Response Cleanup - Run every hour
         // More frequent cleanup for streaming partial responses
@@ -181,7 +180,7 @@ const Scheduler = {
                 // Silent fail - not critical
             }
         });
-        this.jobs.push(job15);
+        Scheduler.jobs.push(job15);
 
         // 16. Feedback Learning Consolidation - Run daily at 4:00 AM
         // Consolidates user feedback into global AI strategies
@@ -195,14 +194,14 @@ const Scheduler = {
                 console.error('[Scheduler] Feedback Consolidation failed:', error.message);
             }
         });
-        this.jobs.push(job16);
+        Scheduler.jobs.push(job16);
 
         // 17. AI Memory Metrics Aggregation - Run daily at 1:00 AM
         // Aggregates hourly memory metrics into daily summaries
         const job17 = cron.schedule('0 1 * * *', async () => {
             console.log('[Scheduler] Running AI Memory Metrics Aggregation');
             try {
-                const result = await aiMemoryMetricsService.aggregateDailyMetrics();
+                const result: { aggregated: number; date: string } = await (aiMemoryMetricsService as any).aggregateDailyMetrics() as { aggregated: number; date: string };
                 console.log(
                     `[Scheduler] Memory Metrics Aggregation completed: ${result.aggregated} organizations for ${result.date}`,
                 );
@@ -211,7 +210,7 @@ const Scheduler = {
                 console.error('[Scheduler] Memory Metrics Aggregation failed:', error.message);
             }
         });
-        this.jobs.push(job17);
+        Scheduler.jobs.push(job17);
 
         // 18. Memory Cleanup - Run every 6 hours
         // Cleans up old data, invalidates stale cache, and prevents memory leaks
@@ -228,7 +227,7 @@ const Scheduler = {
                 console.error('[Scheduler] Memory Cleanup failed:', error.message);
             }
         });
-        this.jobs.push(job18);
+        Scheduler.jobs.push(job18);
 
         console.log(
             '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h)',
@@ -236,10 +235,10 @@ const Scheduler = {
     },
     stop: (): void => {
         console.log('[Scheduler] Stopping all cron jobs...');
-        this.jobs.forEach((job) => {
+        Scheduler.jobs.forEach((job) => {
             job.stop();
         });
-        this.jobs = [];
+        Scheduler.jobs = [];
         console.log('[Scheduler] All cron jobs stopped');
     },
 };

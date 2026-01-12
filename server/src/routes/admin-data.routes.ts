@@ -10,7 +10,8 @@
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { _getDatabase } from '../database/Database.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';

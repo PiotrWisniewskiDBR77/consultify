@@ -120,7 +120,7 @@ class BillingCron {
                     ['active'],
                     (err: Error | null, rows: unknown) => {
                         if (err) reject(err);
-                        else resolve(rows || []);
+                        else resolve((rows as Organization[]) || []);
                     },
                 );
             });
@@ -167,7 +167,7 @@ class BillingCron {
                     [],
                     (err: Error | null, rows: unknown) => {
                         if (err) reject(err);
-                        else resolve(rows || []);
+                        else resolve((rows as OrganizationSeat[]) || []);
                     },
                 );
             });
@@ -213,7 +213,7 @@ class BillingCron {
                     ['active'],
                     (err: Error | null, rows: unknown) => {
                         if (err) reject(err);
-                        else resolve(rows || []);
+                        else resolve((rows as Organization[]) || []);
                     },
                 );
             });

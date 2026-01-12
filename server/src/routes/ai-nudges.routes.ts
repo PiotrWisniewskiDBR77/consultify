@@ -41,8 +41,8 @@ let proactiveNudges: ProactiveNudgesInterface | null = null;
 
 try {
     const nudgesModule = await import('../services/ai/proactiveNudges.js');
-    const module = nudgesModule.default || nudgesModule;
-    proactiveNudges = (module.proactiveNudges || module) as ProactiveNudgesInterface;
+    const module = (nudgesModule as any).default || nudgesModule;
+    proactiveNudges = ((module as any).proactiveNudges || module) as ProactiveNudgesInterface;
 } catch {
     console.warn('[AI Nudges Routes] proactiveNudges service not available');
 }
@@ -66,7 +66,7 @@ router.get(
 
         try {
             const userId = req.user?.id;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
 
             if (!userId || !organizationId) {
                 return res.status(401).json({
@@ -107,7 +107,7 @@ router.post(
 
         try {
             const userId = req.user?.id;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId || req.user?.organizationId;
             const { activityType, metadata } = req.body;
 
             if (!userId || !organizationId) {

@@ -5,7 +5,7 @@
  * Fully migrated to TypeScript ES modules
  */
 
-import { _Request, Response, Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
@@ -182,14 +182,14 @@ router.post(
             // DO NOT accept snapshot or original_payload from client to prevent audit tampering.
             const { proposal_id, decision, reason, modified_payload } = req.body;
             const userRole = req.user?.role;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
             const userId = req.user?.id;
 
             // RBAC CHECK
             if (
                 !userId ||
                 !userRole ||
-                (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')
+                (userRole !== 'administrator' && userRole !== 'owner')
             ) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
@@ -237,17 +237,17 @@ router.get(
         try {
             // RBAC CHECK
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
             // Filters from query params
             const { actionType, decision, limit, offset } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
             // ADMIN can only see their own org. SUPERADMIN can bypass.
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
 
             if (!orgId || (orgId !== 'SUPERADMIN_BYPASS' && !organizationId)) {
                 return res.status(400).json({ error: 'Organization ID required' });
@@ -282,14 +282,15 @@ router.post(
 
         try {
             const { id } = req.params;
+            const idStr = Array.isArray(id) ? id[0] : id;
             const userRole = req.user?.role;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
             const userId = req.user?.id;
 
             if (
                 !userId ||
                 !userRole ||
-                (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')
+                (userRole !== 'administrator' && userRole !== 'owner')
             ) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
@@ -297,24 +298,23 @@ router.post(
             // RBAC check: ADMIN only their own org, SUPERADMIN any org
             // Fetch specific decision to check organization_id
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
             const decisions = await ActionDecisionService.getAuditLog(orgId);
-            const decision = decisions.find((d) => d.id === id);
+            const decision = decisions.find((d) => d.id === idStr);
 
             if (!decision) {
-                return res.status(404).json({ error: `Decision not found: ${id}` });
+                return res.status(404).json({ error: `Decision not found: ${idStr}` });
             }
 
             // Double check isolation for non-superadmins
             if (
-                userRole !== 'SUPERADMIN' &&
-                userRole !== 'SUPER_ADMIN' &&
+                userRole !== 'owner' &&
                 decision.organization_id !== organizationId
             ) {
                 return res.status(403).json({ error: 'Forbidden: Organization mismatch' });
             }
 
-            const executionResult = await ActionExecutionAdapter.executeDecision(id, userId);
+            const executionResult = await ActionExecutionAdapter.executeDecision(idStr, userId);
 
             if (!executionResult.success) {
                 return res.status(400).json(executionResult);
@@ -345,39 +345,39 @@ router.post(
 
         try {
             const { id } = req.params;
+            const idStr = Array.isArray(id) ? id[0] : id;
             const userRole = req.user?.role;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
             const userId = req.user?.id;
 
             // RBAC check
             if (
                 !userId ||
                 !userRole ||
-                (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')
+                (userRole !== 'administrator' && userRole !== 'owner')
             ) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
             // Fetch specific decision to check organization_id
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
             const decisions = await ActionDecisionService.getAuditLog(orgId);
-            const decision = decisions.find((d) => d.id === id);
+            const decision = decisions.find((d) => d.id === idStr);
 
             if (!decision) {
-                return res.status(404).json({ error: `Decision not found: ${id}` });
+                return res.status(404).json({ error: `Decision not found: ${idStr}` });
             }
 
             // Double check isolation for non-superadmins
             if (
-                userRole !== 'SUPERADMIN' &&
-                userRole !== 'SUPER_ADMIN' &&
+                userRole !== 'owner' &&
                 decision.organization_id !== organizationId
             ) {
                 return res.status(403).json({ error: 'Forbidden: Organization mismatch' });
             }
 
-            const dryRunResult = await ActionExecutionAdapter.executeDecision(id, userId, { dry_run: true });
+            const dryRunResult = await ActionExecutionAdapter.executeDecision(idStr, userId, { dry_run: true });
 
             res.json(dryRunResult);
         } catch (err: unknown) {
@@ -404,18 +404,18 @@ router.get(
         try {
             // RBAC check
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
             const { format = 'json', include_archived } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
             // ADMIN can only see their own org. SUPERADMIN can bypass.
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
             const includeArchived =
-                (userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') && include_archived === 'true';
+                (userRole === 'owner') && include_archived === 'true';
 
             if (!orgId || (orgId !== 'SUPERADMIN_BYPASS' && !organizationId)) {
                 return res.status(400).json({ error: 'Organization ID required' });
@@ -458,18 +458,18 @@ router.get(
         try {
             // RBAC check
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
             const { format = 'json', include_archived } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
             // ADMIN can only see their own org. SUPERADMIN can bypass.
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
             const includeArchived =
-                (userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') && include_archived === 'true';
+                (userRole === 'owner') && include_archived === 'true';
 
             if (!orgId || (orgId !== 'SUPERADMIN_BYPASS' && !organizationId)) {
                 return res.status(400).json({ error: 'Organization ID required' });
@@ -515,14 +515,14 @@ router.get(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
             let rules;
-            if (userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') {
+            if (userRole === 'owner' || userRole === 'owner') {
                 rules = await PolicyEngine.getAllRules();
             } else {
                 if (!organizationId) {
@@ -555,7 +555,7 @@ router.patch(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -564,7 +564,8 @@ router.patch(
                 return res.status(400).json({ error: 'enabled (boolean) is required' });
             }
 
-            const result = await PolicyEngine.toggleRule(req.params.id, enabled);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await PolicyEngine.toggleRule(id, enabled);
             res.json(result);
         } catch (err: unknown) {
             if (err instanceof Error && err.message === 'Rule not found') {
@@ -592,7 +593,7 @@ router.post(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
@@ -606,11 +607,11 @@ router.post(
                 organization_id,
             } = req.body;
             const userId = req.user?.id;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
             // SUPERADMIN can specify organization_id, ADMIN can only create for own org
             const targetOrgId =
-                (userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') && organization_id
+                (userRole === 'owner') && organization_id
                     ? organization_id
                     : organizationId;
 
@@ -657,7 +658,7 @@ router.get(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: SuperAdmin access required' });
             }
 
@@ -686,7 +687,7 @@ router.patch(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: SuperAdmin access required' });
             }
 
@@ -726,21 +727,22 @@ router.post(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
             const targetOrgId =
-                (userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') && req.query.organizationId
-                    ? (req.query.organizationId as string)
+                (userRole === 'owner') && req.query.organizationId
+                    ? (Array.isArray(req.query.organizationId) ? req.query.organizationId[0] : req.query.organizationId) as string
                     : organizationId;
 
             if (!targetOrgId) {
                 return res.status(400).json({ error: 'Organization ID required' });
             }
 
-            const proposal = await ActionProposalEngine.getProposalById(targetOrgId, req.params.id);
+            const proposalId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const proposal = await ActionProposalEngine.getProposalById(targetOrgId, proposalId);
             if (!proposal) {
                 return res.status(404).json({ error: 'Proposal not found' });
             }
@@ -776,21 +778,21 @@ router.post(
             const { id } = req.params;
             const { priority = 'normal' } = req.body;
             const userRole = req.user?.role;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
             const userId = req.user?.id;
 
             // RBAC check
             if (
                 !userId ||
                 !userRole ||
-                (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')
+                (userRole !== 'administrator' && userRole !== 'owner')
             ) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
             // Fetch decision to validate org isolation
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
             const decisions = await ActionDecisionService.getAuditLog(orgId);
             const decision = decisions.find((d) => d.id === id);
 
@@ -800,8 +802,7 @@ router.post(
 
             // Validate org isolation for ADMIN
             if (
-                userRole !== 'SUPERADMIN' &&
-                userRole !== 'SUPER_ADMIN' &&
+                userRole !== 'owner' &&
                 decision.organization_id !== organizationId
             ) {
                 return res.status(403).json({ error: 'Forbidden: Organization mismatch' });
@@ -850,14 +851,14 @@ router.get(
         try {
             const { jobId } = req.params;
             const userRole = req.user?.role;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
 
             if (!orgId || (orgId !== 'SUPERADMIN_BYPASS' && !organizationId)) {
                 return res.status(400).json({ error: 'Organization ID required' });
@@ -894,14 +895,14 @@ router.post(
         try {
             const { jobId } = req.params;
             const userRole = req.user?.role;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
 
             if (!orgId || (orgId !== 'SUPERADMIN_BYPASS' && !organizationId)) {
                 return res.status(400).json({ error: 'Organization ID required' });
@@ -940,14 +941,14 @@ router.post(
         try {
             const { jobId } = req.params;
             const userRole = req.user?.role;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
 
             if (!orgId || (orgId !== 'SUPERADMIN_BYPASS' && !organizationId)) {
                 return res.status(400).json({ error: 'Organization ID required' });
@@ -985,13 +986,13 @@ router.get(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
             const orgId =
-                userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
             const { limit = 50, offset = 0 } = req.query;
 
             if (!orgId || (orgId !== 'SUPERADMIN_BYPASS' && !organizationId)) {
@@ -1028,11 +1029,11 @@ router.get(
 
         try {
             const userRole = req.user?.role;
-            if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN')) {
+            if (!userRole || (userRole !== 'administrator' && userRole !== 'owner' && userRole !== 'owner')) {
                 return res.status(403).json({ error: 'Forbidden: Admin access required' });
             }
 
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
             if (!organizationId) {
                 return res.status(400).json({ error: 'Organization ID required' });

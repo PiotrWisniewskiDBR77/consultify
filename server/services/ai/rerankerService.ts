@@ -126,6 +126,12 @@ export interface RerankerService {
     rerankCrossEncoder: (query: string, documents: Document[], topK?: number) => Promise<Document[]>;
     getStatistics: () => Promise<RerankerStatistics>;
     clearCache: () => Promise<void>;
+    _scoreBatch: (openai: OpenAI, query: string, documents: Document[], model: string) => Promise<Document[]>;
+    _combineScores: (hybridScore: number, rerankerScore: number, hybridWeight?: number) => number;
+    _getOpenAIConfig: () => Promise<LLMProvider | null>;
+    _generateCacheKey: (query: string, documents: Document[]) => string;
+    _calculateAvgScoreChange: (results: Document[]) => number;
+    _logRerankerMetrics: (query: string, metrics: RerankerMetrics) => Promise<void>;
 }
 
 const RerankerService: RerankerService = {
@@ -329,6 +335,7 @@ Do not include any explanation, just the JSON array.`;
         return new Promise((resolve) => {
             deps.db.get(
                 "SELECT * FROM llm_providers WHERE provider = 'openai' AND is_active = 1 LIMIT 1",
+                [],
                 (err, row) => {
                     if (err || !row) resolve(null);
                     else resolve(row as LLMProvider);

@@ -24,10 +24,10 @@ export const validateBody = (schema: z.ZodSchema) => {
             if (!result.success) {
                 // Format Zod errors into a readable structure
                 const errors =
-                    result.error?.errors?.map((err: Error | null) => ({
-                        field: err.path.join('.'),
-                        message: err.message,
-                        code: err.code,
+                    result.error?.issues?.map((issue) => ({
+                        field: issue.path.join('.'),
+                        message: issue.message,
+                        code: issue.code,
                     })) || [];
 
                 res.status(400).json({
@@ -58,10 +58,10 @@ export const validateQuery = (schema: z.ZodSchema) => {
             const result = schema.safeParse(req.query);
             if (!result.success) {
                 const errors =
-                    result.error?.errors?.map((err: Error | null) => ({
-                        field: err.path.join('.'),
-                        message: err.message,
-                        code: err.code,
+                    result.error?.issues?.map((issue) => ({
+                        field: issue.path.join('.'),
+                        message: issue.message,
+                        code: issue.code,
                     })) || [];
 
                 res.status(400).json({
@@ -91,10 +91,10 @@ export const validateParams = (schema: z.ZodSchema) => {
             const result = schema.safeParse(req.params);
             if (!result.success) {
                 const errors =
-                    result.error?.errors?.map((err: Error | null) => ({
-                        field: err.path.join('.'),
-                        message: err.message,
-                        code: err.code,
+                    result.error?.issues?.map((issue) => ({
+                        field: issue.path.join('.'),
+                        message: issue.message,
+                        code: issue.code,
                     })) || [];
 
                 res.status(400).json({

@@ -120,15 +120,16 @@ router.post(
                 return res.status(400).json({ error: 'Message is required' });
             }
 
+            const domainStr = Array.isArray(domain) ? domain[0] : domain;
             const validDomains = ['strategy', 'finance', 'change', 'risk', 'pmo'];
-            if (!validDomains.includes(domain)) {
+            if (!validDomains.includes(domainStr)) {
                 return res.status(400).json({
                     error: `Invalid domain. Must be one of: ${validDomains.join(', ')}`,
                 });
             }
 
             const result = await AIOrchestrator.querySpecialistAgent(
-                domain,
+                domainStr,
                 message,
                 userId,
                 organizationId,

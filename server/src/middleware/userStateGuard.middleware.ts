@@ -8,7 +8,7 @@
  *   router.get('/endpoint', userStateGuard.requireState(['ORG_MEMBER', 'TEAM_COLLAB']), handler)
  */
 
-import { _Request, NextFunction, Response } from 'express';
+import { Request, NextFunction, Response } from 'express';
 
 import db from '../../db/sqliteAsync.js';
 import UserStateMachine from '../../services/userStateMachine.js';

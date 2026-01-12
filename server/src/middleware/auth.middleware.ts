@@ -3,7 +3,7 @@
  * Enterprise SaaS Architecture - TypeScript Backend Auth
  */
 
-import { _Request, NextFunction, Response } from 'express';
+import { Request, NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';

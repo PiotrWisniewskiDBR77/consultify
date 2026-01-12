@@ -77,17 +77,16 @@ let aiLogger: { error?: (category: string, message: string) => void } | null = n
 
 try {
     const draftModule = await import('../../services/ai/draftService.js');
-    const module = draftModule.default || draftModule;
-    draftService = module.draftService || module;
-    DRAFT_TYPES = module.DRAFT_TYPES || module;
+    const module = (draftModule as any).default || draftModule;
+    draftService = (module as any).draftService || module;
+    DRAFT_TYPES = (module as any).DRAFT_TYPES || module;
 } catch {
     console.warn('[AI Drafts Routes] draftService not available');
 }
 
 try {
     const loggerModule = await import('../../services/ai/logger.js');
-    const module = loggerModule.default || loggerModule;
-    aiLogger = module.aiLogger || module;
+    aiLogger = (loggerModule as any).aiLogger || (loggerModule as any).default || loggerModule;
 } catch {
     console.warn('[AI Drafts Routes] aiLogger not available');
 }
@@ -148,7 +147,8 @@ router.get(
         }
 
         try {
-            const draft = (await draftService.getDraft(req.params.id)) as {
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const draft = (await draftService.getDraft(id)) as {
                 user_id?: string;
                 organization_id?: string;
             } | null;
@@ -189,7 +189,9 @@ router.get(
         }
 
         try {
-            const drafts = await draftService.getDraftsForEntity(req.params.type, req.params.id);
+            const type = Array.isArray(req.params.type) ? req.params.type[0] : req.params.type;
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const drafts = await draftService.getDraftsForEntity(type, id);
 
             res.json({
                 success: true,
@@ -303,7 +305,8 @@ router.patch(
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const result = await draftService.approveDraft(req.params.id, {
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await draftService.approveDraft(id, {
                 reviewedBy: userId,
                 notes,
                 modifications,
@@ -314,7 +317,8 @@ router.patch(
             }
 
             // Fetch the updated draft to return full details
-            const draft = await draftService.getDraft(req.params.id);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const draft = await draftService.getDraft(id);
 
             res.json({
                 success: true,
@@ -352,7 +356,8 @@ router.patch(
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const result = await draftService.rejectDraft(req.params.id, {
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const result = await draftService.rejectDraft(id, {
                 reviewedBy: userId,
                 notes,
             });
@@ -434,7 +439,7 @@ router.delete(
         try {
             // Check if user has admin role
             const userRole = req.user?.role;
-            if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
+            if (userRole !== 'administrator' && userRole !== 'owner') {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 

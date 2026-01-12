@@ -30,7 +30,9 @@ export {
 } from './CleanupRevokedTokens.js';
 export { default as DunningCron, getDunningCron, startDunningJob, stopDunningJob } from './DunningCron.js';
 export { getHealthCheckJob, default as HealthCheckJob, startHealthCheck } from './HealthCheckJob.js';
-export { getScheduler, init as initScheduler, default as Scheduler } from './Scheduler.js';
+export { default as Scheduler } from './Scheduler.js';
+export const initScheduler = () => Scheduler.init();
+export const getScheduler = () => Scheduler;
 export { getSnapshotMetricsCron, initMetricsSnapshotJob, default as SnapshotMetricsCron } from './SnapshotMetrics.js';
 export { cleanupOldUsageCounters, getTrialCron, runDailyTrialTasks, default as TrialCron } from './TrialCron.js';
 

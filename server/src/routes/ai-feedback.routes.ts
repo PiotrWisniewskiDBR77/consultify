@@ -54,8 +54,7 @@ let adaptiveResponseService: AdaptiveResponseServiceInterface | null = null;
 
 try {
     const loggerModule = await import('../../services/ai/logger.js');
-    const module = loggerModule.default || loggerModule;
-    aiLogger = module.aiLogger || module;
+    aiLogger = (loggerModule as any).aiLogger || (loggerModule as any).default || loggerModule;
 } catch {
     console.warn('[AI Feedback Routes] aiLogger not available');
 }
@@ -81,7 +80,7 @@ router.post(
         try {
             const { interactionId, draftId, feedbackType, rating, comment, capability, modelUsed } = req.body;
 
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
             const userId = req.user?.id;
 
             if (!organizationId || !userId) {
@@ -155,12 +154,12 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const userRole = req.user?.role;
-            if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
+            if (userRole !== 'administrator' && userRole !== 'owner') {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 
             const { period = '30d', capability } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
             if (!organizationId) {
                 return res.status(401).json({ error: 'Unauthorized' });
@@ -259,12 +258,12 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const userRole = req.user?.role;
-            if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
+            if (userRole !== 'administrator' && userRole !== 'owner') {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 
             const { limit = 20, type } = req.query;
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
             if (!organizationId) {
                 return res.status(401).json({ error: 'Unauthorized' });
@@ -316,11 +315,11 @@ router.get(
     asyncHandler(async (req: AuthRequest, res: Response) => {
         try {
             const userRole = req.user?.role;
-            if (userRole !== 'ADMIN' && userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') {
+            if (userRole !== 'administrator' && userRole !== 'owner') {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 
-            const organizationId = req.user?.organizationId || req.user?.organization_id;
+            const organizationId = req.user?.organizationId;
 
             if (!organizationId) {
                 return res.status(401).json({ error: 'Unauthorized' });

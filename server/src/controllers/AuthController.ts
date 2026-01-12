@@ -8,7 +8,7 @@ import { Request, Response } from 'express';
 import type { IDatabase } from '../database/IDatabase.js';
 import mfaService from '../services/MFAService.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
-import type { _AuthRequest, LoginRequest } from '../validators/auth.validators.js';
+import type { LoginRequest } from '../validators/auth.validators.js';
 
 // Dependencies interface for dependency injection
 interface Dependencies {
@@ -50,8 +50,9 @@ const getDeps = async (): Promise<Dependencies> => {
                 import('../../utils/redisRateLimitStore.js'),
             ]);
 
+            const { getDatabase } = dbModule;
             deps = {
-                db: dbModule.default || dbModule,
+                db: getDatabase(),
                 bcrypt: bcryptModule.default || bcryptModule,
                 ActivityService: activityModule.default || activityModule,
                 MFAService: mfaService,
@@ -109,7 +110,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         } | null>((resolve, reject) => {
             dependencies.db.get('SELECT * FROM users WHERE email = ?', [email], (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row as typeof row);
+                else resolve(row as {
+                    id: string;
+                    email: string;
+                    role: string;
+                    organization_id: string;
+                    first_name: string;
+                    last_name: string;
+                    status: string;
+                    password: string;
+                } | null);
             });
         });
 
@@ -145,7 +155,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 [user.organization_id],
                 (err: Error | null, row: unknown) => {
                     if (err) reject(err);
-                    else resolve(row as typeof row);
+                    else resolve(row as {
+                        id: string;
+                        name: string;
+                        status: string;
+                    } | null);
                 },
             );
         });

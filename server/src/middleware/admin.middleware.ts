@@ -76,7 +76,7 @@ export const verifyAdmin = (req: AuthRequest, res: Response, next: NextFunction)
         req.organizationId = payload.organizationId || payload.organization_id;
         req.user = {
             id: payload.id,
-            role: payload.role || 'user',
+            role: payload.role || 'viewer',
             organizationId: req.organizationId,
             isSuperAdmin: payload.role === 'SUPERADMIN',
         };

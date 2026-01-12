@@ -57,10 +57,12 @@ class TrialCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.demoService) {
-            this.deps.demoService = await import('../services/demoService.js').then((m) => m.default || m);
+            const demoModule = await import('../services/demoService.js');
+            this.deps.demoService = (demoModule.default || demoModule) as any;
         }
         if (!this.deps.trialService) {
-            this.deps.trialService = await import('../services/trialService.js').then((m) => m.default || m);
+            const trialModule = await import('../services/trialService.js');
+            this.deps.trialService = (trialModule.default || trialModule) as any;
         }
         return this.deps as Dependencies;
     }

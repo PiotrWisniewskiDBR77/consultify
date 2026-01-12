@@ -5,7 +5,7 @@
  * Enterprise SaaS Architecture - TypeScript Backend
  */
 
-import { getConfig } from '../config/Config.js';
+import config from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { run as dbRun } from '../utils/DbPromise.js';
@@ -17,7 +17,7 @@ import logger from '../utils/Logger.js';
 
 interface Dependencies {
     db: IDatabase;
-    config: ReturnType<typeof getConfig>;
+    config: typeof config;
 }
 
 // ==========================================
@@ -31,7 +31,7 @@ class CleanupRevokedTokensCron {
     constructor(deps?: Partial<Dependencies>) {
         this.deps = {
             db: deps?.db || getDatabase(),
-            config: deps?.config || getConfig(),
+            config: deps?.config || config,
         };
     }
 

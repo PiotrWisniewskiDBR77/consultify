@@ -647,7 +647,7 @@ router.get(
     verifyToken,
     validateQuery(GenerateProposalsQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
+        if (req.userRole !== 'administrator' && req.userRole !== 'owner') {
             const logger = (await import('../utils/Logger.js')).default;
             logger.warn('Unauthorized proposal access attempt', { userId: req.userId, role: req.userRole });
             res.status(403).json({ error: 'Permission denied. ADMIN or SUPERADMIN required.' });
@@ -655,7 +655,7 @@ router.get(
         }
 
         const { organizationId: queryOrgId } = req.query as { organizationId?: string };
-        const organizationId = req.userRole === 'SUPERADMIN' && queryOrgId ? queryOrgId : req.organizationId;
+        const organizationId = req.userRole === 'owner' && queryOrgId ? queryOrgId : req.organizationId;
 
         if (!organizationId) {
             res.status(400).json({ error: 'organizationId required' });

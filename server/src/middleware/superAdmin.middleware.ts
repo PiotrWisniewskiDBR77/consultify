@@ -6,7 +6,7 @@
  * Checks both token and database for role verification.
  */
 
-import { _Request, NextFunction, Response } from 'express';
+import { Request, NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import config from '../../config.js';

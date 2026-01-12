@@ -140,13 +140,14 @@ export class InitiativeController {
         }
 
         // Parse JSON fields
+        const initiativeObj = initiative as Record<string, unknown>;
         const parsed = {
-            ...initiative,
-            deliverables: safeJsonParse((initiative as Record<string, unknown>).deliverables as string, []),
-            successCriteria: safeJsonParse((initiative as Record<string, unknown>).success_criteria as string, []),
-            scopeIn: safeJsonParse((initiative as Record<string, unknown>).scope_in as string, []),
-            scopeOut: safeJsonParse((initiative as Record<string, unknown>).scope_out as string, []),
-            keyRisks: safeJsonParse((initiative as Record<string, unknown>).key_risks as string, []),
+            ...initiativeObj,
+            deliverables: safeJsonParse(initiativeObj.deliverables as string, []),
+            successCriteria: safeJsonParse(initiativeObj.success_criteria as string, []),
+            scopeIn: safeJsonParse(initiativeObj.scope_in as string, []),
+            scopeOut: safeJsonParse(initiativeObj.scope_out as string, []),
+            keyRisks: safeJsonParse(initiativeObj.key_risks as string, []),
         };
 
         res.json(parsed);

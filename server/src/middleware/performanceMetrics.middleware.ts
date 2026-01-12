@@ -131,7 +131,7 @@ export function performanceMetricsMiddleware(req: RequestWithMetrics, res: Respo
             rss: endMemory.rss - startMemory.rss,
         };
 
-        const metrics = req._performanceMetrics || {};
+        const metrics: PerformanceMetrics = req._performanceMetrics || { startTime: 0, startMemory: process.memoryUsage(), dbQueryCount: 0, dbQueryTime: 0 };
         const metric: Metric = {
             timestamp: new Date().toISOString(),
             method: req.method,

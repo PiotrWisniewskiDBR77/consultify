@@ -48,7 +48,8 @@ class HealthCheckJob {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.emailService) {
-            this.deps.emailService = await import('../../services/emailService.js').then((m) => m.default || m);
+            const emailServiceModule = await import('../../services/emailService.js');
+            this.deps.emailService = (emailServiceModule.default || emailServiceModule) as any;
         }
         return this.deps as Dependencies;
     }

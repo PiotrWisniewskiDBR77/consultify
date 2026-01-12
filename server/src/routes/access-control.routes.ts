@@ -14,6 +14,8 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getDatabase } from '../database/Database.js';
+const db = getDatabase();
 
 const router = Router();
 
@@ -256,7 +258,7 @@ router.post(
         }
 
         // Verify user has access to this organization
-        if (req.user?.role !== 'SUPERADMIN' && req.user?.organizationId !== organizationId) {
+        if (req.user?.role !== 'owner' && req.user?.organizationId !== organizationId) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -302,7 +304,7 @@ router.get(
         const { organizationId } = req.query;
 
         // Verify user has access to this organization
-        if (req.user?.role !== 'SUPERADMIN' && req.user?.organizationId !== organizationId) {
+        if (req.user?.role !== 'owner' && req.user?.organizationId !== organizationId) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -536,7 +538,7 @@ router.delete(
         }
 
         // Verify user has access to this organization
-        if (req.user?.role !== 'SUPERADMIN' && req.user?.organizationId !== code.organization_id) {
+        if (req.user?.role !== 'owner' && req.user?.role !== 'administrator' && req.user?.organizationId !== code.organization_id) {
             return res.status(403).json({ error: 'Access denied' });
         }
 

@@ -30,7 +30,7 @@ const CohortService: CohortServiceInterface = {
      * Cols: Weeks since signup (0, 1, 2, 4, 8)
      */
     async getRetentionMatrix(): Promise<RetentionRow[]> {
-        const db = getDb();
+        const db = _db as Database;
 
         const sql = `
             WITH UserCohorts AS (

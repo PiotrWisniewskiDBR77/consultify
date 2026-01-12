@@ -178,7 +178,7 @@ const Scheduler = {
         cron.schedule('0 1 * * *', async () => {
             console.log('[Scheduler] Running AI Memory Metrics Aggregation');
             try {
-                const result = (await AIMemoryMetricsService.aggregateDailyMetrics()) as { aggregated: number; date: string };
+                const result: { aggregated: number; date: string } = await AIMemoryMetricsService.aggregateDailyMetrics() as { aggregated: number; date: string };
                 console.log(
                     `[Scheduler] Memory Metrics Aggregation completed: ${result.aggregated} organizations for ${result.date}`,
                 );
