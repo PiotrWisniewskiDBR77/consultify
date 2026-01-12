@@ -27,6 +27,4 @@ if (typeof initiative_generatorRoutesJS === 'function') {
     // Fallback or error
     console.error('initiative-generator.js did not export a valid router');
 }
-}
-
 export default router;

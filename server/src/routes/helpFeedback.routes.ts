@@ -27,6 +27,4 @@ if (typeof helpFeedbackRoutesJS === 'function') {
     // Fallback or error
     console.error('helpFeedback.js did not export a valid router');
 }
-}
-
 export default router;

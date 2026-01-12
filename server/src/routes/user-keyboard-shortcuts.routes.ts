@@ -27,6 +27,4 @@ if (typeof user_keyboard_shortcutsRoutesJS === 'function') {
     // Fallback or error
     console.error('user-keyboard-shortcuts.js did not export a valid router');
 }
-}
-
 export default router;

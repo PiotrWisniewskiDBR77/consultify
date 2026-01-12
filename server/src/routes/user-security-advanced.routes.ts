@@ -26,6 +26,4 @@ if (typeof user_security_advancedRoutesJS === 'function') {
     // Fallback or error
     console.error('user-security-advanced.js did not export a valid router');
 }
-}
-
 export default router;

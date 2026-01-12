@@ -27,6 +27,4 @@ if (typeof integrationsRoutesJS === 'function') {
     // Fallback or error
     console.error('integrations.js did not export a valid router');
 }
-}
-
 export default router;

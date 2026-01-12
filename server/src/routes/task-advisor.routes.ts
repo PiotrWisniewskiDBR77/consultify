@@ -27,6 +27,4 @@ if (typeof task_advisorRoutesJS === 'function') {
     // Fallback or error
     console.error('task-advisor.js did not export a valid router');
 }
-}
-
 export default router;

@@ -26,6 +26,4 @@ if (typeof user_availabilityRoutesJS === 'function') {
     // Fallback or error
     console.error('user-availability.js did not export a valid router');
 }
-}
-
 export default router;

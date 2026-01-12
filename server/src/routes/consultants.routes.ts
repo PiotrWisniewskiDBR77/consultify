@@ -27,6 +27,4 @@ if (typeof consultantsRoutesJS === 'function') {
     // Fallback or error
     console.error('consultants.js did not export a valid router');
 }
-}
-
 export default router;

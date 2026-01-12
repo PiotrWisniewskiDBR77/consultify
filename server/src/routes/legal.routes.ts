@@ -27,6 +27,4 @@ if (typeof legalRoutesJS === 'function') {
     // Fallback or error
     console.error('legal.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof voiceRoutesJS === 'function') {
     // Fallback or error
     console.error('voice.js did not export a valid router');
 }
-}
-
 export default router;

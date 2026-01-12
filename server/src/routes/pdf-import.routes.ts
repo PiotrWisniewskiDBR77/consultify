@@ -27,6 +27,4 @@ if (typeof pdf_importRoutesJS === 'function') {
     // Fallback or error
     console.error('pdf-import.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof status_reportsRoutesJS === 'function') {
     // Fallback or error
     console.error('status-reports.js did not export a valid router');
 }
-}
-
 export default router;

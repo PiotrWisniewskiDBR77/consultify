@@ -27,6 +27,4 @@ if (typeof promoRoutesJS === 'function') {
     // Fallback or error
     console.error('promo.js did not export a valid router');
 }
-}
-
 export default router;

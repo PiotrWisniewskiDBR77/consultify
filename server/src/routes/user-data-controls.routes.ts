@@ -27,6 +27,4 @@ if (typeof user_data_controlsRoutesJS === 'function') {
     // Fallback or error
     console.error('user-data-controls.js did not export a valid router');
 }
-}
-
 export default router;

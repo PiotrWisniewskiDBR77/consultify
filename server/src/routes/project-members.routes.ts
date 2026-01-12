@@ -27,6 +27,4 @@ if (typeof project_membersRoutesJS === 'function') {
     // Fallback or error
     console.error('project-members.js did not export a valid router');
 }
-}
-
 export default router;

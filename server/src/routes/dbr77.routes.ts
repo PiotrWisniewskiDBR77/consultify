@@ -27,6 +27,4 @@ if (typeof dbr77RoutesJS === 'function') {
     // Fallback or error
     console.error('dbr77.js did not export a valid router');
 }
-}
-
 export default router;

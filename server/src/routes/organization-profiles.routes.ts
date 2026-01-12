@@ -27,6 +27,4 @@ if (typeof organization_profilesRoutesJS === 'function') {
     // Fallback or error
     console.error('organization-profiles.js did not export a valid router');
 }
-}
-
 export default router;

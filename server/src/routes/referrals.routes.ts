@@ -27,6 +27,4 @@ if (typeof referralsRoutesJS === 'function') {
     // Fallback or error
     console.error('referrals.js did not export a valid router');
 }
-}
-
 export default router;

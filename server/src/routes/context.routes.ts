@@ -27,6 +27,4 @@ if (typeof contextRoutesJS === 'function') {
     // Fallback or error
     console.error('context.js did not export a valid router');
 }
-}
-
 export default router;

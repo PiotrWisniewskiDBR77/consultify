@@ -27,6 +27,4 @@ if (typeof chat_projectsRoutesJS === 'function') {
     // Fallback or error
     console.error('chat-projects.js did not export a valid router');
 }
-}
-
 export default router;

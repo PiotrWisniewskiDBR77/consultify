@@ -27,6 +27,4 @@ if (typeof user_profile_extendedRoutesJS === 'function') {
     // Fallback or error
     console.error('user-profile-extended.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof notification_rulesRoutesJS === 'function') {
     // Fallback or error
     console.error('notification-rules.js did not export a valid router');
 }
-}
-
 export default router;

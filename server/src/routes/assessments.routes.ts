@@ -27,6 +27,4 @@ if (typeof assessmentsRoutesJS === 'function') {
     // Fallback or error
     console.error('assessments.js did not export a valid router');
 }
-}
-
 export default router;

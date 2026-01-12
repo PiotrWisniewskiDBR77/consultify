@@ -26,6 +26,4 @@ if (typeof user_profile_completenessRoutesJS === 'function') {
     // Fallback or error
     console.error('user-profile-completeness.js did not export a valid router');
 }
-}
-
 export default router;

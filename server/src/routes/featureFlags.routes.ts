@@ -27,6 +27,4 @@ if (typeof featureFlagsRoutesJS === 'function') {
     // Fallback or error
     console.error('featureFlags.js did not export a valid router');
 }
-}
-
 export default router;

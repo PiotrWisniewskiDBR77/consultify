@@ -27,6 +27,4 @@ if (typeof organization_limitsRoutesJS === 'function') {
     // Fallback or error
     console.error('organization-limits.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof premiumReportsRoutesJS === 'function') {
     // Fallback or error
     console.error('premiumReports.js did not export a valid router');
 }
-}
-
 export default router;

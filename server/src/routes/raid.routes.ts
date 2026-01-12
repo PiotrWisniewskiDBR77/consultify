@@ -27,6 +27,4 @@ if (typeof raidRoutesJS === 'function') {
     // Fallback or error
     console.error('raid.js did not export a valid router');
 }
-}
-
 export default router;

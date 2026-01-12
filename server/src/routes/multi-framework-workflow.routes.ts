@@ -27,6 +27,4 @@ if (typeof multi_framework_workflowRoutesJS === 'function') {
     // Fallback or error
     console.error('multi-framework-workflow.js did not export a valid router');
 }
-}
-
 export default router;

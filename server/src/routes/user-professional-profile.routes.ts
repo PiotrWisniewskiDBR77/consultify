@@ -26,6 +26,4 @@ if (typeof user_professional_profileRoutesJS === 'function') {
     // Fallback or error
     console.error('user-professional-profile.js did not export a valid router');
 }
-}
-
 export default router;

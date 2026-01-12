@@ -27,6 +27,4 @@ if (typeof scimRoutesJS === 'function') {
     // Fallback or error
     console.error('scim.js did not export a valid router');
 }
-}
-
 export default router;

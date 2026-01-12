@@ -27,6 +27,4 @@ if (typeof roadmapRoutesJS === 'function') {
     // Fallback or error
     console.error('roadmap.js did not export a valid router');
 }
-}
-
 export default router;

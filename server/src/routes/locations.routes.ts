@@ -27,6 +27,4 @@ if (typeof locationsRoutesJS === 'function') {
     // Fallback or error
     console.error('locations.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof backupRoutesJS === 'function') {
     // Fallback or error
     console.error('backup.js did not export a valid router');
 }
-}
-
 export default router;

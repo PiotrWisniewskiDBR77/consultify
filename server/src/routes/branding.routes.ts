@@ -27,6 +27,4 @@ if (typeof brandingRoutesJS === 'function') {
     // Fallback or error
     console.error('branding.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof capacityRoutesJS === 'function') {
     // Fallback or error
     console.error('capacity.js did not export a valid router');
 }
-}
-
 export default router;

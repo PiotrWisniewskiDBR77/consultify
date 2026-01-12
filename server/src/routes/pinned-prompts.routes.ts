@@ -27,6 +27,4 @@ if (typeof pinned_promptsRoutesJS === 'function') {
     // Fallback or error
     console.error('pinned-prompts.js did not export a valid router');
 }
-}
-
 export default router;

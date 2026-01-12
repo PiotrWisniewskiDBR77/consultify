@@ -27,6 +27,4 @@ if (typeof report_commentsRoutesJS === 'function') {
     // Fallback or error
     console.error('report-comments.js did not export a valid router');
 }
-}
-
 export default router;

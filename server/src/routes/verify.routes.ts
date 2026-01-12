@@ -27,6 +27,4 @@ if (typeof verifyRoutesJS === 'function') {
     // Fallback or error
     console.error('verify.js did not export a valid router');
 }
-}
-
 export default router;

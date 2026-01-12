@@ -27,6 +27,4 @@ if (typeof workstreamsRoutesJS === 'function') {
     // Fallback or error
     console.error('workstreams.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof assessment_workflowRoutesJS === 'function') {
     // Fallback or error
     console.error('assessment-workflow.js did not export a valid router');
 }
-}
-
 export default router;

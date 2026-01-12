@@ -27,6 +27,4 @@ if (typeof workspace_defaultsRoutesJS === 'function') {
     // Fallback or error
     console.error('workspace-defaults.js did not export a valid router');
 }
-}
-
 export default router;

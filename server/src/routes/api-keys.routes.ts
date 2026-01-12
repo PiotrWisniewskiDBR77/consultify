@@ -27,6 +27,5 @@ if (typeof api_keysRoutesJS === 'function') {
     // Fallback or error
     console.error('api-keys.js did not export a valid router');
 }
-}
 
 export default router;

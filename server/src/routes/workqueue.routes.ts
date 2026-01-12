@@ -27,6 +27,4 @@ if (typeof workqueueRoutesJS === 'function') {
     // Fallback or error
     console.error('workqueue.js did not export a valid router');
 }
-}
-
 export default router;

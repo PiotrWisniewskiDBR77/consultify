@@ -27,6 +27,4 @@ if (typeof intelligenceRoutesJS === 'function') {
     // Fallback or error
     console.error('intelligence.js did not export a valid router');
 }
-}
-
 export default router;

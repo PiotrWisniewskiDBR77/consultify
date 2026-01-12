@@ -27,6 +27,4 @@ if (typeof stabilizationRoutesJS === 'function') {
     // Fallback or error
     console.error('stabilization.js did not export a valid router');
 }
-}
-
 export default router;

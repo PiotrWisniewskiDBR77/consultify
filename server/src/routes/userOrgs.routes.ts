@@ -27,6 +27,4 @@ if (typeof userOrgsRoutesJS === 'function') {
     // Fallback or error
     console.error('userOrgs.js did not export a valid router');
 }
-}
-
 export default router;

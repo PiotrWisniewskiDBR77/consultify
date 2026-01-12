@@ -27,6 +27,4 @@ if (typeof economicsRoutesJS === 'function') {
     // Fallback or error
     console.error('economics.js did not export a valid router');
 }
-}
-
 export default router;

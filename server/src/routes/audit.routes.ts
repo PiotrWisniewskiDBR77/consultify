@@ -27,6 +27,4 @@ if (typeof auditRoutesJS === 'function') {
     // Fallback or error
     console.error('audit.js did not export a valid router');
 }
-}
-
 export default router;

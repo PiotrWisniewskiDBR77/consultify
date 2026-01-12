@@ -27,6 +27,4 @@ if (typeof baselinesRoutesJS === 'function') {
     // Fallback or error
     console.error('baselines.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof pmo_analysisRoutesJS === 'function') {
     // Fallback or error
     console.error('pmo-analysis.js did not export a valid router');
 }
-}
-
 export default router;

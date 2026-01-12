@@ -27,6 +27,4 @@ if (typeof user_appearanceRoutesJS === 'function') {
     // Fallback or error
     console.error('user-appearance.js did not export a valid router');
 }
-}
-
 export default router;

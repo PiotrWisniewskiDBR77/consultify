@@ -27,6 +27,4 @@ if (typeof journeyAnalyticsRoutesJS === 'function') {
     // Fallback or error
     console.error('journeyAnalytics.js did not export a valid router');
 }
-}
-
 export default router;

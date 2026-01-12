@@ -27,6 +27,4 @@ if (typeof budgetRoutesJS === 'function') {
     // Fallback or error
     console.error('budget.js did not export a valid router');
 }
-}
-
 export default router;

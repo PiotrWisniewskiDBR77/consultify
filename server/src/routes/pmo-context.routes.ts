@@ -27,6 +27,4 @@ if (typeof pmo_contextRoutesJS === 'function') {
     // Fallback or error
     console.error('pmo-context.js did not export a valid router');
 }
-}
-
 export default router;

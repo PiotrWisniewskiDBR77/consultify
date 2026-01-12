@@ -27,6 +27,4 @@ if (typeof webhookSubscriptionsRoutesJS === 'function') {
     // Fallback or error
     console.error('webhookSubscriptions.js did not export a valid router');
 }
-}
-
 export default router;

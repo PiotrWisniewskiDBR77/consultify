@@ -27,6 +27,4 @@ if (typeof prompt_assistantRoutesJS === 'function') {
     // Fallback or error
     console.error('prompt-assistant.js did not export a valid router');
 }
-}
-
 export default router;

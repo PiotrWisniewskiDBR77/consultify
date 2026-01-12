@@ -27,6 +27,4 @@ if (typeof ssoRoutesJS === 'function') {
     // Fallback or error
     console.error('sso.js did not export a valid router');
 }
-}
-
 export default router;

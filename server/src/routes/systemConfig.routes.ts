@@ -27,6 +27,4 @@ if (typeof systemConfigRoutesJS === 'function') {
     // Fallback or error
     console.error('systemConfig.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof my_workRoutesJS === 'function') {
     // Fallback or error
     console.error('my-work.js did not export a valid router');
 }
-}
-
 export default router;

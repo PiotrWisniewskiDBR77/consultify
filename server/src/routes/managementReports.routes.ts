@@ -27,6 +27,4 @@ if (typeof managementReportsRoutesJS === 'function') {
     // Fallback or error
     console.error('managementReports.js did not export a valid router');
 }
-}
-
 export default router;

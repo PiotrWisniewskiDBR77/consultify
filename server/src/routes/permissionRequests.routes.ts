@@ -27,6 +27,4 @@ if (typeof permissionRequestsRoutesJS === 'function') {
     // Fallback or error
     console.error('permissionRequests.js did not export a valid router');
 }
-}
-
 export default router;

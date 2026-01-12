@@ -27,6 +27,4 @@ if (typeof user_privacy_extendedRoutesJS === 'function') {
     // Fallback or error
     console.error('user-privacy-extended.js did not export a valid router');
 }
-}
-
 export default router;

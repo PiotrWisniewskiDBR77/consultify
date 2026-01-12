@@ -27,6 +27,4 @@ if (typeof stage_gatesRoutesJS === 'function') {
     // Fallback or error
     console.error('stage-gates.js did not export a valid router');
 }
-}
-
 export default router;

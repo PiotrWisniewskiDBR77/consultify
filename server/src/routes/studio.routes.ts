@@ -27,6 +27,4 @@ if (typeof studioRoutesJS === 'function') {
     // Fallback or error
     console.error('studio.js did not export a valid router');
 }
-}
-
 export default router;

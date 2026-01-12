@@ -27,6 +27,4 @@ if (typeof assessment_level_attachmentsRoutesJS === 'function') {
     // Fallback or error
     console.error('assessment-level-attachments.js did not export a valid router');
 }
-}
-
 export default router;

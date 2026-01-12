@@ -27,6 +27,4 @@ if (typeof conversationsRoutesJS === 'function') {
     // Fallback or error
     console.error('conversations.js did not export a valid router');
 }
-}
-
 export default router;

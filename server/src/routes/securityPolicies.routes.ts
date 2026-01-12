@@ -27,6 +27,4 @@ if (typeof securityPoliciesRoutesJS === 'function') {
     // Fallback or error
     console.error('securityPolicies.js did not export a valid router');
 }
-}
-
 export default router;

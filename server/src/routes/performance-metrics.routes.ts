@@ -27,6 +27,4 @@ if (typeof performance_metricsRoutesJS === 'function') {
     // Fallback or error
     console.error('performance-metrics.js did not export a valid router');
 }
-}
-
 export default router;

@@ -27,6 +27,4 @@ if (typeof preferencesRoutesJS === 'function') {
     // Fallback or error
     console.error('preferences.js did not export a valid router');
 }
-}
-
 export default router;

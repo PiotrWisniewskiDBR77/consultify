@@ -27,6 +27,4 @@ if (typeof videosRoutesJS === 'function') {
     // Fallback or error
     console.error('videos.js did not export a valid router');
 }
-}
-
 export default router;

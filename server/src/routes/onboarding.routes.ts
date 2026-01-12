@@ -27,6 +27,4 @@ if (typeof onboardingRoutesJS === 'function') {
     // Fallback or error
     console.error('onboarding.js did not export a valid router');
 }
-}
-
 export default router;

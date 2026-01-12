@@ -27,6 +27,4 @@ if (typeof rbacRoutesJS === 'function') {
     // Fallback or error
     console.error('rbac.js did not export a valid router');
 }
-}
-
 export default router;

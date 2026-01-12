@@ -27,6 +27,4 @@ if (typeof webauthnRoutesJS === 'function') {
     // Fallback or error
     console.error('webauthn.js did not export a valid router');
 }
-}
-
 export default router;

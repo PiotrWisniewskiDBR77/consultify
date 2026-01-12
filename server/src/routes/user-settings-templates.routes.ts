@@ -27,6 +27,4 @@ if (typeof user_settings_templatesRoutesJS === 'function') {
     // Fallback or error
     console.error('user-settings-templates.js did not export a valid router');
 }
-}
-
 export default router;

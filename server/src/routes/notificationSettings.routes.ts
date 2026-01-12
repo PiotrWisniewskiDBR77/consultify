@@ -27,6 +27,4 @@ if (typeof notificationSettingsRoutesJS === 'function') {
     // Fallback or error
     console.error('notificationSettings.js did not export a valid router');
 }
-}
-
 export default router;

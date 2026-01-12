@@ -27,6 +27,4 @@ if (typeof media_ingestionRoutesJS === 'function') {
     // Fallback or error
     console.error('media-ingestion.js did not export a valid router');
 }
-}
-
 export default router;

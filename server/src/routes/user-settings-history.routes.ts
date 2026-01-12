@@ -27,6 +27,4 @@ if (typeof user_settings_historyRoutesJS === 'function') {
     // Fallback or error
     console.error('user-settings-history.js did not export a valid router');
 }
-}
-
 export default router;
