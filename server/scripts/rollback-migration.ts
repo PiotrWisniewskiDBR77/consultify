@@ -6,6 +6,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
 import { getDatabase } from '../src/database/index.js';
 import logger from '../src/utils/Logger.js';
 
@@ -38,7 +39,7 @@ export async function rollbackMigration(version?: string): Promise<RollbackResul
         };
       }
 
-      version = result.rows[0].version;
+      version = (result.rows[0] as { version: string }).version;
     }
 
     logger.info(`[Rollback] Rolling back migration ${version}...`);

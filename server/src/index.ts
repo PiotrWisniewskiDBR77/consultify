@@ -12,7 +12,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import http from 'http';
 import path from 'path';
@@ -70,9 +70,9 @@ app.set('trust proxy', 1);
 
 // Health Check Routes
 import { HealthCheckController } from './controllers/HealthCheckController.js';
+import dbMetricsRoutes from './routes/db-metrics.routes.js';
 import dbHealthRoutes from './routes/health.routes.js';
 import healthRoutes from './routes/healthRoutes.js';
-import dbMetricsRoutes from './routes/db-metrics.routes.js';
 import systemHealthRoutes from './routes/system-health.routes.js';
 
 // Health Check (Ping) - synchronous
@@ -250,15 +250,16 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     const healthMonitorModule = await import('./services/ai/healthMonitor.js');
     // Debug: Log imported module keys
     logger.info('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
-    // Handle both named exports and default export wrapping (CJS/ESM interop)
-    // @ts-ignore
-    let healthMonitor =
-      healthMonitorModule.healthMonitor || healthMonitorModule.default?.healthMonitor;
+    // The module exports a Promise as default (from lazy service loader)
+    // We need to await it to get the actual healthMonitor service
+    let healthMonitor: any = null;
 
-    // Handle case where default export is a Promise (async module init)
-    if (!healthMonitor && (healthMonitorModule as any).default instanceof Promise) {
-      const resolvedDefault = (await (healthMonitorModule as any).default) as any;
-      healthMonitor = resolvedDefault.healthMonitor;
+    // Handle case where default export is a Promise (lazy loaded service)
+    if (healthMonitorModule.default instanceof Promise) {
+      healthMonitor = await healthMonitorModule.default;
+    } else if (healthMonitorModule.default) {
+      // Direct default export
+      healthMonitor = healthMonitorModule.default;
     }
 
     if (healthMonitor) {
@@ -385,10 +386,12 @@ const apiLimiter = rateLimit({
   store: redisStore,
   skip: (req) => isTest || req.originalUrl.includes('/api/auth/'),
   message: { error: 'Too many requests, please try again later.' },
-  keyGenerator: (req, res) => {
+  keyGenerator: (req) => {
     // Intelligent Rate Limiting: Key by User ID if auth, else IP
     // This solves the "Office IP" problem where all users share one IP
-    return `api:ip:${req.ip}`;
+    // Using req.ip for IPv6 compatibility (trust proxy is set)
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    return `api:ip:${ip}`;
   },
 });
 
@@ -405,14 +408,16 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
-  keyGenerator: (req, res) => {
+  keyGenerator: (req) => {
     const email = (req.body as { email?: string })?.email;
 
     if (email) {
       return `auth:${email.toLowerCase().trim()}`;
     }
 
-    return `auth:ip:${req.ip}`;
+    // Using req.ip for IPv6 compatibility (trust proxy is set)
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    return `auth:ip:${ip}`;
   },
 });
 

@@ -6,6 +6,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
 import { getDatabase } from '../src/database/index.js';
 import logger from '../src/utils/Logger.js';
 
@@ -32,7 +33,7 @@ export async function generateERDiagram(): Promise<string> {
     for (const table of tables) {
       const fkResult = await db.query(`PRAGMA foreign_key_list(${table})`, []);
 
-      for (const fk of fkResult.rows) {
+      for (const fk of fkResult.rows as { table: string }[]) {
         relationships.push(`    ${table} ||--o{ ${fk.table} : "has"`);
       }
     }
