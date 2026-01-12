@@ -49,6 +49,60 @@ export interface DrdAxis {
     maxLevel: number;
 }
 
+// Database row types
+interface OrganizationRow {
+    id?: string;
+    name?: string;
+    transformation_context?: string;
+    industry?: string;
+    companySize?: string;
+    employees?: number;
+    location?: string;
+    country?: string;
+    founded?: number;
+    revenue?: number;
+    digitalMaturity?: string;
+    priorities?: string[];
+    strategicPriorities?: string[];
+    currentInitiatives?: unknown[];
+    budget?: number;
+    timeline?: string;
+    resources?: string;
+}
+
+interface ProjectRow {
+    id?: string;
+    name?: string;
+    status?: string;
+    context?: string;
+    phase?: string;
+    organization_id?: string;
+}
+
+interface AssessmentRow {
+    id?: string;
+    name?: string;
+    organization_id?: string;
+    project_id?: string;
+    axisData?: unknown;
+    axis_data?: unknown;
+    axis_scores?: unknown;
+    overall_as_is?: string;
+    overall_to_be?: string;
+    overall_gap?: string;
+    is_complete?: boolean;
+    completed_at?: string;
+    created_at?: string;
+    updated_at?: string;
+    transformation_context?: string;
+    context?: string;
+    project_context?: string;
+    organization_name?: string;
+    org_name?: string;
+    org_context?: string;
+    org_industry?: string;
+}
+
 export interface BuildContextParams {
     userId?: string;
     organizationId?: string;
@@ -418,14 +472,14 @@ class ContextBuilder {
             },
             organization: {
                 id: organizationId,
-                name: orgInfo?.name,
+                name: (orgInfo as OrganizationRow | null)?.name,
                 ...companyProfile,
             },
             project: {
                 id: projectId,
-                name: projectInfo?.name,
-                status: projectInfo?.status,
-                phase: projectInfo?.phase,
+                name: (projectInfo as ProjectRow | null)?.name,
+                status: (projectInfo as ProjectRow | null)?.status,
+                phase: (projectInfo as ProjectRow | null)?.phase,
             },
 
             // Enhanced context
@@ -456,7 +510,8 @@ class ContextBuilder {
         }
 
         // Fetch organization details
-        const organization = await this._fetchOrganization(organizationId || assessment.organization_id);
+        const assessmentRow = assessment as AssessmentRow;
+        const organization = await this._fetchOrganization(organizationId || assessmentRow.organization_id || '');
 
         // Build comprehensive company profile
         const companyProfile = this._buildCompanyProfile(organization, assessment);
@@ -467,16 +522,17 @@ class ContextBuilder {
 
         // Assessment analysis
         const assessmentContext = this._buildAssessmentContext(assessment);
-        const gapAnalysis = this._performGapAnalysis(assessment.axisData);
-        const maturityAnalysis = this._analyzeMaturityProfile(assessment.axisData, industryContext);
+        const axisData = assessmentRow.axisData || assessmentRow.axis_data || assessmentRow.axis_scores;
+        const gapAnalysis = this._performGapAnalysis(axisData);
+        const maturityAnalysis = this._analyzeMaturityProfile(axisData, industryContext);
 
         return {
             // Core data
             assessment: {
                 id: assessmentId,
-                name: assessment.name,
-                completedAt: assessment.completed_at,
-                isComplete: assessment.is_complete,
+                name: assessmentRow.name || '',
+                completedAt: assessmentRow.completed_at,
+                isComplete: assessmentRow.is_complete,
             },
 
             // Company profile
@@ -510,15 +566,17 @@ class ContextBuilder {
     // =========================================================================
 
     private _buildCompanyProfile(organization: unknown, projectOrAssessment: unknown): CompanyProfile {
-        const transformationContext = this._parseJSON(organization?.transformation_context) || {};
+        const orgRow = organization as OrganizationRow | null;
+        const projOrAssessRow = projectOrAssessment as ProjectRow | AssessmentRow | null;
+        const transformationContext = this._parseJSON(orgRow?.transformation_context) || {};
         const projectContext =
-            this._parseJSON(projectOrAssessment?.context || projectOrAssessment?.transformation_context) || {};
+            this._parseJSON((projOrAssessRow as ProjectRow)?.context || (projOrAssessRow as AssessmentRow)?.transformation_context) || {};
 
         // Merge contexts with priority to organization
-        const merged = { ...projectContext, ...transformationContext };
+        const merged = { ...(projectContext as Record<string, unknown>), ...(transformationContext as Record<string, unknown>) };
 
         // Determine industry
-        const industry = merged.industry || this._inferIndustry(organization?.name, merged);
+        const industry = (merged.industry as string) || this._inferIndustry(orgRow?.name, merged);
 
         // Determine company size
         const size = this._determineCompanySize(merged.employees || merged.companySize);
@@ -528,17 +586,17 @@ class ContextBuilder {
             industryProfile: INDUSTRY_PROFILES[industry] || INDUSTRY_PROFILES.manufacturing,
             size,
             sizeProfile: COMPANY_SIZE_PROFILES[size] || COMPANY_SIZE_PROFILES.sme,
-            location: merged.location || merged.country || 'Poland',
-            founded: merged.founded,
-            revenue: merged.revenue,
-            employees: merged.employees,
-            digitalMaturitySelfAssessment: merged.digitalMaturity,
-            strategicPriorities: merged.priorities || merged.strategicPriorities || [],
-            currentInitiatives: merged.currentInitiatives || [],
+            location: String(merged.location || merged.country || 'Poland'),
+            founded: merged.founded as string | undefined,
+            revenue: merged.revenue as string | undefined,
+            employees: (merged.employees as number | undefined) || (merged.companySize as number | undefined),
+            digitalMaturitySelfAssessment: merged.digitalMaturity as number | undefined,
+            strategicPriorities: (merged.priorities as string[] | undefined) || (merged.strategicPriorities as string[] | undefined) || [],
+            currentInitiatives: (merged.currentInitiatives as string[] | undefined) || [],
             constraints: {
-                budget: merged.budget,
-                timeline: merged.timeline,
-                resources: merged.resources,
+                budget: merged.budget as string | undefined,
+                timeline: merged.timeline as string | undefined,
+                resources: merged.resources as string | undefined,
             },
             rawContext: merged,
         };
@@ -546,12 +604,13 @@ class ContextBuilder {
 
     private _inferIndustry(orgName: string | undefined, context: Record<string, unknown>): string {
         // Check explicit industry field
-        if (context.industry && INDUSTRY_PROFILES[context.industry]) {
-            return context.industry;
+        const industry = context.industry as string | undefined;
+        if (industry && INDUSTRY_PROFILES[industry]) {
+            return industry;
         }
 
         // Check sector/vertical fields
-        const sector = (context.sector || context.vertical || '').toLowerCase();
+        const sector = String(context.sector || context.vertical || '').toLowerCase();
         for (const [key, profile] of Object.entries(INDUSTRY_PROFILES)) {
             if (sector.includes(key) || sector.includes(profile.name.toLowerCase())) {
                 return key;
@@ -686,7 +745,8 @@ class ContextBuilder {
     // =========================================================================
 
     private _buildAssessmentContext(assessment: unknown): AssessmentContext {
-        const axisData = this._parseJSON(assessment.axis_data) || assessment.axisData || {};
+        const assessmentRow = assessment as AssessmentRow;
+        const axisData = this._parseJSON(assessmentRow.axis_data) || assessmentRow.axisData || assessmentRow.axis_scores || {};
 
         const axes = Object.entries(axisData)
             .filter(([key]) => DRD_AXES[key])
@@ -817,7 +877,7 @@ class ContextBuilder {
         const aboveIndustry = axes.filter((a) => a.vsIndustry > 0.5);
         const belowIndustry = axes.filter((a) => a.vsIndustry < -0.5);
 
-        let positioning = 'AT_AVERAGE';
+        let positioning: 'LEADER' | 'ABOVE_AVERAGE' | 'AT_AVERAGE' | 'BELOW_AVERAGE' | 'LAGGARD' = 'AT_AVERAGE';
         if (avgScore >= industryBenchmark + 1) positioning = 'LEADER';
         else if (avgScore >= industryBenchmark + 0.5) positioning = 'ABOVE_AVERAGE';
         else if (avgScore <= industryBenchmark - 1) positioning = 'LAGGARD';
@@ -851,23 +911,23 @@ class ContextBuilder {
         });
     }
 
-    private async _fetchOrganization(orgId: string): Promise<unknown> {
+    private async _fetchOrganization(orgId: string): Promise<OrganizationRow | null> {
         return new Promise((resolve) => {
             db.get('SELECT id, name, transformation_context FROM organizations WHERE id = ?', [orgId], (err, row) =>
-                resolve(err ? null : row),
+                resolve(err ? null : (row as OrganizationRow | null)),
             );
         });
     }
 
-    private async _fetchProject(projectId: string): Promise<unknown> {
+    private async _fetchProject(projectId: string): Promise<ProjectRow | null> {
         return new Promise((resolve) => {
             db.get('SELECT id, name, status, context, phase FROM projects WHERE id = ?', [projectId], (err, row) =>
-                resolve(err ? null : row),
+                resolve(err ? null : (row as ProjectRow | null)),
             );
         });
     }
 
-    private async _fetchAssessment(assessmentId: string): Promise<unknown> {
+    private async _fetchAssessment(assessmentId: string): Promise<AssessmentRow | null> {
         return new Promise((resolve) => {
             db.get(
                 `SELECT a.*, o.name as org_name, o.transformation_context as org_context
@@ -875,12 +935,12 @@ class ContextBuilder {
                  LEFT JOIN organizations o ON a.organization_id = o.id
                  WHERE a.id = ?`,
                 [assessmentId],
-                (err, row) => resolve(err ? null : row),
+                (err, row) => resolve(err ? null : (row as AssessmentRow | null)),
             );
         });
     }
 
-    private async _fetchFullAssessment(assessmentId: string): Promise<unknown> {
+    private async _fetchFullAssessment(assessmentId: string): Promise<AssessmentRow | null> {
         // Helper to wait for database to be ready and schema initialized
         const waitForDb = () =>
             new Promise((resolve) => {

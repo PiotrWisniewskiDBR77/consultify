@@ -54,23 +54,7 @@ COPY server/tsconfig.json ./
 COPY server/ .
 # Create tsconfig.build.json if it doesn't exist (fallback for git-untracked files)
 RUN if [ ! -f tsconfig.build.json ]; then \
-      cat > tsconfig.build.json << 'EOF'; \
-      { \
-        "extends": "./tsconfig.json", \
-        "compilerOptions": { \
-          "noUnusedLocals": false, \
-          "noUnusedParameters": false, \
-          "noImplicitReturns": false, \
-          "noImplicitAny": false, \
-          "strictNullChecks": false, \
-          "strictFunctionTypes": false, \
-          "strictBindCallApply": false, \
-          "strictPropertyInitialization": false, \
-          "noImplicitThis": false, \
-          "skipLibCheck": true \
-        } \
-      } \
-      EOF \
+      echo '{"extends":"./tsconfig.json","compilerOptions":{"noUnusedLocals":false,"noUnusedParameters":false,"noImplicitReturns":false,"noImplicitAny":false,"strictNullChecks":false,"strictFunctionTypes":false,"strictBindCallApply":false,"strictPropertyInitialization":false,"noImplicitThis":false,"skipLibCheck":true}}' > tsconfig.build.json; \
     fi
 # Verify tsconfig.build.json exists before building
 RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!" && ls -la tsconfig*.json && exit 1)
