@@ -40,7 +40,7 @@ export class InvitationController {
      * Create invitation
      */
     static createInvitation = asyncHandler(
-        async (req: AuthenticatedRequest<CreateInvitationRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { email, role, organizationId, message } = req.body;
             const userId = req.user?.id;
             if (!userId) {
@@ -65,7 +65,7 @@ export class InvitationController {
      * Resend invitation
      */
     static resendInvitation = asyncHandler(
-        async (req: AuthenticatedRequest<ResendInvitationRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { invitationId } = req.body;
 
             const InvitationService = (await import('../services/invitationService.js')).default;
@@ -79,7 +79,7 @@ export class InvitationController {
      * Accept invitation
      */
     static acceptInvitation = asyncHandler(
-        async (req: AuthenticatedRequest<AcceptInvitationRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { token, email, firstName, lastName, password } = req.body;
 
             const { acceptInvitation } = await import('../services/invitationService.js');

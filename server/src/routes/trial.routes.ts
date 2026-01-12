@@ -60,12 +60,16 @@ router.post(
         }
 
         try {
-            const { trialId } = req.params;
+            const trialId = Array.isArray(req.params.trialId) ? req.params.trialId[0] : req.params.trialId;
             const { newOrgName } = req.body;
             const userId = req.user?.id;
 
             if (!userId) {
                 return res.status(401).json({ error: 'Unauthorized' });
+            }
+
+            if (!trialId) {
+                return res.status(400).json({ error: 'trialId is required' });
             }
 
             if (!newOrgName) {
@@ -74,14 +78,14 @@ router.post(
 
             const result = await TrialService.convertTrialToOrg(trialId, userId, newOrgName);
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Trial converted successfully',
                 newOrganizationId: result.newOrganizationId,
             });
         } catch (error: unknown) {
             console.error('Trial Conversion Error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );
@@ -127,14 +131,14 @@ router.post(
                 },
             });
 
-            res.json({
+            return res.json({
                 success: true,
                 message: 'Transition confirmed',
                 nextStep: 'ORG_SETUP_WIZARD',
             });
         } catch (error: unknown) {
             console.error('Transition Confirmation Error:', error);
-            res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+            return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
         }
     }),
 );

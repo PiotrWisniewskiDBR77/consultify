@@ -10,7 +10,7 @@
  */
 
 import cron from 'node-cron';
-import DunningService from '../services/dunningService.js';
+import DunningService from '../src/services/dunningService.js';
 
 let dunningJob: cron.ScheduledTask | null = null;
 
@@ -30,15 +30,14 @@ function startDunningJob() {
             console.log('[DunningCron] Starting scheduled dunning processing...');
 
             try {
-                const dunningService = await DunningService;
-                await dunningService.processScheduledRetries();
+                await DunningService.processScheduledRetries();
             } catch (error) {
                 console.error('[DunningCron] Processing failed:', error);
 
                 // Report to Sentry if available
                 try {
-                    const { captureException } = require('../config/sentry');
-                    captureException(error, {
+                    const { captureException } = await import('../config/sentry.js');
+                    captureException(error as Error, {
                         tags: { component: 'dunning', job: 'scheduled' },
                     });
                 } catch (e) {

@@ -46,7 +46,7 @@ export class AdminDataController {
      * Update user tier
      */
     static updateUserTier = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateUserTierRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { orgId, userId } = req.params;
             const { tier } = req.body;
             const { v4: uuidv4 } = await import('uuid');

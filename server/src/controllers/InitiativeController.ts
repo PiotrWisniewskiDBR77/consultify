@@ -156,7 +156,7 @@ export class InitiativeController {
      * Create a new initiative
      */
     static createInitiative = asyncHandler(
-        async (req: AuthenticatedRequest<CreateInitiativeRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const orgId = req.user?.organizationId;
             if (!orgId) {
                 res.status(401).json({ error: 'Unauthorized' });
@@ -249,7 +249,7 @@ export class InitiativeController {
      * Update initiative
      */
     static updateInitiative = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateInitiativeRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { _id } = req.params;
             const orgId = req.user?.organizationId;
             if (!orgId) {
@@ -267,7 +267,7 @@ export class InitiativeController {
      * Update initiative status
      */
     static updateInitiativeStatus = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateInitiativeStatusRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { id } = req.params;
             const { status, _reason } = req.body;
             const orgId = req.user?.organizationId;

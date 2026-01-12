@@ -42,7 +42,7 @@ export class OrganizationController {
      * Create new organization
      */
     static createOrganization = asyncHandler(
-        async (req: AuthenticatedRequest<CreateOrganizationRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const userId = req.user?.id;
             const { name } = req.body;
             if (!userId) {
@@ -91,7 +91,7 @@ export class OrganizationController {
      * Update organization
      */
     static updateOrganization = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateOrganizationRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { orgId } = req.params;
             const _updates = req.body;
 
@@ -128,7 +128,7 @@ export class OrganizationController {
      * Add member to organization
      */
     static addMember = asyncHandler(
-        async (req: AuthenticatedRequest<AddMemberRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { orgId } = req.params;
             const { targetUserId, role } = req.body;
             const userId = req.user?.id;
@@ -165,7 +165,7 @@ export class OrganizationController {
      * Update member role
      */
     static updateMemberRole = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateMemberRoleRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { orgId, memberId } = req.params;
             const { role } = req.body;
             const userId = req.user?.id;

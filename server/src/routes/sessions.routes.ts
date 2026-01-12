@@ -49,7 +49,7 @@ router.get(
             isCurrent: s.id === currentSessionId,
         }));
 
-        res.json({
+        return res.json({
             success: true,
             data: sessionsWithCurrent,
         });
@@ -102,7 +102,10 @@ router.put(
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
 
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            return res.status(400).json({ success: false, error: 'id is required' });
+        }
 
         const runResult = await dbRun(
             `UPDATE active_sessions 
@@ -115,7 +118,7 @@ router.put(
             throw new Error(runResult.error || 'Failed to update session activity');
         }
 
-        res.json({ success: true });
+        return res.json({ success: true });
     }),
 );
 
@@ -132,7 +135,10 @@ router.delete(
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
 
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            return res.status(400).json({ success: false, error: 'id is required' });
+        }
 
         const runResult = await dbRun(`DELETE FROM active_sessions WHERE id = ? AND user_id = ?`, [id, userId]);
 
@@ -140,7 +146,7 @@ router.delete(
             throw new Error(runResult.error || 'Failed to terminate session');
         }
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Session terminated',
         });
@@ -171,7 +177,7 @@ router.delete(
             throw new Error(runResult.error || 'Failed to terminate sessions');
         }
 
-        res.json({
+        return res.json({
             success: true,
             message: 'All other sessions terminated',
         });

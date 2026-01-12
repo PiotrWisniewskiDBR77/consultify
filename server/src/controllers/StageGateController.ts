@@ -85,7 +85,7 @@ export class StageGateController {
     /**
      * Pass gate
      */
-    static passGate = asyncHandler(async (req: AuthenticatedRequest<PassGateRequest>, res: Response): Promise<void> => {
+    static passGate = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId, gateType } = req.params;
         const { notes } = req.body;
         const userId = req.user?.id;

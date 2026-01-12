@@ -17,7 +17,8 @@ interface MegatrendServiceInterface {
     getBaselineTrends?: (industry?: string) => Promise<unknown>;
     getRadarData?: (industry?: string) => Promise<unknown>;
     getTrendDetail?: (id: string) => Promise<unknown>;
-    createCustomTrend?: (data: unknown) => Promise<unknown>;
+    createCustomTrend?: (data: unknown, companyId: string) => Promise<unknown>;
+    updateCustomTrend?: (id: string, data: unknown, companyId: string) => Promise<unknown>;
 }
 
 // Dynamic import for MegatrendService (may not be migrated yet)
@@ -48,10 +49,10 @@ router.get(
         try {
             const industry = req.query.industry as string | undefined;
             const data = await MegatrendService.getBaselineTrends(industry);
-            res.json(data);
+            return res.json(data);
         } catch (err: unknown) {
             console.error('[Megatrend] baseline error', err);
-            res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
 );
@@ -70,10 +71,10 @@ router.get(
         try {
             const industry = req.query.industry as string | undefined;
             const data = await MegatrendService.getRadarData(industry);
-            res.json(data);
+            return res.json(data);
         } catch (err: unknown) {
             console.error('[Megatrend] radar error', err);
-            res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
 );
@@ -90,14 +91,16 @@ router.get(
         }
 
         try {
-            const detail = await MegatrendService.getTrendDetail(req.params.id);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            if (!id) return res.status(400).json({ error: 'id is required' });
+            const detail = await MegatrendService.getTrendDetail(id);
             if (!detail) {
                 return res.status(404).json({ error: 'Trend not found' });
             }
-            res.json(detail);
+            return res.json(detail);
         } catch (err: unknown) {
             console.error('[Megatrend] detail error', err);
-            res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
 );
@@ -121,10 +124,10 @@ router.post(
             }
 
             const created = await MegatrendService.createCustomTrend(req.body, companyId);
-            res.status(201).json(created);
+            return res.status(201).json(created);
         } catch (err: unknown) {
             console.error('[Megatrend] create custom error', err);
-            res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
 );
@@ -147,14 +150,16 @@ router.put(
                 return res.status(401).json({ error: 'Unauthorized' });
             }
 
-            const updated = await MegatrendService.updateCustomTrend(req.params.id, req.body, companyId);
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            if (!id) return res.status(400).json({ error: 'id is required' });
+            const updated = await MegatrendService.updateCustomTrend(id, req.body, companyId);
             if (!updated) {
                 return res.status(404).json({ error: 'Custom trend not found' });
             }
-            res.json(updated);
+            return res.json(updated);
         } catch (err: unknown) {
             console.error('[Megatrend] update custom error', err);
-            res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
         }
     }),
 );

@@ -37,7 +37,7 @@ export class AdminAlertController {
      * Create admin alert
      */
     static createAlert = asyncHandler(
-        async (req: AuthenticatedRequest<CreateAdminAlertRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const orgId = req.user?.organizationId;
             const alertConfig = req.body;
             if (!orgId) {

@@ -49,15 +49,15 @@ export class DecisionController {
 
         if (projectId) {
             sql += ` AND d.project_id = ?`;
-            params.push(projectId);
+            params.push(Array.isArray(projectId) ? projectId[0] : projectId);
         }
         if (status) {
             sql += ` AND d.status = ?`;
-            params.push(status);
+            params.push(Array.isArray(status) ? status[0] : status);
         }
         if (relatedObjectId) {
             sql += ` AND d.related_object_id = ?`;
-            params.push(relatedObjectId);
+            params.push(Array.isArray(relatedObjectId) ? relatedObjectId[0] : relatedObjectId);
         }
 
         sql += ` ORDER BY d.created_at DESC`;
@@ -137,7 +137,7 @@ export class DecisionController {
      * Create a new decision
      */
     static createDecision = asyncHandler(
-        async (req: AuthenticatedRequest<CreateDecisionRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const userId = req.user?.id;
             if (!userId) {
                 res.status(401).json({ error: 'Unauthorized' });
@@ -204,7 +204,7 @@ export class DecisionController {
     /**
      * Make a decision (approve/reject/defer)
      */
-    static decide = asyncHandler(async (req: AuthenticatedRequest<DecideRequest>, res: Response): Promise<void> => {
+    static decide = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
         const { decision, rationale, _notes } = req.body;
         const userId = req.user?.id;
@@ -271,7 +271,7 @@ export class DecisionController {
      * Escalate decision
      */
     static escalateDecision = asyncHandler(
-        async (req: AuthenticatedRequest<EscalateDecisionRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { id } = req.params;
             const { reason, escalateToUserId } = req.body;
             const userId = req.user?.id;

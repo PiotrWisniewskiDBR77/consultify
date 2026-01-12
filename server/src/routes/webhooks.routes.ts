@@ -118,7 +118,11 @@ router.get(
     '/:id',
     validateParams(WebhookIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            res.status(400).json({ error: 'id is required' });
+            return;
+        }
         const webhook = await webhookService.getWebhookById(id);
 
         if (!webhook) {
@@ -164,7 +168,11 @@ router.put(
     validateParams(WebhookIdParamSchema),
     validateBody(UpdateWebhookBodySchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            res.status(400).json({ error: 'id is required' });
+            return;
+        }
         const webhook = await webhookService.updateWebhook(id, req.body);
         res.json(webhook);
     }),
@@ -178,7 +186,11 @@ router.delete(
     '/:id',
     validateParams(WebhookIdParamSchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            res.status(400).json({ error: 'id is required' });
+            return;
+        }
         const result = await webhookService.deleteWebhook(id);
         res.json(result);
     }),
@@ -193,7 +205,11 @@ router.post(
     validateParams(WebhookIdParamSchema),
     validateBody(TestWebhookBodySchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            res.status(400).json({ error: 'id is required' });
+            return;
+        }
         const { payload } = req.body;
 
         const result = await webhookService.testWebhook(id, payload);
@@ -210,7 +226,11 @@ router.get(
     validateParams(WebhookIdParamSchema),
     validateQuery(GetDeliveriesQuerySchema),
     asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        if (!id) {
+            res.status(400).json({ error: 'id is required' });
+            return;
+        }
         const { status, eventType, page = '1', pageSize = '50' } = req.query;
 
         const filters = { status, eventType };

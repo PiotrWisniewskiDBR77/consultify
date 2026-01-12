@@ -5,7 +5,7 @@
 
 import cron from 'node-cron';
 import { getDatabase } from '../src/database/Database.js';
-import EmailService from '../services/emailService.js';
+import EmailService from '../src/services/emailService.js';
 
 const db = getDatabase();
 
@@ -26,8 +26,7 @@ const startHealthCheck = () => {
                 if (isSystemHealthy) {
                     isSystemHealthy = false;
                     // System just went DOWN
-                    const emailService = await EmailService;
-                    await emailService.sendEmail(
+                    await EmailService.sendEmail(
                         ALERT_EMAIL,
                         'CRITICAL ALERT: System Database Down',
                         `
@@ -44,8 +43,7 @@ const startHealthCheck = () => {
                 if (!isSystemHealthy) {
                     // System just came UP
                     console.log('[HEALTH CHECK] RECOVERED');
-                    const emailService = await EmailService;
-                    await emailService.sendEmail(
+                    await EmailService.sendEmail(
                         ALERT_EMAIL,
                         'RESOLVED: System Database Recovered',
                         `

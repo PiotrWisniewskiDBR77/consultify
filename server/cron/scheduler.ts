@@ -194,3 +194,9 @@ const Scheduler = {
 };
 
 export default Scheduler;
+
+// Export init function for compatibility
+export const init = Scheduler.init;
+
+// Export getScheduler function for compatibility
+export const getScheduler = () => Scheduler;

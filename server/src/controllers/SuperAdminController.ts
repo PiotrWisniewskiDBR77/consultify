@@ -59,7 +59,7 @@ export class SuperAdminController {
      * Update organization
      */
     static updateOrganization = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateOrganizationAdminRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { id } = req.params;
             const updates = req.body;
 
@@ -110,7 +110,7 @@ export class SuperAdminController {
      * Create user
      */
     static createUser = asyncHandler(
-        async (req: AuthenticatedRequest<CreateUserAdminRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const superAdminController = await import('../../controllers/superAdminController.js').then(
                 (m) => m.default || m,
             );
@@ -122,7 +122,7 @@ export class SuperAdminController {
      * Update user
      */
     static updateUser = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateUserAdminRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { id } = req.params;
 
             const superAdminController = await import('../../controllers/superAdminController.js').then(
@@ -136,7 +136,7 @@ export class SuperAdminController {
      * Impersonate user
      */
     static impersonateUser = asyncHandler(
-        async (req: AuthenticatedRequest<ImpersonateUserRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const superAdminController = await import('../../controllers/superAdminController.js').then(
                 (m) => m.default || m,
             );

@@ -6,7 +6,7 @@
  */
 
 import cron from 'node-cron';
-import BackupService from '../services/backupService.js';
+import BackupService from '../src/services/backupService.js';
 
 let backupJob: cron.ScheduledTask | null = null;
 
@@ -27,12 +27,11 @@ function startBackupJob() {
 
             try {
                 // Create backup
-                const backupService = await BackupService;
-                const result = await backupService.createBackup('full', 'scheduled');
+                const result = await BackupService.createBackup('full', 'scheduled');
                 console.log(`[BackupCron] Backup completed: ${result.id}`);
 
                 // Run retention policy
-                const cleanup = await backupService.runRetentionPolicy();
+                const cleanup = await BackupService.runRetentionPolicy();
                 console.log(`[BackupCron] Cleanup: deleted ${cleanup.deleted} old backups`);
             } catch (error) {
                 console.error('[BackupCron] Scheduled backup failed:', error);
@@ -72,8 +71,7 @@ function stopBackupJob() {
  */
 async function triggerManualBackup(reason = 'manual') {
     console.log(`[BackupCron] Manual backup triggered: ${reason}`);
-    const backupService = await BackupService;
-    return backupService.createBackup('full', reason);
+    return BackupService.createBackup('full', reason);
 }
 
 export default {

@@ -87,7 +87,7 @@ export class UserController {
      * Update user
      */
     static updateUser = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateUserRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { id } = req.params;
             const orgId = req.user?.organizationId;
             if (!orgId) {
@@ -104,7 +104,7 @@ export class UserController {
      * Update user role
      */
     static updateUserRole = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateUserRoleRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { id } = req.params;
             const { role, _reason } = req.body;
             const orgId = req.user?.organizationId;

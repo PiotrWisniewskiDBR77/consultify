@@ -52,24 +52,24 @@ const deps = {
  */
 async function initDeps() {
     if (!deps._db) {
-        const { default: db } = await import('../database.js');
-        deps._db = db;
+        const { getDatabase } = await import('../src/database/Database.js');
+        deps._db = getDatabase();
     }
     if (!deps._budgetManagementService) {
-        const { default: budgetManagementService } = await import('../services/budgetManagementService.js');
-        deps._budgetManagementService = budgetManagementService;
+        const budgetManagementService = await import('../src/services/budgetManagementService.js');
+        deps._budgetManagementService = budgetManagementService.default || budgetManagementService;
     }
     if (!deps._adminAlertService) {
-        const { default: adminAlertService } = await import('../services/adminAlertService.js');
-        deps._adminAlertService = adminAlertService;
+        const adminAlertService = await import('../src/services/adminAlertService.js');
+        deps._adminAlertService = adminAlertService.default || adminAlertService;
     }
     if (!deps._payAsYouGoService) {
-        const { default: payAsYouGoService } = await import('../services/payAsYouGoService.js');
-        deps._payAsYouGoService = payAsYouGoService;
+        const payAsYouGoService = await import('../src/services/payAsYouGoService.js');
+        deps._payAsYouGoService = payAsYouGoService.default || payAsYouGoService;
     }
     if (!deps._seatManagementService) {
-        const { default: seatManagementService } = await import('../services/seatManagementService.js');
-        deps._seatManagementService = seatManagementService;
+        const seatManagementService = await import('../src/services/seatManagementService.js');
+        deps._seatManagementService = seatManagementService.default || seatManagementService;
     }
 }
 
@@ -96,16 +96,23 @@ async function checkAndTriggerAlerts() {
         console.log('[BillingCron] Running checkAndTriggerAlerts...');
 
         // Get all active organizations
-        const orgs = await new Promise((resolve, reject) => {
-            deps.db.all('SELECT id FROM organizations WHERE status = ?', ['active'], (err, rows) => {
+        const orgs = await new Promise<Array<{ id: string }>>((resolve, reject) => {
+            if (!deps.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+            deps.db.all('SELECT id FROM organizations WHERE status = ?', ['active'], (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as Array<{ id: string }>) || []);
             });
         });
 
         let triggeredCount = 0;
         for (const org of orgs) {
             try {
+                if (!deps.adminAlertService) {
+                    throw new Error('AdminAlertService not initialized');
+                }
                 const result = await deps.adminAlertService.checkAndTriggerAlerts(org.id);
                 if (result.triggeredCount > 0) {
                     triggeredCount += result.triggeredCount;
@@ -135,15 +142,19 @@ async function generatePayAsYouGoInvoices() {
         const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
         // Get all organizations with PAYG billing
-        const orgs = await new Promise((resolve, reject) => {
+        const orgs = await new Promise<Array<{ organization_id: string }>>((resolve, reject) => {
+            if (!deps.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
             deps.db.all(
                 `SELECT os.organization_id
                  FROM organization_seats os
                  WHERE os.billing_model IN('pay_as_you_go', 'hybrid')`,
                 [],
-                (err, rows) => {
+                (err: Error | null, rows: unknown) => {
                     if (err) reject(err);
-                    else resolve(rows || []);
+                    else resolve((rows as Array<{ organization_id: string }>) || []);
                 },
             );
         });
@@ -151,6 +162,9 @@ async function generatePayAsYouGoInvoices() {
         let invoicesGenerated = 0;
         for (const org of orgs) {
             try {
+                if (!deps.payAsYouGoService) {
+                    throw new Error('PayAsYouGoService not initialized');
+                }
                 const result = await deps.payAsYouGoService.generatePayAsYouGoInvoice(
                     org.organization_id,
                     lastMonthStart,
@@ -179,16 +193,23 @@ async function updateSeatCounts() {
     try {
         console.log('[BillingCron] Running updateSeatCounts...');
 
-        const orgs = await new Promise((resolve, reject) => {
-            deps.db.all('SELECT id FROM organizations WHERE status = ?', ['active'], (err, rows) => {
+        const orgs = await new Promise<Array<{ id: string }>>((resolve, reject) => {
+            if (!deps.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+            deps.db.all('SELECT id FROM organizations WHERE status = ?', ['active'], (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as Array<{ id: string }>) || []);
             });
         });
 
         let updated = 0;
         for (const org of orgs) {
             try {
+                if (!deps.seatManagementService) {
+                    throw new Error('SeatManagementService not initialized');
+                }
                 await deps.seatManagementService.updateSeatCount(org.id);
                 updated++;
             } catch (err) {

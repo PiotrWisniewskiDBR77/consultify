@@ -164,7 +164,7 @@ export class ProjectController {
      * Create a new project
      */
     static createProject = asyncHandler(
-        async (req: AuthenticatedRequest<CreateProjectRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const orgId = req.user?.organizationId;
             const userId = req.user?.id;
             if (!orgId || !userId) {
@@ -250,7 +250,7 @@ export class ProjectController {
      * Update project
      */
     static updateProject = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateProjectRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const orgId = req.user?.organizationId;
             const { id } = req.params;
             const { name, description, goal, status } = req.body;
@@ -333,7 +333,7 @@ export class ProjectController {
      * Update notification settings for project
      */
     static updateNotificationSettings = asyncHandler(
-        async (req: AuthenticatedRequest<ProjectNotificationSettingsRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { id: projectId } = req.params;
             const {
                 task_overdue_enabled = true,
@@ -402,7 +402,7 @@ export class ProjectController {
      * Update AI role for project
      */
     static updateAIRole = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateAIRoleRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { id: projectId } = req.params;
             const { aiRole, justification } = req.body;
             const userId = req.user?.id;
@@ -485,7 +485,7 @@ export class ProjectController {
      * Update regulatory mode for project
      */
     static updateRegulatoryMode = asyncHandler(
-        async (req: AuthenticatedRequest<UpdateRegulatoryModeRequest>, res: Response): Promise<void> => {
+        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
             const { id: projectId } = req.params;
             const { enabled, justification } = req.body;
             const userId = req.user?.id;
