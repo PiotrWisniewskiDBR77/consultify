@@ -176,7 +176,7 @@ class RefreshTokenService {
                 organizationId: user.organization_id,
                 jti,
             },
-            config.JWT_SECRET as string,
+            String(config.JWT_SECRET || ''),
             { expiresIn: String(CONFIG.ACCESS_TOKEN_EXPIRY || '15m') },
         );
 
@@ -266,7 +266,7 @@ class RefreshTokenService {
                                 organizationId: latestToken.organization_id!,
                                 jti,
                             },
-                            config.JWT_SECRET as string,
+                            String(config.JWT_SECRET || ''),
                             { expiresIn: String(CONFIG.ACCESS_TOKEN_EXPIRY || '15m') },
                         );
 
@@ -319,7 +319,7 @@ class RefreshTokenService {
                 organizationId: storedToken.organization_id!,
                 jti,
             },
-            config.JWT_SECRET as string,
+            String(config.JWT_SECRET || ''),
             { expiresIn: String(CONFIG.ACCESS_TOKEN_EXPIRY || '15m') },
         );
 

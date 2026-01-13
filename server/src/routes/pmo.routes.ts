@@ -7,8 +7,9 @@
 
 import { Router } from 'express';
 
+import { Response } from 'express';
 import { verifyToken } from '../middleware/auth.middleware.js';
-import type { AuthenticatedRequest, Response } from '../types/index.js';
+import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -29,7 +30,8 @@ router.get(
     asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { projectId } = req.params;
 
-        const { getHealthSnapshot } = await import('../../services/pmoHealthService.js');
+        const pmoModule = await import('../../src/services/pmoHealthService.js');
+        const getHealthSnapshot = (pmoModule as any).getHealthSnapshot || (pmoModule.default as any)?.getHealthSnapshot;
         const snapshot = await getHealthSnapshot(projectId);
 
         res.json(snapshot);

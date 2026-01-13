@@ -1393,7 +1393,8 @@ router.post(
                     | Record<string, unknown>;
             }
             const webhookEvent = event as WebhookEvent;
-            const payload = (webhookEvent.payload?.data?.object || webhookEvent.payload) as
+            const payloadData = (webhookEvent.payload as any)?.data;
+            const payload = (payloadData?.object || webhookEvent.payload) as
                 | Record<string, unknown>
                 | undefined;
             const result = await BillingWebhookService.triggerEvent(

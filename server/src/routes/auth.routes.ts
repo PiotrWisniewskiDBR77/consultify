@@ -291,7 +291,7 @@ router.post(
                 organizationId: adminUser.organization_id,
                 jti: jti,
             },
-            config.JWT_SECRET as string,
+            String(config.JWT_SECRET || ''),
             { expiresIn: String(config.JWT_EXPIRES_IN || '24h') },
         );
 
@@ -536,7 +536,7 @@ router.post(
                         organizationId: orgId,
                         jti: jti,
                     },
-                    config.JWT_SECRET as string,
+                    String(config.JWT_SECRET || ''),
                     { expiresIn: String(config.JWT_EXPIRES_IN || '24h') },
                 );
 

@@ -7,7 +7,8 @@
 
 import { Response, Router } from 'express';
 
-import { type AuthRequest, verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();

@@ -75,7 +75,6 @@ export class StageGateController {
             return;
         }
 
-        const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
         const evaluation = await evaluateGate(projectIdStr, gateType);
 
         res.json({

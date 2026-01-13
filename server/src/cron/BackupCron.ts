@@ -28,7 +28,7 @@ interface BackupService {
 }
 
 interface SentryConfig {
-    captureException: (error: Error, options?: { tags?: Record<string, string> }) => void;
+    captureException: (error: Error, options?: { tags?: Record<string, string>; extra?: Record<string, unknown> }) => void;
 }
 
 interface Dependencies {
@@ -114,11 +114,9 @@ class BackupCron {
                                     job: 'scheduled',
                                     failureCount: String(this.failureCount),
                                 },
-                                contexts: {
-                                    backup: {
-                                        successCount: this.successCount,
-                                        lastBackupTime: this.lastBackupTime?.toISOString() || null,
-                                    },
+                                extra: {
+                                    successCount: this.successCount,
+                                    lastBackupTime: this.lastBackupTime?.toISOString() || null,
                                 },
                             });
                         } catch (e: unknown) {

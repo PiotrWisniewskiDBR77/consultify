@@ -15,8 +15,8 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 const router = Router();
 
 // Helper function for async handler
-function asyncHandler(fn: (req: Request, res: Response) => Promise<void> | void) {
-    return (req: Request, res: Response, next: NextFunction) => {
+function asyncHandler(fn: (req: Request, res: Response) => Promise<void> | void): RequestHandler {
+    return (req: Request, res: Response, next: NextFunction): void => {
         Promise.resolve(fn(req, res)).catch(next);
     };
 }
@@ -57,8 +57,7 @@ router.post(
         if (endpointSecret) {
             const sig = req.headers['stripe-signature'] as string;
             try {
-                const StripeClass = (await import('stripe')).default;
-                const stripe = new StripeClass(process.env.STRIPE_SECRET_KEY || '');
+                const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
                 event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
             } catch (err: unknown) {
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -103,9 +102,11 @@ router.post(
             }
 
             res.json({ received: true });
+            return;
         } catch (error: unknown) {
             console.error('Webhook processing error:', error);
             res.status(500).json({ error: error instanceof Error ? error.message : 'Webhook processing failed' });
+            return;
         }
     }),
 );

@@ -173,7 +173,7 @@ let recordStorageAfterUpload: ((req: AuthRequest, size: number, type: string) =>
 let enforceProjectQuota: any = null;
 
 try {
-    const quotaModule = await import('../../middleware/projectQuota.middleware.js');
+    const quotaModule = await import('../../src/middleware/projectQuota.middleware.js');
     enforceStorageQuota = (quotaModule as any).enforceStorageQuota;
     recordStorageAfterUpload = quotaModule.recordStorageAfterUpload;
 } catch {

@@ -166,6 +166,7 @@ router.put(
             const userId = req.user?.id;
             const organizationId = req.user?.organizationId;
             const { key } = req.params;
+            const keyStr = Array.isArray(key) ? key[0] : (key as string);
             const { value, source = 'explicit', confidence = 1.0, context } = req.body;
 
             if (!userId) {
@@ -177,7 +178,7 @@ router.put(
             }
 
             // Validate key format
-            if (!/^[a-z_]+$/.test(key)) {
+            if (!/^[a-z_]+$/.test(keyStr as string)) {
                 return res.status(400).json({
                     error: 'Invalid key format. Use lowercase letters and underscores only.',
                 });
@@ -191,7 +192,7 @@ router.put(
                 `
             SELECT id FROM ai_user_memory WHERE user_id = ? AND key = ?
         `,
-                [userId, key],
+                [userId, keyStr],
             )) as { id?: string } | null;
 
             if (existing?.id) {
@@ -218,7 +219,7 @@ router.put(
                 `
             SELECT * FROM ai_user_memory WHERE user_id = ? AND key = ?
         `,
-                [userId, key],
+                [userId, keyStr],
             );
 
             res.json(updated);
@@ -251,7 +252,7 @@ router.delete(
             DELETE FROM ai_user_memory
             WHERE user_id = ? AND key = ?
         `,
-                [userId, key],
+                [userId, keyStr],
             );
 
             if (!result.success || (result.changes || 0) === 0) {
@@ -311,7 +312,7 @@ router.post(
                     `
                 SELECT id, confidence FROM ai_user_memory WHERE user_id = ? AND key = ?
             `,
-                    [userId, key],
+                    [userId, keyStr],
                 )) as { id?: string; confidence?: number } | null;
 
                 const valueStr = typeof value === 'string' ? value.trim() : String(value);

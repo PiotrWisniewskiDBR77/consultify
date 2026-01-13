@@ -35,7 +35,7 @@ try {
 }
 
 try {
-    const rbacModule = await import('../../middleware/rbac.middleware.js');
+    const rbacModule = await import('../../src/middleware/rbac.middleware.js');
     requireOrgAccess = (rbacModule as any).default?.requireOrgAccess || (rbacModule as any).requireOrgAccess as RequireOrgAccessMiddleware;
 } catch {
     console.warn('[Budgets] requireOrgAccess middleware not available');

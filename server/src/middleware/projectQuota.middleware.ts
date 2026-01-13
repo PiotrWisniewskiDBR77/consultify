@@ -25,14 +25,13 @@ interface UsageService {
 }
 
 interface FileRequest extends Request {
-    query: Request['query'];
     file?: {
         path?: string;
     };
     body: {
         project_id?: string;
     };
-    query?: {
+    query: Request['query'] & {
         projectId?: string;
     };
 }

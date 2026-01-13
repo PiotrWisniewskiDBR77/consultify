@@ -528,18 +528,19 @@ router.get(
         }
 
         try {
-            const { orgId } = req.params; const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
+            const { orgId } = req.params; 
+            const orgIdStr = Array.isArray(orgId) ? orgId[0] : (orgId as string);
             const { limit = 100, offset = 0 } = req.query;
             const userRole = req.user?.role;
             const userOrgId = req.user?.organizationId || req.user?.organizationId;
 
             // Check access
-            if (userRole !== 'owner' && userOrgId !== orgIdStr) {
+            if (userRole !== 'administrator' && userOrgId !== orgIdStr) {
                 return res.status(403).json({ error: 'Access denied' });
             }
 
             const auditLog = await AISettingsService.getAuditLog({
-                targetId: orgId,
+                targetId: orgIdStr as string,
                 limit: parseInt(limit as string),
                 offset: parseInt(offset as string),
             });
@@ -609,14 +610,13 @@ router.get(
         }
 
         try {
-            const { orgId } = req.params; const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
+            const { orgId } = req.params; 
+            const orgIdStr = Array.isArray(orgId) ? orgId[0] : (orgId as string);
             const userRole = req.user?.role;
             const userOrgId = req.user?.organizationId || req.user?.organizationId;
 
             // Check if user is admin for this org
             const isAdmin =
-                userRole === 'owner' ||
-                userRole === 'owner' ||
                 (userOrgId === orgIdStr && (userRole === 'administrator'));
 
             if (!isAdmin) {
@@ -665,8 +665,6 @@ router.put(
 
             // Check if user is admin for this org
             const isAdmin =
-                userRole === 'owner' ||
-                userRole === 'owner' ||
                 (userOrgId === orgIdStr && (userRole === 'administrator'));
 
             if (!isAdmin) {
@@ -710,8 +708,6 @@ router.get(
 
             // Check if user is admin for this org
             const isAdmin =
-                userRole === 'owner' ||
-                userRole === 'owner' ||
                 (userOrgId === orgIdStr && (userRole === 'administrator'));
 
             if (!isAdmin) {
@@ -772,12 +768,7 @@ router.get(
             }
 
             // Check admin access
-            if (
-                userRole !== 'owner' &&
-                userRole !== 'owner' &&
-                userRole !== 'administrator' &&
-                userRole !== 'administrator'
-            ) {
+            if (userRole !== 'administrator') {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 
@@ -785,8 +776,8 @@ router.get(
                 return res.status(400).json({ error: 'Organization ID required' });
             }
 
-            const orgIdStr = Array.isArray(orgId) ? orgId[0] : orgId;
-            const report = await AISettingsService.generateComplianceReport(orgIdStr, standard as string, format);
+            const orgIdStr = Array.isArray(orgId) ? orgId[0] : (orgId as string);
+            const report = await AISettingsService.generateComplianceReport(orgIdStr as string, standard as string, format);
 
             // Set appropriate headers based on format
             if (format === 'csv') {
@@ -828,15 +819,11 @@ router.post(
         try {
             const { standard = 'ISO21500' } = req.body;
             const orgId = req.user?.organizationId || req.user?.organizationId;
+            const orgIdStr = Array.isArray(orgId) ? orgId[0] : (orgId as string);
             const userRole = req.user?.role;
 
             // Check admin access
-            if (
-                userRole !== 'owner' &&
-                userRole !== 'owner' &&
-                userRole !== 'administrator' &&
-                userRole !== 'administrator'
-            ) {
+            if (userRole !== 'administrator') {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 

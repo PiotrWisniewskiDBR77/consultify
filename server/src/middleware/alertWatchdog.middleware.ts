@@ -31,7 +31,8 @@ let NotificationService: {
 async function getNotificationService() {
     if (!NotificationService) {
         const module = await import('../services/notificationService.js');
-        NotificationService = module.default || module;
+        const service = module.default || module;
+        NotificationService = (service as any).create ? service : (service as any).default || service;
     }
     return NotificationService;
 }

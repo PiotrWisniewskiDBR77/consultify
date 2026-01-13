@@ -851,6 +851,7 @@ router.get(
 
         try {
             const { jobId } = req.params;
+            const jobIdStr = Array.isArray(jobId) ? jobId[0] : jobId;
             const userRole = req.user?.role;
             const organizationId = req.user?.organizationId;
 
@@ -859,13 +860,14 @@ router.get(
             }
 
             const orgId =
-                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : organizationId;
+                userRole === 'owner' ? 'SUPERADMIN_BYPASS' : (Array.isArray(organizationId) ? organizationId[0] : organizationId);
 
             if (!orgId || (orgId !== 'SUPERADMIN_BYPASS' && !organizationId)) {
                 return res.status(400).json({ error: 'Organization ID required' });
             }
 
-            const job = await AsyncJobService.getJob(jobId, orgId);
+            const orgIdStr = typeof orgId === 'string' ? orgId : (Array.isArray(orgId) ? orgId[0] : String(orgId));
+            const job = await AsyncJobService.getJob(jobIdStr, orgIdStr);
 
             if (!job) {
                 return res.status(404).json({ error: 'Job not found' });
@@ -895,6 +897,7 @@ router.post(
 
         try {
             const { jobId } = req.params;
+            const jobIdStr = Array.isArray(jobId) ? jobId[0] : jobId;
             const userRole = req.user?.role;
             const organizationId = req.user?.organizationId;
 
@@ -909,7 +912,7 @@ router.post(
                 return res.status(400).json({ error: 'Organization ID required' });
             }
 
-            const result = await AsyncJobService.retryJob(jobId, orgId);
+            const result = await AsyncJobService.retryJob(jobIdStr, orgId);
             res.json(result);
         } catch (err: unknown) {
             const error = err as { code?: string; message?: string };
@@ -941,6 +944,7 @@ router.post(
 
         try {
             const { jobId } = req.params;
+            const jobIdStr = Array.isArray(jobId) ? jobId[0] : jobId;
             const userRole = req.user?.role;
             const organizationId = req.user?.organizationId;
 
@@ -955,7 +959,7 @@ router.post(
                 return res.status(400).json({ error: 'Organization ID required' });
             }
 
-            const result = await AsyncJobService.cancelJob(jobId, orgId);
+            const result = await AsyncJobService.cancelJob(jobIdStr, orgId);
             res.json(result);
         } catch (err: unknown) {
             const error = err as { code?: string; message?: string };

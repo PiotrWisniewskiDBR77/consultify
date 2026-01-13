@@ -50,7 +50,7 @@ router.post(
 
         // Send Notifications (Async)
         try {
-            await WhatsAppService.sendNewFeedbackAlert({ userId, userEmail, type, message });
+            await WhatsAppService.sendNewFeedbackAlert({ userEmail, type, message });
         } catch (e: unknown) {
             console.warn('WhatsApp notification failed:', e);
         }

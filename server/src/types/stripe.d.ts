@@ -5,8 +5,8 @@
 
 declare module 'stripe' {
     export interface StripeConfig {
-        apiKey: string;
         apiVersion?: string;
+        [key: string]: any;
     }
 
     export default class Stripe {

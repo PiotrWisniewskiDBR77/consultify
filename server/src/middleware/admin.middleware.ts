@@ -77,6 +77,8 @@ export const verifyAdmin = (req: AuthRequest, res: Response, next: NextFunction)
         const userRole = payload.role === 'SUPERADMIN' || payload.role === 'ADMIN' ? 'administrator' : (payload.role || 'viewer') as any;
         req.user = {
             id: payload.id,
+            email: (payload as any).email || '',
+            name: (payload as any).name || (payload as any).email || payload.id,
             role: userRole,
             organizationId: req.organizationId,
             isSuperAdmin: payload.role === 'SUPERADMIN',
