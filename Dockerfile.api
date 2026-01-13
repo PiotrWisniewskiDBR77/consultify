@@ -44,9 +44,13 @@ WORKDIR /app
 
 # Copy package files first for better layer caching
 COPY server/package.json server/package-lock.json ./
+# Install dependencies including devDependencies (needed for TypeScript compiler)
+# We need TypeScript to build, so install devDependencies in builder stage
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 # Ignore scripts (like husky) as they're not needed in Docker builds
 RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
+# Install TypeScript as it's needed for the build (it's in root package.json but not in server/package.json)
+RUN npm install --save-dev typescript@~5.8.2 --ignore-scripts
 
 # Copy TypeScript config files explicitly (needed for build)
 COPY server/tsconfig.json ./
@@ -59,8 +63,8 @@ RUN if [ ! -f tsconfig.build.json ]; then \
 # Verify tsconfig.build.json exists before building
 RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!" && ls -la tsconfig*.json && exit 1)
 # Build TypeScript - use --build flag with tsconfig.build.json to ensure proper compilation
-# Remove || true to fail build if compilation fails
-RUN npx tsc --build tsconfig.build.json || (echo "TypeScript build failed!" && exit 1)
+# Use node_modules/.bin/tsc to ensure we use the locally installed TypeScript
+RUN ./node_modules/.bin/tsc --build tsconfig.build.json || (echo "TypeScript build failed!" && exit 1)
 # Verify dist directory was created
 RUN test -d dist || (echo "ERROR: dist directory not created after build!" && ls -la && exit 1)
 

@@ -51,10 +51,10 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
   // Initiative Statistics
   const initiativeStats = useMemo(() => {
     const inits = safeSession.initiatives || [];
-    const inProgress = inits.filter((i) => i.status === InitiativeStatus.IN_PROGRESS).length;
+    const inProgress = inits.filter((i) => i.status === InitiativeStatus.EXECUTING || i.status === InitiativeStatus.PLANNING).length;
     const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length;
     const delayed = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length;
-    const todo = inits.filter((i) => i.status === InitiativeStatus.TODO).length;
+    const todo = inits.filter((i) => i.status === InitiativeStatus.DRAFT || i.status === InitiativeStatus.REVIEW).length;
 
     return { total: inits.length, inProgress, done, delayed, todo };
   }, [safeSession]);
@@ -70,9 +70,9 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
   const kpis = useMemo(() => {
     const kpiResults = safeSession.kpiResults || {};
     return {
-      cycleTime: kpiResults.cycleTime || '12d',
-      budgetUsage: kpiResults.budgetUsage || '45%',
-      roiRealized: kpiResults.roiRealized || '$12k',
+      cycleTime: (kpiResults as any).cycleTime || '12d',
+      budgetUsage: (kpiResults as any).budgetUsage || '45%',
+      roiRealized: (kpiResults as any).roiRealized || '$12k',
     };
   }, [safeSession.kpiResults]);
 
@@ -191,7 +191,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                     <div className="flex items-center gap-4 mt-2">
                       <span
                         className={`text-xs px-2 py-1 rounded ${
-                          initiative.status === InitiativeStatus.IN_PROGRESS
+                          initiative.status === InitiativeStatus.EXECUTING || initiative.status === InitiativeStatus.PLANNING
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                             : initiative.status === InitiativeStatus.BLOCKED
                               ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'

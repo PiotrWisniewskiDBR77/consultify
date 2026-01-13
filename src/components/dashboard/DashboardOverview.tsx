@@ -92,25 +92,25 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     return [
       {
         label: 'Cycle Time',
-        value: kpiResults.cycleTime || '12d',
+        value: (kpiResults as any).cycleTime || '12d',
         trend: 'good' as const,
         baseline: '4 days',
       },
       {
         label: 'Budget Usage',
-        value: kpiResults.budgetUsage || '45%',
+        value: (kpiResults as any).budgetUsage || '45%',
         trend: 'good' as const,
         baseline: '$0',
       },
       {
         label: 'ROI Realized',
-        value: kpiResults.roiRealized || '$12k',
+        value: (kpiResults as any).roiRealized || '$12k',
         trend: 'good' as const,
         baseline: '$0',
       },
       {
         label: 'Quality',
-        value: kpiResults.quality || '-5%',
+        value: (kpiResults as any).quality || '-5%',
         trend: 'good' as const,
         baseline: '2.1%',
       },
