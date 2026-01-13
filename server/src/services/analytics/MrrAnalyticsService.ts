@@ -84,7 +84,7 @@ export class MrrAnalyticsService {
      * Get current MRR and breakdown
      */
     async getCurrentMRR(): Promise<MRRData> {
-        const row = (await this.db.get<{ total_mrr: number; active_subscriptions: number }>(
+        const row = await this.db.get<{ total_mrr: number; active_subscriptions: number }>(
             `SELECT 
                 COALESCE(SUM(sp.price_monthly), 0) as total_mrr,
                 COUNT(ob.id) as active_subscriptions
@@ -92,12 +92,12 @@ export class MrrAnalyticsService {
              JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
              WHERE ob.status = 'active'`,
             [],
-        ));
+        ) as { total_mrr: number; active_subscriptions: number } | null;
 
         const mrr = row?.total_mrr || 0;
 
         // Get breakdown by plan
-        const plans = await this.db.all<{
+        const plans = (await this.db.all<{
             plan_id: string;
             plan_name: string;
             price_monthly: number;
@@ -116,7 +116,13 @@ export class MrrAnalyticsService {
              GROUP BY sp.id
              ORDER BY plan_mrr DESC`,
             [],
-        );
+        )) as Array<{
+            plan_id: string;
+            plan_name: string;
+            price_monthly: number;
+            subscriber_count: number;
+            plan_mrr: number;
+        }>;
 
         return {
             totalMRR: mrr,
@@ -156,12 +162,24 @@ export class MrrAnalyticsService {
                 net_mrr_change,
                 total_customers,
                 new_customers,
-                churned_customers
-             FROM mrr_snapshots
-             WHERE snapshot_date >= date('now', '-' || ? || ' days')
-             ORDER BY snapshot_date ASC`,
+            churned_customers
+         FROM mrr_snapshots
+         WHERE snapshot_date >= date('now', '-' || ? || ' days')
+         ORDER BY snapshot_date ASC`,
             [days],
-        ));
+        )) as Array<{
+            date: string;
+            mrr: number;
+            new_mrr: number;
+            expansion_mrr: number;
+            contraction_mrr: number;
+            churn_mrr: number;
+            reactivation_mrr: number;
+            net_mrr_change: number;
+            total_customers: number;
+            new_customers: number;
+            churned_customers: number;
+        }>;
 
         // Calculate growth metrics
         const data = rows || [];
@@ -202,7 +220,11 @@ export class MrrAnalyticsService {
              AND mrr_change IS NOT NULL
              GROUP BY event_type`,
             [startDate, endDate],
-        ));
+        )) as Array<{
+            event_type: string;
+            total_change: number;
+            event_count: number;
+        }>;
 
         const movement: MRRMovement = {
             newMRR: 0,
@@ -279,7 +301,13 @@ export class MrrAnalyticsService {
              GROUP BY month
              ORDER BY month ASC`,
             [months],
-        ));
+        )) as Array<{
+            month: string;
+            expansion_mrr: number;
+            contraction_mrr: number;
+            expansion_count: number;
+            contraction_count: number;
+        }>;
 
         const data = (rows || []).map((row) => ({
             ...row,

@@ -433,7 +433,7 @@ class TaxServiceClass {
             } catch (e: unknown) {
                 logger.warn(
                     '[Tax] Stripe Tax calculation failed, falling back to local:',
-                    e instanceof Error ? e.message : String(e),
+                    { error: e instanceof Error ? e.message : String(e) },
                 );
             }
         }
@@ -738,10 +738,10 @@ class TaxServiceClass {
     } {
         return rows.reduce(
             (acc, row) => ({
-                invoice_count: acc.invoice_count + (row.invoice_count || 0),
-                subtotal: acc.subtotal + (row.subtotal || 0),
-                tax_collected: acc.tax_collected + (row.tax_collected || 0),
-                total: acc.total + (row.total || 0),
+                invoice_count: acc.invoice_count + (row.invoice_count ?? 0),
+                subtotal: acc.subtotal + (row.subtotal ?? 0),
+                tax_collected: acc.tax_collected + (row.tax_collected ?? 0),
+                total: acc.total + (row.total ?? 0),
             }),
             { invoice_count: 0, subtotal: 0, tax_collected: 0, total: 0 },
         );

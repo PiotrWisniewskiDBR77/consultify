@@ -65,7 +65,9 @@ async function initDeps(): Promise<void> {
         import('../../config.js'),
     ]);
 
-    db = dbModule.default || dbModule;
+    // Handle database import - could be instance or getDatabase function
+    const dbExport = dbModule.default || dbModule;
+    db = typeof dbExport === 'function' ? dbExport() : dbExport;
     nodemailer = nodemailerModule.default || nodemailerModule;
     config = configModule.default || configModule;
 }

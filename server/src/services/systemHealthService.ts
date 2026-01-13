@@ -89,7 +89,7 @@ class SystemHealthServiceClass {
         return new Promise((resolve, reject) => {
             this.db.get<T>(sql, params, (err: Error | null, row: unknown) => {
                 if (err) reject(err);
-                else resolve(row || null);
+                else resolve((row as T) || null);
             });
         });
     }
@@ -101,7 +101,7 @@ class SystemHealthServiceClass {
         return new Promise((resolve, reject) => {
             this.db.all<T>(sql, params, (err: Error | null, rows: unknown) => {
                 if (err) reject(err);
-                else resolve(rows || []);
+                else resolve((rows as T[]) || []);
             });
         });
     }
@@ -202,7 +202,7 @@ class SystemHealthServiceClass {
                 providers,
             };
         } catch (err: unknown) {
-            logger.warn('[SystemHealth] Error checking AI services:', err);
+            logger.warn('[SystemHealth] Error checking AI services:', { error: err instanceof Error ? err.message : String(err) });
             return {
                 status: 'unknown',
                 providers: { openai: false, anthropic: false, groq: false },

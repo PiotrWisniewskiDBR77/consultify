@@ -68,15 +68,16 @@ export class ReportExecutionService {
     }
 
     async getReportExecutions(reportId: string, limit: number = 20): Promise<ReportExecution[]> {
-        const rows = await this.deps.db.all<any[]>(
+        const rows = (await this.deps.db.all<any>(
             `SELECT * FROM admin_report_executions 
              WHERE report_id = ? 
              ORDER BY executed_at DESC 
              LIMIT ?`,
             [reportId, limit],
-        );
+        )) as any[];
 
-        return (rows || []).map((row: any) => this._mapExecutionRow(row));
+        const rowsArray = rows || [];
+        return rowsArray.map((row: any) => this._mapExecutionRow(row));
     }
 
     private _mapExecutionRow(row: any): ReportExecution {

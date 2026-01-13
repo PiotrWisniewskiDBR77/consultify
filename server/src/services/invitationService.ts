@@ -215,7 +215,7 @@ export class InvitationServiceClass {
                 }
             }
         } catch (seatErr) {
-            logger.warn('[InvitationService] Seat check failed:', seatErr as Error);
+            logger.warn('[InvitationService] Seat check failed:', { error: seatErr instanceof Error ? seatErr.message : String(seatErr) });
         }
 
         // Creation
@@ -266,7 +266,7 @@ export class InvitationServiceClass {
                 context: { email: email.toLowerCase(), role, invitationType: INVITATION_TYPES.ORG },
             });
         } catch (metricsErr) {
-            logger.warn('[InvitationService] Metrics recording failed:', metricsErr as Error);
+            logger.warn('[InvitationService] Metrics recording failed:', { error: metricsErr instanceof Error ? metricsErr.message : String(metricsErr) });
         }
 
         return {

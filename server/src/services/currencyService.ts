@@ -66,7 +66,7 @@ class CurrencyServiceClass {
     private _db: IDatabase;
 
     constructor(deps?: CurrencyServiceDependencies) {
-        this.db = deps?.db || getDatabase();
+        this._db = deps?.db || getDatabase();
     }
 
     /**

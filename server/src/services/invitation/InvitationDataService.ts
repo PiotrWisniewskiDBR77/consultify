@@ -26,26 +26,26 @@ export class InvitationDataService {
     }
 
     async getInvitationById(id: string): Promise<InvitationRecord | null> {
-        return this.deps.db.get<InvitationRecord>(`SELECT * FROM invitations WHERE id = ?`, [id]);
+        return (await this.deps.db.get<InvitationRecord>(`SELECT * FROM invitations WHERE id = ?`, [id])) as InvitationRecord | null;
     }
 
     async getInvitationByTokenHash(tokenHash: string): Promise<InvitationRecord | null> {
-        return this.deps.db.get<InvitationRecord>(
+        return (await this.deps.db.get<InvitationRecord>(
             `SELECT i.*, o.name as organization_name, p.name as project_name
              FROM invitations i
              LEFT JOIN organizations o ON i.organization_id = o.id
              LEFT JOIN projects p ON i.project_id = p.id
              WHERE i.token_hash = ?`,
             [tokenHash],
-        );
+        )) as InvitationRecord | null;
     }
 
     async getPendingInvitationByEmail(organizationId: string, email: string): Promise<InvitationRecord | null> {
-        return this.deps.db.get<InvitationRecord>(
+        return (await this.deps.db.get<InvitationRecord>(
             `SELECT * FROM invitations 
              WHERE organization_id = ? AND email = ? AND status = 'pending'`,
             [organizationId, email.toLowerCase()],
-        );
+        )) as InvitationRecord | null;
     }
 
     async createInvitation(data: {
@@ -87,8 +87,8 @@ export class InvitationDataService {
              SET status = 'accepted', accepted_at = datetime('now'), accepted_by_user_id = ?
              WHERE id = ? AND status = 'pending'`,
             [userId, id],
-        );
-        return (result.changes || 0) > 0;
+        ) as { changes?: number } | null;
+        return (result?.changes || 0) > 0;
     }
 
     async markAsExpired(id: string): Promise<void> {
@@ -144,7 +144,7 @@ export class InvitationDataService {
             params.push(options.offset);
         }
 
-        return this.deps.db.all<InvitationRecord[]>(query, params);
+        return (await this.deps.db.all<InvitationRecord>(query, params)) as InvitationRecord[];
     }
 
     async logEvent(

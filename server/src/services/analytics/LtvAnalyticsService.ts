@@ -25,7 +25,7 @@ export class LtvAnalyticsService {
      * Calculate customer lifetime value
      */
     async getLTV(_options: LTVOptions = {}, currentArpa: number, monthlyChurnRate: number): Promise<LTVData> {
-        const row = (await this.db.get<{
+        const row = await this.db.get<{
             avg_revenue: number;
             avg_lifespan: number;
         }>(
@@ -46,7 +46,7 @@ export class LtvAnalyticsService {
                 GROUP BY o.id
              )`,
             [],
-        ));
+        ) as { avg_revenue: number; avg_lifespan: number } | null;
 
         const avgRevenue = row?.avg_revenue || 0;
         const avgLifespan = row?.avg_lifespan || 1;

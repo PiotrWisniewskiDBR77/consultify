@@ -18,7 +18,7 @@
  */
 
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
 import { config } from '../config/Config.js';
@@ -168,6 +168,7 @@ class RefreshTokenService {
         const refreshTokenHash = this.hashToken(refreshToken);
 
         // Access token (short-lived)
+        const signOptions: SignOptions = { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY || '15m' };
         const accessToken = jwt.sign(
             {
                 id: user.id,
@@ -176,8 +177,8 @@ class RefreshTokenService {
                 organizationId: user.organization_id,
                 jti,
             },
-            String(config.JWT_SECRET || ''),
-            { expiresIn: String(CONFIG.ACCESS_TOKEN_EXPIRY || '15m') },
+            config.JWT_SECRET || '',
+            signOptions,
         );
 
         // Store refresh token
@@ -258,6 +259,7 @@ class RefreshTokenService {
 
                         // Generate new access token only (don't rotate refresh token again)
                         const jti = uuidv4();
+                        const signOptions: SignOptions = { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY || '15m' };
                         const accessToken = jwt.sign(
                             {
                                 id: latestToken.user_id,
@@ -266,8 +268,8 @@ class RefreshTokenService {
                                 organizationId: latestToken.organization_id!,
                                 jti,
                             },
-                            String(config.JWT_SECRET || ''),
-                            { expiresIn: String(CONFIG.ACCESS_TOKEN_EXPIRY || '15m') },
+                            config.JWT_SECRET || '',
+                            signOptions,
                         );
 
                         // Return the existing refresh token from localStorage (client should still have it)
@@ -311,6 +313,7 @@ class RefreshTokenService {
         const expiresAt = new Date(Date.now() + CONFIG.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
         // New access token
+        const signOptions: SignOptions = { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY || '15m' };
         const accessToken = jwt.sign(
             {
                 id: storedToken.user_id,
@@ -319,8 +322,8 @@ class RefreshTokenService {
                 organizationId: storedToken.organization_id!,
                 jti,
             },
-            String(config.JWT_SECRET || ''),
-            { expiresIn: String(CONFIG.ACCESS_TOKEN_EXPIRY || '15m') },
+            config.JWT_SECRET || '',
+            signOptions,
         );
 
         // Store new refresh token (same family)

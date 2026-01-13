@@ -155,7 +155,7 @@ let budgetManagementService: any;
 
 async function initDeps(): Promise<void> {
     if (!billingService) {
-        const billingModule = await import('./billingService.js');
+        const billingModule = await import('../BillingService.js');
         billingService = billingModule.default || billingModule;
     }
     if (!payAsYouGoService) {

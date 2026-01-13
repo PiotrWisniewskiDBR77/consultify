@@ -136,10 +136,12 @@ export class ChurnAnalyticsService {
             [],
         );
 
-        const rowsArray = (rows || []) as Array<{ reason: string; count: number }>;
+        const rowsArray = (rows || []) as Array<{ reason: string | null; count: number; mrr_lost: number }>;
         const total = rowsArray.reduce((sum, r) => sum + r.count, 0);
-        const enriched = rowsArray.map((r) => ({
-            ...r,
+        const enriched: ChurnReason[] = rowsArray.map((r) => ({
+            reason: r.reason || null,
+            count: r.count,
+            mrr_lost: r.mrr_lost || 0,
             percentage: total > 0 ? ((r.count / total) * 100).toFixed(1) : '0',
         }));
 

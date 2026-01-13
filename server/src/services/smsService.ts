@@ -123,7 +123,7 @@ class SMSServiceClass {
     private twilioClient: Twilio | null = null;
 
     constructor(deps?: SMSServiceDependencies) {
-        this.db = deps?.db || getDatabase();
+        this._db = deps?.db || getDatabase();
         this.twilioClient = deps?.twilioClient || null;
     }
 
@@ -137,7 +137,7 @@ class SMSServiceClass {
             } catch (error: unknown) {
                 logger.warn(
                     '[SMS] Twilio not configured, using mock mode:',
-                    error instanceof Error ? error.message : String(error),
+                    { error: error instanceof Error ? error.message : String(error) },
                 );
                 return null;
             }
@@ -353,7 +353,7 @@ class SMSServiceClass {
 
             return { success: true };
         } catch (error: unknown) {
-            logger.error('[SMS] Verify OTP failed:', error);
+            logger.error('[SMS] Verify OTP failed:', error instanceof Error ? error : null, { error: String(error) });
             return { success: false, error: 'Verification failed' };
         }
     }

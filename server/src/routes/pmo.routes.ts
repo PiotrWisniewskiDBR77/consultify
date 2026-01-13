@@ -30,7 +30,10 @@ router.get(
         const { projectId } = req.params;
 
         const pmoModule = await import('../../src/services/pmoHealthService.js');
-        const getHealthSnapshot = (pmoModule as any).getHealthSnapshot || (pmoModule.default as any)?.getHealthSnapshot;
+        const getHealthSnapshot = (pmoModule as any).getHealthSnapshot;
+        if (!getHealthSnapshot || typeof getHealthSnapshot !== 'function') {
+            throw new Error('getHealthSnapshot function not found');
+        }
         const snapshot = await getHealthSnapshot(projectId);
 
         res.json(snapshot);

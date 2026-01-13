@@ -111,7 +111,8 @@ class SlackServiceClass {
         } catch (error: unknown) {
             logger.error(
                 '[SlackService] Failed to send system alert:',
-                error instanceof Error ? error.message : String(error),
+                error instanceof Error ? error : null,
+                { message: error instanceof Error ? error.message : String(error) },
             );
         }
     }

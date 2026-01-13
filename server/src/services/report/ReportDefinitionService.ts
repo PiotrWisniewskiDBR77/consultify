@@ -229,11 +229,11 @@ export class ReportDefinitionService {
     }
 
     async getScheduledReportsToRun(): Promise<Report[]> {
-        const rows = await this.deps.db.all<any[]>(
+        const rows = (await this.deps.db.all<any>(
             `SELECT * FROM admin_saved_reports 
              WHERE schedule_json IS NOT NULL 
              AND json_extract(schedule_json, '$.is_active') = 1`,
-        );
+        )) as any[];
         return (rows || []).map((row: any) => this._mapReportRow(row));
     }
 

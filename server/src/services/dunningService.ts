@@ -86,7 +86,10 @@ let auditService: AuditServiceInterface | null = null;
 async function getEmailService(): Promise<EmailServiceInterface | null> {
     if (!emailService) {
         const module = await import('../../services/emailService.js');
-        emailService = module.default || module;
+        const service = module.default || module;
+        if (service && typeof service.send === 'function') {
+            emailService = service as EmailServiceInterface;
+        }
     }
     return emailService;
 }
@@ -94,7 +97,20 @@ async function getEmailService(): Promise<EmailServiceInterface | null> {
 async function getAuditService(): Promise<AuditServiceInterface | null> {
     if (!auditService) {
         const module = await import('../../services/auditService.js');
-        auditService = module.logSystemEvent ? module : null;
+        if (module.logSystemEvent && typeof module.logSystemEvent === 'function') {
+            // Wrap logSystemEvent to match interface (returns Promise<void>)
+            auditService = {
+                logSystemEvent: async (
+                    actionType: string,
+                    entityType: string,
+                    entityId: string,
+                    orgId?: string | null,
+                    metadata?: Record<string, unknown>,
+                ): Promise<void> => {
+                    await module.logSystemEvent(actionType, entityType, entityId, orgId, metadata);
+                },
+            };
+        }
     }
     return auditService;
 }
