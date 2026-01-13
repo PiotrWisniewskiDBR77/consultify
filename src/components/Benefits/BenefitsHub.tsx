@@ -299,7 +299,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
     
     const doc: OpenDocument = {
       id: row.id,
-      type: 'benefit',
+      type: 'initiative',
       subType: code,
       name: row.name,
       status: row.status === InitiativeStatus.DONE ? 'completed' :

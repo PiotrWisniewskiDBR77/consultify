@@ -137,14 +137,6 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
       );
     }
 
-    // Check if rating is negative (for type narrowing)
-    if (rating !== 'negative') {
-      return null;
-    }
-      </div>
-    );
-  }
-
   // Detailed feedback form (after negative rating)
   return (
     <div className="py-2 space-y-2 animate-fade-in">
