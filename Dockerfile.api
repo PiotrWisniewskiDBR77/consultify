@@ -42,15 +42,15 @@ RUN npm run build
 FROM node:20-alpine AS backend-builder
 WORKDIR /app
 
-# Copy package files first for better layer caching
-COPY server/package.json server/package-lock.json ./
-# Install dependencies including devDependencies (needed for TypeScript compiler)
-# We need TypeScript to build, so install devDependencies in builder stage
+# Copy root package files first (server dependencies are in root package.json due to monorepo/workspace setup)
+COPY package.json package-lock.json ./
+# Copy server package.json for reference (but dependencies come from root)
+COPY server/package.json ./server-package.json
+# Install dependencies from root package.json (includes all server runtime dependencies)
+# Install devDependencies too since we need TypeScript and type definitions for the build
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 # Ignore scripts (like husky) as they're not needed in Docker builds
 RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
-# Install TypeScript as it's needed for the build (it's in root package.json but not in server/package.json)
-RUN npm install --save-dev typescript@~5.8.2 --ignore-scripts
 
 # Copy TypeScript config files explicitly (needed for build)
 COPY server/tsconfig.json ./
