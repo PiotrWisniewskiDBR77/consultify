@@ -18,6 +18,8 @@ COPY server/package.json server/package-lock.json ./server/
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 RUN npm ci --omit=dev --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --omit=dev --ignore-scripts)
 RUN cd server && npm ci --omit=dev --ignore-scripts || (echo "Server lock file out of sync, updating..." && cd server && npm install --omit=dev --ignore-scripts)
+# Install cookie-parser at root level (needed for runtime, installed in backend-builder for build)
+RUN npm install --save --omit=dev --ignore-scripts cookie-parser@^1.4.7 || true
 
 # ==========================================
 # STAGE 2: Frontend Builder
@@ -107,7 +109,19 @@ RUN if [ -d /app/server/dist-temp ]; then \
       echo "ERROR: dist directory not found in backend-builder stage!" && exit 1; \
     fi
 COPY --from=backend-builder /app/package.json /app/server/
-COPY --from=deps /app/server/node_modules /app/server/node_modules
+# Copy production dependencies from deps stage
+# Merge root and server node_modules to ensure all dependencies are available
+RUN mkdir -p /app/server/node_modules
+COPY --from=deps /app/node_modules /app/server/node_modules-root
+COPY --from=deps /app/server/node_modules /app/server/node_modules-server
+# Merge: copy root first, then server (server-specific packages override root if conflicts)
+RUN if [ -d /app/server/node_modules-root ]; then \
+      cp -r /app/server/node_modules-root/. /app/server/node_modules/ 2>/dev/null || true; \
+    fi && \
+    if [ -d /app/server/node_modules-server ]; then \
+      cp -r /app/server/node_modules-server/. /app/server/node_modules/ 2>/dev/null || true; \
+    fi && \
+    rm -rf /app/server/node_modules-root /app/server/node_modules-server
 
 WORKDIR /app/server
 
