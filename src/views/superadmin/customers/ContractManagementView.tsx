@@ -17,7 +17,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { Card } from '../../../components/Admin/shared/Card';
-import { InfoButton } from '../../../components/ui/InfoButton';
+import { InfoButton } from '../../../components/shared/InfoButton';
 import Api from '../../../services/api';
 
 interface Contract {

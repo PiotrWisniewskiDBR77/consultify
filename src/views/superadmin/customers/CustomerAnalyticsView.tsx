@@ -6,7 +6,7 @@ import { BarChart3, Building2, Loader2, TrendingDown, TrendingUp, Users } from '
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { Card } from '../../../components/Admin/shared/Card';
-import { InfoButton } from '../../../components/ui/InfoButton';
+import { InfoButton } from '../../../components/shared/InfoButton';
 import Api from '../../../services/api';
 
 interface OrgMetrics {

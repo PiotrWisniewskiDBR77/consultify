@@ -7,7 +7,7 @@ import { CheckCircle2, Clock, Loader2, Pause, Play, Plus, Settings, Zap } from '
 import React, { useEffect, useState } from 'react';
 
 import { Card } from '../../../components/Admin/shared/Card';
-import { InfoButton } from '../../../components/ui/InfoButton';
+import { InfoButton } from '../../../components/shared/InfoButton';
 import Api from '../../../services/api';
 
 interface AutomationRule {
