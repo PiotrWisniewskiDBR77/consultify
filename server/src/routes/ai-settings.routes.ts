@@ -748,10 +748,11 @@ router.get(
             const { standard = 'ISO21500' } = req.query;
             const orgId = req.user?.organizationId || req.user?.organizationId;
             const userRole = req.user?.role;
+            const formatStr = Array.isArray(format) ? format[0] : format;
 
             // Validate format
             const validFormats = ['pdf', 'csv', 'json'];
-            if (!validFormats.includes(format)) {
+            if (!validFormats.includes(formatStr)) {
                 return res.status(400).json({
                     error: 'Invalid format',
                     message: `Format must be one of: ${validFormats.join(', ')}`,
@@ -777,7 +778,8 @@ router.get(
             }
 
             const orgIdStr = Array.isArray(orgId) ? orgId[0] : (orgId as string);
-            const report = await AISettingsService.generateComplianceReport(orgIdStr as string, standard as string, format);
+            const standardStr = Array.isArray(standard) ? standard[0] : (standard as string);
+            const report = await AISettingsService.generateComplianceReport(orgIdStr as string, standardStr, formatStr);
 
             // Set appropriate headers based on format
             if (format === 'csv') {

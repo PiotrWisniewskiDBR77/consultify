@@ -242,6 +242,7 @@ router.delete(
         try {
             const userId = req.user?.id;
             const { key } = req.params;
+            const keyStr = Array.isArray(key) ? key[0] : key;
 
             if (!userId) {
                 return res.status(401).json({ error: 'Unauthorized' });
@@ -308,6 +309,7 @@ router.post(
                 if (!key || !value) continue;
                 if (!/^[a-z_]+$/.test(key)) continue;
 
+                const keyStr = key;
                 const existing = (await dbGet(
                     `
                 SELECT id, confidence FROM ai_user_memory WHERE user_id = ? AND key = ?

@@ -99,7 +99,18 @@ export class StageGateController {
 
         // Check permission - using PermissionService if available
         const PermissionService = (await import('../services/permissionService.js')).default;
-        if (!PermissionService.can || !PermissionService.can(req.user!, 'manage_stage_gates')) {
+        const user = req.user!;
+        // Map UserRole to Role type expected by PermissionService
+        const roleMap: Record<string, string> = {
+            'owner': 'ADMIN',
+            'administrator': 'ADMIN',
+            'project_manager': 'PROJECT_MANAGER',
+            'team_member': 'TEAM_MEMBER',
+            'viewer': 'VIEWER',
+        };
+        const mappedRole = roleMap[user.role] || user.role;
+        const userWithRole = { ...user, role: mappedRole };
+        if (!PermissionService.can || !PermissionService.can(userWithRole as any, 'manage_stage_gates')) {
             res.status(403).json({ error: 'Permission denied' });
             return;
         }

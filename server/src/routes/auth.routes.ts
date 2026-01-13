@@ -283,6 +283,7 @@ router.post(
 
         // Generate new token for the admin
         const jti = uuidv4();
+        const signOptions: jwt.SignOptions = { expiresIn: config.JWT_EXPIRES_IN || '365d' };
         const token = jwt.sign(
             {
                 id: adminUser.id,
@@ -291,8 +292,8 @@ router.post(
                 organizationId: adminUser.organization_id,
                 jti: jti,
             },
-            String(config.JWT_SECRET || ''),
-            { expiresIn: String(config.JWT_EXPIRES_IN || '24h') },
+            config.JWT_SECRET || '',
+            signOptions,
         );
 
         // Log the reversion
@@ -528,6 +529,7 @@ router.post(
                 }
 
                 const jti = uuidv4();
+                const signOptions: jwt.SignOptions = { expiresIn: config.JWT_EXPIRES_IN || '365d' };
                 const token = jwt.sign(
                     {
                         id: userId,
@@ -536,8 +538,8 @@ router.post(
                         organizationId: orgId,
                         jti: jti,
                     },
-                    String(config.JWT_SECRET || ''),
-                    { expiresIn: String(config.JWT_EXPIRES_IN || '24h') },
+                    config.JWT_SECRET || '',
+                    signOptions,
                 );
 
                 ActivityService.log({

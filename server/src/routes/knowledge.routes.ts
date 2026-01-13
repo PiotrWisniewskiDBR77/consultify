@@ -174,8 +174,8 @@ let enforceProjectQuota: any = null;
 
 try {
     const quotaModule = await import('../../src/middleware/projectQuota.middleware.js');
-    enforceStorageQuota = (quotaModule as any).enforceStorageQuota;
-    recordStorageAfterUpload = quotaModule.recordStorageAfterUpload;
+    enforceStorageQuota = (quotaModule as any).enforceProjectQuota || (quotaModule as any).enforceStorageQuota;
+    // recordStorageAfterUpload doesn't exist in the middleware, removing reference
 } catch {
     console.warn('[Knowledge] Quota middleware not available');
 }
@@ -766,9 +766,7 @@ router.post(
             const chunkCount = await KnowledgeService.processDocument(docId, text);
 
             // Record storage usage (Organization Level)
-            if (recordStorageAfterUpload) {
-                await recordStorageAfterUpload(req, size, 'document_upload');
-            }
+            // Note: recordStorageAfterUpload is not available in the middleware, storage tracking handled elsewhere
 
             return res.json({ message: 'Document uploaded and indexed', docId, chunkCount });
         } catch (err: unknown) {

@@ -50,7 +50,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 router.post(
     '/stripe',
     express.raw({ type: 'application/json' }) as RequestHandler,
-    asyncHandler(async (req: Request, res: Response) => {
+    asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
         let event: Stripe.Event | any;
 
         // Verify webhook signature if secret is configured
@@ -62,7 +62,8 @@ router.post(
             } catch (err: unknown) {
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error';
                 console.error('Webhook signature verification failed:', errorMessage);
-                return res.status(400).send(`Webhook Error: ${errorMessage}`);
+                res.status(400).send(`Webhook Error: ${errorMessage}`);
+                return;
             }
         } else {
             // For development without signature verification
@@ -75,7 +76,8 @@ router.post(
             switch (event.type) {
                 case 'customer.subscription.created':
                     await handleSubscriptionCreated(event.data.object);
-                    break;
+                    res.json({ received: true });
+                    return;
 
                 case 'customer.subscription.updated':
                     await handleSubscriptionUpdated(event.data.object);

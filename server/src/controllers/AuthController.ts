@@ -239,7 +239,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                     return;
                 }
             }
-        } else if (mfaStatus.enforced) {
+        } else if ((mfaStatus as any).enforced || (mfaStatus.required && !mfaStatus.enabled)) {
             res.status(403).json({
                 error: 'Your organization requires two-factor authentication. Please set up MFA first.',
                 mfaSetupRequired: true,
