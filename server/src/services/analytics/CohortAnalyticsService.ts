@@ -43,9 +43,9 @@ export class CohortAnalyticsService {
                 ob.status as current_status
              FROM organizations o
              LEFT JOIN organization_billing ob ON o.id = ob.organization_id
-             WHERE o.created_at >= date('now', '-${cohortMonths} months')
+             WHERE o.created_at >= date('now', '-' || ? || ' months')
              ORDER BY cohort ASC`,
-            [],
+            [cohortMonths],
         );
 
         // Group by cohort

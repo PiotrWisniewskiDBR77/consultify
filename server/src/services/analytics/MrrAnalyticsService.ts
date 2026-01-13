@@ -158,9 +158,9 @@ export class MrrAnalyticsService {
                 new_customers,
                 churned_customers
              FROM mrr_snapshots
-             WHERE snapshot_date >= date('now', '-${days} days')
+             WHERE snapshot_date >= date('now', '-' || ? || ' days')
              ORDER BY snapshot_date ASC`,
-            [],
+            [days],
         );
 
         // Calculate growth metrics
@@ -274,11 +274,11 @@ export class MrrAnalyticsService {
                 COUNT(CASE WHEN event_type IN ('plan_downgraded', 'contraction', 'seat_removed') 
                     THEN 1 END) as contraction_count
              FROM subscription_events
-             WHERE occurred_at >= date('now', '-${months} months')
+             WHERE occurred_at >= date('now', '-' || ? || ' months')
              AND mrr_change IS NOT NULL
              GROUP BY month
              ORDER BY month ASC`,
-            [],
+            [months],
         );
 
         const data = (rows || []).map((row) => ({

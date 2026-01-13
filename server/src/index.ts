@@ -613,20 +613,21 @@ if (startServer && !isTest) {
                             rateLimiter.connectRedis(redisClient);
                         }
                     })
+                    .then(async (redisClient: unknown) => {
+                        if (redisClient && typeof redisClient === 'object') {
+                            console.log('[AI Services] Redis connected for cache and rate limiting');
+                        } else {
+                            console.log('[AI Services] Using in-memory fallback (Redis not available)');
+                        }
+                    })
                     .catch((err: unknown) => {
                         const error = err instanceof Error ? err : new Error(String(err));
                         logger.warn('[Server] Redis initialization failed:', { message: error.message } as any);
+                        console.warn('[AI Services] Redis init failed, using in-memory:', error.message);
                     });
+            } else {
+                console.log('[AI Services] Using in-memory fallback (Redis not available)');
             }
-
-                        console.log('[AI Services] Redis connected for cache and rate limiting');
-                    } else {
-                        console.log('[AI Services] Using in-memory fallback (Redis not available)');
-                    }
-                })
-                .catch((err: Error) => {
-                    console.warn('[AI Services] Redis init failed, using in-memory:', err.message);
-                });
         } catch (err: unknown) {
             const error = err as Error;
             logger.warn('[Server] AI Services failed to initialize:', error.message);
