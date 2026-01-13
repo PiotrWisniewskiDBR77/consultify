@@ -21,16 +21,24 @@ import {
 } from '../validators/webhooks.validators.js';
 
 const router = Router();
-import Stripe from 'stripe';
+import StripeLib from 'stripe';
+import type Stripe from 'stripe';
 
 import type { DunningService as DunningServiceType } from '../services/dunningService.js';
 import type { InvoiceServiceClass } from '../services/InvoiceService.js';
 import webhookService from '../services/WebhookService.js';
 
+// Type aliases for Stripe namespace types
+type StripePaymentIntent = Stripe.PaymentIntent;
+type StripeInvoice = Stripe.Invoice;
+type StripeCustomer = Stripe.Customer;
+type StripeSubscription = Stripe.Subscription;
+type StripeEvent = Stripe.Event;
+
 // Type definitions for lazy-loaded services
 interface DunningServiceInstance {
-    handlePaymentFailed(paymentIntent: Stripe.PaymentIntent | any): Promise<void>;
-    handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent | any): Promise<void>;
+    handlePaymentFailed(paymentIntent: StripePaymentIntent | any): Promise<void>;
+    handlePaymentSucceeded(paymentIntent: StripePaymentIntent | any): Promise<void>;
     processScheduledRetries(): Promise<void>;
     getDunningStatus(orgId: string): Promise<{
         inDunning: boolean;
@@ -47,7 +55,7 @@ interface DunningServiceInstance {
 }
 
 interface InvoiceServiceInstance {
-    createFromStripe(stripeInvoice: Stripe.Invoice | any): Promise<{
+    createFromStripe(stripeInvoice: StripeInvoice | any): Promise<{
         id: string;
         invoiceNumber: string;
         total: number;
@@ -287,7 +295,7 @@ router.post(
             switch (type) {
                 case 'invoice.payment_failed': {
                     // Convert Invoice to PaymentIntent-like structure for DunningService
-                    const invoice = data as Stripe.Invoice;
+                    const invoice = data as StripeInvoice;
                     const paymentIntentId = invoice.payment_intent as string | undefined;
 
                     if (paymentIntentId) {
@@ -308,7 +316,7 @@ router.post(
                                         code: 'payment_failed',
                                         message: invoice.last_payment_error?.message || 'Payment failed',
                                     },
-                                } as Stripe.PaymentIntent;
+                                } as StripePaymentIntent;
 
                                 await dunning.handlePaymentFailed(mockPaymentIntent);
                             }
@@ -318,7 +326,7 @@ router.post(
                 }
 
                 case 'invoice.payment_succeeded': {
-                    const invoice = data as Stripe.Invoice;
+                    const invoice = data as StripeInvoice;
                     const paymentIntentId = invoice.payment_intent as string | undefined;
 
                     if (paymentIntentId) {

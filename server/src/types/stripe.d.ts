@@ -72,4 +72,7 @@ declare module 'stripe' {
         };
         [key: string]: any;
     }
+    
+    // Export namespace at module level for direct access
+    export import StripeTypes = Stripe;
 }

@@ -1,4 +1,12 @@
-import Stripe from 'stripe';
+import StripeLib from 'stripe';
+import type Stripe from 'stripe';
+
+// Type aliases for Stripe namespace types
+type StripeCustomer = Stripe.Customer;
+type StripeInvoice = Stripe.Invoice;
+type StripeSubscription = Stripe.Subscription;
+type StripePaymentIntent = Stripe.PaymentIntent;
+type StripePrice = Stripe.Price;
 
 import { BillingEventService } from './BillingEventService.js';
 import { BillingQueryService } from './BillingQueryService.js';
@@ -188,7 +196,7 @@ export class BillingCommandService {
         orgId: string,
         email: string,
         orgName: string,
-    ): Promise<Stripe.Customer | { id: string; email: string }> {
+    ): Promise<StripeCustomer | { id: string; email: string }> {
         const deps = this.deps();
         const billing = await this.queryService.getOrganizationBilling(orgId);
 
@@ -197,7 +205,7 @@ export class BillingCommandService {
         }
 
         if (billing?.stripe_customer_id) {
-            return (await deps.stripe.customers.retrieve(billing.stripe_customer_id)) as Stripe.Customer;
+            return (await deps.stripe.customers.retrieve(billing.stripe_customer_id)) as StripeCustomer;
         }
 
         const customer = await deps.stripe.customers.create({
@@ -216,7 +224,7 @@ export class BillingCommandService {
         paymentMethodId: string,
         email: string,
         orgName: string,
-    ): Promise<Stripe.Subscription | { id: string; status: string; plan: BillingPlan }> {
+    ): Promise<StripeSubscription | { id: string; status: string; plan: BillingPlan }> {
         const deps = this.deps();
         const plan = await this.queryService.getPlanById(planId);
         if (!plan) {
@@ -228,7 +236,7 @@ export class BillingCommandService {
             return { id: `mock_sub_${orgId}`, status: 'active', plan };
         }
 
-        const customer = (await this.getOrCreateStripeCustomer(orgId, email, orgName)) as Stripe.Customer;
+        const customer = (await this.getOrCreateStripeCustomer(orgId, email, orgName)) as StripeCustomer;
         await deps.stripe.paymentMethods.attach(paymentMethodId, { customer: customer.id });
         await deps.stripe.customers.update(customer.id, {
             invoice_settings: { default_payment_method: paymentMethodId },
@@ -256,7 +264,7 @@ export class BillingCommandService {
         return subscription;
     }
 
-    async cancelSubscription(orgId: string): Promise<Stripe.Subscription | { status: string }> {
+    async cancelSubscription(orgId: string): Promise<StripeSubscription | { status: string }> {
         const deps = this.deps();
         const billing = await this.queryService.getOrganizationBilling(orgId);
         if (!billing?.stripe_subscription_id) {
@@ -308,7 +316,7 @@ export class BillingCommandService {
         return { status: 'updated', plan: newPlan };
     }
 
-    async recordInvoice(orgId: string, stripeInvoice: Stripe.Invoice): Promise<{ id: string }> {
+    async recordInvoice(orgId: string, stripeInvoice: StripeInvoice): Promise<{ id: string }> {
         const deps = this.deps();
         const id = `inv-${deps.uuidv4()}`;
 
@@ -466,7 +474,7 @@ export class BillingCommandService {
             };
         }
 
-        const customer = (await this.getOrCreateStripeCustomer(orgId, email, orgName)) as Stripe.Customer;
+        const customer = (await this.getOrCreateStripeCustomer(orgId, email, orgName)) as StripeCustomer;
         const setupIntent = await deps.stripe.setupIntents.create({
             customer: customer.id,
             payment_method_types: ['card'],
