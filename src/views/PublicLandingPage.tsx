@@ -28,7 +28,6 @@ export const PublicLandingPage: React.FC = () => {
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-600/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]" />
-        <div className="absolute inset-0 bg-[url('/Users/piotrwisniewski/.gemini/antigravity/brain/a7e21c72-ca2e-4e53-b2d1-783518e52c69/strategic_decisions_hero_1766348521850.png')] bg-cover bg-center opacity-[0.03] mix-blend-overlay" />
       </div>
 
       {/* HEADER — Minimalist */}
