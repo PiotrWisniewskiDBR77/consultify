@@ -58,7 +58,11 @@ RUN if [ ! -f tsconfig.build.json ]; then \
     fi
 # Verify tsconfig.build.json exists before building
 RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!" && ls -la tsconfig*.json && exit 1)
-RUN npm run build
+# Build TypeScript - use --build flag with tsconfig.build.json to ensure proper compilation
+# Remove || true to fail build if compilation fails
+RUN npx tsc --build tsconfig.build.json || (echo "TypeScript build failed!" && exit 1)
+# Verify dist directory was created
+RUN test -d dist || (echo "ERROR: dist directory not created after build!" && ls -la && exit 1)
 
 # ==========================================
 # STAGE 4: Production (Backend + Frontend)
@@ -86,7 +90,15 @@ COPY --from=frontend-builder /app/dist /app/dist
 # Copy built backend (server code) to /app/server/
 # Backend compiled output goes directly to /app/server/ (not /app/server/dist/)
 RUN mkdir -p /app/server
-COPY --from=backend-builder /app/dist/* /app/server/
+# Copy dist directory contents - copy the directory first, then move contents
+# This handles the case where dist might be empty or have subdirectories
+COPY --from=backend-builder /app/dist /app/server/dist-temp
+RUN if [ -d /app/server/dist-temp ]; then \
+      cp -r /app/server/dist-temp/. /app/server/ && \
+      rm -rf /app/server/dist-temp; \
+    else \
+      echo "ERROR: dist directory not found in backend-builder stage!" && exit 1; \
+    fi
 COPY --from=backend-builder /app/package.json /app/server/
 COPY --from=deps /app/server/node_modules /app/server/node_modules
 

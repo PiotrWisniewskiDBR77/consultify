@@ -517,21 +517,21 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
         return (
           <GridView
             items={gridItems}
-            onItemClick={handleOpenDocument}
-            onItemAction={handleRowAction}
+            onItemClick={(item: GridItem) => handleOpenDocument(item as unknown as BenefitsInitiative)}
+            onItemAction={(action: string, item: GridItem) => handleRowAction(action, item as unknown as BenefitsInitiative)}
             emptyMessage="No completed initiatives yet."
           />
         );
       }
       return (
-        <FilterableTable
-          columns={columns}
-          data={filteredInitiatives}
-          onRowClick={handleOpenDocument}
-          onRowAction={handleRowAction}
-          activeFilters={activeFilters}
-          onFilterChange={setActiveFilters}
-          emptyMessage="No completed initiatives yet."
+          <FilterableTable
+            columns={columns}
+            data={filteredInitiatives}
+            onRowClick={(row: any) => handleOpenDocument(row as BenefitsInitiative)}
+            onRowAction={(action: string, row: any) => handleRowAction(action, row as BenefitsInitiative)}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            emptyMessage="No completed initiatives yet."
         />
       );
     }
