@@ -5,6 +5,7 @@
  */
 
 import Stripe from 'stripe';
+import type { Stripe as StripeTypes } from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
@@ -57,7 +58,7 @@ interface _StripeInvoiceItem {
   description?: string;
   quantity?: number | null;
   amount?: number | null;
-  plan?: Stripe.Price | Stripe.Plan;
+  plan?: StripeTypes.Price | StripeTypes.Plan;
 }
 
 interface EmailServiceInterface {
@@ -119,7 +120,7 @@ export class DunningService {
     return this.stripeClient;
   }
 
-  public async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  public async handlePaymentFailed(paymentIntent: StripeTypes.PaymentIntent): Promise<void> {
     const orgId = (paymentIntent.metadata as Record<string, string | undefined>)?.organization_id;
     if (!orgId) {
       logger.error('[Dunning] Missing organization_id in payment metadata');
@@ -157,7 +158,7 @@ export class DunningService {
     await this.startDunning(orgId);
   }
 
-  public async handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  public async handlePaymentSucceeded(paymentIntent: StripeTypes.PaymentIntent): Promise<void> {
     const orgId = (paymentIntent.metadata as Record<string, string | undefined>)?.organization_id;
     if (!orgId) return;
 

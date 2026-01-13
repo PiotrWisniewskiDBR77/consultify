@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 
 import { API_URL, getHeaders } from '../../services/api';
-import { InfoButton } from '../ui/InfoButton';
+import { InfoButton } from '../shared/InfoButton';
 
 type EmailStatus = 'DRAFT' | 'PUBLISHED' | 'DEPRECATED';
 

@@ -301,7 +301,7 @@ router.post(
   '/organizations/:id/charge-resource-change',
   authenticateToken,
   requireSuperAdmin,
-  async (req, res) => {
+  async (req: AuthRequest, res) => {
     try {
       const { id } = req.params;
       const { changeType, oldValue, newValue, chargeAmount, description } = req.body;
@@ -315,7 +315,7 @@ router.post(
           changeType,
           oldValue,
           newValue,
-          changedBy: req.user?.userId,
+          changedBy: req.user?.id,
           changedAt: new Date().toISOString(),
         },
       });

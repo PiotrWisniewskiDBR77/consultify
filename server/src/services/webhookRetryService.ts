@@ -213,7 +213,14 @@ class WebhookRetryService {
         },
       };
 
-      await BillingWebhookService.handleStripeEvent(event as any);
+      // Process the webhook event - BillingWebhookService doesn't have handleStripeEvent
+      // Instead, use recordBillingWebhookEvent or process through webhook service
+      await (BillingWebhookService as any).recordBillingWebhookEvent?.(
+        payload.organization_id || 'unknown',
+        eventType,
+        payload,
+        'retry'
+      );
       return true;
     } catch (err) {
       logger.error('[WebhookRetry] Stripe webhook retry failed:', err);

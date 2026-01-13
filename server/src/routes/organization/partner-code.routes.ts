@@ -43,17 +43,17 @@ router.get('/partner-attribution', authenticateToken, async (req: Request, res: 
 
     // Get partner details
     const db = getDatabase();
-    const partnerOrg = await DbPromise.get(
+    const partnerOrg = (await DbPromise.get(
       db,
       `SELECT po.id, po.partner_name, po.contact_email, po.referral_code,
                     po.commission_rate
              FROM partner_organizations po
              WHERE po.id = ?`,
       [attribution.partnerOrgId]
-    );
+    )) as { partner_name?: string; contact_email?: string; referral_code?: string } | null;
 
     // Get discount info if applicable
-    const discount = await DbPromise.get(
+    const discount = (await DbPromise.get(
       db,
       `SELECT discount_type, discount_value, start_date, end_date, status
              FROM organization_discounts
@@ -61,7 +61,7 @@ router.get('/partner-attribution', authenticateToken, async (req: Request, res: 
              ORDER BY created_at DESC
              LIMIT 1`,
       [organizationId, attribution.partnerOrgId]
-    );
+    )) as { discount_type?: string; discount_value?: number; end_date?: string } | null;
 
     return res.json({
       success: true,
@@ -134,7 +134,7 @@ router.post('/partner-code', authenticateToken, async (req: Request, res: Respon
     if (!validation.valid || !validation.partnerOrgId) {
       return res.status(400).json({
         success: false,
-        error: validation.error || 'Invalid partner code',
+        error: (validation as { error?: string }).error || 'Invalid partner code',
       });
     }
 
@@ -144,18 +144,19 @@ router.post('/partner-code', authenticateToken, async (req: Request, res: Respon
       organizationId,
       attributionType: 'PROMO_CODE',
       referralCodeUsed: partnerCode,
+      commissionRatePercent: 0, // Default commission rate
     });
 
     // Create discount if applicable (check partner discount config)
     const db = getDatabase();
-    const discountConfig = await DbPromise.get(
+    const discountConfig = (await DbPromise.get(
       db,
       `SELECT discount_type, discount_value, duration_months
              FROM partner_discount_config
              WHERE is_active = 1
              ORDER BY created_at DESC
              LIMIT 1`
-    );
+    )) as { discount_type?: string; discount_value?: number; duration_months?: number } | null;
 
     if (discountConfig) {
       const endDate = new Date();

@@ -100,8 +100,8 @@ const AlertService = {
 
         try {
           // Create system alert notification
-          if (NotificationService && typeof NotificationService.create === 'function') {
-            await NotificationService.create({
+          if (NotificationService && typeof (NotificationService as any).create === 'function') {
+            await (NotificationService as any).create({
               userId: 'system', // System-level alert
               organizationId: 'system',
               type: 'SYSTEM_ALERT',

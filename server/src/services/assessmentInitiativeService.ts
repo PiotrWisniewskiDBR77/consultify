@@ -86,13 +86,13 @@ class AssessmentInitiativeService {
 
     // Identify gaps (dimensions with low scores)
     const gaps: AssessmentGap[] = (dimensionScores || [])
-      .map((d) => ({
+      .map((d): AssessmentGap => ({
         dimensionId: d.dimension_id,
         dimensionName: d.dimension_name,
         currentScore: d.score,
         targetScore: d.max_score,
         gap: d.max_score - d.score,
-        priority: d.score <= 2 ? 'high' : d.score <= 3 ? 'medium' : ('low' as const),
+        priority: (d.score <= 2 ? 'high' : d.score <= 3 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
       }))
       .sort((a, b) => b.gap - a.gap);
 

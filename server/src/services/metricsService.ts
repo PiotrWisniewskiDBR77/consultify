@@ -304,7 +304,7 @@ class MetricsService {
    * Update Redis connection status
    */
   updateRedisStatus(connected: boolean): void {
-    redisConnected.set(connected ? 1 : 0);
+    redisConnected.set({}, connected ? 1 : 0);
   }
 
   /**
@@ -351,14 +351,14 @@ class MetricsService {
    * Update active connections
    */
   updateActiveConnections(count: number): void {
-    activeConnections.set(count);
+    activeConnections.set({}, count);
   }
 
   /**
    * Update active users
    */
   updateActiveUsers(count: number): void {
-    activeUsers.set(count);
+    activeUsers.set({}, count);
   }
 
   /**
@@ -457,19 +457,19 @@ class MetricsService {
     if (this.throughputWindow.http.length > 0) {
       const httpSum = this.throughputWindow.http.reduce((sum, entry) => sum + entry.count, 0);
       const httpThroughput = httpSum / this.throughputWindow.http.length;
-      httpRequestsPerSecond.set(Math.max(0, httpThroughput));
+      httpRequestsPerSecond.set({}, Math.max(0, httpThroughput));
     }
 
     if (this.throughputWindow.db.length > 0) {
       const dbSum = this.throughputWindow.db.reduce((sum, entry) => sum + entry.count, 0);
       const dbThroughput = dbSum / this.throughputWindow.db.length;
-      dbQueriesPerSecond.set(Math.max(0, dbThroughput));
+      dbQueriesPerSecond.set({}, Math.max(0, dbThroughput));
     }
 
     if (this.throughputWindow.llm.length > 0) {
       const llmSum = this.throughputWindow.llm.reduce((sum, entry) => sum + entry.count, 0);
       const llmThroughput = llmSum / this.throughputWindow.llm.length;
-      llmRequestsPerSecond.set(Math.max(0, llmThroughput));
+      llmRequestsPerSecond.set({}, Math.max(0, llmThroughput));
     }
   }
 

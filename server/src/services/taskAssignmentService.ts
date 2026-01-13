@@ -646,8 +646,8 @@ export class TaskAssignmentService {
         3: 'Project Sponsor',
       };
 
-      if (NotificationService?.create) {
-        await NotificationService.create({
+      if ((NotificationService as any)?.create) {
+        await (NotificationService as any).create({
           userId: recipient.userId,
           organizationId: task.organization_id,
           projectId: task.project_id,

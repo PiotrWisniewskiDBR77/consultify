@@ -317,7 +317,7 @@ router.post(
                                         code: 'payment_failed',
                                         message: invoice.last_payment_error?.message || 'Payment failed',
                                     },
-                                } as StripePaymentIntent;
+                                } as unknown as StripePaymentIntent;
 
                                 await dunning.handlePaymentFailed(mockPaymentIntent);
                             }

@@ -59,7 +59,7 @@ class SecurityIncidentServiceClass {
 
     const rows = await this.db.all(query, params);
 
-    return rows.map((row) => ({
+    return rows.map((row: any) => ({
       id: row.id,
       incidentType: row.type,
       severity: row.severity,
@@ -84,7 +84,7 @@ class SecurityIncidentServiceClass {
   }
 
   async getStats(): Promise<any> {
-    const row = await this.db.get(`
+    const row = (await this.db.get(`
             SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open_count,
@@ -96,7 +96,17 @@ class SecurityIncidentServiceClass {
                 SUM(CASE WHEN severity = 'medium' THEN 1 ELSE 0 END) as medium_count,
                 SUM(CASE WHEN severity = 'low' THEN 1 ELSE 0 END) as low_count
             FROM security_incidents
-        `);
+        `)) as {
+      total?: number;
+      open_count?: number;
+      in_progress_count?: number;
+      resolved_count?: number;
+      closed_count?: number;
+      critical_count?: number;
+      high_count?: number;
+      medium_count?: number;
+      low_count?: number;
+    } | null;
 
     return {
       totalIncidents: row?.total || 0,
