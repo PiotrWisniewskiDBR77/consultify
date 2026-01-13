@@ -558,7 +558,7 @@ import alertWatchdog from './middleware/alertWatchdog.middleware.js';
 app.use(alertWatchdog);
 
 // Error Handler Middleware (must be last, after all routes)
-import { errorHandlerMiddleware } from './utils/errorHandler.js';
+import { errorHandlerMiddleware } from './utils/ErrorHandler.js';
 app.use(errorHandlerMiddleware);
 
 // 404 Handler (must be after error handler)

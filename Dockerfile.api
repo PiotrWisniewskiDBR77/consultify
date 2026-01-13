@@ -44,13 +44,16 @@ WORKDIR /app
 
 # Copy root package files first (server dependencies are in root package.json due to monorepo/workspace setup)
 COPY package.json package-lock.json ./
-# Copy server package.json for reference (but dependencies come from root)
+# Copy server package.json - some dependencies like cookie-parser are only in server/package.json
 COPY server/package.json ./server-package.json
-# Install dependencies from root package.json (includes all server runtime dependencies)
+# Install dependencies from root package.json (includes most server runtime dependencies)
 # Install devDependencies too since we need TypeScript and type definitions for the build
 # Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
 # Ignore scripts (like husky) as they're not needed in Docker builds
 RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
+# Install server-specific dependencies that aren't in root package.json (e.g., cookie-parser)
+# Install them at root level so TypeScript can find them during compilation
+RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parser@^1.4.10 || true
 
 # Copy TypeScript config files explicitly (needed for build)
 COPY server/tsconfig.json ./
