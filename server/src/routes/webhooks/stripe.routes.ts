@@ -50,14 +50,14 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 router.post(
     '/stripe',
     express.raw({ type: 'application/json' }) as RequestHandler,
-    asyncHandler(async (req: Request as any, res: Response, next: NextFunction): Promise<void> => {
+    asyncHandler(async (req: any, res: Response): Promise<void> => {
         let event: StripeEvent | any;
 
         // Verify webhook signature if secret is configured
         if (endpointSecret) {
             const sig = req.headers['stripe-signature'] as string;
             try {
-                const stripe = new StripeLib(process.env.STRIPE_SECRET_KEY || '');
+                const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
                 event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
             } catch (err: unknown) {
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error';
