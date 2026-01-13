@@ -5,7 +5,7 @@
 
 import express from 'express';
 import { verifyToken as authenticateToken, type AuthRequest } from '../middleware/auth.middleware.js';
-import { requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { verifySuperAdmin as requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { getDatabase } from '../database/Database.js';
 import { budgetTrackingService } from '../services/budgetTrackingService.js';
 import logger from '../utils/Logger.js';

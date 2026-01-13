@@ -219,7 +219,7 @@ export class BillingCommandService {
     const taxSettings = await this.queryService.getTaxSettings(orgId);
 
     // Build customer create params with VAT if available
-    const customerParams: Stripe.CustomerCreateParams = {
+    const customerParams: StripeTypes.CustomerCreateParams = {
       email,
       name: taxSettings?.billing_name || orgName,
       metadata: { organization_id: orgId },
@@ -262,8 +262,8 @@ export class BillingCommandService {
    * Map internal tax ID type to Stripe tax ID type
    * GAP-INVOICE-002
    */
-  private mapTaxIdType(taxIdType: string): Stripe.CustomerCreateParams.TaxIdDatum['type'] {
-    const mapping: Record<string, Stripe.CustomerCreateParams.TaxIdDatum['type']> = {
+  private mapTaxIdType(taxIdType: string): StripeTypes.CustomerCreateParams.TaxIdDatum['type'] {
+    const mapping: Record<string, StripeTypes.CustomerCreateParams.TaxIdDatum['type']> = {
       VAT: 'eu_vat',
       eu_vat: 'eu_vat',
       US_EIN: 'us_ein',
@@ -292,7 +292,7 @@ export class BillingCommandService {
     const taxSettings = await this.queryService.getTaxSettings(orgId);
 
     // Update customer address
-    const updateParams: Stripe.CustomerUpdateParams = {};
+    const updateParams: StripeTypes.CustomerUpdateParams = {};
 
     if (taxSettings?.billing_name) {
       updateParams.name = taxSettings.billing_name;
@@ -376,7 +376,7 @@ export class BillingCommandService {
     paymentMethodId: string,
     email: string,
     orgName: string
-  ): Promise<Stripe.Subscription | { id: string; status: string; plan: BillingPlan }> {
+  ): Promise<StripeTypes.Subscription | { id: string; status: string; plan: BillingPlan }> {
     const deps = this.deps();
     const plan = await this.queryService.getPlanById(planId);
     if (!plan) {
@@ -392,7 +392,7 @@ export class BillingCommandService {
       orgId,
       email,
       orgName
-    )) as Stripe.Customer;
+    )) as StripeTypes.Customer;
     await deps.stripe.paymentMethods.attach(paymentMethodId, { customer: customer.id });
     await deps.stripe.customers.update(customer.id, {
       invoice_settings: { default_payment_method: paymentMethodId },
@@ -422,7 +422,7 @@ export class BillingCommandService {
       }
     }
 
-    const subscriptionParams: Stripe.SubscriptionCreateParams = {
+    const subscriptionParams: StripeTypes.SubscriptionCreateParams = {
       customer: customer.id,
       items: [{ price: plan.stripe_price_id || '' }],
       expand: ['latest_invoice.payment_intent'],
@@ -453,7 +453,7 @@ export class BillingCommandService {
 
   async cancelSubscription(
     orgId: string
-  ): Promise<Stripe.Subscription | { status: string; accessUntil?: string }> {
+  ): Promise<StripeTypes.Subscription | { status: string; accessUntil?: string }> {
     const deps = this.deps();
     const billing = await this.queryService.getOrganizationBilling(orgId);
     if (!billing?.stripe_subscription_id) {
@@ -875,7 +875,7 @@ export class BillingCommandService {
         `;
   }
 
-  async recordInvoice(orgId: string, stripeInvoice: Stripe.Invoice): Promise<{ id: string }> {
+  async recordInvoice(orgId: string, stripeInvoice: StripeTypes.Invoice): Promise<{ id: string }> {
     const deps = this.deps();
     const id = `inv-${deps.uuidv4()}`;
 
@@ -1047,7 +1047,7 @@ export class BillingCommandService {
       orgId,
       email,
       orgName
-    )) as Stripe.Customer;
+    )) as StripeTypes.Customer;
     const setupIntent = await deps.stripe.setupIntents.create({
       customer: customer.id,
       payment_method_types: ['card'],
