@@ -46,7 +46,7 @@ export class CohortAnalyticsService {
              WHERE o.created_at >= date('now', '-' || ? || ' months')
              ORDER BY cohort ASC`,
             [cohortMonths],
-        );
+        ));
 
         // Group by cohort
         const cohorts: Record<

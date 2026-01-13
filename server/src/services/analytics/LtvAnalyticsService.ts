@@ -46,7 +46,7 @@ export class LtvAnalyticsService {
                 GROUP BY o.id
              )`,
             [],
-        );
+        ));
 
         const avgRevenue = row?.avg_revenue || 0;
         const avgLifespan = row?.avg_lifespan || 1;

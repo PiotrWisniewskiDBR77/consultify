@@ -92,7 +92,7 @@ export class MrrAnalyticsService {
              JOIN subscription_plans sp ON ob.subscription_plan_id = sp.id
              WHERE ob.status = 'active'`,
             [],
-        );
+        ));
 
         const mrr = row?.total_mrr || 0;
 
@@ -161,7 +161,7 @@ export class MrrAnalyticsService {
              WHERE snapshot_date >= date('now', '-' || ? || ' days')
              ORDER BY snapshot_date ASC`,
             [days],
-        );
+        ));
 
         // Calculate growth metrics
         const data = rows || [];
@@ -202,7 +202,7 @@ export class MrrAnalyticsService {
              AND mrr_change IS NOT NULL
              GROUP BY event_type`,
             [startDate, endDate],
-        );
+        ));
 
         const movement: MRRMovement = {
             newMRR: 0,
@@ -279,7 +279,7 @@ export class MrrAnalyticsService {
              GROUP BY month
              ORDER BY month ASC`,
             [months],
-        );
+        ));
 
         const data = (rows || []).map((row) => ({
             ...row,
