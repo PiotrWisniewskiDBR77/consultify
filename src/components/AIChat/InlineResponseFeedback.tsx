@@ -26,8 +26,8 @@ interface InlineResponseFeedbackProps {
   compact?: boolean;
 }
 
-type LengthFeedback = 'too-short' | 'just-right' | 'too-long';
-type DetailFeedback = 'too-little' | 'just-right' | 'too-much';
+type LengthFeedback = 'too_short' | 'just_right' | 'too_long';
+type DetailFeedback = 'too_basic' | 'just_right' | 'too_detailed';
 type StyleFeedback = 'too-formal' | 'just-right' | 'too-casual';
 
 export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
@@ -134,6 +134,13 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
             <ThumbsDown size={12} />
           </button>
         </div>
+      );
+    }
+
+    // Check if rating is negative (for type narrowing)
+    if (rating !== 'negative') {
+      return null;
+    }
       </div>
     );
   }

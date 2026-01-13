@@ -33,7 +33,7 @@ export const TTSIndicator: React.FC = () => {
   }, []);
 
   // Don't show if TTS is disabled or not speaking
-  if (!aiConfig.textToSpeech || !isSpeaking) {
+  if (!(aiConfig as any).textToSpeech || !isSpeaking) {
     return null;
   }
 

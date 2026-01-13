@@ -183,8 +183,8 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
       );
     }
     
-    activeFilters.forEach(filter => {
-      if (filter.field === 'status') {
+    activeFilters.forEach((filter: FilterChip) => {
+      if (filter.column === 'status') {
         result = result.filter(i => i.status === filter.value);
       }
     });
@@ -353,6 +353,8 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
       typeColor: 'green',
       progress: item.progress || 100,
       updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+      status: (item.status === InitiativeStatus.DONE ? 'completed' :
+               item.status === InitiativeStatus.BLOCKED ? 'in_review' : 'draft') as ItemStatus,
     }));
   }, [filteredInitiatives]);
 

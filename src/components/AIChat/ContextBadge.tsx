@@ -65,7 +65,7 @@ const getContextConfig = (
   type: WorkspaceType,
   t: (key: string, fallback: string) => string
 ): ContextConfig => {
-  const configs: Record<WorkspaceType, ContextConfig> = {
+  const configs: Partial<Record<WorkspaceType, ContextConfig>> & Record<string, ContextConfig> = {
     empty: {
       icon: Sparkles,
       label: t('aiChat.context.general', 'Rozmowa ogólna'),
@@ -190,32 +190,32 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
             </div>
 
             {/* Project context (if different from main entity) */}
-            {context.pmoProjectName && context.type !== 'project' && (
+            {context.projectName && (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <FolderKanban size={10} className="text-slate-400 dark:text-slate-500" />
                 <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {context.pmoProjectName}
+                  {context.projectName}
                 </span>
               </div>
             )}
 
             {/* Additional data */}
-            {context.data && (
+            {context.entityData && (
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                {context.data.taskStatus && (
+                {(context.entityData as any).taskStatus && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                    {context.data.taskStatus}
+                    {(context.entityData as any).taskStatus}
                   </span>
                 )}
-                {context.data.initiativeProgress !== undefined && (
+                {(context.entityData as any).initiativeProgress !== undefined && (
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                    {t('aiChat.context.progress', 'Postęp')}: {context.data.initiativeProgress}%
+                    {t('aiChat.context.progress', 'Postęp')}: {(context.entityData as any).initiativeProgress}%
                   </span>
                 )}
-                {context.data.currentScore !== undefined &&
-                  context.data.targetScore !== undefined && (
+                {(context.entityData as any).currentScore !== undefined &&
+                  (context.entityData as any).targetScore !== undefined && (
                     <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {context.data.currentScore} → {context.data.targetScore}
+                      {(context.entityData as any).currentScore} → {(context.entityData as any).targetScore}
                     </span>
                   )}
               </div>
@@ -241,11 +241,11 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
       <span className={`text-[11px] font-medium ${config.color}`}>
         {context.entityName || config.label}
       </span>
-      {context.pmoProjectName && context.type !== 'project' && (
+      {context.projectName && (
         <>
           <span className="text-slate-300 dark:text-slate-600">•</span>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[100px]">
-            {context.pmoProjectName}
+            {context.projectName}
           </span>
         </>
       )}
@@ -289,11 +289,11 @@ export const InputContextBadge: React.FC<InputContextBadgeProps> = ({
         <span className={`font-medium ${config.color}`}>{config.label}:</span>{' '}
         {context.entityName || t('aiChat.context.unnamed', 'Bez nazwy')}
       </span>
-      {context.pmoProjectName && context.type !== 'project' && (
+      {context.projectName && (
         <>
           <span className="text-slate-300 dark:text-slate-600">•</span>
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            {context.pmoProjectName}
+            {context.projectName}
           </span>
         </>
       )}

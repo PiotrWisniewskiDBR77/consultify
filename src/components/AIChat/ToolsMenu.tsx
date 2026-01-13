@@ -412,7 +412,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           <div className="border-t border-slate-200 dark:border-navy-700 mt-1">
             <button
               onClick={() => {
-                setCurrentView(AppView.USER_SETTINGS);
+                setCurrentView(AppView.SETTINGS_PROFILE);
                 setIsOpen(false);
                 onToolSelect('settings');
               }}

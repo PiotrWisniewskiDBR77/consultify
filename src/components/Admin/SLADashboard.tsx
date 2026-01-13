@@ -117,7 +117,7 @@ export function SLADashboard() {
       const latenciesMs: number[] = (Array.isArray(logsPayload?.logs) ? logsPayload.logs : [])
         .map((l: any) => Number(l.latency || 0))
         .filter((n: number) => Number.isFinite(n) && n > 0)
-        .sort((a, b) => a - b);
+        .sort((a: number, b: number) => a - b);
 
       const pct = (p: number) => {
         if (!latenciesMs.length) return 0;

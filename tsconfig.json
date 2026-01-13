@@ -42,7 +42,7 @@
     // Performance
     "skipLibCheck": true,
     // Types
-    "types": ["node", "vite/client", "@testing-library/jest-dom"]
+    "types": ["node", "vite/client", "@testing-library/jest-dom", "vitest/globals"]
   },
   "include": ["src", "*.ts", "*.tsx"],
   "exclude": ["node_modules", "node_modules_trash", "dist", "server", "server/**/*"]
