@@ -779,7 +779,7 @@ router.get(
 
             const orgIdStr = Array.isArray(orgId) ? orgId[0] : (orgId as string);
             const standardStr = Array.isArray(standard) ? standard[0] : (standard as string);
-            const report = await AISettingsService.generateComplianceReport(orgIdStr as string, standardStr, formatStr);
+            const report = await AISettingsService.generateComplianceReport(orgIdStr as string, standardStr as string, formatStr);
 
             // Set appropriate headers based on format
             if (format === 'csv') {

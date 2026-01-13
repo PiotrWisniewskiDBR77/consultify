@@ -24,10 +24,9 @@ interface UsageService {
     }>;
 }
 
-interface FileRequest extends Request {
-    file?: {
+interface FileRequest extends Omit<Request, 'file'> {
+    file?: Express.Multer.File & {
         path?: string;
-        [key: string]: unknown;
     };
     body: {
         project_id?: string;

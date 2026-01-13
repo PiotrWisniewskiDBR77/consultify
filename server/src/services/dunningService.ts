@@ -11,6 +11,11 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 
+// Type aliases for Stripe types
+type StripePrice = Stripe.Price;
+type StripePlan = Stripe.Plan;
+type StripePaymentIntent = Stripe.PaymentIntent;
+
 const DUNNING_SCHEDULE = {
     RETRY_1: 3, // days
     RETRY_2: 7,
@@ -73,8 +78,8 @@ interface EmailServiceInterface {
 interface AuditServiceInterface {
     logSystemEvent: (
         actionType: string,
-        entityType: string,
-        entityId: string,
+        entityType: string | null,
+        entityId: string | null,
         orgId?: string | null,
         metadata?: Record<string, unknown>,
     ) => Promise<void>;
@@ -86,7 +91,7 @@ let auditService: AuditServiceInterface | null = null;
 async function getEmailService(): Promise<EmailServiceInterface | null> {
     if (!emailService) {
         const module = await import('../../services/emailService.js');
-        const service = module.default || module;
+        const service = (module.default || module) as any;
         if (service && typeof service.send === 'function') {
             emailService = service as EmailServiceInterface;
         }
@@ -102,8 +107,8 @@ async function getAuditService(): Promise<AuditServiceInterface | null> {
             auditService = {
                 logSystemEvent: async (
                     actionType: string,
-                    entityType: string,
-                    entityId: string,
+                    entityType: string | null,
+                    entityId: string | null,
                     orgId?: string | null,
                     metadata?: Record<string, unknown>,
                 ): Promise<void> => {

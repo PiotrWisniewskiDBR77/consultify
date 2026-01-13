@@ -144,7 +144,6 @@ interface AuditServiceDependencies {
 }
 
 interface ExpressRequestWithUser extends Request {
-    method: string; // Required by Request interface
     user?: {
         id: string;
         organization_id?: string;
@@ -165,7 +164,6 @@ interface ExpressRequestWithUser extends Request {
         'x-org-id'?: string;
     };
     originalUrl?: string;
-    method?: string;
 }
 
 // ============================================

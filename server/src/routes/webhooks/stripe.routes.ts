@@ -14,6 +14,11 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 
 const router = Router();
 
+// Type aliases for Stripe types
+type StripeEvent = Stripe.Event;
+type StripeInvoice = Stripe.Invoice;
+type StripeSubscription = Stripe.Subscription;
+
 // Helper function for async handler
 function asyncHandler(fn: (req: Request, res: Response) => Promise<void> | void): RequestHandler {
     return (req: Request, res: Response, next: NextFunction): void => {
@@ -27,7 +32,7 @@ interface BillingServiceInterface {
     cancelSubscription?: (subscriptionId: string) => Promise<void>;
     createInvoice?: (invoiceData: unknown) => Promise<void>;
     upsertOrganizationBilling?: (orgId: string, data: unknown) => Promise<void>;
-    recordInvoice?: (orgId: string, invoice: StripeInvoice | any) => Promise<void>;
+    recordInvoice?: (orgId: string, invoice: Stripe.Invoice | any) => Promise<void>;
 }
 
 // Dynamic import for billingService (may not be migrated yet)

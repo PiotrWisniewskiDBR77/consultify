@@ -168,7 +168,7 @@ class RefreshTokenService {
         const refreshTokenHash = this.hashToken(refreshToken);
 
         // Access token (short-lived)
-        const signOptions: SignOptions = { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY || '15m' };
+        const signOptions: SignOptions = { expiresIn: (CONFIG.ACCESS_TOKEN_EXPIRY || '15m') as string };
         const accessToken = jwt.sign(
             {
                 id: user.id,
@@ -259,7 +259,7 @@ class RefreshTokenService {
 
                         // Generate new access token only (don't rotate refresh token again)
                         const jti = uuidv4();
-                        const signOptions: SignOptions = { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY || '15m' };
+                        const signOptions: SignOptions = { expiresIn: (CONFIG.ACCESS_TOKEN_EXPIRY || '15m') as string };
                         const accessToken = jwt.sign(
                             {
                                 id: latestToken.user_id,
@@ -313,7 +313,7 @@ class RefreshTokenService {
         const expiresAt = new Date(Date.now() + CONFIG.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
         // New access token
-        const signOptions: SignOptions = { expiresIn: CONFIG.ACCESS_TOKEN_EXPIRY || '15m' };
+        const signOptions: SignOptions = { expiresIn: (CONFIG.ACCESS_TOKEN_EXPIRY || '15m') as string };
         const accessToken = jwt.sign(
             {
                 id: storedToken.user_id,

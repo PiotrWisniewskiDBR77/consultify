@@ -6,7 +6,7 @@
  */
 
 import StripeLib from 'stripe';
-import type Stripe from 'stripe';
+import Stripe from 'stripe';
 
 // Type aliases for Stripe namespace types
 type StripeInvoice = Stripe.Invoice;
