@@ -4,7 +4,7 @@ import { tokenService } from './tokenService';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
-const API_URL = '/api';
+export const API_URL = '/api';
 
 let correlationId = sessionStorage.getItem('correlationId');
 if (!correlationId) {
@@ -13,7 +13,7 @@ if (!correlationId) {
   sessionStorage.setItem('correlationId', correlationId);
 }
 
-const getHeaders = () => {
+export const getHeaders = () => {
   const token = tokenService.getToken();
 
   // Check if demo mode is enabled from localStorage
@@ -546,13 +546,49 @@ export const Api = {
     roleName?: string,
     language?: string,
     onThinking?: (thought: any) => void,
-    options?: any
+    options?: {
+      deepResearch?: boolean;
+      webSearch?: boolean;
+      showReasoning?: boolean;
+      knowledgeSources?: {
+        pmoDocuments?: boolean;
+        projectData?: boolean;
+        organizationData?: boolean;
+      };
+      responseStyle?: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+    }
   ) => {
     try {
+      // Build AI config payload from options
+      const aiModes = {
+        deepResearch: options?.deepResearch ?? false,
+        webSearch: options?.webSearch ?? false,
+        showReasoning: options?.showReasoning ?? false,
+      };
+
+      const knowledgeSources = {
+        pmoDocuments: options?.knowledgeSources?.pmoDocuments ?? true,
+        projectData: options?.knowledgeSources?.projectData ?? true,
+        organizationData: options?.knowledgeSources?.organizationData ?? false,
+      };
+
+      const responseStyle = options?.responseStyle ?? 'normal';
+
       const response = await fetch(`${API_URL}/ai/chat/stream`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ message, history, systemInstruction, context, roleName, language }),
+        body: JSON.stringify({
+          message,
+          history,
+          systemInstruction,
+          context,
+          roleName,
+          language,
+          // AI Configuration
+          aiModes,
+          knowledgeSources,
+          responseStyle,
+        }),
       });
 
       if (!response.body) throw new Error('ReadableStream not supported');
@@ -1471,6 +1507,12 @@ export const Api = {
     if (projectId) url += `? projectId=${projectId}`;
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch initiatives');
+    return res.json();
+  },
+
+  getInitiativeById: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/initiatives/${id}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch initiative');
     return res.json();
   },
 
@@ -5033,50 +5075,44 @@ export const Api = {
   terminateSession: async (_id: string) => ({ success: true }),
 
   // IP Access Rules
-  getIPAccessRules: async () => [
-    {
-      id: 'ip-allow-1',
-      ip_pattern: '192.168.0.0/24',
-      rule_type: 'allow',
-      description: 'Office network',
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      created_by: 'admin',
-      enabled: true,
-    },
-  ],
+  getIPAccessRules: async () => [] as any[],
   updateIPRule: async (_id: string, _data: any) => ({ success: true }),
 
   // Security Policies
-  getSecurityPolicies: async () => [
-    {
-      id: 'policy-password',
-      name: 'Password Policy',
-      description: 'Min 12 chars, upper, lower, number, special',
-      category: 'Authentication',
-      settings: {
-        minLength: 12,
-        requireUppercase: true,
-        requireNumber: true,
-        requireSpecial: true,
+  getSecurityPolicies: async () => ({
+    policies: [
+      {
+        id: 'policy-password',
+        name: 'Password Policy',
+        description: 'Min 12 chars, upper, lower, number, special',
+        category: 'Authentication',
+        settings: {
+          minLength: 12,
+          requireUppercase: true,
+          requireNumber: true,
+          requireSpecial: true,
+        },
+        enabled: true,
+        last_updated: new Date().toISOString(),
       },
-      enabled: true,
-      last_updated: new Date().toISOString(),
-    },
-  ],
+    ],
+  }),
   updateSecurityPolicy: async (_id: string, _data: any) => ({ success: true }),
 
   // Compliance
-  getComplianceFrameworks: async () => [
-    {
-      id: 'gdpr',
-      name: 'GDPR',
-      description: 'General Data Protection Regulation',
-      controls_total: 24,
-      controls_compliant: 22,
-      last_assessment: new Date(Date.now() - 7 * 86400000).toISOString(),
-      status: 'partial',
-    },
-  ],
+  getComplianceFrameworks: async () => ({
+    frameworks: [
+      {
+        id: 'gdpr',
+        name: 'GDPR',
+        description: 'General Data Protection Regulation',
+        controls_total: 24,
+        controls_compliant: 22,
+        last_assessment: new Date(Date.now() - 7 * 86400000).toISOString(),
+        status: 'partial',
+      },
+    ],
+  }),
   getComplianceSummary: async () => ({
     items: [
       {
@@ -5691,6 +5727,554 @@ export const Api = {
       console.error('[Api] approveAIAction error:', err);
       return { success: false, error: err.message };
     }
+  },
+
+  // ==================== SETTINGS API STUBS ====================
+  // These are stub implementations for settings management
+
+  getAccessibilitySettings: async () => {
+    return {
+      preferences: {
+        highContrast: false,
+        largeText: false,
+        reduceMotion: false,
+        screenReaderOptimized: false,
+      },
+    };
+  },
+
+  updateAccessibilitySettings: async (settings: any) => {
+    return { success: true, preferences: settings };
+  },
+
+  exportSettings: async (_filters?: any) => {
+    return {
+      data: { version: '1.0', settings: {} },
+      filename: `settings-export-${Date.now()}.json`,
+    };
+  },
+
+  importSettings: async (data: any, _overwrite?: boolean) => {
+    const imported = Array.isArray(data) ? data : [data];
+    return { success: true, imported };
+  },
+
+  getSettingsHistory: async (_category?: string, _days?: number) => {
+    return { entries: [], total: 0 };
+  },
+
+  restoreSettingsEntry: async (entryId: string) => {
+    return { success: true, entryId };
+  },
+
+  getSettingsTemplates: async () => {
+    return { templates: [] };
+  },
+
+  applySettingsTemplate: async (templateId: string) => {
+    return { success: true, templateId };
+  },
+
+  createSettingsTemplate: async (data: any) => {
+    return { success: true, template: { id: `template-${Date.now()}`, ...data } };
+  },
+
+  deleteSettingsTemplate: async (templateId: string) => {
+    return { success: true, templateId };
+  },
+
+  getAIAutoComplete: async () => {
+    return {
+      preferences: {
+        enabled: true,
+        triggerDelay: 500,
+        maxSuggestions: 3,
+        sensitivity: 'medium',
+        suggestionsInComments: true,
+      },
+    };
+  },
+
+  saveAIAutoComplete: async (settings: any) => {
+    return { success: true, preferences: settings };
+  },
+
+  getAIInstructions: async () => {
+    return {
+      preferences: {
+        systemPrompt: '',
+        customInstructions: '',
+        tone: 'professional',
+      },
+    };
+  },
+
+  saveAIInstructions: async (instructions: any) => {
+    return { success: true, preferences: instructions };
+  },
+
+  getAIMemory: async () => {
+    return {
+      preferences: {
+        enabled: true,
+        retentionDays: 30,
+      },
+      memoryItems: [],
+    };
+  },
+
+  saveAIMemory: async (settings: any) => {
+    return { success: true, preferences: settings };
+  },
+
+  clearAIMemoryData: async () => {
+    return { success: true, cleared: true };
+  },
+
+  getAIModelPreferences: async () => {
+    return {
+      preferences: {
+        preferredModel: 'gpt-4',
+        fallbackModel: 'gpt-3.5-turbo',
+        autoSelect: true,
+        enabledModels: ['gpt-4', 'gpt-3.5-turbo', 'claude-3'],
+      },
+    };
+  },
+
+  saveAIModelPreferences: async (preferences: any) => {
+    return { success: true, preferences };
+  },
+
+  getAIParameters: async () => {
+    return {
+      preferences: {
+        temperature: 0.7,
+        maxTokens: 2000,
+        topP: 1,
+        contextWindowSize: 4096,
+        responseSpeed: 'balanced',
+      },
+    };
+  },
+
+  saveAIParameters: async (params: any) => {
+    return { success: true, preferences: params };
+  },
+
+  getAIPersonality: async () => {
+    return {
+      preferences: {
+        name: 'Assistant',
+        style: 'helpful',
+        formality: 'professional',
+      },
+    };
+  },
+
+  saveAIPersonality: async (personality: any) => {
+    return { success: true, preferences: personality };
+  },
+
+  getAIUsageStats: async (_period?: string) => {
+    return {
+      stats: {
+        totalTokens: 0,
+        totalCost: 0,
+        requestsToday: 0,
+        requestsThisMonth: 0,
+        totalRequests: 0,
+        avgResponseTime: 0,
+        successRate: 100,
+        limit: 10000,
+        used: 0,
+      },
+      usageByFeature: [],
+      dailyUsage: [],
+      history: [],
+    };
+  },
+
+  // Additional settings stubs
+  createApiKey: async (data: any) => {
+    const key = {
+      id: `key-${Date.now()}`,
+      key: `sk-${Math.random().toString(36).substr(2, 32)}`,
+      name: data.name || 'API Key',
+      created: new Date().toISOString(),
+      lastUsed: null,
+      permissions: data.permissions || ['read'],
+      ...data,
+    };
+    return { success: true, key };
+  },
+
+  removeAvatar: async (_userId?: string) => {
+    return { success: true };
+  },
+
+  getGdprConsents: async () => {
+    return { consents: [] };
+  },
+
+  updateGdprConsents: async (consents: any) => {
+    return { success: true, consents };
+  },
+
+  getGdprRetention: async () => {
+    return {
+      retention: {
+        period: '365' as const,
+        autoDelete: false,
+      },
+    };
+  },
+
+  updateGdprRetention: async (settings: any) => {
+    return { success: true, ...settings };
+  },
+
+  saveGdprConsents: async (consents: any) => {
+    return { success: true, consents };
+  },
+
+  saveGdprRetention: async (settings: any) => {
+    return { success: true, settings };
+  },
+
+  getGdprExportStatus: async () => {
+    return { status: 'none', lastExport: null, request: null };
+  },
+
+  requestGdprExport: async () => {
+    return {
+      success: true,
+      request: {
+        id: `export-${Date.now()}`,
+        status: 'pending' as const,
+        requestedAt: new Date().toISOString(),
+      },
+    };
+  },
+
+  requestGdprDeletion: async () => {
+    return {
+      success: true,
+      request: {
+        id: `delete-${Date.now()}`,
+        status: 'pending' as const,
+        requestedAt: new Date().toISOString(),
+      },
+    };
+  },
+
+  cancelGdprDeletion: async (_requestId?: string) => {
+    return { success: true };
+  },
+
+  getDeveloperSettings: async () => {
+    return {
+      settings: {
+        debugMode: false,
+        verboseLogging: false,
+        apiMocking: false,
+        experimentalFeatures: false,
+        apiEndpoint: '',
+        developerMode: false,
+        apiLogging: false,
+        showDebugInfo: false,
+        verboseErrors: false,
+        betaFeatures: [] as string[],
+      },
+    };
+  },
+
+  saveDeveloperSettings: async (settings: any) => {
+    return { success: true, settings };
+  },
+
+  // Integration Settings
+  getIntegrations: async (_filter?: string) => {
+    return { integrations: [] as any[] };
+  },
+
+  connectIntegration: async (integrationId: string, config?: any) => {
+    return { success: true, integrationId, config };
+  },
+
+  disconnectIntegration: async (integrationId: string) => {
+    return { success: true, integrationId };
+  },
+
+  // Keyboard Shortcuts
+  getShortcuts: async () => {
+    return {
+      preferences: {
+        preset: 'default' as const,
+        enabled: true,
+        showHints: true,
+        customShortcuts: {} as Record<string, string>,
+        disabledShortcuts: [] as string[],
+      },
+    };
+  },
+
+  saveShortcuts: async (shortcuts: any) => {
+    return { success: true, shortcuts };
+  },
+
+  // Privacy
+  getPrivacyPreferences: async () => {
+    return {
+      preferences: {
+        analytics: true,
+        marketing: false,
+        thirdParty: false,
+      },
+    };
+  },
+
+  savePrivacyPreferences: async (preferences: any) => {
+    return { success: true, preferences };
+  },
+
+  // Theme/Appearance
+  getAppearancePreferences: async () => {
+    return {
+      preferences: {
+        theme: 'system',
+        accentColor: 'blue',
+        fontSize: 'medium',
+        compactMode: false,
+      },
+    };
+  },
+
+  saveAppearancePreferences: async (preferences: any) => {
+    return { success: true, preferences };
+  },
+
+  // Voice Settings
+  getAIVoice: async () => {
+    return {
+      preferences: {
+        enabled: false,
+        voice: 'default',
+        speed: 1.0,
+        pitch: 1.0,
+      },
+    };
+  },
+
+  saveAIVoice: async (settings: any) => {
+    return { success: true, settings };
+  },
+
+  // Webhooks
+  getWebhooks: async () => {
+    return { webhooks: [] };
+  },
+
+  createWebhook: async (webhook: any) => {
+    return { success: true, webhook: { id: `wh-${Date.now()}`, ...webhook } };
+  },
+
+  updateWebhook: async (_webhookId: string, data: any) => {
+    return { success: true, webhook: data };
+  },
+
+  deleteWebhook: async (webhookId: string) => {
+    return { success: true, webhookId };
+  },
+
+  // System/Enterprise
+  getSystemAnalytics: async (_period?: string) => {
+    return {
+      metrics: {
+        activeUsers: 0,
+        totalRequests: 0,
+        avgResponseTime: 0,
+        errorRate: 0,
+        api: { requests: 0, latency: 0, total_requests: 0, change: 0 },
+        ai: { requests: 0, tokens: 0, total_requests: 0, change: 0 },
+        users: { active: 0, total: 0, active_today: 0 },
+        database: { queries: 0, latency: 0, total_queries: 0 },
+      },
+      charts: {
+        api: {
+          labels: [] as string[],
+          requests: [] as number[],
+          errors: [] as number[],
+        },
+        ai: {
+          labels: [] as string[],
+          requests: [] as number[],
+          tokens: [] as number[],
+        },
+        requests: [] as { date: string; value: number }[],
+        latency: [] as { date: string; value: number }[],
+      },
+      trends: [],
+    };
+  },
+
+  getBackupSchedules: async () => {
+    return [] as any[];
+  },
+
+  createBackup: async (_type?: string, _reason?: string) => {
+    return { success: true, backup: { id: `bk-${Date.now()}`, status: 'pending' } };
+  },
+
+  restoreBackup: async (backupId: string) => {
+    return { success: true, backupId, error: null as string | null };
+  },
+
+  deleteBackup: async (backupId: string) => {
+    return { success: true, backupId };
+  },
+
+  // System Configuration
+  getSystemConfigs: async (_category?: string) => {
+    return [] as any[];
+  },
+
+  saveSystemConfig: async (key: string, value: any) => {
+    return { success: true, key, value };
+  },
+
+  // System Integrations
+  getSystemIntegrations: async () => {
+    return { integrations: [] };
+  },
+
+  refreshSystemIntegration: async (integrationId: string) => {
+    return { success: true, integrationId };
+  },
+
+  deleteSystemIntegration: async (integrationId: string) => {
+    return { success: true, integrationId };
+  },
+
+  deleteIntegration: async (integrationId: string) => {
+    return { success: true, integrationId };
+  },
+
+  // System Webhooks
+  getSystemWebhooks: async () => {
+    return { webhooks: [] };
+  },
+
+  deleteSystemWebhook: async (webhookId: string) => {
+    return { success: true, webhookId };
+  },
+
+  getSystemWebhookDeliveries: async (_webhookId: string) => {
+    return [] as any[];
+  },
+
+  testWebhook: async (webhookId: string) => {
+    return { success: true, webhookId, error: null as string | null };
+  },
+
+  testSystemWebhook: async (webhookId: string) => {
+    return { success: true, webhookId };
+  },
+
+  // Feedback
+  submitAIFeedback: async (feedback: any) => {
+    return { success: true, feedback };
+  },
+
+  // Metrics
+  getOrgMetricsEvents: async (_filters?: any) => {
+    return { events: [], metrics: {} };
+  },
+
+  // ===== CLOUD STORAGE INTEGRATIONS =====
+
+  // Get connected cloud providers
+  getCloudProviders: async () => {
+    // TODO: Replace with real API call
+    const stored = localStorage.getItem('cloudIntegrations');
+    if (stored) {
+      return { providers: JSON.parse(stored) };
+    }
+    return {
+      providers: [
+        { id: 'google-drive', name: 'Google Drive', connected: false },
+        { id: 'onedrive', name: 'OneDrive', connected: false },
+        { id: 'dropbox', name: 'Dropbox', connected: false },
+      ],
+    };
+  },
+
+  // Initiate OAuth flow for cloud provider
+  initiateCloudOAuth: async (providerId: string) => {
+    // TODO: Replace with real API call that returns OAuth URL
+    console.log(`[CloudAPI] Initiating OAuth for ${providerId}`);
+    return {
+      authUrl: `https://accounts.${providerId}.com/oauth?client_id=xxx&redirect_uri=xxx`,
+      state: `oauth-${Date.now()}`,
+    };
+  },
+
+  // Complete OAuth callback
+  completeCloudOAuth: async (providerId: string, code: string, state: string) => {
+    console.log(`[CloudAPI] Completing OAuth for ${providerId}`, { code, state });
+    // Update localStorage for demo
+    const stored = localStorage.getItem('cloudIntegrations');
+    const providers = stored ? JSON.parse(stored) : [];
+    const updated = providers.map((p: any) =>
+      p.id === providerId ? { ...p, connected: true, email: 'user@example.com' } : p
+    );
+    localStorage.setItem('cloudIntegrations', JSON.stringify(updated));
+    return { success: true, provider: { id: providerId, connected: true } };
+  },
+
+  // Disconnect cloud provider
+  disconnectCloudProvider: async (providerId: string) => {
+    console.log(`[CloudAPI] Disconnecting ${providerId}`);
+    const stored = localStorage.getItem('cloudIntegrations');
+    if (stored) {
+      const providers = JSON.parse(stored);
+      const updated = providers.map((p: any) =>
+        p.id === providerId ? { ...p, connected: false, email: undefined } : p
+      );
+      localStorage.setItem('cloudIntegrations', JSON.stringify(updated));
+    }
+    return { success: true };
+  },
+
+  // List files from cloud provider
+  listCloudFiles: async (providerId: string, folderId?: string) => {
+    console.log(`[CloudAPI] Listing files from ${providerId}, folder: ${folderId}`);
+    // Demo data
+    return {
+      files: [
+        { id: '1', name: 'Dokumenty projektowe', mimeType: 'folder', size: 0, isFolder: true },
+        { id: '2', name: 'Prezentacje', mimeType: 'folder', size: 0, isFolder: true },
+        { id: '3', name: 'Raport Q4 2025.pdf', mimeType: 'application/pdf', size: 2453000, isFolder: false, modifiedAt: '2025-12-15' },
+        { id: '4', name: 'Budżet projektu.xlsx', mimeType: 'application/vnd.ms-excel', size: 156000, isFolder: false, modifiedAt: '2025-12-10' },
+        { id: '5', name: 'Notatki ze spotkania.docx', mimeType: 'application/msword', size: 45000, isFolder: false, modifiedAt: '2025-12-08' },
+      ],
+      nextPageToken: null,
+    };
+  },
+
+  // Get file download URL
+  getCloudFileDownloadUrl: async (providerId: string, fileId: string) => {
+    console.log(`[CloudAPI] Getting download URL for ${providerId}/${fileId}`);
+    // In real implementation, this would return a signed URL
+    return { downloadUrl: `/api/cloud/${providerId}/files/${fileId}/download` };
+  },
+
+  // Download file from cloud
+  downloadCloudFile: async (providerId: string, fileId: string): Promise<Blob> => {
+    console.log(`[CloudAPI] Downloading file ${providerId}/${fileId}`);
+    // In real implementation, this would download the actual file
+    // For demo, return empty blob
+    return new Blob(['Demo file content'], { type: 'text/plain' });
   },
 };
 

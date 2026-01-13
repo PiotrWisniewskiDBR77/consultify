@@ -373,60 +373,101 @@ export class InitiativeController {
 
       const rows = await queryHelpers.queryAll(sql, [orgId]);
 
-      const initiatives = rows.map((i: Record<string, unknown>) => ({
-        id: i.id,
-        organizationId: i.organization_id,
-        projectId: i.project_id,
-        name: i.title || i.name || 'Untitled Initiative',
-        title: i.title || i.name || 'Untitled Initiative',
-        axis: i.axis || 'operational',
-        area: i.area,
-        summary: i.summary,
-        hypothesis: i.hypothesis,
-        status: i.status || 'DRAFT',
-        progress: i.progress || 0,
-        currentStage: i.current_stage,
-        businessValue: i.business_value || 0,
-        costCapex: i.cost_capex || 0,
-        costOpex: i.cost_opex || 0,
-        expectedRoi: i.expected_roi || 0,
-        valueDriver: i.value_driver,
-        confidenceLevel: i.confidence_level || 'medium',
-        valueTiming: i.value_timing,
-        plannedStartDate: i.planned_start_date,
-        plannedEndDate: i.planned_end_date,
-        actualStartDate: i.actual_start_date,
-        actualEndDate: i.actual_end_date,
-        priority: i.priority || 'medium',
-        ownerBusiness: i.owner_business_id
-          ? {
-              id: i.owner_business_id,
-              firstName: i.ob_first_name,
-              lastName: i.ob_last_name,
-              avatarUrl: i.ob_avatar,
-            }
-          : null,
-        ownerExecution: i.owner_execution_id
-          ? {
-              id: i.owner_execution_id,
-              firstName: i.oe_first_name,
-              lastName: i.oe_last_name,
-              avatarUrl: i.oe_avatar,
-            }
-          : null,
-        createdAt: i.created_at,
-        updatedAt: i.updated_at,
-      }));
+      // Helper to normalize status
+      const normalizeStatus = (status: string | unknown): string => {
+        const s = String(status || 'DRAFT').toUpperCase();
+        // Map old statuses to new ones
+        if (s.includes('STEP3') || s.includes('STEP_3')) return 'REVIEW';
+        if (s.includes('STEP4') || s.includes('STEP_4') || s.includes('PILOT')) return 'APPROVED';
+        if (s.includes('STEP5') || s.includes('STEP_5') || s.includes('FULL')) return 'EXECUTING';
+        if (s === 'COMPLETED' || s === 'DONE') return 'DONE';
+        if (['DRAFT', 'PLANNING', 'REVIEW', 'APPROVED', 'EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED'].includes(s)) {
+          return s;
+        }
+        return 'DRAFT';
+      };
 
-      // Calculate stats
+      // Helper to parse localized name
+      const parseName = (name: string | unknown): string => {
+        const n = String(name || 'Untitled Initiative');
+        if (n.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(n);
+            return parsed.en || parsed.pl || n;
+          } catch {
+            return n;
+          }
+        }
+        return n;
+      };
+
+      const initiatives = rows.map((i: Record<string, unknown>) => {
+        const budget = ((i.cost_capex as number) || 0) + ((i.cost_opex as number) || 0) || (i.business_value as number) || 0;
+        return {
+          id: i.id,
+          organizationId: i.organization_id,
+          projectId: i.project_id,
+          name: parseName(i.title || i.name),
+          title: parseName(i.title || i.name),
+          axis: i.axis || 'operational',
+          area: i.area,
+          summary: i.summary,
+          hypothesis: i.hypothesis,
+          status: normalizeStatus(i.status),
+          progress: i.progress || 0,
+          currentStage: i.current_stage,
+          businessValue: i.business_value || 0,
+          budget: budget,
+          costCapex: i.cost_capex || 0,
+          costOpex: i.cost_opex || 0,
+          expectedRoi: i.expected_roi || 0,
+          valueDriver: i.value_driver,
+          confidenceLevel: i.confidence_level || 'medium',
+          valueTiming: i.value_timing,
+          plannedStartDate: i.planned_start_date,
+          plannedEndDate: i.planned_end_date,
+          actualStartDate: i.actual_start_date,
+          actualEndDate: i.actual_end_date,
+          priority: (String(i.priority || 'MEDIUM')).toUpperCase(),
+          targetQuarter: i.planned_start_date 
+            ? `Q${Math.ceil((new Date(i.planned_start_date as string).getMonth() + 1) / 3)} ${new Date(i.planned_start_date as string).getFullYear()}`
+            : undefined,
+          ownerBusiness: i.owner_business_id
+            ? {
+                id: i.owner_business_id,
+                firstName: i.ob_first_name,
+                lastName: i.ob_last_name,
+                avatarUrl: i.ob_avatar,
+              }
+            : null,
+          ownerExecution: i.owner_execution_id
+            ? {
+                id: i.owner_execution_id,
+                firstName: i.oe_first_name,
+                lastName: i.oe_last_name,
+                avatarUrl: i.oe_avatar,
+              }
+            : null,
+          createdAt: i.created_at,
+          updatedAt: i.updated_at,
+        };
+      });
+
+      // Calculate stats by status
+      const byStatus: Record<string, number> = {};
+      initiatives.forEach((i: any) => {
+        byStatus[i.status] = (byStatus[i.status] || 0) + 1;
+      });
+
       const totalInitiatives = initiatives.length;
-      const inProgress = initiatives.filter((i: any) => i.status === 'IN_PROGRESS').length;
-      const completed = initiatives.filter((i: any) => i.status === 'COMPLETED').length;
-      const atRisk = initiatives.filter(
-        (i: any) => i.status === 'BLOCKED' || i.status === 'AT_RISK'
-      ).length;
+      const executing = byStatus['EXECUTING'] || 0;
+      const approved = byStatus['APPROVED'] || 0;
+      const review = byStatus['REVIEW'] || 0;
+      const blockedCount = byStatus['BLOCKED'] || 0;
+      const done = byStatus['DONE'] || 0;
+      
       const totalBudget = initiatives.reduce(
-        (sum: number, i: any) => sum + (i.costCapex || 0) + (i.costOpex || 0),
+        (sum: number, i: any) => sum + (i.budget || 0),
         0
       );
       const totalValue = initiatives.reduce(
@@ -444,10 +485,13 @@ export class InitiativeController {
       res.json({
         initiatives,
         stats: {
-          totalInitiatives,
-          inProgress,
-          completed,
-          atRisk,
+          total: totalInitiatives,
+          byStatus,
+          executing,
+          approved,
+          review,
+          blockedCount,
+          done,
           totalBudget,
           totalValue,
           avgProgress,

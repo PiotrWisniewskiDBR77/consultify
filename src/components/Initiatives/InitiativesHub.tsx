@@ -1,0 +1,447 @@
+/**
+ * InitiativesHub
+ * Unified Initiatives module with ModuleHub UI pattern
+ * Integrates original Portfolio components (Kanban, List, Timeline, Matrix)
+ * Connected to real API endpoints
+ */
+
+import {
+  Lightbulb,
+  Plus,
+  RefreshCw,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { 
+  InitiativeStatus, 
+  PortfolioFilters, 
+  PortfolioInitiative, 
+} from '../../types';
+
+// Portfolio view components
+import { InitiativeSidePanel } from '../Portfolio/InitiativeSidePanel';
+import { PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
+import { PortfolioListView } from '../Portfolio/PortfolioListView';
+import { PortfolioMatrixView } from '../Portfolio/PortfolioMatrixView';
+import { PortfolioTimelineView } from '../Portfolio/PortfolioTimelineView';
+
+// Initiative Card component
+import { InitiativeCard } from '../InitiativeCard';
+
+// Dynamic card for full initiative view
+import { InitiativeDetailCard } from './InitiativeDetailCard';
+
+// ModuleHub components
+import {
+  CategoryButton,
+  FilterChip,
+  ModuleHub,
+  ModuleTab,
+  OpenDocument,
+  StatusFilter,
+  ViewMode,
+} from '../shared/ModuleHub';
+
+// Status metadata for filters
+const STATUS_META: Record<InitiativeStatus, { 
+  color: string; 
+  label: string; 
+  dotColor: string;
+}> = {
+  [InitiativeStatus.DRAFT]: { color: 'slate', label: 'Draft', dotColor: 'bg-slate-400' },
+  [InitiativeStatus.PLANNING]: { color: 'blue', label: 'Planning', dotColor: 'bg-blue-400' },
+  [InitiativeStatus.REVIEW]: { color: 'amber', label: 'In Review', dotColor: 'bg-amber-400' },
+  [InitiativeStatus.APPROVED]: { color: 'emerald', label: 'Approved', dotColor: 'bg-emerald-400' },
+  [InitiativeStatus.EXECUTING]: { color: 'cyan', label: 'Executing', dotColor: 'bg-cyan-400' },
+  [InitiativeStatus.BLOCKED]: { color: 'red', label: 'Blocked', dotColor: 'bg-red-400' },
+  [InitiativeStatus.DONE]: { color: 'green', label: 'Done', dotColor: 'bg-green-400' },
+  [InitiativeStatus.CANCELLED]: { color: 'gray', label: 'Cancelled', dotColor: 'bg-gray-400' },
+  [InitiativeStatus.ARCHIVED]: { color: 'slate', label: 'Archived', dotColor: 'bg-slate-500' },
+};
+
+interface InitiativesHubProps {
+  initialTab?: ModuleTab;
+}
+
+export const InitiativesHub: React.FC<InitiativesHubProps> = ({
+  initialTab = 'list',
+}) => {
+  const { t } = useTranslation();
+  const { currentProjectId } = useAppStore();
+
+  // View state
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
+  const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
+  
+  // Data state
+  const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showNewModal, setShowNewModal] = useState(false);
+
+  // Side panel state
+  const [selectedInitiative, setSelectedInitiative] = useState<PortfolioInitiative | null>(null);
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+
+  // Filter state for API
+  const [filters, setFilters] = useState<PortfolioFilters>({});
+
+  // ============================================
+  // DATA FETCHING - Real API
+  // ============================================
+
+  const fetchData = useCallback(async (showRefreshIndicator = false) => {
+    if (showRefreshIndicator) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (currentProjectId) params.append('projectId', currentProjectId);
+      if (activeStatusFilter) params.append('status', activeStatusFilter);
+      if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
+      if (searchQuery) params.append('search', searchQuery);
+
+      // Try portfolio endpoint first, fallback to regular initiatives
+      let response;
+      try {
+        response = await Api.get(`/initiatives/portfolio?${params.toString()}`);
+      } catch {
+        // Fallback to regular initiatives endpoint
+        response = await Api.getInitiatives(currentProjectId || undefined);
+        response = { initiatives: Array.isArray(response) ? response : response.initiatives || [] };
+      }
+
+      setInitiatives(response.initiatives || []);
+    } catch (error: any) {
+      console.error('[InitiativesHub] Fetch error:', error);
+      toast.error('Failed to load initiatives');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [currentProjectId, activeStatusFilter, filters.priority, searchQuery]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // ============================================
+  // STATUS FILTERS
+  // ============================================
+
+  const statusFilters: StatusFilter[] = useMemo(() => {
+    const counts: Record<string, number> = {};
+    initiatives.forEach(i => {
+      counts[i.status] = (counts[i.status] || 0) + 1;
+    });
+    
+    return [
+      { id: 'all', label: 'All', color: 'bg-slate-400', count: initiatives.length },
+      { id: InitiativeStatus.DRAFT, label: 'Draft', color: 'bg-slate-400', count: counts[InitiativeStatus.DRAFT] || 0 },
+      { id: InitiativeStatus.PLANNING, label: 'Planning', color: 'bg-blue-400', count: counts[InitiativeStatus.PLANNING] || 0 },
+      { id: InitiativeStatus.REVIEW, label: 'Review', color: 'bg-amber-400', count: counts[InitiativeStatus.REVIEW] || 0 },
+      { id: InitiativeStatus.APPROVED, label: 'Approved', color: 'bg-emerald-400', count: counts[InitiativeStatus.APPROVED] || 0 },
+      { id: InitiativeStatus.EXECUTING, label: 'Executing', color: 'bg-cyan-400', count: counts[InitiativeStatus.EXECUTING] || 0 },
+      { id: InitiativeStatus.BLOCKED, label: 'Blocked', color: 'bg-red-400', count: counts[InitiativeStatus.BLOCKED] || 0 },
+      { id: InitiativeStatus.DONE, label: 'Done', color: 'bg-green-400', count: counts[InitiativeStatus.DONE] || 0 },
+      { id: InitiativeStatus.CANCELLED, label: 'Cancelled', color: 'bg-gray-400', count: counts[InitiativeStatus.CANCELLED] || 0 },
+      { id: InitiativeStatus.ARCHIVED, label: 'Archived', color: 'bg-slate-500', count: counts[InitiativeStatus.ARCHIVED] || 0 },
+    ];
+  }, [initiatives]);
+
+  // Available view modes
+  const availableViewModes: ViewMode[] = ['table', 'grid', 'kanban', 'timeline', 'matrix'];
+
+  // Empty tabs - using status filters instead
+  const tabs: any[] = [];
+
+  // Category buttons - only New Initiative
+  const categoryButtons: CategoryButton[] = useMemo(() => [
+    {
+      id: 'new',
+      label: 'New Initiative',
+      icon: <Plus size={16} />,
+      onClick: () => setShowNewModal(true),
+    },
+  ], []);
+
+  // ============================================
+  // HANDLERS
+  // ============================================
+
+  // Open side panel when clicking on initiative (quick preview)
+  const handleInitiativeClick = useCallback((initiative: PortfolioInitiative) => {
+    setSelectedInitiative(initiative);
+    setIsSidePanelOpen(true);
+  }, []);
+
+// Open initiative as dynamic card - called from side panel button
+  const handleOpenFullScreen = useCallback((initiative: PortfolioInitiative) => {
+    // Close side panel first
+    setIsSidePanelOpen(false);
+
+    // Add to open documents for tab display (if not already open)
+    const existingDoc = openDocuments.find(d => d.id === initiative.id);
+    if (!existingDoc) {
+      const newDoc: OpenDocument = {
+        id: initiative.id,
+        name: initiative.name,
+        type: 'initiative',
+        subType: initiative.axis || 'operational',
+        status: initiative.status as any,
+      };
+      setOpenDocuments(prev => [...prev, newDoc]);
+    }
+    // Set as active document - this will trigger rendering InitiativeDetailCard
+    setActiveDocumentId(initiative.id);
+  }, [openDocuments]);
+
+  const handleCloseSidePanel = useCallback(() => {
+    setIsSidePanelOpen(false);
+    setTimeout(() => setSelectedInitiative(null), 300);
+  }, []);
+
+  const handleStatusChange = useCallback(async (initiativeId: string, newStatus: InitiativeStatus) => {
+    try {
+      await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
+      setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i)));
+      toast.success('Status updated');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Failed to update status');
+    }
+  }, []);
+
+  const handleQuickUpdate = useCallback(async (initiativeId: string, updates: Partial<PortfolioInitiative>) => {
+    try {
+      await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
+      setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, ...updates } : i)));
+    } catch (error: any) {
+      toast.error('Failed to update');
+    }
+  }, []);
+
+  const handleRemoveFilter = useCallback((id: string) => {
+    setActiveFilters((prev) => prev.filter((f) => f.id !== id));
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setActiveFilters([]);
+  }, []);
+
+  const handleShowList = useCallback(() => {
+    setActiveDocumentId(null);
+  }, []);
+
+  const handleCloseDocument = useCallback((id: string) => {
+    setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+    if (activeDocumentId === id) {
+      setActiveDocumentId(null);
+    }
+  }, [activeDocumentId]);
+
+  // Handle save from dynamic card
+  const handleSaveFromCard = useCallback(() => {
+    // Refresh list data after save
+    fetchData(true);
+    toast.success('Initiative saved');
+  }, [fetchData]);
+
+  // ============================================
+  // CONTENT RENDERING - Original Portfolio Components
+  // ============================================
+
+  const renderContent = () => {
+    // If there's an active document, show the dynamic card
+    if (activeDocumentId) {
+      return (
+        <InitiativeDetailCard
+          initiativeId={activeDocumentId}
+          onSave={handleSaveFromCard}
+        />
+      );
+    }
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <RefreshCw className="w-8 h-8 animate-spin text-primary-500" />
+        </div>
+      );
+    }
+
+    if (initiatives.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full text-slate-500">
+          <div className="text-center">
+            <Lightbulb className="w-12 h-12 mx-auto mb-4 text-purple-400/50" />
+            <p className="text-lg text-white">No Initiatives Yet</p>
+            <p className="text-sm text-slate-400 mt-2">
+              Create your first initiative to get started
+            </p>
+            <button
+              onClick={() => setShowNewModal(true)}
+              className="mt-6 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg text-sm font-medium hover:from-primary-400 hover:to-primary-500 transition-all"
+            >
+              <Plus size={14} className="inline mr-2" />
+              New Initiative
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Filter by status if active
+    const filteredInitiatives = activeStatusFilter
+      ? initiatives.filter(i => i.status === activeStatusFilter)
+      : initiatives;
+
+    // Filter by search
+    const searchedInitiatives = searchQuery
+      ? filteredInitiatives.filter(i =>
+          i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (i.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : filteredInitiatives;
+
+    switch (viewMode) {
+      case 'table':
+        return (
+          <PortfolioListView
+            initiatives={searchedInitiatives}
+            onInitiativeClick={handleInitiativeClick}
+            onStatusChange={handleStatusChange}
+            onQuickUpdate={handleQuickUpdate}
+          />
+        );
+      case 'grid':
+        return (
+          <div className="h-full overflow-auto p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {searchedInitiatives.map((initiative) => (
+                <InitiativeCard
+                  key={initiative.id}
+                  initiative={{
+                    ...initiative,
+                    title: initiative.name,
+                    name: initiative.name,
+                    status: initiative.status as any,
+                    priority: initiative.priority as any,
+                  } as any}
+                  onClick={() => handleInitiativeClick(initiative)}
+                />
+              ))}
+            </div>
+            {searchedInitiatives.length === 0 && (
+              <div className="flex items-center justify-center h-64 text-slate-400">
+                No initiatives found
+              </div>
+            )}
+          </div>
+        );
+      case 'kanban':
+        return (
+          <PortfolioKanbanView
+            initiatives={searchedInitiatives}
+            onInitiativeClick={handleInitiativeClick}
+            onStatusChange={handleStatusChange}
+          />
+        );
+      case 'timeline':
+        return (
+          <PortfolioTimelineView
+            initiatives={searchedInitiatives}
+            onInitiativeClick={handleInitiativeClick}
+            projectId={currentProjectId || undefined}
+          />
+        );
+      case 'matrix':
+        return (
+          <PortfolioMatrixView
+            initiatives={searchedInitiatives}
+            onInitiativeClick={handleInitiativeClick}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  // ============================================
+  // MAIN RENDER
+  // ============================================
+
+  return (
+    <>
+      <ModuleHub
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onSearch={setSearchQuery}
+        openDocuments={openDocuments}
+        activeDocumentId={activeDocumentId}
+        onSelectDocument={setActiveDocumentId}
+        onCloseDocument={handleCloseDocument}
+        onShowList={handleShowList}
+        activeFilters={activeFilters}
+        onRemoveFilter={handleRemoveFilter}
+        onClearFilters={handleClearFilters}
+        categoryButtons={categoryButtons}
+        statusFilters={statusFilters}
+        activeStatusFilter={activeStatusFilter}
+        onStatusFilterChange={setActiveStatusFilter}
+        availableViewModes={availableViewModes}
+      >
+        <div className="flex-1 overflow-hidden">
+          {renderContent()}
+        </div>
+      </ModuleHub>
+
+      {/* Side Panel for Initiative Details */}
+      <InitiativeSidePanel
+        initiative={selectedInitiative}
+        isOpen={isSidePanelOpen}
+        onClose={handleCloseSidePanel}
+        onUpdate={(updated) => {
+          setInitiatives((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+        }}
+        onOpenFullDetail={handleOpenFullScreen}
+      />
+
+      {/* New Initiative Modal */}
+      {showNewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-lg font-semibold text-white mb-4">
+              Create New Initiative
+            </h2>
+            <p className="text-slate-400 text-sm mb-6">
+              This feature is coming soon. Use the AI Chat to generate initiatives from assessments.
+            </p>
+            <button
+              onClick={() => setShowNewModal(false)}
+              className="w-full py-2 text-sm text-slate-400 hover:text-white transition-colors border border-navy-600 rounded-lg hover:bg-navy-800"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default InitiativesHub;
