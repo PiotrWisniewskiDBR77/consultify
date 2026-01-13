@@ -27,10 +27,13 @@ router.use(
         // Since we can't easily 'await' a router mount inside another router's initialization
         // for all sub-routes, we would normally use it at entry point.
         // However, for this wrapper to work, we need to handle the delegation.
-        if (typeof legacyRouter === 'function') {
+        if (legacyRouter && typeof (legacyRouter as any).handle === 'function') {
+            // If it's a Router, use it directly
+            return (legacyRouter as any).handle(req, res, next);
+        } else if (typeof legacyRouter === 'function') {
             return (legacyRouter as any)(req, res, next);
         } else {
-            // If it's a Router, use it directly
+            // Fallback: try to use as Router
             return (legacyRouter as any).handle(req, res, next);
         }
     }),

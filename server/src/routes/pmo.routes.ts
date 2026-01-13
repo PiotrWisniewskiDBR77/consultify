@@ -5,9 +5,8 @@
  * All PMO-related API endpoints
  */
 
-import { Router } from 'express';
+import { Response, Router } from 'express';
 
-import { Response } from 'express';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';

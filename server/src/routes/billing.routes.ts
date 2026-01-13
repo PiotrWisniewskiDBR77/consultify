@@ -1393,7 +1393,7 @@ router.post(
                     | Record<string, unknown>;
             }
             const webhookEvent = event as WebhookEvent;
-            const payloadData = (webhookEvent.payload as any)?.data;
+            const payloadData = (webhookEvent.payload as any)?.data as { object?: Record<string, unknown> } | undefined;
             const payload = (payloadData?.object || webhookEvent.payload) as
                 | Record<string, unknown>
                 | undefined;

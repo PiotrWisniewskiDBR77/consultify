@@ -38,7 +38,8 @@ try {
 if (process.env.STRIPE_SECRET_KEY) {
     try {
         const stripeModule = await import('stripe');
-        stripe = stripeModule.default(process.env.STRIPE_SECRET_KEY);
+        const StripeClass = stripeModule.default;
+        stripe = new StripeClass(process.env.STRIPE_SECRET_KEY);
     } catch {
         console.warn('[TokenBilling] Stripe not available');
     }

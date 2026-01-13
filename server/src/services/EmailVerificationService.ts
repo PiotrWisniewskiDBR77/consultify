@@ -6,7 +6,7 @@
  */
 
 // Lazy load the JS service module
-import service from '../services/emailVerificationService.js';
+import service from '../../services/emailVerificationService.js';
 
 // Export default instance (for backward compatibility)
 export default service;
