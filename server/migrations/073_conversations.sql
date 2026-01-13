@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
     project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
+    chat_project_id UUID REFERENCES chat_projects(id) ON DELETE SET NULL,
     
     -- Conversation metadata
     title VARCHAR(255) NOT NULL DEFAULT 'New conversation',
@@ -86,6 +87,11 @@ CREATE INDEX IF NOT EXISTS idx_conversations_starred
 ON conversations(user_id, starred) 
 WHERE starred = TRUE;
 
+-- Conversations: Filter by chat project
+CREATE INDEX IF NOT EXISTS idx_conversations_chat_project
+ON conversations(chat_project_id)
+WHERE chat_project_id IS NOT NULL;
+
 -- Conversations: Full-text search on title
 CREATE INDEX IF NOT EXISTS idx_conversations_title_search 
 ON conversations USING gin(to_tsvector('english', title));
@@ -146,6 +152,16 @@ COMMENT ON TABLE conversation_messages IS 'Stores individual messages within con
 COMMENT ON COLUMN conversations.pmo_context IS 'Links to PMO entities (assessments, initiatives, roadmaps) discussed in conversation';
 COMMENT ON COLUMN conversations.tags IS 'Auto-generated tags based on conversation content';
 COMMENT ON COLUMN conversation_messages.metadata IS 'Rich data: citations, actions, tool calls, etc.';
+
+
+
+
+
+
+
+
+
+
 
 
 

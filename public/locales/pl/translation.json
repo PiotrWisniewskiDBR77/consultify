@@ -1,6 +1,6 @@
 {
   "sidebar": {
-    "aiChat": "AI Chat",
+    "aiChat": "Czat AI",
     "dashboard": "Pulpit",
     "quickAssessment": "Szybka Diagnoza",
     "fullProject": "Pełna Transformacja",
@@ -50,6 +50,11 @@
     "logOut": "Wyloguj",
     "intro": "Wstęp",
     "organization": "Organizacja",
+    "projectIntelligence": "Inteligencja Projektu",
+    "benefitsRealization": "Realizacja Korzyści",
+    "partnerPortal": "Portal Partnerski",
+    "economics": "Ekonomia",
+    "studio": "Studio",
     "context": {
       "profile": "Profil Firmy",
       "goals": "Cele i Oczekiwania",
@@ -67,7 +72,7 @@
     "fullImplementation": "Realizacja",
     "standardReports": "Raporty Standardowe",
     "executiveView": "Widok Zarządu",
-    "aiAdvisor": "AI Advisor",
+    "aiAdvisor": "Doradca AI",
     "automationScheme": "Schemat automatyzacji",
     "implementation": "Wdrożenie",
     "realization": "Realizacja",
@@ -78,11 +83,13 @@
     "assessmentCMMI": "CMMI",
     "assessmentLean": "Lean 4.0",
     "assessmentOther": "Inne",
-    "affiliateDashboard": "Ecosystem Impact",
+    "affiliateDashboard": "Wpływ Ekosystemu",
+    "discoveryConsultant": "Discovery",
     "collapse": "Zwiń",
     "expand": "Rozwiń",
     "metrics": "Metryki & Konwersja",
-    "portfolioRoadmap": "Inicjatywy"
+    "portfolioRoadmap": "Inicjatywy",
+    "superAdmin": "Super Admin"
   },
   "portfolio": {
     "title": "Inicjatywy",
@@ -93,6 +100,12 @@
       "timeline": "Oś czasu",
       "matrix": "Macierz"
     },
+    "emptyState": {
+      "title": "Brak inicjatyw",
+      "description": "Utwórz pierwszą inicjatywę lub wygeneruj z oceny, aby rozpocząć budowanie portfolio.",
+      "createFirst": "Nowa Inicjatywa"
+    },
+    "newInitiative": "Nowa Inicjatywa",
     "filters": {
       "allProjects": "Wszystkie projekty",
       "allStatuses": "Wszystkie statusy",
@@ -143,6 +156,13 @@
       "description": "Utwórz pierwszą inicjatywę lub wygeneruj z oceny"
     }
   },
+  "superadmin": {
+    "overview": "Przegląd",
+    "customers": "Klienci",
+    "aiPlatform": "Platforma AI",
+    "revenue": "Przychody",
+    "system": "System"
+  },
   "myWork": {
     "title": "Moja Praca",
     "tasks": "Zadania",
@@ -187,13 +207,13 @@
     "signInText": "Zaloguj się, aby kontynuować podróż transformacji.",
     "backToStart": "Powrót do Ekranu Startowego",
     "verifyEmail": {
-      "verifying": "Verifying your email...",
-      "successTitle": "Email Verified!",
-      "successMessage": "Thank you for verifying your email.",
-      "redirecting": "Redirecting to login...",
-      "errorTitle": "Verification Failed",
-      "invalidToken": "Invalid verification link.",
-      "failedMessage": "Verification failed. Token may be expired."
+      "verifying": "Weryfikowanie Twojego emaila...",
+      "successTitle": "Email Zweryfikowany!",
+      "successMessage": "Dziękujemy za weryfikację emaila.",
+      "redirecting": "Przekierowanie do logowania...",
+      "errorTitle": "Weryfikacja Nieudana",
+      "invalidToken": "Nieprawidłowy link weryfikacyjny.",
+      "failedMessage": "Weryfikacja nie powiodła się. Token mógł wygasnąć."
     },
     "backToLogin": "Powrót do logowania",
     "privacyLink": "Polityka prywatności",
@@ -444,6 +464,18 @@
     }
   },
   "assessment": {
+    "emptyState": {
+      "title": "Brak ocen",
+      "noMatch": "Brak ocen pasujących do wyszukiwania",
+      "createFirst": "Utwórz Pierwszą Ocenę"
+    },
+    "table": {
+      "assessment": "Ocena",
+      "status": "Status",
+      "progress": "Postęp",
+      "updated": "Zaktualizowano",
+      "actions": "Akcje"
+    },
     "workspace": {
       "header": "Ocena DRD",
       "senseCheck": "Weryfikacja AI",
@@ -1260,10 +1292,7 @@
             ],
             "level4Formula": "Doświadczenie klienta",
             "level5Desc": "Model e-commerce wykorzystuje AI, VR, IoT i zaawansowaną analitykę do tworzenia inteligentnych doświadczeń zakupowych. System sam optymalizuje ofertę, ceny i kanały sprzedaży.",
-            "level5Questions": [
-              "Czy AI steruje ofertą?",
-              "Czy doświadczenie jest inteligentne?"
-            ],
+            "level5Questions": ["Czy AI steruje ofertą?", "Czy doświadczenie jest inteligentne?"],
             "level5Formula": "Inteligentna wartość"
           },
           "platform": {
@@ -1278,20 +1307,13 @@
               "7": "Autonomiczny Ekosystem"
             },
             "level1Desc": "Firma korzysta z istniejących platform do realizacji prostych transakcji, bez tworzenia własnego ekosystemu.",
-            "level1Questions": [
-              "Czy firma tylko korzysta z platform?"
-            ],
+            "level1Questions": ["Czy firma tylko korzysta z platform?"],
             "level1Formula": "Dostęp do rynku",
             "level2Desc": "Firma udostępnia platformę umożliwiającą sprzedaż produktów lub usług przez podmioty trzecie.",
-            "level2Questions": [
-              "Czy inni sprzedają na platformie?"
-            ],
+            "level2Questions": ["Czy inni sprzedają na platformie?"],
             "level2Formula": "Pośrednictwo",
             "level3Desc": "Platforma łączy dostawców, partnerów i klientów, tworząc wartość poprzez ekosystem.",
-            "level3Questions": [
-              "Czy istnieje ekosystem?",
-              "Czy platforma tworzy synergie?"
-            ],
+            "level3Questions": ["Czy istnieje ekosystem?", "Czy platforma tworzy synergie?"],
             "level3Formula": "Synergia",
             "level4Desc": "Platforma oferuje dodatkowo aplikacje i narzędzia SaaS dla uczestników rynku.",
             "level4Questions": [
@@ -1300,10 +1322,7 @@
             ],
             "level4Formula": "Produktywność",
             "level5Desc": "Platforma łączy SEM z aktywną społecznością i inteligentnym wsparciem użytkowników.",
-            "level5Questions": [
-              "Czy użytkownicy współpracują?",
-              "Czy AI wspiera społeczność?"
-            ],
+            "level5Questions": ["Czy użytkownicy współpracują?", "Czy AI wspiera społeczność?"],
             "level5Formula": "Ekosystem wiedzy"
           },
           "aas": {
@@ -1318,29 +1337,19 @@
               "7": "Wszystko-jako-Usługa (XaaS)"
             },
             "level1Desc": "Usługi cyfrowe są realizowane w formie długoterminowych umów, przypominających tradycyjny outsourcing.",
-            "level1Questions": [
-              "Czy usługa przypomina outsourcing?"
-            ],
+            "level1Questions": ["Czy usługa przypomina outsourcing?"],
             "level1Formula": "Wygoda",
             "level2Desc": "Firma oferuje usługi w modelu subskrypcyjnym z jasno zdefiniowanym zakresem.",
-            "level2Questions": [
-              "Czy klient płaci abonament?"
-            ],
+            "level2Questions": ["Czy klient płaci abonament?"],
             "level2Formula": "Dostępność",
             "level3Desc": "Klient płaci za faktyczne użycie zasobów lub funkcji.",
-            "level3Questions": [
-              "Czy klient płaci za użycie?"
-            ],
+            "level3Questions": ["Czy klient płaci za użycie?"],
             "level3Formula": "Elastyczność",
             "level4Desc": "Klient płaci za osiągnięcie konkretnego rezultatu, a dostawca przejmuje odpowiedzialność za wynik.",
-            "level4Questions": [
-              "Czy płatność zależy od wyniku?"
-            ],
+            "level4Questions": ["Czy płatność zależy od wyniku?"],
             "level4Formula": "Wynik",
             "level5Desc": "Dostawca przejmuje całościowe procesy biznesowe klienta, działając jako główny operator.",
-            "level5Questions": [
-              "Czy dostawca zarządza procesem klienta?"
-            ],
+            "level5Questions": ["Czy dostawca zarządza procesem klienta?"],
             "level5Formula": "Delegacja"
           },
           "sharing": {
@@ -1355,29 +1364,19 @@
               "7": "Autonomiczna Pula Zasobów"
             },
             "level1Desc": "Platforma umożliwia współdzielenie zasobów cyfrowych.",
-            "level1Questions": [
-              "Czy zasoby są cyfrowe?"
-            ],
+            "level1Questions": ["Czy zasoby są cyfrowe?"],
             "level1Formula": "Współdzielenie",
             "level2Desc": "Platforma umożliwia współdzielenie fizycznych aktywów.",
-            "level2Questions": [
-              "Czy zasoby są fizyczne?"
-            ],
+            "level2Questions": ["Czy zasoby są fizyczne?"],
             "level2Formula": "Dostęp",
             "level3Desc": "Platforma umożliwia współdzielenie wiedzy i kompetencji.",
-            "level3Questions": [
-              "Czy użytkownicy dzielą się wiedzą?"
-            ],
+            "level3Questions": ["Czy użytkownicy dzielą się wiedzą?"],
             "level3Formula": "Know-how",
             "level4Desc": "Platforma zarządza zasobami w imieniu klientów.",
-            "level4Questions": [
-              "Czy platforma zarządza zasobami?"
-            ],
+            "level4Questions": ["Czy platforma zarządza zasobami?"],
             "level4Formula": "Elastyczność",
             "level5Desc": "Platforma udostępnia złożone rozwiązania biznesowe jako wspólne zasoby.",
-            "level5Questions": [
-              "Czy rozwiązania są kompleksowe?"
-            ],
+            "level5Questions": ["Czy rozwiązania są kompleksowe?"],
             "level5Formula": "Efektywność"
           },
           "monetization": {
@@ -1392,29 +1391,19 @@
               "7": "Dane jako Główny Zasób"
             },
             "level1Desc": "Firma gromadzi dane i wykorzystuje je do poprawy własnych działań.",
-            "level1Questions": [
-              "Czy dane są wykorzystywane wewnętrznie?"
-            ],
+            "level1Questions": ["Czy dane są wykorzystywane wewnętrznie?"],
             "level1Formula": "Zrozumienie",
             "level2Desc": "Firma analizuje dane w celu wspierania decyzji biznesowych.",
-            "level2Questions": [
-              "Czy dane wspierają decyzje?"
-            ],
+            "level2Questions": ["Czy dane wspierają decyzje?"],
             "level2Formula": "Insight",
             "level3Desc": "Dane są wykorzystywane do personalizacji produktów i usług.",
-            "level3Questions": [
-              "Czy dane personalizują ofertę?"
-            ],
+            "level3Questions": ["Czy dane personalizują ofertę?"],
             "level3Formula": "Dopasowanie",
             "level4Desc": "Firma sprzedaje dane lub usługi analityczne innym podmiotom.",
-            "level4Questions": [
-              "Czy dane są sprzedawane?"
-            ],
+            "level4Questions": ["Czy dane są sprzedawane?"],
             "level4Formula": "Monetyzacja",
             "level5Desc": "Dane stanowią fundament nowych produktów, modeli biznesowych i algorytmów AI.",
-            "level5Questions": [
-              "Czy dane są podstawą nowych modeli?"
-            ],
+            "level5Questions": ["Czy dane są podstawą nowych modeli?"],
             "level5Formula": "Innowacja"
           }
         }
@@ -1435,35 +1424,22 @@
               "7": "Przywództwo Sieciowe"
             },
             "level1Desc": "Leadership avoids involvement in innovation and change. Employees are left without guidance, motivation or feedback, which leads to stagnation and loss of competitiveness.",
-            "level1Questions": [
-              "Are leaders disengaged from change?",
-              "Are ideas ignored?"
-            ],
+            "level1Questions": ["Are leaders disengaged from change?", "Are ideas ignored?"],
             "level1Formula": "High risk of failure",
             "level2Desc": "Decisions are made centrally without employee involvement. Innovation is limited due to lack of trust and empowerment.",
-            "level2Questions": [
-              "Are decisions top-down only?"
-            ],
+            "level2Questions": ["Are decisions top-down only?"],
             "level2Formula": "Low adaptability",
             "level3Desc": "Leaders set ambitious goals and provide resources but tightly control execution.",
-            "level3Questions": [
-              "Are goals clear but rigid?"
-            ],
+            "level3Questions": ["Are goals clear but rigid?"],
             "level3Formula": "Fast results, limited learning",
             "level4Desc": "Leaders encourage ideas, psychological safety and initiative.",
-            "level4Questions": [
-              "Do employees feel safe proposing ideas?"
-            ],
+            "level4Questions": ["Do employees feel safe proposing ideas?"],
             "level4Formula": "Strong engagement",
             "level5Desc": "Leaders actively experiment, accept risk and learn from failure.",
-            "level5Questions": [
-              "Is experimentation encouraged?"
-            ],
+            "level5Questions": ["Is experimentation encouraged?"],
             "level5Formula": "High innovation capacity",
             "level6Desc": "Leadership drives vision, values and long-term transformation across the organization.",
-            "level6Questions": [
-              "Is there a strong transformation vision?"
-            ],
+            "level6Questions": ["Is there a strong transformation vision?"],
             "level6Formula": "Sustainable transformation"
           },
           "readiness": {
@@ -1478,34 +1454,22 @@
               "7": "Ciągłe Wymyślanie Się na Nowo"
             },
             "level1Desc": "The organization understands that change is necessary but has not yet organized action.",
-            "level1Questions": [
-              "Is change acknowledged but not executed?"
-            ],
+            "level1Questions": ["Is change acknowledged but not executed?"],
             "level1Formula": "High inertia",
             "level2Desc": "A dedicated group supports and promotes transformation initiatives.",
-            "level2Questions": [
-              "Is there a change coalition?"
-            ],
+            "level2Questions": ["Is there a change coalition?"],
             "level2Formula": "Medium risk",
             "level3Desc": "A clear transformation vision and strategy are being developed collaboratively.",
-            "level3Questions": [
-              "Is there a shared vision?"
-            ],
+            "level3Questions": ["Is there a shared vision?"],
             "level3Formula": "Lower risk",
             "level4Desc": "Vision is communicated clearly and continuously across the organization.",
-            "level4Questions": [
-              "Is communication two-way?"
-            ],
+            "level4Questions": ["Is communication two-way?"],
             "level4Formula": "Low risk",
             "level5Desc": "Transformation initiatives are actively executed and monitored.",
-            "level5Questions": [
-              "Are initiatives implemented?"
-            ],
+            "level5Questions": ["Are initiatives implemented?"],
             "level5Formula": "Controlled risk",
             "level6Desc": "Change is embedded in culture and daily operations.",
-            "level6Questions": [
-              "Is change part of culture?"
-            ],
+            "level6Questions": ["Is change part of culture?"],
             "level6Formula": "Very low risk"
           },
           "improvement": {
@@ -1520,34 +1484,22 @@
               "7": "Samo-Optymalizująca się Organizacja"
             },
             "level1Desc": "Learning occurs mainly through fairs, conferences and external events.",
-            "level1Questions": [
-              "Is learning external only?"
-            ],
+            "level1Questions": ["Is learning external only?"],
             "level1Formula": "Skill gaps",
             "level2Desc": "Regular internal training programmes exist.",
-            "level2Questions": [
-              "Are trainings systematic?"
-            ],
+            "level2Questions": ["Are trainings systematic?"],
             "level2Formula": "Moderate risk",
             "level3Desc": "External experts complement internal learning.",
-            "level3Questions": [
-              "Are external experts used?"
-            ],
+            "level3Questions": ["Are external experts used?"],
             "level3Formula": "Lower risk",
             "level4Desc": "Employees actively pursue self-learning.",
-            "level4Questions": [
-              "Is self-learning encouraged?"
-            ],
+            "level4Questions": ["Is self-learning encouraged?"],
             "level4Formula": "Low risk",
             "level5Desc": "Cross-functional teams learn through real projects.",
-            "level5Questions": [
-              "Are teams cross-functional?"
-            ],
+            "level5Questions": ["Are teams cross-functional?"],
             "level5Formula": "Very low risk",
             "level6Desc": "Formal mentoring accelerates competence transfer.",
-            "level6Questions": [
-              "Is mentoring systematic?"
-            ],
+            "level6Questions": ["Is mentoring systematic?"],
             "level6Formula": "Minimal risk"
           },
           "innovation": {
@@ -1562,34 +1514,22 @@
               "7": "DNA Innowacji"
             },
             "level1Desc": "Employees are encouraged to submit ideas.",
-            "level1Questions": [
-              "Are ideas rewarded?"
-            ],
+            "level1Questions": ["Are ideas rewarded?"],
             "level1Formula": "Low maturity",
             "level2Desc": "Ideas are tested through pilots and prototypes.",
-            "level2Questions": [
-              "Are experiments allowed?"
-            ],
+            "level2Questions": ["Are experiments allowed?"],
             "level2Formula": "Moderate risk",
             "level3Desc": "Organization actively analyzes market and technology trends.",
-            "level3Questions": [
-              "Are trends monitored?"
-            ],
+            "level3Questions": ["Are trends monitored?"],
             "level3Formula": "Lower risk",
             "level4Desc": "Failures are accepted as learning opportunities.",
-            "level4Questions": [
-              "Are mistakes tolerated?"
-            ],
+            "level4Questions": ["Are mistakes tolerated?"],
             "level4Formula": "Low risk",
             "level5Desc": "R&D is embedded in company strategy.",
-            "level5Questions": [
-              "Is R&D strategic?"
-            ],
+            "level5Questions": ["Is R&D strategic?"],
             "level5Formula": "Very low risk",
             "level6Desc": "Innovation ecosystem partnerships are strategic.",
-            "level6Questions": [
-              "Are external partners used?"
-            ],
+            "level6Questions": ["Are external partners used?"],
             "level6Formula": "Minimal risk"
           },
           "resources": {
@@ -1604,34 +1544,22 @@
               "7": "Zasoby Obfitego Ekosystemu"
             },
             "level1Desc": "Financial resources for transformation are identified.",
-            "level1Questions": [
-              "Is budget allocated?"
-            ],
+            "level1Questions": ["Is budget allocated?"],
             "level1Formula": "High risk",
             "level2Desc": "Employees have access to training resources.",
-            "level2Questions": [
-              "Are trainings accessible?"
-            ],
+            "level2Questions": ["Are trainings accessible?"],
             "level2Formula": "Medium risk",
             "level3Desc": "Internal and external experts are accessible.",
-            "level3Questions": [
-              "Are experts engaged?"
-            ],
+            "level3Questions": ["Are experts engaged?"],
             "level3Formula": "Lower risk",
             "level4Desc": "Reliable data supports decision-making.",
-            "level4Questions": [
-              "Is data available?"
-            ],
+            "level4Questions": ["Is data available?"],
             "level4Formula": "Low risk",
             "level5Desc": "Modern tools and technologies are available.",
-            "level5Questions": [
-              "Are tools modern?"
-            ],
+            "level5Questions": ["Are tools modern?"],
             "level5Formula": "Very low risk",
             "level6Desc": "Strategic partners extend organizational capabilities.",
-            "level6Questions": [
-              "Are partnerships strategic?"
-            ],
+            "level6Questions": ["Are partnerships strategic?"],
             "level6Formula": "Minimal risk"
           }
         }
@@ -1658,35 +1586,22 @@
             ],
             "level1Formula": "Dane opisują przeszłość",
             "level2Desc": "Część danych jest zbierana automatycznie, ale proces nadal wymaga ręcznych korekt. Dane są dostępne szybciej, ale ich jakość bywa nierówna.",
-            "level2Questions": [
-              "Czy część danych zbiera się automatycznie?"
-            ],
+            "level2Questions": ["Czy część danych zbiera się automatycznie?"],
             "level2Formula": "Lepsza widoczność",
             "level3Desc": "Dane są zbierane automatycznie w sposób ciągły i spójny, tworząc wiarygodną bazę operacyjną.",
-            "level3Questions": [
-              "Czy dane zbierają się automatycznie?",
-              "Czy są spójne?"
-            ],
+            "level3Questions": ["Czy dane zbierają się automatycznie?", "Czy są spójne?"],
             "level3Formula": "Dane operacyjne",
             "level4Desc": "Dane są dostępne w czasie rzeczywistym i pokazują aktualny stan procesów.",
-            "level4Questions": [
-              "Czy dane są real-time?"
-            ],
+            "level4Questions": ["Czy dane są real-time?"],
             "level4Formula": "Bieżący obraz",
             "level5Desc": "Dane są zbierane według wspólnych standardów w całej organizacji.",
-            "level5Questions": [
-              "Czy dane są standaryzowane?"
-            ],
+            "level5Questions": ["Czy dane są standaryzowane?"],
             "level5Formula": "Jedna wersja prawdy",
             "level6Desc": "Dane są kompletne i wysokiej jakości, gotowe do analiz predykcyjnych.",
-            "level6Questions": [
-              "Czy dane są kompletne i jakościowe?"
-            ],
+            "level6Questions": ["Czy dane są kompletne i jakościowe?"],
             "level6Formula": "Przewidywalność",
             "level7Desc": "System sam optymalizuje zbieranie danych, wykrywa luki i poprawia jakość.",
-            "level7Questions": [
-              "Czy system sam poprawia dane?"
-            ],
+            "level7Questions": ["Czy system sam poprawia dane?"],
             "level7Formula": "Autonomiczna baza"
           },
           "storage": {
@@ -1701,39 +1616,25 @@
               "7": "Zdecentralizowana Sieć (Mesh)"
             },
             "level1Desc": "Dane są przechowywane lokalnie w plikach i systemach rozproszonych, bez centralnej struktury i kontroli.",
-            "level1Questions": [
-              "Czy dane są w plikach lokalnych?"
-            ],
+            "level1Questions": ["Czy dane są w plikach lokalnych?"],
             "level1Formula": "Brak spójności",
             "level2Desc": "Dane są przechowywane w jednej centralnej bazie, ale bez zaawansowanej architektury.",
-            "level2Questions": [
-              "Czy istnieje jedna baza danych?"
-            ],
+            "level2Questions": ["Czy istnieje jedna baza danych?"],
             "level2Formula": "Podstawowa spójność",
             "level3Desc": "Dane są uporządkowane w hurtowni danych i przygotowane do analiz.",
-            "level3Questions": [
-              "Czy istnieje hurtownia danych?"
-            ],
+            "level3Questions": ["Czy istnieje hurtownia danych?"],
             "level3Formula": "Porządek danych",
             "level4Desc": "Firma przechowuje dane w różnych formatach w data lake.",
-            "level4Questions": [
-              "Czy dane są w różnych formatach?"
-            ],
+            "level4Questions": ["Czy dane są w różnych formatach?"],
             "level4Formula": "Elastyczność",
             "level5Desc": "Architektura łączy zalety hurtowni i data lake.",
-            "level5Questions": [
-              "Czy istnieje jedna architektura?"
-            ],
+            "level5Questions": ["Czy istnieje jedna architektura?"],
             "level5Formula": "Jedna platforma",
             "level6Desc": "Platforma danych spełnia standardy enterprise.",
-            "level6Questions": [
-              "Czy spełnione są standardy?"
-            ],
+            "level6Questions": ["Czy spełnione są standardy?"],
             "level6Formula": "Zaufanie",
             "level7Desc": "System sam zarządza przechowywaniem danych.",
-            "level7Questions": [
-              "Czy system sam zarządza?"
-            ],
+            "level7Questions": ["Czy system sam zarządza?"],
             "level7Formula": "Autonomia"
           },
           "communication": {
@@ -1748,39 +1649,25 @@
               "7": "Komunikacja Sieci Neuronowej"
             },
             "level1Desc": "Dane są przekazywane ręcznie pomiędzy systemami.",
-            "level1Questions": [
-              "Czy dane są przesyłane ręcznie?"
-            ],
+            "level1Questions": ["Czy dane są przesyłane ręcznie?"],
             "level1Formula": "Opóźnienia",
             "level2Desc": "Dane są przesyłane cyklicznie w paczkach.",
-            "level2Questions": [
-              "Czy dane są batch?"
-            ],
+            "level2Questions": ["Czy dane są batch?"],
             "level2Formula": "Okresowa spójność",
             "level3Desc": "Systemy komunikują się przez API.",
-            "level3Questions": [
-              "Czy istnieją API?"
-            ],
+            "level3Questions": ["Czy istnieją API?"],
             "level3Formula": "Bieżąca spójność",
             "level4Desc": "Dane są przesyłane w reakcji na zdarzenia.",
-            "level4Questions": [
-              "Czy architektura jest event-driven?"
-            ],
+            "level4Questions": ["Czy architektura jest event-driven?"],
             "level4Formula": "Natychmiastowość",
             "level5Desc": "Przepływy danych są centralnie orkiestrwane.",
-            "level5Questions": [
-              "Czy przepływy są orkiestrwane?"
-            ],
+            "level5Questions": ["Czy przepływy są orkiestrwane?"],
             "level5Formula": "Kontrola",
             "level6Desc": "Spójna warstwa komunikacji danych w skali enterprise.",
-            "level6Questions": [
-              "Czy istnieje data fabric?"
-            ],
+            "level6Questions": ["Czy istnieje data fabric?"],
             "level6Formula": "Jednolitość",
             "level7Desc": "System sam optymalizuje przepływy danych.",
-            "level7Questions": [
-              "Czy system działa autonomicznie?"
-            ],
+            "level7Questions": ["Czy system działa autonomicznie?"],
             "level7Formula": "Autonomia"
           },
           "analysis": {
@@ -1795,39 +1682,25 @@
               "7": "AI Preskryptywne"
             },
             "level1Desc": "Analiza danych opisuje przeszłość.",
-            "level1Questions": [
-              "Czy raporty opisują przeszłość?"
-            ],
+            "level1Questions": ["Czy raporty opisują przeszłość?"],
             "level1Formula": "Historia",
             "level2Desc": "Analiza przyczyn zdarzeń.",
-            "level2Questions": [
-              "Czy znane są przyczyny?"
-            ],
+            "level2Questions": ["Czy znane są przyczyny?"],
             "level2Formula": "Zrozumienie",
             "level3Desc": "Prognozowanie przyszłych zdarzeń.",
-            "level3Questions": [
-              "Czy firma prognozuje?"
-            ],
+            "level3Questions": ["Czy firma prognozuje?"],
             "level3Formula": "Przewidywanie",
             "level4Desc": "System rekomenduje działania.",
-            "level4Questions": [
-              "Czy system rekomenduje?"
-            ],
+            "level4Questions": ["Czy system rekomenduje?"],
             "level4Formula": "Rekomendacje",
             "level5Desc": "Modele uczą się na bieżąco.",
-            "level5Questions": [
-              "Czy modele się uczą?"
-            ],
+            "level5Questions": ["Czy modele się uczą?"],
             "level5Formula": "Uczenie",
             "level6Desc": "System sam podejmuje decyzje.",
-            "level6Questions": [
-              "Czy system decyduje sam?"
-            ],
+            "level6Questions": ["Czy system decyduje sam?"],
             "level6Formula": "Autonomia",
             "level7Desc": "System sam rozwija modele analityczne.",
-            "level7Questions": [
-              "Czy system się rozwija?"
-            ],
+            "level7Questions": ["Czy system się rozwija?"],
             "level7Formula": "Ewolucja"
           },
           "computing": {
@@ -1842,39 +1715,25 @@
               "7": "Przetwarzanie Wszechobecne"
             },
             "level1Desc": "Obliczenia wykonywane lokalnie.",
-            "level1Questions": [
-              "Czy obliczenia są lokalne?"
-            ],
+            "level1Questions": ["Czy obliczenia są lokalne?"],
             "level1Formula": "Ograniczenia",
             "level2Desc": "Obliczenia na serwerach centralnych.",
-            "level2Questions": [
-              "Czy istnieją centralne serwery?"
-            ],
+            "level2Questions": ["Czy istnieją centralne serwery?"],
             "level2Formula": "Stabilność",
             "level3Desc": "Elastyczna moc obliczeniowa w chmurze.",
-            "level3Questions": [
-              "Czy firma korzysta z chmury?"
-            ],
+            "level3Questions": ["Czy firma korzysta z chmury?"],
             "level3Formula": "Elastyczność",
             "level4Desc": "Połączenie chmury i on-prem.",
-            "level4Questions": [
-              "Czy architektura jest hybrydowa?"
-            ],
+            "level4Questions": ["Czy architektura jest hybrydowa?"],
             "level4Formula": "Optymalizacja",
             "level5Desc": "Obliczenia rozproszone.",
-            "level5Questions": [
-              "Czy system jest rozproszony?"
-            ],
+            "level5Questions": ["Czy system jest rozproszony?"],
             "level5Formula": "Skala",
             "level6Desc": "Wykorzystanie GPU/TPU.",
-            "level6Questions": [
-              "Czy są akceleratory?"
-            ],
+            "level6Questions": ["Czy są akceleratory?"],
             "level6Formula": "Wydajność",
             "level7Desc": "System sam zarządza mocą obliczeniową.",
-            "level7Questions": [
-              "Czy system sam zarządza?"
-            ],
+            "level7Questions": ["Czy system sam zarządza?"],
             "level7Formula": "Autonomia"
           }
         }
@@ -1895,35 +1754,22 @@
               "7": "Autonomiczny System Immunologiczny"
             },
             "level1Desc": "Organizacja nie posiada strategii ani polityk cyberbezpieczeństwa. Działania są reaktywne i przypadkowe, a ryzyko biznesowe jest niekontrolowane.",
-            "level1Questions": [
-              "Czy istnieje formalna strategia?",
-              "Czy ryzyka są mapowane?"
-            ],
+            "level1Questions": ["Czy istnieje formalna strategia?", "Czy ryzyka są mapowane?"],
             "level1Formula": "Wysokie ryzyko reputacyjne",
             "level2Desc": "Organizacja identyfikuje podstawowe ryzyka cybernetyczne, ale nie posiada spójnego planu działania.",
-            "level2Questions": [
-              "Czy ryzyka są identyfikowane?"
-            ],
+            "level2Questions": ["Czy ryzyka są identyfikowane?"],
             "level2Formula": "Świadomość zagrożeń",
             "level3Desc": "Istnieje plan działań ograniczających ryzyko, jednak jego realizacja nie jest systematycznie monitorowana.",
-            "level3Questions": [
-              "Czy istnieje plan działań?"
-            ],
+            "level3Questions": ["Czy istnieje plan działań?"],
             "level3Formula": "Kontrola ryzyka",
             "level4Desc": "Funkcjonują formalne polityki bezpieczeństwa regulujące standardy i procedury.",
-            "level4Questions": [
-              "Czy polityki są egzekwowane?"
-            ],
+            "level4Questions": ["Czy polityki są egzekwowane?"],
             "level4Formula": "Zaufanie operacyjne",
             "level5Desc": "Strategia obejmuje kompetencje ludzi, szkolenia i role odpowiedzialne za cyberbezpieczeństwo.",
-            "level5Questions": [
-              "Czy ludzie są szkoleni?"
-            ],
+            "level5Questions": ["Czy ludzie są szkoleni?"],
             "level5Formula": "Odporność organizacji",
             "level6Desc": "Strategia jest stale monitorowana, audytowana i aktualizowana w odpowiedzi na nowe zagrożenia.",
-            "level6Questions": [
-              "Czy strategia jest audytowana?"
-            ],
+            "level6Questions": ["Czy strategia jest audytowana?"],
             "level6Formula": "Zaufanie strategiczne"
           },
           "network": {
@@ -1938,34 +1784,22 @@
               "7": "Samo-Naprawiające się Sieci"
             },
             "level1Desc": "Podstawowa ochrona sieci oparta na firewallach.",
-            "level1Questions": [
-              "Czy istnieją firewalle?"
-            ],
+            "level1Questions": ["Czy istnieją firewalle?"],
             "level1Formula": "Minimalna ochrona",
             "level2Desc": "Systemy zabezpieczone przed podstawowym malware.",
-            "level2Questions": [
-              "Czy antivirus jest aktualny?"
-            ],
+            "level2Questions": ["Czy antivirus jest aktualny?"],
             "level2Formula": "Stabilność systemów",
             "level3Desc": "Wykrywanie prób naruszeń i ataków.",
-            "level3Questions": [
-              "Czy ataki są wykrywane?"
-            ],
+            "level3Questions": ["Czy ataki są wykrywane?"],
             "level3Formula": "Szybka reakcja",
             "level4Desc": "Centralna analiza zdarzeń bezpieczeństwa.",
-            "level4Questions": [
-              "Czy zdarzenia są korelowane?"
-            ],
+            "level4Questions": ["Czy zdarzenia są korelowane?"],
             "level4Formula": "Kontrola operacyjna",
             "level5Desc": "Zaawansowane systemy uwierzytelniania i autoryzacji.",
-            "level5Questions": [
-              "Czy dostęp jest kontrolowany?"
-            ],
+            "level5Questions": ["Czy dostęp jest kontrolowany?"],
             "level5Formula": "Zaufanie systemowe",
             "level6Desc": "Bezpieczna komunikacja sieciowa w skali organizacji.",
-            "level6Questions": [
-              "Czy komunikacja jest szyfrowana?"
-            ],
+            "level6Questions": ["Czy komunikacja jest szyfrowana?"],
             "level6Formula": "Ciągłość operacyjna"
           },
           "dataProtection": {
@@ -1980,34 +1814,22 @@
               "7": "Szyfrowanie Odporne na Quantum"
             },
             "level1Desc": "Dane są szyfrowane w podstawowym zakresie.",
-            "level1Questions": [
-              "Czy dane są szyfrowane?"
-            ],
+            "level1Questions": ["Czy dane są szyfrowane?"],
             "level1Formula": "Ochrona danych",
             "level2Desc": "Stosowane są zasady silnych haseł.",
-            "level2Questions": [
-              "Czy hasła są zarządzane?"
-            ],
+            "level2Questions": ["Czy hasła są zarządzane?"],
             "level2Formula": "Dostęp kontrolowany",
             "level3Desc": "Dostęp do danych jest kontrolowany rolami.",
-            "level3Questions": [
-              "Czy role są zdefiniowane?"
-            ],
+            "level3Questions": ["Czy role są zdefiniowane?"],
             "level3Formula": "Minimalizacja ryzyka",
             "level4Desc": "Systematyczne kopie zapasowe i procedury odtwarzania.",
-            "level4Questions": [
-              "Czy backupy są testowane?"
-            ],
+            "level4Questions": ["Czy backupy są testowane?"],
             "level4Formula": "Ciągłość biznesu",
             "level5Desc": "Stały monitoring zagrożeń związanych z danymi.",
-            "level5Questions": [
-              "Czy zagrożenia są monitorowane?"
-            ],
+            "level5Questions": ["Czy zagrożenia są monitorowane?"],
             "level5Formula": "Wczesne ostrzeganie",
             "level6Desc": "Zaawansowane mechanizmy weryfikacji tożsamości.",
-            "level6Questions": [
-              "Czy stosowane jest MFA/biometria?"
-            ],
+            "level6Questions": ["Czy stosowane jest MFA/biometria?"],
             "level6Formula": "Wysokie zaufanie"
           },
           "education": {
@@ -2022,34 +1844,22 @@
               "7": "Mentalność Security-First"
             },
             "level1Desc": "Zdefiniowany jest system szkoleń cyberbezpieczeństwa.",
-            "level1Questions": [
-              "Czy istnieje plan szkoleń?"
-            ],
+            "level1Questions": ["Czy istnieje plan szkoleń?"],
             "level1Formula": "Świadomość",
             "level2Desc": "Szkolenia są realizowane według planu.",
-            "level2Questions": [
-              "Czy szkolenia są realizowane?"
-            ],
+            "level2Questions": ["Czy szkolenia są realizowane?"],
             "level2Formula": "Zmniejszenie ryzyka",
             "level3Desc": "Prowadzone są testy bezpieczeństwa.",
-            "level3Questions": [
-              "Czy system jest testowany?"
-            ],
+            "level3Questions": ["Czy system jest testowany?"],
             "level3Formula": "Wykrywanie luk",
             "level4Desc": "Istnieją kompetencje audytorskie wewnątrz organizacji.",
-            "level4Questions": [
-              "Czy są auditorzy?"
-            ],
+            "level4Questions": ["Czy są auditorzy?"],
             "level4Formula": "Kontrola jakości",
             "level5Desc": "Audyt bezpieczeństwa jest planowany i systematyczny.",
-            "level5Questions": [
-              "Czy audyty są planowane?"
-            ],
+            "level5Questions": ["Czy audyty są planowane?"],
             "level5Formula": "Zaufanie",
             "level6Desc": "Organizacja posiada certyfikację ISO 27001.",
-            "level6Questions": [
-              "Czy istnieje certyfikacja?"
-            ],
+            "level6Questions": ["Czy istnieje certyfikacja?"],
             "level6Formula": "Wiarygodność rynkowa"
           },
           "contingency": {
@@ -2064,34 +1874,22 @@
               "7": "Operacje Antykruche"
             },
             "level1Desc": "Zidentyfikowano potencjalne zagrożenia.",
-            "level1Questions": [
-              "Czy zagrożenia są znane?"
-            ],
+            "level1Questions": ["Czy zagrożenia są znane?"],
             "level1Formula": "Świadomość",
             "level2Desc": "Zdefiniowano priorytety reagowania.",
-            "level2Questions": [
-              "Czy priorytety są znane?"
-            ],
+            "level2Questions": ["Czy priorytety są znane?"],
             "level2Formula": "Szybka reakcja",
             "level3Desc": "Istnieją procedury reagowania.",
-            "level3Questions": [
-              "Czy procedury są opisane?"
-            ],
+            "level3Questions": ["Czy procedury są opisane?"],
             "level3Formula": "Kontrola kryzysu",
             "level4Desc": "Pracownicy są szkoleni w reagowaniu kryzysowym.",
-            "level4Questions": [
-              "Czy szkolenia są prowadzone?"
-            ],
+            "level4Questions": ["Czy szkolenia są prowadzone?"],
             "level4Formula": "Gotowość",
             "level5Desc": "Plany awaryjne są regularnie testowane.",
-            "level5Questions": [
-              "Czy plany są testowane?"
-            ],
+            "level5Questions": ["Czy plany są testowane?"],
             "level5Formula": "Odporność",
             "level6Desc": "Dokumentacja awaryjna jest aktualna i używana.",
-            "level6Questions": [
-              "Czy dokumentacja jest aktualna?"
-            ],
+            "level6Questions": ["Czy dokumentacja jest aktualna?"],
             "level6Formula": "Ciągłość"
           }
         }
@@ -2489,6 +2287,9 @@
     "currentAxis": "Bieżąca Oś"
   },
   "aiChat": {
+    "welcome": "Rozpocznij rozmowę",
+    "welcomeSubtitle": "Zadawaj pytania, uzyskuj wnioski i współpracuj z AI",
+    "contextPlaceholder": "Zapytaj o {{context}}...",
     "greeting": {
       "morning": "Dzień dobry",
       "afternoon": "Dzień dobry",
@@ -2499,7 +2300,7 @@
       "afternoon": "Popracujmy nad Twoimi inicjatywami",
       "evening": "Przejrzyj swoją podróż transformacyjną"
     },
-    "placeholder": "Zapytaj o cokolwiek...",
+    "placeholder": "Jak mogę Ci dziś pomóc?",
     "frozenPlaceholder": "AI tymczasowo niedostępne",
     "listening": "Słucham...",
     "send": "Wyślij",
@@ -2571,44 +2372,44 @@
     "voiceModeOff": "Włącz rozmowę głosową"
   },
   "common": {
-    "locked": "Locked",
-    "complete": "Complete",
-    "first": "first",
-    "previousStep": "previous step",
-    "backToDashboard": "Back to Dashboard",
-    "level": "Level",
+    "locked": "Zablokowane",
+    "complete": "Ukończone",
+    "first": "pierwszy",
+    "previousStep": "poprzedni krok",
+    "backToDashboard": "Powrót do pulpitu",
+    "level": "Poziom",
     "status": {
-      "saved": "Auto-saved",
-      "saving": "Saving...",
-      "unsaved": "Unsaved changes",
-      "error": "Save failed",
-      "underConstruction": "Component Under Construction"
+      "saved": "Automatycznie zapisano",
+      "saving": "Zapisywanie...",
+      "unsaved": "Niezapisane zmiany",
+      "error": "Zapis nie powiódł się",
+      "underConstruction": "Komponent w budowie"
     },
     "impersonation": {
-      "banner": "IMPERSONATING: {{email}}",
-      "stop": "Stop Impersonating"
+      "banner": "PODSZYWANIE: {{email}}",
+      "stop": "Zakończ podszywanie"
     },
-    "underConstruction": "Component Under Construction",
-    "backToHome": "Back to Home",
-    "close": "Close",
-    "cancel": "Cancel",
-    "save": "Save Changes",
-    "add": "Add",
-    "apply": "Apply",
-    "confirm": "Confirm",
-    "loading": "Loading...",
-    "analysis": "Analysis",
+    "underConstruction": "Komponent w budowie",
+    "backToHome": "Powrót do strony głównej",
+    "close": "Zamknij",
+    "cancel": "Anuluj",
+    "save": "Zapisz zmiany",
+    "add": "Dodaj",
+    "apply": "Zastosuj",
+    "confirm": "Potwierdź",
+    "loading": "Ładowanie...",
+    "analysis": "Analiza",
     "statusLabel": "Status:",
-    "notDefined": "Not defined",
-    "notAssigned": "Not assigned",
-    "notSpecified": "Not specified",
-    "high": "High",
-    "medium": "Medium",
-    "low": "Low",
-    "reason": "Reason",
-    "you": "You",
-    "reply": "Reply",
-    "react": "React",
+    "notDefined": "Nie zdefiniowano",
+    "notAssigned": "Nie przypisano",
+    "notSpecified": "Nie określono",
+    "high": "Wysoki",
+    "medium": "Średni",
+    "low": "Niski",
+    "reason": "Powód",
+    "you": "Ty",
+    "reply": "Odpowiedz",
+    "react": "Zareaguj",
     "languages": {
       "en": "English",
       "pl": "Polski",
@@ -2666,7 +2467,7 @@
       "regional": "Regionalne",
       "accessibility": "Dostępność",
       "work": "Praca",
-      "dashboard": "Dashboard",
+      "dashboard": "Pulpit",
       "status": "Status",
       "bio": "Bio i O mnie",
       "social": "Linki Społecznościowe",
@@ -2686,14 +2487,20 @@
       "header": "Ustawienia",
       "myProfile": "Mój Profil",
       "billing": "Płatności i Plany",
-      "aiConfig": "Zarządzanie LLM",
+      "aiConfig": "Konfiguracja AI",
       "notifications": "Powiadomienia",
       "integrations": "Integracje",
       "regionalization": "Regionalizacja",
       "workPreferences": "Preferencje Pracy",
-      "dashboardPreferences": "Dashboard",
+      "dashboardPreferences": "Pulpit",
       "accessibility": "Dostępność",
-      "privacy": "Prywatność"
+      "privacy": "Prywatność",
+      "preferences": "Preferencje",
+      "theme": "Motyw",
+      "language": "Język",
+      "demoMode": "Tryb Demo",
+      "demoModeOn": "Tryb Demo WŁĄCZONY - przeglądasz dane wzorcowe",
+      "demoModeOff": "Tryb Demo WYŁĄCZONY"
     },
     "profile": {
       "header": "Informacje Osobiste",
@@ -2706,7 +2513,7 @@
       "lastName": "Nazwisko",
       "company": "Firma",
       "role": "Stanowisko",
-      "email": "Adres Email",
+      "emailAddress": "Adres Email",
       "preferences": "Preferencje",
       "theme": "Motyw Interfejsu",
       "light": "Jasny",
@@ -2933,11 +2740,11 @@
   "admin": {
     "title": "ADMIN",
     "panel": "Panel",
-    "role": "Admin",
+    "role": "Administrator",
     "backToApp": "Powrót do Aplikacji",
     "modules": {
       "overview": "Przegląd",
-      "overviewDesc": "Dashboard, metryki i analityka dla Twojej organizacji",
+      "overviewDesc": "Pulpit, metryki i analityka dla Twojej organizacji",
       "team": "Zespół",
       "teamDesc": "Zarządzaj użytkownikami, zaproszeniami, trybami pracy i konsultantami",
       "workspace": "Przestrzeń Robocza",
@@ -2948,7 +2755,7 @@
       "settingsDesc": "Profil organizacji, płatności, bezpieczeństwo i zarządzanie feedbackiem"
     },
     "tabs": {
-      "dashboard": "Dashboard",
+      "dashboard": "Pulpit",
       "metrics": "Metryki",
       "analytics": "Analityka",
       "users": "Użytkownicy",
@@ -3713,7 +3520,7 @@
     "masterclassTitle": "Want to deepen your knowledge?",
     "masterclassDesc": "Join our Masterclass program and learn proven tools from transformation leaders.",
     "masterclassLink": "View Masterclass Details",
-    "videoTitle": "See how CONSULTIFY works",
+    "videoTitle": "See how CONSULTINITY works",
     "videoPerson": "Dr. Piotr Wiśniewski",
     "videoRole": "Your guide to digital transformation"
   },
@@ -3757,7 +3564,7 @@
       "name": "SIRI",
       "fullName": "Smart Industry Readiness Index",
       "description": "Ocena gotowości Industry 4.0 - 3 Building Blocks × 8 Wymiarów",
-      "legalNotice": "SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultify ma wyłącznie cel edukacyjny i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.",
+      "legalNotice": "SIRI (Smart Industry Readiness Index) jest narzędziem opracowanym przez Singapore Economic Development Board (EDB) we współpracy z TÜV SÜD. Wykorzystanie struktury SIRI w Consultinity ma wyłącznie cel edukacyjny i służy do nauki metodologii Industry 4.0. Oficjalna certyfikacja SIRI wymaga akredytowanego audytora.",
       "buildingBlocks": {
         "process": "Proces",
         "technology": "Technologia",
@@ -3786,7 +3593,7 @@
       "name": "ADMA",
       "fullName": "Advanced Digital Maturity Assessment",
       "description": "Framework European Digital Innovation Hubs - 5 Filarów × 12 Wymiarów",
-      "legalNotice": "ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultify służy celom edukacyjnym.",
+      "legalNotice": "ADMA (Advanced Digital Maturity Assessment) jest narzędziem opracowanym przez European Commission w ramach programu Digital Innovation Hubs. Wykorzystanie w Consultinity służy celom edukacyjnym.",
       "pillars": {
         "strategy": "Strategia i Organizacja",
         "smartProducts": "Inteligentne Produkty",
@@ -3820,7 +3627,7 @@
       "name": "CMMI",
       "fullName": "Capability Maturity Model Integration",
       "description": "Framework doskonalenia procesów - 5 Poziomów Dojrzałości × 20 Obszarów Praktyk",
-      "legalNotice": "CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraiser. Implementacja w Consultify służy celom edukacyjnym.",
+      "legalNotice": "CMMI jest znakiem towarowym ISACA (dawniej CMMI Institute). Oficjalna certyfikacja CMMI wymaga akredytowanego Lead Appraiser. Implementacja w Consultinity służy celom edukacyjnym.",
       "categories": {
         "doing": "Realizacja",
         "managing": "Zarządzanie",
@@ -3860,7 +3667,7 @@
       "name": "Lean 4.0",
       "fullName": "DBR77 Lean 4.0 Assessment",
       "description": "Autorska metoda DBR77: Pomierz → Zoptymalizuj → Automatyzuj",
-      "legalNotice": "Metoda DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultify, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI.",
+      "legalNotice": "Metoda DBR77 Lean 4.0 (Pomierz-Zoptymalizuj-Automatyzuj) jest autorską metodą Consultinity, łączącą klasyczne narzędzia Lean z oceną potencjału automatyzacji i AI.",
       "phases": {
         "measure": "Pomierz",
         "optimize": "Zoptymalizuj",
@@ -3960,7 +3767,33 @@
       "docs": "Dokumentacja",
       "contact": "Kontakt"
     },
+    "ai": {
+      "welcome": {
+        "title": "Asystent AI",
+        "subtitle": "Zapytaj mnie o cokolwiek związanego z Consultinity. Jestem tu, żeby pomóc!"
+      },
+      "placeholder": "Zadaj pytanie...",
+      "error": "Przepraszam, wystąpił błąd. Spróbuj ponownie.",
+      "quick": {
+        "label": "Szybkie pytania:",
+        "howto": "Jak używać tego modułu?",
+        "explain": "Wyjaśnij co mogę tu zrobić",
+        "troubleshoot": "Pomóż mi rozwiązać problem"
+      },
+      "prompts": {
+        "howto": "Jak efektywnie korzystać z tego modułu?",
+        "explain": "Jakie funkcje i możliwości są tu dostępne?",
+        "troubleshoot": "Mam problem. Czy możesz mi pomóc go rozwiązać?"
+      }
+    },
     "sidePanel": {
+      "tabs": {
+        "ai": "Asystent AI",
+        "overview": "Przegląd",
+        "howto": "Jak używać",
+        "faq": "FAQ",
+        "video": "Filmy"
+      },
       "modules": {
         "dashboard": {
           "name": "Dashboard",
@@ -4190,7 +4023,7 @@
         },
         "settings": {
           "name": "Ustawienia Użytkownika",
-          "description": "Spersonalizuj swoje doświadczenie Consultify. Skonfiguruj swój profil, bezpieczeństwo, powiadomienia, preferencje AI, integracje i opcje dostępności.",
+          "description": "Spersonalizuj swoje doświadczenie Consultinity. Skonfiguruj swój profil, bezpieczeństwo, powiadomienia, preferencje AI, integracje i opcje dostępności.",
           "purpose": "Dostosuj aplikację do swojego stylu pracy, wymagań bezpieczeństwa i preferencji komunikacyjnych.",
           "keyFeatures": [
             "Zarządzanie profilem",
@@ -4220,7 +4053,7 @@
         "admin": {
           "name": "Panel Administracyjny",
           "description": "Centrum administracyjne organizacji do zarządzania użytkownikami, projektami, konfiguracją AI, bazą wiedzy i metrykami operacyjnymi. Dostępne dla administratorów organizacji.",
-          "purpose": "Zarządzaj instancją Consultify swojej organizacji, kontroluj dostęp, monitoruj użycie i konfiguruj ustawienia organizacyjne.",
+          "purpose": "Zarządzaj instancją Consultinity swojej organizacji, kontroluj dostęp, monitoruj użycie i konfiguruj ustawienia organizacyjne.",
           "keyFeatures": [
             "Zarządzanie użytkownikami i zaproszeniami",
             "Administracja projektami",
@@ -4249,8 +4082,8 @@
         },
         "superadmin": {
           "name": "Konsola Super Admina",
-          "description": "Administracja całą platformą dla operatorów DBR77. Zarządzaj wszystkimi organizacjami, użytkownikami, rozliczeniami, konfiguracją AI, SSO, politykami bezpieczeństwa, white-labelingiem i zgodnością w całej platformie Consultify.",
-          "purpose": "Pełna kontrola nad platformą Consultify dla członków zespołu DBR77 do zarządzania operacjami wielodostępnymi, funkcjami enterprise i kondycją platformy.",
+          "description": "Administracja całą platformą dla operatorów DBR77. Zarządzaj wszystkimi organizacjami, użytkownikami, rozliczeniami, konfiguracją AI, SSO, politykami bezpieczeństwa, white-labelingiem i zgodnością w całej platformie Consultinity.",
+          "purpose": "Pełna kontrola nad platformą Consultinity dla członków zespołu DBR77 do zarządzania operacjami wielodostępnymi, funkcjami enterprise i kondycją platformy.",
           "keyFeatures": [
             "Zarządzanie wieloma organizacjami",
             "Globalna administracja użytkownikami",
@@ -4280,6 +4113,37 @@
             "Monitoruj koszty AI w organizacjach"
           ]
         },
+        "ai-infrastructure": {
+          "name": "Infrastruktura AI",
+          "description": "Centralne centrum zarządzania wszystkimi dostawcami LLM i usługami AI. Konfiguruj klucze API, zarządzaj tierami modeli, ustalaj globalne limity i monitoruj kondycję systemu AI w całej platformie.",
+          "purpose": "Konfiguruj i utrzymuj infrastrukturę AI/LLM, która napędza wszystkie inteligentne funkcje w Consultinity, zapewniając optymalną wydajność i kontrolę kosztów.",
+          "keyFeatures": [
+            "Konfiguracja dostawców LLM (OpenAI, Google, Ollama, itp.)",
+            "Przypisania tierów modeli (Budget, Standard, Premium, Reasoning)",
+            "Zarządzanie i testowanie kluczy API",
+            "Globalne limity zapytań i budżety tokenów",
+            "Monitoring kondycji w czasie rzeczywistym",
+            "Śledzenie kosztów i analityka",
+            "Konfiguracja circuit breaker",
+            "Ustawienia wykrywania PII"
+          ],
+          "workflow": [
+            "Dodaj i skonfiguruj dostawców LLM z kluczami API",
+            "Przypisz modele do tierów wydajnościowych",
+            "Ustaw globalne limity zapytań i budżety tokenów",
+            "Przetestuj połączenia z dostawcami",
+            "Monitoruj dashboard kondycji pod kątem problemów",
+            "Przeglądaj analitykę użycia i koszty",
+            "Dostosuj progi circuit breaker w razie potrzeby"
+          ],
+          "tips": [
+            "Zawsze testuj połączenia po dodaniu nowych dostawców",
+            "Przypisuj modele budget do prostych zadań, aby optymalizować koszty",
+            "Monitoruj trendy latencji, aby wykryć degradację wydajności",
+            "Utrzymuj aktywnego przynajmniej jednego dostawcę zapasowego",
+            "Przeglądaj koszty co tydzień, aby zapobiec przekroczeniu budżetu"
+          ]
+        },
         "playbookTemplates": {
           "name": "Szablony Playbooków",
           "description": "Twórz i zarządzaj szablonami AI Playbooków, które definiują standardowe przepływy pracy automatyzacji. Szablony te są dystrybuowane do organizacji najemców w celu lokalnego wykonania.",
@@ -4301,6 +4165,35 @@
             "Zawsze waliduj szablony przed publikacją",
             "Używaj opisowych kluczy dla łatwiejszego dostępu programistycznego",
             "Deprecjonuj stare wersje zamiast usuwać, aby zachować historię"
+          ]
+        },
+        "emailTemplates": {
+          "name": "Szablony Email",
+          "description": "Zarządzaj szablonami emaili systemowych dla powiadomień, alertów, raportów i automatycznej komunikacji. Twórz profesjonalne, responsywne emaile ze wsparciem zmiennych.",
+          "purpose": "Scentralizuj zarządzanie szablonami email dla spójnej, profesjonalnej komunikacji na całej platformie.",
+          "keyFeatures": [
+            "Bogaty edytor HTML z podglądem",
+            "Wsparcie zmiennych/placeholderów ({{zmienna}})",
+            "Historia wersji i ścieżka audytu",
+            "Wysyłka testowych emaili",
+            "Organizacja według kategorii",
+            "Klonowanie i duplikowanie szablonów",
+            "Wsparcie wielojęzyczności"
+          ],
+          "workflow": [
+            "Przeglądaj istniejące szablony według statusu lub kategorii",
+            "Utwórz nowy szablon z nazwą i unikalnym kluczem",
+            "Zaprojektuj treść używając edytora HTML",
+            "Dodaj zmienne dla dynamicznej zawartości",
+            "Podglądaj i wysyłaj testowe emaile",
+            "Opublikuj, aby udostępnić do użytku systemowego"
+          ],
+          "tips": [
+            "Zawsze wysyłaj testowe emaile przed publikacją",
+            "Używaj opisowych kluczy szablonów dla dostępu przez API",
+            "Utrzymuj treść emaili przyjazną dla urządzeń mobilnych",
+            "Dokumentuj dostępne zmienne dla każdego szablonu",
+            "Używaj kategorii do logicznej organizacji szablonów"
           ]
         },
         "ai-tools": {
@@ -4389,11 +4282,7 @@
             "Alokacja zasobów",
             "Raportowanie dla klientów"
           ],
-          "workflow": [
-            "Przeglądaj listę klientów",
-            "Wybierz projekt",
-            "Generuj raporty"
-          ],
+          "workflow": ["Przeglądaj listę klientów", "Wybierz projekt", "Generuj raporty"],
           "tips": [
             "Używaj widoku portfolio dla statusu ogólnego",
             "Standaryzuj raporty między klientami"
@@ -4403,20 +4292,13 @@
           "name": "Ekosystem",
           "description": "Połącz się z partnerami, firmami stowarzyszonymi i innymi organizacjami w ekosystemie DBR77.",
           "purpose": "Rozszerz swoją sieć i wykorzystaj zewnętrzną wiedzę ekspercką.",
-          "keyFeatures": [
-            "Katalog partnerów",
-            "Panel partnerski",
-            "Narzędzia współpracy"
-          ],
+          "keyFeatures": ["Katalog partnerów", "Panel partnerski", "Narzędzia współpracy"],
           "workflow": [
             "Przeglądaj partnerów",
             "Połącz się z ekspertami",
             "Śledź wyniki partnerskie"
           ],
-          "tips": [
-            "Szukaj certyfikowanych partnerów",
-            "Monitoruj swój wpływ partnerski"
-          ]
+          "tips": ["Szukaj certyfikowanych partnerów", "Monitoruj swój wpływ partnerski"]
         }
       },
       "tabs": {
@@ -4457,831 +4339,1434 @@
         "workflow": "Workflow",
         "tips": "Podpowiedzi",
         "selectView": "Wybierz konkretną kartę lub widok, aby zobaczyć szczegółowe instrukcje.",
-        "relatedDocs": "Powiązana Dokumentacja"
-      },
-      "difficulty": {
-        "beginner": "Początkujący",
-        "intermediate": "Średni",
-        "advanced": "Zaawansowany"
-      },
-      "search": {
-        "placeholder": "Szukaj w pomocy...",
-        "noResults": "Brak wyników dla",
-        "tryDifferentKeywords": "Spróbuj innych słów kluczowych",
-        "suggestions": "Sugestie",
-        "recentSearches": "Ostatnie wyszukiwania",
-        "clear": "Wyczyść",
-        "popular": "Popularne",
-        "types": {
-          "module": "Moduł",
-          "card": "Dokumentacja",
-          "faq": "FAQ",
-          "video": "Wideo"
+        "relatedDocs": "Powiązana Dokumentacja",
+        "modules": {
+          "dashboard": {
+            "name": "Dashboard",
+            "description": "Twoje centralne centrum dowodzenia do monitorowania postępu transformacji cyfrowej. Dashboard zapewnia przegląd w czasie rzeczywistym ocen, inicjatyw i kluczowych wskaźników w całej organizacji.",
+            "purpose": "Szybko zrozum aktualny stan swojej podróży transformacyjnej, zidentyfikuj obszary wymagające uwagi i śledź postęp w realizacji celów strategicznych.",
+            "keyFeatures": [
+              "Wskaźnik dojrzałości transformacji w czasie rzeczywistym",
+              "Śledzenie postępu inicjatyw",
+              "Status aktywnych ocen",
+              "Oś czasu ostatnich aktywności",
+              "Szybki dostęp do oczekujących zadań",
+              "Przegląd metryk w całej organizacji"
+            ],
+            "workflow": [
+              "Przejrzyj ogólny wskaźnik dojrzałości",
+              "Sprawdź oczekujące oceny lub zadania",
+              "Przejrzyj ostatnią aktywność i aktualizacje",
+              "Przejdź do konkretnych modułów z szybkich linków"
+            ],
+            "tips": [
+              "Dostosuj widżety, aby pokazywać metryki najbardziej istotne dla Twojej roli",
+              "Skonfiguruj powiadomienia na dashboardzie dla ważnych kamieni milowych",
+              "Użyj widoku snapshot do prezentacji dla kadry zarządzającej"
+            ]
+          },
+          "assessment": {
+            "name": "Ocena",
+            "description": "Kompleksowa ocena dojrzałości cyfrowej przy użyciu standardowych ram branżowych, w tym DRD, SIRI, ADMA, CMMI i Lean 4.0. Oceń swoją organizację w wielu wymiarach, aby zidentyfikować luki i możliwości.",
+            "purpose": "Obiektywnie zmierz aktualny poziom dojrzałości cyfrowej, porównaj ze standardami branżowymi i wygeneruj praktyczne wskazówki do poprawy.",
+            "keyFeatures": [
+              "Wiele ram oceny (DRD, SIRI, ADMA, CMMI, Lean)",
+              "Ocena wspomagana AI ze śledzeniem dowodów",
+              "Analiza luk i mapy cieplne",
+              "Porównania benchmarkowe z podobnymi organizacjami",
+              "Automatyczne generowanie raportów",
+              "Ocena wieloosiowa (Procesy, Cyfrowe, Dane, Kultura, itp.)",
+              "Workflow recenzentów dla zapewnienia jakości"
+            ],
+            "workflow": [
+              "Wybierz odpowiednią ramę oceny",
+              "Wypełnij kwestionariusze dla każdej osi oceny",
+              "Prześlij dokumenty dowodowe wspierające odpowiedzi",
+              "AI analizuje odpowiedzi i generuje wstępne wyniki",
+              "Przejrzyj i dostosuj wyniki ze swoim zespołem",
+              "Prześlij do zatwierdzenia przez recenzenta, jeśli wymagane",
+              "Wygeneruj kompleksowy raport z oceny"
+            ],
+            "tips": [
+              "Najpierw wypełnij Context Builder dla dokładniejszych rekomendacji AI",
+              "Prześlij prawdziwe dokumenty dowodowe dla wiarygodnych ocen",
+              "Użyj widoku porównania, aby śledzić poprawę w czasie",
+              "Zaplanuj regularne ponowne oceny (zalecane kwartalnie)"
+            ]
+          },
+          "initiatives": {
+            "name": "Inicjatywy",
+            "description": "Przekształć wnioski z oceny w praktyczne inicjatywy poprawy. Generuj, priorytetyzuj i zarządzaj projektami transformacyjnymi, które adresują zidentyfikowane luki i napędzają poprawę organizacji.",
+            "purpose": "Zbuduj most między wynikami oceny a konkretnymi działaniami, tworząc ustrukturyzowane inicjatywy z jasnym właścicielstwem, harmonogramami i oczekiwanymi rezultatami.",
+            "keyFeatures": [
+              "Generowanie inicjatyw wspomagane AI na podstawie luk",
+              "Biblioteka szablonów inicjatyw",
+              "Kreator business case z szacowaniem ROI",
+              "Scoring priorytetów (macierz wpływ vs. wysiłek)",
+              "Planowanie alokacji zasobów",
+              "Śledzenie zależności między inicjatywami",
+              "Monitorowanie postępu i kamieni milowych"
+            ],
+            "workflow": [
+              "Przejrzyj zidentyfikowane luki z ocen",
+              "Użyj AI do wygenerowania sugestii inicjatyw",
+              "Wybierz i dostosuj inicjatywy do swojego kontekstu",
+              "Zdefiniuj zakres, harmonogram i wymagania zasobowe",
+              "Przypisz właścicielstwo i członków zespołu",
+              "Nadaj priorytety używając scoringu wpływ/wysiłek",
+              "Dodaj do roadmapy dla planowania realizacji"
+            ],
+            "tips": [
+              "Zacznij od szybkich zwycięstw, aby zbudować momentum",
+              "Upewnij się, że każda inicjatywa ma jasnego właściciela",
+              "Powiąż inicjatywy z konkretnymi lukami z oceny dla śledzenia",
+              "Przeglądaj i repriorytetyzuj inicjatywy kwartalnie"
+            ]
+          },
+          "roadmap": {
+            "name": "Mapa Drogowa",
+            "description": "Wizualne planowanie strategiczne Twojej podróży transformacyjnej. Organizuj inicjatywy w opartą na czasie mapę drogową z fazami, zależnościami i uwzględnieniem zasobów.",
+            "purpose": "Stwórz jasny, możliwy do udostępnienia harmonogram transformacji, który wyrównuje interesariuszy i kieruje realizacją przez miesiące i lata.",
+            "keyFeatures": [
+              "Widoki wykresu Gantta i osi czasu",
+              "Planowanie inicjatyw metodą przeciągnij i upuść",
+              "Zarządzanie fazami (Szybkie Zwycięstwa, Fundament, Zaawansowane)",
+              "Wizualizacja zależności",
+              "Planowanie pojemności zasobów",
+              "Śledzenie kamieni milowych",
+              "Eksport do prezentacji"
+            ],
+            "workflow": [
+              "Przejrzyj priorytetyzowane inicjatywy",
+              "Zorganizuj inicjatywy w strategiczne fazy",
+              "Ustaw daty rozpoczęcia i czasy trwania",
+              "Zdefiniuj zależności między inicjatywami",
+              "Przypisz zasoby i sprawdź pojemność",
+              "Ustaw kluczowe kamienie milowe i bramki przeglądu",
+              "Udostępnij mapę drogową interesariuszom"
+            ],
+            "tips": [
+              "Uwzględnij czas buforowy na nieoczekiwane opóźnienia",
+              "Zacznij od horyzontu 12-18 miesięcy",
+              "Użyj faz do komunikowania zamiarów strategicznych",
+              "Przeglądaj i dostosowuj mapę drogową co miesiąc"
+            ]
+          },
+          "implementation": {
+            "name": "Wdrożenie",
+            "description": "Realizuj swoje inicjatywy transformacyjne poprzez ustrukturyzowane programy pilotażowe i pełne wdrożenia. Śledź postęp, zarządzaj zmianami i zapewnij pomyślną dostawę.",
+            "purpose": "Przejdź od planowania do działania z zdyscyplinowaną realizacją, zarządzaniem zmianami i pętlami zwrotnej informacji dla ciągłego doskonalenia.",
+            "keyFeatures": [
+              "Zarządzanie programem pilotażowym",
+              "Workflow stage-gate",
+              "Śledzenie żądań zmian",
+              "Zarządzanie ryzykiem i problemami",
+              "Komunikacja z interesariuszami",
+              "Wsparcie decyzji Go/No-go",
+              "Planowanie i realizacja wdrożenia",
+              "Zarządzanie zmianą ADKAR"
+            ],
+            "workflow": [
+              "Wybierz inicjatywy do pilotażu",
+              "Zdefiniuj zakres pilotażu i kryteria sukcesu",
+              "Realizuj pilotaż z monitorowaniem",
+              "Zbierz feedback i wnioski",
+              "Podejmij decyzję Go/No-go",
+              "Zaplanuj pełne wdrożenie na podstawie wniosków z pilotażu",
+              "Zrealizuj wdrożenie z zarządzaniem zmianą",
+              "Przejdź do operacji"
+            ],
+            "tips": [
+              "Zawsze przeprowadź pilotaż przed pełnym wdrożeniem",
+              "Z góry zdefiniuj jasne metryki sukcesu",
+              "Zaangażuj championów zmiany wcześnie",
+              "Dokumentuj wszystko do przyszłego użycia"
+            ]
+          },
+          "reports": {
+            "name": "Raporty i ROI",
+            "description": "Generuj kompleksowe raporty i obliczaj zwrot z inwestycji dla swoich inicjatyw transformacyjnych. Prezentuj wyniki interesariuszom z profesjonalną dokumentacją.",
+            "purpose": "Komunikuj wartość transformacji, śledź ROI i dostarczaj raporty oparte na dowodach dla interesariuszy i audytorów.",
+            "keyFeatures": [
+              "Raporty podsumowań dla kadry zarządzającej",
+              "Kalkulator ROI z projekcjami",
+              "Dashboardy śledzenia KPI/OKR",
+              "Raporty porównawcze ocen",
+              "Eksport PDF/PowerPoint",
+              "Kreator raportów niestandardowych",
+              "Dokumentacja ścieżki audytu",
+              "Raporty benchmarkowe"
+            ],
+            "workflow": [
+              "Wybierz typ raportu lub szablon",
+              "Skonfiguruj parametry raportu",
+              "Podgląd i dostosuj treść",
+              "Dodaj komentarze i wnioski",
+              "Eksportuj lub udostępnij raport",
+              "Zaplanuj cykliczne raporty"
+            ],
+            "tips": [
+              "Użyj widoku executive do prezentacji zarządowych",
+              "Śledź metryki ROI od startu inicjatywy",
+              "Porównuj bieżące vs bazowe oceny",
+              "Zaplanuj miesięczne raporty postępu"
+            ]
+          },
+          "mywork": {
+            "name": "Moja Praca",
+            "description": "Twoje osobiste centrum zarządzania zadaniami. Przeglądaj przypisane zadania, zarządzaj skrzynką odbiorczą, wejdź w tryb skupienia dla głębokiej pracy i śledź swój wkład we wszystkie działania transformacyjne.",
+            "purpose": "Pozostań zorganizowany i produktywny, centralizując wszystkie swoje zadania, powiadomienia i elementy pracy w jednym miejscu.",
+            "keyFeatures": [
+              "Osobista lista zadań z filtrami",
+              "Skrzynka odbiorcza dla powiadomień i wzmianek",
+              "Tryb skupienia dla pracy bez rozpraszaczy",
+              "Priorytetyzacja zadań (P1-P4)",
+              "Śledzenie terminów i przypomnienia",
+              "Historia aktywności",
+              "Agregacja zadań z różnych modułów"
+            ],
+            "workflow": [
+              "Sprawdź skrzynkę odbiorczą pod kątem nowych elementów",
+              "Przejrzyj i nadaj priorytety dzisiejszym zadaniom",
+              "Użyj trybu skupienia dla złożonej pracy",
+              "Oznacz zadania jako ukończone po zakończeniu",
+              "Opróżnij skrzynkę odbiorczą do zera"
+            ],
+            "tips": [
+              "Przetwarzaj skrzynkę odbiorczą codziennie",
+              "Używaj trybu skupienia do ocen",
+              "Ustalaj realistyczne szacunki zadań",
+              "Przeglądaj cotygodniowo, aby repriorytetyzować"
+            ]
+          },
+          "organization": {
+            "name": "Kontekst Organizacji",
+            "description": "Zdefiniuj kontekst strategiczny swojej organizacji, w tym profil firmy, cele, wyzwania, megatrendy i strategię. Ta podstawa umożliwia AI dostarczanie wysoce trafnych rekomendacji.",
+            "purpose": "Dostarcz systemowi AI głęboki kontekst organizacyjny, aby rekomendacje, oceny i inicjatywy były dostosowane do Twojej konkretnej sytuacji.",
+            "keyFeatures": [
+              "Konfiguracja profilu firmy",
+              "Definiowanie celów strategicznych",
+              "Mapowanie wyzwań",
+              "Analiza megatrendów",
+              "Synteza strategii",
+              "Wzbogacenie kontekstu AI",
+              "Wsparcie dla wielu lokalizacji"
+            ],
+            "workflow": [
+              "Wypełnij profil firmy",
+              "Zdefiniuj cele strategiczne i KPI",
+              "Zmapuj bieżące wyzwania",
+              "Przeanalizuj istotne megatrendy",
+              "Dokonaj syntezy kierunku strategicznego",
+              "Przejrzyj rekomendacje AI"
+            ],
+            "tips": [
+              "Aktualizuj kontekst w miarę ewolucji strategii",
+              "Bądź konkretny w kwestii branży i wyzwań",
+              "Uwzględnij zarówno cele krótko jak i długoterminowe",
+              "Przeglądaj kwartalnie z kadrą kierowniczą"
+            ]
+          },
+          "settings": {
+            "name": "Ustawienia Użytkownika",
+            "description": "Spersonalizuj swoje doświadczenie Consultinity. Skonfiguruj swój profil, bezpieczeństwo, powiadomienia, preferencje AI, integracje i opcje dostępności.",
+            "purpose": "Dostosuj aplikację do swojego stylu pracy, wymagań bezpieczeństwa i preferencji komunikacyjnych.",
+            "keyFeatures": [
+              "Zarządzanie profilem",
+              "Uwierzytelnianie dwuskładnikowe",
+              "Preferencje powiadomień",
+              "Dostosowanie zachowania AI",
+              "Ustawienia motywu i języka",
+              "Połączenia integracyjne",
+              "Kontrole prywatności",
+              "Opcje dostępności"
+            ],
+            "workflow": [
+              "Wypełnij informacje profilowe",
+              "Włącz 2FA dla bezpieczeństwa",
+              "Skonfiguruj kanały powiadomień",
+              "Ustaw preferencje AI",
+              "Połącz integracje (Slack, itp.)",
+              "Dostosuj preferencje wyświetlania"
+            ],
+            "tips": [
+              "Włącz 2FA dla bezpieczeństwa konta",
+              "Skonfiguruj integrację Slack dla aktualizacji w czasie rzeczywistym",
+              "Dostosuj styl odpowiedzi AI do swoich preferencji",
+              "Okresowo przeglądaj ustawienia prywatności"
+            ]
+          },
+          "admin": {
+            "name": "Panel Administracyjny",
+            "description": "Centrum administracyjne organizacji do zarządzania użytkownikami, projektami, konfiguracją AI, bazą wiedzy i metrykami operacyjnymi. Dostępne dla administratorów organizacji.",
+            "purpose": "Zarządzaj instancją Consultinity swojej organizacji, kontroluj dostęp, monitoruj użycie i konfiguruj ustawienia organizacyjne.",
+            "keyFeatures": [
+              "Zarządzanie użytkownikami i zaproszeniami",
+              "Administracja projektami",
+              "Konfiguracja AI/LLM",
+              "Zarządzanie bazą wiedzy",
+              "Analityka i metryki użycia",
+              "Przegląd feedbacku",
+              "Bezpieczeństwo i kontrola dostępu",
+              "Zarządzanie playbookami"
+            ],
+            "workflow": [
+              "Zapraszaj i wprowadzaj nowych użytkowników",
+              "Twórz i konfiguruj projekty",
+              "Konfiguruj dostawców AI i limity",
+              "Przesyłaj wiedzę organizacyjną",
+              "Monitoruj użycie i koszty",
+              "Przeglądaj feedback zespołu",
+              "Zarządzaj politykami bezpieczeństwa"
+            ],
+            "tips": [
+              "Regularnie przeglądaj uprawnienia dostępu użytkowników",
+              "Ustaw odpowiednie limity użycia AI",
+              "Utrzymuj aktualną bazę wiedzy",
+              "Monitoruj pod kątem nietypowej aktywności"
+            ]
+          },
+          "superadmin": {
+            "name": "Konsola Super Admina",
+            "description": "Administracja całą platformą dla operatorów DBR77. Zarządzaj wszystkimi organizacjami, użytkownikami, rozliczeniami, konfiguracją AI, SSO, politykami bezpieczeństwa, white-labelingiem i zgodnością w całej platformie Consultinity.",
+            "purpose": "Pełna kontrola nad platformą Consultinity dla członków zespołu DBR77 do zarządzania operacjami wielodostępnymi, funkcjami enterprise i kondycją platformy.",
+            "keyFeatures": [
+              "Zarządzanie wieloma organizacjami",
+              "Globalna administracja użytkownikami",
+              "Rozliczenia i fakturowanie platformy",
+              "Konfiguracja dostawców AI",
+              "Konfiguracja SSO/SAML",
+              "Zarządzanie politykami bezpieczeństwa",
+              "Studio white-label",
+              "Centrum zgodności",
+              "Zarządzanie API",
+              "Operacje masowe"
+            ],
+            "workflow": [
+              "Monitoruj dashboard kondycji platformy",
+              "Zarządzaj kontami organizacji",
+              "Konfiguruj enterprise SSO",
+              "Ustaw polityki bezpieczeństwa",
+              "Zarządzaj rozliczeniami i subskrypcjami",
+              "Konfiguruj dostawców AI globalnie",
+              "Stosuj branding white-label",
+              "Zapewnij wymagania zgodności"
+            ],
+            "tips": [
+              "Używaj impersonacji ostrożnie do debugowania",
+              "Dokumentuj wszystkie zmiany konfiguracji",
+              "Najpierw testuj zmiany SSO w sandboxie",
+              "Monitoruj koszty AI w organizacjach"
+            ]
+          },
+          "ai-infrastructure": {
+            "name": "Infrastruktura AI",
+            "description": "Centralne centrum zarządzania wszystkimi dostawcami LLM i usługami AI. Konfiguruj klucze API, zarządzaj tierami modeli, ustalaj globalne limity i monitoruj kondycję systemu AI w całej platformie.",
+            "purpose": "Konfiguruj i utrzymuj infrastrukturę AI/LLM, która napędza wszystkie inteligentne funkcje w Consultinity, zapewniając optymalną wydajność i kontrolę kosztów.",
+            "keyFeatures": [
+              "Konfiguracja dostawców LLM (OpenAI, Google, Ollama, itp.)",
+              "Przypisania tierów modeli (Budget, Standard, Premium, Reasoning)",
+              "Zarządzanie i testowanie kluczy API",
+              "Globalne limity zapytań i budżety tokenów",
+              "Monitoring kondycji w czasie rzeczywistym",
+              "Śledzenie kosztów i analityka",
+              "Konfiguracja circuit breaker",
+              "Ustawienia wykrywania PII"
+            ],
+            "workflow": [
+              "Dodaj i skonfiguruj dostawców LLM z kluczami API",
+              "Przypisz modele do tierów wydajnościowych",
+              "Ustaw globalne limity zapytań i budżety tokenów",
+              "Przetestuj połączenia z dostawcami",
+              "Monitoruj dashboard kondycji pod kątem problemów",
+              "Przeglądaj analitykę użycia i koszty",
+              "Dostosuj progi circuit breaker w razie potrzeby"
+            ],
+            "tips": [
+              "Zawsze testuj połączenia po dodaniu nowych dostawców",
+              "Przypisuj modele budget do prostych zadań, aby optymalizować koszty",
+              "Monitoruj trendy latencji, aby wykryć degradację wydajności",
+              "Utrzymuj aktywnego przynajmniej jednego dostawcę zapasowego",
+              "Przeglądaj koszty co tydzień, aby zapobiec przekroczeniu budżetu"
+            ]
+          },
+          "playbookTemplates": {
+            "name": "Szablony Playbooków",
+            "description": "Twórz i zarządzaj szablonami AI Playbooków, które definiują standardowe przepływy pracy automatyzacji. Szablony te są dystrybuowane do organizacji najemców w celu lokalnego wykonania.",
+            "purpose": "Standaryzacja logiki automatyzacji AI w całej platformie, umożliwiająca uruchamianie deterministycznych procesów agentowych przez określone wyzwalacze (zmiany danych, czas, zdarzenia).",
+            "keyFeatures": [
+              "Wizualny kreator Playbooków",
+              "Wersjonowanie i zarządzanie cyklem życia",
+              "Konfiguracja wyzwalaczy",
+              "Silnik walidacji",
+              "Publikowanie jednym kliknięciem"
+            ],
+            "workflow": [
+              "Utwórz nowy szkic szablonu",
+              "Zdefiniuj wyzwalacze i logikę agenta",
+              "Zwaliduj strukturę szablonu",
+              "Opublikuj, aby udostępnić wszystkim organizacjom"
+            ],
+            "tips": [
+              "Zawsze waliduj szablony przed publikacją",
+              "Używaj opisowych kluczy dla łatwiejszego dostępu programistycznego",
+              "Deprecjonuj stare wersje zamiast usuwać, aby zachować historię"
+            ]
+          },
+          "emailTemplates": {
+            "name": "Szablony Email",
+            "description": "Zarządzaj szablonami emaili systemowych dla powiadomień, alertów, raportów i automatycznej komunikacji. Twórz profesjonalne, responsywne emaile ze wsparciem zmiennych.",
+            "purpose": "Scentralizuj zarządzanie szablonami email dla spójnej, profesjonalnej komunikacji na całej platformie.",
+            "keyFeatures": [
+              "Bogaty edytor HTML z podglądem",
+              "Wsparcie zmiennych/placeholderów ({{zmienna}})",
+              "Historia wersji i ścieżka audytu",
+              "Wysyłka testowych emaili",
+              "Organizacja według kategorii",
+              "Klonowanie i duplikowanie szablonów",
+              "Wsparcie wielojęzyczności"
+            ],
+            "workflow": [
+              "Przeglądaj istniejące szablony według statusu lub kategorii",
+              "Utwórz nowy szablon z nazwą i unikalnym kluczem",
+              "Zaprojektuj treść używając edytora HTML",
+              "Dodaj zmienne dla dynamicznej zawartości",
+              "Podglądaj i wysyłaj testowe emaile",
+              "Opublikuj, aby udostępnić do użytku systemowego"
+            ],
+            "tips": [
+              "Zawsze wysyłaj testowe emaile przed publikacją",
+              "Używaj opisowych kluczy szablonów dla dostępu przez API",
+              "Utrzymuj treść emaili przyjazną dla urządzeń mobilnych",
+              "Dokumentuj dostępne zmienne dla każdego szablonu",
+              "Używaj kategorii do logicznej organizacji szablonów"
+            ]
+          },
+          "ai-tools": {
+            "name": "Narzędzia AI",
+            "description": "Pomoc napędzana AI dla decyzji transformacyjnych. Otrzymuj proaktywne rekomendacje, analizuj propozycje i wykorzystuj AI do strategicznych wniosków.",
+            "purpose": "Wzmocnij ludzkie podejmowanie decyzji dzięki wygenerowanym przez AI wnioskom, rekomendacjom i analizom we wszystkich działaniach transformacyjnych.",
+            "keyFeatures": [
+              "Doradca Akcji AI",
+              "Proaktywne rekomendacje",
+              "Projektant schematów automatyzacji",
+              "Konsultacje oparte na czacie",
+              "Sugestie oparte na dowodach",
+              "Analiza ryzyka",
+              "Scenariusze what-if"
+            ],
+            "workflow": [
+              "Przejrzyj rekomendacje wygenerowane przez AI",
+              "Oceń dowody i rozumowanie",
+              "Akceptuj, modyfikuj lub odrzucaj propozycje",
+              "Wdrażaj zaakceptowane rekomendacje",
+              "Dostarcz feedback, aby poprawić AI"
+            ],
+            "tips": [
+              "Zawsze krytycznie przeglądaj sugestie AI",
+              "Dostarczaj feedback, aby poprawić przyszłe rekomendacje",
+              "Używaj AI do ideacji, ludzi do decyzji",
+              "Sprawdź dowody przed akceptacją rekomendacji"
+            ]
+          },
+          "knowledge": {
+            "name": "Baza Wiedzy",
+            "description": "Zasoby edukacyjne i dokumentacja transformacji cyfrowej. Dostęp do masterclassów, przewodników, szablonów i najlepszych praktyk.",
+            "purpose": "Zapewnij materiały edukacyjne i szkoleniowe na żądanie, aby pomóc zespołom zrozumieć metodologie i skutecznie realizować transformację.",
+            "keyFeatures": [
+              "Przewodniki po metodologiach",
+              "Szablony najlepszych praktyk",
+              "Masterclassy wideo",
+              "Biblioteka studiów przypadków",
+              "Słownik pojęć",
+              "Linki do zasobów zewnętrznych",
+              "Przeszukiwalna baza artykułów",
+              "Zasoby do pobrania"
+            ],
+            "workflow": [
+              "Szukaj konkretnych tematów lub przewodników",
+              "Przeglądaj treści według kategorii",
+              "Oglądaj samouczki wideo",
+              "Pobieraj szablony do użytku offline",
+              "Udostępniaj przydatne artykuły zespołowi",
+              "Sugeruj nowe tematy"
+            ],
+            "tips": [
+              "Dodaj do zakładek często używane przewodniki",
+              "Sprawdzaj cotygodniowo nowe aktualizacje treści",
+              "Używaj szablonów, aby zaoszczędzić czas",
+              "Wnieś własne wnioski"
+            ]
+          },
+          "onboarding": {
+            "name": "Wdrożenie",
+            "description": "Twój przewodnik na start z Consultinity. Uzupełnij profil, poznaj podstawy platformy i skonfiguruj organizację.",
+            "purpose": "Zapewnienie płynnego startu i efektywnej konfiguracji Twojego obszaru roboczego.",
+            "keyFeatures": [
+              "Konfiguracja profilu",
+              "Konfiguracja organizacji",
+              "Wycieczka po platformie",
+              "Wstępne ustalanie celów"
+            ],
+            "workflow": [
+              "Uzupełnij profil użytkownika",
+              "Skonfiguruj szczegóły organizacji",
+              "Odbądź wycieczkę po platformie"
+            ],
+            "tips": [
+              "Ukończ wszystkie kroki dla lepszego doświadczenia",
+              "Zaproś członków zespołu wcześniej"
+            ]
+          },
+          "consultant": {
+            "name": "Panel Konsultanta",
+            "description": "Dedykowany obszar roboczy dla zewnętrznych konsultantów do zarządzania wieloma organizacjami klientów i projektami.",
+            "purpose": "Usprawnienie zarządzania klientami i nadzoru nad projektami.",
+            "keyFeatures": [
+              "Widok portfolio klientów",
+              "Śledzenie projektów",
+              "Alokacja zasobów",
+              "Raportowanie dla klientów"
+            ],
+            "workflow": ["Przeglądaj listę klientów", "Wybierz projekt", "Generuj raporty"],
+            "tips": [
+              "Używaj widoku portfolio dla statusu ogólnego",
+              "Standaryzuj raporty między klientami"
+            ]
+          },
+          "ecosystem": {
+            "name": "Ekosystem",
+            "description": "Połącz się z partnerami, firmami stowarzyszonymi i innymi organizacjami w ekosystemie DBR77.",
+            "purpose": "Rozszerz swoją sieć i wykorzystaj zewnętrzną wiedzę ekspercką.",
+            "keyFeatures": ["Katalog partnerów", "Panel partnerski", "Narzędzia współpracy"],
+            "workflow": [
+              "Przeglądaj partnerów",
+              "Połącz się z ekspertami",
+              "Śledź wyniki partnerskie"
+            ],
+            "tips": ["Szukaj certyfikowanych partnerów", "Monitoruj swój wpływ partnerski"]
+          }
         },
-        "filters": {
-          "all": "Wszystko",
-          "module": "Moduły",
-          "card": "Dokumenty",
-          "faq": "FAQ",
-          "video": "Wideo"
+        "difficulty": {
+          "beginner": "Początkujący",
+          "intermediate": "Średni",
+          "advanced": "Zaawansowany"
         },
-        "footer": {
-          "navigate": "nawigacja",
-          "select": "wybierz",
-          "close": "zamknij",
-          "results": "wyników"
+        "search": {
+          "placeholder": "Szukaj w pomocy...",
+          "noResults": "Brak wyników dla",
+          "tryDifferentKeywords": "Spróbuj innych słów kluczowych",
+          "suggestions": "Sugestie",
+          "recentSearches": "Ostatnie wyszukiwania",
+          "clear": "Wyczyść",
+          "popular": "Popularne",
+          "types": {
+            "module": "Moduł",
+            "card": "Dokumentacja",
+            "faq": "FAQ",
+            "video": "Wideo"
+          },
+          "filters": {
+            "all": "Wszystko",
+            "module": "Moduły",
+            "card": "Dokumenty",
+            "faq": "FAQ",
+            "video": "Wideo"
+          },
+          "footer": {
+            "navigate": "nawigacja",
+            "select": "wybierz",
+            "close": "zamknij",
+            "results": "wyników"
+          }
+        },
+        "feedback": {
+          "title": "Czy to było pomocne?",
+          "yes": "Tak",
+          "no": "Nie",
+          "addComment": "Dodaj komentarz",
+          "commentPlaceholder": "Powiedz nam, jak możemy poprawić...",
+          "submit": "Wyślij",
+          "skip": "Pomiń",
+          "thanks": "Dziękujemy za opinię!",
+          "error": "Nie udało się wysłać opinii"
         }
+      },
+      "toggle": {
+        "open": "Otwórz Centrum Pomocy",
+        "close": "Zamknij Centrum Pomocy"
+      },
+      "video": {
+        "watched": "Obejrzane",
+        "chapters": "Rozdziały",
+        "settings": "Ustawienia",
+        "speed": "Prędkość",
+        "controls": {
+          "play": "Odtwórz (k)",
+          "pause": "Pauza (k)",
+          "mute": "Wycisz (m)",
+          "unmute": "Włącz dźwięk (m)",
+          "fullscreen": "Pełny ekran (f)",
+          "exitFullscreen": "Zamknij pełny ekran (f)",
+          "prev10": "-10s",
+          "next10": "+10s"
+        },
+        "shortcuts": "Spacja/K: Odtwórz · ←/→: Przewiń · M: Wycisz · F: Pełny ekran"
+      },
+      "whatsNew": {
+        "title": "Co Nowego",
+        "version": "Wersja",
+        "features": "Nowe Funkcje",
+        "improvements": "Ulepszenia",
+        "fixes": "Poprawki Błędów",
+        "breaking": "Zmiany Przełomowe",
+        "dontShow": "Nie pokazuj dla tej wersji",
+        "gotIt": "Rozumiem!",
+        "learnMore": "Dowiedz się więcej",
+        "changelog": "Zobacz pełną historię zmian",
+        "watchDemo": "Obejrzyj demo"
+      }
+    },
+    "playbooks": {
+      "demo_mode_explained": {
+        "title": "Zrozumienie Trybu Demo",
+        "description": "Dowiedz się, co możesz zrobić w trybie Demo i jakie są jego ograniczenia.",
+        "steps": {
+          "1": {
+            "title": "Witamy w Trybie Demo",
+            "content": "Tryb Demo zapewnia **podgląd tylko do odczytu** platformy. Możesz eksplorować wszystkie funkcje, ale zmiany nie zostaną zapisane."
+          },
+          "2": {
+            "title": "Co możesz zrobić",
+            "content": "W trybie Demo możesz:\n- Przeglądać projekty, zadania i inicjatywy\n- Zobaczyć rekomendacje AI (ograniczone)\n- Eksplorować pełny interfejs"
+          },
+          "3": {
+            "title": "Gotowy na więcej?",
+            "content": "Rozpocznij **bezpłatny 14-dniowy okres próbny**, aby odblokować wszystkie funkcje i zapisać swoją pracę.",
+            "action": "Rozpocznij Bezpłatny Okres Próbny"
+          }
+        }
+      },
+      "start_trial_from_demo": {
+        "title": "Rozpocznij Bezpłatny Okres Próbny",
+        "description": "Przejdź z trybu Demo do pełnego 14-dniowego okresu próbnego.",
+        "steps": {
+          "1": {
+            "title": "Dlaczego warto rozpocząć okres próbny?",
+            "content": "Okres próbny daje Ci:\n- **Pełny dostęp do zapisu** wszystkich funkcji\n- **14 dni za darmo** na ocenę\n- Twoje dane zostaną zachowane po przejściu na wersję płatną"
+          },
+          "2": {
+            "title": "Pierwsze Kroki",
+            "content": "Utwórz konto, podając tylko adres e-mail. Karta kredytowa nie jest wymagana.",
+            "action": "Rozpocznij Bezpłatny Okres Próbny"
+          }
+        }
+      },
+      "trial_days_remaining": {
+        "title": "Twój Postęp w Okresie Próbnym",
+        "description": "Śledź status swojego okresu próbnego i wykorzystaj go jak najlepiej.",
+        "steps": {
+          "1": {
+            "title": "Przegląd Okresu Próbnego",
+            "content": "Twój okres próbny obejmuje **pełny dostęp** do wszystkich funkcji. Wykorzystaj jak najlepiej pozostałe dni!"
+          },
+          "2": {
+            "title": "Kluczowe funkcje do wypróbowania",
+            "content": "1. **Twórz projekty** i inicjatywy\n2. **Zaproś członków zespołu** (do 5)\n3. **Używaj funkcji AI** do analiz\n4. **Śledź postępy** na dashboardach"
+          },
+          "3": {
+            "title": "Potrzebujesz więcej czasu?",
+            "content": "Skontaktuj się z pomocą techniczną, jeśli potrzebujesz przedłużenia okresu próbnego, lub przejdź na wersję płatną w dowolnym momencie, aby zachować wszystkie dane.",
+            "action": "Zobacz Cennik"
+          }
+        }
+      },
+      "invite_team": {
+        "title": "Zaproś Swój Zespół",
+        "description": "Współpraca jest kluczowa. Zaproś kolegów do dołączenia do Twojego obszaru roboczego.",
+        "steps": {
+          "1": {
+            "title": "Dlaczego warto zaprosić członków zespołu?",
+            "content": "Zyskaj pełny obraz! Zaproś swój zespół, aby:\n- **Współpracować** nad projektami\n- **Przypisywać zadania** odpowiednim osobom\n- **Szybciej wdrażać** rozwiązania w całej organizacji"
+          },
+          "2": {
+            "title": "Limity Okresu Próbnego",
+            "content": "Twój okres próbny pozwala na dodanie do **5 członków zespołu**. Przejdź na wersję płatną, aby uzyskać nieograniczoną liczbę miejsc."
+          },
+          "3": {
+            "title": "Wyślij zaproszenia",
+            "content": "Przejdź do Ustawienia → Zespół, aby zaprosić kolegów przez e-mail.",
+            "action": "Idź do Ustawień Zespołu"
+          }
+        }
+      },
+      "upgrade_to_paid": {
+        "title": "Przejdź na Pełny Dostęp",
+        "description": "Usuń limity okresu próbnego i odblokuj wszystkie funkcje.",
+        "steps": {
+          "1": {
+            "title": "Korzyści z przejścia na wersję płatną",
+            "content": "✅ **Nieograniczona** liczba projektów i użytkowników\n✅ **Pełne możliwości AI**\n✅ **Priorytetowe wsparcie**\n✅ Dane z okresu próbnego zostają zachowane"
+          },
+          "2": {
+            "title": "Elastyczne Plany",
+            "content": "Wybierz rozliczenie miesięczne lub roczne. Opcje Enterprise dostępne dla większych zespołów.",
+            "action": "Zobacz Plany"
+          }
+        }
+      },
+      "trial_last_week_upgrade": {
+        "title": "Twój Okres Próbny wkrótce się kończy",
+        "description": "Pozostało mniej niż 7 dni. Czas na zmianę planu!",
+        "steps": {
+          "1": {
+            "title": "Okres Próbny kończy się wkrótce",
+            "content": "⚠️ Twój okres próbny kończy się za mniej niż 7 dni.\n\n✅ Twoje dane są **bezpieczne**\n✅ Przejdź na wersję płatną, aby zachować możliwość edycji"
+          },
+          "2": {
+            "title": "Zmień plan teraz",
+            "content": "Wybierz plan, aby kontynuować z pełnymi funkcjami.",
+            "action": "Przejdź na wersję płatną"
+          }
+        }
+      },
+      "trial_expired_upgrade": {
+        "title": "Twój Okres Próbny Wygasł",
+        "description": "Przejdź na wersję płatną, aby przywrócić pełny dostęp.",
+        "steps": {
+          "1": {
+            "title": "Okres Próbny Wygasł",
+            "content": "🔒 Twój okres próbny dobiegł końca. Obszar roboczy jest w trybie **tylko do odczytu**.\n\n✅ Dane są **bezpieczne i zachowane**\n✅ Przejdź na wersję płatną, aby przywrócić dostęp"
+          },
+          "2": {
+            "title": "Przywróć Dostęp",
+            "content": "Zmień plan, aby odblokować swój obszar roboczy.",
+            "action": "Przejdź na wersję płatną"
+          }
+        }
+      },
+      "invite_blocked_explained": {
+        "title": "Dlaczego nie mogę zapraszać użytkowników?",
+        "description": "Zrozum, dlaczego zaproszenia są zablokowane.",
+        "steps": {
+          "1": {
+            "title": "Zaproszenia Zablokowane",
+            "content": "Zaproszenia są zablokowane, ponieważ:\n\n- Tryb Demo (tylko do odczytu)\n- Okres próbny wygasł\n- Osiągnięto limit użytkowników"
+          },
+          "2": {
+            "title": "Odblokuj",
+            "content": "Zmień plan, aby zaprosić więcej członków zespołu.",
+            "action": "Zobacz Plany"
+          }
+        }
+      },
+      "first_value_checklist": {
+        "title": "Lista kontrolna na start",
+        "description": "Skonfiguruj swój obszar roboczy, aby odnieść sukces.",
+        "steps": {
+          "1": {
+            "title": "Witaj!",
+            "content": "Gratulujemy przejścia na wersję płatną! Skonfigurujmy Twój obszar roboczy, aby uzyskać maksymalną wartość."
+          },
+          "2": {
+            "title": "Krok 1: Skonfiguruj swoją organizację",
+            "content": "Przejrzyj ustawienia organizacji, ustaw branding i skonfiguruj domyślne parametry.",
+            "action": "Ustawienia Organizacji"
+          },
+          "3": {
+            "title": "Krok 2: Zaproś swój zespół",
+            "content": "Zaproś wszystkich interesariuszy. W Twoim planie nie ma limitów miejsc!",
+            "action": "Zaproś Zespół"
+          },
+          "4": {
+            "title": "Krok 3: Utwórz swój pierwszy projekt",
+            "content": "Zacznij zarządzać pracą, tworząc swój pierwszy projekt.",
+            "action": "Nowy Projekt"
+          }
+        }
+      },
+      "invite_users": {
+        "title": "Powiększanie Zespołu",
+        "description": "Dodaj więcej członków zespołu do swojego obszaru roboczego.",
+        "steps": {
+          "1": {
+            "title": "Dodawanie członków zespołu",
+            "content": "Jako klient płatny, **nie masz limitów miejsc**. Zaproś tylu użytkowników, ilu potrzebujesz."
+          },
+          "2": {
+            "title": "Dostęp oparty na rolach",
+            "content": "Przypisuj role, aby kontrolować uprawnienia użytkowników:\n- **Admin**: Pełna kontrola\n- **Użytkownik**: Dostęp do projektów"
+          },
+          "3": {
+            "title": "Wyślij zaproszenia",
+            "content": "Przejdź do ustawień Zespołu, aby wysłać zaproszenia e-mail.",
+            "action": "Ustawienia Zespołu"
+          }
+        }
+      },
+      "use_ai_features": {
+        "title": "Funkcje napędzane AI",
+        "description": "Odblokuj moc AI w swoim workflow.",
+        "steps": {
+          "1": {
+            "title": "Możliwości AI",
+            "content": "Twój plan obejmuje pełny dostęp do AI:\n- **Inteligentne rekomendacje**\n- **Wykrywanie ryzyk**\n- **Wsparcie decyzji**\n- **Raporty wykonawcze**"
+          },
+          "2": {
+            "title": "Role AI",
+            "content": "Konfiguruj zachowanie AI per projekt:\n- **Doradca**: Tylko sugestie\n- **Menedżer**: Może proponować działania\n- **Operator**: Pełna automatyzacja"
+          },
+          "3": {
+            "title": "Wypróbuj teraz",
+            "content": "Otwórz projekt i rozpocznij rozmowę z asystentem AI.",
+            "action": "Otwórz Czat AI"
+          }
+        }
+      },
+      "manage_users": {
+        "title": "Zarządzanie Użytkownikami",
+        "description": "Dowiedz się, jak dodawać, usuwać i zarządzać dostępem użytkowników.",
+        "steps": {
+          "1": {
+            "title": "Podstawy Zarządzania Użytkownikami",
+            "content": "Jako admin możesz:\n- **Zapraszać nowych użytkowników**\n- **Zmieniać role użytkowników**\n- **Dezaktywować użytkowników**\n- **Przeglądać aktywność użytkowników**"
+          },
+          "2": {
+            "title": "Role Użytkowników",
+            "content": "- **Admin**: Może zarządzać organizacją, użytkownikami i rozliczeniami\n- **Użytkownik**: Może pracować nad przypisanymi projektami"
+          },
+          "3": {
+            "title": "Idź do Zarządzania Użytkownikami",
+            "content": "Uzyskaj dostęp do wszystkich kontrolek użytkowników w panelu administracyjnym.",
+            "action": "Zarządzaj Użytkownikami"
+          }
+        }
+      },
+      "billing_overview": {
+        "title": "Zrozumienie Rozliczeń",
+        "description": "Przeglądaj i zarządzaj swoją subskrypcją i fakturami.",
+        "steps": {
+          "1": {
+            "title": "Dashboard Rozliczeń",
+            "content": "Przeglądaj swój aktualny plan, zużycie i nadchodzące opłaty w sekcji rozliczeń."
+          },
+          "2": {
+            "title": "Faktury i Potwierdzenia",
+            "content": "Pobieraj archiwalne faktury do celów ewidencyjnych i księgowych."
+          },
+          "3": {
+            "title": "Zobacz Rozliczenia",
+            "content": "Uzyskaj dostęp do pełnej historii rozliczeń i metod płatności.",
+            "action": "Idź do Rozliczeń"
+          }
+        }
+      },
+      "partner_attribution_explained": {
+        "title": "Program Partnerski",
+        "description": "Zrozum, jak działają polecenia partnerów i przypisanie (atrybucja).",
+        "steps": {
+          "1": {
+            "title": "Co to jest Atrybucja?",
+            "content": "Atrybucja śledzi, w jaki sposób odkryłeś naszą platformę – przez partnera, kod promocyjny czy bezpośrednią rejestrację."
+          },
+          "2": {
+            "title": "Twoja Info o Atrybucji",
+            "content": "Wyświetl źródło polecenia swojej organizacji w Ustawieniach Organizacji.",
+            "action": "Zobacz Atrybucję"
+          }
+        }
+      }
+    },
+    "content": {
+      "help": "Pomoc",
+      "helpCenter": "Centrum Pomocy",
+      "currentContext": "Bieżący kontekst:",
+      "actualContext": "Bieżący kontekst",
+      "contextDesc": "Ta dokumentacja dotyczy widoku, w którym aktualnie się znajdujesz.",
+      "relatedModules": "Powiązane Moduły",
+      "relatedModulesDesc": "Te moduły współpracują z bieżącym.",
+      "fullDocumentation": "Pełna Dokumentacja",
+      "purpose": "Cel",
+      "keyFeatures": "Kluczowe Funkcje",
+      "workflow": "Workflow",
+      "tips": "Podpowiedzi",
+      "selectView": "Wybierz konkretną kartę lub widok, aby zobaczyć szczegółowe instrukcje.",
+      "relatedDocs": "Powiązana Dokumentacja",
+      "dashboard": {
+        "0": {
+          "title": "Jak korzystać z dashboardu?",
+          "content": "Dashboard pokazuje przegląd Twojej organizacji i bieżących działań. Kliknij w karty, aby zobaczyć szczegółowe informacje."
+        },
+        "1": {
+          "title": "Tutorial Wideo Dashboardu",
+          "content": "Obejrzyj to 2-minutowe nagranie, aby dowiedzieć się jak dostosować widoki dashboardu."
+        }
+      },
+      "assessment": {
+        "0": {
+          "title": "Jak oceniać dojrzałość?",
+          "content": "Ocena dojrzałości polega na zdefiniowaniu stanu obecnego (Actual) i stanu docelowego (Target) dla każdego obszaru."
+        },
+        "1": {
+          "title": "FAQ Oceny",
+          "content": "Znajdź odpowiedzi na najczęstsze pytania dotyczące poziomów dojrzałości i punktacji."
+        },
+        "2": {
+          "title": "Pytania Pomocnicze",
+          "content": "Użyj pytań pomocniczych, aby lepiej zrozumieć wymagania dla każdego poziomu dojrzałości."
+        }
+      },
+      "initiatives": {
+        "0": {
+          "title": "Co to jest inicjatywa?",
+          "content": "Inicjatywa to konkretne działanie transformacyjne o zdefiniowanym celu, zakresie i harmonogramie."
+        },
+        "1": {
+          "title": "Priorytetyzacja Inicjatyw",
+          "content": "Użyj macierzy Wpływ/Wysiłek, aby spriorytetyzować działania transformacyjne."
+        }
+      },
+      "roadmap": {
+        "0": {
+          "title": "Jak czytać mapę drogową?",
+          "content": "Mapa drogowa pokazuje oś czasu z fazami projektów i ich zależnościami."
+        },
+        "1": {
+          "title": "Przewodnik Wideo po Mapie Drogowej",
+          "content": "Dowiedz się, jak edytować harmonogramy i zarządzać zależnościami na mapie drogowej."
+        }
+      },
+      "team": {
+        "0": {
+          "title": "Zapraszanie Członków",
+          "content": "Kliknij „Zaproś”, wpisz adres e-mail i wybierz rolę dla członków zespołu."
+        },
+        "1": {
+          "title": "Role i Uprawnienia",
+          "content": "Informacje o różnych rolach użytkowników (Administrator, Członek, Obserwator) w systemie."
+        }
+      },
+      "drd_workspace": {
+        "0": {
+          "title": "Co to jest oś decyzji?",
+          "content": "Oś decyzji (Oś DRD) to przestrzeń do ustrukturyzowania jednego tematu strategicznego."
+        },
+        "1": {
+          "title": "Dodawanie Perspektyw",
+          "content": "Dowiedz się, jak zbierać różne punkty widzenia, aby osiągnąć konsensus."
+        },
+        "2": {
+          "title": "Korzystanie ze Snapshotów",
+          "content": "Snapshoty zapisują obecny stan dyskusji do przyszłego wglądu."
+        }
+      },
+      "sso": {
+        "0": {
+          "title": "Co to jest SSO?",
+          "content": "Single Sign-On (SSO) umożliwia logowanie przy użyciu kont firmowych."
+        },
+        "1": {
+          "title": "Konfiguracja Google SSO",
+          "content": "Szczegółowy przewodnik po konfiguracji Google Workspace jako dostawcy tożsamości."
+        },
+        "2": {
+          "title": "FAQ dotyczące SSO",
+          "content": "Częste pytania o nowoczesne uwierzytelnianie i integrację SSO."
+        }
+      },
+      "security": {
+        "0": {
+          "title": "Polityki Bezpieczeństwa",
+          "content": "Definiuj wymagania dotyczące haseł, sesji, MFA i dostępu po IP."
+        },
+        "1": {
+          "title": "Presety Zgodności",
+          "content": "Skonfiguruj polityki zgodnie ze standardami branżowymi, takimi jak SOC2 czy HIPAA."
+        },
+        "2": {
+          "title": "Blokada Konta",
+          "content": "Ustawienia obsługi nieudanych prób logowania i odzyskiwania konta."
+        }
+      },
+      "whitelabel": {
+        "0": {
+          "title": "Co to jest white-label?",
+          "content": "Dostosuj wygląd platformy do marki Twojej organizacji."
+        },
+        "1": {
+          "title": "Zmiana Kolorów i Logo",
+          "content": "Jak zaktualizować kolory motywu i przesłać logo firmy."
+        },
+        "2": {
+          "title": "Własne Domeny",
+          "content": "Konfiguracja własnej domeny (np. pmo.twojafirma.pl) dla platformy."
+        }
+      },
+      "integrations": {
+        "0": {
+          "title": "Czym są integracje?",
+          "content": "Połącz Consultinity z zewnętrznymi narzędziami, takimi jak Slack, Teams czy Jira."
+        },
+        "1": {
+          "title": "Konfiguracja Webhooków",
+          "content": "Dowiedz się, jak ustawić powiadomienia o zdarzeniach w czasie rzeczywistym."
+        },
+        "2": {
+          "title": "Klucze API",
+          "content": "Zarządzanie bezpiecznymi tokenami dostępu dla bezpośrednich integracji API."
+        }
+      },
+      "default": {
+        "0": {
+          "title": "Pierwsze Kroki",
+          "content": "Zacznij od dashboardu lub poznaj dostępne moduły."
+        },
+        "1": {
+          "title": "Potrzebujesz pomocy?",
+          "content": "Skontaktuj się z nami przez czat lub e-mail pod adresem support@consultinity.com"
+        }
+      }
+    },
+    "initiative": {
+      "autoFill": "Uzupełnij przez AI",
+      "charterTitle": "Karta Inicjatywy",
+      "idLabel": "ID:",
+      "newInitiative": "Nowa Inicjatywa",
+      "progressLabel": "Postęp:",
+      "readinessLabel": "Gotowość:",
+      "tabs": {
+        "overview": "Przegląd",
+        "tasks": "Zadania",
+        "definition": "Definicja i Zakres",
+        "execution": "Realizacja i Ryzyka",
+        "economics": "Wartość i Finanse",
+        "governance": "Zarządzanie",
+        "team": "Zespół",
+        "discussion": "Dyskusja",
+        "history": "Historia",
+        "intelligence": "Inteligencja"
+      },
+      "decisionToMake": "Decyzja do podjęcia",
+      "decisionOwner": "Właściciel Decyzji",
+      "oneLiner": "Streszczenie Wykonawcze",
+      "problemStatement": "Opis Problemu (Dlaczego)",
+      "symptom": "Symptom",
+      "rootCause": "Przyczyna Źródłowa",
+      "costOfInaction": "Koszt Bezczynności",
+      "fullDescription": "Pełny Opis (Legacy)",
+      "nameLabel": "Nazwa Inicjatywy",
+      "strategicIntentLabel": "Intencja Strategiczna",
+      "strategicFitTitle": "Dopasowanie Strategiczne",
+      "alignmentWithAxis": "Zgodność z Osią",
+      "corporateGoal": "Cel Korporacyjny",
+      "painPoint": "Problem",
+      "charterReadiness": "Gotowość Karty",
+      "incompleteLabel": "Niekompletne:",
+      "targetStateSnapshot": "Migawka Stanu Docelowego (Po Inicjatywie)",
+      "processChanges": "Zmiany w Procesach",
+      "behaviorChanges": "Zmiany Behawioralne",
+      "capabilityChanges": "Zmiany w Możliwościach",
+      "addBullet": "+ Dodaj punkt",
+      "evidenceTitle": "Dowody i Załączniki",
+      "strategicChangeLog": "Dziennik Zmian Strategicznych",
+      "addAttachmentMock": "+ Dodaj Załącznik (Mock)",
+      "addLogEntry": "+ Dodaj Wpis",
+      "strategicRoadmapAttributes": "Atrybuty Mapy Strategicznej",
+      "strategicRole": "Rola Strategiczna",
+      "placementReason": "Powód Umiejscowienia",
+      "autoFillWithAI": "Uzupełnij przez AI",
+      "effortProfileLabel": "Profil Nakładu (1-5)",
+      "analytical": "Analityczny",
+      "operational": "Operacyjny",
+      "changeMgmt": "Zarządzanie Zmianą",
+      "successCriteriaTyped": "Kryteria Sukcesu (Typowane)",
+      "autoSuggest": "Auto-Sugestia",
+      "metric": "Metryka",
+      "behavior": "Zachowanie",
+      "process": "Proces",
+      "capability": "Możliwość",
+      "criteriaDescriptionPlaceholder": "Opis kryterium...",
+      "addCriteria": "+ Dodaj Kryterium",
+      "explicitAssumptions": "Jawne Założenia",
+      "organizational": "Organizacyjne",
+      "dataTech": "Dane / Technologia",
+      "budgetResources": "Budżet / Zasoby",
+      "peopleSkills": "Ludzie / Umiejętności",
+      "keyDeliverables": "Kluczowe Produkty",
+      "addDeliverable": "+ Dodaj Produkt",
+      "scopeGuard": "Strażnik Zakresu (Docelowy)",
+      "inScope": "W Zakresie",
+      "outOfScope": "Poza Zakresem",
+      "timelineMilestones": "Oś Czasu i Kamienie Milowe",
+      "autoFillExecution": "Uzupełnij Realizację",
+      "killCriteriaMandatory": "Kryteria Wstrzymania (Obowiązkowe) *",
+      "stopConditions": "Warunki Zatrzymania",
+      "killCriteriaPlaceholder": "Opisz warunki wstrzymania tej inicjatywy...",
+      "startDate": "Data Rozpoczęcia",
+      "endDate": "Data Zakończenia",
+      "pilotEnd": "Koniec Pilotażu",
+      "milestonesAndGates": "Kluczowe Kamienie Milowe i Bramki",
+      "milestoneNamePlaceholder": "Nazwa kamienia milowego...",
+      "decisionGate": "Bramka Decyzyjna",
+      "decision": "Decyzja:",
+      "continue": "Kontynuuj",
+      "adjust": "Dostosuj",
+      "stop": "Zatrzymaj",
+      "requiredCompetencies": "Wymagane Kompetencje",
+      "competenciesPlaceholder": "Szukaj lub dodaj kompetencje...",
+      "keyRisks": "Kluczowe Ryzyka",
+      "keyRisksDescription": "Zidentyfikuj i śledź krytyczne ryzyka dla tej inicjatywy.",
+      "riskDescriptionPlaceholder": "Opis ryzyka...",
+      "mitigationStrategyPlaceholder": "Strategia mitygacji...",
+      "maxRisksReached": "Osiągnięto maksymalnie 5 ryzyk",
+      "addRisk": "+ Dodaj Ryzyko",
+      "financialCase": "Uzasadnienie Finansowe",
+      "capexLabel": "CAPEX",
+      "opexLabel": "OPEX",
+      "annualBenefitLabel": "Roczna Korzyść",
+      "roiLabel": "ROI (Obliczone)",
+      "strategicValue": "Wartość Strategiczna",
+      "businessValueLabel": "Opis Wartości Biznesowej",
+      "businessValuePlaceholder": "Opisz główny wpływ biznesowy...",
+      "ownershipAccountability": "Własność i Odpowiedzialność",
+      "businessOwner": "Właściciel Biznesowy",
+      "executionOwner": "Właściciel Realizacji",
+      "executiveSponsor": "Sponsor Wykonawczy",
+      "sponsor": "Sponsor",
+      "assignedTeam": "Przypisany Zespół",
+      "addMember": "Dodaj Członka",
+      "rolePlaceholder": "Rola...",
+      "actions": "Akcje",
+      "businessValue": "Wartość Biznesowa",
+      "valueDriver": "Czynnik Wartości",
+      "selectDriverPlaceholder": "Wybierz Czynnik...",
+      "costOptimization": "Optymalizacja Kosztów",
+      "revenueGrowth": "Wzrost Przychodów",
+      "capitalEfficiency": "Efektywność Kapitału",
+      "riskReduction": "Redukcja Ryzyka",
+      "strategicCapability": "Możliwości Strategiczne",
+      "confidenceLevel": "Poziom Pewności",
+      "confidencePlaceholder": "Pewność...",
+      "capexEst": "Szac. CAPEX ($)",
+      "opexEst": "Szac. OPEX ($)",
+      "valueTiming": "Termin Wartości",
+      "expectedRealizationPlaceholder": "Oczekiwana Realizacja...",
+      "valueTimingImmediate": "Natychmiastowy (<3 mies.)",
+      "valueTimingShortTerm": "Krótkoterminowy (3-12 mies.)",
+      "valueTimingLongTerm": "Długoterminowy (>12 mies.)",
+      "financialSummary": "Podsumowanie Finansowe",
+      "capabilityPlay": "GRA NA MOŻLIWOŚCI",
+      "cashPlay": "GRA NA GOTÓWKĘ",
+      "totalInvestment": "Całkowita Inwestycja",
+      "missingValueDriverWarning": "Brak Czynnika Wartości dla Inwestycji",
+      "socialImpact": "Wpływ Społeczny",
+      "rolesOwnership": "Role i Własność",
+      "businessOwnerDescription": "Odpowiedzialny za dostarczenie WARTOŚCI",
+      "executionOwnerDescription": "Odpowiedzialny za REALIZACJĘ",
+      "sponsorDescription": "Ostateczny autorytet ZATWIERDZENIA",
+      "selectBusinessOwnerPlaceholder": "Wybierz Właściciela Biznesowego...",
+      "selectExecutionOwnerPlaceholder": "Wybierz Właściciela Realizacji...",
+      "selectSponsorPlaceholder": "Wybierz Sponsora...",
+      "approvalWorkflow": "Przepływ Zatwierdzenia",
+      "currentStatus": "Aktualny Status",
+      "nextAction": "Następna Akcja",
+      "nextActionDraft": "Uzupełnij kartę i prześlij do",
+      "nextActionPlanning": "Doprecyzuj szczegóły i prześlij do",
+      "nextActionReview": "Oczekiwanie na",
+      "sponsorApproval": "Zatwierdzenie sponsora",
+      "nextActionApproved": "Gotowe do rozpoczęcia",
+      "nextActionExecuting": "Ukończ wszystkie zadania aby oznaczyć jako",
+      "completedSuccessfully": "Inicjatywa zakończona pomyślnie",
+      "decisionRequired": "Wymagana Decyzja",
+      "viewBrief": "Zobacz Streszczenie",
+      "governanceAuditTrail": "Ścieżka Audytu Zarządzania",
+      "noGovernanceEvents": "Brak zarejestrowanych zdarzeń zarządczych.",
+      "teamMembers": "Członkowie Zespołu",
+      "selectMember": "Wybierz członka...",
+      "noTeamMembersAssigned": "Brak przypisanych członków zespołu",
+      "allocation": "Alokacja",
+      "relatedInitiatives": "Powiązane Inicjatywy",
+      "linkInitiative": "Połącz Inicjatywę",
+      "noLinkedInitiatives": "Brak połączonych inicjatyw",
+      "initiativeIdOrNamePlaceholder": "ID lub nazwa inicjatywy...",
+      "addCommentPlaceholder": "Dodaj komentarz lub pytanie...",
+      "postComment": "Opublikuj Komentarz",
+      "noCommentsYet": "Brak komentarzy",
+      "startDiscussion": "Rozpocznij dyskusję!",
+      "exportCharter": "Eksportuj Kartę",
+      "cloneAsTemplate": "Klonuj jako Szablon",
+      "versionHistory": "Historia Wersji",
+      "currentVersion": "Aktualna Wersja",
+      "live": "AKTYWNE",
+      "initialCreation": "Utworzenie początkowe"
+    },
+    "intelligence": {
+      "title": "Nauka Organizacyjna",
+      "autoGenerate": "Auto-Generuj Wnioski",
+      "analyzing": "Analizowanie...",
+      "learnedTitle": "Czego się nauczyliśmy (Sukcesy)",
+      "learnedPlaceholder": "Udokumentuj kluczowe wnioski prowadzące do sukcesu...",
+      "surprisedTitle": "Co nas zaskoczyło (Nieoczekiwane)",
+      "surprisedPlaceholder": "Udokumentuj nieoczekiwane wyzwania lub rezultaty...",
+      "differentlyTitle": "Co zrobilibyśmy inaczej",
+      "differentlyPlaceholder": "Praktyczne porady na przyszłość...",
+      "patternsTitle": "Wzorce Między-Inicjatywowe",
+      "noPatterns": "Nie wykryto jeszcze wzorców.",
+      "noPatternsDesc": "Uruchom analizę AI aby porównać z innymi inicjatywami.",
+      "detectPatterns": "Wykryj Wzorce",
+      "detectedPatternsLabel": "Wykryte Wzorce",
+      "knowledgeGraphTitle": "Graf Wiedzy BCG",
+      "knowledgeGraphSharing": "Ta inicjatywa dzieli",
+      "knowledgeGraphSimilarity": "podobieństwo w wzorcach \"Oporu przed Zmianą\" z",
+      "viewRelated": "Zobacz Powiązaną Inicjatywę"
+    },
+    "dashboard": {
+      "title": "Pulpit Realizacji",
+      "program": "Program Transformacji",
+      "lastUpdated": "Ostatnia aktualizacja:",
+      "justNow": "Właśnie teraz",
+      "setup": {
+        "title": "Szybki Start",
+        "subtitle": "Wykorzystaj pełnię możliwości Consultinity",
+        "done": "Gotowe",
+        "next": "Następny",
+        "actions": {
+          "chat": {
+            "title": "Wypróbuj Asystenta AI",
+            "description": "Zadaj pierwsze pytanie do AI"
+          },
+          "assessment": {
+            "title": "Rozpocznij Ocenę",
+            "description": "Zacznij diagnozę cyfrowej gotowości"
+          },
+          "roadmap": {
+            "title": "Zobacz Roadmapę",
+            "description": "Przeglądaj harmonogram transformacji"
+          }
+        }
+      },
+      "tabs": {
+        "overview": "Przegląd",
+        "progress": "Postęp",
+        "ai": "Polecenie AI",
+        "report": "Raport"
+      },
+      "stats": {
+        "healthScore": "Wskaźnik Zdrowia",
+        "healthy": "Transformacja Zdrowa",
+        "activeInitiatives": "Aktywne Inicjatywy",
+        "inProgress": "W Trakcie",
+        "valueRealized": "Zrealizowana Wartość",
+        "ofTarget": "z Celu",
+        "criticalRisks": "Krytyczne Ryzyka",
+        "needAttention": "Wymagają Uwagi"
+      },
+      "valueTrajectory": "Trajektoria Realizacji Wartości",
+      "milestone": "Kamień Milowy",
+      "current": "Aktualny",
+      "liveActivity": "Aktywność na Żywo",
+      "time": {
+        "ago": "{{count}} godz. temu",
+        "daysAgo": "{{count}} dni temu"
+      },
+      "generateReport": "Generuj Raport",
+      "downloadPdf": "Pobierz PDF",
+      "initiativeTracking": "Śledzenie Inicjatyw",
+      "onTrack": "Na Właściwej Drodze",
+      "atRisk": "Zagrożone",
+      "table": {
+        "initiative": "Inicjatywa",
+        "owner": "Właściciel",
+        "status": "Status",
+        "progress": "Postęp",
+        "dueDate": "Termin"
+      },
+      "unassigned": "Nieprzypisane",
+      "aiCommand": {
+        "title": "Centrum Poleceń AI",
+        "proactiveInsights": "Proaktywne Wnioski",
+        "description": "Zadawaj złożone pytania o dane transformacji. AI ma dostęp do Twoich KPI, Ryzyk i Mapy Drogowej.",
+        "placeholder": "Zadaj pytanie..."
+      },
+      "finalReport": {
+        "title": "Użyj Raportu Końcowego",
+        "description": "Wygeneruj kompleksowy raport PDF gotowy dla zarządu, obejmujący całą Strategię Transformacji Cyfrowej.",
+        "sections": "Sekcje",
+        "options": "Opcje",
+        "ready": "GOTOWE",
+        "soon": "WKRÓTCE",
+        "generate": "Generuj Raport Końcowy",
+        "pdfDoc": "Dokument PDF",
+        "powerPoint": "PowerPoint"
+      },
+      "reportSections": {
+        "summary": "Streszczenie Wykonawcze",
+        "maturity": "Wyniki Oceny Dojrzałości",
+        "roadmap": "Mapa Drogowa Inicjatyw Strategicznych",
+        "financial": "Uzasadnienie Finansowe (ROI, NPV)",
+        "risk": "Zarządzanie Ryzykiem i Zmianą"
+      },
+      "widgetsComingSoon": "Wkrótce"
+    },
+    "status": {
+      "DRAFT": "Szkic",
+      "PLANNING": "Planowanie",
+      "REVIEW": "W Przeglądzie",
+      "APPROVED": "Zatwierdzone",
+      "EXECUTING": "W Realizacji",
+      "DONE": "Ukończone",
+      "CANCELLED": "Anulowane",
+      "ARCHIVED": "Zarchiwizowane",
+      "BLOCKED": "Zablokowane"
+    },
+    "role": {
+      "CONTRIBUTOR": "Współtwórca",
+      "REVIEWER": "Recenzent",
+      "SME": "Ekspert (SME)",
+      "STAKEHOLDER": "Interesariusz",
+      "OBSERVER": "Obserwator"
+    },
+    "relation": {
+      "DEPENDS_ON": "Zależy od",
+      "BLOCKS": "Blokuje",
+      "RELATED_TO": "Powiązane z",
+      "PARENT_OF": "Rodzic dla",
+      "CHILD_OF": "Dziecko dla"
+    },
+    "ai": {
+      "applyProposedSchedule": "Zastosuj Proponowany Harmonogram",
+      "autoGenerateInsights": "Auto-Generuj Wnioski",
+      "observations": "Kluczowe Obserwacje i Ryzyka",
+      "recommendations": "Zalecane Działania",
+      "optimization": "Strategia Optymalizacji"
+    },
+    "widgets": {
+      "help": {
+        "title": "Centrum Pomocy",
+        "tooltip": "Centrum Pomocy"
+      },
+      "documents": {
+        "title": "Biblioteka Dokumentów",
+        "tooltip": "Dokumenty"
       },
       "feedback": {
-        "title": "Czy to było pomocne?",
-        "yes": "Tak",
-        "no": "Nie",
-        "addComment": "Dodaj komentarz",
-        "commentPlaceholder": "Powiedz nam, jak możemy poprawić...",
-        "submit": "Wyślij",
-        "skip": "Pomiń",
-        "thanks": "Dziękujemy za opinię!",
-        "error": "Nie udało się wysłać opinii"
+        "title": "Zgłoś błąd / Pomysł",
+        "tooltip": "Zgłoś uwagi"
       }
     },
-    "toggle": {
-      "open": "Otwórz Centrum Pomocy",
-      "close": "Zamknij Centrum Pomocy"
-    },
-    "video": {
-      "watched": "Obejrzane",
-      "chapters": "Rozdziały",
-      "settings": "Ustawienia",
-      "speed": "Prędkość",
-      "controls": {
-        "play": "Odtwórz (k)",
-        "pause": "Pauza (k)",
-        "mute": "Wycisz (m)",
-        "unmute": "Włącz dźwięk (m)",
-        "fullscreen": "Pełny ekran (f)",
-        "exitFullscreen": "Zamknij pełny ekran (f)",
-        "prev10": "-10s",
-        "next10": "+10s"
-      },
-      "shortcuts": "Spacja/K: Odtwórz · ←/→: Przewiń · M: Wycisz · F: Pełny ekran"
-    },
-    "whatsNew": {
-      "title": "Co Nowego",
-      "version": "Wersja",
-      "features": "Nowe Funkcje",
-      "improvements": "Ulepszenia",
-      "fixes": "Poprawki Błędów",
-      "breaking": "Zmiany Przełomowe",
-      "dontShow": "Nie pokazuj dla tej wersji",
-      "gotIt": "Rozumiem!",
-      "learnMore": "Dowiedz się więcej",
-      "changelog": "Zobacz pełną historię zmian",
-      "watchDemo": "Obejrzyj demo"
-    }
-  },
-  "playbooks": {
-    "demo_mode_explained": {
-      "title": "Zrozumienie Trybu Demo",
-      "description": "Dowiedz się, co możesz zrobić w trybie Demo i jakie są jego ograniczenia.",
-      "steps": {
-        "1": {
-          "title": "Witamy w Trybie Demo",
-          "content": "Tryb Demo zapewnia **podgląd tylko do odczytu** platformy. Możesz eksplorować wszystkie funkcje, ale zmiany nie zostaną zapisane."
+    "onboarding": {
+      "checklist": {
+        "title": "Rozpocznij pracę",
+        "completed": "ukończonych",
+        "more": "więcej kroków",
+        "dismiss": "Odkryję sam/sama",
+        "profile": {
+          "title": "Uzupełnij profil",
+          "description": "Dodaj imię i informacje o firmie"
         },
-        "2": {
-          "title": "Co możesz zrobić",
-          "content": "W trybie Demo możesz:\n- Przeglądać projekty, zadania i inicjatywy\n- Zobaczyć rekomendacje AI (ograniczone)\n- Eksplorować pełny interfejs"
+        "firstChat": {
+          "title": "Wypróbuj Asystenta AI",
+          "description": "Zadaj pierwsze pytanie"
         },
-        "3": {
-          "title": "Gotowy na więcej?",
-          "content": "Rozpocznij **bezpłatny 14-dniowy okres próbny**, aby odblokować wszystkie funkcje i zapisać swoją pracę.",
-          "action": "Rozpocznij Bezpłatny Okres Próbny"
+        "firstAssessment": {
+          "title": "Rozpocznij ocenę",
+          "description": "Zacznij diagnozę cyfrowej gotowości"
+        },
+        "firstInitiative": {
+          "title": "Utwórz inicjatywę",
+          "description": "Zaplanuj pierwszy projekt transformacji"
+        },
+        "roadmap": {
+          "title": "Zobacz Roadmapę",
+          "description": "Przeglądaj harmonogram transformacji"
+        },
+        "inviteTeam": {
+          "title": "Zaproś zespół",
+          "description": "Współpracuj z kolegami"
+        },
+        "billing": {
+          "title": "Skonfiguruj płatności",
+          "description": "Dodaj metodę płatności"
         }
       }
-    },
-    "start_trial_from_demo": {
-      "title": "Rozpocznij Bezpłatny Okres Próbny",
-      "description": "Przejdź z trybu Demo do pełnego 14-dniowego okresu próbnego.",
-      "steps": {
-        "1": {
-          "title": "Dlaczego warto rozpocząć okres próbny?",
-          "content": "Okres próbny daje Ci:\n- **Pełny dostęp do zapisu** wszystkich funkcji\n- **14 dni za darmo** na ocenę\n- Twoje dane zostaną zachowane po przejściu na wersję płatną"
-        },
-        "2": {
-          "title": "Pierwsze Kroki",
-          "content": "Utwórz konto, podając tylko adres e-mail. Karta kredytowa nie jest wymagana.",
-          "action": "Rozpocznij Bezpłatny Okres Próbny"
-        }
-      }
-    },
-    "trial_days_remaining": {
-      "title": "Twój Postęp w Okresie Próbnym",
-      "description": "Śledź status swojego okresu próbnego i wykorzystaj go jak najlepiej.",
-      "steps": {
-        "1": {
-          "title": "Przegląd Okresu Próbnego",
-          "content": "Twój okres próbny obejmuje **pełny dostęp** do wszystkich funkcji. Wykorzystaj jak najlepiej pozostałe dni!"
-        },
-        "2": {
-          "title": "Kluczowe funkcje do wypróbowania",
-          "content": "1. **Twórz projekty** i inicjatywy\n2. **Zaproś członków zespołu** (do 5)\n3. **Używaj funkcji AI** do analiz\n4. **Śledź postępy** na dashboardach"
-        },
-        "3": {
-          "title": "Potrzebujesz więcej czasu?",
-          "content": "Skontaktuj się z pomocą techniczną, jeśli potrzebujesz przedłużenia okresu próbnego, lub przejdź na wersję płatną w dowolnym momencie, aby zachować wszystkie dane.",
-          "action": "Zobacz Cennik"
-        }
-      }
-    },
-    "invite_team": {
-      "title": "Zaproś Swój Zespół",
-      "description": "Współpraca jest kluczowa. Zaproś kolegów do dołączenia do Twojego obszaru roboczego.",
-      "steps": {
-        "1": {
-          "title": "Dlaczego warto zaprosić członków zespołu?",
-          "content": "Zyskaj pełny obraz! Zaproś swój zespół, aby:\n- **Współpracować** nad projektami\n- **Przypisywać zadania** odpowiednim osobom\n- **Szybciej wdrażać** rozwiązania w całej organizacji"
-        },
-        "2": {
-          "title": "Limity Okresu Próbnego",
-          "content": "Twój okres próbny pozwala na dodanie do **5 członków zespołu**. Przejdź na wersję płatną, aby uzyskać nieograniczoną liczbę miejsc."
-        },
-        "3": {
-          "title": "Wyślij zaproszenia",
-          "content": "Przejdź do Ustawienia → Zespół, aby zaprosić kolegów przez e-mail.",
-          "action": "Idź do Ustawień Zespołu"
-        }
-      }
-    },
-    "upgrade_to_paid": {
-      "title": "Przejdź na Pełny Dostęp",
-      "description": "Usuń limity okresu próbnego i odblokuj wszystkie funkcje.",
-      "steps": {
-        "1": {
-          "title": "Korzyści z przejścia na wersję płatną",
-          "content": "✅ **Nieograniczona** liczba projektów i użytkowników\n✅ **Pełne możliwości AI**\n✅ **Priorytetowe wsparcie**\n✅ Dane z okresu próbnego zostają zachowane"
-        },
-        "2": {
-          "title": "Elastyczne Plany",
-          "content": "Wybierz rozliczenie miesięczne lub roczne. Opcje Enterprise dostępne dla większych zespołów.",
-          "action": "Zobacz Plany"
-        }
-      }
-    },
-    "trial_last_week_upgrade": {
-      "title": "Twój Okres Próbny wkrótce się kończy",
-      "description": "Pozostało mniej niż 7 dni. Czas na zmianę planu!",
-      "steps": {
-        "1": {
-          "title": "Okres Próbny kończy się wkrótce",
-          "content": "⚠️ Twój okres próbny kończy się za mniej niż 7 dni.\n\n✅ Twoje dane są **bezpieczne**\n✅ Przejdź na wersję płatną, aby zachować możliwość edycji"
-        },
-        "2": {
-          "title": "Zmień plan teraz",
-          "content": "Wybierz plan, aby kontynuować z pełnymi funkcjami.",
-          "action": "Przejdź na wersję płatną"
-        }
-      }
-    },
-    "trial_expired_upgrade": {
-      "title": "Twój Okres Próbny Wygasł",
-      "description": "Przejdź na wersję płatną, aby przywrócić pełny dostęp.",
-      "steps": {
-        "1": {
-          "title": "Okres Próbny Wygasł",
-          "content": "🔒 Twój okres próbny dobiegł końca. Obszar roboczy jest w trybie **tylko do odczytu**.\n\n✅ Dane są **bezpieczne i zachowane**\n✅ Przejdź na wersję płatną, aby przywrócić dostęp"
-        },
-        "2": {
-          "title": "Przywróć Dostęp",
-          "content": "Zmień plan, aby odblokować swój obszar roboczy.",
-          "action": "Przejdź na wersję płatną"
-        }
-      }
-    },
-    "invite_blocked_explained": {
-      "title": "Dlaczego nie mogę zapraszać użytkowników?",
-      "description": "Zrozum, dlaczego zaproszenia są zablokowane.",
-      "steps": {
-        "1": {
-          "title": "Zaproszenia Zablokowane",
-          "content": "Zaproszenia są zablokowane, ponieważ:\n\n- Tryb Demo (tylko do odczytu)\n- Okres próbny wygasł\n- Osiągnięto limit użytkowników"
-        },
-        "2": {
-          "title": "Odblokuj",
-          "content": "Zmień plan, aby zaprosić więcej członków zespołu.",
-          "action": "Zobacz Plany"
-        }
-      }
-    },
-    "first_value_checklist": {
-      "title": "Lista kontrolna na start",
-      "description": "Skonfiguruj swój obszar roboczy, aby odnieść sukces.",
-      "steps": {
-        "1": {
-          "title": "Witaj!",
-          "content": "Gratulujemy przejścia na wersję płatną! Skonfigurujmy Twój obszar roboczy, aby uzyskać maksymalną wartość."
-        },
-        "2": {
-          "title": "Krok 1: Skonfiguruj swoją organizację",
-          "content": "Przejrzyj ustawienia organizacji, ustaw branding i skonfiguruj domyślne parametry.",
-          "action": "Ustawienia Organizacji"
-        },
-        "3": {
-          "title": "Krok 2: Zaproś swój zespół",
-          "content": "Zaproś wszystkich interesariuszy. W Twoim planie nie ma limitów miejsc!",
-          "action": "Zaproś Zespół"
-        },
-        "4": {
-          "title": "Krok 3: Utwórz swój pierwszy projekt",
-          "content": "Zacznij zarządzać pracą, tworząc swój pierwszy projekt.",
-          "action": "Nowy Projekt"
-        }
-      }
-    },
-    "invite_users": {
-      "title": "Powiększanie Zespołu",
-      "description": "Dodaj więcej członków zespołu do swojego obszaru roboczego.",
-      "steps": {
-        "1": {
-          "title": "Dodawanie członków zespołu",
-          "content": "Jako klient płatny, **nie masz limitów miejsc**. Zaproś tylu użytkowników, ilu potrzebujesz."
-        },
-        "2": {
-          "title": "Dostęp oparty na rolach",
-          "content": "Przypisuj role, aby kontrolować uprawnienia użytkowników:\n- **Admin**: Pełna kontrola\n- **Użytkownik**: Dostęp do projektów"
-        },
-        "3": {
-          "title": "Wyślij zaproszenia",
-          "content": "Przejdź do ustawień Zespołu, aby wysłać zaproszenia e-mail.",
-          "action": "Ustawienia Zespołu"
-        }
-      }
-    },
-    "use_ai_features": {
-      "title": "Funkcje napędzane AI",
-      "description": "Odblokuj moc AI w swoim workflow.",
-      "steps": {
-        "1": {
-          "title": "Możliwości AI",
-          "content": "Twój plan obejmuje pełny dostęp do AI:\n- **Inteligentne rekomendacje**\n- **Wykrywanie ryzyk**\n- **Wsparcie decyzji**\n- **Raporty wykonawcze**"
-        },
-        "2": {
-          "title": "Role AI",
-          "content": "Konfiguruj zachowanie AI per projekt:\n- **Doradca**: Tylko sugestie\n- **Menedżer**: Może proponować działania\n- **Operator**: Pełna automatyzacja"
-        },
-        "3": {
-          "title": "Wypróbuj teraz",
-          "content": "Otwórz projekt i rozpocznij rozmowę z asystentem AI.",
-          "action": "Otwórz Czat AI"
-        }
-      }
-    },
-    "manage_users": {
-      "title": "Zarządzanie Użytkownikami",
-      "description": "Dowiedz się, jak dodawać, usuwać i zarządzać dostępem użytkowników.",
-      "steps": {
-        "1": {
-          "title": "Podstawy Zarządzania Użytkownikami",
-          "content": "Jako admin możesz:\n- **Zapraszać nowych użytkowników**\n- **Zmieniać role użytkowników**\n- **Dezaktywować użytkowników**\n- **Przeglądać aktywność użytkowników**"
-        },
-        "2": {
-          "title": "Role Użytkowników",
-          "content": "- **Admin**: Może zarządzać organizacją, użytkownikami i rozliczeniami\n- **Użytkownik**: Może pracować nad przypisanymi projektami"
-        },
-        "3": {
-          "title": "Idź do Zarządzania Użytkownikami",
-          "content": "Uzyskaj dostęp do wszystkich kontrolek użytkowników w panelu administracyjnym.",
-          "action": "Zarządzaj Użytkownikami"
-        }
-      }
-    },
-    "billing_overview": {
-      "title": "Zrozumienie Rozliczeń",
-      "description": "Przeglądaj i zarządzaj swoją subskrypcją i fakturami.",
-      "steps": {
-        "1": {
-          "title": "Dashboard Rozliczeń",
-          "content": "Przeglądaj swój aktualny plan, zużycie i nadchodzące opłaty w sekcji rozliczeń."
-        },
-        "2": {
-          "title": "Faktury i Potwierdzenia",
-          "content": "Pobieraj archiwalne faktury do celów ewidencyjnych i księgowych."
-        },
-        "3": {
-          "title": "Zobacz Rozliczenia",
-          "content": "Uzyskaj dostęp do pełnej historii rozliczeń i metod płatności.",
-          "action": "Idź do Rozliczeń"
-        }
-      }
-    },
-    "partner_attribution_explained": {
-      "title": "Program Partnerski",
-      "description": "Zrozum, jak działają polecenia partnerów i przypisanie (atrybucja).",
-      "steps": {
-        "1": {
-          "title": "Co to jest Atrybucja?",
-          "content": "Atrybucja śledzi, w jaki sposób odkryłeś naszą platformę – przez partnera, kod promocyjny czy bezpośrednią rejestrację."
-        },
-        "2": {
-          "title": "Twoja Info o Atrybucji",
-          "content": "Wyświetl źródło polecenia swojej organizacji w Ustawieniach Organizacji.",
-          "action": "Zobacz Atrybucję"
-        }
-      }
-    }
-  },
-  "content": {
-    "help": "Pomoc",
-    "helpCenter": "Centrum Pomocy",
-    "currentContext": "Bieżący kontekst:",
-    "actualContext": "Bieżący kontekst",
-    "contextDesc": "Ta dokumentacja dotyczy widoku, w którym aktualnie się znajdujesz.",
-    "relatedModules": "Powiązane Moduły",
-    "relatedModulesDesc": "Te moduły współpracują z bieżącym.",
-    "fullDocumentation": "Pełna Dokumentacja",
-    "purpose": "Cel",
-    "keyFeatures": "Kluczowe Funkcje",
-    "workflow": "Workflow",
-    "tips": "Podpowiedzi",
-    "selectView": "Wybierz konkretną kartę lub widok, aby zobaczyć szczegółowe instrukcje.",
-    "relatedDocs": "Powiązana Dokumentacja",
-    "dashboard": {
-      "0": {
-        "title": "Jak korzystać z dashboardu?",
-        "content": "Dashboard pokazuje przegląd Twojej organizacji i bieżących działań. Kliknij w karty, aby zobaczyć szczegółowe informacje."
-      },
-      "1": {
-        "title": "Tutorial Wideo Dashboardu",
-        "content": "Obejrzyj to 2-minutowe nagranie, aby dowiedzieć się jak dostosować widoki dashboardu."
-      }
-    },
-    "assessment": {
-      "0": {
-        "title": "Jak oceniać dojrzałość?",
-        "content": "Ocena dojrzałości polega na zdefiniowaniu stanu obecnego (Actual) i stanu docelowego (Target) dla każdego obszaru."
-      },
-      "1": {
-        "title": "FAQ Oceny",
-        "content": "Znajdź odpowiedzi na najczęstsze pytania dotyczące poziomów dojrzałości i punktacji."
-      },
-      "2": {
-        "title": "Pytania Pomocnicze",
-        "content": "Użyj pytań pomocniczych, aby lepiej zrozumieć wymagania dla każdego poziomu dojrzałości."
-      }
-    },
-    "initiatives": {
-      "0": {
-        "title": "Co to jest inicjatywa?",
-        "content": "Inicjatywa to konkretne działanie transformacyjne o zdefiniowanym celu, zakresie i harmonogramie."
-      },
-      "1": {
-        "title": "Priorytetyzacja Inicjatyw",
-        "content": "Użyj macierzy Wpływ/Wysiłek, aby spriorytetyzować działania transformacyjne."
-      }
-    },
-    "roadmap": {
-      "0": {
-        "title": "Jak czytać mapę drogową?",
-        "content": "Mapa drogowa pokazuje oś czasu z fazami projektów i ich zależnościami."
-      },
-      "1": {
-        "title": "Przewodnik Wideo po Mapie Drogowej",
-        "content": "Dowiedz się, jak edytować harmonogramy i zarządzać zależnościami na mapie drogowej."
-      }
-    },
-    "team": {
-      "0": {
-        "title": "Zapraszanie Członków",
-        "content": "Kliknij „Zaproś”, wpisz adres e-mail i wybierz rolę dla członków zespołu."
-      },
-      "1": {
-        "title": "Role i Uprawnienia",
-        "content": "Informacje o różnych rolach użytkowników (Administrator, Członek, Obserwator) w systemie."
-      }
-    },
-    "drd_workspace": {
-      "0": {
-        "title": "Co to jest oś decyzji?",
-        "content": "Oś decyzji (Oś DRD) to przestrzeń do ustrukturyzowania jednego tematu strategicznego."
-      },
-      "1": {
-        "title": "Dodawanie Perspektyw",
-        "content": "Dowiedz się, jak zbierać różne punkty widzenia, aby osiągnąć konsensus."
-      },
-      "2": {
-        "title": "Korzystanie ze Snapshotów",
-        "content": "Snapshoty zapisują obecny stan dyskusji do przyszłego wglądu."
-      }
-    },
-    "sso": {
-      "0": {
-        "title": "Co to jest SSO?",
-        "content": "Single Sign-On (SSO) umożliwia logowanie przy użyciu kont firmowych."
-      },
-      "1": {
-        "title": "Konfiguracja Google SSO",
-        "content": "Szczegółowy przewodnik po konfiguracji Google Workspace jako dostawcy tożsamości."
-      },
-      "2": {
-        "title": "FAQ dotyczące SSO",
-        "content": "Częste pytania o nowoczesne uwierzytelnianie i integrację SSO."
-      }
-    },
-    "security": {
-      "0": {
-        "title": "Polityki Bezpieczeństwa",
-        "content": "Definiuj wymagania dotyczące haseł, sesji, MFA i dostępu po IP."
-      },
-      "1": {
-        "title": "Presety Zgodności",
-        "content": "Skonfiguruj polityki zgodnie ze standardami branżowymi, takimi jak SOC2 czy HIPAA."
-      },
-      "2": {
-        "title": "Blokada Konta",
-        "content": "Ustawienia obsługi nieudanych prób logowania i odzyskiwania konta."
-      }
-    },
-    "whitelabel": {
-      "0": {
-        "title": "Co to jest white-label?",
-        "content": "Dostosuj wygląd platformy do marki Twojej organizacji."
-      },
-      "1": {
-        "title": "Zmiana Kolorów i Logo",
-        "content": "Jak zaktualizować kolory motywu i przesłać logo firmy."
-      },
-      "2": {
-        "title": "Własne Domeny",
-        "content": "Konfiguracja własnej domeny (np. pmo.twojafirma.pl) dla platformy."
-      }
-    },
-    "integrations": {
-      "0": {
-        "title": "Czym są integracje?",
-        "content": "Połącz Consultinity z zewnętrznymi narzędziami, takimi jak Slack, Teams czy Jira."
-      },
-      "1": {
-        "title": "Konfiguracja Webhooków",
-        "content": "Dowiedz się, jak ustawić powiadomienia o zdarzeniach w czasie rzeczywistym."
-      },
-      "2": {
-        "title": "Klucze API",
-        "content": "Zarządzanie bezpiecznymi tokenami dostępu dla bezpośrednich integracji API."
-      }
-    },
-    "default": {
-      "0": {
-        "title": "Pierwsze Kroki",
-        "content": "Zacznij od dashboardu lub poznaj dostępne moduły."
-      },
-      "1": {
-        "title": "Potrzebujesz pomocy?",
-        "content": "Skontaktuj się z nami przez czat lub e-mail pod adresem support@consultinity.com"
-      }
-    }
-  },
-  "initiative": {
-    "autoFill": "Auto-fill with AI",
-    "charterTitle": "Initiative Charter",
-    "idLabel": "ID:",
-    "newInitiative": "New Initiative",
-    "progressLabel": "Progress:",
-    "readinessLabel": "Readiness:",
-    "tabs": {
-      "overview": "Overview",
-      "tasks": "Tasks",
-      "definition": "Definition & Scope",
-      "execution": "Execution & Risks",
-      "economics": "Value & Finance",
-      "governance": "Governance",
-      "team": "Team",
-      "discussion": "Discussion",
-      "history": "History",
-      "intelligence": "Intelligence"
-    },
-    "decisionToMake": "Decision to be made",
-    "decisionOwner": "Decision Owner",
-    "oneLiner": "Executive One-Liner",
-    "problemStatement": "Problem Statement (The Why)",
-    "symptom": "Symptom",
-    "rootCause": "Root Cause",
-    "costOfInaction": "Cost of Inaction",
-    "fullDescription": "Full Description (Legacy)",
-    "nameLabel": "Initiative Name",
-    "strategicIntentLabel": "Strategic Intent",
-    "strategicFitTitle": "Strategic Fit",
-    "alignmentWithAxis": "Alignment with Axis",
-    "corporateGoal": "Corporate Goal",
-    "painPoint": "Pain Point",
-    "charterReadiness": "Charter Readiness",
-    "incompleteLabel": "Incomplete:",
-    "targetStateSnapshot": "Target State Snapshot (After Initiative)",
-    "processChanges": "Process Changes",
-    "behaviorChanges": "Behavior Changes",
-    "capabilityChanges": "Capability Changes",
-    "addBullet": "+ Add bullet",
-    "evidenceTitle": "Evidence & Attachments",
-    "strategicChangeLog": "Strategic Change Log",
-    "addAttachmentMock": "+ Add Attachment (Mock)",
-    "addLogEntry": "+ Add Log Entry",
-    "strategicRoadmapAttributes": "Strategic Roadmap Attributes",
-    "strategicRole": "Strategic Role",
-    "placementReason": "Placement Reason",
-    "autoFillWithAI": "Auto-fill with AI",
-    "effortProfileLabel": "Effort Profile (1-5)",
-    "analytical": "Analytical",
-    "operational": "Operational",
-    "changeMgmt": "Change Mgmt",
-    "successCriteriaTyped": "Success Criteria (Typed)",
-    "autoSuggest": "Auto-Suggest",
-    "metric": "Metric",
-    "behavior": "Behavior",
-    "process": "Process",
-    "capability": "Capability",
-    "criteriaDescriptionPlaceholder": "Criteria description...",
-    "addCriteria": "+ Add Criteria",
-    "explicitAssumptions": "Explicit Assumptions",
-    "organizational": "Organizational",
-    "dataTech": "Data / Tech",
-    "budgetResources": "Budget / Resources",
-    "peopleSkills": "People / Skills",
-    "keyDeliverables": "Key Deliverables",
-    "addDeliverable": "+ Add Deliverable",
-    "scopeGuard": "Scope Guard (Target)",
-    "inScope": "In Scope",
-    "outOfScope": "Out of Scope",
-    "timelineMilestones": "Timeline & Milestones",
-    "autoFillExecution": "Auto-fill Execution",
-    "killCriteriaMandatory": "Kill Criteria (Mandatory) *",
-    "stopConditions": "Stop Conditions",
-    "killCriteriaPlaceholder": "Describe conditions to stop this initiative...",
-    "startDate": "Start Date",
-    "endDate": "End Date",
-    "pilotEnd": "Pilot End",
-    "milestonesAndGates": "Key Milestones & Gates",
-    "milestoneNamePlaceholder": "Milestone name...",
-    "decisionGate": "Decision Gate",
-    "decision": "Decision:",
-    "continue": "Continue",
-    "adjust": "Adjust",
-    "stop": "Stop",
-    "requiredCompetencies": "Required Competencies",
-    "competenciesPlaceholder": "Search or add competencies...",
-    "keyRisks": "Key Risks",
-    "keyRisksDescription": "Identify and track critical risks for this initiative.",
-    "riskDescriptionPlaceholder": "Risk description...",
-    "mitigationStrategyPlaceholder": "Mitigation strategy...",
-    "maxRisksReached": "Max 5 Risks reached",
-    "addRisk": "+ Add Risk",
-    "financialCase": "Financial Case",
-    "capexLabel": "CAPEX",
-    "opexLabel": "OPEX",
-    "annualBenefitLabel": "Annual Benefit",
-    "roiLabel": "ROI (Calculated)",
-    "strategicValue": "Strategic Value",
-    "businessValueLabel": "Business Value Description",
-    "businessValuePlaceholder": "Describe major business impact...",
-    "ownershipAccountability": "Ownership & Accountability",
-    "businessOwner": "Business Owner",
-    "executionOwner": "Execution Owner",
-    "executiveSponsor": "Executive Sponsor",
-    "sponsor": "Sponsor",
-    "assignedTeam": "Assigned Team",
-    "addMember": "Add Member",
-    "rolePlaceholder": "Role...",
-    "actions": "Actions",
-    "businessValue": "Business Value",
-    "valueDriver": "Value Driver",
-    "selectDriverPlaceholder": "Select Driver...",
-    "costOptimization": "Cost Optimization",
-    "revenueGrowth": "Revenue Growth",
-    "capitalEfficiency": "Capital Efficiency",
-    "riskReduction": "Risk Reduction",
-    "strategicCapability": "Strategic Capability",
-    "confidenceLevel": "Confidence Level",
-    "confidencePlaceholder": "Confidence...",
-    "capexEst": "CAPEX Est. ($)",
-    "opexEst": "OPEX Est. ($)",
-    "valueTiming": "Value Timing",
-    "expectedRealizationPlaceholder": "Expected Realization...",
-    "valueTimingImmediate": "Immediate (<3mo)",
-    "valueTimingShortTerm": "Short term (3-12mo)",
-    "valueTimingLongTerm": "Long term (>12mo)",
-    "financialSummary": "Financial Summary",
-    "capabilityPlay": "CAPABILITY PLAY",
-    "cashPlay": "CASH PLAY",
-    "totalInvestment": "Total Investment",
-    "missingValueDriverWarning": "Missing Value Driver for Investment",
-    "socialImpact": "Social Impact",
-    "rolesOwnership": "Roles & Ownership",
-    "businessOwnerDescription": "Accountable for VALUE delivery",
-    "executionOwnerDescription": "Accountable for DELIVERY",
-    "sponsorDescription": "Final APPROVAL authority",
-    "selectBusinessOwnerPlaceholder": "Select Business Owner...",
-    "selectExecutionOwnerPlaceholder": "Select Execution Owner...",
-    "selectSponsorPlaceholder": "Select Sponsor...",
-    "approvalWorkflow": "Approval Workflow",
-    "currentStatus": "Current Status",
-    "nextAction": "Next Action",
-    "nextActionDraft": "Complete charter and submit to",
-    "nextActionPlanning": "Finalize details and submit for",
-    "nextActionReview": "Awaiting",
-    "sponsorApproval": "Sponsor approval",
-    "nextActionApproved": "Ready to start",
-    "nextActionExecuting": "Complete all tasks to mark as",
-    "completedSuccessfully": "Initiative completed successfully",
-    "decisionRequired": "Decision Required",
-    "viewBrief": "View Brief",
-    "governanceAuditTrail": "Governance Audit Trail",
-    "noGovernanceEvents": "No governance events recorded yet.",
-    "teamMembers": "Team Members",
-    "selectMember": "Select member...",
-    "noTeamMembersAssigned": "No team members assigned yet",
-    "allocation": "Allocation",
-    "relatedInitiatives": "Related Initiatives",
-    "linkInitiative": "Link Initiative",
-    "noLinkedInitiatives": "No linked initiatives",
-    "initiativeIdOrNamePlaceholder": "Initiative ID or name...",
-    "addCommentPlaceholder": "Add a comment or question...",
-    "postComment": "Post Comment",
-    "noCommentsYet": "No comments yet",
-    "startDiscussion": "Start the discussion!",
-    "exportCharter": "Export Charter",
-    "cloneAsTemplate": "Clone as Template",
-    "versionHistory": "Version History",
-    "currentVersion": "Current Version",
-    "live": "LIVE",
-    "initialCreation": "Initial creation"
-  },
-  "intelligence": {
-    "title": "Organizational Learning",
-    "autoGenerate": "Auto-Generate Insights",
-    "analyzing": "Analyzing...",
-    "learnedTitle": "What we learned (Successes)",
-    "learnedPlaceholder": "Document key insights that drove success...",
-    "surprisedTitle": "What surprised us (Unexpected)",
-    "surprisedPlaceholder": "Document unexpected challenges or outcomes...",
-    "differentlyTitle": "What we would do differently",
-    "differentlyPlaceholder": "Actionable advice for future comparisons...",
-    "patternsTitle": "Cross-Initiative Patterns",
-    "noPatterns": "No patterns detected yet.",
-    "noPatternsDesc": "Run AI analysis to compare with other initiatives.",
-    "detectPatterns": "Detect Patterns",
-    "detectedPatternsLabel": "Detected Patterns",
-    "knowledgeGraphTitle": "BCG Knowledge Graph",
-    "knowledgeGraphSharing": "This initiative shares",
-    "knowledgeGraphSimilarity": "similarity in \"Change Resistance\" patterns with",
-    "viewRelated": "View Related Initiative"
-  },
-  "dashboard": {
-    "title": "Execution Dashboard",
-    "program": "Transformation Program",
-    "lastUpdated": "Last updated:",
-    "justNow": "Just now",
-    "tabs": {
-      "overview": "Overview",
-      "progress": "Progress",
-      "ai": "AI Command",
-      "report": "Report"
-    },
-    "stats": {
-      "healthScore": "Health Score",
-      "healthy": "Transformation Healthy",
-      "activeInitiatives": "Active Initiatives",
-      "inProgress": "In Progress",
-      "valueRealized": "Value Realized",
-      "ofTarget": "of Target",
-      "criticalRisks": "Critical Risks",
-      "needAttention": "Need Attention"
-    },
-    "valueTrajectory": "Value Realization Trajectory",
-    "milestone": "Milestone",
-    "current": "Current",
-    "liveActivity": "Live Activity",
-    "time": {
-      "ago": "{{count}}h ago",
-      "daysAgo": "{{count}}d ago"
-    },
-    "generateReport": "Generate Report",
-    "downloadPdf": "Download PDF",
-    "initiativeTracking": "Initiative Tracking",
-    "onTrack": "On Track",
-    "atRisk": "At Risk",
-    "table": {
-      "initiative": "Initiative",
-      "owner": "Owner",
-      "status": "Status",
-      "progress": "Progress",
-      "dueDate": "Due Date"
-    },
-    "unassigned": "Unassigned",
-    "aiCommand": {
-      "title": "AI Command Center",
-      "proactiveInsights": "Proactive Insights",
-      "description": "Ask complex questions about your transformation data. The AI has access to your KPIs, Risks, and Roadmap.",
-      "placeholder": "Ask a question..."
-    },
-    "finalReport": {
-      "title": "Use The Final Report",
-      "description": "Generate a comprehensive, board-ready PDF report encapsulating your entire Digital Transformation Strategy.",
-      "sections": "Sections",
-      "options": "Options",
-      "ready": "READY",
-      "soon": "SOON",
-      "generate": "Generate Final Report",
-      "pdfDoc": "PDF Document",
-      "powerPoint": "PowerPoint"
-    },
-    "reportSections": {
-      "summary": "Executive Summary",
-      "maturity": "Maturity Assessment Results",
-      "roadmap": "Strategic Initiatives Roadmap",
-      "financial": "Financial Case (ROI, NPV)",
-      "risk": "Risk & Change Management"
-    },
-    "widgetsComingSoon": "Coming Soon"
-  },
-  "status": {
-    "DRAFT": "Draft",
-    "PLANNING": "Planning",
-    "REVIEW": "In Review",
-    "APPROVED": "Approved",
-    "EXECUTING": "Executing",
-    "DONE": "Done",
-    "CANCELLED": "Cancelled",
-    "ARCHIVED": "Archived",
-    "BLOCKED": "Blocked"
-  },
-  "role": {
-    "CONTRIBUTOR": "Contributor",
-    "REVIEWER": "Reviewer",
-    "SME": "SME",
-    "STAKEHOLDER": "Stakeholder",
-    "OBSERVER": "Observer"
-  },
-  "relation": {
-    "DEPENDS_ON": "Depends on",
-    "BLOCKS": "Blocks",
-    "RELATED_TO": "Related to",
-    "PARENT_OF": "Parent of",
-    "CHILD_OF": "Child of"
-  },
-  "ai": {
-    "applyProposedSchedule": "Apply Proposed Schedule",
-    "autoGenerateInsights": "Auto-Generate Insights",
-    "observations": "Key Observations & Risks",
-    "recommendations": "Recommended Actions",
-    "optimization": "Optimization Strategy"
-  },
-  "widgets": {
-    "help": {
-      "title": "Centrum Pomocy",
-      "tooltip": "Centrum Pomocy"
-    },
-    "documents": {
-      "title": "Biblioteka Dokumentów",
-      "tooltip": "Dokumenty"
     },
     "feedback": {
-      "title": "Zgłoś błąd / Pomysł",
-      "tooltip": "Zgłoś uwagi"
+      "title": "Feedback",
+      "tabs": {
+        "report": "Zgłoś",
+        "pulse": "Szybki",
+        "feature": "Funkcja"
+      },
+      "type": {
+        "bug": "Błąd",
+        "idea": "Pomysł"
+      },
+      "severity": {
+        "label": "Priorytet"
+      },
+      "label": {
+        "bug": "Opis błędu",
+        "idea": "Opis pomysłu"
+      },
+      "placeholder": {
+        "bug": "Opisz co się stało i jak odtworzyć problem...",
+        "idea": "Opisz swój pomysł na usprawnienie..."
+      },
+      "report": {
+        "intro": "Pomóż nam ulepszać aplikację zgłaszając problemy lub pomysły."
+      },
+      "submit": "Wyślij",
+      "submitting": "Wysyłanie...",
+      "success": {
+        "title": "Dziękujemy!",
+        "message": "Dziękujemy za Twoją opinię. Przeanalizujemy ją najszybciej jak to możliwe.",
+        "bugReported": "Błąd zgłoszony! Zajmiemy się tym.",
+        "ideaSubmitted": "Świetny pomysł! Dodano do listy.",
+        "pulse": "Dziękujemy za opinię! 🎉",
+        "feature": "Prośba o funkcję przesłana!",
+        "featureWithAI": "Prośba o funkcję przesłana! AI znalazło podobne zgłoszenia."
+      },
+      "error": {
+        "submit": "Nie udało się wysłać feedbacku"
+      },
+      "intro": "Twoja opinia pomaga nam ulepszać platformę. Zgłoś błąd lub podziel się pomysłem.",
+      "footer": "Feedback wysłany jako",
+      "pulse": {
+        "title": "Jak oceniasz doświadczenie?",
+        "subtitle": "Szybka opinia pomaga nam się rozwijać",
+        "context": "Feedback dla:",
+        "sorry": "Przykro nam to słyszeć!",
+        "tellUs": "Powiedz nam co poszło nie tak",
+        "commentPlaceholder": "Co możemy poprawić?"
+      },
+      "feature": {
+        "category": "Kategoria",
+        "name": "Nazwa funkcji",
+        "namePlaceholder": "np. Tryb ciemny, Eksport do PDF",
+        "description": "Opis",
+        "descPlaceholder": "Opisz funkcję i jak mogłaby Ci pomóc...",
+        "impact": "Wpływ biznesowy",
+        "submit": "Wyślij prośbę o funkcję"
+      },
+      "ai": {
+        "insights": "Spostrzeżenia AI",
+        "loading": "Ładowanie spostrzeżeń AI..."
+      }
+    },
+    "documents": {
+      "library": "Biblioteka Dokumentów",
+      "projectDocs": "Projekt",
+      "myDocs": "Moje",
+      "upload": "Dodaj dokument",
+      "uploading": "Przesyłanie...",
+      "noProjectDocs": "Brak dokumentów projektu",
+      "noUserDocs": "Brak Twoich dokumentów",
+      "download": "Pobierz",
+      "moveToProject": "Przenieś do projektu",
+      "delete": "Usuń",
+      "projectHint": "Dokumenty dostępne dla wszystkich w projekcie",
+      "userHint": "Twoje prywatne dokumenty",
+      "confirmDelete": "Czy na pewno chcesz usunąć ten dokument?"
     }
-  },
-  "feedback": {
-    "title": "Prześlij Feedback",
-    "type": {
-      "bug": "Błąd",
-      "idea": "Pomysł"
-    },
-    "label": {
-      "bug": "Opis błędu",
-      "idea": "Opis pomysłu"
-    },
-    "placeholder": {
-      "bug": "Opisz co nie działa i jak to odtworzyć...",
-      "idea": "Opisz swój pomysł na usprawnienie..."
-    },
-    "submit": "Wyślij Zgłoszenie",
-    "submitting": "Wysyłanie...",
-    "success": {
-      "title": "Wiadomość wysłana!",
-      "message": "Dziękujemy za Twoją opinię. Przeanalizujemy ją najszybciej jak to możliwe."
-    },
-    "intro": "Twoja opinia pomaga nam ulepszać platformę. Zgłoś błąd lub podziel się pomysłem.",
-    "footer": "Zgłoszenie pociągnie dane:"
-  },
-  "documents": {
-    "library": "Biblioteka Dokumentów",
-    "projectDocs": "Projekt",
-    "myDocs": "Moje",
-    "upload": "Dodaj dokument",
-    "uploading": "Przesyłanie...",
-    "noProjectDocs": "Brak dokumentów projektu",
-    "noUserDocs": "Brak Twoich dokumentów",
-    "download": "Pobierz",
-    "moveToProject": "Przenieś do projektu",
-    "delete": "Usuń",
-    "projectHint": "Dokumenty dostępne dla wszystkich w projekcie",
-    "userHint": "Twoje prywatne dokumenty",
-    "confirmDelete": "Czy na pewno chcesz usunąć ten dokument?"
   }
 }

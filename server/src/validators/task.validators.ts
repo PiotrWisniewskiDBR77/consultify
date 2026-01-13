@@ -12,76 +12,85 @@ import { z } from 'zod';
 // ==========================================
 
 export const TaskStatusEnum = z.enum([
-    'todo',
-    'in_progress',
-    'review',
-    'done',
-    'blocked',
-    'on_hold',
-    'backlog',
-    'cancelled',
+  'todo',
+  'in_progress',
+  'review',
+  'done',
+  'blocked',
+  'on_hold',
+  'backlog',
+  'cancelled',
 ]);
 export const PriorityEnum = z.enum(['low', 'medium', 'high', 'urgent', 'critical']);
-export const TaskTypeEnum = z.enum(['execution', 'analysis', 'decision', 'design', 'build', 'test', 'deploy', 'other']);
+export const TaskTypeEnum = z.enum([
+  'execution',
+  'analysis',
+  'decision',
+  'design',
+  'build',
+  'test',
+  'deploy',
+  'other',
+]);
 
 // ==========================================
 // REQUEST SCHEMAS
 // ==========================================
 
 export const CreateTaskSchema = z.object({
-    title: z.string().min(1, 'Title is required').max(255),
-    projectId: z.string().uuid().optional().nullable(),
-    organizationId: z.string().uuid().optional(),
-    description: z.string().optional().nullable(),
-    status: TaskStatusEnum.optional().default('todo'),
-    priority: PriorityEnum.optional().default('medium'),
-    assigneeId: z.string().uuid().optional().nullable(),
-    dueDate: z.string().datetime().optional().nullable().or(z.string()),
-    estimatedHours: z.number().min(0).optional().nullable(),
-    tags: z.array(z.string()).optional(),
-    taskType: TaskTypeEnum.optional().default('execution'),
-    initiativeId: z.string().uuid().optional().nullable(),
-    why: z.string().optional().nullable(),
-    assignees: z.array(z.string().uuid()).optional(),
-    checklist: z.array(z.unknown()).optional(),
-    expectedOutcome: z.string().optional(),
-    decisionImpact: z.unknown().optional(),
-    evidenceRequired: z.unknown().optional(),
-    strategicContribution: z.unknown().optional(),
-    progress: z.number().min(0).max(100).optional(),
-    blockedReason: z.string().optional(),
-    roadmapInitiativeId: z.string().uuid().optional().nullable(),
-    kpiId: z.string().uuid().optional().nullable(),
-    raidItemId: z.string().uuid().optional().nullable(),
+  title: z.string().min(1, 'Title is required').max(255),
+  projectId: z.string().uuid().optional().nullable(),
+  organizationId: z.string().uuid().optional(),
+  description: z.string().optional().nullable(),
+  status: TaskStatusEnum.optional().default('todo'),
+  priority: PriorityEnum.optional().default('medium'),
+  assigneeId: z.string().uuid().optional().nullable(),
+  dueDate: z.string().datetime().optional().nullable().or(z.string()),
+  estimatedHours: z.number().min(0).optional().nullable(),
+  tags: z.array(z.string()).optional(),
+  taskType: TaskTypeEnum.optional().default('execution'),
+  initiativeId: z.string().uuid().optional().nullable(),
+  why: z.string().optional().nullable(),
+  assignees: z.array(z.string().uuid()).optional(),
+  checklist: z.array(z.unknown()).optional(),
+  expectedOutcome: z.string().optional(),
+  decisionImpact: z.unknown().optional(),
+  evidenceRequired: z.unknown().optional(),
+  strategicContribution: z.unknown().optional(),
+  progress: z.number().min(0).max(100).optional(),
+  blockedReason: z.string().optional(),
+  roadmapInitiativeId: z.string().uuid().optional().nullable(),
+  kpiId: z.string().uuid().optional().nullable(),
+  raidItemId: z.string().uuid().optional().nullable(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ organizationId: true });
 
 export const AssignTaskSchema = z.object({
-    assigneeId: z.string().uuid(),
-    notify: z.boolean().optional().default(true),
-    slaHours: z.number().positive().optional(),
+  assigneeId: z.string().uuid(),
+  notify: z.boolean().optional().default(true),
+  slaHours: z.number().positive().optional(),
 });
 
 export const ReassignTaskSchema = z.object({
-    fromAssigneeId: z.string().uuid(),
-    toAssigneeId: z.string().uuid(),
-    reason: z.string().optional(),
+  fromAssigneeId: z.string().uuid(),
+  toAssigneeId: z.string().uuid(),
+  reason: z.string().optional(),
 });
 
 export const EscalateTaskSchema = z.object({
-    reason: z.string().min(1, 'Escalation reason is required'),
-    priority: PriorityEnum.optional(),
-    assignTo: z.string().uuid().optional(),
+  reason: z.string().min(1, 'Escalation reason is required'),
+  priority: PriorityEnum.optional(),
+  assignTo: z.string().uuid().optional(),
 });
 
 export const ResolveEscalationSchema = z.object({
-    resolution: z.string().min(1, 'Resolution is required'),
+  resolution: z.string().min(1, 'Resolution is required'),
 });
 
 export const AddTaskCommentSchema = z.object({
-    content: z.string().min(1, 'Comment content is required').max(5000),
-    mentions: z.array(z.string().uuid()).optional(),
+  content: z.string().min(1, 'Comment content is required').max(5000),
+  mentions: z.array(z.string().uuid()).optional(),
 });
 
 // ==========================================
@@ -89,14 +98,14 @@ export const AddTaskCommentSchema = z.object({
 // ==========================================
 
 export const GetTasksQuerySchema = z.object({
-    projectId: z.string().uuid().optional(),
-    status: TaskStatusEnum.optional(),
-    assigneeId: z.string().uuid().optional(),
-    priority: PriorityEnum.optional(),
-    initiativeId: z.string().uuid().optional(),
-    search: z.string().optional(),
-    page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).max(100).optional().default(100),
+  projectId: z.string().uuid().optional(),
+  status: TaskStatusEnum.optional(),
+  assigneeId: z.string().uuid().optional(),
+  priority: PriorityEnum.optional(),
+  initiativeId: z.string().uuid().optional(),
+  search: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(100),
 });
 
 // ==========================================
@@ -111,4 +120,3 @@ export type EscalateTaskRequest = z.infer<typeof EscalateTaskSchema>;
 export type ResolveEscalationRequest = z.infer<typeof ResolveEscalationSchema>;
 export type AddTaskCommentRequest = z.infer<typeof AddTaskCommentSchema>;
 export type GetTasksQuery = z.infer<typeof GetTasksQuerySchema>;
-

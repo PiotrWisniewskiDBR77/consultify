@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadYoutubeprocessor = createCachedLazyService('../../services/ai/processors/youtubeProcessor.js');
+const loadYoutubeprocessor = createCachedLazyService('../../../ai/processors/youtubeProcessor.js');
 
 // Export default instance (for backward compatibility)
 export default loadYoutubeprocessor();

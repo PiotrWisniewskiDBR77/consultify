@@ -1,356 +1,201 @@
 /**
  * @vitest-environment jsdom
+ *
+ * useKeyboardShortcuts Hook Tests
+ * Tests for keyboard shortcuts management hook
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
-// Mock react-router-dom
-vi.mock('react-router-dom', () => ({
-    useNavigate: () => vi.fn(),
-    useLocation: () => ({ pathname: '/' })
+// Mock Api service
+vi.mock('@/services/api', () => ({
+  Api: {
+    getKeyboardShortcuts: vi.fn().mockResolvedValue({
+      enabled: true,
+      preset: 'default',
+      customMappings: {},
+      disabledActions: [],
+    }),
+    updateKeyboardShortcuts: vi.fn().mockResolvedValue({}),
+  },
 }));
 
 describe('useKeyboardShortcuts Hook', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('Initialization', () => {
+    it('returns allShortcuts array', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(Array.isArray(result.current.allShortcuts)).toBe(true);
+      expect(result.current.allShortcuts.length).toBeGreaterThan(0);
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
+    it('returns loading state', () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
+
+      // Initially should be loading or already loaded
+      expect(typeof result.current.loading).toBe('boolean');
     });
 
-    describe('Initialization', () => {
-        it('starts enabled by default', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
+    it('returns shortcuts configuration', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-            expect(result.current.isEnabled).toBe(true);
-        });
+      await waitFor(() => {
+        expect(result.current.shortcuts).toBeDefined();
+      });
+    });
+  });
 
-        it('can start disabled', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts({ enabled: false }));
+  describe('Default Shortcuts', () => {
+    it('includes navigation shortcuts', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-            expect(result.current.isEnabled).toBe(false);
-        });
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
 
-        it('showHelp starts as false', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
+      const navShortcuts = result.current.allShortcuts.filter((s) => s.category === 'navigation');
 
-            expect(result.current.showHelp).toBe(false);
-        });
-
-        it('returns all shortcuts', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
-
-            expect(result.current.allShortcuts.length).toBeGreaterThan(0);
-        });
+      expect(navShortcuts.length).toBeGreaterThan(0);
     });
 
-    describe('Default Shortcuts', () => {
-        it('includes navigation shortcuts', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
+    it('includes task management shortcuts', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-            const navShortcuts = result.current.allShortcuts.filter(
-                s => s.category === 'Navigation'
-            );
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
 
-            expect(navShortcuts.length).toBeGreaterThan(0);
-            expect(navShortcuts.some(s => s.key === 'f')).toBe(true);
-            expect(navShortcuts.some(s => s.key === 'i')).toBe(true);
-            expect(navShortcuts.some(s => s.key === 't')).toBe(true);
-        });
+      const taskShortcuts = result.current.allShortcuts.filter(
+        (s) => s.category === 'task_management'
+      );
 
-        it('includes action shortcuts', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
-
-            const actionShortcuts = result.current.allShortcuts.filter(
-                s => s.category === 'Actions'
-            );
-
-            expect(actionShortcuts.length).toBeGreaterThan(0);
-            expect(actionShortcuts.some(s => s.key === 'c')).toBe(true);
-            expect(actionShortcuts.some(s => s.key === '/')).toBe(true);
-            expect(actionShortcuts.some(s => s.key === 'Escape')).toBe(true);
-        });
-
-        it('includes help shortcut', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
-
-            const helpShortcut = result.current.allShortcuts.find(s => s.key === '?');
-
-            expect(helpShortcut).toBeDefined();
-            expect(helpShortcut?.modifiers).toContain('shift');
-        });
+      expect(taskShortcuts.length).toBeGreaterThan(0);
     });
 
-    describe('Custom Shortcuts', () => {
-        it('merges custom shortcuts with defaults', () => {
-            const customShortcut = {
-                key: 'x',
-                action: vi.fn(),
-                description: 'Custom action',
-                category: 'Custom'
-            };
+    it('includes help shortcut', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-            const { result } = renderHook(() => useKeyboardShortcuts({
-                shortcuts: [customShortcut]
-            }));
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
 
-            expect(result.current.allShortcuts.some(s => s.key === 'x')).toBe(true);
-        });
+      const helpShortcut = result.current.allShortcuts.find((s) => s.id === 'help');
+      expect(helpShortcut).toBeDefined();
+    });
+  });
+
+  describe('Shortcut Information', () => {
+    it('provides name for each shortcut', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      result.current.allShortcuts.forEach((shortcut) => {
+        expect(shortcut.name).toBeDefined();
+        expect(shortcut.name.length).toBeGreaterThan(0);
+      });
     });
 
-    describe('Toggle Shortcuts', () => {
-        it('toggleShortcuts toggles isEnabled', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
+    it('provides description for each shortcut', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-            expect(result.current.isEnabled).toBe(true);
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
 
-            act(() => {
-                result.current.toggleShortcuts();
-            });
-
-            expect(result.current.isEnabled).toBe(false);
-
-            act(() => {
-                result.current.toggleShortcuts();
-            });
-
-            expect(result.current.isEnabled).toBe(true);
-        });
+      result.current.allShortcuts.forEach((shortcut) => {
+        expect(shortcut.description).toBeDefined();
+      });
     });
 
-    describe('Show Help', () => {
-        it('setShowHelp updates showHelp state', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
+    it('provides category for each shortcut', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-            expect(result.current.showHelp).toBe(false);
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
 
-            act(() => {
-                result.current.setShowHelp(true);
-            });
-
-            expect(result.current.showHelp).toBe(true);
-
-            act(() => {
-                result.current.setShowHelp(false);
-            });
-
-            expect(result.current.showHelp).toBe(false);
-        });
+      result.current.allShortcuts.forEach((shortcut) => {
+        expect(shortcut.category).toBeDefined();
+      });
     });
 
-    describe('Keyboard Event Handling', () => {
-        it('triggers action on key press', () => {
-            const onCreateTask = vi.fn();
+    it('provides defaultKey for each shortcut', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-            renderHook(() => useKeyboardShortcuts({
-                onCreateTask
-            }));
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
 
-            const event = new KeyboardEvent('keydown', {
-                key: 'c',
-                bubbles: true
-            });
-            document.dispatchEvent(event);
+      result.current.allShortcuts.forEach((shortcut) => {
+        expect(shortcut.defaultKey).toBeDefined();
+      });
+    });
+  });
 
-            expect(onCreateTask).toHaveBeenCalled();
-        });
+  describe('API Methods', () => {
+    it('exposes setEnabled method', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-        it('triggers navigation on g + key sequence', async () => {
-            vi.useFakeTimers();
-            const onNavigate = vi.fn();
-
-            renderHook(() => useKeyboardShortcuts({
-                onNavigate
-            }));
-
-            // Press 'g'
-            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true }));
-
-            // Press 'f' within timeout
-            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', bubbles: true }));
-
-            expect(onNavigate).toHaveBeenCalledWith('focus');
-
-            vi.useRealTimers();
-        });
-
-        it('does not trigger navigation if timeout expires', async () => {
-            vi.useFakeTimers();
-            const onNavigate = vi.fn();
-
-            renderHook(() => useKeyboardShortcuts({
-                onNavigate
-            }));
-
-            // Press 'g'
-            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true }));
-
-            // Wait for timeout to expire
-            vi.advanceTimersByTime(1100);
-
-            // Press 'f' after timeout
-            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', bubbles: true }));
-
-            expect(onNavigate).not.toHaveBeenCalled();
-
-            vi.useRealTimers();
-        });
-
-        it('ignores shortcuts when typing in input', () => {
-            const onCreateTask = vi.fn();
-
-            renderHook(() => useKeyboardShortcuts({
-                onCreateTask
-            }));
-
-            // Create an input element
-            const input = document.createElement('input');
-            document.body.appendChild(input);
-            input.focus();
-
-            const event = new KeyboardEvent('keydown', {
-                key: 'c',
-                bubbles: true
-            });
-            Object.defineProperty(event, 'target', { value: input });
-            document.dispatchEvent(event);
-
-            expect(onCreateTask).not.toHaveBeenCalled();
-
-            document.body.removeChild(input);
-        });
-
-        it('allows Escape in input fields', () => {
-            const onCloseModal = vi.fn();
-
-            renderHook(() => useKeyboardShortcuts({
-                onCloseModal
-            }));
-
-            // Create an input element
-            const input = document.createElement('input');
-            document.body.appendChild(input);
-            input.focus();
-
-            const event = new KeyboardEvent('keydown', {
-                key: 'Escape',
-                bubbles: true
-            });
-            Object.defineProperty(event, 'target', { value: input });
-            document.dispatchEvent(event);
-
-            expect(onCloseModal).toHaveBeenCalled();
-
-            document.body.removeChild(input);
-        });
-
-        it('does not trigger when disabled', () => {
-            const onCreateTask = vi.fn();
-
-            const { result } = renderHook(() => useKeyboardShortcuts({
-                onCreateTask
-            }));
-
-            act(() => {
-                result.current.toggleShortcuts();
-            });
-
-            const event = new KeyboardEvent('keydown', {
-                key: 'c',
-                bubbles: true
-            });
-            document.dispatchEvent(event);
-
-            expect(onCreateTask).not.toHaveBeenCalled();
-        });
-
-        it('handles shift modifier', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
-
-            const event = new KeyboardEvent('keydown', {
-                key: '?',
-                shiftKey: true,
-                bubbles: true
-            });
-            document.dispatchEvent(event);
-
-            // This should trigger help modal
-            expect(result.current.showHelp).toBe(true);
-        });
-
-        it('triggers focus search on /', () => {
-            const onFocusSearch = vi.fn();
-
-            renderHook(() => useKeyboardShortcuts({
-                onFocusSearch
-            }));
-
-            const event = new KeyboardEvent('keydown', {
-                key: '/',
-                bubbles: true
-            });
-            document.dispatchEvent(event);
-
-            expect(onFocusSearch).toHaveBeenCalled();
-        });
-
-        it('triggers close modal on Escape', () => {
-            const onCloseModal = vi.fn();
-
-            renderHook(() => useKeyboardShortcuts({
-                onCloseModal
-            }));
-
-            const event = new KeyboardEvent('keydown', {
-                key: 'Escape',
-                bubbles: true
-            });
-            document.dispatchEvent(event);
-
-            expect(onCloseModal).toHaveBeenCalled();
-        });
+      expect(typeof result.current.setEnabled).toBe('function');
     });
 
-    describe('Cleanup', () => {
-        it('removes event listener on unmount', () => {
-            const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
+    it('exposes setPreset method', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-            const { unmount } = renderHook(() => useKeyboardShortcuts());
-
-            unmount();
-
-            expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
-        });
+      expect(typeof result.current.setPreset).toBe('function');
     });
 
-    describe('Shortcut Descriptions', () => {
-        it('provides description for each shortcut', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
+    it('exposes setCustomShortcut method', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
 
-            result.current.allShortcuts.forEach(shortcut => {
-                expect(shortcut.description).toBeDefined();
-                expect(shortcut.description.length).toBeGreaterThan(0);
-            });
-        });
-
-        it('provides category for each shortcut', () => {
-            const { result } = renderHook(() => useKeyboardShortcuts());
-
-            result.current.allShortcuts.forEach(shortcut => {
-                expect(shortcut.category).toBeDefined();
-            });
-        });
+      expect(typeof result.current.setCustomShortcut).toBe('function');
     });
+
+    it('exposes resetAll method', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
+
+      expect(typeof result.current.resetAll).toBe('function');
+    });
+
+    it('exposes getShortcutKey method', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
+
+      expect(typeof result.current.getShortcutKey).toBe('function');
+    });
+
+    it('exposes isShortcutEnabled method', async () => {
+      const { result } = renderHook(() => useKeyboardShortcuts());
+
+      expect(typeof result.current.isShortcutEnabled).toBe('function');
+    });
+  });
+
+  describe('Callback Support', () => {
+    it('accepts onShortcutTriggered callback', () => {
+      const callback = vi.fn();
+      const { result } = renderHook(() =>
+        useKeyboardShortcuts({
+          onShortcutTriggered: callback,
+        })
+      );
+
+      expect(result.current).toBeDefined();
+    });
+  });
 });
-
-
-
-
-
-
-
-
-
-

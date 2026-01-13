@@ -1,0 +1,68 @@
+/**
+ * Unit Tests for SnapshotMetricsCron
+ * Enterprise SaaS Architecture - TypeScript Backend
+ */
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getSnapshotMetricsCron, initMetricsSnapshotJob } from '../../../../src/cron/SnapshotMetrics.js';
+
+describe('SnapshotMetricsCron', () => {
+    let mockMetricsPersistenceService: { saveSnapshot: (reset?: boolean) => Promise<void> };
+    let snapshotCron: ReturnType<typeof getSnapshotMetricsCron>;
+
+    beforeEach(() => {
+        mockMetricsPersistenceService = {
+            saveSnapshot: vi.fn().mockResolvedValue(undefined),
+        };
+
+        snapshotCron = getSnapshotMetricsCron({
+            metricsPersistenceService: mockMetricsPersistenceService,
+        });
+    });
+
+    afterEach(() => {
+        snapshotCron.stop();
+        vi.clearAllMocks();
+    });
+
+    describe('init', () => {
+        it('should initialize metrics snapshot job', () => {
+            snapshotCron.init();
+            // Job is scheduled, no immediate error
+            expect(true).toBe(true);
+        });
+    });
+
+    describe('stop', () => {
+        it('should stop metrics snapshot job', () => {
+            snapshotCron.init();
+            snapshotCron.stop();
+            // No error means it stopped successfully
+            expect(true).toBe(true);
+        });
+
+        it('should handle stop when job not started', () => {
+            snapshotCron.stop();
+            // No error means it handled gracefully
+            expect(true).toBe(true);
+        });
+    });
+
+    describe('getSnapshotMetricsCron', () => {
+        it('should return singleton instance', () => {
+            const instance1 = getSnapshotMetricsCron({
+                metricsPersistenceService: mockMetricsPersistenceService,
+            });
+            const instance2 = getSnapshotMetricsCron({
+                metricsPersistenceService: mockMetricsPersistenceService,
+            });
+
+            expect(instance1).toBe(instance2);
+        });
+    });
+});
+
+
+
+

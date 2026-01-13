@@ -1,8 +1,0 @@
-{
-  "scripts": {
-    "migrate:analyze": "node scripts/analyze-services.js",
-    "migrate:service": "node scripts/migrate-service.js",
-    "migrate:batch": "node scripts/migrate-batch.js",
-    "migrate:verify": "npm run type-check && npm run test:services"
-  }
-}

@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadMagicwand = createCachedLazyService('../../services/ai/magicWandService.js');
+const loadMagicwand = createCachedLazyService('../../ai/magicWandService.js');
 
 // Export default instance (for backward compatibility)
 export default loadMagicwand();

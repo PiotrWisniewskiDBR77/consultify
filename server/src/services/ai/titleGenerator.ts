@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadTitlegenerator = createCachedLazyService('../../services/ai/titleGenerator.js');
+const loadTitlegenerator = createCachedLazyService('../../ai/titleGenerator.js');
 
 // Export default instance (for backward compatibility)
 export default loadTitlegenerator();

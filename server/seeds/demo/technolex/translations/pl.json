@@ -1,0 +1,279 @@
+{
+  "locale": "pl",
+  "translations": {
+    "organization": {
+      "name": "TechnoLex Industries",
+      "description": "TechnoLex Industries to wiodący europejski producent precyzyjnych komponentów motoryzacyjnych, obsługujący głównych producentów OEM na całym kontynencie. Z 30-letnim doświadczeniem w inżynierii i zaangażowaniem w innowacje, TechnoLex rozpoczyna ambitną podróż transformacji cyfrowej, aby stać się liderem Smart Factory.",
+      "vision": "Stać się najbardziej zaawansowaną cyfrowo fabryką komponentów motoryzacyjnych w Europie Środkowej do 2027 roku",
+      "mission": "Dostarczanie precyzyjnie wykonanych komponentów motoryzacyjnych poprzez innowacje, jakość i zrównoważone praktyki"
+    },
+    "project": {
+      "name": "Program Transformacji Cyfrowej 2027",
+      "description": "Kompleksowa 3-letnia inicjatywa transformacji cyfrowej mająca na celu modernizację operacji produkcyjnych TechnoLex, wykorzystująca technologie Przemysłu 4.0 do osiągnięcia doskonałości operacyjnej i przewagi konkurencyjnej."
+    },
+    "initiatives": {
+      "init-001": {
+        "name": "Wdrożenie Smart Factory 4.0",
+        "summary": "Przekształcenie zakładów produkcyjnych w Warszawie i Wrocławiu w w pełni połączone inteligentne fabryki z monitorowaniem w czasie rzeczywistym, zautomatyzowanymi przepływami pracy i optymalizacją opartą na AI.",
+        "description": "Ta flagowa inicjatywa ma na celu digitalizację operacji produkcyjnych poprzez kompleksowe wdrożenie IoT, łączność maszyn i analizę danych w czasie rzeczywistym. Projekt połączy ponad 200 maszyn, wdroży integrację MES i umożliwi predykcyjną kontrolę jakości."
+      },
+      "init-002": {
+        "name": "System Predykcyjnej Konserwacji",
+        "summary": "Wdrożenie predykcyjnej konserwacji opartej na AI w celu zmniejszenia nieplanowanych przestojów o 50% i wydłużenia żywotności urządzeń.",
+        "description": "Wykorzystanie modeli uczenia maszynowego trenowanych na danych wibracji, temperatury i wydajności do przewidywania awarii urządzeń przed ich wystąpieniem. Początkowy focus na 30 krytycznych maszynach CNC i robotach montażowych."
+      },
+      "init-003": {
+        "name": "Platforma Cyfrowego Bliźniaka",
+        "summary": "Tworzenie wirtualnych replik linii produkcyjnych do symulacji, optymalizacji i analizy scenariuszy \"co jeśli\".",
+        "description": "Wdrożenie technologii cyfrowego bliźniaka do symulacji scenariuszy produkcyjnych, optymalizacji równoważenia linii i testowania zmian wirtualnie przed fizyczną implementacją. Początek od Linii Montażowej 3 w Warszawie."
+      },
+      "init-004": {
+        "name": "Migracja ERP do Chmury (SAP S/4HANA)",
+        "summary": "Migracja z przestarzałego SAP ECC do S/4HANA Cloud dla nowoczesnych procesów biznesowych w czasie rzeczywistym.",
+        "description": "Kompleksowa modernizacja ERP obejmująca finanse, zakupy, planowanie produkcji i sprzedaż. Podejście brownfield z selektywną migracją danych i optymalizacją procesów."
+      },
+      "init-005": {
+        "name": "Quality Vision AI",
+        "summary": "Wdrożenie inspekcji jakości opartej na wizji komputerowej w celu zmniejszenia wskaźnika wad z 1,2% do 0,3%.",
+        "description": "Implementacja stanowisk inspekcji wizualnej zasilanych AI w krytycznych punktach kontroli jakości. System będzie wykrywał wady powierzchniowe, problemy wymiarowe i błędy montażu w czasie rzeczywistym."
+      },
+      "init-006": {
+        "name": "Platforma Widoczności Łańcucha Dostaw",
+        "summary": "Wdrożenie kompleksowej widoczności łańcucha dostaw z śledzeniem w czasie rzeczywistym i automatycznymi alertami.",
+        "description": "Wdrożenie chmurowej wieży kontrolnej łańcucha dostaw zapewniającej widoczność u ponad 120 dostawców. Umożliwienie śledzenia zapasów w czasie rzeczywistym, monitorowania czasu realizacji i scoringu dostawców opartego na ryzyku."
+      },
+      "init-007": {
+        "name": "Cyfrowe Miejsce Pracy Pracownika",
+        "summary": "Uruchomienie nowoczesnego portalu pracowniczego z samoobsługą, narzędziami współpracy i dostępem mobilnym.",
+        "description": "Zastąpienie przestarzałego intranetu cyfrowym miejscem pracy opartym na Microsoft 365. Umożliwienie planowania zmian, dostępu do szkoleń, samoobsługi HR i współpracy zespołowej z dowolnego urządzenia."
+      },
+      "init-008": {
+        "name": "Zarządzanie i Optymalizacja Energii",
+        "summary": "Wdrożenie inteligentnego monitorowania energii i optymalizacji opartej na AI w celu zmniejszenia kosztów energii o 20%.",
+        "description": "Instalacja inteligentnych liczników, integracja z API dostawców mediów i wykorzystanie ML do optymalizacji wzorców zużycia energii. Focus na urządzeniach wysokoenergetycznych i harmonogramowaniu produkcji."
+      }
+    },
+    "tasks": {
+      "task-001-01": {
+        "title": "Ocena Łączności Maszyn",
+        "description": "Audyt wszystkich urządzeń produkcyjnych pod kątem opcji łączności i wymagań retrofitu"
+      },
+      "task-001-02": {
+        "title": "Wybór Platformy IoT",
+        "description": "Ocena i wybór platformy przemysłowego IoT (Azure IoT, AWS IoT, Siemens MindSphere)"
+      },
+      "task-001-03": {
+        "title": "Wdrożenie Infrastruktury Edge",
+        "description": "Instalacja węzłów edge computing i infrastruktury sieciowej w zakładzie w Warszawie"
+      },
+      "task-001-04": {
+        "title": "Integracja MES Faza 1",
+        "description": "Integracja 50 krytycznych maszyn z systemem MES"
+      },
+      "task-001-05": {
+        "title": "Rozwój Dashboardów Czasu Rzeczywistego",
+        "description": "Tworzenie dashboardów wizualizacji hali produkcyjnej do monitorowania produkcji na żywo"
+      },
+      "task-001-06": {
+        "title": "Program Szkoleniowy dla Operatorów",
+        "description": "Szkolenie ponad 200 operatorów z nowych narzędzi cyfrowych i dashboardów"
+      },
+      "task-002-01": {
+        "title": "Analiza Historycznych Danych Awarii",
+        "description": "Analiza 3-letnich zapisów konserwacji w celu identyfikacji wzorców awarii"
+      },
+      "task-002-02": {
+        "title": "Instalacja Czujników - Faza 1",
+        "description": "Instalacja czujników wibracji i temperatury na 30 krytycznych maszynach"
+      },
+      "task-002-03": {
+        "title": "Rozwój Modelu ML",
+        "description": "Opracowanie i trening modeli predykcyjnych do przewidywania awarii urządzeń"
+      },
+      "task-002-04": {
+        "title": "Integracja z Workflow Konserwacji",
+        "description": "Integracja predykcji z CMMS dla automatycznego generowania zleceń pracy"
+      },
+      "task-003-01": {
+        "title": "Wybór Platformy Digital Twin",
+        "description": "Ocena Siemens Xcelerator, PTC ThingWorx i rozwiązań custom"
+      },
+      "task-003-02": {
+        "title": "Linia Montażowa 3 - Model Danych",
+        "description": "Tworzenie szczegółowego modelu 3D i schematu danych dla linii pilotażowej"
+      },
+      "task-003-03": {
+        "title": "Integracja Danych w Czasie Rzeczywistym",
+        "description": "Połączenie danych z czujników na żywo z modelem cyfrowego bliźniaka"
+      },
+      "task-004-01": {
+        "title": "Ocena Systemu i Fit-Gap",
+        "description": "Analiza obecnych personalizacji i planowanie podejścia do migracji"
+      },
+      "task-004-02": {
+        "title": "Jakość i Czyszczenie Danych",
+        "description": "Czyszczenie danych master i przygotowanie do migracji"
+      },
+      "task-004-03": {
+        "title": "Go-Live Modułu Finansowego",
+        "description": "Wdrożenie S/4HANA Finance z wbudowaną analityką"
+      },
+      "task-004-04": {
+        "title": "Go-Live Planowania Produkcji",
+        "description": "Migracja PP/DS do S/4HANA z zaawansowanym harmonogramowaniem"
+      },
+      "task-005-01": {
+        "title": "Definicja Taksonomii Wad",
+        "description": "Katalogowanie wszystkich typów wad z przykładami wizualnymi do treningu modelu"
+      },
+      "task-005-02": {
+        "title": "Zbieranie Danych Treningowych",
+        "description": "Zbieranie ponad 50,000 oznakowanych zdjęć dobrych i wadliwych części"
+      },
+      "task-005-03": {
+        "title": "Rozwój Modelu CV",
+        "description": "Trening i optymalizacja modeli wizji komputerowej do wykrywania wad"
+      },
+      "task-006-01": {
+        "title": "Plan Onboardingu Dostawców",
+        "description": "Definicja podejścia do integracji dostawców tier-1 i tier-2"
+      },
+      "task-006-02": {
+        "title": "Wybór Platformy Control Tower",
+        "description": "Ocena rozwiązań SAP IBP, E2open i Kinaxis"
+      },
+      "task-007-01": {
+        "title": "Badanie Potrzeb Pracowników",
+        "description": "Ankieta wśród pracowników na temat preferencji narzędzi cyfrowych i punktów bólu"
+      },
+      "task-008-01": {
+        "title": "Audyt Energetyczny",
+        "description": "Kompleksowy audyt zużycia energii we wszystkich obiektach"
+      }
+    },
+    "assessments": {
+      "drd-strategy": {
+        "name": "Strategia Cyfrowa",
+        "description": "Jasność i zgodność wizji transformacji cyfrowej z celami biznesowymi"
+      },
+      "drd-leadership": {
+        "name": "Przywództwo i Kultura",
+        "description": "Wsparcie kadry zarządzającej i gotowość organizacyjna na cyfrową zmianę"
+      },
+      "drd-technology": {
+        "name": "Infrastruktura Technologiczna",
+        "description": "Stan systemów IT, adopcja chmury i dług technologiczny"
+      },
+      "drd-data": {
+        "name": "Dane i Analityka",
+        "description": "Jakość danych, dostępność i możliwości analityczne"
+      },
+      "drd-operations": {
+        "name": "Połączone Operacje",
+        "description": "Poziom automatyzacji, adopcja IoT i digitalizacja procesów"
+      },
+      "drd-people": {
+        "name": "Umiejętności Cyfrowe i Kadry",
+        "description": "Cyfrowe kompetencje pracowników i kultura ciągłego uczenia się"
+      }
+    },
+    "roadmap": {
+      "phases": {
+        "phase-1": {
+          "name": "Fundament",
+          "description": "Ustanowienie infrastruktury cyfrowej i ram zarządzania"
+        },
+        "phase-2": {
+          "name": "Przyspieszenie",
+          "description": "Skalowanie inicjatyw cyfrowych i budowanie kompetencji"
+        },
+        "phase-3": {
+          "name": "Optymalizacja",
+          "description": "Optymalizacja operacji i rozszerzenie na wszystkie obiekty"
+        },
+        "phase-4": {
+          "name": "Doskonałość",
+          "description": "Osiągnięcie doskonałości operacyjnej i ciągła innowacja"
+        }
+      },
+      "milestones": {
+        "ms-001": {
+          "name": "Go-Live Infrastruktury IoT",
+          "description": "Infrastruktura edge computing wdrożona w zakładzie w Warszawie"
+        },
+        "ms-002": {
+          "name": "Go-Live ERP Finance",
+          "description": "Moduł S/4HANA Finance aktywny z raportowaniem w czasie rzeczywistym"
+        },
+        "ms-003": {
+          "name": "Produkcyjna Konserwacja Predykcyjna",
+          "description": "Predykcje ML zintegrowane z workflow konserwacji"
+        },
+        "ms-004": {
+          "name": "Zakończenie Pilota Quality AI",
+          "description": "Inspekcja jakości wizji komputerowej w produkcji"
+        },
+        "ms-005": {
+          "name": "Zakończenie Smart Factory Warszawa",
+          "description": "Pełna łączność maszyn i integracja MES w Warszawie"
+        },
+        "ms-006": {
+          "name": "Pełny Go-Live ERP",
+          "description": "Pełna migracja S/4HANA we wszystkich modułach"
+        },
+        "ms-007": {
+          "name": "Digital Twin Operacyjny",
+          "description": "Działający cyfrowy bliźniak dla Linii Montażowej 3"
+        },
+        "ms-008": {
+          "name": "Zakończenie Smart Factory Wrocław",
+          "description": "Możliwości Smart Factory rozszerzone na zakład we Wrocławiu"
+        },
+        "ms-009": {
+          "name": "Zakończenie Transformacji",
+          "description": "Wszystkie cele transformacji osiągnięte"
+        }
+      }
+    },
+    "challenges": {
+      "ch-001": {
+        "title": "Przestarzałe Urządzenia Produkcyjne",
+        "description": "40% maszyn produkcyjnych ma ponad 15 lat i nie posiada możliwości cyfrowej łączności."
+      },
+      "ch-002": {
+        "title": "Silosy Danych",
+        "description": "Krytyczne dane biznesowe rozproszone w ponad 12 niepołączonych systemach bez jednego źródła prawdy."
+      },
+      "ch-003": {
+        "title": "Luka Kompetencyjna",
+        "description": "Ograniczona wewnętrzna ekspertyza w zaawansowanej analityce, AI/ML i nowoczesnym rozwoju oprogramowania."
+      },
+      "ch-004": {
+        "title": "Widoczność Łańcucha Dostaw",
+        "description": "Brak widoczności w czasie rzeczywistym wydajności dostawców lub poziomów zapasów w całym łańcuchu wartości."
+      }
+    },
+    "goals": {
+      "goal-001": {
+        "title": "Wdrożenie Smart Factory",
+        "description": "Przekształcenie zakładów w Warszawie i Wrocławiu w w pełni połączone inteligentne fabryki"
+      },
+      "goal-002": {
+        "title": "Operacje Predykcyjne",
+        "description": "Wdrożenie konserwacji predykcyjnej opartej na AI dla krytycznych urządzeń"
+      },
+      "goal-003": {
+        "title": "Cyfrowy Łańcuch Dostaw",
+        "description": "Osiągnięcie kompleksowej widoczności łańcucha dostaw i automatycznego uzupełniania"
+      },
+      "goal-004": {
+        "title": "Kultura Oparta na Danych",
+        "description": "Umożliwienie samoobsługowej analityki dla wszystkich poziomów zarządzania"
+      },
+      "goal-005": {
+        "title": "Doskonałość Jakości",
+        "description": "Wdrożenie inspekcji jakości opartej na AI zmniejszającej wskaźnik wad"
+      }
+    }
+  }
+}

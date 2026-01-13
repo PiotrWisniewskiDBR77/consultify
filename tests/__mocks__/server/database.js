@@ -6,15 +6,15 @@
 import { vi } from 'vitest';
 
 const mockDb = {
+  run: vi.fn().mockResolvedValue({}),
+  get: vi.fn().mockResolvedValue(undefined),
+  all: vi.fn().mockResolvedValue([]),
+  exec: vi.fn().mockResolvedValue({}),
+  prepare: vi.fn().mockReturnValue({
     run: vi.fn().mockResolvedValue({}),
     get: vi.fn().mockResolvedValue(undefined),
     all: vi.fn().mockResolvedValue([]),
-    exec: vi.fn().mockResolvedValue({}),
-    prepare: vi.fn().mockReturnValue({
-        run: vi.fn().mockResolvedValue({}),
-        get: vi.fn().mockResolvedValue(undefined),
-        all: vi.fn().mockResolvedValue([]),
-    }),
+  }),
 };
 
 export default mockDb;

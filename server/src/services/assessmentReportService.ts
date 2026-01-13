@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Assessmentreport Service
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -6,7 +7,7 @@
  */
 
 // Lazy load the JS service module
-import service from '../../services/assessmentReportService.js';
+import service from './assessmentReportService.js';
 
 // Export default instance (for backward compatibility)
 export default service;

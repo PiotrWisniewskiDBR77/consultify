@@ -7,83 +7,83 @@ import { z } from 'zod';
 
 // Login Request
 export const LoginRequestSchema = z.object({
-    email: z.string().email('Invalid email format'),
-    password: z.string().min(1, 'Password is required'),
-    mfaToken: z.string().optional(),
-    deviceFingerprint: z.string().optional(),
-    trustDevice: z.boolean().optional(),
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(1, 'Password is required'),
+  mfaToken: z.string().optional(),
+  deviceFingerprint: z.string().optional(),
+  trustDevice: z.boolean().optional(),
 });
 
 // Register Request
 export const RegisterRequestSchema = z.object({
-    email: z.string().email('Invalid email format'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
-    companyName: z.string().optional(),
-    accessCode: z.string().optional(),
-    isDemo: z.boolean().optional(),
-    promoCode: z.string().optional(),
-    utm_campaign: z.string().optional(),
-    utm_medium: z.string().optional(),
-    partner_code: z.string().optional(),
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  companyName: z.string().optional(),
+  accessCode: z.string().optional(),
+  isDemo: z.boolean().optional(),
+  promoCode: z.string().optional(),
+  utm_campaign: z.string().optional(),
+  utm_medium: z.string().optional(),
+  partner_code: z.string().optional(),
 });
 
 // Refresh Token Request
 export const RefreshTokenRequestSchema = z.object({
-    refreshToken: z.string().min(1, 'Refresh token is required'),
+  refreshToken: z.string().min(1, 'Refresh token is required'),
 });
 
 // Change Password Request
 export const ChangePasswordRequestSchema = z.object({
-    currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z
-        .string()
-        .min(8, 'Password must be at least 8 characters')
-        .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-        .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-        .regex(/[0-9]/, 'Password must contain at least one number'),
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
 });
 
 // Reset Password Request
 export const ResetPasswordRequestSchema = z.object({
-    token: z.string().min(1, 'Token is required'),
-    newPassword: z
-        .string()
-        .min(8, 'Password must be at least 8 characters')
-        .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-        .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-        .regex(/[0-9]/, 'Password must contain at least one number'),
+  token: z.string().min(1, 'Token is required'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
 });
 
 // Verify Email Request
 export const VerifyEmailRequestSchema = z.object({
-    token: z.string().min(1, 'Token is required'),
+  token: z.string().min(1, 'Token is required'),
 });
 
 // MFA Setup Request
 export const MFASetupRequestSchema = z.object({
-    // No body required for setup
+  // No body required for setup
 });
 
 // MFA Enable Request
 export const MFAEnableRequestSchema = z.object({
-    token: z.string().min(1, 'MFA token is required'),
+  token: z.string().min(1, 'MFA token is required'),
 });
 
 // MFA Disable Request
 export const MFADisableRequestSchema = z.object({
-    token: z.string().min(1, 'MFA token is required'),
+  token: z.string().min(1, 'MFA token is required'),
 });
 
 // Revoke All Tokens Request
 export const RevokeAllTokensRequestSchema = z.object({
-    userId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional(),
 });
 
 // Session ID Param
 export const SessionIdParamSchema = z.object({
-    id: z.string().uuid('Invalid session ID'),
+  id: z.string().uuid('Invalid session ID'),
 });
 
 // Type exports
@@ -98,4 +98,3 @@ export type MFAEnableRequest = z.infer<typeof MFAEnableRequestSchema>;
 export type MFADisableRequest = z.infer<typeof MFADisableRequestSchema>;
 export type RevokeAllTokensRequest = z.infer<typeof RevokeAllTokensRequestSchema>;
 export type SessionIdParam = z.infer<typeof SessionIdParamSchema>;
-

@@ -76,3 +76,13 @@ ALTER TABLE organizations ADD COLUMN sms_mfa_required INTEGER DEFAULT 0; -- Requ
 
 
 
+
+
+
+
+
+
+
+
+
+

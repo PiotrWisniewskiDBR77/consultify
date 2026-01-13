@@ -88,3 +88,13 @@ CREATE INDEX IF NOT EXISTS idx_ai_memory_daily_date ON ai_memory_metrics_daily (
 
 
 
+
+
+
+
+
+
+
+
+
+

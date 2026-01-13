@@ -1,26 +1,196 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="3" failures="1" errors="0" time="0.144360416">
-    <testsuite name="tests/integration/tasks.test.js" timestamp="2026-01-04T16:57:09.297Z" hostname="mac.home" tests="3" failures="1" errors="0" skipped="2" time="0.144360416">
-        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should list tasks" time="0">
-            <skipped/>
+{"numTotalTestSuites":52,"numPassedTestSuites":52,"numFailedTestSuites":0,"numPendingTestSuites":0,"numTotalTests":89,"numPasse    <testsuite name="tests/unit/backend/services/analyticsServiceNew.test.ts" timestamp="2026-01-11T16:05:23.904Z" hostname="mac.home" tests="10" failures="0" errors="0" skipped="0" time="0.036137125">
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Project Analytics &gt; should count projects by status" time="0.005559333">
         </testcase>
-        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration &gt; should create a task" time="0">
-            <skipped/>
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Project Analytics &gt; should count projects by health" time="0.001700958">
         </testcase>
-        <testcase classname="tests/integration/tasks.test.js" name="Tasks Integration" time="0.143795917">
-            <system-out>
-[Database] Mocking database for tests
-
-[dotenv@17.2.3] injecting env (7) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
-[Redis] Initializing client...
-[Redis] Using Mock Client
-
-            </system-out>
-            <failure message="Cannot find module &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/index.js&apos; imported from /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/auditLogService.js" type="Error">
-Error: Cannot find module &apos;/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/index.js&apos; imported from /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/services/auditLogService.js
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
-Serialized Error: { code: &apos;ERR_MODULE_NOT_FOUND&apos;, url: &apos;file:///Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/database/index.js&apos; }
-            </failure>
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Initiative Analytics &gt; should count initiatives by status" time="0.002143583">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Custom Dashboards &gt; should create a custom dashboard" time="0.001837">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Custom Dashboards &gt; should list dashboards for organization" time="0.002073083">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Custom Dashboards &gt; should update dashboard" time="0.001735125">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Analytics Snapshots &gt; should create daily snapshot" time="0.003216833">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Analytics Snapshots &gt; should enforce unique snapshot per org per day" time="0.002888375">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Analytics Snapshots &gt; should allow multiple snapshots for different dates" time="0.002705916">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/analyticsServiceNew.test.ts" name="AnalyticsService &gt; Dashboard Widgets &gt; should have seeded widgets" time="0.002416416">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/services/benefitsTrackingService.test.ts" timestamp="2026-01-11T16:05:23.908Z" hostname="mac.home" tests="9" failures="0" errors="0" skipped="0" time="0.037378417">
+        <testcase classname="tests/unit/backend/services/benefitsTrackingService.test.ts" name="BenefitsTrackingService &gt; KPI Definitions &gt; should create a KPI definition" time="0.003687916">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/benefitsTrackingService.test.ts" name="BenefitsTrackingService &gt; KPI Definitions &gt; should create system-defined KPIs" time="0.003189041">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/benefitsTrackingService.test.ts" name="BenefitsTrackingService &gt; KPI Definitions &gt; should list KPIs by category" time="0.001661625">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/benefitsTrackingService.test.ts" name="BenefitsTrackingService &gt; Initiative Benefits &gt; should link benefit to initiative" time="0.001765458">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/benefitsTrackingService.test.ts" name="BenefitsTrackingService &gt; Initiative Benefits &gt; should enforce unique KPI per initiative" time="0.00171325">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/benefitsTrackingService.test.ts" name="BenefitsTrackingService &gt; Initiative Benefits &gt; should track benefit status" time="0.002162417">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/benefitsTrackingService.test.ts" name="BenefitsTrackingService &gt; Benefit Measurements &gt; should record measurement" time="0.002492167">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/benefitsTrackingService.test.ts" name="BenefitsTrackingService &gt; Benefit Measurements &gt; should track measurement history" time="0.004858917">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/benefitsTrackingService.test.ts" name="BenefitsTrackingService &gt; Benefit Targets &gt; should set milestone targets" time="0.004501875">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/services/enterpriseService.test.ts" timestamp="2026-01-11T16:05:23.920Z" hostname="mac.home" tests="10" failures="0" errors="0" skipped="0" time="0.031423125">
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; Enterprise Contracts &gt; should create a new contract" time="0.004054208">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; Enterprise Contracts &gt; should update existing contract" time="0.00212525">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; Enterprise Contracts &gt; should retrieve contract by organization" time="0.001026083">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; Data Residency &gt; should create data residency config" time="0.001355125">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; Data Residency &gt; should store region lock status" time="0.001535792">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; White-label Config &gt; should create white-label config" time="0.001919625">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; White-label Config &gt; should store custom domain with status" time="0.0014565">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; SLA Tracking &gt; should record SLA metrics" time="0.0018385">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; SLA Tracking &gt; should track SLA breach with credit" time="0.001379916">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/enterpriseService.test.ts" name="EnterpriseService &gt; SLA Tracking &gt; should retrieve multiple months of SLA data" time="0.005204542">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/services/gdprComplianceService.test.ts" timestamp="2026-01-11T16:05:23.935Z" hostname="mac.home" tests="13" failures="0" errors="0" skipped="0" time="0.12624525">
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Data Subject Requests &gt; should create DSAR request" time="0.004411209">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Data Subject Requests &gt; should support different request types" time="0.003586625">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Data Subject Requests &gt; should update DSAR status" time="0.002528625">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Data Subject Requests &gt; should log DSAR activity" time="0.002537083">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Consent Management &gt; should record consent" time="0.002398916">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Consent Management &gt; should enforce unique consent per user per type" time="0.004525292">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Consent Management &gt; should revoke consent" time="0.004429708">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Retention Policies &gt; should create retention policy" time="0.001980792">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Retention Policies &gt; should seed default retention policies" time="0.005300875">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Data Deletion &gt; should log data deletion" time="0.002621209">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Sub-processors &gt; should register sub-processor" time="0.0465855">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Legal Holds &gt; should create legal hold" time="0.02793775">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/gdprComplianceService.test.ts" name="GDPRComplianceService &gt; Legal Holds &gt; should release legal hold" time="0.0047045">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/services/knowledgeRagService.test.ts" timestamp="2026-01-11T16:05:23.950Z" hostname="mac.home" tests="13" failures="0" errors="0" skipped="0" time="0.10638525">
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Documents &gt; should create a document" time="0.003938084">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Documents &gt; should support multiple source types" time="0.0037115">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Documents &gt; should update processing status" time="0.002813667">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Documents &gt; should handle processing errors" time="0.0018335">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Chunks &gt; should create document chunks" time="0.002309625">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Chunks &gt; should enforce unique chunk index per document" time="0.003065833">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Chunks &gt; should store embeddings" time="0.0034755">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Queries &gt; should log a query" time="0.002348291">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Queries &gt; should record user feedback" time="0.00319525">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Queries &gt; should track query performance" time="0.0048495">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Knowledge Collections &gt; should create a collection" time="0.002643792">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Sync Jobs &gt; should create sync job" time="0.032328708">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/knowledgeRagService.test.ts" name="KnowledgeRagService &gt; Sync Jobs &gt; should track sync progress" time="0.026806458">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/services/mobilePwaService.test.ts" timestamp="2026-01-11T16:05:23.955Z" hostname="mac.home" tests="12" failures="0" errors="0" skipped="0" time="0.037423625">
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Mobile Devices &gt; should register mobile device" time="0.004287792">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Mobile Devices &gt; should track multiple devices per user" time="0.002734583">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Mobile Devices &gt; should update last active timestamp" time="0.001652709">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Mobile Preferences &gt; should create user preferences" time="0.00153725">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Mobile Preferences &gt; should enforce one preference set per user" time="0.001734916">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Mobile Preferences &gt; should update preferences" time="0.001897416">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Offline Sync Queue &gt; should queue offline action" time="0.00144075">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Offline Sync Queue &gt; should process sync queue by priority" time="0.003260833">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Offline Sync Queue &gt; should mark sync as completed" time="0.004128834">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Offline Sync Queue &gt; should handle sync failures" time="0.002559417">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Push Notifications &gt; should log push notification" time="0.001632375">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/mobilePwaService.test.ts" name="MobilePwaService &gt; Push Notifications &gt; should track notification delivery" time="0.0023715">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/services/sandboxProjectService.test.ts" timestamp="2026-01-11T16:05:24.004Z" hostname="mac.home" tests="12" failures="0" errors="0" skipped="0" time="0.098605292">
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Templates &gt; should create a template" time="0.003846042">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Templates &gt; should seed default templates" time="0.003219583">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Templates &gt; should enforce unique template names" time="0.00114375">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Projects &gt; should create sandbox project" time="0.001749541">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Projects &gt; should reset sandbox" time="0.002512958">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Projects &gt; should expire sandbox" time="0.001760834">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Projects &gt; should list user sandboxes" time="0.002264417">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Exports &gt; should create export request" time="0.004335042">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Exports &gt; should complete export" time="0.004616792">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Exports &gt; should support different export types" time="0.004258375">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Activity &gt; should log activity" time="0.004008">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/sandboxProjectService.test.ts" name="SandboxProjectService &gt; Sandbox Activity &gt; should track activity history" time="0.052608791">
+        </testcase>
+    </testsuite>
+    <testsuite name="tests/unit/backend/services/whiteLabelExtendedService.test.ts" timestamp="2026-01-11T16:05:24.013Z" hostname="mac.home" tests="10" failures="0" errors="0" skipped="0" time="0.03464725">
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; White-label Assets &gt; should upload logo asset" time="0.003818375">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; White-label Assets &gt; should store multiple asset types" time="0.00353425">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; Domain Verification &gt; should create domain verification request" time="0.001241875">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; Domain Verification &gt; should verify domain" time="0.002244791">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; Domain Verification &gt; should enforce unique domains" time="0.00167475">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; Email Sender Verification &gt; should create email sender verification" time="0.001717416">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; Email Sender Verification &gt; should verify email sender" time="0.001598125">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; White-label Themes &gt; should create custom theme" time="0.003211916">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; White-label Themes &gt; should seed system themes" time="0.004325083">
+        </testcase>
+        <testcase classname="tests/unit/backend/services/whiteLabelExtendedService.test.ts" name="WhiteLabelExtendedService &gt; White-label Themes &gt; should enforce unique theme names" time="0.0032605">
         </testcase>
     </testsuite>
 </testsuites>
+s":"passed","title":"should reset sandbox","duration":2.5129580000002534,"failureMessages":[],"meta":{}},{"ancestorTitles":["SandboxProjectService","Sandbox Projects"],"fullName":"SandboxProjectService Sandbox Projects should expire sandbox","status":"passed","title":"should expire sandbox","duration":1.760834000000159,"failureMessages":[],"meta":{}},{"ancestorTitles":["SandboxProjectService","Sandbox Projects"],"fullName":"SandboxProjectService Sandbox Projects should list user sandboxes","status":"passed","title":"should list user sandboxes","duration":2.2644169999998667,"failureMessages":[],"meta":{}},{"ancestorTitles":["SandboxProjectService","Sandbox Exports"],"fullName":"SandboxProjectService Sandbox Exports should create export request","status":"passed","title":"should create export request","duration":4.335041999999703,"failureMessages":[],"meta":{}},{"ancestorTitles":["SandboxProjectService","Sandbox Exports"],"fullName":"SandboxProjectService Sandbox Exports should complete export","status":"passed","title":"should complete export","duration":4.616791999999805,"failureMessages":[],"meta":{}},{"ancestorTitles":["SandboxProjectService","Sandbox Exports"],"fullName":"SandboxProjectService Sandbox Exports should support different export types","status":"passed","title":"should support different export types","duration":4.258375000000342,"failureMessages":[],"meta":{}},{"ancestorTitles":["SandboxProjectService","Sandbox Activity"],"fullName":"SandboxProjectService Sandbox Activity should log activity","status":"passed","title":"should log activity","duration":4.007999999999811,"failureMessages":[],"meta":{}},{"ancestorTitles":["SandboxProjectService","Sandbox Activity"],"fullName":"SandboxProjectService Sandbox Activity should track activity history","status":"passed","title":"should track activity history","duration":52.60879100000011,"failureMessages":[],"meta":{}}],"startTime":1768147523726,"endTime":1768147523813.609,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/services/sandboxProjectService.test.ts"},{"assertionResults":[{"ancestorTitles":["WhiteLabelExtendedService","White-label Assets"],"fullName":"WhiteLabelExtendedService White-label Assets should upload logo asset","status":"passed","title":"should upload logo asset","duration":3.8183750000002874,"failureMessages":[],"meta":{}},{"ancestorTitles":["WhiteLabelExtendedService","White-label Assets"],"fullName":"WhiteLabelExtendedService White-label Assets should store multiple asset types","status":"passed","title":"should store multiple asset types","duration":3.5342500000001564,"failureMessages":[],"meta":{}},{"ancestorTitles":["WhiteLabelExtendedService","Domain Verification"],"fullName":"WhiteLabelExtendedService Domain Verification should create domain verification request","status":"passed","title":"should create domain verification request","duration":1.241874999999709,"failureMessages":[],"meta":{}},{"ancestorTitles":["WhiteLabelExtendedService","Domain Verification"],"fullName":"WhiteLabelExtendedService Domain Verification should verify domain","status":"passed","title":"should verify domain","duration":2.2447909999996227,"failureMessages":[],"meta":{}},{"ancestorTitles":["WhiteLabelExtendedService","Domain Verification"],"fullName":"WhiteLabelExtendedService Domain Verification should enforce unique domains","status":"passed","title":"should enforce unique domains","duration":1.674750000000131,"failureMessages":[],"meta":{}},{"ancestorTitles":["WhiteLabelExtendedService","Email Sender Verification"],"fullName":"WhiteLabelExtendedService Email Sender Verification should create email sender verification","status":"passed","title":"should create email sender verification","duration":1.7174159999999574,"failureMessages":[],"meta":{}},{"ancestorTitles":["WhiteLabelExtendedService","Email Sender Verification"],"fullName":"WhiteLabelExtendedService Email Sender Verification should verify email sender","status":"passed","title":"should verify email sender","duration":1.5981249999999818,"failureMessages":[],"meta":{}},{"ancestorTitles":["WhiteLabelExtendedService","White-label Themes"],"fullName":"WhiteLabelExtendedService White-label Themes should create custom theme","status":"passed","title":"should create custom theme","duration":3.211916000000201,"failureMessages":[],"meta":{}},{"ancestorTitles":["WhiteLabelExtendedService","White-label Themes"],"fullName":"WhiteLabelExtendedService White-label Themes should seed system themes","status":"passed","title":"should seed system themes","duration":4.325083000000177,"failureMessages":[],"meta":{}},{"ancestorTitles":["WhiteLabelExtendedService","White-label Themes"],"fullName":"WhiteLabelExtendedService White-label Themes should enforce unique theme names","status":"passed","title":"should enforce unique theme names","duration":3.26050000000032,"failureMessages":[],"meta":{}}],"startTime":1768147523726,"endTime":1768147523753.2605,"status":"passed","message":"","name":"/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/unit/backend/services/whiteLabelExtendedService.test.ts"}]}

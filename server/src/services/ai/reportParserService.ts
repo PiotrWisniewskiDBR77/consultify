@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadReportparser = createCachedLazyService('../../services/ai/reportParserService.js');
+const loadReportparser = createCachedLazyService('../../ai/reportParserService.js');
 
 // Export default instance (for backward compatibility)
 export default loadReportparser();

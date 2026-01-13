@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadQuota = createCachedLazyService('../../services/ai/quotaService.js');
+const loadQuota = createCachedLazyService('../../ai/quotaService.js');
 
 // Export default instance (for backward compatibility)
 export default loadQuota();

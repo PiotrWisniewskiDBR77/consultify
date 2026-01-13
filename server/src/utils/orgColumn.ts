@@ -10,11 +10,11 @@
 import { getDatabase } from '../database/Database.js';
 
 interface TableColumn {
-    name: string;
-    type: string;
-    notnull: number;
-    dflt_value: unknown;
-    pk: number;
+  name: string;
+  type: string;
+  notnull: number;
+  dflt_value: unknown;
+  pk: number;
 }
 
 /**
@@ -25,27 +25,32 @@ interface TableColumn {
  * @throws Error - If no org column found
  */
 export async function getOrgColumn(tableName: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const isPg = process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
-        const query = isPg
-            ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${tableName}'`
-            : `PRAGMA table_info(${tableName})`;
+  return new Promise((resolve, reject) => {
+    const isPg =
+      process.env.DB_TYPE === 'postgres' || process.env.DATABASE_URL?.startsWith('postgres');
+    const query = isPg
+      ? `SELECT column_name as name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '${tableName}'`
+      : `PRAGMA table_info(${tableName})`;
 
-        getDatabase().all(query, [], (err: Error | null, cols: TableColumn[]) => {
-            if (err) return reject(err);
+    getDatabase().all(query, [], (err: Error | null, cols: TableColumn[]) => {
+      if (err) return reject(err);
 
-            const names = (cols || []).map((c) => c.name);
+      const names = (cols || []).map((c) => c.name);
 
-            if (names.includes('organization_id')) {
-                return resolve('organization_id');
-            }
-            if (names.includes('org_id')) {
-                return resolve('org_id');
-            }
+      if (names.includes('organization_id')) {
+        return resolve('organization_id');
+      }
+      if (names.includes('org_id')) {
+        return resolve('org_id');
+      }
 
-            reject(new Error(`Table ${tableName} has no organization column (expected 'organization_id' or 'org_id')`));
-        });
+      reject(
+        new Error(
+          `Table ${tableName} has no organization column (expected 'organization_id' or 'org_id')`
+        )
+      );
     });
+  });
 }
 
 /**
@@ -55,15 +60,15 @@ export async function getOrgColumn(tableName: string): Promise<string> {
 const columnCache: Record<string, string> = {};
 
 export async function getOrgColumnCached(tableName: string): Promise<string> {
-    if (!columnCache[tableName]) {
-        columnCache[tableName] = await getOrgColumn(tableName);
-    }
-    return columnCache[tableName];
+  if (!columnCache[tableName]) {
+    columnCache[tableName] = await getOrgColumn(tableName);
+  }
+  return columnCache[tableName];
 }
 
 export interface OrgWhereClause {
-    clause: string;
-    value: string;
+  clause: string;
+  value: string;
 }
 
 /**
@@ -74,9 +79,9 @@ export interface OrgWhereClause {
  * @returns Promise with clause and value
  */
 export async function orgWhereClause(tableName: string, orgId: string): Promise<OrgWhereClause> {
-    const col = await getOrgColumnCached(tableName);
-    return {
-        clause: `${tableName}.${col} = ?`,
-        value: orgId,
-    };
+  const col = await getOrgColumnCached(tableName);
+  return {
+    clause: `${tableName}.${col} = ?`,
+    value: orgId,
+  };
 }

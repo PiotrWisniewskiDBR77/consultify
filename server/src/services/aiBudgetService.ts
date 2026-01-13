@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aibudget Service
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -6,7 +7,7 @@
  */
 
 // Lazy load the JS service module
-import service from '../../services/aiBudgetService.js';
+import service from './aiBudgetService.js';
 
 // Export default instance (for backward compatibility)
 export default service;

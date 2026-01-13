@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadPersistentsessionstore = createCachedLazyService('../../services/ai/persistentSessionStore.js');
+const loadPersistentsessionstore = createCachedLazyService('../../ai/persistentSessionStore.js');
 
 // Export default instance (for backward compatibility)
 export default loadPersistentsessionstore();

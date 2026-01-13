@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadSlackuserintegration = createCachedLazyService('../../services/integrations/slackUserIntegration.js');
+const loadSlackuserintegration = createCachedLazyService('./integrations/slackUserIntegration.js');
 
 // Export default instance (for backward compatibility)
 export default loadSlackuserintegration();

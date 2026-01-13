@@ -23,7 +23,7 @@ async function runVerification() {
 
 
     // DB Deletion handled by external command to avoid I/O errors
-    // const dbPath = path.resolve(__dirname, '../consultify.db');
+    // const dbPath = path.resolve(__dirname, '../consultinity.db');
     // if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
 
     const db = require('../database'); // This will re-init

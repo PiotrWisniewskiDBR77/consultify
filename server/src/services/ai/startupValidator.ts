@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadStartupvalidator = createCachedLazyService('../../services/ai/startupValidator.js');
+const loadStartupvalidator = createCachedLazyService('../../ai/startupValidator.js');
 
 // Export default instance (for backward compatibility)
 export default loadStartupvalidator();

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Configuration Module provides comprehensive enterprise-level settings management for the Consultify platform. It enables SuperAdmins to configure security policies, billing, integrations, data management, and email settings across organizations.
+The Configuration Module provides comprehensive enterprise-level settings management for the Consultinity platform. It enables SuperAdmins to configure security policies, billing, integrations, data management, and email settings across organizations.
 
 ## Architecture
 
@@ -52,11 +52,9 @@ Configure organization-level security settings:
   - Session timeout (15-480 minutes)
   - Concurrent sessions limit
   - Session binding (IP/device)
-  
 - **Account Lockout**
   - Max login attempts before lockout
   - Lockout duration
-  
 - **MFA Configuration**
   - Enable/disable MFA requirement
   - Supported methods: TOTP, SMS, Email, Hardware keys
@@ -351,14 +349,14 @@ const { policy } = await Api.get('/security-policies/org-123');
 
 // Update policy
 await Api.put('/security-policies/org-123', {
-    passwordMinLength: 14,
-    mfaRequired: true,
-    sessionTimeoutMinutes: 30
+  passwordMinLength: 14,
+  mfaRequired: true,
+  sessionTimeoutMinutes: 30,
 });
 
 // Apply compliance preset
 await Api.post('/security-policies/org-123/preset', {
-    preset: 'soc2'
+  preset: 'soc2',
 });
 ```
 
@@ -367,9 +365,9 @@ await Api.post('/security-policies/org-123/preset', {
 ```typescript
 // Create webhook
 await Api.post('/settings/webhooks', {
-    url: 'https://api.example.com/webhook',
-    events: ['user.created', 'project.updated'],
-    secret: 'generated_secret'
+  url: 'https://api.example.com/webhook',
+  events: ['user.created', 'project.updated'],
+  secret: 'generated_secret',
 });
 
 // Get delivery logs
@@ -384,8 +382,8 @@ await Api.post('/settings/webhooks/deliveries/delivery-id/retry');
 ```typescript
 // Request full export
 await Api.post('/data-export/requests', {
-    exportType: 'full',
-    includeData: ['users', 'projects', 'tasks', 'documents']
+  exportType: 'full',
+  includeData: ['users', 'projects', 'tasks', 'documents'],
 });
 
 // Check export status
@@ -450,11 +448,3 @@ const { requests } = await Api.get('/data-export/requests');
 - [Billing Integration](./BILLING_INTEGRATION.md)
 - [Webhook Events Reference](./WEBHOOK_EVENTS.md)
 - [API Reference](./API_CONFIGURATION_MODULE.md)
-
-
-
-
-
-
-
-

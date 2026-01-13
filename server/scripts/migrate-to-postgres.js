@@ -1,6 +1,6 @@
 /**
  * PostgreSQL Schema Migration
- * 
+ *
  * Run this script to migrate from SQLite to PostgreSQL:
  * DATABASE_URL=postgres://... node server/scripts/migrate-to-postgres.js
  */
@@ -11,18 +11,18 @@ import { Pool } from 'pg';
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl || !databaseUrl.startsWith('postgres')) {
-    console.error('ERROR: DATABASE_URL must be a PostgreSQL connection string');
-    process.exit(1);
+  console.error('ERROR: DATABASE_URL must be a PostgreSQL connection string');
+  process.exit(1);
 }
 
 const pool = new Pool({
-    connectionString: databaseUrl,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  connectionString: databaseUrl,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
 const schema = `
 -- ================================================
--- CONSULTIFY PostgreSQL Schema
+-- CONSULTINITY PostgreSQL Schema
 -- Generated from SQLite schema
 -- ================================================
 
@@ -238,24 +238,23 @@ CREATE INDEX IF NOT EXISTS idx_revoked_tokens_expires ON revoked_tokens(expires_
 `;
 
 async function migrate() {
-    console.log('🚀 Starting PostgreSQL migration...');
+  console.log('🚀 Starting PostgreSQL migration...');
 
-    try {
-        await pool.query(schema);
-        console.log('✅ Schema created successfully!');
+  try {
+    await pool.query(schema);
+    console.log('✅ Schema created successfully!');
 
-        console.log('\n📋 Next steps:');
-        console.log('1. Update .env.production with DATABASE_URL');
-        console.log('2. Migrate data from SQLite using a data export script');
-        console.log('3. Restart the application');
-
-    } catch (error) {
-        console.error('❌ Migration failed:', error.message);
-        console.error(error);
-        process.exit(1);
-    } finally {
-        await pool.end();
-    }
+    console.log('\n📋 Next steps:');
+    console.log('1. Update .env.production with DATABASE_URL');
+    console.log('2. Migrate data from SQLite using a data export script');
+    console.log('3. Restart the application');
+  } catch (error) {
+    console.error('❌ Migration failed:', error.message);
+    console.error(error);
+    process.exit(1);
+  } finally {
+    await pool.end();
+  }
 }
 
 migrate();

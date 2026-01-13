@@ -1,0 +1,556 @@
+/**
+ * AIUsageDashboard - AI Usage monitoring dashboard
+ *
+ * Features:
+ * - Usage breakdown by feature (Chat, Summaries, Search, etc.)
+ * - Current period stats
+ * - Historical trend chart
+ * - Token/cost estimation
+ * - Usage limit indicators
+ *
+ * Inspired by ClickUp's AI usage dashboard.
+ */
+
+import {
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  BarChart3,
+  Brain,
+  Calendar,
+  Clock,
+  DollarSign,
+  FileText,
+  MessageSquare,
+  Search,
+  Sparkles,
+  TrendingUp,
+  Zap,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { cn } from '../../lib/utils';
+import { Api } from '../../services/api';
+import { User } from '../../types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Progress } from '../ui/progress';
+import { Select } from '../ui/select';
+import { Skeleton } from '../ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+
+interface AIUsageDashboardProps {
+  currentUser: User;
+}
+
+interface UsageStat {
+  feature: string;
+  icon: React.ElementType;
+  count: number;
+  tokens: number;
+  cost: number;
+  trend: number; // percentage change
+}
+
+interface PeriodStats {
+  totalRequests: number;
+  totalTokens: number;
+  totalCost: number;
+  avgResponseTime: number;
+  successRate: number;
+  limit: number;
+  used: number;
+}
+
+interface DailyUsage {
+  date: string;
+  tokens: number;
+  requests: number;
+}
+
+export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser }) => {
+  const { t } = useTranslation();
+  const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
+  const [loading, setLoading] = useState(true);
+  const [periodStats, setPeriodStats] = useState<PeriodStats | null>(null);
+  const [usageByFeature, setUsageByFeature] = useState<UsageStat[]>([]);
+  const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
+
+  // Fetch usage data from backend API
+  useEffect(() => {
+    const fetchUsage = async () => {
+      setLoading(true);
+      try {
+        const response = await Api.getAIUsageStats(period);
+
+        if (response?.stats) {
+          setPeriodStats({
+            totalRequests: response.stats.totalRequests || 0,
+            totalTokens: response.stats.totalTokens || 0,
+            totalCost: response.stats.totalCost || 0,
+            avgResponseTime: response.stats.avgResponseTime || 0,
+            successRate: response.stats.successRate || 100,
+            limit: response.stats.limit || 1000000,
+            used: response.stats.used || 0,
+          });
+        }
+
+        // Map usage by feature from API response
+        if (response?.usageByFeature && response.usageByFeature.length > 0) {
+          const iconMap: Record<string, React.ElementType> = {
+            chat: MessageSquare,
+            document: FileText,
+            search: Search,
+            autocomplete: Zap,
+            summary: Brain,
+            general: Sparkles,
+          };
+
+          setUsageByFeature(
+            response.usageByFeature.map((item: any) => ({
+              feature: item.feature || 'General',
+              icon: iconMap[item.feature?.toLowerCase()] || Sparkles,
+              count: item.count || 0,
+              tokens: item.tokens || 0,
+              cost: item.cost || 0,
+              trend: 0, // Could be calculated from historical data
+            }))
+          );
+        } else {
+          // Default empty state
+          setUsageByFeature([
+            { feature: 'AI Chat', icon: MessageSquare, count: 0, tokens: 0, cost: 0, trend: 0 },
+            {
+              feature: 'Document Analysis',
+              icon: FileText,
+              count: 0,
+              tokens: 0,
+              cost: 0,
+              trend: 0,
+            },
+            { feature: 'Smart Search', icon: Search, count: 0, tokens: 0, cost: 0, trend: 0 },
+          ]);
+        }
+
+        // Set daily usage from API
+        if (response?.dailyUsage && response.dailyUsage.length > 0) {
+          setDailyUsage(response.dailyUsage);
+        } else {
+          // Generate empty daily usage if no data
+          const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+          const daily: DailyUsage[] = [];
+          const today = new Date();
+          for (let i = days - 1; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            daily.push({
+              date: date.toISOString().split('T')[0],
+              tokens: 0,
+              requests: 0,
+            });
+          }
+          setDailyUsage(daily);
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI usage:', error);
+        // Set defaults on error
+        setPeriodStats({
+          totalRequests: 0,
+          totalTokens: 0,
+          totalCost: 0,
+          avgResponseTime: 0,
+          successRate: 100,
+          limit: 1000000,
+          used: 0,
+        });
+        setUsageByFeature([]);
+        setDailyUsage([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsage();
+  }, [period]);
+
+  // Format numbers
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  // Calculate usage percentage
+  const usagePercentage = periodStats ? (periodStats.used / periodStats.limit) * 100 : 0;
+  const isNearLimit = usagePercentage >= 80;
+  const isOverLimit = usagePercentage >= 100;
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="h-80 rounded-xl" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Period Selector */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('settings.aiUsage.title', 'AI Usage Overview')}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('settings.aiUsage.subtitle', 'Monitor your AI usage and token consumption')}
+          </p>
+        </div>
+        <Select
+          value={period}
+          onChange={(v) => setPeriod(v as typeof period)}
+          options={[
+            { value: '7d', label: t('settings.aiUsage.last7Days', 'Last 7 days') },
+            { value: '30d', label: t('settings.aiUsage.last30Days', 'Last 30 days') },
+            { value: '90d', label: t('settings.aiUsage.last90Days', 'Last 90 days') },
+          ]}
+        />
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border-violet-200 dark:border-violet-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-violet-600 dark:text-violet-400 font-medium">
+                  {t('settings.aiUsage.totalRequests', 'Total Requests')}
+                </p>
+                <p className="text-2xl font-bold text-violet-900 dark:text-violet-100 mt-1">
+                  {formatNumber(periodStats?.totalRequests || 0)}
+                </p>
+              </div>
+              <div className="p-3 bg-violet-100 dark:bg-violet-800/50 rounded-xl">
+                <Sparkles className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border-emerald-200 dark:border-emerald-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+                  {t('settings.aiUsage.tokensUsed', 'Tokens Used')}
+                </p>
+                <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100 mt-1">
+                  {formatNumber(periodStats?.totalTokens || 0)}
+                </p>
+              </div>
+              <div className="p-3 bg-emerald-100 dark:bg-emerald-800/50 rounded-xl">
+                <Zap className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                  {t('settings.aiUsage.estimatedCost', 'Est. Cost')}
+                </p>
+                <p className="text-2xl font-bold text-amber-900 dark:text-amber-100 mt-1">
+                  {formatCurrency(periodStats?.totalCost || 0)}
+                </p>
+              </div>
+              <div className="p-3 bg-amber-100 dark:bg-amber-800/50 rounded-xl">
+                <DollarSign className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                  {t('settings.aiUsage.avgResponseTime', 'Avg Response')}
+                </p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">
+                  {periodStats?.avgResponseTime?.toFixed(1)}s
+                </p>
+              </div>
+              <div className="p-3 bg-blue-100 dark:bg-blue-800/50 rounded-xl">
+                <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Usage Limit Progress */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">
+              {t('settings.aiUsage.usageLimit', 'Usage Limit')}
+            </CardTitle>
+            <span
+              className={cn(
+                'text-sm font-medium',
+                isOverLimit
+                  ? 'text-red-600'
+                  : isNearLimit
+                    ? 'text-amber-600'
+                    : 'text-slate-600 dark:text-slate-400'
+              )}
+            >
+              {formatNumber(periodStats?.used || 0)} / {formatNumber(periodStats?.limit || 0)}{' '}
+              tokens
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Progress
+            value={Math.min(usagePercentage, 100)}
+            className={cn(
+              'h-3',
+              isOverLimit
+                ? '[&>div]:bg-red-500'
+                : isNearLimit
+                  ? '[&>div]:bg-amber-500'
+                  : '[&>div]:bg-violet-500'
+            )}
+          />
+          {isNearLimit && !isOverLimit && (
+            <div className="flex items-center gap-2 mt-3 text-amber-600 dark:text-amber-400">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm">
+                {t('settings.aiUsage.nearLimit', 'You are approaching your usage limit')}
+              </span>
+            </div>
+          )}
+          {isOverLimit && (
+            <div className="flex items-center gap-2 mt-3 text-red-600 dark:text-red-400">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm">
+                {t('settings.aiUsage.overLimit', 'You have exceeded your usage limit')}
+              </span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Usage by Feature */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.aiUsage.byFeature', 'Usage by Feature')}</CardTitle>
+          <CardDescription>
+            {t('settings.aiUsage.byFeatureDesc', 'Breakdown of AI usage across different features')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {usageByFeature.map((stat) => {
+              const Icon = stat.icon;
+              const percentage = periodStats ? (stat.tokens / periodStats.totalTokens) * 100 : 0;
+
+              return (
+                <div key={stat.feature} className="flex items-center gap-4">
+                  <div className="p-2 bg-slate-100 dark:bg-navy-800 rounded-lg">
+                    <Icon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">
+                        {stat.feature}
+                      </span>
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {formatNumber(stat.tokens)} tokens
+                        </span>
+                        <span className="text-slate-400 dark:text-slate-500">•</span>
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {stat.count} requests
+                        </span>
+                        <span
+                          className={cn(
+                            'flex items-center gap-1',
+                            stat.trend > 0 ? 'text-emerald-600' : 'text-red-600'
+                          )}
+                        >
+                          {stat.trend > 0 ? (
+                            <ArrowUp className="w-3 h-3" />
+                          ) : (
+                            <ArrowDown className="w-3 h-3" />
+                          )}
+                          {Math.abs(stat.trend)}%
+                        </span>
+                      </div>
+                    </div>
+                    <Progress value={percentage} className="h-2" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Usage Trend Chart (simplified) */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>{t('settings.aiUsage.usageTrend', 'Usage Trend')}</CardTitle>
+              <CardDescription>
+                {t('settings.aiUsage.usageTrendDesc', 'Daily token usage over time')}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <TrendingUp className="w-4 h-4" />
+              <span>+12% vs previous period</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Simple bar chart visualization */}
+          <div className="h-48 flex items-end gap-1">
+            {dailyUsage.slice(-30).map((day, index) => {
+              const maxTokens = Math.max(...dailyUsage.map((d) => d.tokens));
+              const height = (day.tokens / maxTokens) * 100;
+              return (
+                <div
+                  key={day.date}
+                  className="flex-1 bg-violet-200 dark:bg-violet-800 rounded-t hover:bg-violet-300 dark:hover:bg-violet-700 transition-colors cursor-pointer group relative"
+                  style={{ height: `${height}%` }}
+                  title={`${day.date}: ${formatNumber(day.tokens)} tokens`}
+                >
+                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
+                    {formatNumber(day.tokens)} tokens
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-slate-400 dark:text-slate-500">
+            <span>{dailyUsage[0]?.date}</span>
+            <span>{dailyUsage[dailyUsage.length - 1]?.date}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Success Rate & Performance */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              {t('settings.aiUsage.successRate', 'Success Rate')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div className="relative w-24 h-24">
+                <svg className="w-24 h-24 transform -rotate-90">
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="40"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    className="text-slate-200 dark:text-navy-700"
+                  />
+                  <circle
+                    cx="48"
+                    cy="48"
+                    r="40"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    strokeDasharray={`${(periodStats?.successRate || 0) * 2.51} 251`}
+                    className="text-emerald-500"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xl font-bold text-slate-900 dark:text-white">
+                    {periodStats?.successRate?.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                <p>
+                  {t(
+                    'settings.aiUsage.successRateDesc',
+                    'Percentage of successful AI requests without errors'
+                  )}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              {t('settings.aiUsage.performance', 'Performance Metrics')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  Average response time
+                </span>
+                <span className="text-sm font-medium">
+                  {periodStats?.avgResponseTime?.toFixed(2)}s
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  P95 response time
+                </span>
+                <span className="text-sm font-medium">2.4s</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Error rate</span>
+                <span className="text-sm font-medium text-emerald-600">
+                  {(100 - (periodStats?.successRate || 0)).toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  Tokens per request
+                </span>
+                <span className="text-sm font-medium">
+                  {periodStats
+                    ? Math.round(periodStats.totalTokens / periodStats.totalRequests)
+                    : 0}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default AIUsageDashboard;

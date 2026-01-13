@@ -1,3 +1,2 @@
 export * from './ActivityService.ts';
-import M from './ActivityService.ts';
-export default M;
+export { default } from './ActivityService.ts';

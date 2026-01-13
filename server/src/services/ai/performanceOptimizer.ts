@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadPerformanceoptimizer = createCachedLazyService('../../services/ai/performanceOptimizer.js');
+const loadPerformanceoptimizer = createCachedLazyService('../../ai/performanceOptimizer.js');
 
 // Export default instance (for backward compatibility)
 export default loadPerformanceoptimizer();

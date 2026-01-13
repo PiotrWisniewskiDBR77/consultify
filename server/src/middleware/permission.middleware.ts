@@ -10,6 +10,7 @@ import { NextFunction, Request, Response } from 'express';
 
 import GovernanceAuditService from '../services/governanceAuditService.js';
 import PermissionService from '../services/permissionService.js';
+import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -17,39 +18,39 @@ import type { AuthRequest } from './auth.middleware.js';
 // ==========================================
 
 interface PermissionService {
-    hasPermission: (
-        userId: string,
-        orgId: string | undefined,
-        permissionKey: string,
-        userRole?: string,
-    ) => Promise<boolean>;
+  hasPermission: (
+    userId: string,
+    orgId: string | undefined,
+    permissionKey: string,
+    userRole?: string
+  ) => Promise<boolean>;
 }
 
 interface GovernanceAuditService {
-    logAudit: (data: {
-        actorId: string;
-        actorRole?: string;
-        orgId?: string;
-        action: string;
-        resourceType: string;
-        resourceId?: string | null;
-        before?: unknown;
-        after?: unknown;
-        correlationId?: string;
-    }) => Promise<void>;
+  logAudit: (data: {
+    actorId: string;
+    actorRole?: string;
+    orgId?: string;
+    action: string;
+    resourceType: string;
+    resourceId?: string | null;
+    before?: unknown;
+    after?: unknown;
+    correlationId?: string;
+  }) => Promise<void>;
 }
 
 interface Dependencies {
-    PermissionService: PermissionService;
-    GovernanceAuditService: GovernanceAuditService;
+  PermissionService: PermissionService;
+  GovernanceAuditService: GovernanceAuditService;
 }
 
 interface AuditOptions {
-    action: string;
-    resourceType: string;
-    getResourceId?: (req: Request, data?: unknown) => string | null;
-    getBefore?: (req: Request) => unknown;
-    getAfter?: (req: Request, data?: unknown) => unknown;
+  action: string;
+  resourceType: string;
+  getResourceId?: (req: Request, data?: unknown) => string | null;
+  getBefore?: (req: Request) => unknown;
+  getAfter?: (req: Request, data?: unknown) => unknown;
 }
 
 // ==========================================
@@ -57,8 +58,8 @@ interface AuditOptions {
 // ==========================================
 
 let deps: Dependencies = {
-    PermissionService: PermissionService as unknown as PermissionService,
-    GovernanceAuditService: GovernanceAuditService as unknown as GovernanceAuditService,
+  PermissionService: PermissionService as unknown as PermissionService,
+  GovernanceAuditService: GovernanceAuditService as unknown as GovernanceAuditService,
 };
 
 // ==========================================
@@ -71,45 +72,50 @@ let deps: Dependencies = {
  * @returns Express middleware
  */
 export const requirePermission = (permissionKey: string) => {
-    return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const { PermissionService } = deps;
+  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { PermissionService } = deps;
 
-            const userId = req.userId || req.user?.id;
-            const orgId = req.organizationId || req.user?.organizationId;
-            const userRole = req.userRole || req.user?.role;
+      const userId = req.userId || req.user?.id;
+      const orgId = req.organizationId || req.user?.organizationId;
+      const userRole = req.userRole || req.user?.role;
 
-            if (!userId) {
-                res.status(401).json({
-                    error: 'Authentication required',
-                    code: 'AUTH_REQUIRED',
-                });
-                return;
-            }
+      if (!userId) {
+        res.status(401).json({
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED',
+        });
+        return;
+      }
 
-            const hasPermission = await PermissionService.hasPermission(userId, orgId, permissionKey, userRole);
+      const hasPermission = await PermissionService.hasPermission(
+        userId,
+        orgId,
+        permissionKey,
+        userRole
+      );
 
-            if (!hasPermission) {
-                console.log(`[PermissionMiddleware] Denied: ${permissionKey} for user ${userId}`);
-                res.status(403).json({
-                    error: 'Permission denied',
-                    required: permissionKey,
-                    code: 'PERMISSION_DENIED',
-                });
-                return;
-            }
+      if (!hasPermission) {
+        logger.info(`[PermissionMiddleware] Denied: ${permissionKey} for user ${userId}`);
+        res.status(403).json({
+          error: 'Permission denied',
+          required: permissionKey,
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
 
-            // Attach permission info for audit logging
-            (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
-            next();
-        } catch (err: unknown) {
-            console.error('[PermissionMiddleware] Error:', err);
-            res.status(500).json({
-                error: 'Permission check failed',
-                code: 'PERMISSION_ERROR',
-            });
-        }
-    };
+      // Attach permission info for audit logging
+      (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
+      next();
+    } catch (err: any) {
+      logger.error('[PermissionMiddleware] Error:', err);
+      res.status(500).json({
+        error: 'Permission check failed',
+        code: 'PERMISSION_ERROR',
+      });
+    }
+  };
 };
 
 /**
@@ -118,46 +124,53 @@ export const requirePermission = (permissionKey: string) => {
  * @returns Express middleware
  */
 export const requireAnyPermission = (permissionKeys: string[]) => {
-    return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const { PermissionService } = deps;
+  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { PermissionService } = deps;
 
-            const userId = req.userId || req.user?.id;
-            const orgId = req.organizationId || req.user?.organizationId;
-            const userRole = req.userRole || req.user?.role;
+      const userId = req.userId || req.user?.id;
+      const orgId = req.organizationId || req.user?.organizationId;
+      const userRole = req.userRole || req.user?.role;
 
-            if (!userId) {
-                res.status(401).json({
-                    error: 'Authentication required',
-                    code: 'AUTH_REQUIRED',
-                });
-                return;
-            }
+      if (!userId) {
+        res.status(401).json({
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED',
+        });
+        return;
+      }
 
-            for (const permissionKey of permissionKeys) {
-                const hasPermission = await PermissionService.hasPermission(userId, orgId, permissionKey, userRole);
+      for (const permissionKey of permissionKeys) {
+        const hasPermission = await PermissionService.hasPermission(
+          userId,
+          orgId,
+          permissionKey,
+          userRole
+        );
 
-                if (hasPermission) {
-                    (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
-                    next();
-                    return;
-                }
-            }
-
-            console.log(`[PermissionMiddleware] Denied: none of [${permissionKeys.join(', ')}] for user ${userId}`);
-            res.status(403).json({
-                error: 'Permission denied',
-                requiredAny: permissionKeys,
-                code: 'PERMISSION_DENIED',
-            });
-        } catch (err: unknown) {
-            console.error('[PermissionMiddleware] Error:', err);
-            res.status(500).json({
-                error: 'Permission check failed',
-                code: 'PERMISSION_ERROR',
-            });
+        if (hasPermission) {
+          (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
+          next();
+          return;
         }
-    };
+      }
+
+      logger.info(
+        `[PermissionMiddleware] Denied: none of [${permissionKeys.join(', ')}] for user ${userId}`
+      );
+      res.status(403).json({
+        error: 'Permission denied',
+        requiredAny: permissionKeys,
+        code: 'PERMISSION_DENIED',
+      });
+    } catch (err: any) {
+      logger.error('[PermissionMiddleware] Error:', err);
+      res.status(500).json({
+        error: 'Permission check failed',
+        code: 'PERMISSION_ERROR',
+      });
+    }
+  };
 };
 
 /**
@@ -166,54 +179,59 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
  * @returns Express middleware
  */
 export const requireAllPermissions = (permissionKeys: string[]) => {
-    return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const { PermissionService } = deps;
+  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { PermissionService } = deps;
 
-            const userId = req.userId || req.user?.id;
-            const orgId = req.organizationId || req.user?.organizationId;
-            const userRole = req.userRole || req.user?.role;
+      const userId = req.userId || req.user?.id;
+      const orgId = req.organizationId || req.user?.organizationId;
+      const userRole = req.userRole || req.user?.role;
 
-            if (!userId) {
-                res.status(401).json({
-                    error: 'Authentication required',
-                    code: 'AUTH_REQUIRED',
-                });
-                return;
-            }
+      if (!userId) {
+        res.status(401).json({
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED',
+        });
+        return;
+      }
 
-            const missingPermissions: string[] = [];
+      const missingPermissions: string[] = [];
 
-            for (const permissionKey of permissionKeys) {
-                const hasPermission = await PermissionService.hasPermission(userId, orgId, permissionKey, userRole);
+      for (const permissionKey of permissionKeys) {
+        const hasPermission = await PermissionService.hasPermission(
+          userId,
+          orgId,
+          permissionKey,
+          userRole
+        );
 
-                if (!hasPermission) {
-                    missingPermissions.push(permissionKey);
-                }
-            }
-
-            if (missingPermissions.length > 0) {
-                console.log(
-                    `[PermissionMiddleware] Denied: missing [${missingPermissions.join(', ')}] for user ${userId}`,
-                );
-                res.status(403).json({
-                    error: 'Permission denied',
-                    missing: missingPermissions,
-                    code: 'PERMISSION_DENIED',
-                });
-                return;
-            }
-
-            (req as AuthRequest & { permissionChecked?: string[] }).permissionChecked = permissionKeys;
-            next();
-        } catch (err: unknown) {
-            console.error('[PermissionMiddleware] Error:', err);
-            res.status(500).json({
-                error: 'Permission check failed',
-                code: 'PERMISSION_ERROR',
-            });
+        if (!hasPermission) {
+          missingPermissions.push(permissionKey);
         }
-    };
+      }
+
+      if (missingPermissions.length > 0) {
+        logger.info(
+          `[PermissionMiddleware] Denied: missing [${missingPermissions.join(', ')}] for user ${userId}`
+        );
+        res.status(403).json({
+          error: 'Permission denied',
+          missing: missingPermissions,
+          code: 'PERMISSION_DENIED',
+        });
+        return;
+      }
+
+      (req as AuthRequest & { permissionChecked?: string[] }).permissionChecked = permissionKeys;
+      next();
+    } catch (err: any) {
+      logger.error('[PermissionMiddleware] Error:', err);
+      res.status(500).json({
+        error: 'Permission check failed',
+        code: 'PERMISSION_ERROR',
+      });
+    }
+  };
 };
 
 /**
@@ -222,45 +240,51 @@ export const requireAllPermissions = (permissionKeys: string[]) => {
  * @param options - Audit options
  */
 export const auditAction = (options: AuditOptions) => {
-    const { action, resourceType, getResourceId = () => null, getBefore = () => null, getAfter = () => null } = options;
+  const {
+    action,
+    resourceType,
+    getResourceId = () => null,
+    getBefore = () => null,
+    getAfter = () => null,
+  } = options;
 
-    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-        const { GovernanceAuditService } = deps;
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { GovernanceAuditService } = deps;
 
-        // Store original json method
-        const originalJson = res.json.bind(res);
+    // Store original json method
+    const originalJson = res.json.bind(res);
 
-        // Override json to intercept response
-        res.json = (async (data: unknown) => {
-            // Only audit on success (2xx status codes)
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-                try {
-                    await GovernanceAuditService.logAudit({
-                        actorId: (req as AuthRequest).userId || (req as AuthRequest).user?.id || '',
-                        actorRole: (req as AuthRequest).userRole || (req as AuthRequest).user?.role,
-                        orgId: (req as AuthRequest).organizationId || (req as AuthRequest).user?.organizationId,
-                        action,
-                        resourceType,
-                        resourceId: getResourceId(req, data),
-                        before: getBefore(req),
-                        after: getAfter(req, data),
-                        correlationId:
-                            (req as Request & { correlationId?: string }).correlationId ||
-                            req.get('X-Correlation-Id') ||
-                            undefined,
-                    });
-                } catch (auditErr) {
-                    console.error('[AuditMiddleware] Error logging audit:', auditErr);
-                    // Don't fail the request if audit fails
-                }
-            }
+    // Override json to intercept response
+    res.json = (async (data: unknown) => {
+      // Only audit on success (2xx status codes)
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        try {
+          await GovernanceAuditService.logAudit({
+            actorId: (req as AuthRequest).userId || (req as AuthRequest).user?.id || '',
+            actorRole: (req as AuthRequest).userRole || (req as AuthRequest).user?.role,
+            orgId: (req as AuthRequest).organizationId || (req as AuthRequest).user?.organizationId,
+            action,
+            resourceType,
+            resourceId: getResourceId(req, data),
+            before: getBefore(req),
+            after: getAfter(req, data),
+            correlationId:
+              (req as Request & { correlationId?: string }).correlationId ||
+              req.get('X-Correlation-Id') ||
+              undefined,
+          });
+        } catch (auditErr) {
+          logger.error('[AuditMiddleware] Error logging audit:', auditErr);
+          // Don't fail the request if audit fails
+        }
+      }
 
-            // Call original json method
-            return originalJson(data);
-        }) as any;
+      // Call original json method
+      return originalJson(data);
+    }) as any;
 
-        next();
-    };
+    next();
+  };
 };
 
 // ==========================================
@@ -268,5 +292,5 @@ export const auditAction = (options: AuditOptions) => {
 // ==========================================
 
 export const setDependencies = (newDeps: Partial<Dependencies>): void => {
-    deps = { ...deps, ...newDeps };
+  deps = { ...deps, ...newDeps };
 };

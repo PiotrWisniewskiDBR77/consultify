@@ -3,8 +3,8 @@ import { QueryBus } from '../QueryBus.js';
 import { CreateProjectCommand, CreateProjectHandler } from './commands/CreateProjectCommand.js';
 import { DeleteProjectCommand, DeleteProjectHandler } from './commands/DeleteProjectCommand.js';
 import { UpdateProjectCommand, UpdateProjectHandler } from './commands/UpdateProjectCommand.js';
-import { GetProjectQuery, GetProjectHandler } from './queries/GetProjectQuery.js';
-import { ListProjectsQuery, ListProjectsHandler } from './queries/ListProjectsQuery.js';
+import { GetProjectHandler, GetProjectQuery } from './queries/GetProjectQuery.js';
+import { ListProjectsHandler, ListProjectsQuery } from './queries/ListProjectsQuery.js';
 
 const commandBus = new CommandBus();
 commandBus.register(CreateProjectCommand, new CreateProjectHandler());

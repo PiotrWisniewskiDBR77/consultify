@@ -3,6 +3,7 @@
 ## Overview
 
 The Unified AI Chat System provides a seamless chat experience across two display modes:
+
 - **Full-screen mode**: Immersive AI Chat experience (like ChatGPT or Claude)
 - **Split-screen mode**: Chat alongside workspace content (like OpenAI Canvas or Google AI Studio)
 
@@ -17,31 +18,31 @@ flowchart TB
         AppStore[useAppStore]
         ProjectStore[useChatProjectStore]
     end
-    
+
     subgraph api [Backend API]
         ConvAPI[/api/conversations]
         ProjAPI[/api/chat-projects]
         AIAPI[/api/ai/stream]
     end
-    
+
     subgraph views [Views]
         FullChat[AIChatWelcomeView]
         SplitView[SplitLayout]
     end
-    
+
     subgraph components [Shared Components]
         Unified[UnifiedChatPanel]
         Input[EnhancedChatInput]
         History[ChatSlidingPanel]
     end
-    
+
     ConvStore --> Unified
     AppStore --> Unified
     Unified --> FullChat
     Unified --> SplitView
     Input --> Unified
     History --> Unified
-    
+
     ConvStore --> ConvAPI
     ProjectStore --> ProjAPI
     Unified --> AIAPI
@@ -55,27 +56,28 @@ The main chat component that works in both modes.
 
 ```typescript
 interface UnifiedChatPanelProps {
-    /** Display mode: full-screen or split-screen */
-    mode?: ChatDisplayMode;
-    
-    /** Whether to show expand/collapse button */
-    showModeToggle?: boolean;
-    
-    /** Callback when mode toggle is clicked */
-    onModeToggle?: () => void;
-    
-    /** Whether to show the sliding history panel trigger */
-    showHistoryTrigger?: boolean;
-    
-    /** Whether to show focus mode selector */
-    showFocusMode?: boolean;
-    
-    /** Current workspace context (for AI awareness) */
-    workspaceContext?: WorkspaceContext | null;
+  /** Display mode: full-screen or split-screen */
+  mode?: ChatDisplayMode;
+
+  /** Whether to show expand/collapse button */
+  showModeToggle?: boolean;
+
+  /** Callback when mode toggle is clicked */
+  onModeToggle?: () => void;
+
+  /** Whether to show the sliding history panel trigger */
+  showHistoryTrigger?: boolean;
+
+  /** Whether to show focus mode selector */
+  showFocusMode?: boolean;
+
+  /** Current workspace context (for AI awareness) */
+  workspaceContext?: WorkspaceContext | null;
 }
 ```
 
 **Features:**
+
 - EnhancedChatInput with all rich features (files, tools, voice)
 - FocusModeSelector (compact in split mode)
 - ChatSlidingPanel integration for history
@@ -88,24 +90,24 @@ Describes what the user is currently viewing in the workspace panel.
 
 ```typescript
 interface WorkspaceContext {
-    /** Current AppView being displayed */
-    view: AppView;
-    
-    /** Type of content in workspace */
-    type: WorkspaceType; // 'task' | 'initiative' | 'assessment' | ...
-    
-    /** ID of the specific entity being viewed */
-    entityId?: string;
-    
-    /** Name/title of the entity for AI context */
-    entityName?: string;
-    
-    /** PMO project context if applicable */
-    projectId?: string;
-    projectName?: string;
-    
-    /** Timestamp when context was set */
-    timestamp: Date;
+  /** Current AppView being displayed */
+  view: AppView;
+
+  /** Type of content in workspace */
+  type: WorkspaceType; // 'task' | 'initiative' | 'assessment' | ...
+
+  /** ID of the specific entity being viewed */
+  entityId?: string;
+
+  /** Name/title of the entity for AI context */
+  entityName?: string;
+
+  /** PMO project context if applicable */
+  projectId?: string;
+  projectName?: string;
+
+  /** Timestamp when context was set */
+  timestamp: Date;
 }
 ```
 
@@ -180,16 +182,17 @@ The AIContext provides workspace information to the AI:
 
 ```typescript
 interface AIContextProps {
-    // ... existing fields ...
-    
-    // UNIFIED CHAT SYSTEM
-    workspaceContext: WorkspaceContext | null;
-    chatDisplayMode: ChatDisplayMode;
-    isInSplitMode: boolean;
+  // ... existing fields ...
+
+  // UNIFIED CHAT SYSTEM
+  workspaceContext: WorkspaceContext | null;
+  chatDisplayMode: ChatDisplayMode;
+  isInSplitMode: boolean;
 }
 ```
 
 This allows AI responses to be contextually relevant:
+
 - In split mode viewing tasks, AI can reference task details
 - In assessment view, AI can help with evaluation
 - AI knows if user is in full-screen or split mode
@@ -199,12 +202,8 @@ This allows AI responses to be contextually relevant:
 ### Basic Split Layout
 
 ```tsx
-<SplitLayout
-    useUnifiedChat={true}
-    currentView={AppView.MY_WORK}
-    contextEntityId={selectedTaskId}
->
-    <MyWorkContent />
+<SplitLayout useUnifiedChat={true} currentView={AppView.MY_WORK} contextEntityId={selectedTaskId}>
+  <MyWorkContent />
 </SplitLayout>
 ```
 
@@ -212,12 +211,12 @@ This allows AI responses to be contextually relevant:
 
 ```tsx
 <UnifiedChatPanel
-    mode="split"
-    workspaceContext={workspaceContext}
-    showModeToggle={true}
-    onModeToggle={handleModeToggle}
-    showHistoryTrigger={true}
-    showFocusMode={true}
+  mode="split"
+  workspaceContext={workspaceContext}
+  showModeToggle={true}
+  onModeToggle={handleModeToggle}
+  showHistoryTrigger={true}
+  showFocusMode={true}
 />
 ```
 
@@ -226,10 +225,10 @@ This allows AI responses to be contextually relevant:
 ```typescript
 // From sidebar
 const navigateToViewWithChat = (viewId: AppView) => {
-    setDisplayMode('split');
-    const context = createWorkspaceContext(viewId, getDefaultWorkspaceType(viewId));
-    setWorkspaceContext(context);
-    navigateWithChatContext(viewId, { preserveChat: true });
+  setDisplayMode('split');
+  const context = createWorkspaceContext(viewId, getDefaultWorkspaceType(viewId));
+  setWorkspaceContext(context);
+  navigateWithChatContext(viewId, { preserveChat: true });
 };
 ```
 
@@ -238,11 +237,13 @@ const navigateToViewWithChat = (viewId: AppView) => {
 ### Unit Tests
 
 Located in `tests/store/useConversationStore.displayMode.test.ts`:
+
 - Display mode state management
 - Workspace context updates
 - Mode transitions
 
 Located in `tests/components/AIChat/UnifiedChatPanel.test.tsx`:
+
 - Rendering in both modes
 - Message display
 - Context awareness
@@ -251,6 +252,7 @@ Located in `tests/components/AIChat/UnifiedChatPanel.test.tsx`:
 ### E2E Tests
 
 Located in `e2e/unified-chat.spec.ts`:
+
 - Full flow from AI Chat to workspace views
 - Message preservation across transitions
 - History panel functionality
@@ -261,6 +263,7 @@ Located in `e2e/unified-chat.spec.ts`:
 ### From Legacy ChatPanel to UnifiedChatPanel
 
 1. Update SplitLayout usage:
+
 ```tsx
 // Before
 <SplitLayout>
@@ -268,7 +271,7 @@ Located in `e2e/unified-chat.spec.ts`:
 </SplitLayout>
 
 // After (unified chat is default)
-<SplitLayout 
+<SplitLayout
     useUnifiedChat={true}
     currentView={currentView}
 >
@@ -277,6 +280,7 @@ Located in `e2e/unified-chat.spec.ts`:
 ```
 
 2. Access conversation data from useConversationStore instead of useAppStore:
+
 ```typescript
 // Before
 const { activeChatMessages } = useAppStore();
@@ -286,6 +290,7 @@ const { activeMessages, activeConversationId } = useConversationStore();
 ```
 
 3. Use the new navigation functions:
+
 ```typescript
 // Before
 setCurrentView(AppView.MY_WORK);
@@ -297,6 +302,7 @@ navigateWithChatContext(AppView.MY_WORK, { preserveChat: true });
 ## Files Created/Modified
 
 ### New Files
+
 - `components/AIChat/UnifiedChatPanel.tsx`
 - `types/workspace.ts`
 - `tests/store/useConversationStore.displayMode.test.ts`
@@ -305,6 +311,7 @@ navigateWithChatContext(AppView.MY_WORK, { preserveChat: true });
 - `docs/UNIFIED_AI_CHAT_SYSTEM.md`
 
 ### Modified Files
+
 - `store/useConversationStore.ts` - Added displayMode, workspaceContext
 - `store/useAppStore.ts` - Added navigation functions
 - `components/SplitLayout.tsx` - Integrated UnifiedChatPanel
@@ -323,4 +330,3 @@ navigateWithChatContext(AppView.MY_WORK, { preserveChat: true });
 2. **Multi-panel Support**: Multiple workspaces with chat
 3. **AI Workspace Actions**: AI can trigger workspace changes directly
 4. **Offline Support**: Cache conversations for offline access
-

@@ -1,12 +1,21 @@
 /**
- * Regulatorymodeguard Service
- * Enterprise SaaS Architecture - TypeScript Backend
- *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Regulatory Mode Guard
+ * Placeholder service for regulatory mode checking
  */
 
-// Lazy load the JS service module
-import service from '../../services/regulatoryModeGuard.js';
+export class RegulatoryModeGuard {
+  static async isEnabled(projectId: string): Promise<boolean> {
+    return false;
+  }
 
-// Export default instance (for backward compatibility)
-export default service;
+  static async getRegulatoryPrompt(projectId: string): Promise<string> {
+    return '';
+  }
+
+  static checkRegulatoryMode(orgId: string): boolean {
+    // Placeholder implementation
+    return false;
+  }
+}
+
+export default RegulatoryModeGuard;

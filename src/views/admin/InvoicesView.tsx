@@ -1,0 +1,427 @@
+/**
+ * InvoicesView - Invoices & Billing History
+ *
+ * Features:
+ * - List all invoices
+ * - Download PDF invoices
+ * - Filter by date/status
+ * - View invoice details
+ */
+
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  AlertCircle,
+  Calendar,
+  Check,
+  Clock,
+  Download,
+  ExternalLink,
+  Eye,
+  FileText,
+  Filter,
+  RefreshCw,
+  Search,
+  X,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { InfoButton } from '../../components/shared/InfoButton';
+import { useAppStore } from '../../store/useAppStore';
+
+interface Invoice {
+  id: string;
+  number: string;
+  date: string;
+  dueDate: string;
+  amount: number;
+  currency: string;
+  status: 'paid' | 'pending' | 'overdue' | 'void';
+  description: string;
+  pdfUrl?: string;
+  items: InvoiceItem[];
+}
+
+interface InvoiceItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+}
+
+interface InvoicesViewProps {
+  className?: string;
+}
+
+export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) => {
+  const { t } = useTranslation();
+  const { currentOrganization } = useAppStore();
+
+  const [loading, setLoading] = useState(true);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<string>('all');
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const loadInvoices = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/billing/invoices`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Transform backend format to frontend format
+        const invoices = (data.invoices || []).map((inv: any) => ({
+          id: inv.id,
+          number: inv.invoice_number || inv.number || `INV-${inv.id.slice(0, 8)}`,
+          date: inv.invoice_date || inv.created_at || inv.date,
+          dueDate: inv.due_date || inv.dueDate,
+          amount: inv.total || inv.amount || 0,
+          currency: inv.currency || 'USD',
+          status: inv.status || 'pending',
+          description: inv.description || `Invoice #${inv.invoice_number || inv.id.slice(0, 8)}`,
+          pdfUrl: inv.pdf_url || inv.pdfUrl,
+          items: inv.items || [],
+        }));
+        setInvoices(invoices);
+      } else {
+        setInvoices([]);
+      }
+    } catch (error) {
+      console.error('Failed to load invoices:', error);
+      setInvoices([]);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadInvoices();
+  }, [currentOrganization?.id, loadInvoices]);
+
+  const handleDownload = async (invoice: Invoice) => {
+    setDownloading(invoice.id);
+    try {
+      // In production, this would download from Stripe or your invoice service
+      const res = await fetch(`/api/billing/invoices/${invoice.id}/download`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${invoice.number}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        toast.success('Invoice downloaded');
+      }
+    } catch (error) {
+      console.error('Failed to download invoice:', error);
+      toast.error('Failed to download invoice');
+    }
+    setDownloading(null);
+  };
+
+  const getStatusBadge = (status: Invoice['status']) => {
+    const styles = {
+      paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+      pending: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+      overdue: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+      void: 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400',
+    };
+
+    const icons = {
+      paid: <Check size={12} />,
+      pending: <Clock size={12} />,
+      overdue: <AlertCircle size={12} />,
+      void: <X size={12} />,
+    };
+
+    return (
+      <span
+        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}
+      >
+        {icons[status]}
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  };
+
+  const filteredInvoices = invoices.filter((inv) => {
+    if (
+      searchTerm &&
+      !inv.number.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !inv.description.toLowerCase().includes(searchTerm.toLowerCase())
+    ) {
+      return false;
+    }
+    if (statusFilter !== 'all' && inv.status !== statusFilter) {
+      return false;
+    }
+    if (dateRange !== 'all') {
+      const invoiceDate = new Date(inv.date);
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+      if (dateRange === 'month' && invoiceDate < startOfMonth) return false;
+      if (dateRange === 'year' && invoiceDate < startOfYear) return false;
+    }
+    return true;
+  });
+
+  const totalPaid = invoices
+    .filter((i) => i.status === 'paid')
+    .reduce((sum, i) => sum + i.amount, 0);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`space-y-6 ${className}`}>
+      <InfoButton cardId="admin-invoices" position="top-right" />
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <FileText size={24} />
+            {t('admin.billing.invoices', 'Invoices & Billing History')}
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {t('admin.billing.invoicesDesc', 'View and download your billing history')}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-slate-500 dark:text-slate-400">Total Paid (All Time)</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+            {formatCurrency(totalPaid, 'USD')}
+          </p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            size={18}
+          />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search invoices..."
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+        >
+          <option value="all">All Status</option>
+          <option value="paid">Paid</option>
+          <option value="pending">Pending</option>
+          <option value="overdue">Overdue</option>
+        </select>
+        <select
+          value={dateRange}
+          onChange={(e) => setDateRange(e.target.value)}
+          className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
+        >
+          <option value="all">All Time</option>
+          <option value="month">This Month</option>
+          <option value="year">This Year</option>
+        </select>
+      </div>
+
+      {/* Invoices List */}
+      {filteredInvoices.length === 0 ? (
+        <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Invoices</h3>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">No invoices match your filters</p>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-slate-50 dark:bg-navy-900">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  Invoice
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
+              {filteredInvoices.map((invoice) => (
+                <tr key={invoice.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-slate-900 dark:text-white">
+                      {invoice.number}
+                    </div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                      {invoice.description}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                    {formatDate(invoice.date)}
+                  </td>
+                  <td className="px-6 py-4">{getStatusBadge(invoice.status)}</td>
+                  <td className="px-6 py-4 text-right font-medium text-slate-900 dark:text-white">
+                    {formatCurrency(invoice.amount, invoice.currency)}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setSelectedInvoice(invoice)}
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-600 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-300"
+                        title="View details"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDownload(invoice)}
+                        disabled={downloading === invoice.id}
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-600 rounded-lg text-slate-500 dark:text-slate-400 hover:text-violet-600"
+                        title="Download PDF"
+                      >
+                        {downloading === invoice.id ? (
+                          <RefreshCw size={16} className="animate-spin" />
+                        ) : (
+                          <Download size={16} />
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Invoice Detail Modal */}
+      <AnimatePresence>
+        {selectedInvoice && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden"
+            >
+              <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {selectedInvoice.number}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {formatDate(selectedInvoice.date)}
+                  </p>
+                </div>
+                {getStatusBadge(selectedInvoice.status)}
+              </div>
+              <div className="p-6 space-y-4">
+                {/* Line Items */}
+                <div>
+                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                    Items
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedInvoice.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex justify-between py-2 border-b border-slate-100 dark:border-navy-700"
+                      >
+                        <div>
+                          <p className="text-sm text-slate-900 dark:text-white">
+                            {item.description}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Qty: {item.quantity} ×{' '}
+                            {formatCurrency(item.unitPrice, selectedInvoice.currency)}
+                          </p>
+                        </div>
+                        <p className="font-medium text-slate-900 dark:text-white">
+                          {formatCurrency(item.amount, selectedInvoice.currency)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Total */}
+                <div className="pt-4 border-t border-slate-200 dark:border-navy-700 flex justify-between">
+                  <span className="font-semibold text-slate-900 dark:text-white">Total</span>
+                  <span className="text-xl font-bold text-slate-900 dark:text-white">
+                    {formatCurrency(selectedInvoice.amount, selectedInvoice.currency)}
+                  </span>
+                </div>
+              </div>
+              <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-between">
+                <button
+                  onClick={() => setSelectedInvoice(null)}
+                  className="px-4 py-2 text-slate-600 dark:text-slate-400"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => handleDownload(selectedInvoice)}
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
+                >
+                  <Download size={16} />
+                  Download PDF
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default InvoicesView;

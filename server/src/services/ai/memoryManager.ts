@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadMemorymanager = createCachedLazyService('../../services/ai/memoryManager.js');
+const loadMemorymanager = createCachedLazyService('../../ai/memoryManager.js');
 
 // Export default instance (for backward compatibility)
 export default loadMemorymanager();

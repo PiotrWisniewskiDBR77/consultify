@@ -1,85 +1,92 @@
-// @vitest-environment node
-import { describe, it, expect, beforeAll } from 'vitest';
+import app from '../../../server/src/index.js';
+import bcrypt from 'bcryptjs';
 import request from 'supertest';
-import { createRequire } from 'module';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
-const require = createRequire(import.meta.url);
-const app = require('../../../server/index.js');
-const db = require('../../../server/database.js');
+vi.hoisted(() => {
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+});
+
+// @vitest-environment node
 
 /**
  * Level 2: Integration Tests - Help & Enablement
  * Tests Playbooks and Help Events
  */
+const db = getDatabase();
 describe('Integration Test: Help Routes', () => {
-    let authToken;
-    const testId = Date.now();
-    const testOrgId = `help-org-${testId}`;
-    const testUserId = `help-user-${testId}`;
-    const testEmail = `help-${testId}@test.com`;
+  let authToken;
+  const testId = Date.now();
+  const testOrgId = `help-org-${testId}`;
+  const testUserId = `help-user-${testId}`;
+  const testEmail = `help-${testId}@test.com`;
 
-    beforeAll(async () => {
-        await db.initPromise;
+  beforeAll(async () => {
+    await initializeDatabase();
+    await db.initPromise;
 
-        const bcrypt = require('bcryptjs');
-        const hash = bcrypt.hashSync('test123', 8);
+    const hash = bcrypt.hashSync('test123', 8);
 
-        await new Promise((resolve) => {
-            db.serialize(() => {
-                db.run(
-                    'INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)',
-                    [testOrgId, 'Help Test Org', 'enterprise', 'active']
-                );
-                db.run(
-                    'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
-                    [testUserId, testOrgId, testEmail, hash, 'HelpUser', 'ADMIN'],
-                    resolve
-                );
-            });
-        });
-
-        const loginRes = await request(app)
-            .post('/api/auth/login')
-            .send({
-                email: testEmail,
-                password: 'test123',
-            });
-
-        if (loginRes.body.token) {
-            authToken = loginRes.body.token;
-        }
+    await new Promise((resolve) => {
+      db.serialize(() => {
+        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+          testOrgId,
+          'Help Test Org',
+          'enterprise',
+          'active',
+        ]);
+        db.run(
+          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+          [testUserId, testOrgId, testEmail, hash, 'HelpUser', 'ADMIN'],
+          resolve
+        );
+      });
     });
 
-    describe('GET /api/help/playbooks', () => {
-        it('should return available playbooks', async () => {
-            if (!authToken) return;
-
-            const res = await request(app)
-                .get('/api/help/playbooks')
-                .set('Authorization', `Bearer ${authToken}`);
-
-            expect([200, 500]).toContain(res.status);
-            if (res.status === 200) {
-                expect(res.body).toHaveProperty('playbooks');
-                expect(res.body).toHaveProperty('recommendedKey');
-            }
-        });
+    const loginRes = await request(app).post('/api/auth/login').send({
+      email: testEmail,
+      password: 'test123',
     });
 
-    describe('POST /api/help/events', () => {
-        it('should log help event', async () => {
-            if (!authToken) return;
+    if (loginRes.body.token) {
+      authToken = loginRes.body.token;
+    }
+  });
 
-            const res = await request(app)
-                .post('/api/help/events')
-                .set('Authorization', `Bearer ${authToken}`)
-                .send({
-                    playbookKey: 'onboarding-tour',
-                    eventType: 'VIEWED',
-                    context: { route: '/dashboard' }
-                });
+  describe('GET /api/help/playbooks', () => {
+    it('should return available playbooks', async () => {
+      if (!authToken) return;
 
-            expect([201, 200, 400, 500]).toContain(res.status);
-        });
+      const res = await request(app)
+        .get('/api/help/playbooks')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect([200, 500]).toContain(res.status);
+      if (res.status === 200) {
+        expect(res.body).toHaveProperty('playbooks');
+        expect(res.body).toHaveProperty('recommendedKey');
+      }
     });
+  });
+
+  describe('POST /api/help/events', () => {
+    it('should log help event', async () => {
+      if (!authToken) return;
+
+      const res = await request(app)
+        .post('/api/help/events')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          playbookKey: 'onboarding-tour',
+          eventType: 'VIEWED',
+          context: { route: '/dashboard' },
+        });
+
+      expect([201, 200, 400, 500]).toContain(res.status);
+    });
+  });
 });

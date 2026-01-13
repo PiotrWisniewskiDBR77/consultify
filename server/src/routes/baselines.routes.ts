@@ -1,30 +1,19 @@
 /**
  * Baselines Routes
- * API endpoints for baselines
- *
- * Note: This is a TypeScript wrapper around the existing JS implementation
- * to maintain backward compatibility during migration.
- * TODO: Fully migrate to TypeScript
+ * Enterprise SaaS Architecture - TypeScript Backend
  */
+import { Router } from 'express';
 
-import { Router, type RequestHandler } from 'express';
-// Import the JS implementation for now (will be fully migrated later)
-const module = await import('../../routes/baselines.js');
-const baselinesRoutesJS = module.default || module;
+import { BaselinesController } from '../controllers/BaselinesController.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
 
-// Create router and apply JS routes
 const router = Router();
 
-// Re-export the JS router (maintains backward compatibility)
-// The JS route file exports a router that we can use directly
-if (typeof baselinesRoutesJS === 'function') {
-    // If it's a router function, use it
-    router.use(baselinesRoutesJS as unknown as unknown as unknown as RequestHandler);
-} else if (baselinesRoutesJS && typeof (baselinesRoutesJS as { handle?: unknown }).handle === 'function') {
-    // If it's a router function or Router object, use it
-    router.use(baselinesRoutesJS as unknown as unknown as unknown as RequestHandler);
-} else {
-    // Fallback or error
-    console.error('baselines.js did not export a valid router');
-}
+// All routes require authentication
+router.use(verifyToken);
+
+router.post('/:roadmapId/capture', BaselinesController.capture);
+router.get('/:roadmapId/current', BaselinesController.getCurrent);
+router.get('/:roadmapId/variance', BaselinesController.getVariance);
+
 export default router;

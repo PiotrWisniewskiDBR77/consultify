@@ -1264,42 +1264,42 @@
     {
       "legacyFile": "BaseService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/BaseService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/BaseService.ts"
     },
     {
       "legacyFile": "accessCodeService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/accessCodeService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/accessCodeService.ts"
     },
     {
       "legacyFile": "accessPolicyService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/accessPolicyService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/accessPolicyService.ts"
     },
     {
       "legacyFile": "activityService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/activityService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/activityService.ts"
     },
     {
       "legacyFile": "adkarService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adkarService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/adkarService.ts"
     },
     {
       "legacyFile": "adminAlertService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adminAlertService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/adminAlertService.ts"
     },
     {
       "legacyFile": "adminAuditService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adminAuditService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/adminAuditService.ts"
     },
     {
       "legacyFile": "adminSessionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/adminSessionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/adminSessionService.ts"
     },
     {
       "legacyFile": "ai/abTesting.js",
@@ -2044,197 +2044,197 @@
     {
       "legacyFile": "aiActionExecutor.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiActionExecutor.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiActionExecutor.ts"
     },
     {
       "legacyFile": "aiAnalyticsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAnalyticsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiAnalyticsService.ts"
     },
     {
       "legacyFile": "aiAssessmentFormHelper.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAssessmentFormHelper.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiAssessmentFormHelper.ts"
     },
     {
       "legacyFile": "aiAssessmentPartnerService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAssessmentPartnerService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiAssessmentPartnerService.ts"
     },
     {
       "legacyFile": "aiAssessmentReportGenerator.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAssessmentReportGenerator.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiAssessmentReportGenerator.ts"
     },
     {
       "legacyFile": "aiAuditLogger.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiAuditLogger.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiAuditLogger.ts"
     },
     {
       "legacyFile": "aiBudgetService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiBudgetService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiBudgetService.ts"
     },
     {
       "legacyFile": "aiCharterGeneratorService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiCharterGeneratorService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiCharterGeneratorService.ts"
     },
     {
       "legacyFile": "aiContextBuilder.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiContextBuilder.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiContextBuilder.ts"
     },
     {
       "legacyFile": "aiContextValidator.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiContextValidator.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiContextValidator.ts"
     },
     {
       "legacyFile": "aiCostControlService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiCostControlService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiCostControlService.ts"
     },
     {
       "legacyFile": "aiDecisionGovernance.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiDecisionGovernance.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiDecisionGovernance.ts"
     },
     {
       "legacyFile": "aiExecutiveReporting.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiExecutiveReporting.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiExecutiveReporting.ts"
     },
     {
       "legacyFile": "aiExplainabilityService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiExplainabilityService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiExplainabilityService.ts"
     },
     {
       "legacyFile": "aiExternalDataControl.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiExternalDataControl.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiExternalDataControl.ts"
     },
     {
       "legacyFile": "aiFailureHandler.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiFailureHandler.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiFailureHandler.ts"
     },
     {
       "legacyFile": "aiIntegrationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiIntegrationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiIntegrationService.ts"
     },
     {
       "legacyFile": "aiKnowledgeManager.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiKnowledgeManager.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiKnowledgeManager.ts"
     },
     {
       "legacyFile": "aiMaturityMonitor.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiMaturityMonitor.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiMaturityMonitor.ts"
     },
     {
       "legacyFile": "aiMemoryManager.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiMemoryManager.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiMemoryManager.ts"
     },
     {
       "legacyFile": "aiModeEnforcer.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiModeEnforcer.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiModeEnforcer.ts"
     },
     {
       "legacyFile": "aiModeResolver.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiModeResolver.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiModeResolver.ts"
     },
     {
       "legacyFile": "aiOrchestrator.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiOrchestrator.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiOrchestrator.ts"
     },
     {
       "legacyFile": "aiPolicyEngine.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiPolicyEngine.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiPolicyEngine.ts"
     },
     {
       "legacyFile": "aiProactivityEngine.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiProactivityEngine.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiProactivityEngine.ts"
     },
     {
       "legacyFile": "aiPromptHierarchy.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiPromptHierarchy.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiPromptHierarchy.ts"
     },
     {
       "legacyFile": "aiRecommendationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiRecommendationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiRecommendationService.ts"
     },
     {
       "legacyFile": "aiReplayService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiReplayService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiReplayService.ts"
     },
     {
       "legacyFile": "aiResponsePostProcessor.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiResponsePostProcessor.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiResponsePostProcessor.ts"
     },
     {
       "legacyFile": "aiRiskChangeControl.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiRiskChangeControl.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiRiskChangeControl.ts"
     },
     {
       "legacyFile": "aiRoleGuard.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiRoleGuard.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiRoleGuard.ts"
     },
     {
       "legacyFile": "aiService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiService.ts"
     },
     {
       "legacyFile": "aiSettingsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiSettingsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiSettingsService.ts"
     },
     {
       "legacyFile": "aiWorkloadIntelligence.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/aiWorkloadIntelligence.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/aiWorkloadIntelligence.ts"
     },
     {
       "legacyFile": "alertService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/alertService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/alertService.ts"
     },
     {
       "legacyFile": "analyticsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/analyticsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/analyticsService.ts"
     },
     {
       "legacyFile": "apiKeyService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/apiKeyService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/apiKeyService.ts"
     },
     {
       "legacyFile": "approvalPatternService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/approvalPatternService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/approvalPatternService.ts"
     },
     {
       "legacyFile": "areaContentTemplates.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/areaContentTemplates.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/areaContentTemplates.ts"
     },
     {
       "legacyFile": "assessment/assessmentAnalysis.js",
@@ -2254,432 +2254,432 @@
     {
       "legacyFile": "assessmentOverviewService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/assessmentOverviewService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/assessmentOverviewService.ts"
     },
     {
       "legacyFile": "assessmentReportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/assessmentReportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/assessmentReportService.ts"
     },
     {
       "legacyFile": "assessmentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/assessmentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/assessmentService.ts"
     },
     {
       "legacyFile": "assessmentWorkflowService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/assessmentWorkflowService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/assessmentWorkflowService.ts"
     },
     {
       "legacyFile": "attributionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/attributionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/attributionService.ts"
     },
     {
       "legacyFile": "auditIntegrityService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/auditIntegrityService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/auditIntegrityService.ts"
     },
     {
       "legacyFile": "auditLogService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/auditLogService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/auditLogService.ts"
     },
     {
       "legacyFile": "auditService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/auditService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/auditService.ts"
     },
     {
       "legacyFile": "automationEngineService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/automationEngineService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/automationEngineService.ts"
     },
     {
       "legacyFile": "backupService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/backupService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/backupService.ts"
     },
     {
       "legacyFile": "baselineService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/baselineService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/baselineService.ts"
     },
     {
       "legacyFile": "benchmarkingService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/benchmarkingService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/benchmarkingService.ts"
     },
     {
       "legacyFile": "billingService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/billingService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/billingService.ts"
     },
     {
       "legacyFile": "brandingService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/brandingService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/brandingService.ts"
     },
     {
       "legacyFile": "breakGlassService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/breakGlassService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/breakGlassService.ts"
     },
     {
       "legacyFile": "budgetService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/budgetService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/budgetService.ts"
     },
     {
       "legacyFile": "capacityService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/capacityService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/capacityService.ts"
     },
     {
       "legacyFile": "circuitBreakerService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/circuitBreakerService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/circuitBreakerService.ts"
     },
     {
       "legacyFile": "cohortService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/cohortService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/cohortService.ts"
     },
     {
       "legacyFile": "collaborationAIService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/collaborationAIService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/collaborationAIService.ts"
     },
     {
       "legacyFile": "competitiveIntelligenceService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/competitiveIntelligenceService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/competitiveIntelligenceService.ts"
     },
     {
       "legacyFile": "complianceService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/complianceService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/complianceService.ts"
     },
     {
       "legacyFile": "connectorHealthService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/connectorHealthService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/connectorHealthService.ts"
     },
     {
       "legacyFile": "connectorRegistry.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/connectorRegistry.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/connectorRegistry.ts"
     },
     {
       "legacyFile": "connectorService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/connectorService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/connectorService.ts"
     },
     {
       "legacyFile": "consentManagementService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/consentManagementService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/consentManagementService.ts"
     },
     {
       "legacyFile": "consultantService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/consultantService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/consultantService.ts"
     },
     {
       "legacyFile": "contentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/contentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/contentService.ts"
     },
     {
       "legacyFile": "contextService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/contextService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/contextService.ts"
     },
     {
       "legacyFile": "creditNoteService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/creditNoteService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/creditNoteService.ts"
     },
     {
       "legacyFile": "criticalPathService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/criticalPathService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/criticalPathService.ts"
     },
     {
       "legacyFile": "currencyService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/currencyService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/currencyService.ts"
     },
     {
       "legacyFile": "customerSuccessService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/customerSuccessService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/customerSuccessService.ts"
     },
     {
       "legacyFile": "dashboardBuilderService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/dashboardBuilderService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/dashboardBuilderService.ts"
     },
     {
       "legacyFile": "dataRetentionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/dataRetentionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/dataRetentionService.ts"
     },
     {
       "legacyFile": "decisionTriggerService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/decisionTriggerService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/decisionTriggerService.ts"
     },
     {
       "legacyFile": "demoService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/demoService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/demoService.ts"
     },
     {
       "legacyFile": "demoSessionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/demoSessionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/demoSessionService.ts"
     },
     {
       "legacyFile": "dependencyService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/dependencyService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/dependencyService.ts"
     },
     {
       "legacyFile": "deviceManagementService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/deviceManagementService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/deviceManagementService.ts"
     },
     {
       "legacyFile": "dlpService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/dlpService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/dlpService.ts"
     },
     {
       "legacyFile": "documentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/documentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/documentService.ts"
     },
     {
       "legacyFile": "economicsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/economicsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/economicsService.ts"
     },
     {
       "legacyFile": "emailCampaignService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailCampaignService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/emailCampaignService.ts"
     },
     {
       "legacyFile": "emailService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/emailService.ts"
     },
     {
       "legacyFile": "emailTemplateService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailTemplateService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/emailTemplateService.ts"
     },
     {
       "legacyFile": "emailVerificationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/emailVerificationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/emailVerificationService.ts"
     },
     {
       "legacyFile": "enterpriseReportTemplates.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/enterpriseReportTemplates.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/enterpriseReportTemplates.ts"
     },
     {
       "legacyFile": "escalationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/escalationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/escalationService.ts"
     },
     {
       "legacyFile": "evidenceLedgerService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/evidenceLedgerService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/evidenceLedgerService.ts"
     },
     {
       "legacyFile": "evidenceService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/evidenceService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/evidenceService.ts"
     },
     {
       "legacyFile": "evmMetricsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/evmMetricsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/evmMetricsService.ts"
     },
     {
       "legacyFile": "excelExportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/excelExportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/excelExportService.ts"
     },
     {
       "legacyFile": "excelImportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/excelImportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/excelImportService.ts"
     },
     {
       "legacyFile": "executionMonitorService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/executionMonitorService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/executionMonitorService.ts"
     },
     {
       "legacyFile": "executionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/executionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/executionService.ts"
     },
     {
       "legacyFile": "experimentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/experimentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/experimentService.ts"
     },
     {
       "legacyFile": "externalAssessmentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/externalAssessmentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/externalAssessmentService.ts"
     },
     {
       "legacyFile": "facilityUserService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/facilityUserService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/facilityUserService.ts"
     },
     {
       "legacyFile": "featureFlagService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/featureFlagService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/featureFlagService.ts"
     },
     {
       "legacyFile": "feedbackService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/feedbackService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/feedbackService.ts"
     },
     {
       "legacyFile": "financialCalculatorService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/financialCalculatorService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/financialCalculatorService.ts"
     },
     {
       "legacyFile": "financialService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/financialService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/financialService.ts"
     },
     {
       "legacyFile": "focusService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/focusService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/focusService.ts"
     },
     {
       "legacyFile": "frameworkAssessmentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/frameworkAssessmentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/frameworkAssessmentService.ts"
     },
     {
       "legacyFile": "frameworkBenchmarkService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/frameworkBenchmarkService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/frameworkBenchmarkService.ts"
     },
     {
       "legacyFile": "frameworkRBACService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/frameworkRBACService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/frameworkRBACService.ts"
     },
     {
       "legacyFile": "frameworkScoreCalculators.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/frameworkScoreCalculators.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/frameworkScoreCalculators.ts"
     },
     {
       "legacyFile": "gamificationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/gamificationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/gamificationService.ts"
     },
     {
       "legacyFile": "gdprService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/gdprService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/gdprService.ts"
     },
     {
       "legacyFile": "genericReportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/genericReportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/genericReportService.ts"
     },
     {
       "legacyFile": "governanceAuditService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/governanceAuditService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/governanceAuditService.ts"
     },
     {
       "legacyFile": "governanceService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/governanceService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/governanceService.ts"
     },
     {
       "legacyFile": "helpAnalyticsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/helpAnalyticsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/helpAnalyticsService.ts"
     },
     {
       "legacyFile": "helpChatService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/helpChatService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/helpChatService.ts"
     },
     {
       "legacyFile": "helpService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/helpService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/helpService.ts"
     },
     {
       "legacyFile": "inboxService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/inboxService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/inboxService.ts"
     },
     {
       "legacyFile": "industryAIModelsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/industryAIModelsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/industryAIModelsService.ts"
     },
     {
       "legacyFile": "ingestionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ingestionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ingestionService.ts"
     },
     {
       "legacyFile": "initiativeGeneratorService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeGeneratorService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/initiativeGeneratorService.ts"
     },
     {
       "legacyFile": "initiativeService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/initiativeService.ts"
     },
     {
       "legacyFile": "initiativeStatusService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeStatusService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/initiativeStatusService.ts"
     },
     {
       "legacyFile": "initiativeTemplateService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/initiativeTemplateService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/initiativeTemplateService.ts"
     },
     {
       "legacyFile": "integrationAnalyticsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/integrationAnalyticsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/integrationAnalyticsService.ts"
     },
     {
       "legacyFile": "integrationHubService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/integrationHubService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/integrationHubService.ts"
     },
     {
       "legacyFile": "integrationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/integrationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/integrationService.ts"
     },
     {
       "legacyFile": "integrations/clickupUserIntegration.js",
@@ -2704,747 +2704,747 @@
     {
       "legacyFile": "invitationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/invitationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/invitationService.ts"
     },
     {
       "legacyFile": "invoiceTemplateService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/invoiceTemplateService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/invoiceTemplateService.ts"
     },
     {
       "legacyFile": "ipWhitelistService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ipWhitelistService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ipWhitelistService.ts"
     },
     {
       "legacyFile": "journeyAnalytics.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/journeyAnalytics.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/journeyAnalytics.ts"
     },
     {
       "legacyFile": "knowledgeGraphService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/knowledgeGraphService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/knowledgeGraphService.ts"
     },
     {
       "legacyFile": "knowledgeService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/knowledgeService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/knowledgeService.ts"
     },
     {
       "legacyFile": "legalEventLogger.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/legalEventLogger.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/legalEventLogger.ts"
     },
     {
       "legacyFile": "legalExportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/legalExportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/legalExportService.ts"
     },
     {
       "legacyFile": "legalService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/legalService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/legalService.ts"
     },
     {
       "legacyFile": "llmFallbackService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/llmFallbackService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/llmFallbackService.ts"
     },
     {
       "legacyFile": "managementReportsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/managementReportsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/managementReportsService.ts"
     },
     {
       "legacyFile": "metricsAggregator.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsAggregator.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/metricsAggregator.ts"
     },
     {
       "legacyFile": "metricsCollector.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsCollector.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/metricsCollector.ts"
     },
     {
       "legacyFile": "metricsPersistenceService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsPersistenceService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/metricsPersistenceService.ts"
     },
     {
       "legacyFile": "metricsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/metricsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/metricsService.ts"
     },
     {
       "legacyFile": "mfaService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/mfaService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/mfaService.ts"
     },
     {
       "legacyFile": "multiFrameworkAssessmentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/multiFrameworkAssessmentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/multiFrameworkAssessmentService.ts"
     },
     {
       "legacyFile": "multiFrameworkAuditService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/multiFrameworkAuditService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/multiFrameworkAuditService.ts"
     },
     {
       "legacyFile": "multiFrameworkReportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/multiFrameworkReportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/multiFrameworkReportService.ts"
     },
     {
       "legacyFile": "myWorkService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/myWorkService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/myWorkService.ts"
     },
     {
       "legacyFile": "narrativeService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/narrativeService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/narrativeService.ts"
     },
     {
       "legacyFile": "notificationBatchingService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/notificationBatchingService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/notificationBatchingService.ts"
     },
     {
       "legacyFile": "notificationOutboxService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/notificationOutboxService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/notificationOutboxService.ts"
     },
     {
       "legacyFile": "notificationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/notificationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/notificationService.ts"
     },
     {
       "legacyFile": "oauthService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/oauthService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/oauthService.ts"
     },
     {
       "legacyFile": "onboardingService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/onboardingService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/onboardingService.ts"
     },
     {
       "legacyFile": "organizationAnalyticsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationAnalyticsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationAnalyticsService.ts"
     },
     {
       "legacyFile": "organizationEventService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationEventService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationEventService.ts"
     },
     {
       "legacyFile": "organizationHealthService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationHealthService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationHealthService.ts"
     },
     {
       "legacyFile": "organizationMetadataService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationMetadataService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationMetadataService.ts"
     },
     {
       "legacyFile": "organizationRelationshipService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationRelationshipService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationRelationshipService.ts"
     },
     {
       "legacyFile": "organizationSegmentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationSegmentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationSegmentService.ts"
     },
     {
       "legacyFile": "organizationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationService.ts"
     },
     {
       "legacyFile": "organizationTagService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/organizationTagService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/organizationTagService.ts"
     },
     {
       "legacyFile": "outcomeService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/outcomeService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/outcomeService.ts"
     },
     {
       "legacyFile": "partnerService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/partnerService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/partnerService.ts"
     },
     {
       "legacyFile": "passwordPolicyService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/passwordPolicyService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/passwordPolicyService.ts"
     },
     {
       "legacyFile": "patternRecognitionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/patternRecognitionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/patternRecognitionService.ts"
     },
     {
       "legacyFile": "payAsYouGoService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/payAsYouGoService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/payAsYouGoService.ts"
     },
     {
       "legacyFile": "pdfExportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pdfExportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pdfExportService.ts"
     },
     {
       "legacyFile": "pdfGeneratorService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pdfGeneratorService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pdfGeneratorService.ts"
     },
     {
       "legacyFile": "pdfParserService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pdfParserService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pdfParserService.ts"
     },
     {
       "legacyFile": "periodComparisonService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/periodComparisonService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/periodComparisonService.ts"
     },
     {
       "legacyFile": "permissionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/permissionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/permissionService.ts"
     },
     {
       "legacyFile": "permissionsMatrixService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/permissionsMatrixService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/permissionsMatrixService.ts"
     },
     {
       "legacyFile": "platformEcosystemService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/platformEcosystemService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/platformEcosystemService.ts"
     },
     {
       "legacyFile": "playbookResolver.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/playbookResolver.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/playbookResolver.ts"
     },
     {
       "legacyFile": "pmoAnalysisService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoAnalysisService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pmoAnalysisService.ts"
     },
     {
       "legacyFile": "pmoDomainRegistry.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoDomainRegistry.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pmoDomainRegistry.ts"
     },
     {
       "legacyFile": "pmoHealthService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoHealthService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pmoHealthService.ts"
     },
     {
       "legacyFile": "pmoRoleService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoRoleService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pmoRoleService.ts"
     },
     {
       "legacyFile": "pmoStandardsMapping.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pmoStandardsMapping.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pmoStandardsMapping.ts"
     },
     {
       "legacyFile": "portfolioService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/portfolioService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/portfolioService.ts"
     },
     {
       "legacyFile": "pptxExportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pptxExportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pptxExportService.ts"
     },
     {
       "legacyFile": "pptxGeneratorService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pptxGeneratorService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pptxGeneratorService.ts"
     },
     {
       "legacyFile": "predictiveService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/predictiveService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/predictiveService.ts"
     },
     {
       "legacyFile": "premiumPdfService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/premiumPdfService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/premiumPdfService.ts"
     },
     {
       "legacyFile": "premiumReportAIService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/premiumReportAIService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/premiumReportAIService.ts"
     },
     {
       "legacyFile": "pricingService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/pricingService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/pricingService.ts"
     },
     {
       "legacyFile": "progressService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/progressService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/progressService.ts"
     },
     {
       "legacyFile": "projectMemberService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/projectMemberService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/projectMemberService.ts"
     },
     {
       "legacyFile": "promoCodeService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/promoCodeService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/promoCodeService.ts"
     },
     {
       "legacyFile": "promptService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/promptService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/promptService.ts"
     },
     {
       "legacyFile": "promptVersionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/promptVersionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/promptVersionService.ts"
     },
     {
       "legacyFile": "qualityAssessmentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/qualityAssessmentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/qualityAssessmentService.ts"
     },
     {
       "legacyFile": "ragEnhancedService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ragEnhancedService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ragEnhancedService.ts"
     },
     {
       "legacyFile": "ragService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ragService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ragService.ts"
     },
     {
       "legacyFile": "rapidLeanObservationMapper.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/rapidLeanObservationMapper.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/rapidLeanObservationMapper.ts"
     },
     {
       "legacyFile": "rapidLeanReportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/rapidLeanReportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/rapidLeanReportService.ts"
     },
     {
       "legacyFile": "rapidLeanService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/rapidLeanService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/rapidLeanService.ts"
     },
     {
       "legacyFile": "rbacService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/rbacService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/rbacService.ts"
     },
     {
       "legacyFile": "realtimeService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/realtimeService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/realtimeService.ts"
     },
     {
       "legacyFile": "recommendationsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/recommendationsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/recommendationsService.ts"
     },
     {
       "legacyFile": "referralService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/referralService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/referralService.ts"
     },
     {
       "legacyFile": "refreshTokenService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/refreshTokenService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/refreshTokenService.ts"
     },
     {
       "legacyFile": "regulatoryModeGuard.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/regulatoryModeGuard.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/regulatoryModeGuard.ts"
     },
     {
       "legacyFile": "reportApprovalService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportApprovalService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportApprovalService.ts"
     },
     {
       "legacyFile": "reportAuditService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportAuditService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportAuditService.ts"
     },
     {
       "legacyFile": "reportCacheService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportCacheService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportCacheService.ts"
     },
     {
       "legacyFile": "reportCommentsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportCommentsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportCommentsService.ts"
     },
     {
       "legacyFile": "reportContentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportContentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportContentService.ts"
     },
     {
       "legacyFile": "reportEmailService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportEmailService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportEmailService.ts"
     },
     {
       "legacyFile": "reportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportService.ts"
     },
     {
       "legacyFile": "reportTemplateService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportTemplateService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportTemplateService.ts"
     },
     {
       "legacyFile": "reportVersionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportVersionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportVersionService.ts"
     },
     {
       "legacyFile": "reportingService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/reportingService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/reportingService.ts"
     },
     {
       "legacyFile": "retentionPolicyService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/retentionPolicyService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/retentionPolicyService.ts"
     },
     {
       "legacyFile": "roadmapService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/roadmapService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/roadmapService.ts"
     },
     {
       "legacyFile": "roiService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/roiService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/roiService.ts"
     },
     {
       "legacyFile": "scenarioService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/scenarioService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/scenarioService.ts"
     },
     {
       "legacyFile": "scheduledReportsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/scheduledReportsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/scheduledReportsService.ts"
     },
     {
       "legacyFile": "scimService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/scimService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/scimService.ts"
     },
     {
       "legacyFile": "seatManagementService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/seatManagementService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/seatManagementService.ts"
     },
     {
       "legacyFile": "secretManager.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/secretManager.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/secretManager.ts"
     },
     {
       "legacyFile": "secretsVault.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/secretsVault.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/secretsVault.ts"
     },
     {
       "legacyFile": "securityEventService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/securityEventService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/securityEventService.ts"
     },
     {
       "legacyFile": "securityIncidentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/securityIncidentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/securityIncidentService.ts"
     },
     {
       "legacyFile": "securityPolicyService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/securityPolicyService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/securityPolicyService.ts"
     },
     {
       "legacyFile": "securityService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/securityService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/securityService.ts"
     },
     {
       "legacyFile": "settlementService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/settlementService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/settlementService.ts"
     },
     {
       "legacyFile": "shareLinkService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/shareLinkService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/shareLinkService.ts"
     },
     {
       "legacyFile": "siemService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/siemService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/siemService.ts"
     },
     {
       "legacyFile": "slaService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/slaService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/slaService.ts"
     },
     {
       "legacyFile": "slackService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/slackService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/slackService.ts"
     },
     {
       "legacyFile": "smsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/smsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/smsService.ts"
     },
     {
       "legacyFile": "ssoService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/ssoService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/ssoService.ts"
     },
     {
       "legacyFile": "stabilizationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/stabilizationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/stabilizationService.ts"
     },
     {
       "legacyFile": "stageGateService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/stageGateService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/stageGateService.ts"
     },
     {
       "legacyFile": "stakeholderPerspectiveService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/stakeholderPerspectiveService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/stakeholderPerspectiveService.ts"
     },
     {
       "legacyFile": "statusMachine.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/statusMachine.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/statusMachine.ts"
     },
     {
       "legacyFile": "statusReportService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/statusReportService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/statusReportService.ts"
     },
     {
       "legacyFile": "statusService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/statusService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/statusService.ts"
     },
     {
       "legacyFile": "steeringCommitteeAggregator.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/steeringCommitteeAggregator.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/steeringCommitteeAggregator.ts"
     },
     {
       "legacyFile": "storageReconciliationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/storageReconciliationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/storageReconciliationService.ts"
     },
     {
       "legacyFile": "storageService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/storageService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/storageService.ts"
     },
     {
       "legacyFile": "studioAIService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/studioAIService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/studioAIService.ts"
     },
     {
       "legacyFile": "subscriptionAnalyticsService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/subscriptionAnalyticsService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/subscriptionAnalyticsService.ts"
     },
     {
       "legacyFile": "supportTicketService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/supportTicketService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/supportTicketService.ts"
     },
     {
       "legacyFile": "systemConfigService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/systemConfigService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/systemConfigService.ts"
     },
     {
       "legacyFile": "systemHealthService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/systemHealthService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/systemHealthService.ts"
     },
     {
       "legacyFile": "systemIntegrity.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/systemIntegrity.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/systemIntegrity.ts"
     },
     {
       "legacyFile": "taskAssignmentService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/taskAssignmentService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/taskAssignmentService.ts"
     },
     {
       "legacyFile": "taxService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/taxService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/taxService.ts"
     },
     {
       "legacyFile": "teamMeetingAggregator.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/teamMeetingAggregator.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/teamMeetingAggregator.ts"
     },
     {
       "legacyFile": "threatIntelligenceService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/threatIntelligenceService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/threatIntelligenceService.ts"
     },
     {
       "legacyFile": "tokenBillingService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/tokenBillingService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/tokenBillingService.ts"
     },
     {
       "legacyFile": "trialService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/trialService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/trialService.ts"
     },
     {
       "legacyFile": "usageService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/usageService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/usageService.ts"
     },
     {
       "legacyFile": "userActivityService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userActivityService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userActivityService.ts"
     },
     {
       "legacyFile": "userAdoptionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userAdoptionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userAdoptionService.ts"
     },
     {
       "legacyFile": "userGoals.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userGoals.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userGoals.ts"
     },
     {
       "legacyFile": "userGroupService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userGroupService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userGroupService.ts"
     },
     {
       "legacyFile": "userIntegrationService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userIntegrationService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userIntegrationService.ts"
     },
     {
       "legacyFile": "userLicenseService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userLicenseService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userLicenseService.ts"
     },
     {
       "legacyFile": "userNotificationPreferencesService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userNotificationPreferencesService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userNotificationPreferencesService.ts"
     },
     {
       "legacyFile": "userPreferencesService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userPreferencesService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userPreferencesService.ts"
     },
     {
       "legacyFile": "userProfileExtendedService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userProfileExtendedService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userProfileExtendedService.ts"
     },
     {
       "legacyFile": "userSessionService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userSessionService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userSessionService.ts"
     },
     {
       "legacyFile": "userStateMachine.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/userStateMachine.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/userStateMachine.ts"
     },
     {
       "legacyFile": "versioningService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/versioningService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/versioningService.ts"
     },
     {
       "legacyFile": "voiceCommandParser.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/voiceCommandParser.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/voiceCommandParser.ts"
     },
     {
       "legacyFile": "webSearchService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/webSearchService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/webSearchService.ts"
     },
     {
       "legacyFile": "webauthnService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/webauthnService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/webauthnService.ts"
     },
     {
       "legacyFile": "webhookDeliveryService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/webhookDeliveryService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/webhookDeliveryService.ts"
     },
     {
       "legacyFile": "webhookService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/webhookService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/webhookService.ts"
     },
     {
       "legacyFile": "whatsappService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/whatsappService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/whatsappService.ts"
     },
     {
       "legacyFile": "workModeService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/workModeService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/workModeService.ts"
     },
     {
       "legacyFile": "workqueueService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/workqueueService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/workqueueService.ts"
     },
     {
       "legacyFile": "workstreamService.js",
       "hasWrapper": true,
-      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/server/src/services/workstreamService.ts"
+      "wrapperPath": "/Users/piotrwisniewski/Documents/Antygracity/DRD/consultinity/server/src/services/workstreamService.ts"
     }
   ]
 }

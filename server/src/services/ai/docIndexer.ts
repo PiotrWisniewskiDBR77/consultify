@@ -2,13 +2,8 @@
  * Docindexer Service
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Lazy-loaded ES module wrapper for backward compatibility during migration
+ * Re-exports from the JavaScript implementation
  */
 
-import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
-
-// Lazy load the JS service module
-const loadDocindexer = createCachedLazyService('../../services/ai/docIndexer.js');
-
-// Export default instance (for backward compatibility)
-export default loadDocindexer();
+// Re-export everything from the real implementation
+export { DocIndexer, PROMPT_ENGINEERING_KB, default } from '../../ai/docIndexer.js';

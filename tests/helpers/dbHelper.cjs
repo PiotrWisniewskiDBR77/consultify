@@ -15,8 +15,8 @@ async function getDb() {
     if (!dbInitialized) {
         if (!dbInitPromise) {
             dbInitPromise = (async () => {
-                const dbModule = await import('../../server/database.sqlite.active.js');
-                db = dbModule.default || dbModule;
+                const dbModule = await import('../../server/src/database/Database.ts');
+                db = dbModule.getDatabase();
                 dbInitialized = true;
                 return db;
             })();
@@ -46,6 +46,45 @@ async function initTestDb() {
     // Enable foreign keys for SQLite
     await new Promise((resolve) => {
         db.run('PRAGMA foreign_keys = ON', resolve);
+    });
+}
+
+/**
+ * Start a database transaction
+ */
+async function beginTransaction() {
+    const database = await getDb();
+    return new Promise((resolve, reject) => {
+        database.run('BEGIN TRANSACTION', (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}
+
+/**
+ * Rollback a database transaction
+ */
+async function rollbackTransaction() {
+    const database = await getDb();
+    return new Promise((resolve, reject) => {
+        database.run('ROLLBACK', (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}
+
+/**
+ * Commit a database transaction
+ */
+async function commitTransaction() {
+    const database = await getDb();
+    return new Promise((resolve, reject) => {
+        database.run('COMMIT', (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
     });
 }
 
@@ -98,9 +137,21 @@ async function cleanAllTestTables() {
         'tasks',
         'projects',
         'users',
+        'organization_members',
+        'organization_seats',
         'organizations',
         'sessions',
         'settings',
+        'invitations',
+        'invitation_events',
+        'audit_logs',
+        'initiatives',
+        'stage_gates',
+        'maturity_assessments',
+        'decisions',
+        'refresh_tokens',
+        'teams',
+        'team_members'
     ];
 
     return cleanTables(testTables);
@@ -199,6 +250,9 @@ async function dbGet(sql, params = []) {
 
 module.exports = {
     initTestDb,
+    beginTransaction,
+    rollbackTransaction,
+    commitTransaction,
     cleanTables,
     cleanAllTestTables,
     createTestOrg,

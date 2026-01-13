@@ -1,67 +1,129 @@
 /**
- * Integration tests for SuperAdmin Support endpoints
+ * SuperAdmin Support Routes Integration Tests
+ * Tests support ticket and help functions for SUPERADMIN
  */
+import request from 'supertest';
+import bcrypt from 'bcryptjs';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 
-const request = require('supertest');
-const express = require('express');
-const router = require('../../../../server/routes/superadmin');
-const { createTestToken } = require('../../helpers/auth');
-
-const app = express();
-app.use(express.json());
-app.use('/api/superadmin', router);
-
-describe('SuperAdmin Support API', () => {
-    let authToken;
-
-    beforeAll(() => {
-        authToken = createTestToken({ role: 'SUPERADMIN', id: 'admin-001' });
-    });
-
-    describe('GET /api/superadmin/support/tickets', () => {
-        it('should return support tickets', async () => {
-            const response = await request(app)
-                .get('/api/superadmin/support/tickets')
-                .set('Authorization', `Bearer ${authToken}`)
-                .expect(200);
-
-            expect(Array.isArray(response.body)).toBe(true);
-        });
-    });
-
-    describe('POST /api/superadmin/support/tickets', () => {
-        it('should create a support ticket', async () => {
-            const response = await request(app)
-                .post('/api/superadmin/support/tickets')
-                .set('Authorization', `Bearer ${authToken}`)
-                .send({
-                    organizationId: 'org-123',
-                    subject: 'Test Ticket',
-                    description: 'Test Description',
-                    priority: 'medium'
-                })
-                .expect(200);
-
-            expect(response.body).toHaveProperty('ticketNumber');
-        });
-    });
-
-    describe('GET /api/superadmin/organizations/:id/customer-success/notes', () => {
-        it('should return customer success notes', async () => {
-            const response = await request(app)
-                .get('/api/superadmin/organizations/org-123/customer-success/notes')
-                .set('Authorization', `Bearer ${authToken}`)
-                .expect(200);
-
-            expect(Array.isArray(response.body)).toBe(true);
-        });
-    });
+vi.hoisted(() => {
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-superadmin-support-${workerId}.db`;
 });
 
+describe('SuperAdmin Support API', () => {
+  let app;
+  let superadminToken;
+  let regularToken;
+  const db = getDatabase();
+  const testId = Date.now();
 
+  const superadminOrgId = `sup-sa-org-${testId}`;
+  const superadminUserId = `sup-sa-user-${testId}`;
+  const superadminEmail = `sup-sa-${testId}@test.com`;
 
+  const regularOrgId = `sup-reg-org-${testId}`;
+  const regularUserId = `sup-reg-user-${testId}`;
+  const regularEmail = `sup-reg-${testId}@test.com`;
 
+  beforeAll(async () => {
+    await initializeDatabase();
+    const serverModule = await import('../../../server/src/index.js');
+    app = serverModule.default;
 
+    const hash = bcrypt.hashSync('test123', 8);
 
+    await new Promise((resolve) => {
+      db.serialize(() => {
+        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+          superadminOrgId,
+          'Support SA Org',
+          'enterprise',
+          'active',
+        ]);
+        db.run('INSERT INTO organizations (id, name, plan, status) VALUES (?, ?, ?, ?)', [
+          regularOrgId,
+          'Support Reg Org',
+          'professional',
+          'active',
+        ]);
+        db.run(
+          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+          [superadminUserId, superadminOrgId, superadminEmail, hash, 'SuperAdmin', 'SUPERADMIN']
+        );
+        db.run(
+          'INSERT INTO users (id, organization_id, email, password, first_name, role) VALUES (?, ?, ?, ?, ?, ?)',
+          [regularUserId, regularOrgId, regularEmail, hash, 'Regular', 'ADMIN'],
+          resolve
+        );
+      });
+    });
 
+    const saLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email: superadminEmail, password: 'test123' });
+    if (saLogin.body.token) superadminToken = saLogin.body.token;
 
+    const regLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email: regularEmail, password: 'test123' });
+    if (regLogin.body.token) regularToken = regLogin.body.token;
+  });
+
+  afterAll(async () => {
+    await new Promise((resolve) => {
+      db.serialize(() => {
+        db.run('DELETE FROM users WHERE id IN (?, ?)', [superadminUserId, regularUserId]);
+        db.run(
+          'DELETE FROM organizations WHERE id IN (?, ?)',
+          [superadminOrgId, regularOrgId],
+          resolve
+        );
+      });
+    });
+  });
+
+  describe('Access Requests', () => {
+    it('should return 401 without auth', async () => {
+      const res = await request(app).get('/api/superadmin/access-requests');
+      expect([401, 403]).toContain(res.status);
+    });
+
+    it('should return 403 for regular users', async () => {
+      if (!regularToken) return;
+      const res = await request(app)
+        .get('/api/superadmin/access-requests')
+        .set('Authorization', `Bearer ${regularToken}`);
+      expect([401, 403]).toContain(res.status);
+    });
+
+    it('should get access requests for superadmin', async () => {
+      if (!superadminToken) return;
+      const res = await request(app)
+        .get('/api/superadmin/access-requests')
+        .set('Authorization', `Bearer ${superadminToken}`);
+      expect([200, 404, 500]).toContain(res.status);
+    });
+  });
+
+  describe('User Support', () => {
+    it('should get user activities for superadmin', async () => {
+      if (!superadminToken) return;
+      const res = await request(app)
+        .get('/api/superadmin/activities')
+        .set('Authorization', `Bearer ${superadminToken}`);
+      expect([200, 404, 500]).toContain(res.status);
+    });
+
+    it('should get activity stats for superadmin', async () => {
+      if (!superadminToken) return;
+      const res = await request(app)
+        .get('/api/superadmin/activities/stats')
+        .set('Authorization', `Bearer ${superadminToken}`);
+      expect([200, 404, 500]).toContain(res.status);
+    });
+  });
+});

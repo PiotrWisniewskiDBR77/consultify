@@ -1,0 +1,17 @@
+# Database Management Scripts
+
+# Phase 2: Advanced Migrations
+db:rollback=tsx server/scripts/rollback-migration.ts
+db:rollback:version=tsx server/scripts/rollback-migration.ts
+
+# Phase 3: Visual Documentation
+db:generate-er=tsx server/scripts/generate-er-diagram.ts
+
+# Phase 4: Data Quality
+db:check-integrity=tsx server/scripts/check-data-integrity.ts
+
+# Phase 5: Testing
+test:database=vitest run tests/database
+
+# Phase 6: Monitoring
+db:metrics=curl http://localhost:3005/api/metrics/database

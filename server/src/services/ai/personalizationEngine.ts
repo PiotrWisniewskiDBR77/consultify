@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadPersonalizationengine = createCachedLazyService('../../services/ai/personalizationEngine.js');
+const loadPersonalizationengine = createCachedLazyService('../../ai/personalizationEngine.js');
 
 // Export default instance (for backward compatibility)
 export default loadPersonalizationengine();

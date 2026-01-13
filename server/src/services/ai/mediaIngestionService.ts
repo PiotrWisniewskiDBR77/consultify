@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadMediaingestion = createCachedLazyService('../../services/ai/mediaIngestionService.js');
+const loadMediaingestion = createCachedLazyService('../../ai/mediaIngestionService.js');
 
 // Export default instance (for backward compatibility)
 export default loadMediaingestion();

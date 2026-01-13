@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadEnterprisesecurity = createCachedLazyService('../../services/ai/enterpriseSecurity.js');
+const loadEnterprisesecurity = createCachedLazyService('../../ai/enterpriseSecurity.js');
 
 // Export default instance (for backward compatibility)
 export default loadEnterprisesecurity();

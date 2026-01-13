@@ -7,27 +7,32 @@
 
 import { Response, Router } from 'express';
 
+import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 
+// Apply rate limiting
+router.use(aiRateLimiter);
+
 // Service interfaces
 interface LLMHealthMonitorInterface {
-    checkAllProviders?: (providers: unknown[]) => Promise<unknown[]>;
-    getSummary?: () => unknown;
-    testProvider?: (provider: unknown) => Promise<unknown>;
-    getAllCachedStatuses?: () => unknown[];
+  checkAllProviders?: (providers: unknown[]) => Promise<unknown[]>;
+  getSummary?: () => unknown;
+  testProvider?: (provider: unknown) => Promise<unknown>;
+  getAllCachedStatuses?: () => unknown[];
 }
 
 interface HealthStatus {
-    HEALTHY: string;
-    DEGRADED: string;
-    UNHEALTHY: string;
+  HEALTHY: string;
+  DEGRADED: string;
+  UNHEALTHY: string;
 }
 
 interface ErrorMessages {
-    [key: string]: { title: string; action: string };
+  [key: string]: { title: string; action: string };
 }
 
 // Dynamic imports for services (may not be migrated yet)
@@ -36,31 +41,31 @@ let HealthStatusEnum: HealthStatus | null = null;
 let ErrorMessagesEnum: ErrorMessages | null = null;
 
 try {
-    const healthModule = await import('../../services/ai/llmHealthMonitor.js');
-    const module = healthModule.default || healthModule;
-    llmHealthMonitor = (module.llmHealthMonitor || module) as typeof llmHealthMonitor;
-    HealthStatusEnum = (module.HealthStatus || module) as typeof HealthStatusEnum;
-    ErrorMessagesEnum = (module.ErrorMessages || module) as typeof ErrorMessagesEnum;
+  const healthModule = (await import('../services/ai/llmHealthMonitor.js')) as any;
+  const module = healthModule.default || healthModule;
+  llmHealthMonitor = module.llmHealthMonitor || module;
+  HealthStatusEnum = module.HealthStatus || module;
+  ErrorMessagesEnum = module.ErrorMessages || module;
 } catch {
-    console.warn('[LLMHealth Routes] llmHealthMonitor not available');
+  logger.warn('[LLMHealth Routes] llmHealthMonitor not available');
 }
 
 // Helper function
 function getStatusLabel(status: string): { text: string; color: string } {
-    if (!HealthStatusEnum) {
-        return { text: 'Nieznany', color: 'gray' };
-    }
+  if (!HealthStatusEnum) {
+    return { text: 'Nieznany', color: 'gray' };
+  }
 
-    switch (status) {
-        case HealthStatusEnum.HEALTHY:
-            return { text: 'Zdrowy', color: 'green' };
-        case HealthStatusEnum.DEGRADED:
-            return { text: 'Spowolniony', color: 'yellow' };
-        case HealthStatusEnum.UNHEALTHY:
-            return { text: 'Niedostępny', color: 'red' };
-        default:
-            return { text: 'Nieznany', color: 'gray' };
-    }
+  switch (status) {
+    case HealthStatusEnum.HEALTHY:
+      return { text: 'Zdrowy', color: 'green' };
+    case HealthStatusEnum.DEGRADED:
+      return { text: 'Spowolniony', color: 'yellow' };
+    case HealthStatusEnum.UNHEALTHY:
+      return { text: 'Niedostępny', color: 'red' };
+    default:
+      return { text: 'Nieznany', color: 'gray' };
+  }
 }
 
 /**
@@ -68,87 +73,87 @@ function getStatusLabel(status: string): { text: string; color: string } {
  * Get health status of all LLM providers
  */
 router.get(
-    '/health',
-    asyncHandler(async (_req, res: Response) => {
-        if (!llmHealthMonitor?.checkAllProviders || !llmHealthMonitor?.getSummary) {
-            return res.status(503).json({
-                success: false,
-                error: 'LLM health monitor not available',
-            });
-        }
+  '/health',
+  asyncHandler(async (_req, res: Response) => {
+    if (!llmHealthMonitor?.checkAllProviders || !llmHealthMonitor?.getSummary) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM health monitor not available',
+      });
+    }
 
-        try {
-            // Get providers from database
-            const providers = (await dbAll(`
+    try {
+      // Get providers from database
+      const providers = (await dbAll(`
             SELECT id, name, provider, api_key, endpoint, model_id, is_active 
             FROM llm_providers 
             WHERE is_active = 1
         `)) as Array<{
-                id: string;
-                name: string;
-                provider: string;
-                api_key: string | null;
-                endpoint: string | null;
-                model_id: string | null;
-                is_active: number;
-            }>;
+        id: string;
+        name: string;
+        provider: string;
+        api_key: string | null;
+        endpoint: string | null;
+        model_id: string | null;
+        is_active: number;
+      }>;
 
-            if (providers.length === 0) {
-                return res.json({
-                    success: true,
-                    summary: { total: 0, healthy: 0, degraded: 0, unhealthy: 0 },
-                    providers: [],
-                    lastCheck: new Date().toISOString(),
-                });
-            }
+      if (providers.length === 0) {
+        return res.json({
+          success: true,
+          summary: { total: 0, healthy: 0, degraded: 0, unhealthy: 0 },
+          providers: [],
+          lastCheck: new Date().toISOString(),
+        });
+      }
 
-            // Check all providers
-            const results = (await llmHealthMonitor.checkAllProviders(providers)) as Array<{
-                id: string;
-                provider: string;
-                providerId: string;
-                status: string;
-                errorCategory?: string;
-                error?: unknown;
-                rawError?: unknown;
-                statusCode?: number;
-                responseTime?: number;
-                lastCheck?: string;
-            }>;
-            const summary = llmHealthMonitor.getSummary() as {
-                total: number;
-                healthy: number;
-                degraded: number;
-                unhealthy: number;
-                lastCheck: string;
-            };
+      // Check all providers
+      const results = (await llmHealthMonitor.checkAllProviders(providers)) as Array<{
+        id: string;
+        provider: string;
+        providerId: string;
+        status: string;
+        errorCategory?: string;
+        error?: unknown;
+        rawError?: unknown;
+        statusCode?: number;
+        responseTime?: number;
+        lastCheck?: string;
+      }>;
+      const summary = llmHealthMonitor.getSummary() as {
+        total: number;
+        healthy: number;
+        degraded: number;
+        unhealthy: number;
+        lastCheck: string;
+      };
 
-            res.json({
-                success: true,
-                summary,
-                providers: results.map((r) => ({
-                    id: r.id,
-                    name: r.provider,
-                    providerId: r.providerId,
-                    status: r.status,
-                    statusLabel: getStatusLabel(r.status),
-                    errorCategory: r.errorCategory,
-                    error: r.error,
-                    rawError: r.rawError,
-                    statusCode: r.statusCode,
-                    responseTime: r.responseTime,
-                    lastCheck: r.lastCheck,
-                })),
-                lastCheck: summary.lastCheck,
-            });
-        } catch (error: unknown) {
-            console.error('[LLMHealth] Error:', error);
-            return res.status(500).json({
-                success: false,
-                error: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      return res.json({
+        success: true,
+        summary,
+        providers: results.map((r) => ({
+          id: r.id,
+          name: r.provider,
+          providerId: r.providerId,
+          status: r.status,
+          statusLabel: getStatusLabel(r.status),
+          errorCategory: r.errorCategory,
+          error: r.error,
+          rawError: r.rawError,
+          statusCode: r.statusCode,
+          responseTime: r.responseTime,
+          lastCheck: r.lastCheck,
+        })),
+        lastCheck: summary.lastCheck,
+      });
+    } catch (error: unknown) {
+      logger.error('[LLMHealth] Error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -156,79 +161,79 @@ router.get(
  * Get health status of a specific provider
  */
 router.get(
-    '/health/:providerId',
-    asyncHandler(async (req, res: Response) => {
-        if (!llmHealthMonitor?.testProvider) {
-            return res.status(503).json({
-                success: false,
-                error: 'LLM health monitor not available',
-            });
-        }
+  '/health/:providerId',
+  asyncHandler(async (req, res: Response) => {
+    if (!llmHealthMonitor?.testProvider) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM health monitor not available',
+      });
+    }
 
-        try {
-            const { providerId } = req.params;
+    try {
+      const { providerId } = req.params;
 
-            // Get provider from database
-            const providers = (await dbAll(
-                `
+      // Get provider from database
+      const providers = (await dbAll(
+        `
             SELECT id, name, provider, api_key, endpoint, model_id, is_active 
             FROM llm_providers 
             WHERE id = ?
         `,
-                [providerId],
-            )) as Array<{
-                id: string;
-                name: string;
-                provider: string;
-                api_key: string | null;
-                endpoint: string | null;
-                model_id: string | null;
-                is_active: number;
-            }>;
+        [providerId]
+      )) as Array<{
+        id: string;
+        name: string;
+        provider: string;
+        api_key: string | null;
+        endpoint: string | null;
+        model_id: string | null;
+        is_active: number;
+      }>;
 
-            if (providers.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    error: 'Provider not found',
-                });
-            }
+      if (providers.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Provider not found',
+        });
+      }
 
-            const result = (await llmHealthMonitor.testProvider(providers[0])) as {
-                provider: string;
-                providerId: string;
-                status: string;
-                errorCategory?: string;
-                error?: unknown;
-                rawError?: unknown;
-                statusCode?: number;
-                responseTime?: number;
-                lastCheck?: string;
-            };
+      const result = (await llmHealthMonitor.testProvider(providers[0])) as {
+        provider: string;
+        providerId: string;
+        status: string;
+        errorCategory?: string;
+        error?: unknown;
+        rawError?: unknown;
+        statusCode?: number;
+        responseTime?: number;
+        lastCheck?: string;
+      };
 
-            res.json({
-                success: true,
-                provider: {
-                    id: providerId,
-                    name: result.provider,
-                    providerId: result.providerId,
-                    status: result.status,
-                    statusLabel: getStatusLabel(result.status),
-                    errorCategory: result.errorCategory,
-                    error: result.error,
-                    rawError: result.rawError,
-                    statusCode: result.statusCode,
-                    responseTime: result.responseTime,
-                    lastCheck: result.lastCheck,
-                },
-            });
-        } catch (error: unknown) {
-            console.error('[LLMHealth] Error:', error);
-            return res.status(500).json({
-                success: false,
-                error: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      return res.json({
+        success: true,
+        provider: {
+          id: providerId,
+          name: result.provider,
+          providerId: result.providerId,
+          status: result.status,
+          statusLabel: getStatusLabel(result.status),
+          errorCategory: result.errorCategory,
+          error: result.error,
+          rawError: result.rawError,
+          statusCode: result.statusCode,
+          responseTime: result.responseTime,
+          lastCheck: result.lastCheck,
+        },
+      });
+    } catch (error: unknown) {
+      logger.error('[LLMHealth] Error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -236,62 +241,63 @@ router.get(
  * Test a specific provider connection
  */
 router.post(
-    '/health/test',
-    asyncHandler(async (req, res: Response) => {
-        if (!llmHealthMonitor?.testProvider || !HealthStatusEnum) {
-            return res.status(503).json({
-                success: false,
-                error: 'LLM health monitor not available',
-            });
-        }
+  '/health/test',
+  asyncHandler(async (req, res: Response) => {
+    if (!llmHealthMonitor?.testProvider || !HealthStatusEnum) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM health monitor not available',
+      });
+    }
 
-        try {
-            const { provider, api_key, endpoint, model_id, name } = req.body;
+    try {
+      const { provider, api_key, endpoint, model_id, name } = req.body;
 
-            if (!provider) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Provider is required',
-                });
-            }
+      if (!provider) {
+        return res.status(400).json({
+          success: false,
+          error: 'Provider is required',
+        });
+      }
 
-            const result = (await llmHealthMonitor.testProvider({
-                provider,
-                api_key,
-                endpoint,
-                model_id,
-                name,
-            })) as {
-                status: string;
-                errorCategory?: string;
-                error?: unknown;
-                rawError?: unknown;
-                statusCode?: number;
-                responseTime?: number;
-                lastCheck?: string;
-            };
+      const result = (await llmHealthMonitor.testProvider({
+        provider,
+        api_key,
+        endpoint,
+        model_id,
+        name,
+      })) as {
+        status: string;
+        errorCategory?: string;
+        error?: unknown;
+        rawError?: unknown;
+        statusCode?: number;
+        responseTime?: number;
+        lastCheck?: string;
+      };
 
-            return res.json({
-                success: result.status === HealthStatusEnum.HEALTHY || result.status === HealthStatusEnum.DEGRADED,
-                result: {
-                    status: result.status,
-                    statusLabel: getStatusLabel(result.status),
-                    errorCategory: result.errorCategory,
-                    error: result.error,
-                    rawError: result.rawError,
-                    statusCode: result.statusCode,
-                    responseTime: result.responseTime,
-                    lastCheck: result.lastCheck,
-                },
-            });
-        } catch (error: unknown) {
-            console.error('[LLMHealth] Test error:', error);
-            return res.status(500).json({
-                success: false,
-                error: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      return res.json({
+        success:
+          result.status === HealthStatusEnum.HEALTHY || result.status === HealthStatusEnum.DEGRADED,
+        result: {
+          status: result.status,
+          statusLabel: getStatusLabel(result.status),
+          errorCategory: result.errorCategory,
+          error: result.error,
+          rawError: result.rawError,
+          statusCode: result.statusCode,
+          responseTime: result.responseTime,
+          lastCheck: result.lastCheck,
+        },
+      });
+    } catch (error: unknown) {
+      logger.error('[LLMHealth] Test error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -299,63 +305,67 @@ router.post(
  * Get summary of all provider health statuses
  */
 router.get(
-    '/health/summary',
-    asyncHandler(async (_req, res: Response) => {
-        if (!llmHealthMonitor?.getSummary || !llmHealthMonitor?.getAllCachedStatuses || !HealthStatusEnum) {
-            return res.status(503).json({
-                success: false,
-                error: 'LLM health monitor not available',
-            });
+  '/health/summary',
+  asyncHandler(async (_req, res: Response) => {
+    if (
+      !llmHealthMonitor?.getSummary ||
+      !llmHealthMonitor?.getAllCachedStatuses ||
+      !HealthStatusEnum
+    ) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM health monitor not available',
+      });
+    }
+
+    try {
+      const summary = llmHealthMonitor.getSummary() as {
+        total: number;
+        healthy: number;
+        degraded: number;
+        unhealthy: number;
+        lastCheck: string;
+      };
+      const cachedStatuses = llmHealthMonitor.getAllCachedStatuses() as Array<{
+        provider: string;
+        status: string;
+        errorCategory?: string;
+        error?: { title?: string; action?: string };
+      }>;
+
+      // Group by error category
+      const byCategory: Record<string, string[]> = {};
+      cachedStatuses.forEach((s) => {
+        if (s.errorCategory) {
+          if (!byCategory[s.errorCategory]) {
+            byCategory[s.errorCategory] = [];
+          }
+          byCategory[s.errorCategory].push(s.provider);
         }
+      });
 
-        try {
-            const summary = llmHealthMonitor.getSummary() as {
-                total: number;
-                healthy: number;
-                degraded: number;
-                unhealthy: number;
-                lastCheck: string;
-            };
-            const cachedStatuses = llmHealthMonitor.getAllCachedStatuses() as Array<{
-                provider: string;
-                status: string;
-                errorCategory?: string;
-                error?: { title?: string; action?: string };
-            }>;
-
-            // Group by error category
-            const byCategory: Record<string, string[]> = {};
-            cachedStatuses.forEach((s) => {
-                if (s.errorCategory) {
-                    if (!byCategory[s.errorCategory]) {
-                        byCategory[s.errorCategory] = [];
-                    }
-                    byCategory[s.errorCategory].push(s.provider);
-                }
-            });
-
-            return res.json({
-                success: true,
-                summary: {
-                    ...summary,
-                    byCategory,
-                },
-                alerts: cachedStatuses
-                    .filter((s) => s.status === HealthStatusEnum.UNHEALTHY)
-                    .map((s) => ({
-                        provider: s.provider,
-                        category: s.errorCategory,
-                        message: s.error?.title || 'Unknown error',
-                        action: s.error?.action || 'Check configuration',
-                    })),
-            });
-        } catch (error: unknown) {
-            return res.status(500).json({
-                success: false,
-                error: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      return res.json({
+        success: true,
+        summary: {
+          ...summary,
+          byCategory,
+        },
+        alerts: cachedStatuses
+          .filter((s) => s.status === HealthStatusEnum.UNHEALTHY)
+          .map((s) => ({
+            provider: s.provider,
+            category: s.errorCategory,
+            message: s.error?.title || 'Unknown error',
+            action: s.error?.action || 'Check configuration',
+          })),
+      });
+    } catch (error: unknown) {
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -363,23 +373,150 @@ router.get(
  * Get all error categories with descriptions
  */
 router.get(
-    '/health/errors',
-    asyncHandler(async (_req, res: Response) => {
-        if (!ErrorMessagesEnum) {
-            return res.status(503).json({
-                success: false,
-                error: 'Error messages not available',
-            });
-        }
+  '/health/errors',
+  asyncHandler(async (_req, res: Response) => {
+    if (!ErrorMessagesEnum) {
+      return res.status(503).json({
+        success: false,
+        error: 'Error messages not available',
+      });
+    }
 
-        return res.json({
-            success: true,
-            categories: Object.entries(ErrorMessagesEnum).map(([key, value]) => ({
-                code: key,
-                ...value,
-            })),
-        });
-    }),
+    return res.json({
+      success: true,
+      categories: Object.entries(ErrorMessagesEnum).map(([key, value]) => ({
+        code: key,
+        ...value,
+      })),
+    });
+  })
+);
+
+/**
+ * GET /api/llm/health/status
+ * Alias for /api/llm/health - used by frontend HealthMonitoringTab
+ */
+router.get(
+  '/health/status',
+  asyncHandler(async (_req, res: Response) => {
+    try {
+      // Get providers from database
+      const providers = (await dbAll(`
+                SELECT id, name, provider, api_key, endpoint, model_id, is_active, visibility 
+                FROM llm_providers 
+                WHERE is_active = 1
+            `)) as Array<{
+        id: string;
+        name: string;
+        provider: string;
+        api_key: string | null;
+        endpoint: string | null;
+        model_id: string | null;
+        is_active: number;
+        visibility: string;
+      }>;
+
+      // Get basic metrics from llm_logs
+      const metricsResult = (await dbAll(`
+                SELECT 
+                    COUNT(*) as totalRequests,
+                    AVG(latency_ms) as avgLatencyMs,
+                    SUM(CASE WHEN error IS NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*) as uptime50
+                FROM (
+                    SELECT latency_ms, error FROM llm_logs 
+                    ORDER BY created_at DESC LIMIT 50
+                )
+            `)) as Array<{ totalRequests: number; avgLatencyMs: number; uptime50: number }>;
+
+      const metrics = metricsResult[0] || { totalRequests: 0, avgLatencyMs: 0, uptime50: 100 };
+
+      return res.json({
+        providers: providers.map((p) => ({
+          name: p.name,
+          type: p.provider,
+          status: 'ACTIVE',
+          visibility: p.visibility || 'internal',
+        })),
+        metrics: {
+          uptime50: metrics.uptime50 || 100,
+          avgLatencyMs: Math.round(metrics.avgLatencyMs || 0),
+          totalRequests: metrics.totalRequests || 0,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: unknown) {
+      logger.error('[LLMHealth] Status error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
+);
+
+/**
+ * GET /api/llm/health/detailed
+ * Detailed health info for LLMHealthPanel
+ */
+router.get(
+  '/health/detailed',
+  asyncHandler(async (_req, res: Response) => {
+    try {
+      // Get providers with health info
+      const providers = (await dbAll(`
+                SELECT 
+                    id, name, provider, is_active, visibility,
+                    COALESCE(
+                        (SELECT AVG(latency_ms) FROM llm_logs WHERE provider = lp.provider ORDER BY created_at DESC LIMIT 10),
+                        0
+                    ) as avgLatency
+                FROM llm_providers lp
+                WHERE is_active = 1
+            `)) as Array<{
+        id: string;
+        name: string;
+        provider: string;
+        is_active: number;
+        visibility: string;
+        avgLatency: number;
+      }>;
+
+      // Get summary metrics
+      const summaryResult = (await dbAll(`
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as healthy
+                FROM llm_providers
+            `)) as Array<{ total: number; healthy: number }>;
+
+      const summary = summaryResult[0] || { total: 0, healthy: 0 };
+
+      return res.json({
+        success: true,
+        providers: providers.map((p) => ({
+          id: p.id,
+          name: p.name,
+          provider: p.provider,
+          status: p.is_active ? 'healthy' : 'unhealthy',
+          latency: Math.round(p.avgLatency || 0),
+          visibility: p.visibility || 'internal',
+        })),
+        alerts: [],
+        summary: {
+          total: summary.total,
+          healthy: summary.healthy,
+          degraded: 0,
+          unhealthy: summary.total - summary.healthy,
+        },
+      });
+    } catch (error: unknown) {
+      logger.error('[LLMHealth] Detailed error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 export default router;

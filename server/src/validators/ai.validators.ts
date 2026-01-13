@@ -7,42 +7,51 @@ import { z } from 'zod';
 
 // Chat Request
 export const ChatRequestSchema = z.object({
-    message: z.string().min(1, 'Message is required'),
-    projectId: z.string().uuid().optional(),
-    currentScreen: z.string().optional(),
-    selectedObjectId: z.string().optional(),
-    selectedObjectType: z.string().optional(),
+  message: z.string().min(1, 'Message is required'),
+  projectId: z.string().uuid().optional(),
+  currentScreen: z.string().optional(),
+  selectedObjectId: z.string().optional(),
+  selectedObjectType: z.string().optional(),
 });
 
 // Chat Stream Request
 export const ChatStreamRequestSchema = z.object({
-    message: z.string().min(1, 'Message is required'),
-    history: z
-        .array(
+  message: z.string().min(1, 'Message is required'),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant', 'model']),
+        content: z.string().optional(),
+        parts: z
+          .array(
             z.object({
-                role: z.enum(['user', 'assistant', 'model']),
-                content: z.string().optional(),
-                parts: z
-                    .array(
-                        z.object({
-                            text: z.string(),
-                        }),
-                    )
-                    .optional(),
-            }),
-        )
-        .optional(),
-    systemInstruction: z.string().optional(),
-    context: z.record(z.string(), z.unknown()).optional(),
-    roleName: z.string().optional(),
-    language: z.enum(['pl', 'en', 'de', 'es', 'ja', 'ar']).optional(),
-    conversationId: z.string().optional(),
-    resumeFromPartial: z.boolean().optional(),
+              text: z.string(),
+            })
+          )
+          .optional(),
+      })
+    )
+    .optional(),
+  systemInstruction: z.string().optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
+  roleName: z.string().optional(),
+  language: z
+    .string()
+    .transform((lang) => {
+      // Accept locale variants like 'en-GB', 'en-US', etc. and convert to base code
+      if (!lang) return 'en';
+      const base = lang.split('-')[0].toLowerCase();
+      const validLangs = ['pl', 'en', 'de', 'es', 'ja', 'ar'];
+      return validLangs.includes(base) ? base : 'en';
+    })
+    .optional(),
+  conversationId: z.string().optional(),
+  resumeFromPartial: z.boolean().optional(),
 });
 
 // AI Context Query
 export const AIContextQuerySchema = z.object({
-    screen: z.string().optional(),
+  screen: z.string().optional(),
 });
 
 // AI Policy Update Request
@@ -50,15 +59,15 @@ export const UpdatePolicyRequestSchema = z.record(z.string(), z.unknown());
 
 // Can Perform Action Query
 export const CanPerformActionQuerySchema = z.object({
-    projectId: z.string().uuid().optional(),
+  projectId: z.string().uuid().optional(),
 });
 
 // Record Decision Request
 export const RecordDecisionRequestSchema = z.object({
-    decisionId: z.string().uuid(),
-    title: z.string().min(1),
-    outcome: z.string().min(1),
-    rationale: z.string().optional(),
+  decisionId: z.string().uuid(),
+  title: z.string().min(1),
+  outcome: z.string().min(1),
+  rationale: z.string().optional(),
 });
 
 // Update User Preferences Request
@@ -66,191 +75,191 @@ export const UpdateUserPreferencesRequestSchema = z.record(z.string(), z.unknown
 
 // Create Draft Request
 export const CreateDraftRequestSchema = z.object({
-    draftType: z.string().min(1),
-    content: z.string().min(1),
-    projectId: z.string().uuid(),
+  draftType: z.string().min(1),
+  content: z.string().min(1),
+  projectId: z.string().uuid(),
 });
 
 // Get Pending Actions Query
 export const GetPendingActionsQuerySchema = z.object({
-    projectId: z.string().uuid().optional(),
+  projectId: z.string().uuid().optional(),
 });
 
 // Approve Action Request
 export const ApproveActionRequestSchema = z.object({
-    alwaysApprove: z.boolean().optional(),
+  alwaysApprove: z.boolean().optional(),
 });
 
 // Reject Action Request
 export const RejectActionRequestSchema = z.object({
-    reason: z.string().optional(),
-    alwaysReject: z.boolean().optional(),
+  reason: z.string().optional(),
+  alwaysReject: z.boolean().optional(),
 });
 
 // Generate Proposals Query
 export const GenerateProposalsQuerySchema = z.object({
-    organizationId: z.string().uuid().optional(),
+  organizationId: z.string().uuid().optional(),
 });
 
 // Recommend Request
 export const RecommendRequestSchema = z.object({
-    diagnosisReport: z.object({
-        assessment: z.record(z.string(), z.unknown()).optional(),
-        goals: z.array(z.string()).optional(),
-        painPoints: z.array(z.string()).optional(),
-        industry: z.string().optional(),
-    }),
+  diagnosisReport: z.object({
+    assessment: z.record(z.string(), z.unknown()).optional(),
+    goals: z.array(z.string()).optional(),
+    painPoints: z.array(z.string()).optional(),
+    industry: z.string().optional(),
+  }),
 });
 
 // Roadmap Request
 export const RoadmapRequestSchema = z.object({
-    initiatives: z
-        .array(
-            z.object({
-                name: z.string(),
-                priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).optional(),
-                complexity: z.string().optional(),
-                expectedRoi: z.number().optional(),
-                roi: z.number().optional(),
-            }),
-        )
-        .min(1),
+  initiatives: z
+    .array(
+      z.object({
+        name: z.string(),
+        priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).optional(),
+        complexity: z.string().optional(),
+        expectedRoi: z.number().optional(),
+        roi: z.number().optional(),
+      })
+    )
+    .min(1),
 });
 
 // Get Audit Logs Query
 export const GetAuditLogsQuerySchema = z.object({
-    projectId: z.string().uuid().optional(),
-    userId: z.string().uuid().optional(),
-    actionType: z.string().optional(),
-    limit: z.string().transform(Number).pipe(z.number().int().positive().max(100)).optional().default(50),
-    offset: z.string().transform(Number).pipe(z.number().int().nonnegative()).optional().default(0),
+  projectId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional(),
+  actionType: z.string().optional(),
+  limit: z.string().transform(Number).pipe(z.number().int().positive().max(100)).default(50),
+  offset: z.string().transform(Number).pipe(z.number().int().nonnegative()).default(0),
 });
 
 // Record Decision for Audit Request
 export const RecordAuditDecisionRequestSchema = z.object({
-    decision: z.enum(['approved', 'rejected', 'deferred']),
-    feedback: z.string().optional(),
+  decision: z.enum(['approved', 'rejected', 'deferred']),
+  feedback: z.string().optional(),
 });
 
 // Get Explanations Query
 export const GetExplanationsQuerySchema = z.object({
-    limit: z.string().transform(Number).pipe(z.number().int().positive().max(100)).optional().default(50),
-    offset: z.string().transform(Number).pipe(z.number().int().nonnegative()).optional().default(0),
+  limit: z.string().transform(Number).pipe(z.number().int().positive().max(100)).default(50),
+  offset: z.string().transform(Number).pipe(z.number().int().nonnegative()).default(0),
 });
 
 // Export Explanations Query
 export const ExportExplanationsQuerySchema = z.object({
-    projectId: z.string().uuid().optional(),
-    startDate: z.string().datetime().optional(),
-    endDate: z.string().datetime().optional(),
+  projectId: z.string().uuid().optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
 });
 
 // Get Suggestions Query
 export const GetSuggestionsQuerySchema = z.object({
-    projectId: z.string().uuid().optional(),
-    screenContext: z.string().optional(),
+  projectId: z.string().uuid().optional(),
+  screenContext: z.string().optional(),
 });
 
 // Post Suggestions Request
 export const PostSuggestionsRequestSchema = z.object({
-    projectId: z.string().uuid().optional(),
-    conversationContext: z.record(z.string(), z.unknown()).optional(),
+  projectId: z.string().uuid().optional(),
+  conversationContext: z.record(z.string(), z.unknown()).optional(),
 });
 
 // Record Suggestion Action Request
 export const RecordSuggestionActionRequestSchema = z.object({
-    suggestionId: z.string().uuid(),
-    action: z.enum(['accepted', 'dismissed', 'clicked']),
-    feedback: z.string().optional(),
+  suggestionId: z.string().uuid(),
+  action: z.enum(['accepted', 'dismissed', 'clicked']),
+  feedback: z.string().optional(),
 });
 
 // Get Suggestion Metrics Query
 export const GetSuggestionMetricsQuerySchema = z.object({
-    days: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(30),
+  days: z.string().transform(Number).pipe(z.number().int().positive()).default(30),
 });
 
 // Calculate Quality Request
 export const CalculateQualityRequestSchema = z.object({
-    query: z.string().min(1),
-    response: z.string().min(1),
-    context: z.record(z.string(), z.unknown()).optional(),
-    sources: z.array(z.string()).optional(),
+  query: z.string().min(1),
+  response: z.string().min(1),
+  context: z.record(z.string(), z.unknown()).optional(),
+  sources: z.array(z.string()).optional(),
 });
 
 // Get Aggregate Quality Query
 export const GetAggregateQualityQuerySchema = z.object({
-    days: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(30),
+  days: z.string().transform(Number).pipe(z.number().int().positive()).default(30),
 });
 
 // Get Quality Trends Query
 export const GetQualityTrendsQuerySchema = z.object({
-    days: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(30),
+  days: z.string().transform(Number).pipe(z.number().int().positive()).default(30),
 });
 
 // Get Patterns Query
 export const GetPatternsQuerySchema = z.object({
-    actionType: z.string().optional(),
+  actionType: z.string().optional(),
 });
 
 // Toggle Auto-Apply Request
 export const ToggleAutoApplyRequestSchema = z.object({
-    enabled: z.boolean(),
+  enabled: z.boolean(),
 });
 
 // Record Feedback Request
 export const RecordFeedbackRequestSchema = z.object({
-    messageId: z.string().uuid(),
-    rating: z.enum(['up', 'down']),
+  messageId: z.string().uuid(),
+  rating: z.enum(['up', 'down']),
 });
 
 // Report Message Request
 export const ReportMessageRequestSchema = z.object({
-    messageId: z.string().uuid(),
-    reason: z.string().min(1),
+  messageId: z.string().uuid(),
+  reason: z.string().min(1),
 });
 
 // Get Memory Metrics Query
 export const GetMemoryMetricsQuerySchema = z.object({
-    period: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(7),
+  period: z.string().transform(Number).pipe(z.number().int().positive()).default(7),
 });
 
 // Get Current Memory Query
 export const GetCurrentMemoryQuerySchema = z.object({
-    projectId: z.string().uuid().optional(),
+  projectId: z.string().uuid().optional(),
 });
 
 // Get Memory Latency Query
 export const GetMemoryLatencyQuerySchema = z.object({
-    hours: z.string().transform(Number).pipe(z.number().int().positive()).optional().default(24),
+  hours: z.string().transform(Number).pipe(z.number().int().positive()).default(24),
 });
 
 // ID Params
 export const ProjectIdParamSchema = z.object({
-    projectId: z.string().uuid(),
+  projectId: z.string().uuid(),
 });
 
 export const ActionIdParamSchema = z.object({
-    id: z.string().uuid(),
+  id: z.string().uuid(),
 });
 
 export const ActionIdParamSchemaAlt = z.object({
-    actionId: z.string().uuid(),
+  actionId: z.string().uuid(),
 });
 
 export const PatternIdParamSchema = z.object({
-    patternId: z.string().uuid(),
+  patternId: z.string().uuid(),
 });
 
 export const AuditIdParamSchema = z.object({
-    id: z.string().uuid(),
+  id: z.string().uuid(),
 });
 
 export const SessionIdParamSchema = z.object({
-    sessionId: z.string(),
+  sessionId: z.string(),
 });
 
 export const ActionTypeParamSchema = z.object({
-    actionType: z.string(),
+  actionType: z.string(),
 });
 
 // Type exports

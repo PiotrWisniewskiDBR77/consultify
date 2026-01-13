@@ -4,86 +4,127 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TaskDetailModal } from '../../components/TaskDetailModal';
-import { Api } from '../../../services/api';
+import { TaskDetailModal } from '../../src/components/TaskDetailModal';
+import { Api } from '../../src/services/api';
 
-vi.mock('../../../services/api', () => ({
-    Api: {
-        generateTaskInsight: vi.fn()
-    }
+vi.mock('../../src/services/api', () => ({
+  Api: {
+    generateTaskInsight: vi.fn(),
+  },
 }));
 
 const mockTask = {
-    id: 'task-1',
-    title: 'Test Task',
-    status: 'TODO',
-    priority: 'high'
+  id: 'task-1',
+  title: 'Test Task',
+  status: 'TODO',
+  priority: 'high',
 } as any;
 
 const mockUser = {
-    id: 'user-1',
-    email: 'test@example.com'
+  id: 'user-1',
+  email: 'test@example.com',
 } as any;
 
 describe('TaskDetailModal Component', () => {
-    const user = userEvent.setup();
+  const user = userEvent.setup();
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    it('renders modal when open', () => {
-        render(<TaskDetailModal task={mockTask} isOpen={true} onClose={vi.fn()} onSave={vi.fn()} currentUser={mockUser} />);
+  it('renders modal when open', () => {
+    render(
+      <TaskDetailModal
+        task={mockTask}
+        isOpen={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        currentUser={mockUser}
+      />
+    );
 
-        expect(screen.getByText('Test Task')).toBeInTheDocument();
-    });
+    expect(screen.getByDisplayValue('Test Task')).toBeInTheDocument();
+  });
 
-    it('does not render when closed', () => {
-        const { container } = render(<TaskDetailModal task={mockTask} isOpen={false} onClose={vi.fn()} onSave={vi.fn()} currentUser={mockUser} />);
-        expect(container.firstChild).toBeNull();
-    });
+  it('does not render when closed', () => {
+    const { container } = render(
+      <TaskDetailModal
+        task={mockTask}
+        isOpen={false}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        currentUser={mockUser}
+      />
+    );
+    expect(container.firstChild).toBeNull();
+  });
 
-    it('displays task title', () => {
-        render(<TaskDetailModal task={mockTask} isOpen={true} onClose={vi.fn()} onSave={vi.fn()} currentUser={mockUser} />);
+  it('displays task title', () => {
+    render(
+      <TaskDetailModal
+        task={mockTask}
+        isOpen={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        currentUser={mockUser}
+      />
+    );
 
-        expect(screen.getByText('Test Task')).toBeInTheDocument();
-    });
+    expect(screen.getByDisplayValue('Test Task')).toBeInTheDocument();
+  });
 
-    it('displays tabs', () => {
-        render(<TaskDetailModal task={mockTask} isOpen={true} onClose={vi.fn()} onSave={vi.fn()} currentUser={mockUser} />);
+  it('displays tabs', () => {
+    render(
+      <TaskDetailModal
+        task={mockTask}
+        isOpen={true}
+        onClose={vi.fn()}
+        onSave={vi.fn()}
+        currentUser={mockUser}
+      />
+    );
 
-        expect(screen.getByText(/Strategy/i) || screen.getByText(/Execution/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText(/Strategic Context/i)).toBeInTheDocument();
+    expect(screen.getByText(/Execution Plan/i)).toBeInTheDocument();
+  });
 
-    it('validates required fields on save', async () => {
-        const onSave = vi.fn();
-        render(<TaskDetailModal task={{ ...mockTask, title: '' }} isOpen={true} onClose={vi.fn()} onSave={onSave} currentUser={mockUser} />);
+  it('validates required fields on save', async () => {
+    const onSave = vi.fn();
+    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
-        const saveButton = screen.getByRole('button', { name: /save/i });
-        await user.click(saveButton);
+    render(
+      <TaskDetailModal
+        task={{ ...mockTask, title: '' }}
+        isOpen={true}
+        onClose={vi.fn()}
+        onSave={onSave}
+        currentUser={mockUser}
+      />
+    );
 
-        await waitFor(() => {
-            expect(screen.getByText(/required/i) || screen.getByText(/Title/i)).toBeInTheDocument();
-        });
-    });
+    const saveButton = screen.getByRole('button', { name: /Save Changes/i });
+    await user.click(saveButton);
 
-    it('calls onClose when close clicked', async () => {
-        const onClose = vi.fn();
-        render(<TaskDetailModal task={mockTask} isOpen={true} onClose={onClose} onSave={vi.fn()} currentUser={mockUser} />);
+    expect(alertMock).toHaveBeenCalledWith(expect.stringMatching(/required/i));
 
-        const closeButton = screen.getByRole('button', { name: /close/i });
-        await user.click(closeButton);
+    alertMock.mockRestore();
+  });
 
-        expect(onClose).toHaveBeenCalled();
-    });
+  it('calls onClose when close clicked', async () => {
+    const onClose = vi.fn();
+    render(
+      <TaskDetailModal
+        task={mockTask}
+        isOpen={true}
+        onClose={onClose}
+        onSave={vi.fn()}
+        currentUser={mockUser}
+      />
+    );
+
+    const closeButton = screen.getByText(/Cancel/i);
+    await user.click(closeButton);
+
+    expect(onClose).toHaveBeenCalled();
+  });
 });
-
-
-
-
-
-
-
-
-
-

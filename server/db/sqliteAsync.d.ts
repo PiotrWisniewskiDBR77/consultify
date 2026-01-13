@@ -11,9 +11,13 @@
  * @param {array} params - Parameters for prepared statement
  * @returns {Promise<{changes: number, lastID: number}>}
  */
-export function runAsync(db: object, sql: string, params?: array): Promise<{
-    changes: number;
-    lastID: number;
+export function runAsync(
+  db: object,
+  sql: string,
+  params?: array
+): Promise<{
+  changes: number;
+  lastID: number;
 }>;
 export function getAsync(db: any, sql: any, params?: any[]): Promise<any>;
 export function allAsync(db: any, sql: any, params?: any[]): Promise<any>;

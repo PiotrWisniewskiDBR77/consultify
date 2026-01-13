@@ -1,549 +1,482 @@
 /**
  * Integration Service
- *
- * Manages third-party integrations and connectors.
- * Features:
- * - Integration CRUD operations
- * - Sync management
- * - Health monitoring
- * - Error handling and retry logic
- *
- * Fully migrated from server/services/integrationService.js to TypeScript
+ * FLOW-INTEGRATION-001: External system integrations
  */
 
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
-import type { IDatabase, RunResult } from '../database/IDatabase.js';
-import _logger from '../utils/Logger.js';
+import type { IDatabase } from '../database/IDatabase.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
-// TYPE DEFINITIONS
+// TYPES
 // ==========================================
 
-export interface IntegrationFilters {
-    type?: string;
-    enabled?: boolean;
-}
-
-export interface IntegrationRecord {
-    id: string;
-    organization_id: string;
-    type: string;
-    name: string;
-    config: string;
-    auth_config: string;
-    enabled: number;
-    sync_config: string;
-    last_sync_at?: string | null;
-    last_sync_status?: string | null;
-    created_at?: string;
-    updated_at?: string;
+export interface IntegrationProvider {
+  id: string;
+  name: string;
+  displayName: string;
+  category: string;
+  description?: string;
+  authType: 'oauth2' | 'api_key' | 'webhook';
+  isActive: boolean;
+  isBeta: boolean;
+  isEnterpriseOnly: boolean;
 }
 
 export interface Integration {
-    id: string;
-    organizationId: string;
-    type: string;
-    name: string;
-    config: Record<string, unknown>;
-    authConfig: Record<string, unknown>;
-    enabled: boolean;
-    syncConfig: Record<string, unknown>;
-    lastSyncAt?: string | null;
-    lastSyncStatus?: string | null;
-    createdAt?: string;
-    updatedAt?: string;
+  id: string;
+  organizationId: string;
+  providerId: string;
+  providerName?: string;
+  status: 'active' | 'paused' | 'error' | 'disconnected';
+  externalAccountId?: string;
+  externalAccountName?: string;
+  settings: Record<string, unknown>;
+  lastSyncAt?: string;
+  lastError?: string;
+  connectedAt: string;
 }
 
-export interface CreateIntegrationData {
-    organization_id: string;
-    type: string;
-    name: string;
-    config?: Record<string, unknown>;
-    auth_config?: Record<string, unknown>;
-    enabled?: boolean;
-    sync_config?: Record<string, unknown>;
-}
-
-export interface UpdateIntegrationData {
-    name?: string;
-    config?: Record<string, unknown>;
-    auth_config?: Record<string, unknown>;
-    enabled?: boolean;
-    sync_config?: Record<string, unknown>;
-    last_sync_at?: string;
-    last_sync_status?: string;
-}
-
-export interface SyncLogRecord {
-    id: string;
-    integration_id: string;
-    sync_type: string;
-    status: string;
-    started_at: string;
-    completed_at?: string | null;
-    records_processed?: number | null;
-    errors?: string | null;
-}
-
-export interface SyncLog {
-    id: string;
-    integrationId: string;
-    syncType: string;
-    status: string;
-    startedAt: string;
-    completedAt?: string | null;
-    recordsProcessed?: number | null;
-    errors?: Record<string, unknown> | null;
+export interface SyncMapping {
+  id: string;
+  integrationId: string;
+  localType: string;
+  localId: string;
+  externalType: string;
+  externalId: string;
+  syncStatus: string;
 }
 
 export interface SyncResult {
-    recordsProcessed: number;
-    message?: string;
-}
-
-export interface HealthCheckResult {
-    status: 'healthy' | 'unhealthy';
-    lastSync?: string | null;
-    lastSyncStatus?: string | null;
-    error?: string;
-}
-
-export interface IntegrationType {
-    id: string;
-    name: string;
-    description: string;
-}
-
-export interface UpdateSyncLogData {
-    status?: string;
-    records_processed?: number;
-    errors?: string;
-    completed_at?: string;
-}
-
-// Dependency injection interface for testing
-export interface IntegrationServiceDependencies {
-    db: IDatabase;
-    uuidv4: () => string;
+  status: 'success' | 'partial' | 'failed';
+  itemsProcessed: number;
+  itemsCreated: number;
+  itemsUpdated: number;
+  itemsFailed: number;
+  errors?: string[];
 }
 
 // ==========================================
-// SERVICE IMPLEMENTATION
+// SERVICE
 // ==========================================
 
-class IntegrationServiceClass {
-    private deps: IntegrationServiceDependencies;
+class IntegrationService {
+  private db: IDatabase | null = null;
 
-    constructor(deps?: Partial<IntegrationServiceDependencies>) {
-        this.deps = {
-            db: deps?.db ?? getDatabase(),
-            uuidv4: deps?.uuidv4 ?? uuidv4,
-        };
+  private async getDb(): Promise<IDatabase> {
+    if (!this.db) {
+      this.db = await getDatabase();
+    }
+    return this.db;
+  }
+
+  // ==========================================
+  // PROVIDERS
+  // ==========================================
+
+  /**
+   * Get available integration providers
+   */
+  async getProviders(category?: string): Promise<IntegrationProvider[]> {
+    const db = await this.getDb();
+
+    let query = `SELECT * FROM integration_providers WHERE is_active = 1`;
+    const params: string[] = [];
+
+    if (category) {
+      query += ` AND category = ?`;
+      params.push(category);
     }
 
-    /**
-     * Set dependencies (for testing)
-     */
-    setDependencies(newDeps: Partial<IntegrationServiceDependencies>): void {
-        this.deps = { ...this.deps, ...newDeps };
-    }
+    query += ` ORDER BY sort_order, display_name`;
 
-    /**
-     * Get all integrations for an organization
-     */
-    async getIntegrations(organizationId: string, filters: IntegrationFilters = {}): Promise<Integration[]> {
-        const { type, enabled } = filters;
+    const rows = await db.all<{
+      id: string;
+      name: string;
+      display_name: string;
+      category: string;
+      description: string;
+      auth_type: string;
+      is_active: number;
+      is_beta: number;
+      is_enterprise_only: number;
+    }>(query, params);
 
-        let query = 'SELECT * FROM integrations WHERE organization_id = ?';
-        const params: unknown[] = [organizationId];
+    return (rows || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      displayName: r.display_name,
+      category: r.category,
+      description: r.description,
+      authType: r.auth_type as IntegrationProvider['authType'],
+      isActive: r.is_active === 1,
+      isBeta: r.is_beta === 1,
+      isEnterpriseOnly: r.is_enterprise_only === 1,
+    }));
+  }
 
-        if (type) {
-            query += ' AND type = ?';
-            params.push(type);
-        }
+  // ==========================================
+  // INTEGRATIONS
+  // ==========================================
 
-        if (enabled !== undefined) {
-            query += ' AND enabled = ?';
-            params.push(enabled ? 1 : 0);
-        }
+  /**
+   * Get organization integrations
+   */
+  async getIntegrations(orgId: string): Promise<Integration[]> {
+    const db = await this.getDb();
 
-        query += ' ORDER BY created_at DESC';
+    const rows = await db.all<{
+      id: string;
+      organization_id: string;
+      provider_id: string;
+      status: string;
+      external_account_id: string;
+      external_account_name: string;
+      settings: string;
+      last_sync_at: string;
+      last_error: string;
+      connected_at: string;
+      provider_name: string;
+    }>(
+      `SELECT i.*, p.name as provider_name
+             FROM integrations i
+             JOIN integration_providers p ON i.provider_id = p.id
+             WHERE i.organization_id = ?
+             ORDER BY i.connected_at DESC`,
+      [orgId]
+    );
 
-        const rows = (await this.deps.db.all<IntegrationRecord>(query, params)) as IntegrationRecord[];
+    return (rows || []).map((r) => ({
+      id: r.id,
+      organizationId: r.organization_id,
+      providerId: r.provider_id,
+      providerName: r.provider_name,
+      status: r.status as Integration['status'],
+      externalAccountId: r.external_account_id,
+      externalAccountName: r.external_account_name,
+      settings: JSON.parse(r.settings || '{}'),
+      lastSyncAt: r.last_sync_at,
+      lastError: r.last_error,
+      connectedAt: r.connected_at,
+    }));
+  }
 
-        return rows.map((row) => this._formatIntegration(row));
-    }
+  /**
+   * Connect integration
+   */
+  async connectIntegration(input: {
+    organizationId: string;
+    providerId: string;
+    accessToken?: string;
+    refreshToken?: string;
+    apiKey?: string;
+    externalAccountId?: string;
+    externalAccountName?: string;
+    settings?: Record<string, unknown>;
+    connectedBy: string;
+  }): Promise<Integration> {
+    const db = await this.getDb();
+    const id = `int-${uuidv4()}`;
+    const now = new Date().toISOString();
 
-    /**
-     * Get integration by ID
-     */
-    async getIntegrationById(id: string): Promise<Integration | null> {
-        const row = (await this.deps.db.get<IntegrationRecord>('SELECT * FROM integrations WHERE id = ?', [
-            id,
-        ])) as IntegrationRecord | null;
+    // Get provider auth type
+    const provider = await db.get<{ auth_type: string }>(
+      'SELECT auth_type FROM integration_providers WHERE id = ?',
+      [input.providerId]
+    );
 
-        if (!row) {
-            return null;
-        }
+    await db.run(
+      `INSERT INTO integrations (
+                id, organization_id, provider_id, auth_type,
+                access_token, refresh_token, api_key,
+                external_account_id, external_account_name,
+                settings, status, connected_by, connected_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
+      [
+        id,
+        input.organizationId,
+        input.providerId,
+        provider?.auth_type || 'oauth2',
+        input.accessToken || null,
+        input.refreshToken || null,
+        input.apiKey || null,
+        input.externalAccountId || null,
+        input.externalAccountName || null,
+        JSON.stringify(input.settings || {}),
+        input.connectedBy,
+        now,
+        now,
+      ]
+    );
 
-        return this._formatIntegration(row);
-    }
+    logger.info(
+      `[IntegrationService] Connected integration ${input.providerId} for org ${input.organizationId}`
+    );
 
-    /**
-     * Create a new integration
-     */
-    async createIntegration(integrationData: CreateIntegrationData): Promise<Integration> {
-        const {
-            organization_id,
-            type,
-            name,
-            config = {},
-            auth_config = {},
-            enabled = true,
-            sync_config = {},
-        } = integrationData;
+    return this.getIntegration(id) as Promise<Integration>;
+  }
 
-        const id = this.deps.uuidv4();
-        const now = new Date().toISOString();
+  /**
+   * Get single integration
+   */
+  async getIntegration(integrationId: string): Promise<Integration | null> {
+    const db = await this.getDb();
 
-        await this.deps.db.run(
-            `INSERT INTO integrations (
-                id, organization_id, type, name, config, auth_config,
-                enabled, sync_config, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                id,
-                organization_id,
-                type,
-                name,
-                JSON.stringify(config),
-                JSON.stringify(auth_config),
-                enabled ? 1 : 0,
-                JSON.stringify(sync_config),
-                now,
-                now,
-            ],
-        );
+    const row = await db.get<{
+      id: string;
+      organization_id: string;
+      provider_id: string;
+      status: string;
+      external_account_id: string;
+      external_account_name: string;
+      settings: string;
+      last_sync_at: string;
+      last_error: string;
+      connected_at: string;
+    }>(`SELECT * FROM integrations WHERE id = ?`, [integrationId]);
 
-        const created = await this.getIntegrationById(id);
-        if (!created) {
-            throw new Error('Failed to retrieve created integration');
-        }
-        return created;
-    }
+    if (!row) return null;
 
-    /**
-     * Update an integration
-     */
-    async updateIntegration(id: string, updates: UpdateIntegrationData): Promise<Integration> {
-        const { name, config, auth_config, enabled, sync_config, last_sync_at, last_sync_status } = updates;
+    return {
+      id: row.id,
+      organizationId: row.organization_id,
+      providerId: row.provider_id,
+      status: row.status as Integration['status'],
+      externalAccountId: row.external_account_id,
+      externalAccountName: row.external_account_name,
+      settings: JSON.parse(row.settings || '{}'),
+      lastSyncAt: row.last_sync_at,
+      lastError: row.last_error,
+      connectedAt: row.connected_at,
+    };
+  }
 
-        const updatesList: string[] = [];
-        const params: unknown[] = [];
+  /**
+   * Disconnect integration
+   */
+  async disconnectIntegration(integrationId: string, userId: string): Promise<void> {
+    const db = await this.getDb();
+    const now = new Date().toISOString();
 
-        if (name !== undefined) {
-            updatesList.push('name = ?');
-            params.push(name);
-        }
+    await db.run(
+      `UPDATE integrations SET 
+                status = 'disconnected',
+                access_token = NULL,
+                refresh_token = NULL,
+                api_key = NULL,
+                disconnected_at = ?,
+                disconnected_by = ?,
+                updated_at = ?
+             WHERE id = ?`,
+      [now, userId, now, integrationId]
+    );
 
-        if (config !== undefined) {
-            updatesList.push('config = ?');
-            params.push(JSON.stringify(config));
-        }
+    logger.info(`[IntegrationService] Disconnected integration ${integrationId}`);
+  }
 
-        if (auth_config !== undefined) {
-            updatesList.push('auth_config = ?');
-            params.push(JSON.stringify(auth_config));
-        }
+  /**
+   * Update integration settings
+   */
+  async updateSettings(integrationId: string, settings: Record<string, unknown>): Promise<void> {
+    const db = await this.getDb();
+    const now = new Date().toISOString();
 
-        if (enabled !== undefined) {
-            updatesList.push('enabled = ?');
-            params.push(enabled ? 1 : 0);
-        }
+    await db.run(`UPDATE integrations SET settings = ?, updated_at = ? WHERE id = ?`, [
+      JSON.stringify(settings),
+      now,
+      integrationId,
+    ]);
+  }
 
-        if (sync_config !== undefined) {
-            updatesList.push('sync_config = ?');
-            params.push(JSON.stringify(sync_config));
-        }
+  /**
+   * Pause/Resume integration
+   */
+  async setIntegrationStatus(integrationId: string, status: 'active' | 'paused'): Promise<void> {
+    const db = await this.getDb();
+    const now = new Date().toISOString();
 
-        if (last_sync_at !== undefined) {
-            updatesList.push('last_sync_at = ?');
-            params.push(last_sync_at);
-        }
+    await db.run(`UPDATE integrations SET status = ?, updated_at = ? WHERE id = ?`, [
+      status,
+      now,
+      integrationId,
+    ]);
+  }
 
-        if (last_sync_status !== undefined) {
-            updatesList.push('last_sync_status = ?');
-            params.push(last_sync_status);
-        }
+  // ==========================================
+  // SYNC
+  // ==========================================
 
-        if (updatesList.length === 0) {
-            const existing = await this.getIntegrationById(id);
-            if (!existing) {
-                throw new Error('Integration not found');
-            }
-            return existing;
-        }
+  /**
+   * Create sync mapping
+   */
+  async createSyncMapping(input: {
+    integrationId: string;
+    localType: string;
+    localId: string;
+    externalType: string;
+    externalId: string;
+    externalUrl?: string;
+  }): Promise<string> {
+    const db = await this.getDb();
+    const id = `sync-${uuidv4()}`;
+    const now = new Date().toISOString();
 
-        updatesList.push('updated_at = ?');
-        params.push(new Date().toISOString());
-        params.push(id);
+    await db.run(
+      `INSERT INTO integration_sync_mappings (
+                id, integration_id, local_type, local_id,
+                external_type, external_id, external_url,
+                sync_status, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?)`,
+      [
+        id,
+        input.integrationId,
+        input.localType,
+        input.localId,
+        input.externalType,
+        input.externalId,
+        input.externalUrl || null,
+        now,
+        now,
+      ]
+    );
 
-        await this.deps.db.run(`UPDATE integrations SET ${updatesList.join(', ')} WHERE id = ?`, params);
+    return id;
+  }
 
-        const updated = await this.getIntegrationById(id);
-        if (!updated) {
-            throw new Error('Failed to retrieve updated integration');
-        }
-        return updated;
-    }
+  /**
+   * Get sync mapping by local entity
+   */
+  async getSyncMapping(
+    integrationId: string,
+    localType: string,
+    localId: string
+  ): Promise<SyncMapping | null> {
+    const db = await this.getDb();
 
-    /**
-     * Delete an integration
-     */
-    async deleteIntegration(id: string): Promise<{ deleted: boolean }> {
-        const result = (await this.deps.db.run('DELETE FROM integrations WHERE id = ?', [id])) as RunResult;
+    const row = await db.get<{
+      id: string;
+      integration_id: string;
+      local_type: string;
+      local_id: string;
+      external_type: string;
+      external_id: string;
+      sync_status: string;
+    }>(
+      `SELECT * FROM integration_sync_mappings 
+             WHERE integration_id = ? AND local_type = ? AND local_id = ?`,
+      [integrationId, localType, localId]
+    );
 
-        return { deleted: result.changes > 0 };
-    }
+    if (!row) return null;
 
-    /**
-     * Trigger a sync for an integration
-     */
-    async syncIntegration(id: string, syncType: string = 'incremental'): Promise<{ syncLogId: string } & SyncResult> {
-        const integration = await this.getIntegrationById(id);
-        if (!integration) {
-            throw new Error('Integration not found');
-        }
+    return {
+      id: row.id,
+      integrationId: row.integration_id,
+      localType: row.local_type,
+      localId: row.local_id,
+      externalType: row.external_type,
+      externalId: row.external_id,
+      syncStatus: row.sync_status,
+    };
+  }
 
-        const syncLogId = this.deps.uuidv4();
-        const startedAt = new Date().toISOString();
+  /**
+   * Log sync operation
+   */
+  async logSync(input: {
+    integrationId: string;
+    syncType: string;
+    direction: string;
+    triggerType?: string;
+    result: SyncResult;
+    durationMs?: number;
+  }): Promise<void> {
+    const db = await this.getDb();
+    const id = `log-${uuidv4()}`;
+    const now = new Date().toISOString();
 
-        // Create sync log entry
-        await this.deps.db.run(
-            `INSERT INTO integration_sync_logs (
-                id, integration_id, sync_type, status, started_at
-            ) VALUES (?, ?, ?, ?, ?)`,
-            [syncLogId, id, syncType, 'in_progress', startedAt],
-        );
+    await db.run(
+      `INSERT INTO integration_sync_log (
+                id, integration_id, sync_type, direction, trigger_type,
+                status, items_processed, items_created, items_updated, items_failed,
+                error_details, started_at, completed_at, duration_ms
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        input.integrationId,
+        input.syncType,
+        input.direction,
+        input.triggerType || 'manual',
+        input.result.status,
+        input.result.itemsProcessed,
+        input.result.itemsCreated,
+        input.result.itemsUpdated,
+        input.result.itemsFailed,
+        input.result.errors ? JSON.stringify(input.result.errors) : null,
+        now,
+        now,
+        input.durationMs || 0,
+      ]
+    );
 
-        try {
-            // Perform actual sync based on integration type
-            const result = await this.performSync(integration, syncType);
+    // Update integration last_sync_at
+    await db.run(`UPDATE integrations SET last_sync_at = ?, updated_at = ? WHERE id = ?`, [
+      now,
+      now,
+      input.integrationId,
+    ]);
+  }
 
-            // Update sync log with results
-            await this.updateSyncLog(syncLogId, {
-                status: 'success',
-                records_processed: result.recordsProcessed || 0,
-                completed_at: new Date().toISOString(),
-            });
+  // ==========================================
+  // WEBHOOKS
+  // ==========================================
 
-            // Update integration last sync info
-            await this.updateIntegration(id, {
-                last_sync_at: new Date().toISOString(),
-                last_sync_status: 'success',
-            });
+  /**
+   * Process incoming webhook
+   */
+  async processWebhook(
+    provider: string,
+    payload: Record<string, unknown>,
+    signature?: string
+  ): Promise<{ success: boolean; message: string }> {
+    logger.info(`[IntegrationService] Processing ${provider} webhook`);
 
-            return { syncLogId, ...result };
-        } catch (error: unknown) {
-            // Update sync log with error
-            await this.updateSyncLog(syncLogId, {
-                status: 'failed',
-                errors: JSON.stringify({ error: (error as Error).message }),
-                completed_at: new Date().toISOString(),
-            });
+    // Provider-specific webhook handling would go here
+    // For now, just log and return success
 
-            // Update integration last sync info
-            await this.updateIntegration(id, {
-                last_sync_at: new Date().toISOString(),
-                last_sync_status: 'failed',
-            });
-
-            throw error;
-        }
-    }
-
-    /**
-     * Perform actual sync (placeholder - implement per integration type)
-     */
-    async performSync(integration: Integration, _syncType: string): Promise<SyncResult> {
-        // This is a placeholder - implement actual sync logic per integration type
-        // For now, return a mock result
-        return {
-            recordsProcessed: 0,
-            message: `Sync for ${integration.type} not yet implemented`,
-        };
-    }
-
-    /**
-     * Update sync log
-     */
-    async updateSyncLog(syncLogId: string, updates: UpdateSyncLogData): Promise<{ updated: boolean }> {
-        const { status, records_processed, errors, completed_at } = updates;
-
-        const updatesList: string[] = [];
-        const params: unknown[] = [];
-
-        if (status !== undefined) {
-            updatesList.push('status = ?');
-            params.push(status);
-        }
-
-        if (records_processed !== undefined) {
-            updatesList.push('records_processed = ?');
-            params.push(records_processed);
-        }
-
-        if (errors !== undefined) {
-            updatesList.push('errors = ?');
-            params.push(errors);
-        }
-
-        if (completed_at !== undefined) {
-            updatesList.push('completed_at = ?');
-            params.push(completed_at);
-        }
-
-        if (updatesList.length === 0) {
-            return { updated: false };
-        }
-
-        params.push(syncLogId);
-
-        const result = (await this.deps.db.run(
-            `UPDATE integration_sync_logs SET ${updatesList.join(', ')} WHERE id = ?`,
-            params,
-        )) as RunResult;
-
-        return { updated: result.changes > 0 };
-    }
-
-    /**
-     * Get sync logs for an integration
-     */
-    async getSyncLogs(integrationId: string, limit: number = 50): Promise<SyncLog[]> {
-        const rows = (await this.deps.db.all<SyncLogRecord>(
-            `SELECT * FROM integration_sync_logs 
-             WHERE integration_id = ? 
-             ORDER BY started_at DESC 
-             LIMIT ?`,
-            [integrationId, limit],
-        )) as SyncLogRecord[];
-
-        return rows.map((row) => ({
-            id: row.id,
-            integrationId: row.integration_id,
-            syncType: row.sync_type,
-            status: row.status,
-            startedAt: row.started_at,
-            completedAt: row.completed_at || undefined,
-            recordsProcessed: row.records_processed || undefined,
-            errors: row.errors ? (JSON.parse(row.errors) as Record<string, unknown>) : null,
-        }));
-    }
-
-    /**
-     * Check integration health
-     */
-    async checkHealth(id: string): Promise<HealthCheckResult> {
-        const integration = await this.getIntegrationById(id);
-        if (!integration) {
-            throw new Error('Integration not found');
-        }
-
-        // Basic health check - verify connection
-        try {
-            // This is a placeholder - implement actual health check per integration type
-            return {
-                status: 'healthy',
-                lastSync: integration.lastSyncAt,
-                lastSyncStatus: integration.lastSyncStatus,
-            };
-        } catch (error: unknown) {
-            return {
-                status: 'unhealthy',
-                error: (error as Error).message,
-            };
-        }
-    }
-
-    /**
-     * Get available integration types
-     */
-    getAvailableTypes(): IntegrationType[] {
-        return [
-            { id: 'slack', name: 'Slack', description: 'Slack notifications and commands' },
-            { id: 'microsoft_teams', name: 'Microsoft Teams', description: 'Teams notifications' },
-            { id: 'jira', name: 'Jira', description: 'Bi-directional Jira sync' },
-            { id: 'confluence', name: 'Confluence', description: 'Confluence integration' },
-            { id: 'google_workspace', name: 'Google Workspace', description: 'Calendar, Drive, Gmail' },
-            { id: 'microsoft_365', name: 'Microsoft 365', description: 'Office 365 integration' },
-            { id: 'github', name: 'GitHub', description: 'GitHub integration' },
-            { id: 'gitlab', name: 'GitLab', description: 'GitLab integration' },
-            { id: 'salesforce', name: 'Salesforce', description: 'Salesforce CRM integration' },
-            { id: 'hubspot', name: 'HubSpot', description: 'HubSpot CRM integration' },
-        ];
-    }
-
-    /**
-     * Format integration from DB record to API response
-     * @private
-     */
-    private _formatIntegration(row: IntegrationRecord): Integration {
-        return {
-            id: row.id,
-            organizationId: row.organization_id,
-            type: row.type,
-            name: row.name,
-            config: row.config ? (JSON.parse(row.config) as Record<string, unknown>) : {},
-            authConfig: row.auth_config ? (JSON.parse(row.auth_config) as Record<string, unknown>) : {},
-            enabled: row.enabled === 1,
-            syncConfig: row.sync_config ? (JSON.parse(row.sync_config) as Record<string, unknown>) : {},
-            lastSyncAt: row.last_sync_at || undefined,
-            lastSyncStatus: row.last_sync_status || undefined,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        };
-    }
+    return { success: true, message: 'Webhook processed' };
+  }
 }
 
-// Create singleton instance
-const integrationServiceInstance = new IntegrationServiceClass();
-
-// Export individual functions for backward compatibility
-export const getIntegrations = (organizationId: string, filters?: IntegrationFilters) =>
-    integrationServiceInstance.getIntegrations(organizationId, filters);
-export const getIntegrationById = (id: string) => integrationServiceInstance.getIntegrationById(id);
-export const createIntegration = (integrationData: CreateIntegrationData) =>
-    integrationServiceInstance.createIntegration(integrationData);
-export const updateIntegration = (id: string, updates: UpdateIntegrationData) =>
-    integrationServiceInstance.updateIntegration(id, updates);
-export const deleteIntegration = (id: string) => integrationServiceInstance.deleteIntegration(id);
-export const syncIntegration = (id: string, syncType?: string) =>
-    integrationServiceInstance.syncIntegration(id, syncType);
-export const performSync = (integration: Integration, syncType: string) =>
-    integrationServiceInstance.performSync(integration, syncType);
-export const updateSyncLog = (syncLogId: string, updates: UpdateSyncLogData) =>
-    integrationServiceInstance.updateSyncLog(syncLogId, updates);
-export const getSyncLogs = (integrationId: string, limit?: number) =>
-    integrationServiceInstance.getSyncLogs(integrationId, limit);
-export const checkHealth = (id: string) => integrationServiceInstance.checkHealth(id);
-export const getAvailableTypes = () => integrationServiceInstance.getAvailableTypes();
-
-// Default export for backward compatibility
-const integrationService = {
-    getIntegrations,
-    getIntegrationById,
-    createIntegration,
-    updateIntegration,
-    deleteIntegration,
-    syncIntegration,
-    performSync,
-    updateSyncLog,
-    getSyncLogs,
-    checkHealth,
-    getAvailableTypes,
-};
-
+// Export singleton
+const integrationService = new IntegrationService();
 export default integrationService;
+
+// Named exports
+export const getProviders = (category?: string) => integrationService.getProviders(category);
+export const getIntegrations = (orgId: string) => integrationService.getIntegrations(orgId);
+export const connectIntegration = (
+  input: Parameters<typeof integrationService.connectIntegration>[0]
+) => integrationService.connectIntegration(input);
+export const getIntegration = (integrationId: string) =>
+  integrationService.getIntegration(integrationId);
+export const disconnectIntegration = (integrationId: string, userId: string) =>
+  integrationService.disconnectIntegration(integrationId, userId);
+export const updateSettings = (integrationId: string, settings: Record<string, unknown>) =>
+  integrationService.updateSettings(integrationId, settings);
+export const setIntegrationStatus = (integrationId: string, status: 'active' | 'paused') =>
+  integrationService.setIntegrationStatus(integrationId, status);
+export const createSyncMapping = (
+  input: Parameters<typeof integrationService.createSyncMapping>[0]
+) => integrationService.createSyncMapping(input);
+export const getSyncMapping = (integrationId: string, localType: string, localId: string) =>
+  integrationService.getSyncMapping(integrationId, localType, localId);
+export const logSync = (input: Parameters<typeof integrationService.logSync>[0]) =>
+  integrationService.logSync(input);
+export const processWebhook = (
+  provider: string,
+  payload: Record<string, unknown>,
+  signature?: string
+) => integrationService.processWebhook(provider, payload, signature);

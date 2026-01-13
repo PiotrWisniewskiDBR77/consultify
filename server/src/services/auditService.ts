@@ -1,543 +1,465 @@
 /**
- * Audit Service (HARDENED)
- * Enterprise SaaS Architecture - TypeScript Backend
- *
- * Provides centralized, structured logging for all critical actions.
- * Fully migrated from server/services/auditService.js
- *
- * Security Features:
- * - sanitizeMetadata: Redacts sensitive fields (tokens, passwords, secrets)
- * - Standard actor types: USER, CONSULTANT, SYSTEM, AI
- * - Fail-silent: Audit failures don't break main flow
+ * Audit Service
+ * FLOW-AUDIT-001: Comprehensive audit logging for compliance
  */
 
-import type { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
-export const ACTOR_TYPES = {
-    USER: 'USER',
-    CONSULTANT: 'CONSULTANT',
-    SYSTEM: 'SYSTEM',
-    AI: 'AI',
-} as const;
-
-export type ActorType = (typeof ACTOR_TYPES)[keyof typeof ACTOR_TYPES];
-
-export const ACTION_TYPES = {
-    // Invites
-    INVITE_CREATED: 'INVITE_CREATED',
-    INVITE_ACCEPTED: 'INVITE_ACCEPTED',
-    INVITE_REVOKED: 'INVITE_REVOKED',
-
-    // Trial & Org Lifecycle
-    TRIAL_STARTED: 'TRIAL_STARTED',
-    TRIAL_EXPIRED: 'TRIAL_EXPIRED',
-    TRIAL_CONVERTED: 'TRIAL_CONVERTED',
-    ORG_CREATED: 'ORG_CREATED',
-    ORG_ACTIVATED: 'ORG_ACTIVATED',
-    ORG_DEACTIVATED: 'ORG_DEACTIVATED',
-
-    // RBAC
-    ROLE_CHANGED: 'ROLE_CHANGED',
-    PERMISSION_GRANTED: 'PERMISSION_GRANTED',
-    PERMISSION_REVOKED: 'PERMISSION_REVOKED',
-    MEMBER_ADDED: 'MEMBER_ADDED',
-    MEMBER_REMOVED: 'MEMBER_REMOVED',
-    CONSULTANT_LINKED: 'CONSULTANT_LINKED',
-    CONSULTANT_UNLINKED: 'CONSULTANT_UNLINKED',
-
-    // Tokens
-    TOKEN_CREDITED: 'TOKEN_CREDITED',
-    TOKEN_DEBITED: 'TOKEN_DEBITED',
-
-    // Initiatives & Tasks
-    INITIATIVE_CREATED: 'INITIATIVE_CREATED',
-    INITIATIVE_UPDATED: 'INITIATIVE_UPDATED',
-    INITIATIVE_DELETED: 'INITIATIVE_DELETED',
-    TASK_CREATED: 'TASK_CREATED',
-    TASK_UPDATED: 'TASK_UPDATED',
-    TASK_DELETED: 'TASK_DELETED',
-
-    // AI
-    AI_PROPOSAL_CREATED: 'AI_PROPOSAL_CREATED',
-    AI_ACTION_EXECUTED: 'AI_ACTION_EXECUTED',
-    AI_ACTION_REJECTED: 'AI_ACTION_REJECTED',
-
-    // Auth
-    USER_LOGIN: 'USER_LOGIN',
-    USER_LOGOUT: 'USER_LOGOUT',
-    USER_REGISTERED: 'USER_REGISTERED',
-
-    // Security
-    ACCESS_DENIED: 'ACCESS_DENIED',
-    TENANT_HOPPING_ATTEMPT: 'TENANT_HOPPING_ATTEMPT',
-
-    // Generic
-    ENTITY_VIEWED: 'ENTITY_VIEWED',
-    ENTITY_EXPORTED: 'ENTITY_EXPORTED',
-
-    // Phase E: Onboarding
-    ONBOARDING_CONTEXT_SAVED: 'ONBOARDING_CONTEXT_SAVED',
-    ONBOARDING_PLAN_GENERATED: 'ONBOARDING_PLAN_GENERATED',
-    ONBOARDING_PLAN_ACCEPTED: 'ONBOARDING_PLAN_ACCEPTED',
-} as const;
-
-export type ActionType = (typeof ACTION_TYPES)[keyof typeof ACTION_TYPES];
-
-interface LogEventParams {
-    actorUserId?: string | null;
-    actorType?: ActorType;
-    orgId?: string | null;
-    actionType: ActionType | string;
-    entityType?: string | null;
-    entityId?: string | null;
-    metadata?: Record<string, unknown>;
-    ip?: string | null;
-    userAgent?: string | null;
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  actorType: 'user' | 'system' | 'ai' | 'integration' | 'superadmin' | 'cron';
+  actorId?: string;
+  actorEmail?: string;
+  actorName?: string;
+  actorIp?: string;
+  action: string;
+  actionCategory: 'auth' | 'data' | 'admin' | 'ai' | 'system' | 'billing';
+  actionDescription?: string;
+  resourceType: string;
+  resourceId?: string;
+  resourceName?: string;
+  organizationId?: string;
+  projectId?: string;
+  previousValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
+  changedFields?: string[];
+  metadata?: Record<string, unknown>;
+  result: 'success' | 'failure' | 'partial';
+  errorMessage?: string;
 }
 
-interface LogEventResult {
-    success: boolean;
-    id?: string;
-    actionType?: string;
-    entityType?: string | null;
-    entityId?: string | null;
-    error?: string;
+export interface AuditLogInput {
+  actorType: AuditLogEntry['actorType'];
+  actorId?: string;
+  actorEmail?: string;
+  actorName?: string;
+  actorIp?: string;
+  actorUserAgent?: string;
+  action: string;
+  actionCategory: AuditLogEntry['actionCategory'];
+  actionDescription?: string;
+  resourceType: string;
+  resourceId?: string;
+  resourceName?: string;
+  organizationId?: string;
+  projectId?: string;
+  previousValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  result?: 'success' | 'failure' | 'partial';
+  errorMessage?: string;
+  requestId?: string;
 }
 
-interface GetEventsParams {
-    orgId?: string;
-    actorUserId?: string;
-    actionType?: string;
-    entityType?: string;
-    entityId?: string;
-    limit?: number;
-    offset?: number;
+export interface AuditLogFilters {
+  organizationId?: string;
+  actorId?: string;
+  actorType?: string;
+  action?: string;
+  actionCategory?: string;
+  resourceType?: string;
+  resourceId?: string;
+  result?: string;
+  fromDate?: Date;
+  toDate?: Date;
+  limit?: number;
+  offset?: number;
 }
 
-interface AuditEvent {
-    id: string;
-    ts: string;
-    actor_user_id: string | null;
-    actor_type: ActorType;
-    org_id: string | null;
-    action_type: string;
-    entity_type: string | null;
-    entity_id: string | null;
-    metadata_json: string;
-    ip: string | null;
-    user_agent: string | null;
-    metadata?: Record<string, unknown>;
-}
+// ==========================================
+// SERVICE
+// ==========================================
 
-interface AuditServiceDependencies {
-    db?: IDatabase;
-}
+class AuditService {
+  private db: IDatabase | null = null;
 
-interface ExpressRequestWithUser extends Request {
-    user?: {
-        id: string;
-        organization_id?: string;
+  private async getDb(): Promise<IDatabase> {
+    if (!this.db) {
+      this.db = await getDatabase();
+    }
+    return this.db;
+  }
+
+  /**
+   * Log an audit entry
+   */
+  async log(input: AuditLogInput): Promise<string> {
+    const db = await this.getDb();
+    const id = `audit-${uuidv4()}`;
+    const now = new Date().toISOString();
+
+    // Determine changed fields
+    let changedFields: string[] = [];
+    if (input.previousValues && input.newValues) {
+      changedFields = this.getChangedFields(input.previousValues, input.newValues);
+    }
+
+    // Determine retention category
+    const retentionCategory = this.getRetentionCategory(input.actionCategory);
+
+    await db.run(
+      `INSERT INTO audit_log (
+                id, timestamp, actor_type, actor_id, actor_email, actor_name,
+                actor_ip, actor_user_agent, action, action_category, action_description,
+                resource_type, resource_id, resource_name, organization_id, project_id,
+                previous_values, new_values, changed_fields, metadata, request_id,
+                result, error_message, retention_category
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        now,
+        input.actorType,
+        input.actorId || null,
+        input.actorEmail || null,
+        input.actorName || null,
+        input.actorIp || null,
+        input.actorUserAgent || null,
+        input.action,
+        input.actionCategory,
+        input.actionDescription || null,
+        input.resourceType,
+        input.resourceId || null,
+        input.resourceName || null,
+        input.organizationId || null,
+        input.projectId || null,
+        input.previousValues ? JSON.stringify(input.previousValues) : null,
+        input.newValues ? JSON.stringify(input.newValues) : null,
+        changedFields.length > 0 ? JSON.stringify(changedFields) : null,
+        input.metadata ? JSON.stringify(input.metadata) : null,
+        input.requestId || null,
+        input.result || 'success',
+        input.errorMessage || null,
+        retentionCategory,
+      ]
+    );
+
+    return id;
+  }
+
+  /**
+   * Get audit logs with filters
+   */
+  async getLogs(filters: AuditLogFilters): Promise<{ entries: AuditLogEntry[]; total: number }> {
+    const db = await this.getDb();
+
+    let whereClause = '1=1';
+    const params: (string | number)[] = [];
+
+    if (filters.organizationId) {
+      whereClause += ' AND organization_id = ?';
+      params.push(filters.organizationId);
+    }
+
+    if (filters.actorId) {
+      whereClause += ' AND actor_id = ?';
+      params.push(filters.actorId);
+    }
+
+    if (filters.actorType) {
+      whereClause += ' AND actor_type = ?';
+      params.push(filters.actorType);
+    }
+
+    if (filters.action) {
+      whereClause += ' AND action = ?';
+      params.push(filters.action);
+    }
+
+    if (filters.actionCategory) {
+      whereClause += ' AND action_category = ?';
+      params.push(filters.actionCategory);
+    }
+
+    if (filters.resourceType) {
+      whereClause += ' AND resource_type = ?';
+      params.push(filters.resourceType);
+    }
+
+    if (filters.resourceId) {
+      whereClause += ' AND resource_id = ?';
+      params.push(filters.resourceId);
+    }
+
+    if (filters.result) {
+      whereClause += ' AND result = ?';
+      params.push(filters.result);
+    }
+
+    if (filters.fromDate) {
+      whereClause += ' AND timestamp >= ?';
+      params.push(filters.fromDate.toISOString());
+    }
+
+    if (filters.toDate) {
+      whereClause += ' AND timestamp <= ?';
+      params.push(filters.toDate.toISOString());
+    }
+
+    // Get total count
+    const countResult = await db.get<{ count: number }>(
+      `SELECT COUNT(*) as count FROM audit_log WHERE ${whereClause}`,
+      params
+    );
+    const total = countResult?.count || 0;
+
+    // Get entries
+    const limit = filters.limit || 50;
+    const offset = filters.offset || 0;
+
+    const rows = await db.all<{
+      id: string;
+      timestamp: string;
+      actor_type: string;
+      actor_id: string;
+      actor_email: string;
+      actor_name: string;
+      actor_ip: string;
+      action: string;
+      action_category: string;
+      action_description: string;
+      resource_type: string;
+      resource_id: string;
+      resource_name: string;
+      organization_id: string;
+      project_id: string;
+      previous_values: string;
+      new_values: string;
+      changed_fields: string;
+      metadata: string;
+      result: string;
+      error_message: string;
+    }>(`SELECT * FROM audit_log WHERE ${whereClause} ORDER BY timestamp DESC LIMIT ? OFFSET ?`, [
+      ...params,
+      limit,
+      offset,
+    ]);
+
+    const entries = (rows || []).map((r) => ({
+      id: r.id,
+      timestamp: r.timestamp,
+      actorType: r.actor_type as AuditLogEntry['actorType'],
+      actorId: r.actor_id,
+      actorEmail: r.actor_email,
+      actorName: r.actor_name,
+      actorIp: r.actor_ip,
+      action: r.action,
+      actionCategory: r.action_category as AuditLogEntry['actionCategory'],
+      actionDescription: r.action_description,
+      resourceType: r.resource_type,
+      resourceId: r.resource_id,
+      resourceName: r.resource_name,
+      organizationId: r.organization_id,
+      projectId: r.project_id,
+      previousValues: r.previous_values ? JSON.parse(r.previous_values) : undefined,
+      newValues: r.new_values ? JSON.parse(r.new_values) : undefined,
+      changedFields: r.changed_fields ? JSON.parse(r.changed_fields) : undefined,
+      metadata: r.metadata ? JSON.parse(r.metadata) : undefined,
+      result: r.result as AuditLogEntry['result'],
+      errorMessage: r.error_message,
+    }));
+
+    return { entries, total };
+  }
+
+  /**
+   * Get single audit entry
+   */
+  async getEntry(entryId: string): Promise<AuditLogEntry | null> {
+    const { entries } = await this.getLogs({ limit: 1 });
+    const db = await this.getDb();
+
+    const row = await db.get<{
+      id: string;
+      timestamp: string;
+      actor_type: string;
+      actor_id: string;
+      actor_email: string;
+      actor_name: string;
+      actor_ip: string;
+      action: string;
+      action_category: string;
+      action_description: string;
+      resource_type: string;
+      resource_id: string;
+      resource_name: string;
+      organization_id: string;
+      project_id: string;
+      previous_values: string;
+      new_values: string;
+      changed_fields: string;
+      metadata: string;
+      result: string;
+      error_message: string;
+    }>(`SELECT * FROM audit_log WHERE id = ?`, [entryId]);
+
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      timestamp: row.timestamp,
+      actorType: row.actor_type as AuditLogEntry['actorType'],
+      actorId: row.actor_id,
+      actorEmail: row.actor_email,
+      actorName: row.actor_name,
+      actorIp: row.actor_ip,
+      action: row.action,
+      actionCategory: row.action_category as AuditLogEntry['actionCategory'],
+      actionDescription: row.action_description,
+      resourceType: row.resource_type,
+      resourceId: row.resource_id,
+      resourceName: row.resource_name,
+      organizationId: row.organization_id,
+      projectId: row.project_id,
+      previousValues: row.previous_values ? JSON.parse(row.previous_values) : undefined,
+      newValues: row.new_values ? JSON.parse(row.new_values) : undefined,
+      changedFields: row.changed_fields ? JSON.parse(row.changed_fields) : undefined,
+      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      result: row.result as AuditLogEntry['result'],
+      errorMessage: row.error_message,
     };
-    org?: {
-        id?: string;
-        isConsultant?: boolean;
-    };
-    orgContext?: {
-        orgId?: string;
-    };
-    params?: {
-        orgId?: string;
-    };
-    headers?: {
-        'x-forwarded-for'?: string;
-        'user-agent'?: string;
-        'x-org-id'?: string;
-    };
-    originalUrl?: string;
+  }
+
+  /**
+   * Get statistics for dashboard
+   */
+  async getStats(
+    orgId: string,
+    days: number = 7
+  ): Promise<{
+    byCategory: Record<string, number>;
+    byResult: Record<string, number>;
+    byDay: { date: string; count: number }[];
+    topActions: { action: string; count: number }[];
+  }> {
+    const db = await this.getDb();
+    const fromDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+    // By category
+    const categoryRows = await db.all<{ action_category: string; count: number }>(
+      `SELECT action_category, COUNT(*) as count FROM audit_log 
+             WHERE organization_id = ? AND timestamp >= ? 
+             GROUP BY action_category`,
+      [orgId, fromDate]
+    );
+
+    const byCategory: Record<string, number> = {};
+    for (const row of categoryRows || []) {
+      byCategory[row.action_category] = row.count;
+    }
+
+    // By result
+    const resultRows = await db.all<{ result: string; count: number }>(
+      `SELECT result, COUNT(*) as count FROM audit_log 
+             WHERE organization_id = ? AND timestamp >= ? 
+             GROUP BY result`,
+      [orgId, fromDate]
+    );
+
+    const byResult: Record<string, number> = {};
+    for (const row of resultRows || []) {
+      byResult[row.result] = row.count;
+    }
+
+    // By day
+    const dayRows = await db.all<{ date: string; count: number }>(
+      `SELECT DATE(timestamp) as date, COUNT(*) as count FROM audit_log 
+             WHERE organization_id = ? AND timestamp >= ? 
+             GROUP BY DATE(timestamp) ORDER BY date`,
+      [orgId, fromDate]
+    );
+
+    const byDay = (dayRows || []).map((r) => ({ date: r.date, count: r.count }));
+
+    // Top actions
+    const actionRows = await db.all<{ action: string; count: number }>(
+      `SELECT action, COUNT(*) as count FROM audit_log 
+             WHERE organization_id = ? AND timestamp >= ? 
+             GROUP BY action ORDER BY count DESC LIMIT 10`,
+      [orgId, fromDate]
+    );
+
+    const topActions = (actionRows || []).map((r) => ({ action: r.action, count: r.count }));
+
+    return { byCategory, byResult, byDay, topActions };
+  }
+
+  // ==========================================
+  // PRIVATE HELPERS
+  // ==========================================
+
+  private getChangedFields(prev: Record<string, unknown>, next: Record<string, unknown>): string[] {
+    const changed: string[] = [];
+    const allKeys = new Set([...Object.keys(prev), ...Object.keys(next)]);
+
+    for (const key of allKeys) {
+      if (JSON.stringify(prev[key]) !== JSON.stringify(next[key])) {
+        changed.push(key);
+      }
+    }
+
+    return changed;
+  }
+
+  private getRetentionCategory(actionCategory: string): string {
+    switch (actionCategory) {
+      case 'auth':
+        return 'security';
+      case 'admin':
+      case 'billing':
+        return 'compliance';
+      case 'system':
+        return 'debug';
+      default:
+        return 'standard';
+    }
+  }
 }
 
-// ============================================
-// SECURITY: Sensitive field redaction
-// ============================================
-
-const SENSITIVE_KEYS = new Set([
-    // Auth & Tokens
-    'password',
-    'passwordHash',
-    'password_hash',
-    'token',
-    'accessToken',
-    'access_token',
-    'refreshToken',
-    'refresh_token',
-    'jwt',
-    'jwtToken',
-    'bearer',
-    'authorization',
-    'auth',
-
-    // Secrets & Keys
-    'apiKey',
-    'api_key',
-    'apikey',
-    'secret',
-    'secretKey',
-    'secret_key',
-    'clientSecret',
-    'client_secret',
-    'privateKey',
-    'private_key',
-    'encryptionKey',
-    'encryption_key',
-
-    // Invite & Access Codes
-    'inviteCode',
-    'invite_code',
-    'accessCode',
-    'access_code',
-    'verificationCode',
-    'verification_code',
-    'resetToken',
-    'reset_token',
-
-    // PII (optional redaction)
-    'ssn',
-    'socialSecurityNumber',
-    'creditCard',
-    'credit_card',
-    'cardNumber',
-    'card_number',
-    'cvv',
-    'cvc',
-]);
-
-/**
- * Recursively sanitize metadata object, redacting sensitive fields.
- */
-export function sanitizeMetadata(obj: unknown, depth = 0): unknown {
-    if (depth > 10) return '[MAX_DEPTH]';
-    if (obj === null || obj === undefined) return obj;
-    if (typeof obj !== 'object') return obj;
-
-    if (Array.isArray(obj)) {
-        return obj.map((item) => sanitizeMetadata(item, depth + 1));
-    }
-
-    const sanitized: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
-        const keyLower = key.toLowerCase();
-
-        // Check if key is sensitive
-        if (SENSITIVE_KEYS.has(key) || SENSITIVE_KEYS.has(keyLower)) {
-            sanitized[key] = '[REDACTED]';
-        }
-        // Recursively sanitize nested objects
-        else if (value && typeof value === 'object') {
-            sanitized[key] = sanitizeMetadata(value, depth + 1);
-        } else {
-            sanitized[key] = value;
-        }
-    }
-    return sanitized;
-}
-
-// ============================================
-// AUDIT SERVICE CLASS
-// ============================================
-
-class AuditServiceClass {
-    private db: IDatabase;
-
-    constructor(deps?: AuditServiceDependencies) {
-        this.db = deps?.db || getDatabase();
-    }
-
-    /**
-     * Database helper: Run query
-     */
-    private async dbRun(sql: string, params: unknown[] = []): Promise<{ lastID?: number; changes: number }> {
-        const result = await DbPromise.run(sql, params);
-        return {
-            lastID: result.lastID,
-            changes: result.changes || 0,
-        };
-    }
-
-    /**
-     * Database helper: Get all rows
-     */
-    private async dbAll<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
-        return await DbPromise.all<T>(sql, params);
-    }
-
-    /**
-     * Log an audit event to the database.
-     */
-    async logEvent(params: LogEventParams): Promise<LogEventResult> {
-        const id = uuidv4();
-        const {
-            actorUserId = null,
-            actorType = ACTOR_TYPES.USER,
-            orgId = null,
-            actionType,
-            entityType = null,
-            entityId = null,
-            metadata = {},
-            ip = null,
-            userAgent = null,
-        } = params;
-
-        // SECURITY: Always sanitize metadata
-        const sanitizedMetadata = sanitizeMetadata(metadata);
-        const metadataJson = JSON.stringify(sanitizedMetadata);
-
-        try {
-            await this.dbRun(
-                `INSERT INTO audit_events 
-                 (id, actor_user_id, actor_type, org_id, action_type, entity_type, entity_id, metadata_json, ip, user_agent)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [id, actorUserId, actorType, orgId, actionType, entityType, entityId, metadataJson, ip, userAgent],
-            );
-
-            return {
-                success: true,
-                id,
-                actionType,
-                entityType,
-                entityId,
-            };
-        } catch (err: unknown) {
-            const error = err instanceof Error ? err : new Error(String(err));
-            logger.error('[AuditService] Failed to log event:', error);
-            // Fail-silent: audit failures should not break main flow
-            return {
-                success: false,
-                error: err instanceof Error ? err.message : String(err),
-            };
-        }
-    }
-
-    /**
-     * Log from Express request context.
-     * Automatically extracts user, org, IP, and user-agent.
-     */
-    async logFromRequest(
-        req: ExpressRequestWithUser,
-        actionType: ActionType | string,
-        entityType: string | null,
-        entityId: string | null,
-        metadata: Record<string, unknown> = {},
-    ): Promise<LogEventResult> {
-        // Determine actor type from request context
-        let actorType: ActorType = ACTOR_TYPES.USER;
-        if (req.org?.isConsultant) {
-            actorType = ACTOR_TYPES.CONSULTANT;
-        }
-
-        const actorUserId = req.user?.id || null;
-        const orgId = req.org?.id || req.orgContext?.orgId || req.user?.organization_id || null;
-        const ip = req.ip || req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || null;
-        const userAgent = req.headers?.['user-agent'] || null;
-
-        return this.logEvent({
-            actorUserId,
-            actorType,
-            orgId,
-            actionType,
-            entityType,
-            entityId,
-            metadata,
-            ip,
-            userAgent,
-        });
-    }
-
-    /**
-     * Log a SYSTEM event (no user actor).
-     */
-    async logSystemEvent(
-        actionType: ActionType | string,
-        entityType: string | null,
-        entityId: string | null,
-        orgId: string | null = null,
-        metadata: Record<string, unknown> = {},
-    ): Promise<LogEventResult> {
-        return this.logEvent({
-            actorUserId: null,
-            actorType: ACTOR_TYPES.SYSTEM,
-            orgId,
-            actionType,
-            entityType,
-            entityId,
-            metadata,
-        });
-    }
-
-    /**
-     * Log an AI event.
-     */
-    async logAIEvent(
-        actionType: ActionType | string,
-        entityType: string | null,
-        entityId: string | null,
-        orgId: string | null = null,
-        metadata: Record<string, unknown> = {},
-    ): Promise<LogEventResult> {
-        return this.logEvent({
-            actorUserId: null,
-            actorType: ACTOR_TYPES.AI,
-            orgId,
-            actionType,
-            entityType,
-            entityId,
-            metadata,
-        });
-    }
-
-    /**
-     * Log a security event (access denied, tenant hopping, etc.)
-     */
-    async logSecurityEvent(
-        req: ExpressRequestWithUser,
-        actionType: ActionType | string,
-        metadata: Record<string, unknown> = {},
-    ): Promise<LogEventResult> {
-        return this.logFromRequest(req, actionType, 'SECURITY', null, {
-            ...metadata,
-            attemptedOrg: req.params?.orgId || req.headers?.['x-org-id'],
-            userOrg: req.user?.organization_id,
-            path: req.originalUrl,
-            method: req.method,
-        });
-    }
-
-    /**
-     * Query audit events with filters.
-     */
-    async getEvents(params: GetEventsParams = {}): Promise<AuditEvent[]> {
-        const { orgId, actorUserId, actionType, entityType, entityId, limit = 100, offset = 0 } = params;
-
-        const conditions: string[] = [];
-        const queryParams: unknown[] = [];
-
-        if (orgId) {
-            conditions.push('org_id = ?');
-            queryParams.push(orgId);
-        }
-        if (actorUserId) {
-            conditions.push('actor_user_id = ?');
-            queryParams.push(actorUserId);
-        }
-        if (actionType) {
-            conditions.push('action_type = ?');
-            queryParams.push(actionType);
-        }
-        if (entityType) {
-            conditions.push('entity_type = ?');
-            queryParams.push(entityType);
-        }
-        if (entityId) {
-            conditions.push('entity_id = ?');
-            queryParams.push(entityId);
-        }
-
-        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-
-        const rows = await this.dbAll<AuditEvent>(
-            `SELECT * FROM audit_events ${whereClause} ORDER BY ts DESC LIMIT ? OFFSET ?`,
-            [...queryParams, limit, offset],
-        );
-
-        return rows.map((row) => ({
-            ...row,
-            metadata: JSON.parse(row.metadata_json || '{}') as Record<string, unknown>,
-        }));
-    }
-
-    /**
-     * Generate CSV content for audit events.
-     */
-    async getCSVExport(params: { orgId?: string; limit?: number } = {}): Promise<string> {
-        const { orgId, limit = 1000 } = params;
-        const events = await this.getEvents({ orgId, limit });
-
-        const headers = ['Timestamp', 'Actor ID', 'Actor Type', 'Action', 'Entity Type', 'Entity ID', 'IP', 'Metadata'];
-        const rows = events.map((e) => [
-            e.ts,
-            e.actor_user_id || 'System',
-            e.actor_type,
-            e.action_type,
-            e.entity_type || 'N/A',
-            e.entity_id || 'N/A',
-            e.ip || 'N/A',
-            JSON.stringify(e.metadata || {}).replace(/"/g, '""'),
-        ]);
-
-        const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join(
-            '\n',
-        );
-
-        return csvContent;
-    }
-
-    /**
-     * Alias for logEvent (for backward compatibility)
-     */
-    async log(params: LogEventParams): Promise<LogEventResult> {
-        return this.logEvent(params);
-    }
-}
-
-// ============================================
-// EXPORTS
-// ===========================================
-
-// Export singleton instance
-const auditService = new AuditServiceClass();
-
-// Export class for testing
-export { AuditServiceClass };
-
-// Export default instance (for backward compatibility)
+// Export singleton
+const auditService = new AuditService();
 export default auditService;
 
-// Export individual functions for backward compatibility
-export const logEvent = (params: LogEventParams) => auditService.logEvent(params);
-export const logFromRequest = (
-    req: ExpressRequestWithUser,
-    actionType: ActionType | string,
-    entityType: string | null,
-    entityId: string | null,
-    metadata: Record<string, unknown> = {},
-) => auditService.logFromRequest(req, actionType, entityType, entityId, metadata);
-export const logSystemEvent = (
-    actionType: ActionType | string,
-    entityType: string | null,
-    entityId: string | null,
-    orgId: string | null = null,
-    metadata: Record<string, unknown> = {},
-) => auditService.logSystemEvent(actionType, entityType, entityId, orgId, metadata);
-export const logAIEvent = (
-    actionType: ActionType | string,
-    entityType: string | null,
-    entityId: string | null,
-    orgId: string | null = null,
-    metadata: Record<string, unknown> = {},
-) => auditService.logAIEvent(actionType, entityType, entityId, orgId, metadata);
-export const logSecurityEvent = (
-    req: ExpressRequestWithUser,
-    actionType: ActionType | string,
-    metadata: Record<string, unknown> = {},
-) => auditService.logSecurityEvent(req, actionType, metadata);
-export const getEvents = (params: GetEventsParams = {}) => auditService.getEvents(params);
-export const getCSVExport = (params: { orgId?: string; limit?: number } = {}) => auditService.getCSVExport(params);
+// Named exports
+export const log = (input: AuditLogInput) => auditService.log(input);
+export const getLogs = (filters: AuditLogFilters) => auditService.getLogs(filters);
+export const getEntry = (entryId: string) => auditService.getEntry(entryId);
+export const getStats = (orgId: string, days?: number) => auditService.getStats(orgId, days);
+
+// Convenience methods for common actions
+export const logAuth = (
+  action: string,
+  input: Omit<AuditLogInput, 'action' | 'actionCategory' | 'resourceType'>
+) =>
+  auditService.log({
+    ...input,
+    action: `auth.${action}`,
+    actionCategory: 'auth',
+    resourceType: 'session',
+  });
+
+export const logDataChange = (
+  action: 'create' | 'update' | 'delete',
+  resourceType: string,
+  input: Omit<AuditLogInput, 'action' | 'actionCategory' | 'resourceType'>
+) => auditService.log({ ...input, action: `data.${action}`, actionCategory: 'data', resourceType });
+
+export const logAdminAction = (
+  action: string,
+  resourceType: string,
+  input: Omit<AuditLogInput, 'action' | 'actionCategory' | 'resourceType'>
+) =>
+  auditService.log({ ...input, action: `admin.${action}`, actionCategory: 'admin', resourceType });
+
+export const logAIAction = (
+  action: string,
+  input: Omit<AuditLogInput, 'action' | 'actionCategory' | 'actorType'>
+) => auditService.log({ ...input, action: `ai.${action}`, actionCategory: 'ai', actorType: 'ai' });

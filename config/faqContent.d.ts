@@ -6,13 +6,13 @@
  */
 import { HelpModuleId } from './viewToModuleMapping';
 export interface FAQItem {
-    id: string;
-    question: string;
-    questionPl: string;
-    answer: string;
-    answerPl: string;
-    moduleId: HelpModuleId;
-    tags: string[];
+  id: string;
+  question: string;
+  questionPl: string;
+  answer: string;
+  answerPl: string;
+  moduleId: HelpModuleId;
+  tags: string[];
 }
 export declare const FAQ_CONTENT: FAQItem[];
 /**

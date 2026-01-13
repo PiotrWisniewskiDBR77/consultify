@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Branding Service
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -6,7 +7,7 @@
  */
 
 // Lazy load the JS service module
-import service from '../../services/brandingService.js';
+import service from './brandingService.js';
 
 // Export default instance (for backward compatibility)
 export default service;

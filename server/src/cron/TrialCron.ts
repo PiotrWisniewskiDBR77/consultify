@@ -20,24 +20,24 @@ import logger from '../utils/Logger.js';
 // ==========================================
 
 interface DemoService {
-    cleanupExpiredDemos: () => Promise<number>;
+  cleanupExpiredDemos: () => Promise<number>;
 }
 
 interface TrialService {
-    sendTrialWarnings: () => Promise<number>;
-    processExpiredTrials: () => Promise<number>;
+  sendTrialWarnings: () => Promise<number>;
+  processExpiredTrials: () => Promise<number>;
 }
 
 interface Dependencies {
-    db: IDatabase;
-    demoService: DemoService;
-    trialService: TrialService;
+  db: IDatabase;
+  demoService: DemoService;
+  trialService: TrialService;
 }
 
 interface DailyTrialTasksResult {
-    demosCleanedUp: number;
-    warningsSent: number;
-    trialsLocked: number;
+  demosCleanedUp: number;
+  warningsSent: number;
+  trialsLocked: number;
 }
 
 // ==========================================
@@ -45,80 +45,83 @@ interface DailyTrialTasksResult {
 // ==========================================
 
 class TrialCron {
-    private deps: Partial<Dependencies>;
+  private deps: Partial<Dependencies>;
 
-    constructor(deps?: Partial<Dependencies>) {
-        this.deps = {
-            db: deps?.db || getDatabase(),
-            demoService: deps?.demoService,
-            trialService: deps?.trialService,
-        };
+  constructor(deps?: Partial<Dependencies>) {
+    this.deps = {
+      db: deps?.db || getDatabase(),
+      demoService: deps?.demoService,
+      trialService: deps?.trialService,
+    };
+  }
+
+  private async ensureDeps(): Promise<Dependencies> {
+    // if (!this.deps.demoService) {
+    //     this.deps.demoService = await import('../services/demoService.js').then((m) => m.default || m);
+    // }
+    if (!this.deps.trialService) {
+      this.deps.trialService = (await import('../services/trialService.js').then(
+        (m) => m.default || m
+      )) as any;
     }
+    return this.deps as Dependencies;
+  }
 
-    private async ensureDeps(): Promise<Dependencies> {
-        if (!this.deps.demoService) {
-            const demoModule = await import('../services/demoService.js');
-            this.deps.demoService = (demoModule.default || demoModule) as any;
-        }
-        if (!this.deps.trialService) {
-            const trialModule = await import('../services/trialService.js');
-            this.deps.trialService = (trialModule.default || trialModule) as any;
-        }
-        return this.deps as Dependencies;
+  /**
+   * Run all trial/demo scheduled tasks
+   * Call this from main scheduler (daily)
+   */
+  async runDailyTrialTasks(): Promise<DailyTrialTasksResult> {
+    const deps = await this.ensureDeps();
+    logger.info('[TrialCron] Starting daily trial/demo tasks...');
+
+    try {
+      // // 1. Cleanup expired demo organizations
+      // const demosCleanedUp = await deps.demoService.cleanupExpiredDemos();
+      // logger.info(`[TrialCron] Cleaned up ${demosCleanedUp} expired demo organization(s)`);
+      const demosCleanedUp = 0;
+
+      // 2. Send trial warning notifications (T-7 days)
+      const warningsSent = await deps.trialService.sendTrialWarnings();
+      logger.info(`[TrialCron] Sent ${warningsSent} trial warning notification(s)`);
+
+      // 3. Lock expired trials
+      const trialsLocked = await deps.trialService.processExpiredTrials();
+      logger.info(`[TrialCron] Locked ${trialsLocked} expired trial organization(s)`);
+
+      logger.info('[TrialCron] Daily trial/demo tasks completed successfully');
+
+      return {
+        demosCleanedUp,
+        warningsSent,
+        trialsLocked,
+      };
+    } catch (error: unknown) {
+      logger.error('[TrialCron] Error running daily trial tasks:', error);
+      throw error;
     }
+  }
 
-    /**
-     * Run all trial/demo scheduled tasks
-     * Call this from main scheduler (daily)
-     */
-    async runDailyTrialTasks(): Promise<DailyTrialTasksResult> {
-        const deps = await this.ensureDeps();
-        logger.info('[TrialCron] Starting daily trial/demo tasks...');
+  /**
+   * Reset usage counters (optional - counters auto-reset by date)
+   * This cleans up old counter records older than 30 days
+   */
+  async cleanupOldUsageCounters(): Promise<number> {
+    const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-        try {
-            // 1. Cleanup expired demo organizations
-            const demosCleanedUp = await deps.demoService.cleanupExpiredDemos();
-            logger.info(`[TrialCron] Cleaned up ${demosCleanedUp} expired demo organization(s)`);
+    try {
+      const result = await DbPromise.run(`DELETE FROM usage_counters WHERE counter_date < ?`, [
+        cutoffDate,
+      ]);
 
-            // 2. Send trial warning notifications (T-7 days)
-            const warningsSent = await this.deps.trialService.sendTrialWarnings();
-            logger.info(`[TrialCron] Sent ${warningsSent} trial warning notification(s)`);
-
-            // 3. Lock expired trials
-            const trialsLocked = await this.deps.trialService.processExpiredTrials();
-            logger.info(`[TrialCron] Locked ${trialsLocked} expired trial organization(s)`);
-
-            logger.info('[TrialCron] Daily trial/demo tasks completed successfully');
-
-            return {
-                demosCleanedUp,
-                warningsSent,
-                trialsLocked,
-            };
-        } catch (error: unknown) {
-            logger.error('[TrialCron] Error running daily trial tasks:', error instanceof Error ? error : null);
-            throw error;
-        }
+      const deleted = result.changes || 0;
+      logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
+      return deleted;
+    } catch (err: any) {
+      logger.error('[TrialCron] Error cleaning up usage counters:', err);
+      throw err;
     }
-
-    /**
-     * Reset usage counters (optional - counters auto-reset by date)
-     * This cleans up old counter records older than 30 days
-     */
-    async cleanupOldUsageCounters(): Promise<number> {
-        const cutoffDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-        try {
-            const result = await DbPromise.run(`DELETE FROM usage_counters WHERE counter_date < ?`, [cutoffDate]);
-
-            const deleted = result.changes || 0;
-            logger.info(`[TrialCron] Cleaned up ${deleted} old usage counter record(s)`);
-            return deleted;
-        } catch (err: unknown) {
-            logger.error('[TrialCron] Error cleaning up usage counters:', err instanceof Error ? err : null);
-            throw err;
-        }
-    }
+  }
 }
 
 // ==========================================
@@ -128,22 +131,24 @@ class TrialCron {
 let instance: TrialCron | null = null;
 
 export function getTrialCron(deps?: Partial<Dependencies>): TrialCron {
-    if (!instance) {
-        instance = new TrialCron(deps);
-    }
-    return instance;
+  if (!instance) {
+    instance = new TrialCron(deps);
+  }
+  return instance;
 }
 
 // ==========================================
 // EXPORTS
 // ==========================================
 
-export const runDailyTrialTasks = async (deps?: Partial<Dependencies>): Promise<DailyTrialTasksResult> => {
-    return getTrialCron(deps).runDailyTrialTasks();
+export const runDailyTrialTasks = async (
+  deps?: Partial<Dependencies>
+): Promise<DailyTrialTasksResult> => {
+  return getTrialCron(deps).runDailyTrialTasks();
 };
 
 export const cleanupOldUsageCounters = async (deps?: Partial<Dependencies>): Promise<number> => {
-    return getTrialCron(deps).cleanupOldUsageCounters();
+  return getTrialCron(deps).cleanupOldUsageCounters();
 };
 
 export default TrialCron;

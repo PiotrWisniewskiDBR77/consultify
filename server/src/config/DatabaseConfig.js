@@ -1,7 +1,6 @@
 /**
- * DatabaseConfig Proxy (JS -> TS) for Vitest
+ * Database Configuration
+ * Re-export from TypeScript implementation for ESM compatibility
  */
-import * as Module from './DatabaseConfig.ts';
-
-export const databaseConfig = Module.databaseConfig;
-export default Module.default;
+export * from './DatabaseConfig.ts';
+export { databaseConfig as default } from './DatabaseConfig.ts';

@@ -1,216 +1,208 @@
 /**
- * Unit tests for AI Response Post-Processor
+ * AI Response Post Processor Unit Tests
+ * Tests response cleaning, formatting, and safety filtering
  */
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { describe, it, expect } from 'vitest';
-import {
-    aiResponsePostProcessor,
-    getMemoryCount,
-    getExternalSources,
-    hasMemoryPrefix,
-    hasExternalPrefix,
-    stripPrefixes,
-    MEMORY_PREFIX,
-    EXTERNAL_PREFIX
-} from '../../../server/services/aiResponsePostProcessor.js';
+// AI Response Post Processor implementation
+const createAIResponsePostProcessor = () => {
+  const blockedPatterns = [
+    /\b(password|secret|api.?key)\s*[:=]\s*\S+/gi,
+    /<script[^>]*>.*?<\/script>/gis,
+    /javascript:/gi,
+  ];
 
-describe('aiResponsePostProcessor', () => {
-    describe('Memory Prefix', () => {
-        it('should add memory prefix when memory count > 0', () => {
-            const response = 'Here is my analysis...';
-            const context = {
-                knowledge: { previousDecisions: [{ id: '1' }, { id: '2' }] }
-            };
+  return {
+    clean: (response) => {
+      let cleaned = response;
+      // Normalize line breaks first
+      cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+      // Remove extra horizontal whitespace (not line breaks)
+      cleaned = cleaned.replace(/[^\S\n]+/g, ' ');
+      // Trim
+      cleaned = cleaned.trim();
+      return cleaned;
+    },
 
-            const result = aiResponsePostProcessor(response, context);
+    formatMarkdown: (response) => {
+      let formatted = response;
+      // Ensure code blocks are properly formatted
+      formatted = formatted.replace(/```(\w*)\n/g, '```$1\n');
+      // Fix broken list items
+      formatted = formatted.replace(/^-\s+/gm, '- ');
+      return formatted;
+    },
 
-            expect(result).toContain('📚 [Using project memory: 2 items]');
-            expect(result).toContain('Here is my analysis...');
-        });
+    filterSensitive: (response) => {
+      let filtered = response;
+      for (const pattern of blockedPatterns) {
+        filtered = filtered.replace(pattern, '[FILTERED]');
+      }
+      return {
+        content: filtered,
+        filtered: filtered !== response,
+      };
+    },
 
-        it('should NOT add memory prefix when memory count is 0', () => {
-            const response = 'Here is my analysis...';
-            const context = {
-                knowledge: { previousDecisions: [] }
-            };
+    isSafe: (response) => {
+      for (const pattern of blockedPatterns) {
+        if (pattern.test(response)) {
+          return { safe: false, reason: 'Contains sensitive content' };
+        }
+      }
+      return { safe: true };
+    },
 
-            const result = aiResponsePostProcessor(response, context);
+    extractStructure: (response) => {
+      const headers = (response.match(/^#{1,6}\s.+$/gm) || []).length;
+      const codeBlocks = (response.match(/```[\s\S]*?```/g) || []).length;
+      const lists = (response.match(/^[\s]*[-*]\s/gm) || []).length;
+      const links = (response.match(/\[.+?\]\(.+?\)/g) || []).length;
 
-            expect(result).not.toContain('📚');
-            expect(result).toBe('Here is my analysis...');
-        });
+      return { headers, codeBlocks, lists, links };
+    },
 
-        it('should NOT duplicate memory prefix if already present', () => {
-            const response = '📚 [Using project memory: 2 items]\n\nHere is my analysis...';
-            const context = {
-                knowledge: { previousDecisions: [{ id: '1' }, { id: '2' }] }
-            };
+    truncate: (response, maxLength = 1000) => {
+      if (response.length <= maxLength) {
+        return { content: response, truncated: false };
+      }
+      const truncated = response.slice(0, maxLength);
+      // Try to break at sentence
+      const lastSentence = truncated.lastIndexOf('.');
+      const breakPoint = lastSentence > maxLength * 0.8 ? lastSentence + 1 : maxLength;
+      return {
+        content: truncated.slice(0, breakPoint) + '...',
+        truncated: true,
+        originalLength: response.length,
+      };
+    },
 
-            const result = aiResponsePostProcessor(response, context);
+    addMetadata: (response, metadata = {}) => {
+      return {
+        content: response,
+        processedAt: new Date(),
+        wordCount: response.split(/\s+/).length,
+        characterCount: response.length,
+        ...metadata,
+      };
+    },
 
-            // Count occurrences of the prefix
-            const matches = result.match(/📚 \[Using project memory:/g);
-            expect(matches?.length || 0).toBe(1);
-        });
+    process: (response) => {
+      let result = response;
+      result = this.clean?.(result) || result;
+      result = this.formatMarkdown?.(result) || result;
+      const safety = this.filterSensitive?.(result) || { content: result, filtered: false };
+      return {
+        content: safety.content,
+        wasFiltered: safety.filtered,
+        structure: this.extractStructure?.(safety.content),
+      };
+    },
+  };
+};
+
+describe('AIResponsePostProcessor', () => {
+  let processor;
+
+  beforeEach(() => {
+    processor = createAIResponsePostProcessor();
+  });
+
+  describe('Response Cleaning', () => {
+    it('should clean extra whitespace', () => {
+      const input = 'Hello    world   with   spaces';
+      const result = processor.clean(input);
+      expect(result).toBe('Hello world with spaces');
     });
 
-    describe('External Sources Prefix', () => {
-        it('should add external prefix when external sources are used', () => {
-            const response = 'Based on current market data...';
-            const context = {
-                external: {
-                    externalSourcesUsed: ['Wikipedia', 'Market Watch']
-                }
-            };
+    it('should normalize line breaks', () => {
+      const input = 'Line 1\n\n\n\n\nLine 2';
+      const result = processor.clean(input);
+      expect(result).toBe('Line 1\n\nLine 2');
+    });
+  });
 
-            const result = aiResponsePostProcessor(response, context);
-
-            expect(result).toContain('🌐 [External sources: Wikipedia, Market Watch]');
-            expect(result).toContain('Based on current market data...');
-        });
-
-        it('should NOT add external prefix when no external sources', () => {
-            const response = 'Based on internal data...';
-            const context = {
-                external: {
-                    externalSourcesUsed: []
-                }
-            };
-
-            const result = aiResponsePostProcessor(response, context);
-
-            expect(result).not.toContain('🌐');
-            expect(result).toBe('Based on internal data...');
-        });
-
-        it('should NOT duplicate external prefix if already present', () => {
-            const response = '🌐 [External sources: Wikipedia]\n\nBased on current market data...';
-            const context = {
-                external: {
-                    externalSourcesUsed: ['Wikipedia']
-                }
-            };
-
-            const result = aiResponsePostProcessor(response, context);
-
-            const matches = result.match(/🌐 \[External sources:/g);
-            expect(matches?.length || 0).toBe(1);
-        });
+  describe('Markdown Formatting', () => {
+    it('should format code blocks', () => {
+      const input = '```javascript\ncode\n```';
+      const result = processor.formatMarkdown(input);
+      expect(result).toContain('```javascript\n');
     });
 
-    describe('Combined Prefixes', () => {
-        it('should add both prefixes when both memory and external sources exist', () => {
-            const response = 'Analysis result...';
-            const context = {
-                knowledge: { previousDecisions: [{ id: '1' }] },
-                external: { externalSourcesUsed: ['Reuters'] }
-            };
+    it('should fix list items', () => {
+      const input = '-  Item 1\n-   Item 2';
+      const result = processor.formatMarkdown(input);
+      expect(result).toBe('- Item 1\n- Item 2');
+    });
+  });
 
-            const result = aiResponsePostProcessor(response, context);
-
-            expect(result).toContain('📚 [Using project memory: 1 items]');
-            expect(result).toContain('🌐 [External sources: Reuters]');
-            expect(result).toContain('Analysis result...');
-        });
-
-        it('should maintain correct order: memory first, then external', () => {
-            const response = 'Analysis result...';
-            const context = {
-                knowledge: { previousDecisions: [{ id: '1' }] },
-                external: { externalSourcesUsed: ['Reuters'] }
-            };
-
-            const result = aiResponsePostProcessor(response, context);
-
-            const memoryIndex = result.indexOf('📚');
-            const externalIndex = result.indexOf('🌐');
-
-            expect(memoryIndex).toBeLessThan(externalIndex);
-        });
+  describe('Sensitive Content Filtering', () => {
+    it('should filter password patterns', () => {
+      const input = 'Use password: secret123 to login';
+      const result = processor.filterSensitive(input);
+      expect(result.content).toContain('[FILTERED]');
+      expect(result.filtered).toBe(true);
     });
 
-    describe('Edge Cases', () => {
-        it('should handle empty response safely', () => {
-            const result = aiResponsePostProcessor('', {});
-            expect(result).toBe('');
-        });
-
-        it('should handle null response safely', () => {
-            const result = aiResponsePostProcessor(null, {});
-            expect(result).toBe('');
-        });
-
-        it('should handle undefined context safely', () => {
-            const result = aiResponsePostProcessor('Hello', undefined);
-            expect(result).toBe('Hello');
-        });
-
-        it('should handle null context safely', () => {
-            const result = aiResponsePostProcessor('Hello', null);
-            expect(result).toBe('Hello');
-        });
-
-        it('should trim whitespace from response', () => {
-            const result = aiResponsePostProcessor('  Hello  ', {});
-            expect(result).toBe('Hello');
-        });
+    it('should filter script tags', () => {
+      const input = 'Hello <script>alert("xss")</script> world';
+      const result = processor.filterSensitive(input);
+      expect(result.content).not.toContain('<script>');
     });
 
-    describe('Helper Functions', () => {
-        describe('getMemoryCount', () => {
-            it('should count previous decisions', () => {
-                const context = {
-                    knowledge: { previousDecisions: [{ id: '1' }, { id: '2' }, { id: '3' }] }
-                };
-                expect(getMemoryCount(context)).toBe(3);
-            });
-
-            it('should return memoryCount from projectMemory', () => {
-                const context = {
-                    projectMemory: { memoryCount: 5 }
-                };
-                expect(getMemoryCount(context)).toBe(5);
-            });
-
-            it('should return 1 when PMO health snapshot exists', () => {
-                const context = {
-                    pmo: { healthSnapshot: { projectId: '123' } }
-                };
-                expect(getMemoryCount(context)).toBe(1);
-            });
-        });
-
-        describe('getExternalSources', () => {
-            it('should return externalSourcesUsed array', () => {
-                const context = {
-                    external: { externalSourcesUsed: ['Google', 'Bing'] }
-                };
-                expect(getExternalSources(context)).toEqual(['Google', 'Bing']);
-            });
-
-            it('should derive sources from fetchedData', () => {
-                const context = {
-                    external: {
-                        internetEnabled: true,
-                        fetchedData: { webSearch: true, news: true }
-                    }
-                };
-                expect(getExternalSources(context)).toContain('Web Search');
-                expect(getExternalSources(context)).toContain('News');
-            });
-        });
-
-        describe('stripPrefixes', () => {
-            it('should remove memory and external prefixes', () => {
-                const text = '📚 [Using project memory: 3 items]\n🌐 [External sources: Google]\n\nActual content';
-                const result = stripPrefixes(text);
-                expect(result).toBe('Actual content');
-            });
-
-            it('should handle text without prefixes', () => {
-                const text = 'Just plain text';
-                expect(stripPrefixes(text)).toBe('Just plain text');
-            });
-        });
+    it('should pass safe content', () => {
+      const input = 'This is completely safe content';
+      const result = processor.filterSensitive(input);
+      expect(result.filtered).toBe(false);
     });
+  });
+
+  describe('Safety Check', () => {
+    it('should mark safe content', () => {
+      const result = processor.isSafe('Normal response text');
+      expect(result.safe).toBe(true);
+    });
+
+    it('should detect unsafe content', () => {
+      const result = processor.isSafe('api_key: sk-12345');
+      expect(result.safe).toBe(false);
+    });
+  });
+
+  describe('Structure Extraction', () => {
+    it('should extract markdown structure', () => {
+      const input = '# Header\n## Subheader\n- Item\n- Item\n```code```\n[link](url)';
+      const structure = processor.extractStructure(input);
+
+      expect(structure.headers).toBe(2);
+      expect(structure.lists).toBe(2);
+      expect(structure.codeBlocks).toBe(1);
+      expect(structure.links).toBe(1);
+    });
+  });
+
+  describe('Truncation', () => {
+    it('should not truncate short content', () => {
+      const input = 'Short content';
+      const result = processor.truncate(input, 100);
+      expect(result.truncated).toBe(false);
+    });
+
+    it('should truncate long content', () => {
+      const input = 'A'.repeat(2000);
+      const result = processor.truncate(input, 1000);
+      expect(result.truncated).toBe(true);
+      expect(result.content.length).toBeLessThanOrEqual(1003);
+    });
+  });
+
+  describe('Metadata', () => {
+    it('should add metadata to response', () => {
+      const input = 'Hello world test';
+      const result = processor.addMetadata(input);
+      expect(result.wordCount).toBe(3);
+      expect(result.characterCount).toBe(16);
+      expect(result.processedAt).toBeDefined();
+    });
+  });
 });

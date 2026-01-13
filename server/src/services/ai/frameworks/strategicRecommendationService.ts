@@ -9,7 +9,7 @@ import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
 const loadStrategicrecommendation = createCachedLazyService(
-    '../../services/ai/frameworks/strategicRecommendationService.js',
+  '../../../ai/frameworks/strategicRecommendationService.js'
 );
 
 // Export default instance (for backward compatibility)

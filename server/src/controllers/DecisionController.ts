@@ -13,9 +13,9 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
-    CreateDecisionRequest,
-    DecideRequest,
-    EscalateDecisionRequest,
+  CreateDecisionRequest,
+  DecideRequest,
+  EscalateDecisionRequest,
 } from '../validators/decision.validators.js';
 
 // ==========================================
@@ -23,10 +23,10 @@ import type {
 // ==========================================
 
 interface AuditTrailEntry {
-    action: string;
-    by: string;
-    at: string;
-    notes?: string;
+  action: string;
+  by: string;
+  at: string;
+  notes?: string;
 }
 
 // ==========================================
@@ -34,46 +34,56 @@ interface AuditTrailEntry {
 // ==========================================
 
 export class DecisionController {
-    /**
-     * Get all decisions
-     */
-    static getDecisions = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { projectId, status, relatedObjectId } = req.query;
+  /**
+   * Get all decisions
+   */
+  static getDecisions = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { projectId, status, relatedObjectId } = req.query;
+      const orgId = req.user?.organizationId;
 
-        let sql = `SELECT d.*, u.first_name, u.last_name 
+      let sql = `SELECT d.*, u.first_name, u.last_name 
                    FROM decisions d
                    LEFT JOIN users u ON d.decision_owner_id = u.id
                    WHERE 1=1`;
-        type SQLParam = string | number | boolean | null | undefined;
-        const params: SQLParam[] = [];
 
-        if (projectId) {
-            sql += ` AND d.project_id = ?`;
-            params.push(Array.isArray(projectId) ? (projectId[0] as SQLParam) : (projectId as SQLParam));
-        }
-        if (status) {
-            sql += ` AND d.status = ?`;
-            params.push(Array.isArray(status) ? (status[0] as SQLParam) : (status as SQLParam));
-        }
-        if (relatedObjectId) {
-            sql += ` AND d.related_object_id = ?`;
-            params.push(Array.isArray(relatedObjectId) ? (relatedObjectId[0] as SQLParam) : (relatedObjectId as SQLParam));
-        }
+      type SQLParam = string | number | boolean | null | undefined;
+      const params: SQLParam[] = [];
 
-        sql += ` ORDER BY d.created_at DESC`;
+      if (orgId) {
+        sql += ` AND d.organization_id = ?`;
+        params.push(orgId);
+      }
+      if (projectId) {
+        sql += ` AND d.project_id = ?`;
+        params.push(projectId);
+      }
+      if (status) {
+        sql += ` AND d.status = ?`;
+        params.push(status);
+      }
+      if (relatedObjectId) {
+        sql += ` AND d.related_object_id = ?`;
+        params.push(relatedObjectId);
+      }
 
-        const decisions = await queryHelpers.queryAll(sql, params);
-        res.json(decisions);
-    });
+      sql += ` ORDER BY d.created_at DESC`;
 
-    /**
-     * Get decision bottlenecks
-     */
-    static getBottlenecks = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { projectId } = req.query;
+      const rows = await queryHelpers.queryAll(sql, params);
+      const decisions = rows.map((row) => queryHelpers.transformRow(row));
+      res.json(decisions);
+    }
+  );
 
-        // Aging decisions
-        const agingSql = `
+  /**
+   * Get decision bottlenecks
+   */
+  static getBottlenecks = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { projectId } = req.query;
+
+      // Aging decisions
+      const agingSql = `
             SELECT d.*, 
                 CAST(julianday('now') - julianday(d.created_at) AS INTEGER) as days_waiting,
                 u.first_name || ' ' || u.last_name as owner_name
@@ -85,12 +95,12 @@ export class DecisionController {
             ORDER BY days_waiting DESC
             LIMIT 20
         `;
-        const agingParams = projectId ? [projectId] : [];
+      const agingParams = projectId ? [projectId] : [];
 
-        const aging = await DbPromise.all(agingSql, agingParams);
+      const aging = await DbPromise.all(agingSql, agingParams);
 
-        // Blocking decisions
-        const blockingSql = `
+      // Blocking decisions
+      const blockingSql = `
             SELECT d.*, 
                 u.first_name || ' ' || u.last_name as owner_name,
                 COUNT(di.id) as blocked_count
@@ -104,186 +114,193 @@ export class DecisionController {
             ORDER BY blocked_count DESC
             LIMIT 20
         `;
-        const blockingParams = projectId ? [projectId] : [];
+      const blockingParams = projectId ? [projectId] : [];
 
-        const blocking = await DbPromise.all(blockingSql, blockingParams);
+      const blocking = await DbPromise.all(blockingSql, blockingParams);
 
-        res.json({ aging, blocking });
-    });
+      res.json({ aging, blocking });
+    }
+  );
 
-    /**
-     * Get single decision by ID
-     */
-    static getDecisionById = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
+  /**
+   * Get single decision by ID
+   */
+  static getDecisionById = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
 
-        const sql = `
+      const sql = `
             SELECT d.*, u.first_name, u.last_name, u.avatar_url
             FROM decisions d
             LEFT JOIN users u ON d.decision_owner_id = u.id
             WHERE d.id = ?
         `;
 
-        const decision = await queryHelpers.queryOne(sql, [id]);
-        if (!decision) {
-            res.status(404).json({ error: 'Decision not found' });
-            return;
-        }
+      const decision = await queryHelpers.queryOne(sql, [id]);
+      if (!decision) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
 
-        res.json(decision);
-    });
+      res.json(queryHelpers.transformRow(decision));
+    }
+  );
 
-    /**
-     * Create a new decision
-     */
-    static createDecision = asyncHandler(
-        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-            const userId = req.user?.id;
-            if (!userId) {
-                res.status(401).json({ error: 'Unauthorized' });
-                return;
-            }
+  /**
+   * Create a new decision
+   */
+  static createDecision = asyncHandler(
+    async (req: AuthenticatedRequest<CreateDecisionRequest>, res: Response): Promise<void> => {
+      const userId = req.user?.id;
+      const orgId = req.user?.organizationId;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-            // Check permission (assuming middleware adds can method)
-            if (!(req as any).can || !(req as any).can('approve_changes')) {
-                res.status(403).json({ error: 'Permission denied' });
-                return;
-            }
+      // Check permission
+      if (!req.can || !req.can('approve_changes')) {
+        res.status(403).json({ error: 'Permission denied' });
+        return;
+      }
 
-            const {
-                projectId,
-                title,
-                description,
-                pmoDomain,
-                decisionOwnerId,
-                relatedObjectType,
-                relatedObjectId,
-                dueDate,
-                priority,
-            } = req.body;
+      const {
+        projectId,
+        title,
+        description,
+        pmoDomain,
+        decisionOwnerId,
+        relatedObjectType,
+        relatedObjectId,
+        dueDate,
+        priority,
+      } = req.body;
 
-            if (!projectId || !title) {
-                res.status(400).json({ error: 'Missing required fields' });
-                return;
-            }
+      if (!projectId || !title) {
+        res.status(400).json({ error: 'Missing required fields' });
+        return;
+      }
 
-            const id = uuidv4();
-            const auditTrail = JSON.stringify([
-                {
-                    action: 'CREATED',
-                    by: userId,
-                    at: new Date().toISOString(),
-                },
-            ]);
+      const id = uuidv4();
+      const auditTrail = JSON.stringify([
+        {
+          action: 'CREATED',
+          by: userId,
+          at: new Date().toISOString(),
+        },
+      ]);
 
-            const sql = `INSERT INTO decisions (
-            id, project_id, title, description, pmo_domain,
+      const sql = `INSERT INTO decisions (
+            id, organization_id, project_id, title, description, pmo_domain,
             decision_owner_id, related_object_type, related_object_id,
             due_date, priority, status, audit_trail
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-            await queryHelpers.queryRun(sql, [
-                id,
-                projectId,
-                title,
-                description || null,
-                pmoDomain,
-                decisionOwnerId || userId,
-                relatedObjectType || null,
-                relatedObjectId || null,
-                dueDate || null,
-                priority || 'medium',
-                'pending',
-                auditTrail,
-            ]);
+      await queryHelpers.queryRun(sql, [
+        id,
+        orgId,
+        projectId,
+        title,
+        description || null,
+        pmoDomain,
+        decisionOwnerId || userId,
+        relatedObjectType || null,
+        relatedObjectId || null,
+        dueDate || null,
+        priority || 'medium',
+        'pending',
+        auditTrail,
+      ]);
 
-            res.status(201).json({ id, projectId, title, status: 'pending' });
-        },
-    );
+      res.status(201).json({ id, projectId, title, status: 'pending' });
+    }
+  );
 
-    /**
-     * Make a decision (approve/reject/defer)
-     */
-    static decide = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { id } = req.params;
-        const { decision, rationale, _notes } = req.body;
-        const userId = req.user?.id;
-        if (!userId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
+  /**
+   * Make a decision (approve/reject/defer)
+   */
+  static decide = asyncHandler(
+    async (req: AuthenticatedRequest<DecideRequest>, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const { decision, rationale, notes } = req.body;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-        if (!['approved', 'rejected', 'deferred'].includes(decision)) {
-            res.status(400).json({ error: 'Invalid decision' });
-            return;
-        }
+      if (!['approved', 'rejected', 'deferred'].includes(decision)) {
+        res.status(400).json({ error: 'Invalid decision' });
+        return;
+      }
 
-        if (!rationale || rationale.trim() === '') {
-            res.status(400).json({ error: 'Decision rationale is required' });
-            return;
-        }
+      if (!rationale || rationale.trim() === '') {
+        res.status(400).json({ error: 'Decision rationale is required' });
+        return;
+      }
 
-        // Get decision first
-        const currentDecision = (await queryHelpers.queryOne(`SELECT * FROM decisions WHERE id = ?`, [id])) as {
-            decision_owner_id?: string;
-            audit_trail?: string;
-        } | null;
+      // Get decision first
+      const currentDecision = await queryHelpers.queryOne<{
+        decision_owner_id?: string;
+        audit_trail?: string;
+      }>(`SELECT * FROM decisions WHERE id = ?`, [id]);
 
-        if (!currentDecision) {
-            res.status(404).json({ error: 'Decision not found' });
-            return;
-        }
+      if (!currentDecision) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
 
-        // Check if user is decision owner
-        if (
-            currentDecision.decision_owner_id !== userId &&
-            req.user?.role !== 'administrator' &&
-            req.user?.role !== 'owner'
-        ) {
-            res.status(403).json({ error: 'Only decision owner can decide' });
-            return;
-        }
+      // Check if user is decision owner
+      if (
+        currentDecision.decision_owner_id !== userId &&
+        req.user?.role !== 'ADMIN' &&
+        req.user?.role !== 'SUPERADMIN'
+      ) {
+        res.status(403).json({ error: 'Only decision owner can decide' });
+        return;
+      }
 
-        // Update audit trail
-        let auditTrail: AuditTrailEntry[] = [];
-        try {
-            auditTrail = JSON.parse(currentDecision.audit_trail || '[]') as AuditTrailEntry[];
-        } catch {
-            // Ignore parse errors
-        }
-        auditTrail.push({
-            action: decision.toUpperCase(),
-            by: userId,
-            at: new Date().toISOString(),
-            notes: rationale,
-        });
+      // Update audit trail
+      let auditTrail: AuditTrailEntry[] = [];
+      try {
+        auditTrail = JSON.parse(currentDecision.audit_trail || '[]') as AuditTrailEntry[];
+      } catch {
+        // Ignore parse errors
+      }
+      auditTrail.push({
+        action: decision.toUpperCase(),
+        by: userId,
+        at: new Date().toISOString(),
+        notes: rationale,
+      });
 
-        const sql = `UPDATE decisions 
+      const sql = `UPDATE decisions 
                      SET status = ?, outcome = ?, decided_at = CURRENT_TIMESTAMP, audit_trail = ?
                      WHERE id = ?`;
 
-        await queryHelpers.queryRun(sql, [decision, rationale, JSON.stringify(auditTrail), id]);
+      await queryHelpers.queryRun(sql, [decision, rationale, JSON.stringify(auditTrail), id]);
 
-        res.json({ id, status: decision, decidedBy: userId });
-    });
+      res.json({ id, status: decision, decidedBy: userId });
+    }
+  );
 
-    /**
-     * Escalate decision
-     */
-    static escalateDecision = asyncHandler(
-        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-            const { id } = req.params;
-            const { reason, escalateToUserId } = req.body;
-            const userId = req.user?.id;
-            if (!userId) {
-                res.status(401).json({ error: 'Unauthorized' });
-                return;
-            }
+  /**
+   * Escalate decision
+   */
+  static escalateDecision = asyncHandler(
+    async (req: AuthenticatedRequest<EscalateDecisionRequest>, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const { reason, escalateToUserId } = req.body;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-            // TODO: Implement escalation logic
-            res.json({ id, message: 'Decision escalated', escalatedBy: userId });
-        },
-    );
+      // TODO: Implement escalation logic
+      res.json({ id, message: 'Decision escalated', escalatedBy: userId });
+    }
+  );
 }
 
 export default DecisionController;

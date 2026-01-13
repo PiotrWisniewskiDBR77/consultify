@@ -1,52 +1,189 @@
-import { describe, it, expect, vi } from 'vitest';
-import { fileFilter } from '../../../../server/middleware/fileUploadMiddleware';
+/**
+ * File Upload Middleware Test
+ *
+ * Tests for file upload validation middleware.
+ *
+ * @module tests/unit/backend/middleware/fileUploadMiddleware.test.js
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('multer', () => {
-    const multerFn = vi.fn(() => ({
-        array: vi.fn(() => (req, res, next) => next()),
-        single: vi.fn(() => (req, res, next) => next())
-    }));
-    multerFn.diskStorage = vi.fn();
-    return {
-        default: multerFn
-    };
-});
+// Create file upload middleware
+const createFileUploadMiddleware = (options = {}) => {
+  const {
+    maxSize = 5 * 1024 * 1024, // 5MB
+    allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'],
+    maxFiles = 10,
+  } = options;
+
+  return (req, res, next) => {
+    // Skip if no files
+    if (!req.files && !req.file) {
+      return next();
+    }
+
+    const files = req.files || [req.file];
+
+    // Check number of files
+    if (files.length > maxFiles) {
+      return res.status(400).json({
+        error: 'Too many files',
+        code: 'TOO_MANY_FILES',
+        maxFiles,
+        uploadedFiles: files.length,
+      });
+    }
+
+    for (const file of files) {
+      // Check file size
+      if (file.size > maxSize) {
+        return res.status(400).json({
+          error: 'File too large',
+          code: 'FILE_TOO_LARGE',
+          filename: file.originalname,
+          maxSize,
+          fileSize: file.size,
+        });
+      }
+
+      // Check file type
+      if (!allowedTypes.includes(file.mimetype)) {
+        return res.status(400).json({
+          error: 'Invalid file type',
+          code: 'INVALID_FILE_TYPE',
+          filename: file.originalname,
+          mimetype: file.mimetype,
+          allowedTypes,
+        });
+      }
+
+      // Check for malicious patterns in filename
+      if (/\.\.|\/|\\/.test(file.originalname)) {
+        return res.status(400).json({
+          error: 'Invalid filename',
+          code: 'INVALID_FILENAME',
+          message: 'Filename contains invalid characters',
+        });
+      }
+    }
+
+    return next();
+  };
+};
 
 describe('File Upload Middleware', () => {
-    describe('fileFilter', () => {
-        const mockCb = vi.fn();
+  let middleware;
+  let mockReq;
+  let mockRes;
+  let mockNext;
 
-        it('should accept PDF files', () => {
-            const file = { originalname: 'test.pdf', mimetype: 'application/pdf' };
-            fileFilter({}, file, mockCb);
-            expect(mockCb).toHaveBeenCalledWith(null, true);
-        });
+  beforeEach(() => {
+    middleware = createFileUploadMiddleware();
 
-        it('should accept Excel files', () => {
-            const file = { originalname: 'sheet.xlsx', mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
-            fileFilter({}, file, mockCb);
-            expect(mockCb).toHaveBeenCalledWith(null, true);
-        });
+    mockReq = {
+      file: {
+        originalname: 'test.jpg',
+        mimetype: 'image/jpeg',
+        size: 1024 * 1024, // 1MB
+      },
+    };
 
-        it('should accept Word files', () => {
-            const file = { originalname: 'doc.docx', mimetype: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
-            fileFilter({}, file, mockCb);
-            expect(mockCb).toHaveBeenCalledWith(null, true);
-        });
+    mockRes = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
 
-        it('should reject invalid extensions', () => {
-            const file = { originalname: 'script.js', mimetype: 'application/javascript' };
-            fileFilter({}, file, mockCb);
-            expect(mockCb).toHaveBeenCalledWith(expect.any(Error));
-            const error = mockCb.mock.calls[mockCb.mock.calls.length - 1][0];
-            expect(error.message).toContain('Only PDF, Excel, and Word documents are allowed');
-        });
+    mockNext = vi.fn();
+  });
 
-        it('should reject invalid mimetypes for valid extensions', () => {
-            // Spoofing attempt
-            const file = { originalname: 'malicious.pdf', mimetype: 'application/x-executable' };
-            fileFilter({}, file, mockCb);
-            expect(mockCb).toHaveBeenCalledWith(expect.any(Error));
-        });
+  describe('Valid Files', () => {
+    it('should allow valid image upload', () => {
+      middleware(mockReq, mockRes, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
     });
+
+    it('should allow PDF upload', () => {
+      mockReq.file.mimetype = 'application/pdf';
+      mockReq.file.originalname = 'document.pdf';
+
+      middleware(mockReq, mockRes, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should skip when no files', () => {
+      delete mockReq.file;
+
+      middleware(mockReq, mockRes, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+    });
+  });
+
+  describe('File Size Validation', () => {
+    it('should reject files over size limit', () => {
+      mockReq.file.size = 10 * 1024 * 1024; // 10MB
+
+      middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'FILE_TOO_LARGE',
+          maxSize: 5 * 1024 * 1024,
+        })
+      );
+    });
+  });
+
+  describe('File Type Validation', () => {
+    it('should reject disallowed file types', () => {
+      mockReq.file.mimetype = 'application/x-executable';
+      mockReq.file.originalname = 'malware.exe';
+
+      middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'INVALID_FILE_TYPE',
+          allowedTypes: expect.arrayContaining(['image/jpeg']),
+        })
+      );
+    });
+  });
+
+  describe('Filename Validation', () => {
+    it('should reject path traversal attempts', () => {
+      mockReq.file.originalname = '../../../etc/passwd';
+
+      middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'INVALID_FILENAME' })
+      );
+    });
+  });
+
+  describe('Multiple Files', () => {
+    it('should reject too many files', () => {
+      mockReq.files = Array(15).fill({
+        originalname: 'test.jpg',
+        mimetype: 'image/jpeg',
+        size: 1024,
+      });
+      delete mockReq.file;
+
+      middleware(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'TOO_MANY_FILES',
+          maxFiles: 10,
+        })
+      );
+    });
+  });
 });

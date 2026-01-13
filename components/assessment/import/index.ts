@@ -1,6 +1,0 @@
-/**
- * Assessment Import Components Index
- */
-
-export { PDFImportWizard } from './PDFImportWizard';
-

@@ -3,8 +3,8 @@
 // Currently not implemented - placeholder for future use
 
 export const initSentry = () => {
-    // Sentry initialization will be added here when needed
-    if (process.env.NODE_ENV === 'production') {
-        // Initialize Sentry in production
-    }
+  // Sentry initialization will be added here when needed
+  if (process.env.NODE_ENV === 'production') {
+    // Initialize Sentry in production
+  }
 };

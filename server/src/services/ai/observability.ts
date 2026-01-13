@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadObservability = createCachedLazyService('../../services/ai/observability.js');
+const loadObservability = createCachedLazyService('../../ai/observability.js');
 
 // Export default instance (for backward compatibility)
 export default loadObservability();

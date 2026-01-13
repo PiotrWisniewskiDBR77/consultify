@@ -2,25 +2,25 @@
   "version": "6.0",
   "nxVersion": "22.3.3",
   "pathMappings": {
-    "@consultify/shared": [
+    "@consultinity/shared": [
       "packages/shared/src/index.ts"
     ],
-    "@consultify/shared/*": [
+    "@consultinity/shared/*": [
       "packages/shared/src/*"
     ],
-    "@consultify/types": [
+    "@consultinity/types": [
       "packages/shared/src/types/index.ts"
     ],
-    "@consultify/types/*": [
+    "@consultinity/types/*": [
       "packages/shared/src/types/*"
     ],
-    "@consultify/utils": [
+    "@consultinity/utils": [
       "packages/shared/src/utils/index.ts"
     ],
-    "@consultify/utils/*": [
+    "@consultinity/utils/*": [
       "packages/shared/src/utils/*"
     ],
-    "@consultify/constants": [
+    "@consultinity/constants": [
       "packages/shared/src/constants/index.ts"
     ]
   },
@@ -6252,7 +6252,7 @@
         "hash": "13666136294312495201"
       },
       {
-        "file": "components/AdminSidebar.tsx",
+        "file": "components/layout/AdminSidebar.tsx",
         "hash": "15869487950957516200"
       },
       {
@@ -6268,7 +6268,7 @@
         "hash": "2559928775574296391"
       },
       {
-        "file": "components/Button.tsx",
+        "file": "components/ui/Button.tsx",
         "hash": "10911589942907093378"
       },
       {
@@ -6284,7 +6284,7 @@
         "hash": "17014751755242078792"
       },
       {
-        "file": "components/ChatPanel.tsx",
+        "file": "components/layout/ChatPanel.tsx",
         "hash": "1167663416267181217"
       },
       {
@@ -6296,7 +6296,7 @@
         "hash": "15679741840373298570"
       },
       {
-        "file": "components/DemoBadge.tsx",
+        "file": "components/ui/DemoBadge.tsx",
         "hash": "10431122209083360940"
       },
       {
@@ -6436,11 +6436,11 @@
         "hash": "16377730583326113467"
       },
       {
-        "file": "components/FullExecutionDashboardWorkspace.tsx",
+        "file": "components/workspaces/FullExecutionDashboardWorkspace.tsx",
         "hash": "17817541159932361113"
       },
       {
-        "file": "components/FullROIWorkspace.tsx",
+        "file": "components/workspaces/FullROIWorkspace.tsx",
         "hash": "13500147416097597911"
       },
       {
@@ -6448,31 +6448,31 @@
         "hash": "16796801194057529791"
       },
       {
-        "file": "components/FullRolloutWorkspace.tsx",
+        "file": "components/workspaces/FullRolloutWorkspace.tsx",
         "hash": "2582780946179330875"
       },
       {
-        "file": "components/FullStep1Workspace.tsx",
+        "file": "components/workspaces/FullStep1Workspace.tsx",
         "hash": "10969704753122847712"
       },
       {
-        "file": "components/FullStep2Workspace.tsx",
+        "file": "components/workspaces/FullStep2Workspace.tsx",
         "hash": "18439945897340592579"
       },
       {
-        "file": "components/FullStep3Workspace.tsx",
+        "file": "components/workspaces/FullStep3Workspace.tsx",
         "hash": "16212340517770533305"
       },
       {
-        "file": "components/FullStep4Workspace.tsx",
+        "file": "components/workspaces/FullStep4Workspace.tsx",
         "hash": "5609603523569152447"
       },
       {
-        "file": "components/FullStep5Workspace.tsx",
+        "file": "components/workspaces/FullStep5Workspace.tsx",
         "hash": "10583402275508649998"
       },
       {
-        "file": "components/FullStep6Workspace.tsx",
+        "file": "components/workspaces/FullStep6Workspace.tsx",
         "hash": "7580897584252423866"
       },
       {
@@ -6484,7 +6484,7 @@
         "hash": "12228164240461953226"
       },
       {
-        "file": "components/GlobalAccessBanners.tsx",
+        "file": "components/layout/GlobalAccessBanners.tsx",
         "hash": "12809952320600938369"
       },
       {
@@ -6524,11 +6524,11 @@
         "hash": "116294213860182993"
       },
       {
-        "file": "components/HelpButton.tsx",
+        "file": "components/ui/HelpButton.tsx",
         "hash": "11925683833701682467"
       },
       {
-        "file": "components/HelpPanel.tsx",
+        "file": "components/layout/HelpPanel.tsx",
         "hash": "8793413372781376003"
       },
       {
@@ -6660,7 +6660,7 @@
         "hash": "12724323477305513805"
       },
       {
-        "file": "components/LoadingScreen.tsx",
+        "file": "components/ui/LoadingScreen.tsx",
         "hash": "6580428730626185099"
       },
       {
@@ -6912,7 +6912,7 @@
         "hash": "14236358600825234444"
       },
       {
-        "file": "components/NotificationDropdown.tsx",
+        "file": "components/layout/NotificationDropdown.tsx",
         "hash": "14078977590217291029"
       },
       {
@@ -7012,7 +7012,7 @@
         "hash": "15864821118674737128"
       },
       {
-        "file": "components/PilotDecisionWorkspace.tsx",
+        "file": "components/workspaces/PilotDecisionWorkspace.tsx",
         "hash": "5754885891950823384"
       },
       {
@@ -7060,7 +7060,7 @@
         "hash": "7877731317900121361"
       },
       {
-        "file": "components/PresenceIndicator.tsx",
+        "file": "components/ui/PresenceIndicator.tsx",
         "hash": "11866712080708698242"
       },
       {
@@ -7384,35 +7384,35 @@
         "hash": "2322865861275961633"
       },
       {
-        "file": "components/Select.tsx",
+        "file": "components/ui/Select.tsx",
         "hash": "8861972591033533830"
       },
       {
-        "file": "components/SettingsSidebar.tsx",
+        "file": "components/layout/SettingsSidebar.tsx",
         "hash": "17135884043950992086"
       },
       {
-        "file": "components/Sidebar.tsx",
+        "file": "components/layout/Sidebar.tsx",
         "hash": "16599476542589432489"
       },
       {
-        "file": "components/SidebarUsage.tsx",
+        "file": "components/layout/SidebarUsage.tsx",
         "hash": "5545430231790240820"
       },
       {
-        "file": "components/SplitLayout.tsx",
+        "file": "components/layout/SplitLayout.tsx",
         "hash": "6677850033476836224"
       },
       {
-        "file": "components/Step1Workspace.tsx",
+        "file": "components/workspaces/Step1Workspace.tsx",
         "hash": "11512399689803635899"
       },
       {
-        "file": "components/Step2Workspace.tsx",
+        "file": "components/workspaces/Step2Workspace.tsx",
         "hash": "12618620519202776632"
       },
       {
-        "file": "components/Step3Workspace.tsx",
+        "file": "components/workspaces/Step3Workspace.tsx",
         "hash": "4235322426283815464"
       },
       {
@@ -7716,7 +7716,7 @@
         "hash": "3096960115675681648"
       },
       {
-        "file": "components/SuperAdminSidebar.tsx",
+        "file": "components/layout/SuperAdminSidebar.tsx",
         "hash": "16260780908006791015"
       },
       {
@@ -7764,7 +7764,7 @@
         "hash": "17023085427028469358"
       },
       {
-        "file": "components/UserProfileMenu.tsx",
+        "file": "components/layout/UserProfileMenu.tsx",
         "hash": "10574751131626005537"
       },
       {
@@ -9660,7 +9660,7 @@
         "hash": "16156404647541788043"
       },
       {
-        "file": "consultinity/60_enablement/videos/01-consultify-welcome.md",
+        "file": "consultinity/60_enablement/videos/01-consultinity-welcome.md",
         "hash": "13320644758629470662"
       },
       {
@@ -10992,7 +10992,7 @@
         "hash": "7419769507687126025"
       },
       {
-        "file": "docs/videos/01-consultify-welcome.md",
+        "file": "docs/videos/01-consultinity-welcome.md",
         "hash": "13588094475636717644"
       },
       {
@@ -26820,7 +26820,7 @@
         "hash": "16230083077273376971"
       },
       {
-        "file": "tests/components/Button.test.tsx",
+        "file": "tests/components/ui/Button.test.tsx",
         "hash": "11793806201004804091"
       },
       {
@@ -26832,7 +26832,7 @@
         "hash": "5505440727034694929"
       },
       {
-        "file": "tests/components/ChatPanel.test.tsx",
+        "file": "tests/components/layout/ChatPanel.test.tsx",
         "hash": "15446420315460027846"
       },
       {
@@ -26884,39 +26884,39 @@
         "hash": "14169628456918521192"
       },
       {
-        "file": "tests/components/FullExecutionDashboardWorkspace.test.tsx",
+        "file": "tests/components/workspaces/FullExecutionDashboardWorkspace.test.tsx",
         "hash": "8675498682707699603"
       },
       {
-        "file": "tests/components/FullROIWorkspace.test.tsx",
+        "file": "tests/components/workspaces/FullROIWorkspace.test.tsx",
         "hash": "14573133685991121075"
       },
       {
-        "file": "tests/components/FullRolloutWorkspace.test.tsx",
+        "file": "tests/components/workspaces/FullRolloutWorkspace.test.tsx",
         "hash": "12546949008003080357"
       },
       {
-        "file": "tests/components/FullStep1Workspace.test.tsx",
+        "file": "tests/components/workspaces/FullStep1Workspace.test.tsx",
         "hash": "17560131244474248866"
       },
       {
-        "file": "tests/components/FullStep2Workspace.test.tsx",
+        "file": "tests/components/workspaces/FullStep2Workspace.test.tsx",
         "hash": "1409810334676953577"
       },
       {
-        "file": "tests/components/FullStep3Workspace.test.tsx",
+        "file": "tests/components/workspaces/FullStep3Workspace.test.tsx",
         "hash": "482131880860661914"
       },
       {
-        "file": "tests/components/FullStep4Workspace.test.tsx",
+        "file": "tests/components/workspaces/FullStep4Workspace.test.tsx",
         "hash": "5914964506072416720"
       },
       {
-        "file": "tests/components/FullStep5Workspace.test.tsx",
+        "file": "tests/components/workspaces/FullStep5Workspace.test.tsx",
         "hash": "17732848255015820786"
       },
       {
-        "file": "tests/components/FullStep6Workspace.test.tsx",
+        "file": "tests/components/workspaces/FullStep6Workspace.test.tsx",
         "hash": "3318585384917258237"
       },
       {
@@ -26924,15 +26924,15 @@
         "hash": "9702742278059547414"
       },
       {
-        "file": "tests/components/GlobalAccessBanners.test.tsx",
+        "file": "tests/components/layout/GlobalAccessBanners.test.tsx",
         "hash": "9107980942367213384"
       },
       {
-        "file": "tests/components/HelpButton.test.tsx",
+        "file": "tests/components/ui/HelpButton.test.tsx",
         "hash": "16891976814567435205"
       },
       {
-        "file": "tests/components/HelpPanel.test.tsx",
+        "file": "tests/components/layout/HelpPanel.test.tsx",
         "hash": "18264881706835998949"
       },
       {
@@ -27012,7 +27012,7 @@
         "hash": "16539266190069035409"
       },
       {
-        "file": "tests/components/LoadingScreen.test.tsx",
+        "file": "tests/components/ui/LoadingScreen.test.tsx",
         "hash": "7447494058270975196"
       },
       {
@@ -27056,7 +27056,7 @@
         "hash": "15920684699652226345"
       },
       {
-        "file": "tests/components/NotificationDropdown.test.tsx",
+        "file": "tests/components/layout/NotificationDropdown.test.tsx",
         "hash": "8296339168087800773"
       },
       {
@@ -27132,7 +27132,7 @@
         "hash": "14964944007534470396"
       },
       {
-        "file": "tests/components/PilotDecisionWorkspace.test.tsx",
+        "file": "tests/components/workspaces/PilotDecisionWorkspace.test.tsx",
         "hash": "14548040435871027737"
       },
       {
@@ -27220,19 +27220,19 @@
         "hash": "15948860630618817914"
       },
       {
-        "file": "tests/components/Sidebar.test.tsx",
+        "file": "tests/components/layout/Sidebar.test.tsx",
         "hash": "3009338992323102568"
       },
       {
-        "file": "tests/components/Step1Workspace.test.tsx",
+        "file": "tests/components/workspaces/Step1Workspace.test.tsx",
         "hash": "8291258457227602704"
       },
       {
-        "file": "tests/components/Step2Workspace.test.tsx",
+        "file": "tests/components/workspaces/Step2Workspace.test.tsx",
         "hash": "17670228085477863199"
       },
       {
-        "file": "tests/components/Step3Workspace.test.tsx",
+        "file": "tests/components/workspaces/Step3Workspace.test.tsx",
         "hash": "1887628753049076294"
       },
       {
@@ -27396,7 +27396,7 @@
         "hash": "14278327356012819556"
       },
       {
-        "file": "tests/components/SuperAdminSidebar.test.tsx",
+        "file": "tests/components/layout/SuperAdminSidebar.test.tsx",
         "hash": "15289935902087453373"
       },
       {
@@ -30593,9 +30593,9 @@
       }
     ],
     "projectFileMap": {
-      "@consultify/app-frontend": [
+      "@consultinity/app-frontend": [
         {
-          "file": "apps/consultify/frontend/package.json",
+          "file": "apps/consultinity/frontend/package.json",
           "hash": "10785713022357235010",
           "deps": [
             "npm:typescript",
@@ -30603,17 +30603,17 @@
             "npm:@types/react-dom",
             "npm:@vitejs/plugin-react",
             "npm:vite",
-            "@consultify/shared",
+            "@consultinity/shared",
             "npm:react",
             "npm:react-dom"
           ]
         },
         {
-          "file": "apps/consultify/frontend/src/index.tsx",
+          "file": "apps/consultinity/frontend/src/index.tsx",
           "hash": "12707450863866331125"
         }
       ],
-      "@consultify/shared": [
+      "@consultinity/shared": [
         {
           "file": "packages/shared/package.json",
           "hash": "5458800569472245453",
@@ -30742,7 +30742,7 @@
           "hash": "15146804485701529856"
         }
       ],
-      "@consultify/new-app-frontend": [
+      "@consultinity/new-app-frontend": [
         {
           "file": "apps/new-app/frontend/package.json",
           "hash": "13807902631506265983",
@@ -30752,7 +30752,7 @@
             "npm:@types/react-dom",
             "npm:@vitejs/plugin-react",
             "npm:vite",
-            "@consultify/shared",
+            "@consultinity/shared",
             "npm:react",
             "npm:react-dom"
           ]
@@ -30772,33 +30772,33 @@
           "hash": "8644646037080722536"
         }
       ],
-      "consultify": [
+      "consultinity": [
         {
-          "file": "apps/consultify/README.md",
+          "file": "apps/consultinity/README.md",
           "hash": "7242560591963188853"
         },
         {
-          "file": "apps/consultify/project.json",
+          "file": "apps/consultinity/project.json",
           "hash": "14559927233347815876"
         }
       ],
-      "@consultify/app-backend": [
+      "@consultinity/app-backend": [
         {
-          "file": "apps/consultify/backend/package.json",
+          "file": "apps/consultinity/backend/package.json",
           "hash": "12125268079342146247",
           "deps": [
             "npm:typescript",
             "npm:@types/node",
             "npm:tsx",
-            "@consultify/shared"
+            "@consultinity/shared"
           ]
         },
         {
-          "file": "apps/consultify/backend/src/index.ts",
+          "file": "apps/consultinity/backend/src/index.ts",
           "hash": "17618616071008529119"
         }
       ],
-      "@consultify/new-app-backend": [
+      "@consultinity/new-app-backend": [
         {
           "file": "apps/new-app/backend/package.json",
           "hash": "5674457762874095468",
@@ -30806,7 +30806,7 @@
             "npm:typescript",
             "npm:@types/node",
             "npm:tsx",
-            "@consultify/shared"
+            "@consultinity/shared"
           ]
         },
         {

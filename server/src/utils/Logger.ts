@@ -1,160 +1,70 @@
 /**
- * Production Logger
+ * Logger Utility
  * Enterprise SaaS Architecture - TypeScript Backend
- *
- * Outputs structured JSON logs for easy parsing by log aggregators
- * Powered by Winston
  */
 
-import type { NextFunction, Request, Response } from 'express';
 import winston from 'winston';
-import 'winston-daily-rotate-file';
-
-import { getCorrelationId } from './RequestStore.js';
-
-const isProduction = process.env.NODE_ENV === 'production';
-
-// ==========================================
-// TYPES
-// ==========================================
 
 export interface LoggerMeta {
-    [key: string]: unknown;
+  [key: string]: unknown;
 }
 
 export interface Logger {
-    info: (message: string, meta?: LoggerMeta) => void;
-    warn: (message: string, meta?: LoggerMeta) => void;
-    error: (message: string, error?: Error | null, meta?: LoggerMeta) => void;
-    debug: (message: string, meta?: LoggerMeta) => void;
-    requestLogger: (req: Request, res: Response, next: NextFunction) => void;
+  error: (message: string, ...meta: any[]) => void;
+  warn: (message: string, ...meta: any[]) => void;
+  info: (message: string, ...meta: any[]) => void;
+  http: (message: string, ...meta: any[]) => void;
+  debug: (message: string, ...meta: any[]) => void;
 }
 
-// ==========================================
-// WINSTON CONFIGURATION
-// ==========================================
+const levels = {
+  error: 0,
+  warn: 1,
+  info: 2,
+  http: 3,
+  debug: 4,
+};
 
-// Define custom formats
-const addCorrelationId = winston.format((info) => {
-    info.correlationId = getCorrelationId();
-    return info;
-});
+const level = () => {
+  const env = process.env.NODE_ENV || 'development';
+  const isDevelopment = env === 'development' || env === 'test';
+  return isDevelopment ? 'debug' : 'warn';
+};
 
-// Configure transports
-const transports: winston.transport[] = [
-    new winston.transports.Console(),
+const colors = {
+  error: 'red',
+  warn: 'yellow',
+  info: 'green',
+  http: 'magenta',
+  debug: 'white',
+};
+
+winston.addColors(colors);
+
+const format = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
+  winston.format.colorize({ all: true }),
+  winston.format.printf((info) => {
+    const { timestamp, level, message, ...meta } = info;
+    const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+    return `${timestamp} ${level}: ${message}${metaStr}`;
+  })
+);
+
+const transports = [
+  new winston.transports.Console(),
+  new winston.transports.File({
+    filename: 'logs/error.log',
+    level: 'error',
+  }),
+  new winston.transports.File({ filename: 'logs/all.log' }),
 ];
 
-// Add file logging in production or if explicitly enabled
-if (isProduction || process.env.ENABLE_FILE_LOGGING === 'true') {
-    // Import 'winston-daily-rotate-file' dynamically or assume it's available if added to project
-    // Note: In ESM/TS, we might need a require or import. 
-    // Since we are in TS, we rely on the import above. 
-    // However, winston-daily-rotate-file usually needs to be required to attach itself to winston.transports
-    // @ts-ignore
-    await import('winston-daily-rotate-file');
-
-    transports.push(
-        new winston.transports.DailyRotateFile({
-            filename: 'logs/error-%DATE%.log',
-            datePattern: 'YYYY-MM-DD',
-            zippedArchive: true,
-            maxSize: '20m',
-            maxFiles: '14d',
-            level: 'error',
-            format: winston.format.json(),
-        }),
-        new winston.transports.DailyRotateFile({
-            filename: 'logs/combined-%DATE%.log',
-            datePattern: 'YYYY-MM-DD',
-            zippedArchive: true,
-            maxSize: '20m',
-            maxFiles: '30d',
-            format: winston.format.json(),
-        }),
-    );
-}
-
-// Configure Winston Logger
-const winstonLogger = winston.createLogger({
-    level: isProduction ? 'info' : 'debug',
-    format: winston.format.combine(
-        addCorrelationId(),
-        winston.format.timestamp(),
-        isProduction
-            ? winston.format.json()
-            : winston.format.combine(
-                winston.format.colorize(),
-                winston.format.printf(({ timestamp, level, message, correlationId, ...meta }) => {
-                    const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
-                    const cid = correlationId ? `[${correlationId}] ` : '';
-                    return `${timestamp} ${level}: ${cid}${message} ${metaStr}`;
-                }),
-            ),
-    ),
-    transports,
+const logger = winston.createLogger({
+  level: level(),
+  levels,
+  format,
+  transports,
 });
-
-// ==========================================
-// LOGGER IMPLEMENTATION
-// ==========================================
-
-const logger: Logger = {
-    info: (message: string, meta: LoggerMeta = {}): void => {
-        winstonLogger.info(message, meta);
-    },
-
-    warn: (message: string, meta: LoggerMeta = {}): void => {
-        winstonLogger.warn(message, meta);
-    },
-
-    error: (message: string, error: Error | null = null, meta: LoggerMeta = {}): void => {
-        const logData: LoggerMeta = { ...meta };
-        if (error) {
-            logData.error = error.message;
-            logData.stack = error.stack;
-            logData.name = error.name;
-        }
-        winstonLogger.error(message, logData);
-    },
-
-    debug: (message: string, meta: LoggerMeta = {}): void => {
-        winstonLogger.debug(message, meta);
-    },
-
-    // Request logging middleware
-    requestLogger: (req: Request, res: Response, next: NextFunction): void => {
-        const start = Date.now();
-
-        // Log request start (debug only)
-        if (!isProduction) {
-            winstonLogger.debug(`Incoming ${req.method} ${req.originalUrl}`);
-        }
-
-        res.on('finish', () => {
-            const duration = Date.now() - start;
-            const logData: LoggerMeta = {
-                method: req.method,
-                url: req.originalUrl,
-                status: res.statusCode,
-                duration: `${duration}ms`,
-                ip: req.ip || (req.socket.remoteAddress ?? 'unknown'),
-                userAgent: req.get('User-Agent') ?? 'unknown',
-            };
-
-            const msg = `HTTP ${req.method} ${req.originalUrl} - ${res.statusCode}`;
-
-            if (res.statusCode >= 500) {
-                winstonLogger.error(msg, logData);
-            } else if (res.statusCode >= 400) {
-                winstonLogger.warn(msg, logData);
-            } else {
-                winstonLogger.info(msg, logData);
-            }
-        });
-
-        next();
-    },
-};
 
 export default logger;

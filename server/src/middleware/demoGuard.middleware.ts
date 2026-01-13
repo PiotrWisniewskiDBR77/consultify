@@ -1,127 +1,283 @@
 /**
- * Demo Guard Middleware
- * Enterprise SaaS Architecture - TypeScript Backend
+ * Demo Mode Middleware
  *
- * Enforces Read-Only restrictions for Demo Users.
- * Blocks state-changing methods (POST, PUT, DELETE, PATCH) unless explicitly allowed.
+ * Handles demo mode context switching and write protection.
+ * When demo mode is enabled, user sees data from the demo organization
+ * instead of their own organization.
  */
-
 import { NextFunction, Response } from 'express';
 
-import type { AuthRequest } from './auth.middleware.js';
-
-// ==========================================
-// TYPES
-// ==========================================
-
-interface DemoRequest extends AuthRequest {
-    isDemo?: boolean;
-}
+import { type AuthRequest } from './auth.middleware.js';
+import { get as dbGet } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 // ==========================================
 // CONSTANTS
 // ==========================================
 
-const ALLOWED_DEMO_PATHS = [
-    '/api/auth/logout',
-    '/api/ai/chat', // AI interaction allowed
-    '/api/ai/stream', // AI streaming allowed
-    '/api/ai/coach', // AI coach interaction allowed
-    '/api/ai/actions', // AI actions (check logic inside for safeguards if needed, but chat/proposal is ok)
-    '/api/ai/explain', // Explainability is read-heavy or interactive viewing
-    '/api/feedback', // Feedback might be useful even in demo? Maybe not. Let's block for now unless critical.
-    '/api/metrics', // Metrics viewing is GET usually.
-];
+export const DEMO_ORG_ID = 'org-demo-acme-global';
+export const DEMO_ORG_NAME = 'Acme Digital Corp';
+
+// ==========================================
+// DEMO CONTEXT MIDDLEWARE
+// ==========================================
+
+/**
+ * Middleware that checks if user has demo mode enabled
+ * and switches their organization context to the demo organization.
+ *
+ * Must be applied AFTER verifyToken middleware.
+ */
+export const demoContextMiddleware = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Check if demo mode is enabled via header or user preference
+    const demoHeader = req.headers['x-demo-mode'];
+    const isDemoMode = demoHeader === 'true' || demoHeader === '1';
+
+    logger.debug(
+      `[DemoMode] Middleware called: isDemoMode=${isDemoMode}, hasUser=${!!req.user}, userOrgId=${req.user?.organizationId}`
+    );
+
+    if (isDemoMode && req.user) {
+      // Store original organization for audit trail
+      const originalOrgId = req.user.organizationId;
+
+      // Switch context to demo organization
+      req.user = {
+        ...req.user,
+        organizationId: DEMO_ORG_ID,
+        isDemo: true,
+      };
+
+      req.isDemo = true;
+      req.organizationId = DEMO_ORG_ID;
+
+      // Store original for potential rollback
+      (req as any).originalOrganizationId = originalOrgId;
+
+      logger.info(
+        `[DemoMode] User ${req.user.id} switched to demo mode (original org: ${originalOrgId} -> ${DEMO_ORG_ID})`
+      );
+    } else if (isDemoMode) {
+      logger.warn(`[DemoMode] Demo header set but no user found on request`);
+    }
+
+    next();
+  } catch (error) {
+    logger.error('[DemoMode] Error in demo context middleware:', error);
+    next();
+  }
+};
+
+// ==========================================
+// DEMO WRITE PROTECTION MIDDLEWARE
+// ==========================================
+
+/**
+ * Middleware that prevents write operations in demo mode.
+ * Returns 403 Forbidden for POST, PUT, PATCH, DELETE when in demo mode.
+ *
+ * Can be configured to allow specific routes.
+ */
+export interface DemoWriteProtectionOptions {
+  allowedRoutes?: string[];
+  allowedMethods?: string[];
+}
+
+export const demoWriteProtection = (options: DemoWriteProtectionOptions = {}) => {
+  const { allowedRoutes = [], allowedMethods = ['GET', 'HEAD', 'OPTIONS'] } = options;
+
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    // Check if demo mode is enabled via header (primary check)
+    const demoHeader = req.headers['x-demo-mode'];
+    const isDemoFromHeader = demoHeader === 'true' || demoHeader === '1';
+
+    // Also check req.isDemo set by demoContextMiddleware
+    const isDemo = isDemoFromHeader || req.isDemo || req.user?.isDemo;
+
+    // Skip if not in demo mode
+    if (!isDemo) {
+      next();
+      return;
+    }
+
+    // Allow safe methods
+    if (allowedMethods.includes(req.method.toUpperCase())) {
+      next();
+      return;
+    }
+
+    // Check if route is allowed
+    const isAllowedRoute = allowedRoutes.some(
+      (route) => req.path.startsWith(route) || req.originalUrl.startsWith(route)
+    );
+
+    if (isAllowedRoute) {
+      next();
+      return;
+    }
+
+    // Block write operation in demo mode
+    logger.warn(`[DemoMode] Blocked ${req.method} ${req.path} - demo mode is read-only`);
+
+    res.status(403).json({
+      success: false,
+      error: 'demo_mode_read_only',
+      message: 'W trybie demo nie można modyfikować danych. Wyłącz tryb demo aby edytować.',
+      isDemoMode: true,
+      details: {
+        method: req.method,
+        path: req.path,
+        hint: 'Dane demo są tylko do odczytu w celach szkoleniowych.',
+      },
+    });
+  };
+};
+
+// ==========================================
+// LEGACY COMPATIBILITY
+// ==========================================
+
+/**
+ * Legacy demo guard - simple passthrough for backward compatibility
+ * @deprecated Use demoContextMiddleware instead
+ */
+export const demoGuard = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  next();
+};
 
 // ==========================================
 // HELPER FUNCTIONS
 // ==========================================
 
 /**
- * Helper to check if path matches allowed list
+ * Check if user has demo mode enabled in their preferences
  */
-const isAllowedPath = (path: string): boolean => {
-    return ALLOWED_DEMO_PATHS.some((allowed) => path.startsWith(allowed));
+export const checkUserDemoPreference = async (userId: string): Promise<boolean> => {
+  try {
+    const result = await dbGet<{ demo_mode_enabled: number }>(
+      'SELECT demo_mode_enabled FROM user_preferences WHERE user_id = ?',
+      [userId]
+    );
+    return result?.demo_mode_enabled === 1;
+  } catch (error) {
+    return false;
+  }
 };
-
-// ==========================================
-// MIDDLEWARE
-// ==========================================
 
 /**
- * Demo Guard - Blocks write operations for demo users
+ * Set user demo mode preference
  */
-export const demoGuard = (req: DemoRequest, res: Response, next: NextFunction): void => {
-    // 1. Check if user is in Demo Mode
-    // We assume req.user is populated by authMiddleware
-    // jwt payload has { isDemo: true }
-    if (!req.user || !req.user.isDemo) {
-        next();
-        return;
-    }
+export const setUserDemoPreference = async (userId: string, enabled: boolean): Promise<void> => {
+  const { run: dbRun } = await import('../utils/DbPromise.js');
 
-    // 1.1 Strict Isolation Check (Before matching paths)
-    // Ensure that if organizationId is passed in Query, Body, or Params, it matches User's Org
-    const userOrg = req.user.organizationId;
-    const requestedOrgs = [
-        (req.query as { organizationId?: string })?.organizationId,
-        (req.body as { organizationId?: string })?.organizationId,
-        (req.params as { organizationId?: string })?.organizationId,
-    ];
-
-    for (const reqOrg of requestedOrgs) {
-        if (reqOrg && reqOrg !== userOrg) {
-            console.warn(
-                `[DemoGuard] Blocked cross-tenant access attempt by Demo User ${req.userId} (Target: ${reqOrg}, Actual: ${userOrg})`,
-            );
-            res.status(403).json({
-                code: 'DEMO_BLOCKED',
-                action: 'ISOLATION_VIOLATION',
-                message: 'Cross-tenant access blocked in Demo Mode',
-                error: 'Cross-tenant access blocked in Demo Mode',
-                errorCode: 'DEMO_ACTION_BLOCKED',
-                isDemoRestriction: true,
-            });
-            return;
-        }
-    }
-
-    // 2. Allow Safe Methods (GET, OPTIONS, HEAD)
-    if (['GET', 'OPTIONS', 'HEAD'].includes(req.method)) {
-        next();
-        return;
-    }
-
-    // 3. Allow Whitelisted Paths
-    if (isAllowedPath(req.originalUrl)) {
-        next();
-        return;
-    }
-
-    // 4. Block Everything Else
-    const actionContext = req.originalUrl.split('/api/')[1]?.split('/')[0]?.toUpperCase() || 'UNKNOWN';
-    const actionMethod =
-        req.method === 'POST'
-            ? 'CREATE'
-            : req.method === 'PUT'
-              ? 'UPDATE'
-              : req.method === 'DELETE'
-                ? 'DELETE'
-                : 'MODIFY';
-    const derivedAction = `${actionMethod}_${actionContext}`;
-
-    console.warn(
-        `[DemoGuard] Blocked ${req.method} ${req.originalUrl} for Demo User ${req.userId} (Action: ${derivedAction})`,
+  try {
+    await dbRun(
+      `INSERT INTO user_preferences (user_id, demo_mode_enabled, updated_at)
+             VALUES (?, ?, datetime('now'))
+             ON CONFLICT(user_id) DO UPDATE SET 
+                demo_mode_enabled = excluded.demo_mode_enabled,
+                updated_at = datetime('now')`,
+      [userId, enabled ? 1 : 0]
     );
-
-    res.status(403).json({
-        code: 'DEMO_BLOCKED',
-        action: derivedAction,
-        message: 'Action not allowed in Demo Mode',
-        // Backward compatibility flags if needed by specific old guards (can remove later)
-        error: 'Action not allowed in Demo Mode',
-        errorCode: 'DEMO_ACTION_BLOCKED',
-        isDemoRestriction: true,
-    });
+  } catch (error) {
+    logger.error('[DemoMode] Failed to set user demo preference:', error);
+    throw error;
+  }
 };
 
+/**
+ * Get demo organization details
+ */
+export const getDemoOrganization = async () => {
+  try {
+    const org = await dbGet<{
+      id: string;
+      name: string;
+      slug: string;
+      description: string;
+      settings: string;
+    }>('SELECT id, name, slug, description, settings FROM organizations WHERE id = ?', [
+      DEMO_ORG_ID,
+    ]);
+
+    if (!org) {
+      return {
+        id: DEMO_ORG_ID,
+        name: DEMO_ORG_NAME,
+        slug: 'acme-demo',
+        description: 'Firma demonstracyjna z pełnymi danymi szkoleniowymi',
+        settings: {},
+      };
+    }
+
+    return {
+      ...org,
+      settings: org.settings ? JSON.parse(org.settings) : {},
+    };
+  } catch (error) {
+    logger.error('[DemoMode] Failed to get demo organization:', error);
+    return {
+      id: DEMO_ORG_ID,
+      name: DEMO_ORG_NAME,
+      slug: 'acme-demo',
+      description: 'Firma demonstracyjna z pełnymi danymi szkoleniowymi',
+      settings: {},
+    };
+  }
+};
+
+/**
+ * Get demo mode statistics
+ */
+export const getDemoStats = async () => {
+  try {
+    const [projects, initiatives, tasks, assessments] = await Promise.all([
+      dbGet<{ count: number }>('SELECT COUNT(*) as count FROM projects WHERE organization_id = ?', [
+        DEMO_ORG_ID,
+      ]),
+      dbGet<{ count: number }>(
+        'SELECT COUNT(*) as count FROM initiatives WHERE organization_id = ?',
+        [DEMO_ORG_ID]
+      ),
+      dbGet<{ count: number }>('SELECT COUNT(*) as count FROM tasks WHERE organization_id = ?', [
+        DEMO_ORG_ID,
+      ]),
+      dbGet<{ count: number }>(
+        'SELECT COUNT(*) as count FROM assessments WHERE organization_id = ?',
+        [DEMO_ORG_ID]
+      ),
+    ]);
+
+    return {
+      projects: projects?.count || 0,
+      initiatives: initiatives?.count || 0,
+      tasks: tasks?.count || 0,
+      assessments: assessments?.count || 0,
+    };
+  } catch (error) {
+    logger.error('[DemoMode] Failed to get demo stats:', error);
+    return {
+      projects: 0,
+      initiatives: 0,
+      tasks: 0,
+      assessments: 0,
+    };
+  }
+};
+
+export default {
+  demoGuard,
+  demoContextMiddleware,
+  demoWriteProtection,
+  checkUserDemoPreference,
+  setUserDemoPreference,
+  getDemoOrganization,
+  getDemoStats,
+  DEMO_ORG_ID,
+  DEMO_ORG_NAME,
+};

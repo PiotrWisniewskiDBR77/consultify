@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadTeamsuserintegration = createCachedLazyService('../../services/integrations/teamsUserIntegration.js');
+const loadTeamsuserintegration = createCachedLazyService('./integrations/teamsUserIntegration.js');
 
 // Export default instance (for backward compatibility)
 export default loadTeamsuserintegration();

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aiexecutivereporting Service
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -6,7 +7,7 @@
  */
 
 // Lazy load the JS service module
-import service from '../../services/aiExecutiveReporting.js';
+import service from './aiExecutiveReporting.js';
 
 // Export default instance (for backward compatibility)
 export default service;

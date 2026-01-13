@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadCitationverifier = createCachedLazyService('../../services/ai/citationVerifier.js');
+const loadCitationverifier = createCachedLazyService('../../ai/citationVerifier.js');
 
 // Export default instance (for backward compatibility)
 export default loadCitationverifier();

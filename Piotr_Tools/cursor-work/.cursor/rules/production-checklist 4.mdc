@@ -1,0 +1,54 @@
+# Production Deployment Checklist Rules
+
+## 📋 OBOWIĄZKOWA AKTUALIZACJA
+
+Podczas pracy nad modułami SuperAdmin, **ZAWSZE** aktualizuj plik:
+`docs/PRODUCTION_DEPLOYMENT_CHECKLIST.md`
+
+### Kiedy aktualizować:
+
+1. **Po audycie modułu** - dodaj zadania do sekcji modułu
+2. **Po naprawie błędu** - usuń zadanie z listy jeśli ukończone
+3. **Po odkryciu braku** - dodaj nowe zadanie do odpowiedniej sekcji
+4. **Po dodaniu mock data** - zanotuj co wymaga podłączenia do DB
+
+### Format wpisów:
+
+```markdown
+## 📋 NAZWA_MODUŁU MODULE
+
+### Kategoria zadań
+- [ ] Opis zadania - szczegóły techniczne
+- [x] Ukończone zadanie (zaznacz gdy gotowe)
+```
+
+### Kategorie zadań:
+
+- **Database** - migracje, tabele, indeksy
+- **API Endpoints** - brakujące lub wymagające naprawy
+- **Integrations** - zewnętrzne systemy (Stripe, Zendesk, etc.)
+- **Security** - uprawnienia, encryption, audit
+- **Performance** - cache, query optimization
+
+### Przykład wpisu:
+
+```markdown
+## 📋 BILLING MODULE
+
+### Database
+- [ ] Tabela `invoices` - dodać kolumnę `pdf_url`
+- [ ] Indeks na `subscriptions.organization_id`
+
+### Integrations
+- [ ] Stripe webhooks - konfiguracja produkcyjna
+- [ ] Invoice PDF generation - integracja z Puppeteer
+```
+
+## ⚠️ NIE DODAWAJ
+
+- Szczegółów audytu (co działa, co nie)
+- Statusów modułów
+- Notatek tymczasowych
+- Informacji o mock data (tylko że trzeba podłączyć real data)
+
+Plik ma być **krótki i konkretny** - tylko lista TODO do produkcji.

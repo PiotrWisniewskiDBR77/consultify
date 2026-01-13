@@ -35,21 +35,24 @@ tests/
 **Purpose:** Test individual service functions in isolation.
 
 **Coverage:**
+
 - `organizationMetadataService.test.js` - Tests for organization metadata operations
 - `supportTicketService.test.js` - Tests for support ticket operations
 
 **Running:**
+
 ```bash
 npm run test:unit
 ```
 
 **Example:**
+
 ```javascript
 describe('OrganizationMetadataService', () => {
-    it('should return metadata for an organization', async () => {
-        const result = await OrganizationMetadataService.getMetadata('org1');
-        expect(result).toBeArray();
-    });
+  it('should return metadata for an organization', async () => {
+    const result = await OrganizationMetadataService.getMetadata('org1');
+    expect(result).toBeArray();
+  });
 });
 ```
 
@@ -60,25 +63,28 @@ describe('OrganizationMetadataService', () => {
 **Purpose:** Test API endpoints with database interactions.
 
 **Coverage:**
+
 - `superadmin-organizations-extended.test.js` - Organization endpoints
 - `superadmin-security.test.js` - Security endpoints
 - `superadmin-support.test.js` - Support endpoints
 
 **Running:**
+
 ```bash
 npm run test:integration
 ```
 
 **Example:**
+
 ```javascript
 describe('GET /api/superadmin/organizations/:id/metadata', () => {
-    it('should return organization metadata', async () => {
-        const response = await request(app)
-            .get('/api/superadmin/organizations/org-123/metadata')
-            .set('Authorization', `Bearer ${authToken}`)
-            .expect(200);
-        expect(Array.isArray(response.body)).toBe(true);
-    });
+  it('should return organization metadata', async () => {
+    const response = await request(app)
+      .get('/api/superadmin/organizations/org-123/metadata')
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
 });
 ```
 
@@ -89,22 +95,25 @@ describe('GET /api/superadmin/organizations/:id/metadata', () => {
 **Purpose:** Test complete user flows in the browser.
 
 **Coverage:**
+
 - `customers-module-security.spec.ts` - Security module UI tests
 - `customers-module-support.spec.ts` - Support module UI tests
 
 **Running:**
+
 ```bash
 npm run test:e2e
 ```
 
 **Example:**
+
 ```typescript
 test('should add IP to whitelist', async ({ page }) => {
-    await page.goto('/superadmin/customers?tab=security');
-    await page.click('text=Add IP');
-    await page.fill('input[placeholder*="IP"]', '192.168.1.1');
-    await page.click('button:has-text("Add IP")');
-    await expect(page.locator('text=192.168.1.1')).toBeVisible();
+  await page.goto('/superadmin/customers?tab=security');
+  await page.click('text=Add IP');
+  await page.fill('input[placeholder*="IP"]', '192.168.1.1');
+  await page.click('button:has-text("Add IP")');
+  await expect(page.locator('text=192.168.1.1')).toBeVisible();
 });
 ```
 
@@ -115,10 +124,12 @@ test('should add IP to whitelist', async ({ page }) => {
 **Location:** `tests/helpers/auth.js`
 
 **Functions:**
+
 - `createTestToken(payload)` - Create a test JWT token
 - `createSuperAdminToken()` - Create a SuperAdmin token
 
 **Usage:**
+
 ```javascript
 const { createSuperAdminToken } = require('./helpers/auth');
 const token = createSuperAdminToken();
@@ -141,26 +152,31 @@ const token = createSuperAdminToken();
 ## Running Tests
 
 ### All Tests
+
 ```bash
 npm run test:all
 ```
 
 ### Unit Tests Only
+
 ```bash
 npm run test:unit
 ```
 
 ### Integration Tests Only
+
 ```bash
 npm run test:integration
 ```
 
 ### E2E Tests Only
+
 ```bash
 npm run test:e2e
 ```
 
 ### With Coverage
+
 ```bash
 npm run test:coverage
 ```
@@ -179,6 +195,7 @@ Test data is seeded using `server/seed/seed_enterprise_customers.js`:
 - Email Templates: 2 test templates
 
 ### Running Seed
+
 ```bash
 node server/seed/seed_enterprise_customers.js
 ```
@@ -204,6 +221,7 @@ JWT_SECRET=test-secret
 ### GitHub Actions
 
 Tests should run on:
+
 - Pull requests
 - Pushes to main branch
 - Scheduled nightly runs
@@ -211,6 +229,7 @@ Tests should run on:
 ### Test Reports
 
 Test results are generated in:
+
 - `coverage/` - Coverage reports
 - `test-results/` - Playwright test results
 - `playwright-report/` - Playwright HTML reports
@@ -243,6 +262,7 @@ Test results are generated in:
 ### Updating Tests
 
 When updating functionality:
+
 1. Update corresponding tests
 2. Ensure tests still pass
 3. Update test documentation if needed
@@ -252,11 +272,3 @@ When updating functionality:
 - [Vitest Documentation](https://vitest.dev/)
 - [Playwright Documentation](https://playwright.dev/)
 - [Supertest Documentation](https://github.com/visionmedia/supertest)
-
-
-
-
-
-
-
-

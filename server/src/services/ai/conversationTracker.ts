@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadConversationtracker = createCachedLazyService('../../services/ai/conversationTracker.js');
+const loadConversationtracker = createCachedLazyService('../../ai/conversationTracker.js');
 
 // Export default instance (for backward compatibility)
 export default loadConversationtracker();

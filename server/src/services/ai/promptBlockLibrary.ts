@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadPromptblocklibrary = createCachedLazyService('../../services/ai/promptBlockLibrary.js');
+const loadPromptblocklibrary = createCachedLazyService('../../ai/promptBlockLibrary.js');
 
 // Export default instance (for backward compatibility)
 export default loadPromptblocklibrary();

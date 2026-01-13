@@ -1,3 +1,2 @@
 export * from './Config.ts';
-import M from './Config.ts';
-export default M;
+export { default } from './Config.ts';

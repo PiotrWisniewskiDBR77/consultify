@@ -1,11 +1,11 @@
 /**
  * k6 Load Testing Script
  * Enterprise SaaS Architecture - Performance Testing
- * 
+ *
  * Usage:
  *   k6 run tests/performance/load-test.js
  *   k6 run --vus 50 --duration 60s tests/performance/load-test.js
- * 
+ *
  * Environment Variables:
  *   K6_VUS - Number of virtual users (default: 10)
  *   K6_DURATION - Test duration (default: 30s)
@@ -25,12 +25,12 @@ const apiDuration = new Trend('api_duration');
 // Test configuration
 export const options = {
   stages: [
-    { duration: '10s', target: 10 },    // Ramp up to 10 users
-    { duration: '30s', target: 50 },    // Ramp up to 50 users
-    { duration: '1m', target: 50 },     // Stay at 50 users
-    { duration: '30s', target: 100 },   // Ramp up to 100 users
-    { duration: '1m', target: 100 },    // Stay at 100 users
-    { duration: '30s', target: 0 },     // Ramp down to 0 users
+    { duration: '10s', target: 10 }, // Ramp up to 10 users
+    { duration: '30s', target: 50 }, // Ramp up to 50 users
+    { duration: '1m', target: 50 }, // Stay at 50 users
+    { duration: '30s', target: 100 }, // Ramp up to 100 users
+    { duration: '1m', target: 100 }, // Stay at 100 users
+    { duration: '30s', target: 0 }, // Ramp down to 0 users
   ],
   thresholds: {
     // 95% of requests should be below 500ms
@@ -165,7 +165,7 @@ export default function () {
     }
 
     // Check that requests are handled
-    const successCount = responses.filter(r => r.status === 200).length;
+    const successCount = responses.filter((r) => r.status === 200).length;
 
     check(null, {
       'burst requests handled': () => successCount >= 1,
@@ -234,7 +234,7 @@ export function handleSummary(data) {
   };
 
   return {
-    'stdout': textSummary(data, { indent: ' ', enableColors: true }),
+    stdout: textSummary(data, { indent: ' ', enableColors: true }),
     'tests/performance/results/summary.json': JSON.stringify(summary, null, 2),
   };
 }

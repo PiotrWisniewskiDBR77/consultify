@@ -4,13 +4,15 @@
  */
 
 export { asyncHandler, createAsyncHandler } from './asyncHandler.js';
-export { type Logger, default as logger, type LoggerMeta } from './Logger.js';
+// Export logger
+import logger from './Logger.js';
+export { logger };
+export type { Logger, LoggerMeta } from './Logger.js';
 export { RedisRateLimitStore, default as redisRateLimitStore } from './RedisRateLimitStore.js';
 export {
-    correlationMiddleware,
-    getCorrelationId,
-    getStartTime,
-    getStore,
-    default as requestStore,
+  correlationMiddleware,
+  getCorrelationId,
+  getStartTime,
+  getStore,
+  default as requestStore,
 } from './RequestStore.js';
-

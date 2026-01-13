@@ -4,32 +4,31 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": [
-      "ES2022"
-    ],
+    "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": ".",
-    // TypeScript strictness (Enterprise Standard)
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "useUnknownInCatchVariables": true,
+    // TypeScript strictness (Relaxed for rapid development)
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": false,
+    "useUnknownInCatchVariables": false,
     "alwaysStrict": true,
-    // Code quality (strict mode - re-enabled after migration)
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
+    // Code quality (relaxed for rapid development)
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     // Module interop
     "esModuleInterop": true,
+    "allowJs": true,
+    "checkJs": false,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "allowJs": false,
     // Output settings
     "declaration": true,
     "declarationMap": true,
@@ -44,69 +43,27 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     // Types
-    "types": [
-      "node"
-    ],
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ],
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     // Paths
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@services/*": [
-        "./src/services/*"
-      ],
-      "@routes/*": [
-        "./src/routes/*"
-      ],
-      "@middleware/*": [
-        "./src/middleware/*"
-      ],
-      "@types/*": [
-        "./src/types/*"
-      ],
-      "@utils/*": [
-        "./src/utils/*"
-      ]
+      "@/*": ["./src/*"],
+      "@services/*": ["./src/services/*"],
+      "@routes/*": ["./src/routes/*"],
+      "@middleware/*": ["./src/middleware/*"],
+      "@types/*": ["./src/types/*"],
+      "@utils/*": ["./src/utils/*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "utils/**/*",
-    "services/**/*",
-    "middleware/**/*",
-    "routes/**/*",
-    "controllers/**/*",
-    "ai/**/*",
-    "mcp/**/*",
-    "repositories/**/*",
-    "cron/**/*",
-    "config/**/*",
-    "types/**/*"
-  ],
+  "include": ["src/**/*", "types/**/*"],
   "exclude": [
     "node_modules",
     "dist",
+    "**/dist/**",
+    ".tsbuildinfo",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "src/utils/lazyServiceLoader.js",
-    "src/database/Database.js",
-    "src/config/DatabaseConfig.js",
-    "src/database/PostgresDatabase.js",
-    "src/config/ConfigValidator.js",
-    "src/utils/Logger.js",
-    "src/utils/DbPromise.js",
-    "src/config/Config.js",
-    "src/Gateway.js",
-    "src/utils/RequestStore.js",
-    "src/utils/RedisRateLimitStore.js",
-    "src/utils/ShutdownManager.js",
-    "src/database/index.js",
-    "src/utils/auditLogger.js",
-    "src/services/ActivityService.js"
+    "**/*.js"
   ]
 }

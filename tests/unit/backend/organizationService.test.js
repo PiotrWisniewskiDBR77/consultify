@@ -1,430 +1,326 @@
 /**
- * Organization Service Tests
- * 
- * HIGH PRIORITY BUSINESS SERVICE - Must have 85%+ coverage
- * Tests organization creation, member management, and multi-tenant isolation.
+ * Organization Service Unit Tests
+ * Tests organization CRUD, member management, billing, and AI settings
  */
-
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMockDb } from '../../helpers/dependencyInjector.js';
-import { testUsers, testOrganizations } from '../../fixtures/testData.js';
-
-describe('OrganizationService', () => {
-    let mockDb;
-    let OrganizationService;
-
-    beforeEach(async () => {
-        vi.resetModules();
-
-        mockDb = createMockDb();
-        global.__TEST_DB_MOCK__ = mockDb;
-
-        OrganizationService = (await import('../../../server/src/services/organizationService.ts')).default;
-        OrganizationService.setDependencies({
-            db: mockDb,
-            uuidv4: () => 'org-uuid-1'
-        });
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    describe('createOrganization()', () => {
-        it('should create organization with owner', async () => {
-            const userId = testUsers.user.id;
-            const name = 'New Organization';
-
-            // Mock serialize to execute callback synchronously
-            mockDb.serialize.mockImplementation((callback) => {
-                if (callback) callback();
-            });
-
-            // Mock run to handle transaction steps
-            mockDb.run.mockImplementation(function (query, params, callback) {
-                const cb = typeof params === 'function' ? params : callback;
-                const context = { changes: 1, lastID: 1 };
-                // Handle different query types
-                if (query === 'BEGIN TRANSACTION') {
-                    if (cb) cb.call(context, null);
-                } else if (query === 'COMMIT') {
-                    if (cb) cb.call(context, null);
-                } else if (query === 'ROLLBACK') {
-                    if (cb) cb.call(context, null);
-                } else {
-                    // Insert queries
-                    if (query.includes('INSERT INTO organizations')) {
-                        expect(params).toContain(name);
-                        expect(params).toContain(userId);
-                    } else if (query.includes('INSERT INTO organization_members')) {
-                        expect(params).toContain('OWNER');
-                        expect(params).toContain(userId);
-                    }
-
-                    if (cb) {
-                        cb.call(context, null);
-                    }
-                }
-            });
-
-            const result = await OrganizationService.createOrganization({
-                userId,
-                name
-            });
-
-            expect(result.id).toBeDefined();
-            expect(result.name).toBe(name);
-            expect(result.role).toBe('OWNER');
-        });
-
-        it('should rollback on error', async () => {
-            const userId = testUsers.user.id;
-            const name = 'New Organization';
-
-            mockDb.serialize.mockImplementation((callback) => {
-                callback();
-            });
-
-            mockDb.run.mockImplementation((query, params, callback) => {
-                const cb = typeof params === 'function' ? params : callback;
-                const context = { changes: 0, lastID: 0 };
-                if (query === 'BEGIN TRANSACTION') {
-                    if (cb) cb.call(context, null);
-                } else if (query.includes('INSERT INTO organizations')) {
-                    if (cb) cb.call(context, new Error('DB Error'));
-                } else if (query === 'ROLLBACK') {
-                    if (cb) cb.call(context, null);
-                } else {
-                    if (cb) cb.call(context, null);
-                }
-            });
-
-            await expect(
-                OrganizationService.createOrganization({ userId, name })
-            ).rejects.toThrow('DB Error');
-        });
-
-        it.skip('should include attribution data when provided', async () => {
-            const userId = testUsers.user.id;
-            const name = 'New Organization';
-            const attribution = { type: 'partner', id: 'partner-123' };
-
-            mockDb.serialize.mockImplementation((callback) => {
-                if (callback) callback();
-            });
-
-            mockDb.run.mockImplementation(function (query, params, callback) {
-                if (query === 'BEGIN TRANSACTION') {
-                    // No callback
-                } else if (query.includes('INSERT INTO organizations')) {
-                    if (callback) callback.call({ changes: 1 }, null);
-                } else if (query.includes('INSERT INTO organization_members')) {
-                    if (callback) callback.call({ changes: 1 }, null);
-                } else if (query === 'COMMIT') {
-                    if (callback) callback(null);
-                } else {
-                    if (callback) callback(null);
-                }
-            });
-
-            const result = await OrganizationService.createOrganization({
-                userId,
-                name,
-                attribution
-            });
-
-            expect(result.id).toBeDefined();
-        });
-    });
-
-    describe('getOrganization()', () => {
-        it('should return organization details', async () => {
-            const orgId = testOrganizations.org1.id;
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, {
-                    id: orgId,
-                    name: 'Test Org',
-                    status: 'active',
-                    billing_status: 'TRIAL',
-                    token_balance: 1000
-                });
-            });
-
-            const org = await OrganizationService.getOrganization(orgId);
-
-            expect(org.id).toBe(orgId);
-            expect(org.name).toBe('Test Org');
-            expect(org.token_balance).toBe(1000);
-        });
-
-        it('should throw error when organization not found', async () => {
-            const orgId = 'non-existent';
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
-
-            await expect(
-                OrganizationService.getOrganization(orgId)
-            ).rejects.toThrow('Organization not found');
-        });
-    });
-
-    describe('addMember()', () => {
-        it('should add member to organization', async () => {
-            const orgId = testOrganizations.org1.id;
-            const userId = testUsers.user.id;
-            const role = OrganizationService.ROLES.MEMBER;
-
-            mockDb.run.mockImplementation((query, params, callback) => {
-                if (callback) callback.call({ changes: 1 }, null);
-            });
-
-            const result = await OrganizationService.addMember({
-                organizationId: orgId,
-                userId,
-                role
-            });
-
-            expect(result.id).toBeDefined();
-            expect(result.organizationId).toBe(orgId);
-            expect(result.userId).toBe(userId);
-            expect(result.role).toBe(role);
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('INSERT INTO organization_members'),
-                expect.arrayContaining([orgId, userId, role]),
-                expect.any(Function)
-            );
-        });
-
-        it('should handle duplicate member gracefully', async () => {
-            const orgId = testOrganizations.org1.id;
-            const userId = testUsers.user.id;
-
-            mockDb.run.mockImplementation((query, params, callback) => {
-                const error = new Error('UNIQUE constraint failed');
-                error.code = 'SQLITE_CONSTRAINT';
-                callback(error);
-            });
-
-            await expect(
-                OrganizationService.addMember({
-                    organizationId: orgId,
-                    userId,
-                    role: OrganizationService.ROLES.MEMBER
-                })
-            ).rejects.toThrow();
-        });
-    });
-
-    describe('removeMember()', () => {
-        it('should remove member from organization', async () => {
-            const orgId = testOrganizations.org1.id;
-            const userId = testUsers.user.id;
-
-            mockDb.run.mockImplementation((query, params, callback) => {
-                expect(query).toContain('DELETE FROM organization_members');
-                expect(params).toContain(orgId);
-                expect(params).toContain(userId);
-                if (callback) {
-                    callback.call({ changes: 1 }, null);
-                }
-            });
-
-            await OrganizationService.removeMember({
-                organizationId: orgId,
-                userId
-            });
-
-            expect(mockDb.run).toHaveBeenCalledWith(
-                expect.stringContaining('DELETE FROM organization_members'),
-                expect.arrayContaining([orgId, userId]),
-                expect.any(Function)
-            );
-        });
-
-        it('should throw error when member not found', async () => {
-            const orgId = testOrganizations.org1.id;
-            const userId = 'non-existent-user';
-
-            mockDb.run.mockImplementation((query, params, callback) => {
-                if (callback) {
-                    callback.call({ changes: 0 }, null);
-                }
-            });
-
-            await expect(
-                OrganizationService.removeMember({ organizationId: orgId, userId })
-            ).rejects.toThrow('Member not found');
-        });
-    });
-
-    describe('getMembers()', () => {
-        it('should return organization members', async () => {
-            const orgId = testOrganizations.org1.id;
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                callback(null, [
-                    {
-                        user_id: testUsers.admin.id,
-                        role: 'ADMIN',
-                        status: 'ACTIVE'
-                    },
-                    {
-                        user_id: testUsers.user.id,
-                        role: 'MEMBER',
-                        status: 'ACTIVE'
-                    }
-                ]);
-            });
-
-            const members = await OrganizationService.getMembers(orgId);
-
-            expect(members).toHaveLength(2);
-            expect(mockDb.all).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT'),
-                expect.arrayContaining([orgId]),
-                expect.any(Function)
-            );
-        });
-
-        it('should only return members for specified organization', async () => {
-            const org1Id = testOrganizations.org1.id;
-            const org2Id = testOrganizations.org2.id;
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                // Verify query filters by organization_id
-                expect(params).toContain(org1Id);
-                expect(params).not.toContain(org2Id);
-                callback(null, []);
-            });
-
-            await OrganizationService.getMembers(org1Id);
-        });
-    });
-
-    describe('updateMemberRole()', () => {
-        it('should update member role', async () => {
-            const orgId = testOrganizations.org1.id;
-            const userId = testUsers.user.id;
-            const newRole = OrganizationService.ROLES.ADMIN;
-
-            mockDb.run.mockImplementation((query, params, callback) => {
-                expect(query).toContain('UPDATE organization_members');
-                expect(params).toContain(newRole);
-                expect(params).toContain(orgId);
-                expect(params).toContain(userId);
-                if (callback) {
-                    callback.call({ changes: 1 }, null);
-                }
-            });
-
-            const result = await OrganizationService.updateMemberRole({
-                organizationId: orgId,
-                userId,
-                role: newRole
-            });
-
-            expect(result.organizationId).toBe(orgId);
-            expect(result.userId).toBe(userId);
-            expect(result.role).toBe(newRole);
-        });
-
-        it('should throw error on invalid role', async () => {
-            await expect(
-                OrganizationService.updateMemberRole({
-                    organizationId: testOrganizations.org1.id,
-                    userId: testUsers.user.id,
-                    role: 'INVALID_ROLE'
-                })
-            ).rejects.toThrow('Invalid role');
-        });
-
-        it('should throw error when member not found', async () => {
-            mockDb.run.mockImplementation((query, params, callback) => {
-                if (callback) {
-                    callback.call({ changes: 0 }, null);
-                }
-            });
-
-            await expect(
-                OrganizationService.updateMemberRole({
-                    organizationId: testOrganizations.org1.id,
-                    userId: 'non-existent',
-                    role: OrganizationService.ROLES.MEMBER
-                })
-            ).rejects.toThrow('Member not found');
-        });
-    });
-
-    describe('getMemberRole()', () => {
-        it('should return member role', async () => {
-            const orgId = testOrganizations.org1.id;
-            const userId = testUsers.user.id;
-            const role = 'ADMIN';
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                expect(query).toContain('SELECT role FROM organization_members');
-                expect(params).toContain(orgId);
-                expect(params).toContain(userId);
-                callback(null, { role });
-            });
-
-            const result = await OrganizationService.getMemberRole(orgId, userId);
-
-            expect(result).toBe(role);
-        });
-
-        it('should return null when member not found', async () => {
-            const orgId = testOrganizations.org1.id;
-            const userId = 'non-existent-user';
-
-            mockDb.get.mockImplementation((query, params, callback) => {
-                callback(null, null);
-            });
-
-            const result = await OrganizationService.getMemberRole(orgId, userId);
-
-            expect(result).toBeNull();
-        });
-    });
-
-    describe('Multi-Tenant Isolation', () => {
-        it('should only access members for specified organization', async () => {
-            const org1Id = testOrganizations.org1.id;
-            const org2Id = testOrganizations.org2.id;
-
-            mockDb.all.mockImplementation((query, params, callback) => {
-                expect(params).toContain(org1Id);
-                expect(params).not.toContain(org2Id);
-                callback(null, []);
-            });
-
-            await OrganizationService.getMembers(org1Id);
-        });
-
-        it('should prevent cross-organization member access', async () => {
-            const org1Id = testOrganizations.org1.id;
-            const org2Id = testOrganizations.org2.id;
-            const userId = testUsers.user.id;
-
-            // Mock getMemberRole to return null for cross-org access
-            mockDb.get.mockImplementation((query, params, callback) => {
-                // If querying for org2 member in org1 context, return null
-                if (params[0] === org1Id && params[1] === userId) {
-                    // This user is not a member of org1
-                    callback(null, null);
-                } else {
-                    callback(null, { role: 'MEMBER' });
-                }
-            });
-
-            const role = await OrganizationService.getMemberRole(org1Id, userId);
-
-            // Should return null if user is not a member of this organization
-            expect(role).toBeNull();
-        });
-    });
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { v4 as uuidv4 } from 'uuid';
+
+vi.hoisted(() => {
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-org-service-${workerId}.db`;
 });
 
+// Dynamic import for ESM
+let OrganizationService;
+
+describe('OrganizationService', () => {
+  const db = getDatabase();
+  let testUserId;
+  let testUserEmail;
+  let createdOrgIds = [];
+
+  beforeAll(async () => {
+    await initializeDatabase();
+
+    // Import service
+    OrganizationService = (await import('../../../server/src/services/organizationService.js'))
+      .default;
+
+    // Create test user
+    testUserId = uuidv4();
+    testUserEmail = `orgtest-${Date.now()}@test.com`;
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO users (id, email, password, role, status) VALUES (?, ?, ?, ?, ?)`,
+        [testUserId, testUserEmail, 'hashed-password', 'ADMIN', 'active'],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
+  });
+
+  afterAll(async () => {
+    // Cleanup created orgs
+    for (const orgId of createdOrgIds) {
+      await new Promise((r) =>
+        db.run(`DELETE FROM organization_members WHERE organization_id = ?`, [orgId], () => r())
+      );
+      await new Promise((r) =>
+        db.run(`DELETE FROM organizations WHERE id = ?`, [orgId], () => r())
+      );
+    }
+    await new Promise((r) => db.run(`DELETE FROM users WHERE id = ?`, [testUserId], () => r()));
+  });
+
+  describe('createOrganization', () => {
+    it('should create a new organization', async () => {
+      const result = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'Test Organization',
+      });
+
+      expect(result).toBeDefined();
+      expect(result.id).toBeDefined();
+      expect(result.name).toBe('Test Organization');
+      expect(result.role).toBe('OWNER');
+
+      createdOrgIds.push(result.id);
+    });
+
+    it('should store organization in database', async () => {
+      const result = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'DB Test Org',
+      });
+      createdOrgIds.push(result.id);
+
+      const dbOrg = await new Promise((resolve) => {
+        db.get(`SELECT * FROM organizations WHERE id = ?`, [result.id], (_, row) => resolve(row));
+      });
+
+      expect(dbOrg).toBeDefined();
+      expect(dbOrg.name).toBe('DB Test Org');
+      expect(dbOrg.billing_status).toBe('TRIAL');
+    });
+
+    it('should add creator as OWNER member', async () => {
+      const result = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'Owner Test Org',
+      });
+      createdOrgIds.push(result.id);
+
+      const member = await new Promise((resolve) => {
+        db.get(
+          `SELECT * FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+          [result.id, testUserId],
+          (_, row) => resolve(row)
+        );
+      });
+
+      expect(member).toBeDefined();
+      expect(member.role).toBe('OWNER');
+    });
+  });
+
+  describe('getOrganization', () => {
+    it('should return organization by ID', async () => {
+      const created = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'Get Test Org',
+      });
+      createdOrgIds.push(created.id);
+
+      const org = await OrganizationService.getOrganization(created.id);
+
+      expect(org).toBeDefined();
+      expect(org.id).toBe(created.id);
+      expect(org.name).toBe('Get Test Org');
+    });
+
+    it('should throw for non-existent ID', async () => {
+      await expect(OrganizationService.getOrganization('non-existent-id')).rejects.toThrow(
+        'Organization not found'
+      );
+    });
+  });
+
+  describe('addMember', () => {
+    it('should add a member to organization', async () => {
+      const org = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'Add Member Org',
+      });
+      createdOrgIds.push(org.id);
+
+      // Create another user
+      const newUserId = uuidv4();
+      await new Promise((resolve) => {
+        db.run(
+          `INSERT INTO users (id, email, password, role, status) VALUES (?, ?, ?, ?, ?)`,
+          [newUserId, `member-${Date.now()}@test.com`, 'hash', 'USER', 'active'],
+          () => resolve()
+        );
+      });
+
+      const result = await OrganizationService.addMember({
+        organizationId: org.id,
+        userId: newUserId,
+        role: 'MEMBER',
+      });
+
+      expect(result).toBeDefined();
+      expect(result.role).toBe('MEMBER');
+      expect(result.userId).toBe(newUserId);
+
+      // Cleanup
+      await new Promise((r) => db.run(`DELETE FROM users WHERE id = ?`, [newUserId], () => r()));
+    });
+
+    it('should reject invalid roles', async () => {
+      const org = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'Invalid Role Org',
+      });
+      createdOrgIds.push(org.id);
+
+      await expect(
+        OrganizationService.addMember({
+          organizationId: org.id,
+          userId: uuidv4(),
+          role: 'INVALID_ROLE',
+        })
+      ).rejects.toThrow('Invalid role');
+    });
+  });
+
+  describe('getMembers', () => {
+    it('should return organization members', async () => {
+      const org = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'Get Members Org',
+      });
+      createdOrgIds.push(org.id);
+
+      const members = await OrganizationService.getMembers(org.id);
+
+      expect(members).toBeDefined();
+      expect(members.length).toBeGreaterThanOrEqual(1);
+      expect(members.some((m) => m.role === 'OWNER')).toBe(true);
+    });
+  });
+
+  describe('getUserOrganizations', () => {
+    it('should return user organizations', async () => {
+      const org = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'User Orgs Test',
+      });
+      createdOrgIds.push(org.id);
+
+      const orgs = await OrganizationService.getUserOrganizations(testUserId);
+
+      expect(orgs).toBeDefined();
+      expect(orgs.length).toBeGreaterThanOrEqual(1);
+      expect(orgs.some((o) => o.id === org.id)).toBe(true);
+    });
+  });
+
+  describe('updateMemberRole', () => {
+    it('should update member role', async () => {
+      const org = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'Role Update Org',
+      });
+      createdOrgIds.push(org.id);
+
+      // Create another user
+      const newUserId = uuidv4();
+      await new Promise((resolve) => {
+        db.run(
+          `INSERT INTO users (id, email, password, role, status) VALUES (?, ?, ?, ?, ?)`,
+          [newUserId, `roletest-${Date.now()}@test.com`, 'hash', 'USER', 'active'],
+          () => resolve()
+        );
+      });
+
+      await OrganizationService.addMember({
+        organizationId: org.id,
+        userId: newUserId,
+        role: 'MEMBER',
+      });
+
+      const result = await OrganizationService.updateMemberRole({
+        organizationId: org.id,
+        userId: newUserId,
+        role: 'ADMIN',
+      });
+
+      expect(result.role).toBe('ADMIN');
+
+      // Cleanup
+      await new Promise((r) => db.run(`DELETE FROM users WHERE id = ?`, [newUserId], () => r()));
+    });
+  });
+
+  describe('removeMember', () => {
+    it('should remove member from organization', async () => {
+      const org = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'Remove Member Org',
+      });
+      createdOrgIds.push(org.id);
+
+      // Create another user
+      const newUserId = uuidv4();
+      await new Promise((resolve) => {
+        db.run(
+          `INSERT INTO users (id, email, password, role, status) VALUES (?, ?, ?, ?, ?)`,
+          [newUserId, `remove-${Date.now()}@test.com`, 'hash', 'USER', 'active'],
+          () => resolve()
+        );
+      });
+
+      await OrganizationService.addMember({
+        organizationId: org.id,
+        userId: newUserId,
+        role: 'MEMBER',
+      });
+
+      await OrganizationService.removeMember({
+        organizationId: org.id,
+        userId: newUserId,
+      });
+
+      const role = await OrganizationService.getMemberRole(org.id, newUserId);
+      expect(role).toBeNull();
+
+      // Cleanup
+      await new Promise((r) => db.run(`DELETE FROM users WHERE id = ?`, [newUserId], () => r()));
+    });
+  });
+
+  describe('AI Settings', () => {
+    it('should get default AI settings', async () => {
+      const org = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'AI Settings Org',
+      });
+      createdOrgIds.push(org.id);
+
+      const settings = await OrganizationService.getAISettings(org.id);
+
+      expect(settings).toBeDefined();
+      expect(settings.ai_assertiveness_level).toBeDefined();
+      expect(settings.ai_autonomy_level).toBeDefined();
+    });
+
+    it('should update AI settings', async () => {
+      const org = await OrganizationService.createOrganization({
+        userId: testUserId,
+        name: 'Update AI Org',
+      });
+      createdOrgIds.push(org.id);
+
+      await OrganizationService.updateAISettings(org.id, {
+        ai_assertiveness_level: 'HIGH',
+        ai_autonomy_level: 'AUTO_EXECUTE',
+      });
+
+      const settings = await OrganizationService.getAISettings(org.id);
+      expect(settings.ai_assertiveness_level).toBe('HIGH');
+      expect(settings.ai_autonomy_level).toBe('AUTO_EXECUTE');
+    });
+  });
+
+  describe('Roles Validation', () => {
+    it('should have valid role constants', () => {
+      expect(OrganizationService.ROLES.OWNER).toBe('OWNER');
+      expect(OrganizationService.ROLES.ADMIN).toBe('ADMIN');
+      expect(OrganizationService.ROLES.MEMBER).toBe('MEMBER');
+      expect(OrganizationService.ROLES.CONSULTANT).toBe('CONSULTANT');
+    });
+  });
+});

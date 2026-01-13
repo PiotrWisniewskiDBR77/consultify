@@ -1,6 +1,6 @@
 # Billing Integration Guide
 
-This guide covers how to set up and integrate the Consultify billing system with Stripe for production use.
+This guide covers how to set up and integrate the Consultinity billing system with Stripe for production use.
 
 ## Table of Contents
 
@@ -38,15 +38,15 @@ SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
 SMTP_USER=apikey
 SMTP_PASS=SG.xxx
-SMTP_FROM="Consultify Billing" <billing@consultify.app>
+SMTP_FROM="Consultinity Billing" <billing@consultinity.app>
 
 # Optional: Redis for Email Queue
 REDIS_URL=redis://localhost:6379
 
 # Application URLs
-APP_URL=https://app.consultify.app
-COMPANY_NAME=Consultify
-COMPANY_EMAIL=billing@consultify.app
+APP_URL=https://app.consultinity.app
+COMPANY_NAME=Consultinity
+COMPANY_EMAIL=billing@consultinity.app
 ```
 
 ### Configuration in Database
@@ -74,22 +74,22 @@ In your Stripe Dashboard or via API:
 ```javascript
 // Example: Create a product and price
 const product = await stripe.products.create({
-    name: 'Consultify Pro',
-    description: 'Professional plan with unlimited projects'
+  name: 'Consultinity Pro',
+  description: 'Professional plan with unlimited projects',
 });
 
 const monthlyPrice = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 9900, // $99.00
-    currency: 'usd',
-    recurring: { interval: 'month' }
+  product: product.id,
+  unit_amount: 9900, // $99.00
+  currency: 'usd',
+  recurring: { interval: 'month' },
 });
 
 const yearlyPrice = await stripe.prices.create({
-    product: product.id,
-    unit_amount: 99000, // $990.00 (2 months free)
-    currency: 'usd',
-    recurring: { interval: 'year' }
+  product: product.id,
+  unit_amount: 99000, // $990.00 (2 months free)
+  currency: 'usd',
+  recurring: { interval: 'year' },
 });
 ```
 
@@ -129,21 +129,21 @@ https://your-domain.com/webhooks/stripe
 
 Enable the following events in Stripe Dashboard:
 
-| Event | Purpose |
-|-------|---------|
-| `customer.subscription.created` | New subscription activation |
-| `customer.subscription.updated` | Plan changes, status updates |
-| `customer.subscription.deleted` | Subscription cancellation |
-| `invoice.created` | New invoice generation |
-| `invoice.paid` | Successful payment |
-| `invoice.payment_failed` | Failed payment (triggers dunning) |
-| `checkout.session.completed` | Checkout success |
-| `payment_intent.succeeded` | Payment confirmation |
-| `payment_intent.payment_failed` | Payment failure |
-| `customer.updated` | Billing info sync |
-| `charge.refunded` | Refund processing |
-| `charge.dispute.created` | Dispute handling |
-| `price.updated` | Price sync |
+| Event                           | Purpose                           |
+| ------------------------------- | --------------------------------- |
+| `customer.subscription.created` | New subscription activation       |
+| `customer.subscription.updated` | Plan changes, status updates      |
+| `customer.subscription.deleted` | Subscription cancellation         |
+| `invoice.created`               | New invoice generation            |
+| `invoice.paid`                  | Successful payment                |
+| `invoice.payment_failed`        | Failed payment (triggers dunning) |
+| `checkout.session.completed`    | Checkout success                  |
+| `payment_intent.succeeded`      | Payment confirmation              |
+| `payment_intent.payment_failed` | Payment failure                   |
+| `customer.updated`              | Billing info sync                 |
+| `charge.refunded`               | Refund processing                 |
+| `charge.dispute.created`        | Dispute handling                  |
+| `price.updated`                 | Price sync                        |
 
 ### Webhook Signature Verification
 
@@ -152,9 +152,9 @@ The webhook handler automatically verifies signatures when `STRIPE_WEBHOOK_SECRE
 ```javascript
 // Handled automatically in server/routes/webhooks/stripe.js
 const event = stripe.webhooks.constructEvent(
-    req.body,
-    req.headers['stripe-signature'],
-    process.env.STRIPE_WEBHOOK_SECRET
+  req.body,
+  req.headers['stripe-signature'],
+  process.env.STRIPE_WEBHOOK_SECRET
 );
 ```
 
@@ -201,12 +201,12 @@ stripe trigger customer.subscription.updated
 
 ### 4. Test Card Numbers
 
-| Card Number | Scenario |
-|-------------|----------|
-| `4242424242424242` | Success |
-| `4000000000000002` | Declined |
+| Card Number        | Scenario           |
+| ------------------ | ------------------ |
+| `4242424242424242` | Success            |
+| `4000000000000002` | Declined           |
 | `4000000000009995` | Insufficient funds |
-| `4000000000009987` | Expired card |
+| `4000000000009987` | Expired card       |
 
 ---
 
@@ -330,6 +330,6 @@ DEBUG=billing:*
 ### Support
 
 For additional support:
-- Stripe Documentation: https://stripe.com/docs
-- Consultify Support: support@consultify.app
 
+- Stripe Documentation: https://stripe.com/docs
+- Consultinity Support: support@consultinity.app

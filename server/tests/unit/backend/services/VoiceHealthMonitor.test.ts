@@ -8,54 +8,54 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IDatabase } from '../../../../src/database/IDatabase.js';
-import VoiceHealthMonitor from '../../../../src/services/voiceHealthMonitor.js';
+import VoiceHealthMonitor from '../../../../src/services/ai/voiceHealthMonitor.js';
 
 describe('VoiceHealthMonitor', () => {
-    let mockDb: IDatabase;
+  let mockDb: IDatabase;
 
-    beforeEach(() => {
-        vi.clearAllMocks();
+  beforeEach(() => {
+    vi.clearAllMocks();
 
-        mockDb = {
-            get: vi.fn(),
-            all: vi.fn(),
-            run: vi.fn((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                const dbObj = {
-                    ...mockDb,
-                    changes: 1,
-                    lastID: 1,
-                };
-                if (callback) {
-                    callback(null);
-                }
-                return dbObj;
-            }),
-            exec: vi.fn(),
-            serialize: vi.fn(),
-            close: vi.fn(),
-            query: vi.fn(),
-        } as unknown as IDatabase;
-
-        if (VoiceHealthMonitor.setDependencies) {
-            VoiceHealthMonitor.setDependencies({ db: mockDb });
+    mockDb = {
+      get: vi.fn(),
+      all: vi.fn(),
+      run: vi.fn((sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+        const dbObj = {
+          ...mockDb,
+          changes: 1,
+          lastID: 1,
+        };
+        if (callback) {
+          callback(null);
         }
-    });
+        return dbObj;
+      }),
+      exec: vi.fn(),
+      serialize: vi.fn(),
+      close: vi.fn(),
+      query: vi.fn(),
+    } as unknown as IDatabase;
 
-    describe('Service Methods', () => {
-        it('should have required methods', () => {
-            expect(VoiceHealthMonitor).toBeDefined();
-        });
-    });
+    if (VoiceHealthMonitor.setDependencies) {
+      VoiceHealthMonitor.setDependencies({ db: mockDb });
+    }
+  });
 
-    describe('Error Handling', () => {
-        it('should handle database errors gracefully', () => {
-            (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
-                (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
-                    callback(new Error('Database error'));
-                },
-            );
-
-            expect(true).toBe(true);
-        });
+  describe('Service Methods', () => {
+    it('should have required methods', () => {
+      expect(VoiceHealthMonitor).toBeDefined();
     });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle database errors gracefully', () => {
+      (mockDb.get as ReturnType<typeof vi.fn>).mockImplementation(
+        (sql: string, params: unknown[], callback: (err: Error | null) => void) => {
+          callback(new Error('Database error'));
+        }
+      );
+
+      expect(true).toBe(true);
+    });
+  });
 });

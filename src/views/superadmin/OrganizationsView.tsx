@@ -1,0 +1,805 @@
+import {
+  AlertCircle,
+  Building2,
+  Check,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Copy,
+  DollarSign,
+  Edit2,
+  Eye,
+  Key,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  TrendingUp,
+  Users,
+  X,
+  XCircle,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { InfoButton } from '../../components/shared/InfoButton';
+import { Api } from '../../services/api';
+import { Organization } from '../../types';
+import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
+
+interface AccessRequest {
+  id: string;
+  organization_name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  rejection_reason?: string;
+}
+
+interface AccessCode {
+  id: string;
+  code: string;
+  role: string;
+  max_uses: number;
+  current_uses: number;
+  expires_at: string | null;
+  created_by_email?: string;
+}
+
+type ActiveTab = 'organizations' | 'pending' | 'codes';
+
+export const OrganizationsView: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<ActiveTab>('organizations');
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [requests, setRequests] = useState<AccessRequest[]>([]);
+  const [codes, setCodes] = useState<AccessCode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  // Modal States
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [newCodeData, setNewCodeData] = useState({
+    code: '',
+    role: 'USER',
+    maxUses: 100,
+    expiresAt: '',
+  });
+
+  // Inline Edit State
+  const [editingOrgId, setEditingOrgId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{
+    plan: string;
+    status: string;
+    discount_percent: number;
+  }>({
+    plan: 'free',
+    status: 'active',
+    discount_percent: 0,
+  });
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [orgsData, reqsData, codesData] = await Promise.all([
+        Api.getOrganizations(),
+        Api.getAccessRequests().catch(() => []),
+        Api.getAccessCodes().catch(() => []),
+      ]);
+      setOrganizations(orgsData);
+      setRequests(reqsData);
+      setCodes(codesData);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const pendingRequestsCount = requests.filter((r) => r.status === 'pending').length;
+
+  // Organization Actions
+  const handleDeleteOrg = async (id: string, name: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${name}" and all its users? This cannot be undone.`
+      )
+    )
+      return;
+    try {
+      await Api.deleteOrganization(id);
+      toast.success('Organization deleted');
+      fetchData();
+    } catch (err) {
+      toast.error('Failed to delete organization');
+    }
+  };
+
+  const startInlineEdit = (org: Organization) => {
+    setEditingOrgId(org.id);
+    setEditForm({
+      plan: org.plan,
+      status: org.status,
+      discount_percent: org.discount_percent || 0,
+    });
+  };
+
+  const cancelInlineEdit = () => {
+    setEditingOrgId(null);
+  };
+
+  const saveInlineEdit = async (orgId: string) => {
+    try {
+      await Api.updateOrganization(orgId, {
+        plan: editForm.plan,
+        status: editForm.status,
+        discount_percent: editForm.discount_percent,
+      });
+      toast.success('Organization updated');
+      setEditingOrgId(null);
+      fetchData();
+    } catch (err) {
+      toast.error('Failed to update organization');
+    }
+  };
+
+  // Access Request Actions
+  const handleApprove = async (id: string) => {
+    setProcessingId(id);
+    try {
+      await Api.approveAccessRequest(id);
+      toast.success('Access request approved');
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to approve request');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    const reason = prompt('Enter rejection reason:');
+    if (reason === null) return;
+
+    setProcessingId(id);
+    try {
+      await Api.rejectAccessRequest(id, reason);
+      toast.success('Access request rejected');
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reject request');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Access Code Actions
+  const handleGenerateCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await Api.generateAccessCode(newCodeData);
+      toast.success('Access code generated');
+      setShowCodeModal(false);
+      setNewCodeData({ code: '', role: 'USER', maxUses: 100, expiresAt: '' });
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to generate code');
+    }
+  };
+
+  const copyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success('Code copied to clipboard');
+  };
+
+  // Filtered Data
+  const filteredOrgs = organizations.filter((org) => {
+    const name = String(org.name || org.organization_name || 'Unknown Organization');
+    return (
+      name.toLowerCase().includes(searchTerm.toLowerCase()) || (org.id || '').includes(searchTerm)
+    );
+  });
+
+  const getPlanColor = (plan: string) => {
+    switch (plan) {
+      case 'enterprise':
+        return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+      case 'pro':
+        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'trial':
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      default:
+        return 'bg-slate-700/50 text-slate-300 border-white/10';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'text-emerald-400';
+      case 'blocked':
+        return 'text-red-400';
+      case 'pending':
+        return 'text-yellow-400';
+      default:
+        return 'text-slate-400 dark:text-slate-500';
+    }
+  };
+
+  const getOrgName = (org: Organization) =>
+    String((org as any).name || (org as any).organization_name || 'Unknown Organization');
+
+  return (
+    <div className="p-8 overflow-y-auto h-full relative">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Building2 size={20} className="text-white" />
+            </div>
+            Organizations
+          </h1>
+          <p className="text-slate-400 dark:text-slate-500 mt-1 text-sm">
+            Manage organizations, subscriptions, and access requests
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <InfoButton
+            cardId="superadmin-organizations"
+            position="header-inline"
+            size="md"
+            showLabel
+            label="Help"
+          />
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-navy-800 hover:bg-navy-700 text-white rounded-lg text-sm transition-colors border border-white/10"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab('organizations')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            activeTab === 'organizations'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+              : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+          }`}
+        >
+          <Building2 size={16} />
+          All Organizations
+          <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">
+            {organizations.length}
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('pending')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            activeTab === 'pending'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+              : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+          }`}
+        >
+          <Clock size={16} />
+          Pending Requests
+          {pendingRequestsCount > 0 && (
+            <span className="ml-1 bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs font-bold">
+              {pendingRequestsCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('codes')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            activeTab === 'codes'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+              : 'bg-navy-800 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-navy-700'
+          }`}
+        >
+          <Key size={16} />
+          Access Codes
+        </button>
+      </div>
+
+      {/* Organizations Tab */}
+      {activeTab === 'organizations' && (
+        <>
+          {/* Search */}
+          <div className="mb-4">
+            <div className="relative max-w-md">
+              <Search
+                className="absolute left-3 top-2.5 text-slate-500 dark:text-slate-400"
+                size={16}
+              />
+              <input
+                type="text"
+                placeholder="Search organizations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-navy-900 border border-white/10 rounded-lg text-sm text-white focus:border-blue-500 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Organizations Table */}
+          <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider">
+                  <th className="p-4 font-medium">Organization</th>
+                  <th className="p-4 font-medium">Users</th>
+                  <th className="p-4 font-medium">Plan</th>
+                  <th className="p-4 font-medium">Status</th>
+                  <th className="p-4 font-medium">Discount</th>
+                  <th className="p-4 font-medium">Created</th>
+                  <th className="p-4 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-sm">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : filteredOrgs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                      No organizations found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredOrgs.map((org) => {
+                    const isEditing = editingOrgId === org.id;
+
+                    return (
+                      <tr
+                        key={org.id}
+                        className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors group"
+                      >
+                        <td className="p-4">
+                          <div className="font-medium text-white">{getOrgName(org)}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                            {org.id.slice(0, 8)}...
+                          </div>
+                        </td>
+                        <td className="p-4 text-slate-300">{org.user_count}</td>
+                        <td className="p-4">
+                          {isEditing ? (
+                            <select
+                              value={editForm.plan}
+                              onChange={(e) => setEditForm({ ...editForm, plan: e.target.value })}
+                              className="bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white text-xs focus:outline-none"
+                            >
+                              <option value="free">Free</option>
+                              <option value="trial">Trial</option>
+                              <option value="pro">Pro</option>
+                              <option value="enterprise">Enterprise</option>
+                            </select>
+                          ) : (
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-bold uppercase border ${getPlanColor(org.plan)}`}
+                            >
+                              {org.plan}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          {isEditing ? (
+                            <select
+                              value={editForm.status}
+                              onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                              className="bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white text-xs focus:outline-none"
+                            >
+                              <option value="active">Active</option>
+                              <option value="pending">Pending</option>
+                              <option value="blocked">Blocked</option>
+                            </select>
+                          ) : (
+                            <span
+                              className={`flex items-center gap-1.5 ${getStatusColor(org.status)}`}
+                            >
+                              {org.status === 'active' ? (
+                                <CheckCircle size={14} />
+                              ) : (
+                                <AlertCircle size={14} />
+                              )}
+                              {org.status}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={editForm.discount_percent}
+                                onChange={(e) =>
+                                  setEditForm({
+                                    ...editForm,
+                                    discount_percent: parseInt(e.target.value) || 0,
+                                  })
+                                }
+                                className="w-16 bg-navy-950 border border-blue-500/50 rounded px-2 py-1 text-white text-xs focus:outline-none"
+                              />
+                              <span className="text-slate-500 dark:text-slate-400 text-xs">%</span>
+                            </div>
+                          ) : org.discount_percent ? (
+                            <span className="text-emerald-400 font-bold">
+                              -{org.discount_percent}%
+                            </span>
+                          ) : (
+                            <span className="text-slate-600 dark:text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
+                          {org.created_at ? new Date(org.created_at).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="p-4 text-right">
+                          {isEditing ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => saveInlineEdit(org.id)}
+                                className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded transition-colors"
+                                title="Save"
+                              >
+                                <Check size={16} />
+                              </button>
+                              <button
+                                onClick={cancelInlineEdit}
+                                className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded transition-colors"
+                                title="Cancel"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => setSelectedOrg(org)}
+                                className="p-1.5 hover:bg-blue-500/20 text-slate-400 dark:text-slate-500 hover:text-blue-400 rounded transition-colors"
+                                title="View Details"
+                              >
+                                <Eye size={16} />
+                              </button>
+                              <button
+                                onClick={() => startInlineEdit(org)}
+                                className="p-1.5 hover:bg-yellow-500/20 text-slate-400 dark:text-slate-500 hover:text-yellow-400 rounded transition-colors"
+                                title="Quick Edit"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
+                                className="p-1.5 hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Pending Requests Tab */}
+      {activeTab === 'pending' && (
+        <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-white/5 flex justify-between items-center">
+            <h3 className="font-semibold text-white">Pending Organization Requests</h3>
+          </div>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider">
+                <th className="p-4 font-medium">Date</th>
+                <th className="p-4 font-medium">Organization</th>
+                <th className="p-4 font-medium">Contact</th>
+                <th className="p-4 font-medium">Status</th>
+                <th className="p-4 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 text-sm">
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                    Loading...
+                  </td>
+                </tr>
+              ) : requests.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                    No access requests found.
+                  </td>
+                </tr>
+              ) : (
+                requests.map((req) => (
+                  <tr
+                    key={req.id}
+                    className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                  >
+                    <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
+                      {new Date(req.requested_at).toLocaleString()}
+                    </td>
+                    <td className="p-4 text-white font-medium">{req.organization_name}</td>
+                    <td className="p-4">
+                      <div className="text-white">
+                        {req.first_name} {req.last_name}
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 text-xs">{req.email}</div>
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                          req.status === 'approved'
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : req.status === 'rejected'
+                              ? 'bg-red-500/20 text-red-400'
+                              : 'bg-yellow-500/20 text-yellow-400'
+                        }`}
+                      >
+                        {req.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right">
+                      {req.status === 'pending' && (
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleApprove(req.id)}
+                            disabled={processingId === req.id}
+                            className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded transition-colors disabled:opacity-50"
+                            title="Approve"
+                          >
+                            <CheckCircle size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleReject(req.id)}
+                            disabled={processingId === req.id}
+                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded transition-colors disabled:opacity-50"
+                            title="Reject"
+                          >
+                            <XCircle size={18} />
+                          </button>
+                        </div>
+                      )}
+                      {req.status === 'rejected' && req.rejection_reason && (
+                        <span className="text-xs text-red-400 italic">
+                          Reason: {req.rejection_reason}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Access Codes Tab */}
+      {activeTab === 'codes' && (
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowCodeModal(true)}
+              className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+            >
+              <Plus size={16} /> Generate New Code
+            </button>
+          </div>
+
+          <div className="bg-navy-900 border border-white/10 rounded-xl overflow-hidden">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-navy-950 text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wider">
+                  <th className="p-4 font-medium">Code</th>
+                  <th className="p-4 font-medium">Role</th>
+                  <th className="p-4 font-medium">Usage</th>
+                  <th className="p-4 font-medium">Expires</th>
+                  <th className="p-4 font-medium">Created By</th>
+                  <th className="p-4 font-medium text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 text-sm">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : codes.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                      No access codes generated yet.
+                    </td>
+                  </tr>
+                ) : (
+                  codes.map((code) => (
+                    <tr
+                      key={code.id}
+                      className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <code className="bg-navy-950 px-2 py-1 rounded text-blue-400 font-mono text-xs border border-blue-500/20">
+                            {code.code}
+                          </code>
+                          <button
+                            onClick={() => copyCode(code.code)}
+                            className="text-slate-500 dark:text-slate-400 hover:text-white transition-colors"
+                          >
+                            <Copy size={12} />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="p-4 text-slate-300 font-medium text-xs">{code.role}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 h-1.5 bg-navy-950 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-500"
+                              style={{
+                                width: `${Math.min(100, (code.current_uses / code.max_uses) * 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-slate-400 dark:text-slate-500">
+                            {code.current_uses}/{code.max_uses}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
+                        {code.expires_at ? new Date(code.expires_at).toLocaleDateString() : 'Never'}
+                      </td>
+                      <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
+                        {code.created_by_email || 'Super Admin'}
+                      </td>
+                      <td className="p-4 text-right">
+                        <button className="text-slate-500 dark:text-slate-400 hover:text-red-400 transition-colors">
+                          <XCircle size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Organization Details Modal */}
+      {selectedOrg && (
+        <SuperAdminOrgDetailsModal
+          org={selectedOrg}
+          onClose={() => setSelectedOrg(null)}
+          onUpdate={() => {
+            setSelectedOrg(null);
+            fetchData();
+          }}
+        />
+      )}
+
+      {/* Generate Code Modal */}
+      {showCodeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-navy-900 border border-white/10 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Key size={20} className="text-purple-500" /> Generate Access Code
+              </h3>
+              <button
+                onClick={() => setShowCodeModal(false)}
+                className="text-slate-400 dark:text-slate-500 hover:text-white"
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleGenerateCode} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                  Custom Code (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newCodeData.code}
+                  onChange={(e) =>
+                    setNewCodeData({ ...newCodeData, code: e.target.value.toUpperCase() })
+                  }
+                  placeholder="Leave empty for random"
+                  className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm placeholder:text-slate-600 dark:text-slate-400"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                    Max Uses
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newCodeData.maxUses}
+                    onChange={(e) =>
+                      setNewCodeData({ ...newCodeData, maxUses: parseInt(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                    Role
+                  </label>
+                  <select
+                    value={newCodeData.role}
+                    onChange={(e) => setNewCodeData({ ...newCodeData, role: e.target.value })}
+                    className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm"
+                  >
+                    <option value="USER">User</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="CEO">CEO</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                  Expires At (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={newCodeData.expiresAt}
+                  onChange={(e) => setNewCodeData({ ...newCodeData, expiresAt: e.target.value })}
+                  className="w-full px-3 py-2 bg-navy-950 border border-white/10 rounded text-white focus:border-purple-500 outline-none text-sm"
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCodeModal(false)}
+                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-300 text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded text-white text-sm font-medium transition-colors"
+                >
+                  Generate Code
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OrganizationsView;

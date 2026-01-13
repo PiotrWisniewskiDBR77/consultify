@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadAihealthalert = createCachedLazyService('../../services/ai/aiHealthAlertService.js');
+const loadAihealthalert = createCachedLazyService('../../ai/aiHealthAlertService.js');
 
 // Export default instance (for backward compatibility)
 export default loadAihealthalert();

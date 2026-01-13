@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadIndex = createCachedLazyService('../../services/ai/pipeline/index.js');
+const loadIndex = createCachedLazyService('../../../ai/pipeline/index.js');
 
 // Export default instance (for backward compatibility)
 export default loadIndex();

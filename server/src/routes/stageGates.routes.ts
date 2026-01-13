@@ -7,12 +7,17 @@
 
 import { Router } from 'express';
 
-import StageGateController from '../controllers/StageGateController.js';
+import StageGateControllerRaw from '../controllers/StageGateController.js';
+const StageGateController = StageGateControllerRaw as any;
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { PassGateSchema } from '../validators/stageGate.validators.js';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(authRateLimiter);
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
@@ -37,7 +42,11 @@ router.get('/:projectId/current', StageGateController.getCurrentGate);
  * POST /api/stage-gates/:projectId/pass/:gateType
  * Pass gate (requires manage_stage_gates permission)
  */
-router.post('/:projectId/pass/:gateType', validateBody(PassGateSchema), StageGateController.passGate);
+router.post(
+  '/:projectId/pass/:gateType',
+  validateBody(PassGateSchema),
+  StageGateController.passGate
+);
 
 /**
  * GET /api/stage-gates/:projectId/history
@@ -46,4 +55,3 @@ router.post('/:projectId/pass/:gateType', validateBody(PassGateSchema), StageGat
 router.get('/:projectId/history', StageGateController.getGateHistory);
 
 export default router;
-

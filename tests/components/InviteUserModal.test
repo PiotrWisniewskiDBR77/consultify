@@ -1,0 +1,125 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import InviteUserModal from '../../components/InviteUserModal';
+import { useAppStore } from '../../../store/useAppStore';
+
+vi.mock('../../../store/useAppStore', () => ({
+    useAppStore: vi.fn()
+}));
+
+global.fetch = vi.fn();
+
+describe('InviteUserModal Component', () => {
+    const user = userEvent.setup();
+    const mockOnClose = vi.fn();
+    const mockOnSuccess = vi.fn();
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        localStorage.clear();
+        localStorage.setItem('token', 'test-token');
+        (useAppStore as any).mockReturnValue({
+            currentUser: { id: 'user-1', email: 'admin@example.com' }
+        });
+        (global.fetch as any).mockResolvedValue({
+            ok: true,
+            json: vi.fn().mockResolvedValue([])
+        });
+    });
+
+    it('renders modal with invite user heading', () => {
+        render(<InviteUserModal onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+
+        expect(screen.getByText(/Invite User/i)).toBeInTheDocument();
+    });
+
+    it('renders email input', () => {
+        render(<InviteUserModal onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+
+        expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
+    });
+
+    it('renders role selector', () => {
+        render(<InviteUserModal onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+
+        expect(screen.getByLabelText(/Role/i)).toBeInTheDocument();
+    });
+
+    it('validates email format', async () => {
+        render(<InviteUserModal onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+
+        const emailInput = screen.getByPlaceholderText(/email/i);
+        await user.type(emailInput, 'invalid-email');
+
+        const submitButton = screen.getByRole('button', { name: /Send Invitation/i });
+        await user.click(submitButton);
+
+        await waitFor(() => {
+            expect(screen.getByText(/valid email/i)).toBeInTheDocument();
+        });
+    });
+
+    it('submits invitation with valid email', async () => {
+        (global.fetch as any).mockResolvedValueOnce({
+            ok: true,
+            json: vi.fn().mockResolvedValue({ id: 'inv-1' })
+        });
+
+        render(<InviteUserModal onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+
+        const emailInput = screen.getByPlaceholderText(/email/i);
+        await user.type(emailInput, 'user@example.com');
+
+        const submitButton = screen.getByRole('button', { name: /Send Invitation/i });
+        await user.click(submitButton);
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalled();
+        });
+    });
+
+    it('closes modal when X clicked', async () => {
+        render(<InviteUserModal onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+
+        const closeButton = screen.getByRole('button', { name: /close/i });
+        await user.click(closeButton);
+
+        expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('shows project selector for project invite', () => {
+        render(<InviteUserModal onClose={mockOnClose} onSuccess={mockOnSuccess} projectId="proj-1" />);
+
+        expect(screen.getByText(/Project Invitation/i)).toBeInTheDocument();
+    });
+
+    it('fetches projects on mount', async () => {
+        render(<InviteUserModal onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining('/projects'),
+                expect.any(Object)
+            );
+        });
+    });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

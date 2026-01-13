@@ -181,10 +181,7 @@ or
 ```json
 {
   "valid": false,
-  "errors": [
-    "Password must contain at least one special character",
-    "Password was used recently"
-  ]
+  "errors": ["Password must contain at least one special character", "Password was used recently"]
 }
 ```
 
@@ -273,12 +270,12 @@ GET /security-policies/:orgId/login-attempts
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| limit | number | Max results (default: 100) |
-| status | string | Filter: "success" or "failed" |
-| startDate | string | ISO date filter |
-| endDate | string | ISO date filter |
+| Parameter | Type   | Description                   |
+| --------- | ------ | ----------------------------- |
+| limit     | number | Max results (default: 100)    |
+| status    | string | Filter: "success" or "failed" |
+| startDate | string | ISO date filter               |
+| endDate   | string | ISO date filter               |
 
 **Response:**
 
@@ -306,9 +303,9 @@ GET /security-policies/stats
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| days | number | Time range (default: 7) |
+| Parameter | Type   | Description             |
+| --------- | ------ | ----------------------- |
+| days      | number | Time range (default: 7) |
 
 **Response:**
 
@@ -334,9 +331,9 @@ GET /security-policies/lockouts/all
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| active | boolean | Filter active only |
+| Parameter | Type    | Description        |
+| --------- | ------- | ------------------ |
+| active    | boolean | Filter active only |
 
 ### Unlock Account
 
@@ -432,8 +429,8 @@ GET /billing/overview
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter      | Type   | Description   |
+| -------------- | ------ | ------------- |
 | organizationId | string | Filter by org |
 
 **Response:**
@@ -466,11 +463,11 @@ GET /billing/invoices
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| status | string | draft, open, paid, void |
-| organizationId | string | Filter by org |
-| limit | number | Max results |
+| Parameter      | Type   | Description             |
+| -------------- | ------ | ----------------------- |
+| status         | string | draft, open, paid, void |
+| organizationId | string | Filter by org           |
+| limit          | number | Max results             |
 
 **Response:**
 
@@ -533,9 +530,9 @@ GET /billing/subscriptions
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| status | string | active, trialing, canceled, etc. |
+| Parameter | Type   | Description                      |
+| --------- | ------ | -------------------------------- |
+| status    | string | active, trialing, canceled, etc. |
 
 ### Create Subscription
 
@@ -622,8 +619,8 @@ GET /feature-flags
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter   | Type   | Description                      |
+| ----------- | ------ | -------------------------------- |
 | environment | string | development, staging, production |
 
 ### Evaluate Flag (Client)
@@ -792,10 +789,10 @@ GET /data-export/requests
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationId | string | Filter by org |
-| status | string | pending, processing, completed, failed |
+| Parameter      | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| organizationId | string | Filter by org                          |
+| status         | string | pending, processing, completed, failed |
 
 ### Create Export Request
 
@@ -827,9 +824,9 @@ GET /data-export/backup-config
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationId | string | Required |
+| Parameter      | Type   | Description |
+| -------------- | ------ | ----------- |
+| organizationId | string | Required    |
 
 ### Update Backup Configuration
 
@@ -839,9 +836,9 @@ PUT /data-export/backup-config
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationId | string | Required |
+| Parameter      | Type   | Description |
+| -------------- | ------ | ----------- |
+| organizationId | string | Required    |
 
 **Request Body:**
 
@@ -877,9 +874,9 @@ GET /data-export/backup-history
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationId | string | Required |
+| Parameter      | Type   | Description |
+| -------------- | ------ | ----------- |
+| organizationId | string | Required    |
 
 ---
 
@@ -893,9 +890,9 @@ GET /settings/email-config
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationId | string | Required |
+| Parameter      | Type   | Description |
+| -------------- | ------ | ----------- |
+| organizationId | string | Required    |
 
 ### Update Email Configuration
 
@@ -905,9 +902,9 @@ PUT /settings/email-config
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationId | string | Required |
+| Parameter      | Type   | Description |
+| -------------- | ------ | ----------- |
+| organizationId | string | Required    |
 
 **Request Body:**
 
@@ -920,7 +917,7 @@ PUT /settings/email-config
   "smtp_password_encrypted": "encrypted_password",
   "smtp_use_tls": true,
   "from_email": "noreply@example.com",
-  "from_name": "Consultify",
+  "from_name": "Consultinity",
   "reply_to_email": "support@example.com"
 }
 ```
@@ -933,9 +930,9 @@ POST /settings/email-config/test
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationId | string | Required |
+| Parameter      | Type   | Description |
+| -------------- | ------ | ----------- |
+| organizationId | string | Required    |
 
 **Request Body:**
 
@@ -953,9 +950,9 @@ POST /settings/email-config/verify-dns
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| organizationId | string | Required |
+| Parameter      | Type   | Description |
+| -------------- | ------ | ----------- |
+| organizationId | string | Required    |
 
 **Response:**
 
@@ -983,14 +980,14 @@ All endpoints return errors in the following format:
 
 ### Common Error Codes
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| UNAUTHORIZED | 401 | Invalid or missing token |
-| FORBIDDEN | 403 | Insufficient permissions |
-| NOT_FOUND | 404 | Resource not found |
-| VALIDATION_ERROR | 400 | Invalid request data |
-| RATE_LIMITED | 429 | Too many requests |
-| INTERNAL_ERROR | 500 | Server error |
+| Code             | HTTP Status | Description              |
+| ---------------- | ----------- | ------------------------ |
+| UNAUTHORIZED     | 401         | Invalid or missing token |
+| FORBIDDEN        | 403         | Insufficient permissions |
+| NOT_FOUND        | 404         | Resource not found       |
+| VALIDATION_ERROR | 400         | Invalid request data     |
+| RATE_LIMITED     | 429         | Too many requests        |
+| INTERNAL_ERROR   | 500         | Server error             |
 
 ---
 
@@ -1016,25 +1013,25 @@ X-RateLimit-Reset: 1704067200
 
 Events that can trigger webhooks:
 
-| Event | Description |
-|-------|-------------|
-| `user.created` | New user registered |
-| `user.updated` | User profile updated |
-| `user.deleted` | User account deleted |
-| `project.created` | New project created |
-| `project.updated` | Project settings changed |
-| `project.deleted` | Project deleted |
-| `task.created` | New task created |
-| `task.updated` | Task modified |
-| `task.completed` | Task marked complete |
-| `task.deleted` | Task deleted |
-| `subscription.created` | New subscription |
-| `subscription.updated` | Subscription changed |
-| `subscription.canceled` | Subscription canceled |
-| `invoice.created` | Invoice generated |
-| `invoice.paid` | Invoice payment received |
-| `export.completed` | Data export ready |
-| `backup.completed` | Backup finished |
+| Event                   | Description              |
+| ----------------------- | ------------------------ |
+| `user.created`          | New user registered      |
+| `user.updated`          | User profile updated     |
+| `user.deleted`          | User account deleted     |
+| `project.created`       | New project created      |
+| `project.updated`       | Project settings changed |
+| `project.deleted`       | Project deleted          |
+| `task.created`          | New task created         |
+| `task.updated`          | Task modified            |
+| `task.completed`        | Task marked complete     |
+| `task.deleted`          | Task deleted             |
+| `subscription.created`  | New subscription         |
+| `subscription.updated`  | Subscription changed     |
+| `subscription.canceled` | Subscription canceled    |
+| `invoice.created`       | Invoice generated        |
+| `invoice.paid`          | Invoice payment received |
+| `export.completed`      | Data export ready        |
+| `backup.completed`      | Backup finished          |
 
 ---
 
@@ -1043,7 +1040,7 @@ Events that can trigger webhooks:
 ### JavaScript/TypeScript
 
 ```typescript
-import { Api } from '@consultify/api';
+import { Api } from '@consultinity/api';
 
 // Security policy
 const policy = await Api.get('/security-policies/org-123');
@@ -1053,14 +1050,14 @@ await Api.put('/security-policies/org-123', { mfaRequired: true });
 const webhooks = await Api.get('/settings/webhooks');
 await Api.post('/settings/webhooks', {
   url: 'https://example.com/hook',
-  events: ['user.created']
+  events: ['user.created'],
 });
 
 // Data export
 const { requests } = await Api.get('/data-export/requests');
 await Api.post('/data-export/requests', {
   exportType: 'full',
-  includeData: ['users', 'projects']
+  includeData: ['users', 'projects'],
 });
 ```
 
@@ -1104,11 +1101,3 @@ requests.post(
 - Added Data Export functionality
 - Added Backup Configuration
 - Added Email Configuration with DNS verification
-
-
-
-
-
-
-
-

@@ -1,6 +1,6 @@
 # New Application Fork
 
-This is a skeleton application forked from Consultify, ready for customization.
+This is a skeleton application forked from Consultinity, ready for customization.
 
 ## Getting Started
 
@@ -30,9 +30,9 @@ apps/new-app/
 
 ## Shared Dependencies
 
-This app uses the shared packages from `@consultify/*`:
+This app uses the shared packages from `@consultinity/*`:
 
-- `@consultify/shared` - Types, utils, constants
+- `@consultinity/shared` - Types, utils, constants
 - All shared functionality is available from the monorepo
 
 ## Configuration
@@ -51,6 +51,4 @@ This app uses the shared packages from `@consultify/*`:
 
 1. Update branding in `frontend/src/`
 2. Add custom API routes in `backend/src/`
-3. Import shared utilities: `import { ... } from '@consultify/shared'`
-
-
+3. Import shared utilities: `import { ... } from '@consultinity/shared'`

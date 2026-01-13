@@ -9,9 +9,11 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 
+// Apply rate limiting
 const router = Router();
 
 // Apply auth middleware to all routes
@@ -26,15 +28,15 @@ router.use(verifyToken);
  * Get initiative health metrics
  */
 router.get(
-    '/health',
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        if (!orgId) {
-            res.status(400).json({ error: 'Organization ID required' });
-            return;
-        }
+  '/health',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      return res.status(400).json({ error: 'Organization ID required' });
+      return;
+    }
 
-        const sql = `
+    const sql = `
             SELECT 
                 status,
                 COUNT(*) as count,
@@ -45,10 +47,10 @@ router.get(
             GROUP BY status
         `;
 
-        const rows = await dbAll(sql, [orgId]);
+    const rows = await dbAll(sql, [orgId]);
 
-        // Also get Tasks overdue count
-        const taskSql = `
+    // Also get Tasks overdue count
+    const taskSql = `
             SELECT COUNT(*) as overdue_count 
             FROM tasks 
             WHERE organization_id = ? 
@@ -56,13 +58,13 @@ router.get(
             AND due_date < DATE('now')
         `;
 
-        const taskRow = await dbGet<{ overdue_count: number }>(taskSql, [orgId]);
+    const taskRow = await dbGet<{ overdue_count: number }>(taskSql, [orgId]);
 
-        res.json({
-            initiativesByStatus: rows,
-            overdueTasks: taskRow ? taskRow.overdue_count : 0,
-        });
-    }),
+    return res.json({
+      initiativesByStatus: rows,
+      overdueTasks: taskRow ? taskRow.overdue_count : 0,
+    });
+  })
 );
 
 /**
@@ -70,15 +72,15 @@ router.get(
  * Get people & performance metrics
  */
 router.get(
-    '/performance',
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        if (!orgId) {
-            res.status(400).json({ error: 'Organization ID required' });
-            return;
-        }
+  '/performance',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      return res.status(400).json({ error: 'Organization ID required' });
+      return;
+    }
 
-        const sql = `
+    const sql = `
             SELECT 
                 u.id, u.first_name, u.last_name, u.avatar_url,
                 COUNT(t.id) as total_tasks,
@@ -90,10 +92,10 @@ router.get(
             GROUP BY u.id
         `;
 
-        const rows = await dbAll(sql, [orgId]);
+    const rows = await dbAll(sql, [orgId]);
 
-        res.json(rows);
-    }),
+    return res.json(rows);
+  })
 );
 
 /**
@@ -101,15 +103,15 @@ router.get(
  * Get economic impact metrics
  */
 router.get(
-    '/economics',
-    asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-        const orgId = req.user?.organizationId;
-        if (!orgId) {
-            res.status(400).json({ error: 'Organization ID required' });
-            return;
-        }
+  '/economics',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) {
+      return res.status(400).json({ error: 'Organization ID required' });
+      return;
+    }
 
-        const sql = `
+    const sql = `
             SELECT 
                 SUM(cost_capex) as total_capex,
                 SUM(cost_opex) as total_opex,
@@ -119,27 +121,27 @@ router.get(
             WHERE organization_id = ?
         `;
 
-        const row = await dbGet<{
-            total_capex: number;
-            total_opex: number;
-            expected_benefit: number;
-            total_cost: number;
-        }>(sql, [orgId]);
+    const row = await dbGet<{
+      total_capex: number;
+      total_opex: number;
+      expected_benefit: number;
+      total_cost: number;
+    }>(sql, [orgId]);
 
-        // Also get actual spend from Tasks
-        const spendSql = `
+    // Also get actual spend from Tasks
+    const spendSql = `
             SELECT SUM(budget_spent) as actual_spend
             FROM tasks
             WHERE organization_id = ?
         `;
 
-        const spendRow = await dbGet<{ actual_spend: number }>(spendSql, [orgId]);
+    const spendRow = await dbGet<{ actual_spend: number }>(spendSql, [orgId]);
 
-        res.json({
-            ...row,
-            actualSpend: spendRow ? spendRow.actual_spend : 0,
-        });
-    }),
+    return res.json({
+      ...row,
+      actualSpend: spendRow ? spendRow.actual_spend : 0,
+    });
+  })
 );
 
 export default router;

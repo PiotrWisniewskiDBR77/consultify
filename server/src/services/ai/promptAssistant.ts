@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadPromptassistant = createCachedLazyService('../../services/ai/promptAssistant.js');
+const loadPromptassistant = createCachedLazyService('../../ai/promptAssistant.js');
 
 // Export default instance (for backward compatibility)
 export default loadPromptassistant();

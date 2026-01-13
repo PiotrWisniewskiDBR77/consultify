@@ -1,0 +1,400 @@
+{
+  "initiatives": [
+    {
+      "id": "init-001",
+      "name": "Smart Factory 4.0 Implementation",
+      "summary": "Transform the Warsaw and Wrocław production facilities into fully connected smart factories with real-time monitoring, automated workflows, and AI-driven optimization.",
+      "description": "This flagship initiative aims to digitize our manufacturing floor operations through comprehensive IoT deployment, machine connectivity, and real-time data analytics. The project will connect 200+ machines, implement MES integration, and enable predictive quality control.",
+      "status": "EXECUTING",
+      "priority": "HIGH",
+      "progress": 45,
+      "owner_id": "demo-user-pm1",
+      "sponsor_id": "demo-user-coo",
+      "start_date": "2025-03-01",
+      "target_date": "2026-09-30",
+      "budget": 3500000,
+      "budget_spent": 1200000,
+      "strategic_alignment": "Primary driver of OEE improvement objective",
+      "risks": [
+        {
+          "title": "Legacy equipment integration complexity",
+          "severity": "high",
+          "mitigation": "Retrofit sensors and edge gateways for older machines"
+        },
+        {
+          "title": "Production disruption during deployment",
+          "severity": "medium",
+          "mitigation": "Weekend rollouts with full rollback capability"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "task-001-01",
+          "title": "Machine Connectivity Assessment",
+          "description": "Audit all production equipment for connectivity options and retrofit requirements",
+          "status": "done",
+          "priority": "high",
+          "assignee_id": "demo-user-arch2",
+          "due_date": "2025-04-15",
+          "effort_hours": 120
+        },
+        {
+          "id": "task-001-02",
+          "title": "IoT Platform Selection",
+          "description": "Evaluate and select the industrial IoT platform (Azure IoT, AWS IoT, Siemens MindSphere)",
+          "status": "done",
+          "priority": "high",
+          "assignee_id": "demo-user-cto",
+          "due_date": "2025-05-01",
+          "effort_hours": 80
+        },
+        {
+          "id": "task-001-03",
+          "title": "Edge Infrastructure Deployment",
+          "description": "Install edge computing nodes and network infrastructure in Warsaw plant",
+          "status": "done",
+          "priority": "high",
+          "assignee_id": "demo-user-arch2",
+          "due_date": "2025-06-30",
+          "effort_hours": 200
+        },
+        {
+          "id": "task-001-04",
+          "title": "MES Integration Phase 1",
+          "description": "Integrate 50 critical machines with Manufacturing Execution System",
+          "status": "in_progress",
+          "priority": "high",
+          "assignee_id": "demo-user-pm1",
+          "due_date": "2025-12-31",
+          "effort_hours": 400
+        },
+        {
+          "id": "task-001-05",
+          "title": "Real-time Dashboard Development",
+          "description": "Create shop floor visualization dashboards for live production monitoring",
+          "status": "in_progress",
+          "priority": "medium",
+          "assignee_id": "demo-user-spec2",
+          "due_date": "2026-02-28",
+          "effort_hours": 160
+        },
+        {
+          "id": "task-001-06",
+          "title": "Operator Training Program",
+          "description": "Train 200+ operators on new digital tools and dashboards",
+          "status": "todo",
+          "priority": "medium",
+          "assignee_id": "demo-user-spec3",
+          "due_date": "2026-04-30",
+          "effort_hours": 240
+        }
+      ]
+    },
+    {
+      "id": "init-002",
+      "name": "Predictive Maintenance System",
+      "summary": "Implement AI-driven predictive maintenance to reduce unplanned downtime by 50% and extend equipment lifespan.",
+      "description": "Leverage machine learning models trained on vibration, temperature, and performance data to predict equipment failures before they occur. Initial focus on 30 critical CNC machines and assembly robots.",
+      "status": "EXECUTING",
+      "priority": "HIGH",
+      "progress": 35,
+      "owner_id": "demo-user-spec2",
+      "sponsor_id": "demo-user-cto",
+      "start_date": "2025-04-01",
+      "target_date": "2026-06-30",
+      "budget": 1800000,
+      "budget_spent": 450000,
+      "strategic_alignment": "Key enabler for unplanned downtime reduction target",
+      "tasks": [
+        {
+          "id": "task-002-01",
+          "title": "Historical Failure Data Analysis",
+          "description": "Analyze 3 years of maintenance records to identify failure patterns",
+          "status": "done",
+          "priority": "high",
+          "assignee_id": "demo-user-spec2",
+          "due_date": "2025-05-15",
+          "effort_hours": 160
+        },
+        {
+          "id": "task-002-02",
+          "title": "Sensor Installation - Phase 1",
+          "description": "Install vibration and temperature sensors on 30 critical machines",
+          "status": "done",
+          "priority": "high",
+          "assignee_id": "demo-user-arch2",
+          "due_date": "2025-07-31",
+          "effort_hours": 200
+        },
+        {
+          "id": "task-002-03",
+          "title": "ML Model Development",
+          "description": "Develop and train predictive models for equipment failure prediction",
+          "status": "in_progress",
+          "priority": "high",
+          "assignee_id": "demo-user-spec2",
+          "due_date": "2025-11-30",
+          "effort_hours": 320
+        },
+        {
+          "id": "task-002-04",
+          "title": "Maintenance Workflow Integration",
+          "description": "Integrate predictions with CMMS for automated work order generation",
+          "status": "todo",
+          "priority": "medium",
+          "assignee_id": "demo-user-pm1",
+          "due_date": "2026-02-28",
+          "effort_hours": 120
+        }
+      ]
+    },
+    {
+      "id": "init-003",
+      "name": "Digital Twin Platform",
+      "summary": "Create virtual replicas of production lines for simulation, optimization, and what-if analysis.",
+      "description": "Implement digital twin technology to simulate production scenarios, optimize line balancing, and test changes virtually before physical implementation. Starting with Warsaw Assembly Line 3.",
+      "status": "PLANNING",
+      "priority": "MEDIUM",
+      "progress": 15,
+      "owner_id": "demo-user-pm1",
+      "sponsor_id": "demo-user-cto",
+      "start_date": "2025-07-01",
+      "target_date": "2027-03-31",
+      "budget": 2200000,
+      "budget_spent": 180000,
+      "strategic_alignment": "Enables virtual testing and accelerates continuous improvement",
+      "tasks": [
+        {
+          "id": "task-003-01",
+          "title": "Digital Twin Platform Selection",
+          "description": "Evaluate Siemens Xcelerator, PTC ThingWorx, and custom solutions",
+          "status": "done",
+          "priority": "high",
+          "assignee_id": "demo-user-cto",
+          "due_date": "2025-08-31",
+          "effort_hours": 80
+        },
+        {
+          "id": "task-003-02",
+          "title": "Assembly Line 3 - Data Model",
+          "description": "Create detailed 3D model and data schema for pilot line",
+          "status": "in_progress",
+          "priority": "high",
+          "assignee_id": "demo-user-arch1",
+          "due_date": "2025-12-31",
+          "effort_hours": 240
+        },
+        {
+          "id": "task-003-03",
+          "title": "Real-time Data Integration",
+          "description": "Connect live sensor data to digital twin model",
+          "status": "todo",
+          "priority": "high",
+          "assignee_id": "demo-user-arch2",
+          "due_date": "2026-03-31",
+          "effort_hours": 160
+        }
+      ]
+    },
+    {
+      "id": "init-004",
+      "name": "ERP Cloud Migration (SAP S/4HANA)",
+      "summary": "Migrate from legacy SAP ECC to S/4HANA Cloud for modern, real-time business processes.",
+      "description": "Comprehensive ERP modernization including finance, procurement, production planning, and sales. Brownfield migration approach with selective data migration and process optimization.",
+      "status": "EXECUTING",
+      "priority": "HIGH",
+      "progress": 25,
+      "owner_id": "demo-user-pm2",
+      "sponsor_id": "demo-user-ceo",
+      "start_date": "2025-02-01",
+      "target_date": "2026-12-31",
+      "budget": 4200000,
+      "budget_spent": 800000,
+      "strategic_alignment": "Foundation for real-time business intelligence",
+      "tasks": [
+        {
+          "id": "task-004-01",
+          "title": "System Assessment & Fit-Gap",
+          "description": "Analyze current customizations and plan migration approach",
+          "status": "done",
+          "priority": "high",
+          "assignee_id": "demo-user-pm2",
+          "due_date": "2025-04-30",
+          "effort_hours": 200
+        },
+        {
+          "id": "task-004-02",
+          "title": "Data Quality & Cleansing",
+          "description": "Clean master data and prepare for migration",
+          "status": "in_progress",
+          "priority": "high",
+          "assignee_id": "demo-user-spec4",
+          "due_date": "2025-09-30",
+          "effort_hours": 320
+        },
+        {
+          "id": "task-004-03",
+          "title": "Finance Module Go-Live",
+          "description": "Deploy S/4HANA Finance with embedded analytics",
+          "status": "todo",
+          "priority": "high",
+          "assignee_id": "demo-user-pm2",
+          "due_date": "2026-01-31",
+          "effort_hours": 400
+        },
+        {
+          "id": "task-004-04",
+          "title": "Production Planning Go-Live",
+          "description": "Migrate PP/DS to S/4HANA with advanced scheduling",
+          "status": "todo",
+          "priority": "high",
+          "assignee_id": "demo-user-pm2",
+          "due_date": "2026-06-30",
+          "effort_hours": 480
+        }
+      ]
+    },
+    {
+      "id": "init-005",
+      "name": "Quality Vision AI",
+      "summary": "Deploy computer vision-based quality inspection to reduce defect rates from 1.2% to 0.3%.",
+      "description": "Implement AI-powered visual inspection stations at critical quality checkpoints. The system will detect surface defects, dimensional issues, and assembly errors in real-time.",
+      "status": "PLANNING",
+      "priority": "HIGH",
+      "progress": 20,
+      "owner_id": "demo-user-pm3",
+      "sponsor_id": "demo-user-coo",
+      "start_date": "2025-06-01",
+      "target_date": "2026-03-31",
+      "budget": 950000,
+      "budget_spent": 120000,
+      "strategic_alignment": "Direct impact on quality excellence goal",
+      "tasks": [
+        {
+          "id": "task-005-01",
+          "title": "Defect Taxonomy Definition",
+          "description": "Catalog all defect types with visual examples for model training",
+          "status": "done",
+          "priority": "high",
+          "assignee_id": "demo-user-pm3",
+          "due_date": "2025-07-31",
+          "effort_hours": 80
+        },
+        {
+          "id": "task-005-02",
+          "title": "Training Data Collection",
+          "description": "Collect 50,000+ labeled images of good and defective parts",
+          "status": "in_progress",
+          "priority": "high",
+          "assignee_id": "demo-user-spec2",
+          "due_date": "2025-10-31",
+          "effort_hours": 200
+        },
+        {
+          "id": "task-005-03",
+          "title": "CV Model Development",
+          "description": "Train and optimize computer vision models for defect detection",
+          "status": "todo",
+          "priority": "high",
+          "assignee_id": "demo-user-spec2",
+          "due_date": "2025-12-31",
+          "effort_hours": 280
+        }
+      ]
+    },
+    {
+      "id": "init-006",
+      "name": "Supply Chain Visibility Platform",
+      "summary": "Implement end-to-end supply chain visibility with real-time tracking and automated alerts.",
+      "description": "Deploy a cloud-based supply chain tower providing visibility across 120+ suppliers. Enable real-time inventory tracking, lead time monitoring, and risk-based supplier scoring.",
+      "status": "REVIEW",
+      "priority": "MEDIUM",
+      "progress": 10,
+      "owner_id": "demo-user-spec4",
+      "sponsor_id": "demo-user-coo",
+      "start_date": "2025-09-01",
+      "target_date": "2026-06-30",
+      "budget": 780000,
+      "budget_spent": 45000,
+      "strategic_alignment": "Key for supply chain resilience and inventory optimization",
+      "tasks": [
+        {
+          "id": "task-006-01",
+          "title": "Supplier Onboarding Plan",
+          "description": "Define tier-1 and tier-2 supplier integration approach",
+          "status": "in_progress",
+          "priority": "high",
+          "assignee_id": "demo-user-spec4",
+          "due_date": "2025-10-31",
+          "effort_hours": 80
+        },
+        {
+          "id": "task-006-02",
+          "title": "Control Tower Platform Selection",
+          "description": "Evaluate SAP IBP, E2open, and Kinaxis solutions",
+          "status": "todo",
+          "priority": "high",
+          "assignee_id": "demo-user-pm2",
+          "due_date": "2025-11-30",
+          "effort_hours": 60
+        }
+      ]
+    },
+    {
+      "id": "init-007",
+      "name": "Employee Digital Workplace",
+      "summary": "Launch a modern employee portal with self-service, collaboration tools, and mobile access.",
+      "description": "Replace legacy intranet with Microsoft 365-based digital workplace. Enable shift scheduling, training access, HR self-service, and team collaboration from any device.",
+      "status": "DRAFT",
+      "priority": "LOW",
+      "progress": 5,
+      "owner_id": "demo-user-spec3",
+      "sponsor_id": "demo-user-coo",
+      "start_date": "2026-01-01",
+      "target_date": "2026-09-30",
+      "budget": 320000,
+      "budget_spent": 0,
+      "strategic_alignment": "Enables digital adoption and workforce engagement",
+      "tasks": [
+        {
+          "id": "task-007-01",
+          "title": "Employee Needs Assessment",
+          "description": "Survey workforce on digital tool preferences and pain points",
+          "status": "todo",
+          "priority": "medium",
+          "assignee_id": "demo-user-spec3",
+          "due_date": "2026-02-28",
+          "effort_hours": 60
+        }
+      ]
+    },
+    {
+      "id": "init-008",
+      "name": "Energy Management & Optimization",
+      "summary": "Deploy smart energy monitoring and AI-driven optimization to reduce energy costs by 20%.",
+      "description": "Install smart meters, integrate with utility APIs, and use ML to optimize energy consumption patterns. Focus on high-energy equipment and production scheduling.",
+      "status": "DRAFT",
+      "priority": "MEDIUM",
+      "progress": 0,
+      "owner_id": "demo-user-arch2",
+      "sponsor_id": "demo-user-ceo",
+      "start_date": "2026-04-01",
+      "target_date": "2027-06-30",
+      "budget": 550000,
+      "budget_spent": 0,
+      "strategic_alignment": "Supports sustainability goals and cost reduction",
+      "tasks": [
+        {
+          "id": "task-008-01",
+          "title": "Energy Audit",
+          "description": "Comprehensive audit of energy consumption across all facilities",
+          "status": "todo",
+          "priority": "high",
+          "assignee_id": "demo-user-arch2",
+          "due_date": "2026-05-31",
+          "effort_hours": 120
+        }
+      ]
+    }
+  ]
+}

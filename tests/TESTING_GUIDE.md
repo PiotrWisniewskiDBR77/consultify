@@ -1,25 +1,29 @@
 # Testing Guide
+
 ## Enterprise SaaS Architecture - TypeScript Backend
 
 ## Overview
 
-This guide provides comprehensive instructions for writing, running, and maintaining tests for the Consultify backend system. The testing strategy follows a 5-level approach to ensure 95%+ coverage across all layers.
+This guide provides comprehensive instructions for writing, running, and maintaining tests for the Consultinity backend system. The testing strategy follows a 5-level approach to ensure 95%+ coverage across all layers.
 
 ## Testing Strategy - 5 Levels
 
 ### Level 1: Static Analysis & Integrity (100% coverage)
+
 - **ESLint**: Code quality and style checks
 - **TypeScript Check**: Type safety validation
 - **Import Validation**: Verify all imports are correct
 - **Type Safety**: Check for `any` usage
 
 **Commands:**
+
 ```bash
 npm run lint
 npm run type-check
 ```
 
 ### Level 2: Unit Testing (95%+ coverage)
+
 - **Routes**: Test individual route handlers
 - **Services**: Test business logic
 - **Middleware**: Test request/response handling
@@ -27,36 +31,43 @@ npm run type-check
 - **Config**: Test configuration loading
 
 **Commands:**
+
 ```bash
 npm run test:backend
 npm run test:unit
 ```
 
 ### Level 3: Component Testing (95%+ coverage)
+
 - **Frontend Components**: React component tests
 - **Accessibility**: A11y tests
 
 **Commands:**
+
 ```bash
 npm run test:component
 ```
 
 ### Level 4: Integration & API Testing (95%+ coverage)
+
 - **Routes Integration**: Test full request/response flows
 - **Services Integration**: Test service interactions
 - **Middleware Chain**: Test middleware execution order
 
 **Commands:**
+
 ```bash
 npm run test:integration
 ```
 
 ### Level 5: System & Performance Testing (95%+ coverage)
+
 - **Load Tests**: Test under concurrent load
 - **Stress Tests**: Test system limits
 - **E2E Tests**: Test complete user journeys
 
 **Commands:**
+
 ```bash
 npm run test:e2e
 npm run test:performance
@@ -71,24 +82,24 @@ npm run test:load
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 describe('ComponentName', () => {
-    let mockDependency: MockType;
+  let mockDependency: MockType;
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-        // Setup mocks
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Setup mocks
+  });
+
+  describe('methodName', () => {
+    it('should do something', () => {
+      // Arrange
+      // Act
+      // Assert
     });
 
-    describe('methodName', () => {
-        it('should do something', () => {
-            // Arrange
-            // Act
-            // Assert
-        });
-
-        it('should handle errors', () => {
-            // Test error cases
-        });
+    it('should handle errors', () => {
+      // Test error cases
     });
+  });
 });
 ```
 
@@ -125,9 +136,9 @@ npm run test:e2e
 ## CI/CD Integration
 
 Tests run automatically on:
+
 - Pull requests
 - Commits to main branch
 - Nightly builds
 
 Coverage reports are generated and tracked over time.
-

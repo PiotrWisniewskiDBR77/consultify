@@ -13,48 +13,48 @@ import { requireRole } from '../../../../src/middleware/rbac.middleware.js';
 import { validateBody } from '../../../../src/middleware/validation.middleware.js';
 
 describe('Middleware Chain Integration', () => {
-    let app: Express;
+  let app: Express;
 
-    beforeEach(() => {
-        app = express();
-        app.use(express.json());
+  beforeEach(() => {
+    app = express();
+    app.use(express.json());
+  });
+
+  describe('Auth → RBAC → Validation → Controller', () => {
+    it('should execute middleware chain in correct order', async () => {
+      // 1. Setup route with all middleware
+      // 2. Make request
+      // 3. Verify middleware execution order
+      expect(true).toBe(true);
     });
 
-    describe('Auth → RBAC → Validation → Controller', () => {
-        it('should execute middleware chain in correct order', async () => {
-            // 1. Setup route with all middleware
-            // 2. Make request
-            // 3. Verify middleware execution order
-            expect(true).toBe(true);
-        });
-
-        it('should stop at auth middleware if not authenticated', async () => {
-            // Test would verify 401 response
-            expect(true).toBe(true);
-        });
-
-        it('should stop at RBAC middleware if insufficient permissions', async () => {
-            // Test would verify 403 response
-            expect(true).toBe(true);
-        });
-
-        it('should stop at validation middleware if invalid data', async () => {
-            // Test would verify 400 response
-            expect(true).toBe(true);
-        });
+    it('should stop at auth middleware if not authenticated', async () => {
+      // Test would verify 401 response
+      expect(true).toBe(true);
     });
 
-    describe('Error Handling Chain', () => {
-        it('should handle errors from middleware', async () => {
-            // Test would verify error handling
-            expect(true).toBe(true);
-        });
+    it('should stop at RBAC middleware if insufficient permissions', async () => {
+      // Test would verify 403 response
+      expect(true).toBe(true);
     });
 
-    describe('Security Headers Chain', () => {
-        it('should apply security headers', async () => {
-            // Test would verify security headers
-            expect(true).toBe(true);
-        });
+    it('should stop at validation middleware if invalid data', async () => {
+      // Test would verify 400 response
+      expect(true).toBe(true);
     });
+  });
+
+  describe('Error Handling Chain', () => {
+    it('should handle errors from middleware', async () => {
+      // Test would verify error handling
+      expect(true).toBe(true);
+    });
+  });
+
+  describe('Security Headers Chain', () => {
+    it('should apply security headers', async () => {
+      // Test would verify security headers
+      expect(true).toBe(true);
+    });
+  });
 });

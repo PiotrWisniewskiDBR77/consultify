@@ -111,3 +111,30 @@ parse_*.py
 test-*.js
 test-*.cjs
 secure_backups/
+
+# Legacy and archived files
+archive/
+consultinity/
+cursor_zadania/
+backup/
+quarantine/
+
+# Additional log files
+dev_server.log
+server_stdout.log
+test_results*.log
+tests_*.log
+integration-results.json
+e2e-results.xml
+
+# Debug screenshots
+debug-*.png
+
+# Test result files
+test-results-*.txt# Coverage directories
+coverage-*/# Additional ignores
+*.bak
+coverage/.tmp
+.nx/
+junit.xml# Quarantine folder for duplicate files
+_quarantine/

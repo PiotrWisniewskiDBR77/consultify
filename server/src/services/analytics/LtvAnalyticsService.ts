@@ -2,34 +2,38 @@ import { getDatabase } from '../../database/Database.js';
 import type { IDatabase } from '../../database/IDatabase.js';
 
 export interface LTVOptions {
-    segmentBy?: string | null;
+  segmentBy?: string | null;
 }
 
 export interface LTVData {
-    ltv: number;
-    arpa: number;
-    avgLifespanMonths: number;
-    avgRevenuePerCustomer: number;
-    monthlyChurnRate: string;
-    ltvToCac: string | null;
+  ltv: number;
+  arpa: number;
+  avgLifespanMonths: number;
+  avgRevenuePerCustomer: number;
+  monthlyChurnRate: string;
+  ltvToCac: string | null;
 }
 
 export class LtvAnalyticsService {
-    private db: IDatabase;
+  private db: IDatabase;
 
-    constructor(db?: IDatabase) {
-        this.db = db || getDatabase();
-    }
+  constructor(db?: IDatabase) {
+    this.db = db || getDatabase();
+  }
 
-    /**
-     * Calculate customer lifetime value
-     */
-    async getLTV(_options: LTVOptions = {}, currentArpa: number, monthlyChurnRate: number): Promise<LTVData> {
-        const row = await this.db.get<{
-            avg_revenue: number;
-            avg_lifespan: number;
-        }>(
-            `SELECT 
+  /**
+   * Calculate customer lifetime value
+   */
+  async getLTV(
+    _options: LTVOptions = {},
+    currentArpa: number,
+    monthlyChurnRate: number
+  ): Promise<LTVData> {
+    const row = await this.db.get<{
+      avg_revenue: number;
+      avg_lifespan: number;
+    }>(
+      `SELECT 
                 AVG(total_revenue) as avg_revenue,
                 AVG(lifespan_months) as avg_lifespan
              FROM (
@@ -45,44 +49,44 @@ export class LtvAnalyticsService {
                 LEFT JOIN invoices i ON o.id = i.organization_id AND i.status = 'paid'
                 GROUP BY o.id
              )`,
-            [],
-        ) as { avg_revenue: number; avg_lifespan: number } | null;
+      []
+    );
 
-        const avgRevenue = row?.avg_revenue || 0;
-        const avgLifespan = row?.avg_lifespan || 1;
+    const avgRevenue = row?.avg_revenue || 0;
+    const avgLifespan = row?.avg_lifespan || 1;
 
-        // LTV = ARPA / Monthly Churn Rate
-        // If churn is 0, fall back to ARPA * 24 months
-        const ltv = monthlyChurnRate > 0 ? currentArpa / monthlyChurnRate : currentArpa * 24;
+    // LTV = ARPA / Monthly Churn Rate
+    // If churn is 0, fall back to ARPA * 24 months
+    const ltv = monthlyChurnRate > 0 ? currentArpa / monthlyChurnRate : currentArpa * 24;
 
-        // Customer Acquisition Cost (placeholder - would need actual data)
-        const cac = 0; // To be implemented with marketing data
+    // Customer Acquisition Cost (placeholder - would need actual data)
+    const cac = 0; // To be implemented with marketing data
 
-        return {
-            ltv: Math.round(ltv),
-            arpa: Math.round(currentArpa),
-            avgLifespanMonths: Math.round(avgLifespan),
-            avgRevenuePerCustomer: Math.round(avgRevenue),
-            monthlyChurnRate: (monthlyChurnRate * 100).toFixed(2),
-            ltvToCac: cac > 0 ? (ltv / cac).toFixed(2) : null,
-        };
-    }
+    return {
+      ltv: Math.round(ltv),
+      arpa: Math.round(currentArpa),
+      avgLifespanMonths: Math.round(avgLifespan),
+      avgRevenuePerCustomer: Math.round(avgRevenue),
+      monthlyChurnRate: (monthlyChurnRate * 100).toFixed(2),
+      ltvToCac: cac > 0 ? (ltv / cac).toFixed(2) : null,
+    };
+  }
 
-    /**
-     * Get LTV by plan/segment
-     */
-    async getLTVBySegment(segmentField: string = 'plan'): Promise<
-        Array<{
-            segment: string;
-            segment_id?: string;
-            customer_count: number;
-            avg_revenue: number;
-            monthly_price?: number;
-        }>
-    > {
-        const query =
-            segmentField === 'plan'
-                ? `SELECT 
+  /**
+   * Get LTV by plan/segment
+   */
+  async getLTVBySegment(segmentField: string = 'plan'): Promise<
+    Array<{
+      segment: string;
+      segment_id?: string;
+      customer_count: number;
+      avg_revenue: number;
+      monthly_price?: number;
+    }>
+  > {
+    const query =
+      segmentField === 'plan'
+        ? `SELECT 
                 sp.name as segment,
                 sp.id as segment_id,
                 COUNT(DISTINCT o.id) as customer_count,
@@ -98,7 +102,7 @@ export class LtvAnalyticsService {
                ) rev ON o.id = rev.organization_id
                WHERE sp.is_active = 1
                GROUP BY sp.id`
-                : `SELECT 
+        : `SELECT 
                 o.billing_country as segment,
                 COUNT(DISTINCT o.id) as customer_count,
                 AVG(COALESCE(rev.total_revenue, 0)) as avg_revenue
@@ -110,20 +114,14 @@ export class LtvAnalyticsService {
                ) rev ON o.id = rev.organization_id
                GROUP BY o.billing_country`;
 
-        const rows = (await this.db.all<{
-            segment: string;
-            segment_id?: string;
-            customer_count: number;
-            avg_revenue: number;
-            monthly_price?: number;
-        }>(query, [])) as Array<{
-            segment: string;
-            segment_id?: string;
-            customer_count: number;
-            avg_revenue: number;
-            monthly_price?: number;
-        }>;
+    const rows = await this.db.all<{
+      segment: string;
+      segment_id?: string;
+      customer_count: number;
+      avg_revenue: number;
+      monthly_price?: number;
+    }>(query, []);
 
-        return rows || [];
-    }
+    return rows || [];
+  }
 }

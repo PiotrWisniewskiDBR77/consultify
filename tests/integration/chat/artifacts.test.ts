@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { parseArtifactsFromResponse, createArtifact } from '../../../store/useArtifactsStore';
-import { Artifact } from '../../../types';
+import { parseArtifactsFromResponse, createArtifact } from '@/store/useArtifactsStore';
+import { Artifact } from '@/types';
 
 describe('Artifacts Integration', () => {
   describe('parseArtifactsFromResponse', () => {
@@ -17,9 +17,9 @@ describe('Artifacts Integration', () => {
         Content here
         \`\`\`
       `;
-      
+
       const artifacts = parseArtifactsFromResponse(response);
-      
+
       expect(artifacts).toHaveLength(1);
       expect(artifacts[0].type).toBe('markdown');
       expect(artifacts[0].title).toBe('My Document');
@@ -35,9 +35,9 @@ describe('Artifacts Integration', () => {
         }
         \`\`\`
       `;
-      
+
       const artifacts = parseArtifactsFromResponse(response);
-      
+
       expect(artifacts).toHaveLength(1);
       expect(artifacts[0].type).toBe('code');
       expect(artifacts[0].language).toBe('typescript');
@@ -58,9 +58,9 @@ describe('Artifacts Integration', () => {
         }
         \`\`\`
       `;
-      
+
       const artifacts = parseArtifactsFromResponse(response);
-      
+
       expect(artifacts).toHaveLength(1);
       expect(artifacts[0].type).toBe('pmo-document');
       expect(artifacts[0].title).toBe('RACI Matrix');
@@ -77,16 +77,16 @@ describe('Artifacts Integration', () => {
         console.log('test');
         \`\`\`
       `;
-      
+
       const artifacts = parseArtifactsFromResponse(response);
-      
+
       expect(artifacts).toHaveLength(2);
       // Check that both types are present (order may vary)
-      const types = artifacts.map(a => a.type);
+      const types = artifacts.map((a) => a.type);
       expect(types).toContain('markdown');
       expect(types).toContain('code');
       // Check that code artifact has language
-      const codeArtifact = artifacts.find(a => a.type === 'code');
+      const codeArtifact = artifacts.find((a) => a.type === 'code');
       expect(codeArtifact?.language).toBe('javascript');
     });
 
@@ -101,7 +101,7 @@ describe('Artifacts Integration', () => {
         { invalid json }
         \`\`\`
       `;
-      
+
       const artifacts = parseArtifactsFromResponse(response);
       expect(artifacts).toHaveLength(0);
     });
@@ -110,7 +110,7 @@ describe('Artifacts Integration', () => {
   describe('createArtifact', () => {
     it('creates artifact with defaults', () => {
       const artifact = createArtifact('markdown', 'Test', 'Content');
-      
+
       expect(artifact.type).toBe('markdown');
       expect(artifact.title).toBe('Test');
       expect(artifact.content).toBe('Content');
@@ -123,13 +123,12 @@ describe('Artifacts Integration', () => {
       const artifact = createArtifact('code', 'Test', 'Content', {
         language: 'typescript',
         editable: false,
-        metadata: { framework: 'ISO' }
+        metadata: { framework: 'ISO' },
       });
-      
+
       expect(artifact.language).toBe('typescript');
       expect(artifact.editable).toBe(false);
       expect(artifact.metadata?.framework).toBe('ISO');
     });
   });
 });
-

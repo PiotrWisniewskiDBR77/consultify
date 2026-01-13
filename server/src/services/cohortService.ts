@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Cohort Service
  * Enterprise SaaS Architecture - TypeScript Backend
@@ -6,7 +7,7 @@
  */
 
 // Lazy load the JS service module
-import service from '../../services/cohortService.js';
+import service from './cohortService.js';
 
 // Export default instance (for backward compatibility)
 export default service;

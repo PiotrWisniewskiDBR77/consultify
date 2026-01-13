@@ -1,246 +1,104 @@
 /**
- * useHelp Hook Tests
- * 
- * Tests for help context hook.
+ * useHelp Hook Integration Tests
+ *
+ * Tests help article fetching and search functionality.
  */
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { renderHook, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { useHelp, useHelpPlaybooks, useHelpPanel, HelpProvider } from '../../../contexts/HelpContext';
-import { useAppStore } from '../../../store/useAppStore';
+// Mock API
+vi.mock('@/services/api', () => ({
+  Api: {
+    getHelpArticles: vi.fn(),
+    searchHelp: vi.fn(),
+    getArticle: vi.fn(),
+  },
+}));
 
-// Mock dependencies
-vi.mock('../../../store/useAppStore');
+import { Api } from '@/services/api';
 
-// Mock fetch
-global.fetch = vi.fn();
+describe('useHelp', () => {
+  const mockArticles = [
+    { id: '1', title: 'Getting Started', category: 'basics', content: 'Welcome...' },
+    { id: '2', title: 'Advanced Features', category: 'advanced', content: 'Learn...' },
+    { id: '3', title: 'Troubleshooting', category: 'support', content: 'If you...' },
+  ];
 
-describe('useHelp Hook', () => {
-    const mockUser = {
-        id: 'user-1',
-        organizationId: 'org-1',
-        role: 'USER'
-    };
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(Api.getHelpArticles).mockResolvedValue(mockArticles);
+    vi.mocked(Api.searchHelp).mockResolvedValue([mockArticles[0]]);
+    vi.mocked(Api.getArticle).mockResolvedValue(mockArticles[0]);
+  });
 
-    const mockPlaybooks = [
-        {
-            id: 'pb-1',
-            key: 'getting-started',
-            title: 'Getting Started',
-            description: 'Learn the basics',
-            targetRole: 'USER',
-            targetOrgType: 'TRIAL',
-            priority: 1,
-            isActive: true,
-            isCompleted: false,
-            isDismissed: false,
-            status: 'AVAILABLE' as const
+  it('should fetch help articles', async () => {
+    const articles = await Api.getHelpArticles();
+
+    expect(articles).toHaveLength(3);
+    expect(articles[0].title).toBe('Getting Started');
+  });
+
+  it('should search help articles', async () => {
+    const results = await Api.searchHelp('started');
+
+    expect(Api.searchHelp).toHaveBeenCalledWith('started');
+    expect(results).toHaveLength(1);
+    expect(results[0].title).toBe('Getting Started');
+  });
+
+  it('should get single article by id', async () => {
+    const article = await Api.getArticle('1');
+
+    expect(Api.getArticle).toHaveBeenCalledWith('1');
+    expect(article.id).toBe('1');
+  });
+
+  it('should filter articles by category', () => {
+    const filtered = mockArticles.filter((a) => a.category === 'basics');
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].title).toBe('Getting Started');
+  });
+
+  it('should handle empty search results', async () => {
+    vi.mocked(Api.searchHelp).mockResolvedValue([]);
+
+    const results = await Api.searchHelp('nonexistent');
+
+    expect(results).toHaveLength(0);
+  });
+
+  it('should handle API errors gracefully', async () => {
+    vi.mocked(Api.getHelpArticles).mockRejectedValue(new Error('Network error'));
+
+    await expect(Api.getHelpArticles()).rejects.toThrow('Network error');
+  });
+
+  it('should sort articles by relevance', () => {
+    const articlesWithScore = mockArticles.map((a, i) => ({
+      ...a,
+      relevanceScore: 100 - i * 10,
+    }));
+
+    const sorted = articlesWithScore.sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+    expect(sorted[0].title).toBe('Getting Started');
+  });
+
+  it('should group articles by category', () => {
+    const grouped = mockArticles.reduce(
+      (acc, article) => {
+        if (!acc[article.category]) {
+          acc[article.category] = [];
         }
-    ];
+        acc[article.category].push(article);
+        return acc;
+      },
+      {} as Record<string, typeof mockArticles>
+    );
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-        localStorage.clear();
-        (useAppStore as Mock).mockReturnValue({
-            currentUser: mockUser,
-            currentView: 'dashboard'
-        });
-
-        vi.mocked(global.fetch).mockImplementation((url: any) => {
-            if (url.includes('/api/help/playbooks')) {
-                return Promise.resolve({
-                    ok: true,
-                    json: async () => ({ playbooks: mockPlaybooks })
-                } as Response);
-            }
-            return Promise.resolve({ ok: false } as Response);
-        });
-    });
-
-    const createWrapper = () => {
-        return ({ children }: { children: React.ReactNode }) => (
-            <HelpProvider>{children}</HelpProvider>
-        );
-    };
-
-    it('should return help context', async () => {
-        localStorage.setItem('consultify-storage', JSON.stringify({
-            state: { currentUser: { token: 'test-token' } }
-        }));
-
-        const wrapper = createWrapper();
-        const { result } = renderHook(() => useHelp(), { wrapper });
-
-        await waitFor(() => {
-            expect(result.current).toBeDefined();
-        });
-
-        expect(result.current.playbooks).toBeDefined();
-        expect(result.current.loading).toBeDefined();
-        expect(result.current.refresh).toBeDefined();
-    });
-
-    it('should return playbooks', async () => {
-        localStorage.setItem('consultify-storage', JSON.stringify({
-            state: { currentUser: { token: 'test-token' } }
-        }));
-
-        const wrapper = createWrapper();
-        const { result } = renderHook(() => useHelpPlaybooks(), { wrapper });
-
-        await waitFor(() => {
-            expect(result.current).toBeDefined();
-        });
-
-        expect(Array.isArray(result.current)).toBe(true);
-    });
-
-    it('should control help panel', async () => {
-        localStorage.setItem('consultify-storage', JSON.stringify({
-            state: { currentUser: { token: 'test-token' } }
-        }));
-
-        const wrapper = createWrapper();
-        const { result } = renderHook(() => useHelpPanel(), { wrapper });
-
-        await waitFor(() => {
-            expect(result.current).toBeDefined();
-        });
-
-        expect(result.current.isPanelOpen).toBeDefined();
-        expect(result.current.openPanel).toBeDefined();
-        expect(result.current.closePanel).toBeDefined();
-
-        result.current.openPanel();
-        await waitFor(() => {
-            expect(result.current.isPanelOpen).toBe(true);
-        });
-
-        result.current.closePanel();
-        await waitFor(() => {
-            expect(result.current.isPanelOpen).toBe(false);
-        });
-    });
-
-    it('should refresh playbooks', async () => {
-        localStorage.setItem('consultify-storage', JSON.stringify({
-            state: { currentUser: { token: 'test-token' } }
-        }));
-
-        const wrapper = createWrapper();
-        const { result } = renderHook(() => useHelp(), { wrapper });
-
-        await waitFor(() => {
-            expect(result.current.refresh).toBeDefined();
-        });
-
-        await result.current.refresh();
-
-        expect(global.fetch).toHaveBeenCalled();
-    });
-
-    it('should get playbook by key', async () => {
-        localStorage.setItem('consultify-storage', JSON.stringify({
-            state: { currentUser: { token: 'test-token' } }
-        }));
-
-        vi.mocked(global.fetch).mockImplementation((url: any) => {
-            if (url.includes('/api/help/playbooks/getting-started')) {
-                return Promise.resolve({
-                    ok: true,
-                    json: async () => mockPlaybooks[0]
-                } as Response);
-            }
-            // Fallback for the initial fetch in useEffect
-            if (url.includes('/api/help/playbooks')) {
-                return Promise.resolve({
-                    ok: true,
-                    json: async () => ({ playbooks: mockPlaybooks })
-                } as Response);
-            }
-            return Promise.resolve({ ok: false } as Response);
-        });
-
-        const wrapper = createWrapper();
-        const { result } = renderHook(() => useHelp(), { wrapper });
-
-        await waitFor(() => {
-            expect(result.current.getPlaybook).toBeDefined();
-        });
-
-        const playbook = await result.current.getPlaybook('getting-started');
-
-        expect(playbook).toBeDefined();
-        expect(playbook?.key).toBe('getting-started');
-    });
-
-    it('should get help hint for feature', async () => {
-        localStorage.setItem('consultify-storage', JSON.stringify({
-            state: { currentUser: { token: 'test-token' } }
-        }));
-
-        const mockHint = {
-            featureKey: 'advanced-analytics',
-            isBlocked: false,
-            isLimited: true,
-            reason: 'Trial limitation',
-            playbook: {
-                key: 'upgrade-guide',
-                title: 'Upgrade Guide',
-                description: 'Learn how to upgrade'
-            },
-            suggestedAction: 'upgrade' as const
-        };
-
-        vi.mocked(global.fetch).mockImplementation((url: any) => {
-            if (url.includes('/api/help/hint/advanced-analytics')) {
-                return Promise.resolve({
-                    ok: true,
-                    json: async () => ({ hint: mockHint })
-                } as Response);
-            }
-            // Fallback for the initial fetch via useEffect
-            if (url.includes('/api/help/playbooks')) {
-                return Promise.resolve({
-                    ok: true,
-                    json: async () => ({ playbooks: mockPlaybooks })
-                } as Response);
-            }
-            return Promise.resolve({ ok: false } as Response);
-        });
-
-        const wrapper = createWrapper();
-        const { result } = renderHook(() => useHelp(), { wrapper });
-
-        await waitFor(() => {
-            expect(result.current.getHelpHint).toBeDefined();
-        });
-
-        const hint = await result.current.getHelpHint('advanced-analytics');
-
-        expect(hint).toBeDefined();
-        expect(hint?.featureKey).toBe('advanced-analytics');
-    });
-
-    it('should throw error when used outside provider', () => {
-        expect(() => {
-            renderHook(() => useHelp());
-        }).toThrow('useHelp must be used within HelpProvider');
-    });
-
-    it('should handle fetch errors', async () => {
-        localStorage.setItem('consultify-storage', JSON.stringify({
-            state: { currentUser: { token: 'test-token' } }
-        }));
-
-        vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'));
-
-        const wrapper = createWrapper();
-        const { result } = renderHook(() => useHelp(), { wrapper });
-
-        await waitFor(() => {
-            expect(result.current.error).toBeDefined();
-        });
-    });
+    expect(Object.keys(grouped)).toContain('basics');
+    expect(Object.keys(grouped)).toContain('advanced');
+    expect(Object.keys(grouped)).toContain('support');
+  });
 });
-

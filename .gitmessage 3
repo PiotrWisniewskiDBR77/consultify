@@ -1,0 +1,40 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+#
+# Types:
+#   feat:     A new feature
+#   fix:      A bug fix
+#   docs:     Documentation only changes
+#   style:    Changes that do not affect the meaning of the code
+#   refactor: A code change that neither fixes a bug nor adds a feature
+#   perf:     A code change that improves performance
+#   test:     Adding missing tests or correcting existing tests
+#   chore:    Changes to the build process or auxiliary tools
+#   security: Security fixes
+#   build:    Changes that affect the build system or external dependencies
+#   ci:       Changes to CI configuration files and scripts
+#
+# Examples:
+#   feat(auth): add JWT token rotation
+#   fix(security): prevent IDOR in user endpoints
+#   docs: update API documentation
+#   refactor(api): simplify error handling middleware
+#
+# Subject line rules:
+#   - Use imperative, present tense: "add" not "added" nor "adds"
+#   - Don't capitalize the first letter
+#   - No period (.) at the end
+#   - Maximum 100 characters
+#
+# Body (optional):
+#   - Explain the "what" and "why" vs. "how"
+#   - Can include multiple paragraphs
+#   - Use blank lines between paragraphs
+#
+# Footer (optional):
+#   - Reference issues: "Fixes #123" or "Closes #456"
+#   - Breaking changes: "BREAKING CHANGE: description"
+#

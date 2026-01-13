@@ -2,109 +2,94 @@
  * Activity Logging Service
  * Enterprise SaaS Architecture - TypeScript Backend
  *
- * Migrated from server/services/activityService.js (ES Modules) to TypeScript (ES Modules)
  * Logs user actions for audit trail and SuperAdmin dashboard
  */
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDatabase } from '../database/Database.js';
-import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
-
-import type RequestStore from '../utils/RequestStore.js';
+import logger from '../utils/Logger.js';
+import { getCorrelationId } from '../utils/RequestStore.js';
 
 // ==========================================
 // TYPES
 // ==========================================
 
-interface LogActivityParams {
-    organizationId: string;
-    userId?: string | null;
-    action: string;
-    entityType: string;
-    entityId?: string | null;
-    entityName?: string | null;
-    oldValue?: unknown;
-    newValue?: unknown;
-    ipAddress?: string | null;
-    userAgent?: string | null;
+export interface ActivityLogParams {
+  organizationId: string;
+  userId?: string;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  entityName?: string;
+  oldValue?: unknown;
+  newValue?: unknown;
+  ipAddress?: string;
+  userAgent?: string;
+  metadata?: Record<string, unknown>;
 }
 
-interface ActivityLogRow {
-    id: string;
-    organization_id: string;
-    user_id?: string | null;
-    action: string;
-    entity_type: string;
-    entity_id?: string | null;
-    entity_name?: string | null;
-    old_value?: string | null;
-    new_value?: string | null;
-    ip_address?: string | null;
-    user_agent?: string | null;
-    correlation_id?: string | null;
-    created_at: string;
-    user_name?: string | null;
-    user_email?: string | null;
-    organization_name?: string | null;
-}
-
-interface ActivityStats {
-    total: number;
-    last_hour: number;
-    last_24h: number;
-    last_7d: number;
-}
-
-interface ISiemService {
-    stream(event: any): Promise<void>;
+export interface ActivityLog {
+  id: string;
+  organization_id: string;
+  user_id?: string;
+  action: string;
+  entity_type: string;
+  entity_id?: string;
+  entity_name?: string;
+  old_value?: string;
+  new_value?: string;
+  ip_address?: string;
+  user_agent?: string;
+  correlation_id?: string;
+  created_at: string;
 }
 
 // ==========================================
-// SERVICE
+// ACTIVITY SERVICE
 // ==========================================
 
-let db: IDatabase = getDatabase();
-let requestStore: typeof RequestStore | undefined;
-let siemService: ISiemService | undefined;
+class ActivityService {
+  private deps = {
+    dbRun: DbPromise.run,
+    dbAll: DbPromise.all,
+    dbGet: DbPromise.get,
+  };
 
-async function initDeps(): Promise<void> {
-    if (!requestStore) {
-        const requestStoreModule = await import('../utils/RequestStore.js');
-        requestStore = requestStoreModule.default;
-    }
-    if (!siemService) {
-        const siemServiceModule = await import('./siemService.js');
-        siemService = (siemServiceModule.default || siemServiceModule) as unknown as ISiemService;
-    }
-}
-
-/**
- * Set dependencies for testing
- */
-export function setDependencies(
-    newDeps: { db?: IDatabase; requestStore?: typeof RequestStore; siemService?: ISiemService } = {},
-): void {
+  /**
+   * Set dependencies (for testing)
+   */
+  setDependencies(newDeps: any): void {
     if (newDeps.db) {
-        db = newDeps.db;
+      // Mapping for backward compatibility with old mockDb.run pattern
+      this.deps.dbRun = (async (sql: string, params?: unknown[]) => {
+        return new Promise((resolve) => {
+          newDeps.db.run(sql, params || [], (err: any) => {
+            if (err) resolve({ success: false, error: err.message });
+            else resolve({ success: true });
+          });
+        });
+      }) as any;
+      this.deps.dbAll = (async (sql: string, params?: unknown[]) => {
+        return new Promise((resolve, reject) => {
+          newDeps.db.all(sql, params || [], (err: any, rows: any) => {
+            if (err) reject(err);
+            else resolve(rows);
+          });
+        });
+      }) as any;
     }
-    if (newDeps.requestStore) {
-        requestStore = newDeps.requestStore;
-    }
-    if (newDeps.siemService) {
-        siemService = newDeps.siemService;
-    }
-}
+    if (newDeps.dbRun) this.deps.dbRun = newDeps.dbRun;
+    if (newDeps.dbAll) this.deps.dbAll = newDeps.dbAll;
+  }
 
-/**
- * Log an activity
- */
-export async function log(params: LogActivityParams): Promise<void> {
-    await initDeps();
-
-    const correlationId = requestStore && requestStore.getCorrelationId ? requestStore.getCorrelationId() : null;
-    const {
+  /**
+   * Log an activity
+   */
+  async log(params: ActivityLogParams): Promise<void> {
+    try {
+      const correlationId = getCorrelationId();
+      const {
         organizationId,
         userId,
         action,
@@ -115,125 +100,104 @@ export async function log(params: LogActivityParams): Promise<void> {
         newValue,
         ipAddress,
         userAgent,
-    } = params;
+        metadata,
+      } = params;
 
-    const activityId = uuidv4();
+      const sql = `
+                INSERT INTO activity_logs 
+                (id, organization_id, user_id, action, entity_type, entity_id, entity_name, old_value, new_value, ip_address, user_agent, correlation_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
 
-    try {
-        await DbPromise.run(
-            db,
-            `INSERT INTO activity_logs 
-             (id, organization_id, user_id, action, entity_type, entity_id, entity_name, old_value, new_value, ip_address, user_agent, correlation_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                activityId,
-                organizationId,
-                userId || null,
-                action,
-                entityType,
-                entityId || null,
-                entityName || null,
-                oldValue ? JSON.stringify(oldValue) : null,
-                newValue ? JSON.stringify(newValue) : null,
-                ipAddress || null,
-                userAgent || null,
-                correlationId,
-            ],
-        );
+      const activityId = uuidv4();
 
-        // Prestige Layer: Stream to external SIEM
-        try {
-            if (siemService) {
-                await siemService.stream({
-                    id: activityId,
-                    organizationId,
-                    userId,
-                    action,
-                    entityType,
-                    entityId,
-                    correlationId,
-                    metadata: { ipAddress, userAgent },
-                });
-            }
-        } catch {
-            // Ignore SIEM errors
-        }
-    } catch (err: unknown) {
-        if (process.env.NODE_ENV !== 'production') {
-            const error = err as Error;
-            console.warn('[ActivityService] Failed to log activity:', error.message);
-        }
-        // Resolve anyway to prevent crashing caller
+      await this.deps.dbRun(sql, [
+        activityId,
+        organizationId,
+        userId || null,
+        action,
+        entityType,
+        entityId || null,
+        entityName || null,
+        oldValue ? JSON.stringify(oldValue) : null,
+        newValue || metadata ? JSON.stringify(newValue || metadata) : null,
+        ipAddress || null,
+        userAgent || null,
+        correlationId,
+      ]);
+    } catch (err) {
+      const error = err as Error;
+      if (process.env.NODE_ENV !== 'production') {
+        logger.warn('[ActivityService] Failed to log activity:', { error: error.message });
+      }
     }
+  }
+
+  /**
+   * Get recent activities for SuperAdmin dashboard
+   */
+  async getRecent(limit = 50): Promise<ActivityLog[]> {
+    const sql = `
+            SELECT 
+                al.*,
+                u.email as user_email,
+                u.first_name || ' ' || u.last_name as user_name
+            FROM activity_logs al
+            LEFT JOIN users u ON al.user_id = u.id
+            ORDER BY al.created_at DESC
+            LIMIT ?
+        `;
+
+    return (await this.deps.dbAll(sql, [limit])) as ActivityLog[];
+  }
+
+  /**
+   * Get activities for a specific organization
+   */
+  async getByOrganization(organizationId: string, limit = 50): Promise<ActivityLog[]> {
+    const sql = `
+            SELECT 
+                al.*,
+                u.email as user_email,
+                u.first_name || ' ' || u.last_name as user_name
+            FROM activity_logs al
+            LEFT JOIN users u ON al.user_id = u.id
+            WHERE al.organization_id = ?
+            ORDER BY al.created_at DESC
+            LIMIT ?
+        `;
+
+    return (await this.deps.dbAll(sql, [organizationId, limit])) as ActivityLog[];
+  }
+
+  /**
+   * Get activity statistics for SuperAdmin dashboard
+   */
+  async getStats(): Promise<{
+    total: number;
+    last_hour: number;
+    last_24h: number;
+    last_7d: number;
+  }> {
+    try {
+      const result = await this.deps.dbGet<{
+        total: number;
+        last_hour: number;
+        last_24h: number;
+        last_7d: number;
+      }>(`
+                SELECT 
+                    (SELECT COUNT(*) FROM activity_logs) as total,
+                    (SELECT COUNT(*) FROM activity_logs WHERE created_at > datetime('now', '-1 hour')) as last_hour,
+                    (SELECT COUNT(*) FROM activity_logs WHERE created_at > datetime('now', '-24 hours')) as last_24h,
+                    (SELECT COUNT(*) FROM activity_logs WHERE created_at > datetime('now', '-7 days')) as last_7d
+            `);
+      return result || { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 };
+    } catch {
+      return { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 };
+    }
+  }
 }
 
-/**
- * Get recent activities for SuperAdmin dashboard
- */
-export async function getRecent(limit: number = 50): Promise<ActivityLogRow[]> {
-    const rows = await DbPromise.all<ActivityLogRow>(
-        db,
-        `SELECT 
-            al.*,
-            u.first_name || ' ' || u.last_name as user_name,
-            u.email as user_email,
-            o.name as organization_name
-        FROM activity_logs al
-        LEFT JOIN users u ON al.user_id = u.id
-        LEFT JOIN organizations o ON al.organization_id = o.id
-        ORDER BY al.created_at DESC
-        LIMIT ?`,
-        [limit],
-    );
-
-    return rows || [];
-}
-
-/**
- * Get activities by organization
- */
-export async function getByOrganization(organizationId: string, limit: number = 50): Promise<ActivityLogRow[]> {
-    const rows = await DbPromise.all<ActivityLogRow>(
-        db,
-        `SELECT 
-            al.*,
-            u.first_name || ' ' || u.last_name as user_name,
-            u.email as user_email
-        FROM activity_logs al
-        LEFT JOIN users u ON al.user_id = u.id
-        WHERE al.organization_id = ?
-        ORDER BY al.created_at DESC
-        LIMIT ?`,
-        [organizationId, limit],
-    );
-
-    return rows || [];
-}
-
-/**
- * Get activity stats
- */
-export async function getStats(): Promise<ActivityStats> {
-    const row = await DbPromise.get<ActivityStats>(
-        db,
-        `SELECT 
-            COUNT(*) as total,
-            COUNT(CASE WHEN created_at > datetime('now', '-1 hour') THEN 1 END) as last_hour,
-            COUNT(CASE WHEN created_at > datetime('now', '-24 hours') THEN 1 END) as last_24h,
-            COUNT(CASE WHEN created_at > datetime('now', '-7 days') THEN 1 END) as last_7d
-        FROM activity_logs`,
-    );
-
-    return row || { total: 0, last_hour: 0, last_24h: 0, last_7d: 0 };
-}
-
-// Default export for backward compatibility
-const ActivityService = {
-    setDependencies,
-    log,
-    getRecent,
-    getByOrganization,
-    getStats,
-};
-
-export default ActivityService;
+export const activityService = new ActivityService();
+export default activityService;

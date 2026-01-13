@@ -1,5 +1,5 @@
 {
-  "name": "@consultify/new-app-frontend",
+  "name": "@consultinity/new-app-frontend",
   "version": "0.0.1",
   "description": "New Application Fork - React Frontend (Skeleton)",
   "type": "module",
@@ -12,7 +12,7 @@
     "lint": "eslint src/ --ext .ts,.tsx"
   },
   "dependencies": {
-    "@consultify/shared": "*",
+    "@consultinity/shared": "*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -28,4 +28,3 @@
     "directory": "apps/new-app/frontend"
   }
 }
-

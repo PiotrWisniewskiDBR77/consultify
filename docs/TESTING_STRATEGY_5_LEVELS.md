@@ -4,9 +4,10 @@
 **Target Coverage:** 95%
 **Minimum Pass Rate:** 98%
 
-This document defines the comprehensive 5-level testing strategy for the Consultify platform.
+This document defines the comprehensive 5-level testing strategy for the Consultinity platform.
 
 ## Level 1: Unit Testing
+
 **Scope:** Individual functions, classes, and isolated components.
 **Tools:** Vitest, React Testing Library
 **Location:** `tests/unit`, `tests/components`
@@ -14,6 +15,7 @@ This document defines the comprehensive 5-level testing strategy for the Consult
 **Command:** `npm run test:unit`
 
 ## Level 2: Integration Testing
+
 **Scope:** Module interactions, API endpoints, Database operations (using specific test DB).
 **Tools:** Vitest, Supertest
 **Location:** `tests/integration`
@@ -21,6 +23,7 @@ This document defines the comprehensive 5-level testing strategy for the Consult
 **Command:** `npm run test:integration`
 
 ## Level 3: End-to-End (E2E) Testing
+
 **Scope:** Full user journeys via browser.
 **Tools:** Playwright
 **Location:** `tests/e2e`
@@ -28,6 +31,7 @@ This document defines the comprehensive 5-level testing strategy for the Consult
 **Command:** `npm run test:e2e`
 
 ## Level 4: Performance Testing
+
 **Scope:** Load testing, stress testing, scalability verification.
 **Tools:** k6 / Autocannon, Vitest (Architecture checks)
 **Location:** `tests/performance`
@@ -35,6 +39,7 @@ This document defines the comprehensive 5-level testing strategy for the Consult
 **Command:** `npm run test:performance`
 
 ## Level 5: Security Testing
+
 **Scope:** Vulnerability scanning, penetration testing scenarios.
 **Tools:** npm audit, OWASP/Snyk (simulated), Custom Security Tests
 **Location:** `tests/security`
@@ -42,11 +47,14 @@ This document defines the comprehensive 5-level testing strategy for the Consult
 **Command:** `npm run test:security`
 
 ## Unified Execution
+
 To run the full suite:
+
 ```bash
 npm run test:complete
 ```
 
 ## Coverage Enforcement
+
 The CI pipeline enforces 95% code coverage across Unit and Integration levels combined.
 Failures in any level block deployment to production.

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+
 import { getDatabase } from '../database/Database.js';
 
 /**
@@ -6,114 +7,114 @@ import { getDatabase } from '../database/Database.js';
  * Handles application health monitoring endpoints
  */
 export class HealthCheckController {
-    /**
-     * Simple ping endpoint (synchronous)
-     * Used by load balancers for basic uptime check
-     */
-    static ping(_req: Request, res: Response): void {
-        res.status(200).send('pong');
+  /**
+   * Simple ping endpoint (synchronous)
+   * Used by load balancers for basic uptime check
+   */
+  static ping(_req: Request, res: Response): void {
+    res.status(200).send('pong');
+  }
+
+  /**
+   * Basic health check endpoint
+   * Returns status and critical component connectivity
+   */
+  static async checkHealth(_req: Request, res: Response): Promise<void> {
+    const health: {
+      status: string;
+      timestamp: string;
+      database: string;
+      redis?: string;
+      version: string;
+      environment: string;
+    } = {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      database: 'connected', // Optimistic default
+      version: process.env.npm_package_version || '0.0.1',
+      environment: process.env.NODE_ENV || 'development',
+    };
+
+    // Check Redis connectivity (dynamically imported to avoid hard dependency)
+    try {
+      const { isRedisConnected } = await import('../services/ai/redisClient.js');
+      health.redis = isRedisConnected() ? 'connected' : 'disconnected';
+    } catch (error) {
+      health.redis = 'error';
     }
 
-    /**
-     * Basic health check endpoint
-     * Returns status and critical component connectivity
-     */
-    static async checkHealth(_req: Request, res: Response): Promise<void> {
-        const health: {
-            status: string;
-            timestamp: string;
-            database: string;
-            redis?: string;
-            version: string;
-            environment: string;
-        } = {
-            status: 'ok',
-            timestamp: new Date().toISOString(),
-            database: 'connected', // Optimistic default
-            version: process.env.npm_package_version || '0.0.1',
-            environment: process.env.NODE_ENV || 'development',
-        };
+    res.json(health);
+  }
 
-        // Check Redis connectivity (dynamically imported to avoid hard dependency)
-        try {
-            const { isRedisConnected } = await import('../services/ai/redisClient.js');
-            health.redis = isRedisConnected() ? 'connected' : 'disconnected';
-        } catch (error) {
-            health.redis = 'error';
-        }
+  /**
+   * Deep readiness check (Kubernetes Readiness Probe)
+   * Verifies if application is ready to serve traffic
+   */
+  static async checkReadiness(_req: Request, res: Response): Promise<void> {
+    const checks: {
+      database: boolean;
+      redis: boolean;
+      metrics: boolean;
+    } = {
+      database: false,
+      redis: false,
+      metrics: false,
+    };
 
-        res.json(health);
+    // Check database
+    try {
+      const db = getDatabase();
+      // Simple query to verify database is accessible
+      await db.query('SELECT 1');
+      checks.database = true;
+    } catch (error) {
+      checks.database = false;
     }
 
-    /**
-     * Deep readiness check (Kubernetes Readiness Probe)
-     * Verifies if application is ready to serve traffic
-     */
-    static async checkReadiness(_req: Request, res: Response): Promise<void> {
-        const checks: {
-            database: boolean;
-            redis: boolean;
-            metrics: boolean;
-        } = {
-            database: false,
-            redis: false,
-            metrics: false,
-        };
-
-        // Check database
-        try {
-            const db = getDatabase();
-            // Simple query to verify database is accessible
-            await db.query('SELECT 1');
-            checks.database = true;
-        } catch (error) {
-            checks.database = false;
-        }
-
-        // Check Redis
-        try {
-            const { isRedisConnected } = await import('../services/ai/redisClient.js');
-            checks.redis = isRedisConnected();
-        } catch (error) {
-            checks.redis = false;
-        }
-
-        // Check metrics service
-        try {
-            const { getMetricsService } = await import('../services/metricsService.js');
-            const metricsService = getMetricsService();
-            await metricsService.getMetrics();
-            checks.metrics = true;
-        } catch (error) {
-            checks.metrics = false;
-        }
-
-        const isReady = checks.database && checks.redis && checks.metrics;
-
-        if (isReady) {
-            res.status(200).json({
-                status: 'ready',
-                checks,
-                timestamp: new Date().toISOString(),
-            });
-        } else {
-            res.status(503).json({
-                status: 'not ready',
-                checks,
-                timestamp: new Date().toISOString(),
-            });
-        }
+    // Check Redis
+    try {
+      const { isRedisConnected } = await import('../services/ai/redisClient.js');
+      checks.redis = isRedisConnected();
+    } catch (error) {
+      checks.redis = false;
     }
 
-    /**
-     * Liveness probe (Kubernetes Liveness Probe)
-     * Checks if application process is running
-     */
-    static async checkLiveness(_req: Request, res: Response): Promise<void> {
-        res.status(200).json({
-            status: 'alive',
-            timestamp: new Date().toISOString(),
-            uptime: process.uptime(),
-        });
+    // Check metrics service
+    try {
+      const { getMetricsService } = await import('../services/metricsService.js');
+      const metricsService = getMetricsService();
+      await metricsService.getMetrics();
+      checks.metrics = true;
+    } catch (error) {
+      checks.metrics = false;
     }
+
+    const isReady = checks.database && checks.redis && checks.metrics;
+
+    if (isReady) {
+      res.status(200).json({
+        status: 'ready',
+        checks,
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      res.status(503).json({
+        status: 'not ready',
+        checks,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Liveness probe (Kubernetes Liveness Probe)
+   * Checks if application process is running
+   */
+  static async checkLiveness(_req: Request, res: Response): Promise<void> {
+    res.status(200).json({
+      status: 'alive',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  }
 }

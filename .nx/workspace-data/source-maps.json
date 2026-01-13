@@ -1,219 +1,219 @@
 {
-  "apps/consultify/backend": {
+  "apps/consultinity/backend": {
     "root": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "name": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "projectType": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "tags": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "tags.npm:private": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.0": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.1": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.2": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.3": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.4": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.description": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.js": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.js.packageName": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.js.packageVersion": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.js.packageMain": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "metadata.js.isInPackageManagerWorkspaces": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.executor": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.options": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.metadata": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.options.script": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.metadata.scriptContent": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.metadata.runCommand": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.build": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.executor": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.options": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.metadata": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.options.script": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.metadata.scriptContent": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.metadata.runCommand": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.start": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.start.executor": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.start.options": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.start.metadata": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.start.options.script": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.start.metadata.scriptContent": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.start.metadata.runCommand": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.test": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.executor": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.options": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.metadata": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.options.script": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.metadata.scriptContent": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.metadata.runCommand": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.executor": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.options": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.metadata": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.options.script": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.metadata.scriptContent": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.metadata.runCommand": [
-      "apps/consultify/backend/package.json",
+      "apps/consultinity/backend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.dependsOn": [
@@ -257,217 +257,217 @@
       "nx/target-defaults"
     ]
   },
-  "apps/consultify/frontend": {
+  "apps/consultinity/frontend": {
     "root": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "name": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "projectType": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "tags": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "tags.npm:private": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.0": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.1": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.2": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.3": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.targetGroups.NPM Scripts.4": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.description": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.js": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.js.packageName": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.js.packageVersion": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "metadata.js.isInPackageManagerWorkspaces": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.executor": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.options": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.metadata": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.options.script": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.metadata.scriptContent": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.dev.metadata.runCommand": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.build": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.executor": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.options": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.metadata": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.options.script": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.metadata.scriptContent": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.metadata.runCommand": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.preview": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.preview.executor": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.preview.options": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.preview.metadata": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.preview.options.script": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.preview.metadata.scriptContent": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.preview.metadata.runCommand": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.test": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.executor": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.options": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.metadata": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.options.script": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.metadata.scriptContent": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.test.metadata.runCommand": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.executor": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.options": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.metadata": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.options.script": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.metadata.scriptContent": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.lint.metadata.runCommand": [
-      "apps/consultify/frontend/package.json",
+      "apps/consultinity/frontend/package.json",
       "nx/core/package-json"
     ],
     "targets.build.dependsOn": [
@@ -1181,105 +1181,105 @@
       "nx/target-defaults"
     ]
   },
-  "apps/consultify": {
+  "apps/consultinity": {
     "root": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "name": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "$schema": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "projectType": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "tags": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "tags.scope:app": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
-    "tags.type:consultify": [
-      "apps/consultify/project.json",
+    "tags.type:consultinity": [
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.build": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.build.executor": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.build.dependsOn": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.build.options": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.build.options.commands": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.build.options.parallel": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.serve": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.serve.executor": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.serve.dependsOn": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.serve.options": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.serve.options.commands": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.serve.options.parallel": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.test": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.test.executor": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.test.options": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.test.options.commands": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.test.options.parallel": [
-      "apps/consultify/project.json",
+      "apps/consultinity/project.json",
       "nx/core/project-json"
     ],
     "targets.build.inputs": [

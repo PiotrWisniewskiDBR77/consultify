@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadResponsequality = createCachedLazyService('../../services/ai/responseQualityService.js');
+const loadResponsequality = createCachedLazyService('../../ai/responseQualityService.js');
 
 // Export default instance (for backward compatibility)
 export default loadResponsequality();

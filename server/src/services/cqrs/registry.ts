@@ -1,17 +1,21 @@
-import { CreateSubscriptionCommand, CreateSubscriptionHandler } from './billing/CreateSubscription.js';
+import logger from '../../utils/Logger.js';
+import {
+  CreateSubscriptionCommand,
+  CreateSubscriptionHandler,
+} from './billing/CreateSubscription.js';
 import { commandBus } from './index.js';
 import { CreateInitiativeCommand, CreateInitiativeHandler } from './initiative/CreateInitiative.js';
 import { CreateTaskCommand, CreateTaskHandler } from './task/CreateTask.js';
 
 export function registerCQRSHandlers() {
-    // Initiatives
-    commandBus.register(CreateInitiativeCommand, new CreateInitiativeHandler());
+  // Initiatives
+  commandBus.register(CreateInitiativeCommand, new CreateInitiativeHandler());
 
-    // Billing
-    commandBus.register(CreateSubscriptionCommand, new CreateSubscriptionHandler());
+  // Billing
+  commandBus.register(CreateSubscriptionCommand, new CreateSubscriptionHandler());
 
-    // Tasks
-    commandBus.register(CreateTaskCommand, new CreateTaskHandler());
+  // Tasks
+  commandBus.register(CreateTaskCommand, new CreateTaskHandler());
 
-    console.log('[CQRS] Handlers registered');
+  logger.info('[CQRS] Handlers registered');
 }

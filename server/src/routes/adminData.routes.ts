@@ -7,12 +7,15 @@
 
 import { Router } from 'express';
 
-import AdminDataController from '../controllers/AdminDataController.js';
+import AdminDataControllerRaw from '../controllers/AdminDataController.js';
+const AdminDataController = AdminDataControllerRaw as any;
 import { verifyAdmin } from '../middleware/admin.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { UpdateUserTierSchema } from '../validators/admin.validators.js';
 
+// Apply rate limiting
 const router = Router();
 
 // Apply auth and admin middleware to all routes
@@ -33,7 +36,11 @@ router.get('/user-tiers/:orgId', AdminDataController.getUserTiers);
  * PUT /api/admin-data/user-tiers/:orgId/:userId
  * Update user's AI tier
  */
-router.put('/user-tiers/:orgId/:userId', validateBody(UpdateUserTierSchema), AdminDataController.updateUserTier);
+router.put(
+  '/user-tiers/:orgId/:userId',
+  validateBody(UpdateUserTierSchema),
+  AdminDataController.updateUserTier
+);
 
 /**
  * GET /api/admin-data/cost-attribution/:orgId

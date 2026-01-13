@@ -17,13 +17,14 @@ import type { UpdateUserTierRequest } from '../validators/admin.validators.js';
 // ==========================================
 
 export class AdminDataController {
-    /**
-     * Get user tiers for organization
-     */
-    static getUserTiers = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { orgId } = req.params;
+  /**
+   * Get user tiers for organization
+   */
+  static getUserTiers = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { orgId } = req.params;
 
-        const sql = `
+      const sql = `
             SELECT 
                 u.id as userId,
                 u.first_name || ' ' || u.last_name as userName,
@@ -38,40 +39,42 @@ export class AdminDataController {
             ORDER BY aus.cost_usd DESC NULLS LAST
         `;
 
-        const users = await queryHelpers.queryAll(sql, [orgId]);
-        res.json(users);
-    });
+      const users = await queryHelpers.queryAll(sql, [orgId]);
+      res.json(users);
+    }
+  );
 
-    /**
-     * Update user tier
-     */
-    static updateUserTier = asyncHandler(
-        async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-            const { orgId, userId } = req.params;
-            const { tier } = req.body;
-            const { v4: uuidv4 } = await import('uuid');
+  /**
+   * Update user tier
+   */
+  static updateUserTier = asyncHandler(
+    async (req: AuthenticatedRequest<UpdateUserTierRequest>, res: Response): Promise<void> => {
+      const { orgId, userId } = req.params;
+      const { tier } = req.body;
+      const { v4: uuidv4 } = await import('uuid');
 
-            const sql = `
+      const sql = `
             INSERT INTO ai_usage_stats (id, organization_id, user_id, tier, period_start, period_end)
             VALUES (?, ?, ?, ?, date('now', '-7 days'), date('now'))
             ON CONFLICT(user_id, period_start) DO UPDATE SET tier = ?
         `;
 
-            await queryHelpers.queryRun(sql, [uuidv4(), orgId, userId, tier, tier]);
+      await queryHelpers.queryRun(sql, [uuidv4(), orgId, userId, tier, tier]);
 
-            res.json({ success: true, tier });
-        },
-    );
+      res.json({ success: true, tier });
+    }
+  );
 
-    /**
-     * Get cost attribution
-     */
-    static getCostAttribution = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { orgId } = req.params;
+  /**
+   * Get cost attribution
+   */
+  static getCostAttribution = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { orgId } = req.params;
 
-        // Get user cost attribution
-        const userCosts = await queryHelpers.queryAll(
-            `
+      // Get user cost attribution
+      const userCosts = await queryHelpers.queryAll(
+        `
             SELECT 
                 'user' as entityType,
                 aus.user_id as entityId,
@@ -85,12 +88,12 @@ export class AdminDataController {
             GROUP BY aus.user_id
             ORDER BY cost DESC
         `,
-            [orgId],
-        );
+        [orgId]
+      );
 
-        // Get project cost attribution
-        const projectCosts = await queryHelpers.queryAll(
-            `
+      // Get project cost attribution
+      const projectCosts = await queryHelpers.queryAll(
+        `
             SELECT 
                 'project' as entityType,
                 aus.project_id as entityId,
@@ -104,48 +107,52 @@ export class AdminDataController {
             GROUP BY aus.project_id
             ORDER BY cost DESC
         `,
-            [orgId],
-        );
+        [orgId]
+      );
 
-        res.json({ users: userCosts, projects: projectCosts });
-    });
+      res.json({ users: userCosts, projects: projectCosts });
+    }
+  );
 
-    /**
-     * Get security events
-     */
-    static getSecurityEvents = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { orgId } = req.params;
-        const limit = parseInt(String(req.query.limit || 50), 10);
+  /**
+   * Get security events
+   */
+  static getSecurityEvents = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { orgId } = req.params;
+      const limit = parseInt(String(req.query.limit || 50), 10);
 
-        const sql = `
+      const sql = `
             SELECT * FROM security_events
             WHERE organization_id = ?
             ORDER BY created_at DESC
             LIMIT ?
         `;
 
-        const events = await queryHelpers.queryAll(sql, [orgId, limit]);
-        res.json(events);
-    });
+      const events = await queryHelpers.queryAll(sql, [orgId, limit]);
+      res.json(events);
+    }
+  );
 
-    /**
-     * Get dashboard activity
-     */
-    static getDashboardActivity = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { orgId } = req.params;
-        const limit = parseInt(String(req.query.limit || 50), 10);
+  /**
+   * Get dashboard activity
+   */
+  static getDashboardActivity = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { orgId } = req.params;
+      const limit = parseInt(String(req.query.limit || 50), 10);
 
-        const sql = `
+      const sql = `
             SELECT * FROM activity_logs
             WHERE organization_id = ?
             ORDER BY created_at DESC
             LIMIT ?
         `;
 
-        const activities = await queryHelpers.queryAll(sql, [orgId, limit]);
-        res.json(activities);
-    });
+      const activities = await queryHelpers.queryAll(sql, [orgId, limit]);
+      res.json(activities);
+    }
+  );
 }
 
 export default AdminDataController;
-

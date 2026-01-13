@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadSpeechtotext = createCachedLazyService('../../services/ai/speechToTextService.js');
+const loadSpeechtotext = createCachedLazyService('../../ai/speechToTextService.js');
 
 // Export default instance (for backward compatibility)
 export default loadSpeechtotext();

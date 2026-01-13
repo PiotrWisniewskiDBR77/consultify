@@ -7,9 +7,7 @@
       "jsFunctions": 1,
       "tsFunctions": 1,
       "commonFunctions": 1,
-      "commonFunctionNames": [
-        "BaseService"
-      ],
+      "commonFunctionNames": ["BaseService"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -233,9 +231,7 @@
       "jsFunctions": 15,
       "tsFunctions": 1,
       "commonFunctions": 1,
-      "commonFunctionNames": [
-        "AIPipeline"
-      ],
+      "commonFunctionNames": ["AIPipeline"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -244,9 +240,7 @@
       "jsFunctions": 1,
       "tsFunctions": 1,
       "commonFunctions": 1,
-      "commonFunctionNames": [
-        "AlertingService"
-      ],
+      "commonFunctionNames": ["AlertingService"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -380,9 +374,7 @@
       "jsFunctions": 1,
       "tsFunctions": 1,
       "commonFunctions": 1,
-      "commonFunctionNames": [
-        "EmbeddingService"
-      ],
+      "commonFunctionNames": ["EmbeddingService"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -463,9 +455,7 @@
       "jsFunctions": 1,
       "tsFunctions": 1,
       "commonFunctions": 1,
-      "commonFunctionNames": [
-        "IngestionPipeline"
-      ],
+      "commonFunctionNames": ["IngestionPipeline"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -519,9 +509,7 @@
       "jsFunctions": 1,
       "tsFunctions": 4,
       "commonFunctions": 1,
-      "commonFunctionNames": [
-        "KnowledgeIndexer"
-      ],
+      "commonFunctionNames": ["KnowledgeIndexer"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -539,10 +527,7 @@
       "jsFunctions": 2,
       "tsFunctions": 2,
       "commonFunctions": 2,
-      "commonFunctionNames": [
-        "healthDiff",
-        "LLMConfigService"
-      ],
+      "commonFunctionNames": ["healthDiff", "LLMConfigService"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -560,10 +545,7 @@
       "jsFunctions": 2,
       "tsFunctions": 10,
       "commonFunctions": 2,
-      "commonFunctionNames": [
-        "modelLower",
-        "LLMService"
-      ],
+      "commonFunctionNames": ["modelLower", "LLMService"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -572,11 +554,7 @@
       "jsFunctions": 4,
       "tsFunctions": 3,
       "commonFunctions": 3,
-      "commonFunctionNames": [
-        "getCurrentLevel",
-        "formatMessage",
-        "TraceContext"
-      ],
+      "commonFunctionNames": ["getCurrentLevel", "formatMessage", "TraceContext"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -594,9 +572,7 @@
       "jsFunctions": 2,
       "tsFunctions": 4,
       "commonFunctions": 1,
-      "commonFunctionNames": [
-        "MCPServer"
-      ],
+      "commonFunctionNames": ["MCPServer"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -632,11 +608,7 @@
       "jsFunctions": 3,
       "tsFunctions": 4,
       "commonFunctions": 3,
-      "commonFunctionNames": [
-        "getLLMConfigService",
-        "nextIndex",
-        "ModelRouter"
-      ],
+      "commonFunctionNames": ["getLLMConfigService", "nextIndex", "ModelRouter"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -654,10 +626,7 @@
       "jsFunctions": 2,
       "tsFunctions": 3,
       "commonFunctions": 2,
-      "commonFunctionNames": [
-        "rows",
-        "OrganizationMemoryStore"
-      ],
+      "commonFunctionNames": ["rows", "OrganizationMemoryStore"],
       "recommendation": "Potential duplicate - verify migration completeness before removing"
     },
     {
@@ -743,9 +712,7 @@
       "oldFile": "services/BaseService.js",
       "newFile": "services/BaseService.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "BaseService"
-      ]
+      "commonFunctions": ["BaseService"]
     },
     {
       "oldFile": "services/accessCodeService.js",
@@ -900,17 +867,13 @@
       "oldFile": "services/ai/aiPipeline.js",
       "newFile": "services/ai/AIPipeline.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "AIPipeline"
-      ]
+      "commonFunctions": ["AIPipeline"]
     },
     {
       "oldFile": "services/ai/alerting.js",
       "newFile": "services/ai/alerting.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "AlertingService"
-      ]
+      "commonFunctions": ["AlertingService"]
     },
     {
       "oldFile": "services/ai/bcgReportGenerator.js",
@@ -1002,9 +965,7 @@
       "oldFile": "services/ai/embeddingService.js",
       "newFile": "services/ai/embeddingService.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "EmbeddingService"
-      ]
+      "commonFunctions": ["EmbeddingService"]
     },
     {
       "oldFile": "services/ai/enhancedContextBuilder.js",
@@ -1058,9 +1019,7 @@
       "oldFile": "services/ai/ingestionPipeline.js",
       "newFile": "services/ai/ingestionPipeline.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "IngestionPipeline"
-      ]
+      "commonFunctions": ["IngestionPipeline"]
     },
     {
       "oldFile": "services/ai/intelligence/benchmarkDataService.js",
@@ -1096,9 +1055,7 @@
       "oldFile": "services/ai/knowledgeIndexer.js",
       "newFile": "services/ai/knowledgeIndexer.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "KnowledgeIndexer"
-      ]
+      "commonFunctions": ["KnowledgeIndexer"]
     },
     {
       "oldFile": "services/ai/learningSystem.js",
@@ -1110,10 +1067,7 @@
       "oldFile": "services/ai/llmConfigService.js",
       "newFile": "services/ai/llmConfigService.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "healthDiff",
-        "LLMConfigService"
-      ]
+      "commonFunctions": ["healthDiff", "LLMConfigService"]
     },
     {
       "oldFile": "services/ai/llmHealthMonitor.js",
@@ -1125,20 +1079,13 @@
       "oldFile": "services/ai/llmService.js",
       "newFile": "services/ai/llmService.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "modelLower",
-        "LLMService"
-      ]
+      "commonFunctions": ["modelLower", "LLMService"]
     },
     {
       "oldFile": "services/ai/logger.js",
       "newFile": "services/ai/logger.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "getCurrentLevel",
-        "formatMessage",
-        "TraceContext"
-      ]
+      "commonFunctions": ["getCurrentLevel", "formatMessage", "TraceContext"]
     },
     {
       "oldFile": "services/ai/magicWandService.js",
@@ -1150,9 +1097,7 @@
       "oldFile": "services/ai/mcpServer.js",
       "newFile": "services/ai/mcpServer.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "MCPServer"
-      ]
+      "commonFunctions": ["MCPServer"]
     },
     {
       "oldFile": "services/ai/mediaIngestionService.js",
@@ -1176,11 +1121,7 @@
       "oldFile": "services/ai/modelRouter.js",
       "newFile": "services/ai/modelRouter.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "getLLMConfigService",
-        "nextIndex",
-        "ModelRouter"
-      ]
+      "commonFunctions": ["getLLMConfigService", "nextIndex", "ModelRouter"]
     },
     {
       "oldFile": "services/ai/observability.js",
@@ -1192,10 +1133,7 @@
       "oldFile": "services/ai/organizationMemoryStore.js",
       "newFile": "services/ai/organizationMemoryStore.ts",
       "action": "Potential duplicate - verify migration completeness before removing",
-      "commonFunctions": [
-        "rows",
-        "OrganizationMemoryStore"
-      ]
+      "commonFunctions": ["rows", "OrganizationMemoryStore"]
     },
     {
       "oldFile": "services/ai/performanceOptimizer.js",

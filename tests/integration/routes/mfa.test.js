@@ -1,6 +1,20 @@
+import AuditService from '../../../server/services/auditService';
+import MFAService from '../../../server/services/mfaService';
+import app from '../../../server/src/index.js';
+import request from 'supertest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+
+vi.hoisted(() => {
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+});
+
 /**
  * MFA Routes Integration Tests
- * 
+ *
  * Tests for Multi-Factor Authentication endpoints:
  * - GET /api/mfa/status
  * - POST /api/mfa/setup
@@ -14,519 +28,552 @@
  * - DELETE /api/mfa/devices
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-
 // Mock dependencies
 vi.mock('../../../server/middleware/authMiddleware', () => ({
-    default: (req, res, next) => {
-        req.user = { id: 1, email: 'test@example.com' };
-        next();
-    }
+  default: (req, res, next) => {
+    req.user = { id: 1, email: 'test@example.com' };
+    next();
+  },
 }));
 
 vi.mock('../../../server/services/mfaService', () => ({
-    default: {
-        getMFAStatus: vi.fn(),
-        setupMFA: vi.fn(),
-        verifyAndEnableMFA: vi.fn(),
-        verifyTOTP: vi.fn(),
-        useBackupCode: vi.fn(),
-        regenerateBackupCodes: vi.fn(),
-        disableMFA: vi.fn(),
-        trustDevice: vi.fn(),
-        getTrustedDevices: vi.fn(),
-        revokeTrustedDevice: vi.fn(),
-        revokeAllTrustedDevices: vi.fn(),
-        isDeviceTrusted: vi.fn()
-    }
+  default: {
+    getMFAStatus: vi.fn(),
+    setupMFA: vi.fn(),
+    verifyAndEnableMFA: vi.fn(),
+    verifyTOTP: vi.fn(),
+    useBackupCode: vi.fn(),
+    regenerateBackupCodes: vi.fn(),
+    disableMFA: vi.fn(),
+    trustDevice: vi.fn(),
+    getTrustedDevices: vi.fn(),
+    revokeTrustedDevice: vi.fn(),
+    revokeAllTrustedDevices: vi.fn(),
+    isDeviceTrusted: vi.fn(),
+  },
 }));
 
 vi.mock('../../../server/services/auditService', () => ({
-    default: {
-        logFromRequest: vi.fn()
-    }
+  default: {
+    logFromRequest: vi.fn(),
+  },
 }));
 
 // Import after mocks
-import MFAService from '../../../server/services/mfaService';
-import AuditService from '../../../server/services/auditService';
 
 describe('MFA Routes', () => {
-    const mockUser = { id: 1, email: 'test@example.com' };
+  const db = getDatabase();
+  beforeAll(async () => {
+    await initializeDatabase();
+  });
 
-    beforeEach(() => {
-        vi.clearAllMocks();
+  const mockUser = { id: 1, email: 'test@example.com' };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // ===== GET /api/mfa/status Tests =====
+
+  describe('GET /api/mfa/status', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
+    it('should return MFA status for user', async () => {
+      vi.mocked(MFAService.getMFAStatus).mockResolvedValue({
+        enabled: true,
+        enforced: false,
+        backupCodesRemaining: 8,
+      });
+
+      const status = await MFAService.getMFAStatus(mockUser.id);
+
+      expect(status.enabled).toBe(true);
+      expect(status.enforced).toBe(false);
+      expect(status.backupCodesRemaining).toBe(8);
     });
 
-    // ===== GET /api/mfa/status Tests =====
+    it('should return disabled status for new user', async () => {
+      vi.mocked(MFAService.getMFAStatus).mockResolvedValue({
+        enabled: false,
+        enforced: false,
+      });
 
-    describe('GET /api/mfa/status', () => {
-        it('should return MFA status for user', async () => {
-            vi.mocked(MFAService.getMFAStatus).mockResolvedValue({
-                enabled: true,
-                enforced: false,
-                backupCodesRemaining: 8
-            });
+      const status = await MFAService.getMFAStatus(mockUser.id);
 
-            const status = await MFAService.getMFAStatus(mockUser.id);
-
-            expect(status.enabled).toBe(true);
-            expect(status.enforced).toBe(false);
-            expect(status.backupCodesRemaining).toBe(8);
-        });
-
-        it('should return disabled status for new user', async () => {
-            vi.mocked(MFAService.getMFAStatus).mockResolvedValue({
-                enabled: false,
-                enforced: false
-            });
-
-            const status = await MFAService.getMFAStatus(mockUser.id);
-
-            expect(status.enabled).toBe(false);
-        });
-
-        it('should return enforced flag when org requires MFA', async () => {
-            vi.mocked(MFAService.getMFAStatus).mockResolvedValue({
-                enabled: false,
-                enforced: true,
-                gracePeriodRemaining: 7
-            });
-
-            const status = await MFAService.getMFAStatus(mockUser.id);
-
-            expect(status.enforced).toBe(true);
-            expect(status.gracePeriodRemaining).toBe(7);
-        });
+      expect(status.enabled).toBe(false);
     });
 
-    // ===== POST /api/mfa/setup Tests =====
+    it('should return enforced flag when org requires MFA', async () => {
+      vi.mocked(MFAService.getMFAStatus).mockResolvedValue({
+        enabled: false,
+        enforced: true,
+        gracePeriodRemaining: 7,
+      });
 
-    describe('POST /api/mfa/setup', () => {
-        it('should return QR code and manual entry for setup', async () => {
-            vi.mocked(MFAService.setupMFA).mockResolvedValue({
-                qrCode: 'data:image/png;base64,mock-qr-code',
-                manualEntry: 'ABCD1234EFGH5678'
-            });
+      const status = await MFAService.getMFAStatus(mockUser.id);
 
-            const setup = await MFAService.setupMFA(mockUser.id, mockUser.email);
+      expect(status.enforced).toBe(true);
+      expect(status.gracePeriodRemaining).toBe(7);
+    });
+  });
 
-            expect(setup.qrCode).toContain('data:image/png');
-            expect(setup.manualEntry).toBeDefined();
-        });
+  // ===== POST /api/mfa/setup Tests =====
 
-        it('should log setup initiation', async () => {
-            vi.mocked(MFAService.setupMFA).mockResolvedValue({
-                qrCode: 'mock-qr',
-                manualEntry: 'MOCK1234'
-            });
-
-            await MFAService.setupMFA(mockUser.id, mockUser.email);
-
-            // Verify setup was called
-            expect(MFAService.setupMFA).toHaveBeenCalledWith(mockUser.id, mockUser.email);
-        });
+  describe('POST /api/mfa/setup', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
     });
 
-    // ===== POST /api/mfa/verify-setup Tests =====
+    it('should return QR code and manual entry for setup', async () => {
+      vi.mocked(MFAService.setupMFA).mockResolvedValue({
+        qrCode: 'data:image/png;base64,mock-qr-code',
+        manualEntry: 'ABCD1234EFGH5678',
+      });
 
-    describe('POST /api/mfa/verify-setup', () => {
-        it('should enable MFA with valid token', async () => {
-            vi.mocked(MFAService.verifyAndEnableMFA).mockResolvedValue({
-                success: true,
-                backupCodes: ['CODE1', 'CODE2', 'CODE3', 'CODE4', 'CODE5']
-            });
+      const setup = await MFAService.setupMFA(mockUser.id, mockUser.email);
 
-            const result = await MFAService.verifyAndEnableMFA(mockUser.id, '123456');
-
-            expect(result.success).toBe(true);
-            expect(result.backupCodes).toHaveLength(5);
-        });
-
-        it('should reject invalid token format', () => {
-            const token = '12345'; // 5 digits instead of 6
-            
-            expect(token.length).not.toBe(6);
-        });
-
-        it('should reject empty token', () => {
-            const token = '';
-            
-            expect(!token).toBe(true);
-        });
-
-        it('should reject invalid TOTP', async () => {
-            vi.mocked(MFAService.verifyAndEnableMFA).mockResolvedValue({
-                success: false,
-                error: 'Invalid token'
-            });
-
-            const result = await MFAService.verifyAndEnableMFA(mockUser.id, '000000');
-
-            expect(result.success).toBe(false);
-            expect(result.error).toBe('Invalid token');
-        });
+      expect(setup.qrCode).toContain('data:image/png');
+      expect(setup.manualEntry).toBeDefined();
     });
 
-    // ===== POST /api/mfa/challenge Tests =====
+    it('should log setup initiation', async () => {
+      vi.mocked(MFAService.setupMFA).mockResolvedValue({
+        qrCode: 'mock-qr',
+        manualEntry: 'MOCK1234',
+      });
 
-    describe('POST /api/mfa/challenge', () => {
-        it('should verify valid TOTP', async () => {
-            vi.mocked(MFAService.verifyTOTP).mockResolvedValue({
-                success: true
-            });
+      await MFAService.setupMFA(mockUser.id, mockUser.email);
 
-            const result = await MFAService.verifyTOTP(
-                mockUser.id,
-                '123456',
-                '127.0.0.1',
-                'Mozilla/5.0'
-            );
+      // Verify setup was called
+      expect(MFAService.setupMFA).toHaveBeenCalledWith(mockUser.id, mockUser.email);
+    });
+  });
 
-            expect(result.success).toBe(true);
-        });
+  // ===== POST /api/mfa/verify-setup Tests =====
 
-        it('should reject invalid TOTP', async () => {
-            vi.mocked(MFAService.verifyTOTP).mockResolvedValue({
-                success: false,
-                error: 'Invalid token'
-            });
-
-            const result = await MFAService.verifyTOTP(
-                mockUser.id,
-                '000000',
-                '127.0.0.1',
-                'Mozilla/5.0'
-            );
-
-            expect(result.success).toBe(false);
-        });
-
-        it('should block after too many attempts', async () => {
-            vi.mocked(MFAService.verifyTOTP).mockResolvedValue({
-                success: false,
-                error: 'Too many attempts',
-                blocked: true
-            });
-
-            const result = await MFAService.verifyTOTP(
-                mockUser.id,
-                '000000',
-                '127.0.0.1',
-                'Mozilla/5.0'
-            );
-
-            expect(result.blocked).toBe(true);
-        });
-
-        it('should trust device when requested', async () => {
-            vi.mocked(MFAService.verifyTOTP).mockResolvedValue({ success: true });
-            vi.mocked(MFAService.trustDevice).mockResolvedValue({ success: true });
-
-            await MFAService.verifyTOTP(mockUser.id, '123456', '127.0.0.1', 'Mozilla');
-            await MFAService.trustDevice(mockUser.id, 'device-fingerprint', 'Chrome on Windows');
-
-            expect(MFAService.trustDevice).toHaveBeenCalledWith(
-                mockUser.id,
-                'device-fingerprint',
-                'Chrome on Windows'
-            );
-        });
+  describe('POST /api/mfa/verify-setup', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
     });
 
-    // ===== POST /api/mfa/backup-code Tests =====
+    it('should enable MFA with valid token', async () => {
+      vi.mocked(MFAService.verifyAndEnableMFA).mockResolvedValue({
+        success: true,
+        backupCodes: ['CODE1', 'CODE2', 'CODE3', 'CODE4', 'CODE5'],
+      });
 
-    describe('POST /api/mfa/backup-code', () => {
-        it('should accept valid backup code', async () => {
-            vi.mocked(MFAService.useBackupCode).mockResolvedValue({
-                success: true,
-                remainingCodes: 4
-            });
+      const result = await MFAService.verifyAndEnableMFA(mockUser.id, '123456');
 
-            const result = await MFAService.useBackupCode(
-                mockUser.id,
-                'BACKUP-CODE-1',
-                '127.0.0.1',
-                'Mozilla/5.0'
-            );
-
-            expect(result.success).toBe(true);
-            expect(result.remainingCodes).toBe(4);
-        });
-
-        it('should reject invalid backup code', async () => {
-            vi.mocked(MFAService.useBackupCode).mockResolvedValue({
-                success: false,
-                error: 'Invalid backup code'
-            });
-
-            const result = await MFAService.useBackupCode(
-                mockUser.id,
-                'INVALID-CODE',
-                '127.0.0.1',
-                'Mozilla/5.0'
-            );
-
-            expect(result.success).toBe(false);
-        });
-
-        it('should warn when few backup codes remain', async () => {
-            vi.mocked(MFAService.useBackupCode).mockResolvedValue({
-                success: true,
-                remainingCodes: 1,
-                warning: 'Only 1 backup code remaining. Consider regenerating.'
-            });
-
-            const result = await MFAService.useBackupCode(
-                mockUser.id,
-                'BACKUP-CODE',
-                '127.0.0.1',
-                'Mozilla/5.0'
-            );
-
-            expect(result.warning).toBeDefined();
-            expect(result.remainingCodes).toBe(1);
-        });
-
-        it('should require backup code', () => {
-            const body = {};
-            
-            expect(body.code).toBeUndefined();
-        });
+      expect(result.success).toBe(true);
+      expect(result.backupCodes).toHaveLength(5);
     });
 
-    // ===== POST /api/mfa/regenerate-codes Tests =====
+    it('should reject invalid token format', () => {
+      const token = '12345'; // 5 digits instead of 6
 
-    describe('POST /api/mfa/regenerate-codes', () => {
-        it('should regenerate backup codes with valid TOTP', async () => {
-            vi.mocked(MFAService.regenerateBackupCodes).mockResolvedValue({
-                success: true,
-                backupCodes: ['NEW1', 'NEW2', 'NEW3', 'NEW4', 'NEW5']
-            });
-
-            const result = await MFAService.regenerateBackupCodes(mockUser.id, '123456');
-
-            expect(result.success).toBe(true);
-            expect(result.backupCodes).toHaveLength(5);
-        });
-
-        it('should require TOTP to regenerate codes', async () => {
-            vi.mocked(MFAService.regenerateBackupCodes).mockResolvedValue({
-                success: false,
-                error: 'Invalid token'
-            });
-
-            const result = await MFAService.regenerateBackupCodes(mockUser.id, '000000');
-
-            expect(result.success).toBe(false);
-        });
+      expect(token.length).not.toBe(6);
     });
 
-    // ===== POST /api/mfa/disable Tests =====
+    it('should reject empty token', () => {
+      const token = '';
 
-    describe('POST /api/mfa/disable', () => {
-        it('should disable MFA with valid TOTP', async () => {
-            vi.mocked(MFAService.disableMFA).mockResolvedValue({ success: true });
-            vi.mocked(MFAService.revokeAllTrustedDevices).mockResolvedValue({ count: 2 });
-
-            const result = await MFAService.disableMFA(mockUser.id, '123456');
-            await MFAService.revokeAllTrustedDevices(mockUser.id);
-
-            expect(result.success).toBe(true);
-            expect(MFAService.revokeAllTrustedDevices).toHaveBeenCalledWith(mockUser.id);
-        });
-
-        it('should reject invalid TOTP when disabling', async () => {
-            vi.mocked(MFAService.disableMFA).mockResolvedValue({
-                success: false,
-                error: 'Invalid token'
-            });
-
-            const result = await MFAService.disableMFA(mockUser.id, '000000');
-
-            expect(result.success).toBe(false);
-        });
-
-        it('should require TOTP token', () => {
-            const token = '';
-            
-            expect(!token || token.length !== 6).toBe(true);
-        });
+      expect(!token).toBe(true);
     });
 
-    // ===== Trusted Devices Tests =====
+    it('should reject invalid TOTP', async () => {
+      vi.mocked(MFAService.verifyAndEnableMFA).mockResolvedValue({
+        success: false,
+        error: 'Invalid token',
+      });
 
-    describe('Trusted Devices', () => {
-        describe('GET /api/mfa/devices', () => {
-            it('should list trusted devices', async () => {
-                vi.mocked(MFAService.getTrustedDevices).mockResolvedValue([
-                    { id: 1, name: 'Chrome on Windows', created_at: new Date().toISOString() },
-                    { id: 2, name: 'Safari on iPhone', created_at: new Date().toISOString() }
-                ]);
+      const result = await MFAService.verifyAndEnableMFA(mockUser.id, '000000');
 
-                const devices = await MFAService.getTrustedDevices(mockUser.id);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Invalid token');
+    });
+  });
 
-                expect(devices).toHaveLength(2);
-            });
+  // ===== POST /api/mfa/challenge Tests =====
 
-            it('should return empty array when no trusted devices', async () => {
-                vi.mocked(MFAService.getTrustedDevices).mockResolvedValue([]);
-
-                const devices = await MFAService.getTrustedDevices(mockUser.id);
-
-                expect(devices).toHaveLength(0);
-            });
-        });
-
-        describe('DELETE /api/mfa/devices/:id', () => {
-            it('should revoke specific trusted device', async () => {
-                vi.mocked(MFAService.revokeTrustedDevice).mockResolvedValue({ success: true });
-
-                const result = await MFAService.revokeTrustedDevice(mockUser.id, '1');
-
-                expect(result.success).toBe(true);
-            });
-
-            it('should return 404 for non-existent device', async () => {
-                vi.mocked(MFAService.revokeTrustedDevice).mockResolvedValue({ success: false });
-
-                const result = await MFAService.revokeTrustedDevice(mockUser.id, '999');
-
-                expect(result.success).toBe(false);
-            });
-        });
-
-        describe('DELETE /api/mfa/devices', () => {
-            it('should revoke all trusted devices', async () => {
-                vi.mocked(MFAService.revokeAllTrustedDevices).mockResolvedValue({ count: 3 });
-
-                const result = await MFAService.revokeAllTrustedDevices(mockUser.id);
-
-                expect(result.count).toBe(3);
-            });
-        });
-
-        describe('Device Trust Check', () => {
-            it('should check if device is trusted', async () => {
-                vi.mocked(MFAService.isDeviceTrusted).mockResolvedValue(true);
-
-                const isTrusted = await MFAService.isDeviceTrusted(mockUser.id, 'device-fingerprint');
-
-                expect(isTrusted).toBe(true);
-            });
-
-            it('should return false for untrusted device', async () => {
-                vi.mocked(MFAService.isDeviceTrusted).mockResolvedValue(false);
-
-                const isTrusted = await MFAService.isDeviceTrusted(mockUser.id, 'unknown-device');
-
-                expect(isTrusted).toBe(false);
-            });
-        });
+  describe('POST /api/mfa/challenge', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
     });
 
-    // ===== Audit Logging Tests =====
+    it('should verify valid TOTP', async () => {
+      vi.mocked(MFAService.verifyTOTP).mockResolvedValue({
+        success: true,
+      });
 
-    describe('Audit Logging', () => {
-        it('should log MFA setup initiation', () => {
-            AuditService.logFromRequest(
-                { user: mockUser, ip: '127.0.0.1' },
-                'MFA_SETUP_INITIATED',
-                'user',
-                mockUser.id,
-                { email: mockUser.email }
-            );
+      const result = await MFAService.verifyTOTP(mockUser.id, '123456', '127.0.0.1', 'Mozilla/5.0');
 
-            expect(AuditService.logFromRequest).toHaveBeenCalledWith(
-                expect.any(Object),
-                'MFA_SETUP_INITIATED',
-                'user',
-                mockUser.id,
-                expect.objectContaining({ email: mockUser.email })
-            );
-        });
-
-        it('should log MFA enabled', () => {
-            AuditService.logFromRequest(
-                { user: mockUser },
-                'MFA_ENABLED',
-                'user',
-                mockUser.id,
-                { backupCodesGenerated: 5 }
-            );
-
-            expect(AuditService.logFromRequest).toHaveBeenCalled();
-        });
-
-        it('should log MFA disabled (critical event)', () => {
-            AuditService.logFromRequest(
-                { user: mockUser },
-                'MFA_DISABLED',
-                'user',
-                mockUser.id
-            );
-
-            expect(AuditService.logFromRequest).toHaveBeenCalledWith(
-                expect.any(Object),
-                'MFA_DISABLED',
-                'user',
-                mockUser.id
-            );
-        });
-
-        it('should log backup code usage', () => {
-            AuditService.logFromRequest(
-                { user: mockUser },
-                'MFA_BACKUP_CODE_USED',
-                'user',
-                mockUser.id,
-                { remainingCodes: 4 }
-            );
-
-            expect(AuditService.logFromRequest).toHaveBeenCalled();
-        });
+      expect(result.success).toBe(true);
     });
 
-    // ===== Token Validation Tests =====
+    it('should reject invalid TOTP', async () => {
+      vi.mocked(MFAService.verifyTOTP).mockResolvedValue({
+        success: false,
+        error: 'Invalid token',
+      });
 
-    describe('Token Validation', () => {
-        it('should reject token shorter than 6 digits', () => {
-            const token = '12345';
-            
-            expect(token.length !== 6).toBe(true);
-        });
+      const result = await MFAService.verifyTOTP(mockUser.id, '000000', '127.0.0.1', 'Mozilla/5.0');
 
-        it('should reject token longer than 6 digits', () => {
-            const token = '1234567';
-            
-            expect(token.length !== 6).toBe(true);
-        });
-
-        it('should accept exactly 6 digit token', () => {
-            const token = '123456';
-            
-            expect(token.length === 6).toBe(true);
-        });
-
-        it('should reject non-numeric token', () => {
-            const token = 'abcdef';
-            
-            // In real implementation, would validate numeric
-            expect(/^\d{6}$/.test(token)).toBe(false);
-        });
+      expect(result.success).toBe(false);
     });
+
+    it('should block after too many attempts', async () => {
+      vi.mocked(MFAService.verifyTOTP).mockResolvedValue({
+        success: false,
+        error: 'Too many attempts',
+        blocked: true,
+      });
+
+      const result = await MFAService.verifyTOTP(mockUser.id, '000000', '127.0.0.1', 'Mozilla/5.0');
+
+      expect(result.blocked).toBe(true);
+    });
+
+    it('should trust device when requested', async () => {
+      vi.mocked(MFAService.verifyTOTP).mockResolvedValue({ success: true });
+      vi.mocked(MFAService.trustDevice).mockResolvedValue({ success: true });
+
+      await MFAService.verifyTOTP(mockUser.id, '123456', '127.0.0.1', 'Mozilla');
+      await MFAService.trustDevice(mockUser.id, 'device-fingerprint', 'Chrome on Windows');
+
+      expect(MFAService.trustDevice).toHaveBeenCalledWith(
+        mockUser.id,
+        'device-fingerprint',
+        'Chrome on Windows'
+      );
+    });
+  });
+
+  // ===== POST /api/mfa/backup-code Tests =====
+
+  describe('POST /api/mfa/backup-code', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
+    });
+
+    it('should accept valid backup code', async () => {
+      vi.mocked(MFAService.useBackupCode).mockResolvedValue({
+        success: true,
+        remainingCodes: 4,
+      });
+
+      const result = await MFAService.useBackupCode(
+        mockUser.id,
+        'BACKUP-CODE-1',
+        '127.0.0.1',
+        'Mozilla/5.0'
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.remainingCodes).toBe(4);
+    });
+
+    it('should reject invalid backup code', async () => {
+      vi.mocked(MFAService.useBackupCode).mockResolvedValue({
+        success: false,
+        error: 'Invalid backup code',
+      });
+
+      const result = await MFAService.useBackupCode(
+        mockUser.id,
+        'INVALID-CODE',
+        '127.0.0.1',
+        'Mozilla/5.0'
+      );
+
+      expect(result.success).toBe(false);
+    });
+
+    it('should warn when few backup codes remain', async () => {
+      vi.mocked(MFAService.useBackupCode).mockResolvedValue({
+        success: true,
+        remainingCodes: 1,
+        warning: 'Only 1 backup code remaining. Consider regenerating.',
+      });
+
+      const result = await MFAService.useBackupCode(
+        mockUser.id,
+        'BACKUP-CODE',
+        '127.0.0.1',
+        'Mozilla/5.0'
+      );
+
+      expect(result.warning).toBeDefined();
+      expect(result.remainingCodes).toBe(1);
+    });
+
+    it('should require backup code', () => {
+      const body = {};
+
+      expect(body.code).toBeUndefined();
+    });
+  });
+
+  // ===== POST /api/mfa/regenerate-codes Tests =====
+
+  describe('POST /api/mfa/regenerate-codes', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
+    });
+
+    it('should regenerate backup codes with valid TOTP', async () => {
+      vi.mocked(MFAService.regenerateBackupCodes).mockResolvedValue({
+        success: true,
+        backupCodes: ['NEW1', 'NEW2', 'NEW3', 'NEW4', 'NEW5'],
+      });
+
+      const result = await MFAService.regenerateBackupCodes(mockUser.id, '123456');
+
+      expect(result.success).toBe(true);
+      expect(result.backupCodes).toHaveLength(5);
+    });
+
+    it('should require TOTP to regenerate codes', async () => {
+      vi.mocked(MFAService.regenerateBackupCodes).mockResolvedValue({
+        success: false,
+        error: 'Invalid token',
+      });
+
+      const result = await MFAService.regenerateBackupCodes(mockUser.id, '000000');
+
+      expect(result.success).toBe(false);
+    });
+  });
+
+  // ===== POST /api/mfa/disable Tests =====
+
+  describe('POST /api/mfa/disable', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
+    });
+
+    it('should disable MFA with valid TOTP', async () => {
+      vi.mocked(MFAService.disableMFA).mockResolvedValue({ success: true });
+      vi.mocked(MFAService.revokeAllTrustedDevices).mockResolvedValue({ count: 2 });
+
+      const result = await MFAService.disableMFA(mockUser.id, '123456');
+      await MFAService.revokeAllTrustedDevices(mockUser.id);
+
+      expect(result.success).toBe(true);
+      expect(MFAService.revokeAllTrustedDevices).toHaveBeenCalledWith(mockUser.id);
+    });
+
+    it('should reject invalid TOTP when disabling', async () => {
+      vi.mocked(MFAService.disableMFA).mockResolvedValue({
+        success: false,
+        error: 'Invalid token',
+      });
+
+      const result = await MFAService.disableMFA(mockUser.id, '000000');
+
+      expect(result.success).toBe(false);
+    });
+
+    it('should require TOTP token', () => {
+      const token = '';
+
+      expect(!token || token.length !== 6).toBe(true);
+    });
+  });
+
+  // ===== Trusted Devices Tests =====
+
+  describe('Trusted Devices', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
+    });
+
+    describe('GET /api/mfa/devices', () => {
+      const db = getDatabase();
+      beforeAll(async () => {
+        await initializeDatabase();
+      });
+
+      it('should list trusted devices', async () => {
+        vi.mocked(MFAService.getTrustedDevices).mockResolvedValue([
+          { id: 1, name: 'Chrome on Windows', created_at: new Date().toISOString() },
+          { id: 2, name: 'Safari on iPhone', created_at: new Date().toISOString() },
+        ]);
+
+        const devices = await MFAService.getTrustedDevices(mockUser.id);
+
+        expect(devices).toHaveLength(2);
+      });
+
+      it('should return empty array when no trusted devices', async () => {
+        vi.mocked(MFAService.getTrustedDevices).mockResolvedValue([]);
+
+        const devices = await MFAService.getTrustedDevices(mockUser.id);
+
+        expect(devices).toHaveLength(0);
+      });
+    });
+
+    describe('DELETE /api/mfa/devices/:id', () => {
+      const db = getDatabase();
+      beforeAll(async () => {
+        await initializeDatabase();
+      });
+
+      it('should revoke specific trusted device', async () => {
+        vi.mocked(MFAService.revokeTrustedDevice).mockResolvedValue({ success: true });
+
+        const result = await MFAService.revokeTrustedDevice(mockUser.id, '1');
+
+        expect(result.success).toBe(true);
+      });
+
+      it('should return 404 for non-existent device', async () => {
+        vi.mocked(MFAService.revokeTrustedDevice).mockResolvedValue({ success: false });
+
+        const result = await MFAService.revokeTrustedDevice(mockUser.id, '999');
+
+        expect(result.success).toBe(false);
+      });
+    });
+
+    describe('DELETE /api/mfa/devices', () => {
+      const db = getDatabase();
+      beforeAll(async () => {
+        await initializeDatabase();
+      });
+
+      it('should revoke all trusted devices', async () => {
+        vi.mocked(MFAService.revokeAllTrustedDevices).mockResolvedValue({ count: 3 });
+
+        const result = await MFAService.revokeAllTrustedDevices(mockUser.id);
+
+        expect(result.count).toBe(3);
+      });
+    });
+
+    describe('Device Trust Check', () => {
+      const db = getDatabase();
+      beforeAll(async () => {
+        await initializeDatabase();
+      });
+
+      it('should check if device is trusted', async () => {
+        vi.mocked(MFAService.isDeviceTrusted).mockResolvedValue(true);
+
+        const isTrusted = await MFAService.isDeviceTrusted(mockUser.id, 'device-fingerprint');
+
+        expect(isTrusted).toBe(true);
+      });
+
+      it('should return false for untrusted device', async () => {
+        vi.mocked(MFAService.isDeviceTrusted).mockResolvedValue(false);
+
+        const isTrusted = await MFAService.isDeviceTrusted(mockUser.id, 'unknown-device');
+
+        expect(isTrusted).toBe(false);
+      });
+    });
+  });
+
+  // ===== Audit Logging Tests =====
+
+  describe('Audit Logging', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
+    });
+
+    it('should log MFA setup initiation', () => {
+      AuditService.logFromRequest(
+        { user: mockUser, ip: '127.0.0.1' },
+        'MFA_SETUP_INITIATED',
+        'user',
+        mockUser.id,
+        { email: mockUser.email }
+      );
+
+      expect(AuditService.logFromRequest).toHaveBeenCalledWith(
+        expect.any(Object),
+        'MFA_SETUP_INITIATED',
+        'user',
+        mockUser.id,
+        expect.objectContaining({ email: mockUser.email })
+      );
+    });
+
+    it('should log MFA enabled', () => {
+      AuditService.logFromRequest({ user: mockUser }, 'MFA_ENABLED', 'user', mockUser.id, {
+        backupCodesGenerated: 5,
+      });
+
+      expect(AuditService.logFromRequest).toHaveBeenCalled();
+    });
+
+    it('should log MFA disabled (critical event)', () => {
+      AuditService.logFromRequest({ user: mockUser }, 'MFA_DISABLED', 'user', mockUser.id);
+
+      expect(AuditService.logFromRequest).toHaveBeenCalledWith(
+        expect.any(Object),
+        'MFA_DISABLED',
+        'user',
+        mockUser.id
+      );
+    });
+
+    it('should log backup code usage', () => {
+      AuditService.logFromRequest({ user: mockUser }, 'MFA_BACKUP_CODE_USED', 'user', mockUser.id, {
+        remainingCodes: 4,
+      });
+
+      expect(AuditService.logFromRequest).toHaveBeenCalled();
+    });
+  });
+
+  // ===== Token Validation Tests =====
+
+  describe('Token Validation', () => {
+    const db = getDatabase();
+    beforeAll(async () => {
+      await initializeDatabase();
+    });
+
+    it('should reject token shorter than 6 digits', () => {
+      const token = '12345';
+
+      expect(token.length !== 6).toBe(true);
+    });
+
+    it('should reject token longer than 6 digits', () => {
+      const token = '1234567';
+
+      expect(token.length !== 6).toBe(true);
+    });
+
+    it('should accept exactly 6 digit token', () => {
+      const token = '123456';
+
+      expect(token.length === 6).toBe(true);
+    });
+
+    it('should reject non-numeric token', () => {
+      const token = 'abcdef';
+
+      // In real implementation, would validate numeric
+      expect(/^\d{6}$/.test(token)).toBe(false);
+    });
+  });
 });
-
-
-
-
-
-
-
-
-
-

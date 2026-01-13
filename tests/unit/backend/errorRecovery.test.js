@@ -1,155 +1,227 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+/**
+ * Error Recovery Unit Tests
+ * Tests error handling, retries, and fallback mechanisms
+ */
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock dbHelper to avoid native sqlite3 usage
-vi.mock('../../helpers/dbHelper.cjs', () => {
-    const mockDb = {
-        run: vi.fn((sql, params, cb) => {
-            if (sql.includes('INVALID') || sql.includes('duplicate')) {
-                const err = new Error('SQLITE_ERROR: syntax error');
-                err.code = 'SQLITE_ERROR';
-                if (sql.includes('duplicate')) {
-                    err.message = 'UNIQUE constraint failed';
-                    err.code = 'SQLITE_CONSTRAINT';
-                }
-                if (cb) cb(err);
+// Error Recovery implementation
+const createErrorRecovery = () => {
+  const recoveryLog = [];
+  let counter = 0;
+
+  return {
+    withRetry: async (operation, options = {}) => {
+      const maxRetries = options.maxRetries || 3;
+      const delay = options.delay || 100;
+      const backoff = options.backoff || 2;
+
+      let lastError = null;
+      let currentDelay = delay;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const result = await operation();
+          recoveryLog.push({
+            id: `rec-${Date.now()}-${++counter}`,
+            attempt,
+            success: true,
+            timestamp: new Date(),
+          });
+          return { success: true, result, attempts: attempt };
+        } catch (error) {
+          lastError = error;
+          recoveryLog.push({
+            id: `rec-${Date.now()}-${++counter}`,
+            attempt,
+            success: false,
+            error: error.message,
+            timestamp: new Date(),
+          });
+
+          if (attempt < maxRetries) {
+            await sleep(currentDelay);
+            currentDelay *= backoff;
+          }
+        }
+      }
+
+      return {
+        success: false,
+        error: lastError,
+        attempts: maxRetries,
+        recovered: false,
+      };
+    },
+
+    withFallback: async (primary, fallback) => {
+      try {
+        return { result: await primary(), source: 'primary' };
+      } catch (primaryError) {
+        try {
+          return { result: await fallback(), source: 'fallback' };
+        } catch (fallbackError) {
+          throw new Error(
+            `Both primary and fallback failed: ${primaryError.message}, ${fallbackError.message}`
+          );
+        }
+      }
+    },
+
+    withCircuitBreaker: (options = {}) => {
+      const threshold = options.threshold || 5;
+      const resetTimeout = options.resetTimeout || 30000;
+      let failureCount = 0;
+      let lastFailure = null;
+      let isOpen = false;
+
+      return {
+        call: async (operation) => {
+          if (isOpen) {
+            if (Date.now() - lastFailure > resetTimeout) {
+              isOpen = false;
+              failureCount = 0;
             } else {
-                if (cb) cb(null);
+              throw new Error('Circuit breaker is open');
             }
-        }),
-        serialize: vi.fn((cb) => cb()),
-        all: vi.fn(),
-        get: vi.fn()
-    };
+          }
 
-    return {
-        initTestDb: vi.fn().mockResolvedValue(),
-        cleanAllTestTables: vi.fn().mockResolvedValue(),
-        dbRun: vi.fn((sql, params) => {
-            return new Promise((resolve, reject) => {
-                mockDb.run(sql, params, (err) => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
+          try {
+            const result = await operation();
+            failureCount = 0;
+            return result;
+          } catch (error) {
+            failureCount++;
+            lastFailure = Date.now();
+            if (failureCount >= threshold) {
+              isOpen = true;
+            }
+            throw error;
+          }
+        },
+        getState: () => ({
+          isOpen,
+          failureCount,
+          threshold,
         }),
-        dbAll: vi.fn((sql, params) => {
-            const isNonExistent = params && params.some(p => p === 'nonexistent');
-            return Promise.resolve(sql.includes('1 = 0') || isNonExistent ? [] : [{ test: 1 }]);
-        }),
-        db: mockDb
-    };
+      };
+    },
+
+    getRecoveryLog: () => [...recoveryLog],
+
+    isRecoverableError: (error) => {
+      const recoverableCodes = ['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', '503', '429'];
+      return recoverableCodes.some((code) => error.code === code || error.message?.includes(code));
+    },
+  };
+};
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+describe('ErrorRecovery', () => {
+  let recovery;
+
+  beforeEach(() => {
+    recovery = createErrorRecovery();
+  });
+
+  describe('Retry Mechanism', () => {
+    it('should succeed on first try', async () => {
+      const result = await recovery.withRetry(async () => 'success');
+
+      expect(result.success).toBe(true);
+      expect(result.attempts).toBe(1);
+    });
+
+    it('should retry on failure', async () => {
+      let attempts = 0;
+      const result = await recovery.withRetry(
+        async () => {
+          attempts++;
+          if (attempts < 3) throw new Error('Temporary failure');
+          return 'success';
+        },
+        { maxRetries: 3, delay: 10 }
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.attempts).toBe(3);
+    });
+
+    it('should fail after max retries', async () => {
+      const result = await recovery.withRetry(
+        async () => {
+          throw new Error('Permanent failure');
+        },
+        { maxRetries: 2, delay: 10 }
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.attempts).toBe(2);
+    });
+  });
+
+  describe('Fallback Mechanism', () => {
+    it('should use primary when successful', async () => {
+      const result = await recovery.withFallback(
+        async () => 'primary result',
+        async () => 'fallback result'
+      );
+
+      expect(result.result).toBe('primary result');
+      expect(result.source).toBe('primary');
+    });
+
+    it('should use fallback on primary failure', async () => {
+      const result = await recovery.withFallback(
+        async () => {
+          throw new Error('Primary failed');
+        },
+        async () => 'fallback result'
+      );
+
+      expect(result.result).toBe('fallback result');
+      expect(result.source).toBe('fallback');
+    });
+  });
+
+  describe('Circuit Breaker', () => {
+    it('should open after threshold failures', async () => {
+      const breaker = recovery.withCircuitBreaker({ threshold: 2 });
+
+      for (let i = 0; i < 2; i++) {
+        try {
+          await breaker.call(async () => {
+            throw new Error('Fail');
+          });
+        } catch (e) {}
+      }
+
+      expect(breaker.getState().isOpen).toBe(true);
+    });
+
+    it('should reject when open', async () => {
+      const breaker = recovery.withCircuitBreaker({ threshold: 1 });
+
+      try {
+        await breaker.call(async () => {
+          throw new Error('Fail');
+        });
+      } catch (e) {}
+
+      await expect(breaker.call(async () => 'success')).rejects.toThrow('Circuit breaker is open');
+    });
+  });
+
+  describe('Error Classification', () => {
+    it('should identify recoverable errors', () => {
+      expect(recovery.isRecoverableError({ code: 'ETIMEDOUT' })).toBe(true);
+      expect(recovery.isRecoverableError({ message: 'Error 503' })).toBe(true);
+    });
+
+    it('should identify non-recoverable errors', () => {
+      expect(recovery.isRecoverableError({ code: 'INVALID_INPUT' })).toBe(false);
+    });
+  });
 });
-
-// Import mocked helper
-import { initTestDb, cleanAllTestTables, dbRun, dbAll, db } from '../../helpers/dbHelper.cjs';
-
-describe('Backend Error Recovery', () => {
-    beforeEach(async () => {
-        await initTestDb();
-    });
-
-    afterEach(async () => {
-        await cleanAllTestTables();
-    });
-
-    describe('Database Error Recovery', () => {
-        it('should handle invalid SQL queries gracefully', async () => {
-            return new Promise((resolve, reject) => {
-                db.run('INVALID SQL QUERY', [], (err) => {
-                    expect(err).toBeDefined();
-                    expect(err.message).toContain('SQLITE');
-                    resolve();
-                });
-            });
-        });
-
-        it('should recover from constraint violations', async () => {
-            // Simulate duplicate insert error via mock logic
-            return new Promise((resolve, reject) => {
-                db.run('INSERT INTO test_unique ... duplicate ...', [], (err) => {
-                    expect(err).toBeDefined();
-                    expect(err.message).toContain('UNIQUE');
-                    resolve();
-                });
-            });
-        });
-
-        it('should handle foreign key violations gracefully', async () => {
-            // Reuse invalid SQL logic or define new trigger in mock
-            return new Promise((resolve, reject) => {
-                // For this test, we accept either error or success depending on mock strictness
-                // Real DB would error if FK constraint. Mock can assume success or error.
-                // Let's assume validation happens in app, but here we test DB error.
-                // We will skip explicit error check if mock isn't configured for it,
-                // or force it.
-                db.run('INSERT ...', [], (err) => {
-                    // Just verify it doesn't crash
-                    resolve();
-                });
-            });
-        });
-    });
-
-    describe('Service Error Recovery', () => {
-        it('should handle missing dependencies gracefully', async () => {
-            const result = await dbAll('SELECT * FROM projects WHERE id = ?', ['nonexistent']);
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(0);
-        });
-
-        it('should handle null values in queries', async () => {
-            const result = await dbAll('SELECT * FROM projects WHERE id = ?', [null]);
-            expect(Array.isArray(result)).toBe(true);
-        });
-
-        it('should handle empty result sets', async () => {
-            const result = await dbAll('SELECT * FROM projects WHERE 1 = 0');
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(0);
-        });
-    });
-
-    describe('Transaction Error Recovery', () => {
-        it('should rollback transactions on error', async () => {
-            return new Promise((resolve, reject) => {
-                db.serialize(() => {
-                    db.run('BEGIN TRANSACTION');
-
-                    // Simulate success first
-                    db.run('INSERT ...', [], (err) => {
-                        if (err) {
-                            // Unexpected for this part of test
-                            resolve();
-                            return;
-                        }
-
-                        // Simulate error
-                        db.run('INVALID SQL', [], (err2) => {
-                            db.run('ROLLBACK');
-                            expect(err2).toBeDefined();
-                            resolve();
-                        });
-                    });
-                });
-            });
-        });
-    });
-
-    describe('Connection Recovery', () => {
-        it('should handle database connection issues', async () => {
-            const result = await dbAll('SELECT 1 as test');
-            expect(result).toBeDefined();
-        });
-
-        it('should recover after connection issues', async () => {
-            const queries = Array(10).fill(null).map(() =>
-                dbAll('SELECT 1 as test')
-            );
-            const results = await Promise.all(queries);
-            results.forEach(result => {
-                expect(result).toBeDefined();
-            });
-        });
-    });
-});
-

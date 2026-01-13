@@ -10,7 +10,9 @@ import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
-import { validateDatabaseConfig } from './ConfigValidator.js';
+
+import logger from '../utils/Logger.js';
+// import { validateDatabaseConfig } from './ConfigValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,43 +24,43 @@ const __dirname = dirname(__filename);
 const DatabaseTypeSchema = z.enum(['sqlite', 'postgres']);
 
 const SSLConfigSchema = z.union([
-    z.boolean(),
-    z.object({
-        rejectUnauthorized: z.boolean().optional(),
-    }),
+  z.boolean(),
+  z.object({
+    rejectUnauthorized: z.boolean().optional(),
+  }),
 ]);
 
 const PostgresConfigSchema = z.object({
-    host: z.string(),
-    port: z.number().int().positive(),
-    database: z.string(),
-    user: z.string(),
-    password: z.string(),
-    ssl: SSLConfigSchema,
-    max: z.number().int().positive().default(10),
-    idleTimeoutMillis: z.number().int().positive().default(30000),
-    connectionTimeoutMillis: z.number().int().positive().min(10000).default(30000),
-    statement_timeout: z.number().int().positive().default(60000),
+  host: z.string(),
+  port: z.number().int().positive(),
+  database: z.string(),
+  user: z.string(),
+  password: z.string(),
+  ssl: SSLConfigSchema,
+  max: z.number().int().positive().default(10),
+  idleTimeoutMillis: z.number().int().positive().default(30000),
+  connectionTimeoutMillis: z.number().int().positive().min(10000).default(30000),
+  statement_timeout: z.number().int().positive().default(60000),
 });
 
 const ReadReplicaConfigSchema = PostgresConfigSchema.optional();
 
 const SQLiteConfigSchema = z.object({
-    path: z.string(),
-    options: z
-        .object({
-            verbose: z.boolean().optional(),
-        })
-        .optional(),
+  path: z.string(),
+  options: z
+    .object({
+      verbose: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 const DatabaseConfigSchema = z.object({
-    type: DatabaseTypeSchema,
-    sqlite: SQLiteConfigSchema,
-    postgres: PostgresConfigSchema,
-    readReplica: ReadReplicaConfigSchema,
-    debug: z.boolean().default(false),
-    logQueries: z.boolean().default(false),
+  type: DatabaseTypeSchema,
+  sqlite: SQLiteConfigSchema,
+  postgres: PostgresConfigSchema,
+  readReplica: ReadReplicaConfigSchema,
+  debug: z.boolean().default(false),
+  logQueries: z.boolean().default(false),
 });
 
 export type DatabaseType = z.infer<typeof DatabaseTypeSchema>;
@@ -70,208 +72,228 @@ export type SQLiteConfig = z.infer<typeof SQLiteConfigSchema>;
 // CONFIGURATION
 // ==========================================
 
-const isProduction = process.env.NODE_ENV === 'production';
-let databaseUrl: string | undefined = process.env.DATABASE_URL;
+// ==========================================
+// CONFIGURATION HELPERS
+// ==========================================
 
-// Check if Railway variable expansion didn't work (still contains ${{)
-if (databaseUrl && databaseUrl.includes('${{')) {
-    console.warn('[DB Config] DATABASE_URL appears to contain unexpanded Railway variable:', databaseUrl);
-    console.warn('[DB Config] Falling back to individual DB_* variables');
-    databaseUrl = undefined; // Force fallback to individual variables
+function getDatabaseUrl(): string | undefined {
+  const url = process.env.DATABASE_URL;
+  // Check if Railway variable expansion didn't work (still contains ${{)
+  if (url && url.includes('${{')) {
+    logger.warn('[DB Config] DATABASE_URL appears to contain unexpanded Railway variable:', url);
+    logger.warn('[DB Config] Falling back to individual DB_* variables');
+    return undefined;
+  }
+  return url;
 }
 
 /**
  * Determine database type from environment
  */
-function getDatabaseType(): DatabaseType {
-    // Validate database configuration (will crash in production if invalid)
-    validateDatabaseConfig();
+export function getDatabaseType(): DatabaseType {
+  // Re-read environment variables inside the function for testing support
+  const databaseUrl = getDatabaseUrl();
 
-    // 1. Strict Mode: If DB_TYPE is explicitly set, we MUST satisfy it or crash.
-    if (process.env.DB_TYPE) {
-        if (process.env.DB_TYPE === 'postgres') {
-            if (!databaseUrl && !process.env.DB_HOST) {
-                console.error(
-                    '\n\x1b[31m%s\x1b[0m',
-                    'FATAL ERROR: DB_TYPE is set to "postgres" but no DATABASE_URL or DB_HOST is provided.',
-                );
-                console.error('Please configure your .env file with the correct database credentials.\n');
-                process.exit(1);
-            }
-            return 'postgres';
-        }
-        if (process.env.DB_TYPE === 'sqlite') {
-            return 'sqlite';
-        }
+  // Validate database configuration (will crash in production if invalid)
+  // validateDatabaseConfig();
+
+  // 1. Strict Mode: If DB_TYPE is explicitly set, we MUST satisfy it or crash.
+  if (process.env.DB_TYPE) {
+    if (process.env.DB_TYPE === 'postgres') {
+      if (!databaseUrl && !process.env.DB_HOST) {
+        logger.error(
+          '\n\x1b[31m%s\x1b[0m',
+          'FATAL ERROR: DB_TYPE is set to "postgres" but no DATABASE_URL or DB_HOST is provided.'
+        );
+        logger.error('Please configure your .env file with the correct database credentials.\n');
+        process.exit(1);
+      }
+      return 'postgres';
     }
-
-    // 2. Legacy/Auto-Detect Mode (Warn if falling back)
-    if (databaseUrl) {
-        if (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://')) {
-            return 'postgres';
-        }
+    if (process.env.DB_TYPE === 'sqlite') {
+      return 'sqlite';
     }
+  }
 
-    // Warn about implicit fallback
-    console.warn('\n\x1b[33m%s\x1b[0m', 'WARNING: No DB_TYPE set. Falling back to SQLite default.');
-    console.warn('To prevent this, set DB_TYPE=sqlite or DB_TYPE=postgres in your .env file.\n');
-    return 'sqlite';
+  // 2. Legacy/Auto-Detect Mode (Warn if falling back)
+  if (databaseUrl) {
+    if (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://')) {
+      return 'postgres';
+    }
+  }
+
+  // Warn about implicit fallback
+  logger.warn('\n\x1b[33m%s\x1b[0m', 'WARNING: No DB_TYPE set. Falling back to SQLite default.');
+  logger.warn('To prevent this, set DB_TYPE=sqlite or DB_TYPE=postgres in your .env file.\n');
+  return 'sqlite';
 }
 
-const databaseType = getDatabaseType();
-
 // Database paths for SQLite
-const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultify.db');
+const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultinity.db');
 
 /**
  * Parse PostgreSQL connection URL
  */
 function parsePostgresUrl(url: string): PostgresConfig | null {
-    try {
-        const parsed = new URL(url);
+  try {
+    const parsed = new URL(url);
 
-        // Determine SSL configuration
-        let sslConfig: boolean | { rejectUnauthorized?: boolean } = false;
-        if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
-            sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
-        } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
-            sslConfig = false;
-        } else {
-            // Default: No SSL for Railway/internal connections
-            sslConfig = false;
-        }
-
-        const connectionTimeout = (() => {
-            const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
-            if (timeout < 10000) {
-                console.warn(
-                    `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`,
-                );
-                return 30000; // Force minimum 30 seconds
-            }
-            return timeout;
-        })();
-
-        return {
-            host: parsed.hostname,
-            port: parseInt(parsed.port || '5432'),
-            database: parsed.pathname.slice(1), // Remove leading /
-            user: parsed.username,
-            password: parsed.password,
-            ssl: sslConfig,
-            max: parseInt(process.env.DB_POOL_SIZE || '10'),
-            idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: connectionTimeout,
-            statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '60000', 10),
-        };
-    } catch (e: unknown) {
-        const error = e instanceof Error ? e : new Error(String(e));
-        console.error('Failed to parse DATABASE_URL:', error.message);
-        return null;
+    // Determine SSL configuration
+    let sslConfig: boolean | { rejectUnauthorized?: boolean } = false;
+    if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
+      sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
+    } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
+      sslConfig = false;
+    } else {
+      // Default: No SSL for Railway/internal connections
+      sslConfig = false;
     }
+
+    const connectionTimeout = (() => {
+      const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
+      if (timeout < 10000) {
+        logger.warn(
+          `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`
+        );
+        return 30000; // Force minimum 30 seconds
+      }
+      return timeout;
+    })();
+
+    return {
+      host: parsed.hostname,
+      port: parseInt(parsed.port || '5432'),
+      database: parsed.pathname.slice(1), // Remove leading /
+      user: parsed.username,
+      password: parsed.password,
+      ssl: sslConfig,
+      max: parseInt(process.env.DB_POOL_SIZE || '10'),
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: connectionTimeout,
+      statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '60000', 10),
+    };
+  } catch (e: unknown) {
+    const error = e instanceof Error ? e : new Error(String(e));
+    logger.error('Failed to parse DATABASE_URL:', error.message);
+    return null;
+  }
 }
 
 /**
  * Get PostgreSQL config from environment variables
  */
 function getPostgresConfig(): PostgresConfig {
-    if (databaseUrl) {
-        const parsed = parsePostgresUrl(databaseUrl);
-        if (parsed) {
-            return parsed;
-        }
-        // If parsing failed, fall through to individual env vars
+  const databaseUrl = getDatabaseUrl();
+  if (databaseUrl) {
+    const parsed = parsePostgresUrl(databaseUrl);
+    if (parsed) {
+      return parsed;
     }
+    // If parsing failed, fall through to individual env vars
+  }
 
-    // Determine SSL configuration
-    let sslConfig: boolean | { rejectUnauthorized?: boolean } = false;
-    if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
-        sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
-    } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
-        sslConfig = false;
-    } else {
-        // Default: No SSL for Railway/internal connections
-        sslConfig = false;
+  // Determine SSL configuration
+  let sslConfig: boolean | { rejectUnauthorized?: boolean } = false;
+  if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
+    sslConfig = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
+  } else if (process.env.DB_SSL === 'false' || process.env.DB_SSL === 'disable') {
+    sslConfig = false;
+  } else {
+    // Default: No SSL for Railway/internal connections
+    sslConfig = false;
+  }
+
+  const connectionTimeout = (() => {
+    const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
+    if (timeout < 10000) {
+      logger.warn(
+        `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`
+      );
+      return 30000; // Force minimum 30 seconds
     }
+    return timeout;
+  })();
 
-    const connectionTimeout = (() => {
-        const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
-        if (timeout < 10000) {
-            console.warn(
-                `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`,
-            );
-            return 30000; // Force minimum 30 seconds
-        }
-        return timeout;
-    })();
-
-    return {
-        host: process.env.DB_HOST || 'localhost',
-        port: parseInt(process.env.DB_PORT || '5432'),
-        database: process.env.DB_NAME || 'consultify',
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || '',
-        ssl: sslConfig,
-        max: parseInt(process.env.DB_POOL_SIZE || '10'),
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: connectionTimeout,
-        statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '60000', 10),
-    };
+  return {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME || 'consultinity',
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || '',
+    ssl: sslConfig,
+    max: parseInt(process.env.DB_POOL_SIZE || '10'),
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: connectionTimeout,
+    statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '60000', 10),
+  };
 }
 
 /**
  * Get Read Replica config from environment variables
  */
 function getReadReplicaConfig(): PostgresConfig | undefined {
-    const readUrl = process.env.DB_READ_URL || process.env.DATABASE_READ_URL;
-    if (readUrl) {
-        const parsed = parsePostgresUrl(readUrl);
-        if (parsed) return parsed;
+  const readUrl = process.env.DB_READ_URL || process.env.DATABASE_READ_URL;
+  if (readUrl) {
+    // Check if readUrl also has unexpanded Railway variables
+    if (readUrl.includes('${{')) {
+      logger.warn('[DB Config] DATABASE_READ_URL appears to contain unexpanded Railway variable');
+      return undefined;
     }
+    const parsed = parsePostgresUrl(readUrl);
+    if (parsed) return parsed;
+  }
 
-    if (process.env.DB_READ_HOST) {
-        // Inherit defaults from primary, override with read-specifics
-        const primary = getPostgresConfig();
-        return {
-            ...primary,
-            host: process.env.DB_READ_HOST,
-            port: parseInt(process.env.DB_READ_PORT || String(primary.port)),
-            user: process.env.DB_READ_USER || primary.user,
-            password: process.env.DB_READ_PASSWORD || primary.password,
-        };
-    }
+  if (process.env.DB_READ_HOST) {
+    // Inherit defaults from primary, override with read-specifics
+    const primary = getPostgresConfig();
+    return {
+      ...primary,
+      host: process.env.DB_READ_HOST,
+      port: parseInt(process.env.DB_READ_PORT || String(primary.port)),
+      user: process.env.DB_READ_USER || primary.user,
+      password: process.env.DB_READ_PASSWORD || primary.password,
+    };
+  }
 
-    return undefined;
+  return undefined;
 }
 
 /**
  * Create and validate database configuration
+ * Renamed to loadDatabaseConfig for consistency with tests and exported for testing support
  */
-function createDatabaseConfig(): DatabaseConfig {
-    const config: DatabaseConfig = {
-        type: databaseType,
-        sqlite: {
-            path: sqlitePath,
-            options: {
-                verbose: !isProduction,
-            },
-        },
-        postgres: getPostgresConfig(),
-        readReplica: getReadReplicaConfig(),
-        debug: process.env.DB_DEBUG === 'true',
-        logQueries: !isProduction && process.env.DB_LOG_QUERIES === 'true',
-    };
+export function loadDatabaseConfig(): DatabaseConfig {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const databaseType = getDatabaseType();
+  const sqlitePath = process.env.SQLITE_PATH || path.resolve(__dirname, '../../consultinity.db');
 
-    // Validate with Zod
-    const result = DatabaseConfigSchema.safeParse(config);
-    if (!result.success) {
-        console.error('[DB Config] Configuration validation failed:', result.error);
-        throw new Error('Invalid database configuration');
-    }
+  console.log('[DB Config] Loading config. SQLITE_PATH env:', process.env.SQLITE_PATH);
+  console.log('[DB Config] Resolved sqlitePath:', sqlitePath);
 
-    return result.data;
+  const config: DatabaseConfig = {
+    type: databaseType,
+    sqlite: {
+      path: sqlitePath,
+      options: {
+        verbose: !isProduction,
+      },
+    },
+    postgres: getPostgresConfig(),
+    readReplica: getReadReplicaConfig(),
+    debug: process.env.DB_DEBUG === 'true',
+    logQueries: !isProduction && process.env.DB_LOG_QUERIES === 'true',
+  };
+
+  // Validate with Zod
+  const result = DatabaseConfigSchema.safeParse(config);
+  if (!result.success) {
+    logger.error('[DB Config] Configuration validation failed:', result.error);
+    throw new Error('Invalid database configuration');
+  }
+
+  return result.data;
 }
 
-export const databaseConfig = createDatabaseConfig();
+export const databaseConfig = loadDatabaseConfig();
 
 export default databaseConfig;

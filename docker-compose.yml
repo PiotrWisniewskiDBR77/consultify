@@ -1,4 +1,4 @@
-# Consultify Docker Compose
+# Consultinity Docker Compose
 # Local development and testing environment
 
 version: '3.9'
@@ -14,7 +14,7 @@ services:
       target: frontend-builder
     command: npm run dev -- --host
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - ./src:/app/src:ro
       - ./public:/app/public:ro
@@ -23,7 +23,7 @@ services:
     depends_on:
       - api
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # API Server
@@ -34,11 +34,11 @@ services:
       dockerfile: Dockerfile
       target: api
     ports:
-      - "3001:3001"
+      - '3001:3001'
     environment:
       - NODE_ENV=development
       - PORT=3001
-      - DATABASE_URL=postgresql://consultify:consultify@postgres:5432/consultify
+      - DATABASE_URL=postgresql://consultinity:consultinity@postgres:5432/consultinity
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=dev-jwt-secret-change-in-production
       - ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
@@ -49,13 +49,13 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3001/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # PostgreSQL Database
@@ -63,21 +63,21 @@ services:
   postgres:
     image: postgres:15-alpine
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
-      - POSTGRES_USER=consultify
-      - POSTGRES_PASSWORD=consultify
-      - POSTGRES_DB=consultify
+      - POSTGRES_USER=consultinity
+      - POSTGRES_PASSWORD=consultinity
+      - POSTGRES_DB=consultinity
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U consultify"]
+      test: ['CMD-SHELL', 'pg_isready -U consultinity']
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # Redis Cache
@@ -85,17 +85,17 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # Prometheus (Metrics)
@@ -103,7 +103,7 @@ services:
   prometheus:
     image: prom/prometheus:v2.48.0
     ports:
-      - "9090:9090"
+      - '9090:9090'
     volumes:
       - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
@@ -112,7 +112,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
     networks:
-      - consultify-network
+      - consultinity-network
 
   # ==========================================
   # Grafana (Dashboards)
@@ -120,7 +120,7 @@ services:
   grafana:
     image: grafana/grafana:10.2.2
     ports:
-      - "3002:3000"
+      - '3002:3000'
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -131,13 +131,13 @@ services:
     depends_on:
       - prometheus
     networks:
-      - consultify-network
+      - consultinity-network
 
 # ==========================================
 # Networks
 # ==========================================
 networks:
-  consultify-network:
+  consultinity-network:
     driver: bridge
 
 # ==========================================

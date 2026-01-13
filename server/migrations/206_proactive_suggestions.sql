@@ -57,3 +57,13 @@ CREATE INDEX IF NOT EXISTS idx_ai_suggestion_preferences_user_id ON ai_suggestio
 
 
 
+
+
+
+
+
+
+
+
+
+

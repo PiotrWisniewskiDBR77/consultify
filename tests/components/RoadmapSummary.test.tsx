@@ -3,33 +3,26 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { RoadmapSummary } from '../../components/RoadmapSummary';
+import { RoadmapSummary } from '../../src/components/RoadmapSummary';
 
-const mockInitiatives = [
-    { id: 'init-1', name: 'Initiative 1', quarter: '2024-Q1', status: 'EXECUTING' },
-    { id: 'init-2', name: 'Initiative 2', quarter: '2024-Q2', status: 'PLANNING' }
-] as any;
+const mockSummary = {
+  summaryText: 'Strategic implementation focusing on digital transformation.',
+  riskText: 'Resource constraints.',
+  recommendation: 'Hire more devs.',
+};
 
 describe('RoadmapSummary Component', () => {
-    it('renders roadmap summary', () => {
-        render(<RoadmapSummary initiatives={mockInitiatives} />);
+  it('renders roadmap summary', () => {
+    render(<RoadmapSummary summary={mockSummary} />);
 
-        expect(screen.getByText(/Roadmap/i) || screen.getByText(/Summary/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText(/Strategic Roadmap Summary/i)).toBeInTheDocument();
+    expect(screen.getByText(/Strategic implementation/i)).toBeInTheDocument();
+  });
 
-    it('displays initiative count', () => {
-        render(<RoadmapSummary initiatives={mockInitiatives} />);
+  it('displays risks', () => {
+    render(<RoadmapSummary summary={mockSummary} />);
 
-        expect(screen.getByText(/2/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText(/Key Risk/i)).toBeInTheDocument();
+    expect(screen.getByText(/Resource constraints/i)).toBeInTheDocument();
+  });
 });
-
-
-
-
-
-
-
-
-
-

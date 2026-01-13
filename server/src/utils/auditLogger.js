@@ -1,3 +1,2 @@
 export * from './auditLogger.ts';
-import M from './auditLogger.ts';
-export default M;
+export { default } from './auditLogger.ts';

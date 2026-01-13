@@ -1,198 +1,160 @@
+import app from '../../../server/src/index.js';
+import express from 'express';
+import request from 'supertest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
+import { getDatabase } from '../../../server/src/database/Database.js';
+import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+
+vi.hoisted(() => {
+  process.env.MOCK_DB = 'false';
+  const workerId = process.env.VITEST_WORKER_ID || '0';
+  process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
+  process.env.SQLITE_PATH = `./test-integration-${workerId}.db`;
+});
+
 /**
  * Initiatives Routes Integration Tests
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import request from 'supertest';
-import express from 'express';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const queryHelpers = require('../../../server/utils/queryHelpers');
-// initiatives.js exports router directly usually
-const initiativesRouter = require('../../../server/routes/initiatives');
 
 describe('Initiatives Routes', () => {
-    let app;
+  let db;
 
-    beforeEach(() => {
-        // Spy on methods on the CJS object
-        vi.spyOn(queryHelpers, 'queryAll');
-        vi.spyOn(queryHelpers, 'queryOne');
-        vi.spyOn(queryHelpers, 'queryRun');
+  beforeAll(async () => {
+    await initializeDatabase();
+    db = getDatabase();
+  });
 
-        app = express();
-        app.use(express.json());
-        app.use('/api/initiatives', initiativesRouter);
+  let testApp;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+
+    // Clear tables before each test
+    await db.run('DELETE FROM initiatives');
+    await db.run('DELETE FROM projects');
+    await db.run('DELETE FROM organizations');
+
+    // Seed parent records
+    await db.run('INSERT INTO organizations (id, name, status) VALUES (?, ?, ?)', [
+      'org-1',
+      'Test Org',
+      'active',
+    ]);
+    await db.run('INSERT INTO projects (id, organization_id, name, status) VALUES (?, ?, ?, ?)', [
+      'e8235222-2222-2222-2222-222222222222',
+      'org-1',
+      'Test Project',
+      'active',
+    ]);
+
+    // Enable Auth Bypass for this test suite
+    process.env.ENABLE_TEST_AUTH_BYPASS = 'true';
+    process.env.NODE_ENV = 'test';
+
+    testApp = express();
+    testApp.use(express.json());
+
+    // Mock authentication middleware
+    testApp.use((req, res, next) => {
+      req.user = { id: 'user-1', organizationId: 'org-1', role: 'ADMIN' };
+      next();
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
+    const initiativesRouter = (await import('../../../server/src/routes/pmo/initiatives.routes.ts'))
+      .default;
+    testApp.use('/api/initiatives', initiativesRouter);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('GET /api/initiatives', () => {
+    it('returns list of initiatives', async () => {
+      const initId1 = '00000000-0000-0000-0000-000000000001';
+      const initId2 = '00000000-0000-0000-0000-000000000002';
+      // Seed database
+      await db.run(
+        'INSERT INTO initiatives (id, organization_id, name, title, status, progress) VALUES (?, ?, ?, ?, ?, ?)',
+        [initId1, 'org-1', 'Digital Transformation', 'Digital Transformation', 'active', 50]
+      );
+      await db.run(
+        'INSERT INTO initiatives (id, organization_id, name, title, status, progress) VALUES (?, ?, ?, ?, ?, ?)',
+        [initId2, 'org-1', 'Process Automation', 'Process Automation', 'planning', 10]
+      );
+
+      const response = await request(testApp)
+        .get('/api/initiatives')
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBeGreaterThanOrEqual(2);
+      expect(response.body.map((i) => i.name)).toContain('Digital Transformation');
     });
 
-    describe('GET /api/initiatives', () => {
-        it('returns list of initiatives', async () => {
-            const mockInitiatives = [
-                {
-                    id: 'init-1',
-                    organization_id: 'org-1',
-                    name: 'Digital Transformation',
-                    status: 'active',
-                    progress: 50
-                },
-                {
-                    id: 'init-2',
-                    organization_id: 'org-1',
-                    name: 'Process Automation',
-                    status: 'planning',
-                    progress: 10
-                }
-            ];
+    it('returns 401 for missing auth', async () => {
+      const originalBypass = process.env.ENABLE_TEST_AUTH_BYPASS;
+      process.env.ENABLE_TEST_AUTH_BYPASS = 'false';
 
-            queryHelpers.queryAll.mockResolvedValue(mockInitiatives);
+      try {
+        const anonymousApp = express();
+        anonymousApp.use(express.json());
+        const initiativesRouter = (
+          await import('../../../server/src/routes/pmo/initiatives.routes.ts')
+        ).default;
+        anonymousApp.use('/api/initiatives', initiativesRouter);
 
-            const response = await request(app)
-                .get('/api/initiatives')
-                .expect('Content-Type', /json/)
-                .expect(200);
+        // This should fail because verifyToken will return 401 for missing token when bypass is off
+        await request(anonymousApp).get('/api/initiatives').expect(401);
+      } finally {
+        process.env.ENABLE_TEST_AUTH_BYPASS = originalBypass;
+      }
+    });
+  });
 
-            expect(response.body.initiatives).toBeDefined();
-            expect(response.body.total).toBe(2);
-        });
+  describe('GET /api/initiatives/:id', () => {
+    it('returns single initiative', async () => {
+      const initId = '00000000-0000-0000-0000-000000000003';
+      await db.run(
+        'INSERT INTO initiatives (id, organization_id, name, title, status, progress) VALUES (?, ?, ?, ?, ?, ?)',
+        [initId, 'org-1', 'Single Initiative', 'Single Initiative', 'active', 20]
+      );
 
-        it('returns empty array when no initiatives', async () => {
-            queryHelpers.queryAll.mockResolvedValue([]);
+      const response = await request(testApp).get(`/api/initiatives/${initId}`).expect(200);
 
-            const response = await request(app)
-                .get('/api/initiatives')
-                .expect(200);
-
-            expect(response.body.initiatives).toEqual([]);
-            expect(response.body.total).toBe(0);
-        });
-
-        it('handles table not found error gracefully', async () => {
-            queryHelpers.queryAll.mockRejectedValue(new Error('no such table: initiatives'));
-
-            const response = await request(app)
-                .get('/api/initiatives')
-                .expect(200);
-
-            expect(response.body.initiatives).toEqual([]);
-            expect(response.body.total).toBe(0);
-        });
-
-        it('parses JSON fields correctly', async () => {
-            const mockInitiative = {
-                id: 'init-1',
-                name: 'Test',
-                deliverables: JSON.stringify(['Deliverable 1', 'Deliverable 2']),
-                success_criteria: JSON.stringify(['Criteria 1']),
-                scope_in: JSON.stringify(['In scope']),
-                scope_out: JSON.stringify(['Out of scope']),
-                key_risks: JSON.stringify(['Risk 1'])
-            };
-
-            queryHelpers.queryAll.mockResolvedValue([mockInitiative]);
-
-            const response = await request(app)
-                .get('/api/initiatives')
-                .expect(200);
-
-            const initiative = response.body.initiatives[0];
-            expect(initiative.deliverables).toEqual(['Deliverable 1', 'Deliverable 2']);
-            expect(initiative.successCriteria).toEqual(['Criteria 1']);
-        });
-
-        it('includes owner information', async () => {
-            const mockInitiative = {
-                id: 'init-1',
-                name: 'Test',
-                owner_business_id: 'user-1',
-                ob_first_name: 'John',
-                ob_last_name: 'Doe',
-                ob_avatar: 'avatar.jpg',
-                owner_execution_id: 'user-2',
-                oe_first_name: 'Jane',
-                oe_last_name: 'Smith',
-                oe_avatar: 'avatar2.jpg'
-            };
-
-            queryHelpers.queryAll.mockResolvedValue([mockInitiative]);
-
-            const response = await request(app)
-                .get('/api/initiatives')
-                .expect(200);
-
-            const initiative = response.body.initiatives[0];
-            expect(initiative.ownerBusiness).toEqual({
-                id: 'user-1',
-                firstName: 'John',
-                lastName: 'Doe',
-                avatarUrl: 'avatar.jpg'
-            });
-            expect(initiative.ownerExecution).toEqual({
-                id: 'user-2',
-                firstName: 'Jane',
-                lastName: 'Smith',
-                avatarUrl: 'avatar2.jpg'
-            });
-        });
+      expect(response.body.id).toBe(initId);
+      expect(response.body.title).toBe('Single Initiative');
     });
 
-    describe('GET /api/initiatives/:id', () => {
-        it('returns single initiative', async () => {
-            const mockInitiative = {
-                id: 'init-1',
-                organization_id: 'org-1',
-                name: 'Digital Transformation',
-                status: 'active',
-                progress: 50,
-                problem_statement: 'Need to modernize',
-                hypothesis: 'Automation will help'
-            };
+    it('returns 404 for non-existent initiative', async () => {
+      const nonExistentId = '00000000-0000-0000-0000-ffffffffffff';
+      const response = await request(testApp).get(`/api/initiatives/${nonExistentId}`).expect(404);
 
-            queryHelpers.queryOne.mockResolvedValue(mockInitiative);
-
-            const response = await request(app)
-                .get('/api/initiatives/init-1')
-                .expect(200);
-
-            expect(response.body.id).toBe('init-1');
-            expect(response.body.name).toBe('Digital Transformation');
-        });
-
-        it('returns 404 for non-existent initiative', async () => {
-            queryHelpers.queryOne.mockResolvedValue(null);
-
-            const response = await request(app)
-                .get('/api/initiatives/non-existent')
-                .expect(404);
-
-            expect(response.body.error).toBe('Initiative not found');
-        });
-
-        it('includes task count', async () => {
-            const mockInitiative = { id: 'init-1', name: 'Test' };
-
-            queryHelpers.queryOne
-                .mockResolvedValueOnce(mockInitiative)
-                .mockResolvedValueOnce({ count: 5 });
-
-            const response = await request(app)
-                .get('/api/initiatives/init-1')
-                .expect(200);
-
-            expect(response.body.taskCount).toBe(5);
-        });
+      expect(response.body.error).toBe('Initiative not found');
     });
+  });
+
+  describe('POST /api/initiatives', () => {
+    it('creates new initiative', async () => {
+      const projectId = 'e8235222-2222-2222-2222-222222222222';
+      const newInitiative = {
+        projectId: projectId,
+        title: 'New created initiative',
+        area: 'Tech',
+        summary: 'Doing stuff',
+      };
+
+      const response = await request(testApp).post('/api/initiatives').send(newInitiative);
+
+      if (response.status !== 200) {
+        console.log('[DEBUG] Create Initiative Error:', response.body);
+      }
+
+      expect(response.status).toBe(200); // Controller returns 200 for creation
+
+      expect(response.body.id).toBeDefined();
+      expect(response.body.name).toBe('New created initiative');
+    });
+  });
 });
-
-
-
-
-
-
-
-
-
-

@@ -6,11 +6,11 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3005:3005"
+      - '3005:3005'
     env_file:
       - .env.production
     environment:
-      - DATABASE_URL=postgres://consultify:consultify@postgres:5432/consultify
+      - DATABASE_URL=postgres://consultinity:consultinity@postgres:5432/consultinity
     depends_on:
       postgres:
         condition: service_healthy
@@ -19,7 +19,8 @@ services:
       - ./data/uploads:/app/server/uploads
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3005/api/health"]
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3005/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -28,17 +29,17 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_USER: consultify
-      POSTGRES_PASSWORD: consultify
-      POSTGRES_DB: consultify
+      POSTGRES_USER: consultinity
+      POSTGRES_PASSWORD: consultinity
+      POSTGRES_DB: consultinity
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./server/migrations/init-pgvector.sql:/docker-entrypoint-initdb.d/01-init-pgvector.sql
     ports:
-      - "5432:5432"
+      - '5432:5432'
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U consultify"]
+      test: ['CMD-SHELL', 'pg_isready -U consultinity']
       interval: 10s
       timeout: 5s
       retries: 5

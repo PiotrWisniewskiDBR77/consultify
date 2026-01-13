@@ -1,0 +1,184 @@
+{
+  "roadmap": {
+    "name": "TechnoLex Digital Transformation Roadmap 2025-2027",
+    "start_date": "2025-01-01",
+    "end_date": "2027-12-31",
+    "phases": [
+      {
+        "id": "phase-1",
+        "name": "Foundation",
+        "description": "Establish digital infrastructure and governance framework",
+        "start_date": "2025-01-01",
+        "end_date": "2025-06-30",
+        "status": "completed",
+        "objectives": [
+          "Complete digital readiness assessment",
+          "Establish transformation governance",
+          "Deploy initial IoT infrastructure",
+          "Begin ERP assessment"
+        ],
+        "initiatives": ["init-001", "init-004"]
+      },
+      {
+        "id": "phase-2",
+        "name": "Acceleration",
+        "description": "Scale digital initiatives and build capabilities",
+        "start_date": "2025-07-01",
+        "end_date": "2026-06-30",
+        "status": "in_progress",
+        "objectives": [
+          "Complete Smart Factory pilot in Warsaw",
+          "Launch predictive maintenance system",
+          "Go-live with S/4HANA Finance",
+          "Deploy Quality Vision AI pilot"
+        ],
+        "initiatives": ["init-001", "init-002", "init-004", "init-005"]
+      },
+      {
+        "id": "phase-3",
+        "name": "Optimization",
+        "description": "Optimize operations and expand to all facilities",
+        "start_date": "2026-07-01",
+        "end_date": "2027-06-30",
+        "status": "planned",
+        "objectives": [
+          "Extend Smart Factory to Wrocław",
+          "Complete ERP migration",
+          "Launch Digital Twin platform",
+          "Achieve full supply chain visibility"
+        ],
+        "initiatives": ["init-001", "init-003", "init-004", "init-006"]
+      },
+      {
+        "id": "phase-4",
+        "name": "Excellence",
+        "description": "Achieve operational excellence and continuous innovation",
+        "start_date": "2027-07-01",
+        "end_date": "2027-12-31",
+        "status": "planned",
+        "objectives": [
+          "Achieve target OEE of 88%",
+          "Full AI-driven operations",
+          "Energy optimization deployed",
+          "Transformation benefits realized"
+        ],
+        "initiatives": ["init-003", "init-007", "init-008"]
+      }
+    ],
+    "milestones": [
+      {
+        "id": "ms-001",
+        "name": "IoT Infrastructure Go-Live",
+        "date": "2025-06-30",
+        "phase": "phase-1",
+        "status": "completed",
+        "description": "Edge computing infrastructure deployed in Warsaw plant"
+      },
+      {
+        "id": "ms-002",
+        "name": "ERP Finance Go-Live",
+        "date": "2026-01-31",
+        "phase": "phase-2",
+        "status": "upcoming",
+        "description": "S/4HANA Finance module live with real-time reporting"
+      },
+      {
+        "id": "ms-003",
+        "name": "Predictive Maintenance Production",
+        "date": "2026-03-31",
+        "phase": "phase-2",
+        "status": "upcoming",
+        "description": "ML-based predictions integrated with maintenance workflow"
+      },
+      {
+        "id": "ms-004",
+        "name": "Quality AI Pilot Complete",
+        "date": "2026-03-31",
+        "phase": "phase-2",
+        "status": "upcoming",
+        "description": "Computer vision quality inspection in production"
+      },
+      {
+        "id": "ms-005",
+        "name": "Smart Factory Warsaw Complete",
+        "date": "2026-09-30",
+        "phase": "phase-2",
+        "status": "upcoming",
+        "description": "Full machine connectivity and MES integration in Warsaw"
+      },
+      {
+        "id": "ms-006",
+        "name": "ERP Full Go-Live",
+        "date": "2026-12-31",
+        "phase": "phase-3",
+        "status": "planned",
+        "description": "Complete S/4HANA migration across all modules"
+      },
+      {
+        "id": "ms-007",
+        "name": "Digital Twin Operational",
+        "date": "2027-03-31",
+        "phase": "phase-3",
+        "status": "planned",
+        "description": "Live digital twin for Assembly Line 3"
+      },
+      {
+        "id": "ms-008",
+        "name": "Smart Factory Wrocław Complete",
+        "date": "2027-06-30",
+        "phase": "phase-3",
+        "status": "planned",
+        "description": "Smart Factory capabilities extended to Wrocław plant"
+      },
+      {
+        "id": "ms-009",
+        "name": "Transformation Complete",
+        "date": "2027-12-31",
+        "phase": "phase-4",
+        "status": "planned",
+        "description": "All transformation objectives achieved"
+      }
+    ],
+    "dependencies": [
+      {
+        "from": "init-001",
+        "to": "init-002",
+        "type": "enables",
+        "description": "IoT infrastructure needed for sensor data"
+      },
+      {
+        "from": "init-001",
+        "to": "init-003",
+        "type": "enables",
+        "description": "Machine connectivity required for digital twin"
+      },
+      {
+        "from": "init-004",
+        "to": "init-006",
+        "type": "enables",
+        "description": "S/4HANA provides master data for supply chain"
+      },
+      {
+        "from": "init-002",
+        "to": "init-008",
+        "type": "synergy",
+        "description": "Predictive models can inform energy scheduling"
+      }
+    ],
+    "budget_allocation": {
+      "total": 14300000,
+      "by_phase": {
+        "phase-1": 2500000,
+        "phase-2": 6800000,
+        "phase-3": 4200000,
+        "phase-4": 800000
+      },
+      "by_category": {
+        "technology": 8500000,
+        "implementation": 3200000,
+        "change_management": 1600000,
+        "contingency": 1000000
+      }
+    }
+  }
+}

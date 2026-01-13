@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadPptxprocessor = createCachedLazyService('../../services/ai/processors/pptxProcessor.js');
+const loadPptxprocessor = createCachedLazyService('../../../ai/processors/pptxProcessor.js');
 
 // Export default instance (for backward compatibility)
 export default loadPptxprocessor();

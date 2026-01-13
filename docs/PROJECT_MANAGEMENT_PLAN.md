@@ -2,13 +2,14 @@
 
 ## Executive Summary
 
-This document outlines the complete redesign and enhancement of the Project Management module in Consultify's Admin panel. The module is the primary workspace for managing transformation projects, aligned with PMO standards (ISO 21500, PMBOK 7, PRINCE2).
+This document outlines the complete redesign and enhancement of the Project Management module in Consultinity's Admin panel. The module is the primary workspace for managing transformation projects, aligned with PMO standards (ISO 21500, PMBOK 7, PRINCE2).
 
 ---
 
 ## 1. Current State Analysis
 
 ### ✅ What Works
+
 - Grid/List view toggle
 - Project creation (basic: name, description, goal)
 - Project deletion with confirmation
@@ -16,11 +17,13 @@ This document outlines the complete redesign and enhancement of the Project Mana
 - Project Governance settings modal
 
 ### ❌ Issues Identified
+
 1. **Project Details** - Was returning 404 (FIXED)
 2. **PMO Context API** - SQL error with missing column (FIXED)
 3. **AI Role endpoint** - Double `/api/api/` prefix (FIXED)
 
 ### 🔧 Missing Features
+
 1. Edit project inline (not just in details view)
 2. Project status workflow management
 3. Advanced filtering (status, owner, date range)
@@ -41,65 +44,60 @@ interface Project {
   // Identity
   id: string;
   name: string;
-  code: string;              // NEW: Short code like "DT-2026"
+  code: string; // NEW: Short code like "DT-2026"
   description?: string;
-  
+
   // Hierarchy
   organizationId: string;
-  parentProjectId?: string;  // NEW: For sub-projects
-  programId?: string;        // NEW: Portfolio/Program grouping
-  
+  parentProjectId?: string; // NEW: For sub-projects
+  programId?: string; // NEW: Portfolio/Program grouping
+
   // Strategy & Goals
-  goal?: string;             // CEL - strategic objective
+  goal?: string; // CEL - strategic objective
   successCriteria?: string[];
   businessCase?: string;
-  
+
   // Lifecycle
   status: ProjectStatus;
-  phase: ProjectPhase;       // NEW: Initiation, Planning, Execution, Closure
+  phase: ProjectPhase; // NEW: Initiation, Planning, Execution, Closure
   healthStatus: 'GREEN' | 'AMBER' | 'RED';
-  
+
   // Dates
   plannedStartDate?: Date;
   plannedEndDate?: Date;
   actualStartDate?: Date;
   actualEndDate?: Date;
-  
+
   // Resources
   budget?: number;
   currency?: string;
   effortHours?: number;
-  
+
   // PMO Settings
   methodology: 'AGILE' | 'WATERFALL' | 'HYBRID';
   aiProcessingEnabled: boolean;
   visibility: 'ORG_WIDE' | 'TEAM_ONLY' | 'PRIVATE';
-  
+
   // Ownership
   ownerId: string;
   sponsorId?: string;
   projectManagerId?: string;
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
   archivedAt?: Date;
 }
 
-type ProjectStatus = 
-  | 'DRAFT'      // Not started, still being defined
-  | 'ACTIVE'     // In progress
-  | 'ON_HOLD'    // Temporarily paused
-  | 'COMPLETED'  // Finished successfully
-  | 'CANCELLED'  // Terminated before completion
-  | 'ARCHIVED';  // Stored for reference
+type ProjectStatus =
+  | 'DRAFT' // Not started, still being defined
+  | 'ACTIVE' // In progress
+  | 'ON_HOLD' // Temporarily paused
+  | 'COMPLETED' // Finished successfully
+  | 'CANCELLED' // Terminated before completion
+  | 'ARCHIVED'; // Stored for reference
 
-type ProjectPhase =
-  | 'INITIATION'
-  | 'PLANNING'
-  | 'EXECUTION'
-  | 'MONITORING'
-  | 'CLOSURE';
+type ProjectPhase = 'INITIATION' | 'PLANNING' | 'EXECUTION' | 'MONITORING' | 'CLOSURE';
 ```
 
 ### 2.2 Database Schema Updates
@@ -183,29 +181,29 @@ CREATE TABLE IF NOT EXISTS programs (
 
 ### 3.2 Project Card Visible Information
 
-| Field | Description | Priority |
-|-------|-------------|----------|
-| Name | Project title | HIGH |
-| Code | Short identifier (e.g., DT-2026) | HIGH |
-| Status | DRAFT/ACTIVE/ON_HOLD/COMPLETED/CANCELLED | HIGH |
-| Health | GREEN/AMBER/RED indicator | HIGH |
-| Phase | INITIATION/PLANNING/EXECUTION/CLOSURE | MEDIUM |
-| Progress | Percentage bar based on initiatives | HIGH |
-| Team Count | Number of members | MEDIUM |
-| Initiative Count | Number of initiatives | MEDIUM |
-| Date Range | Planned start - end dates | MEDIUM |
-| Owner | Project owner name/avatar | LOW |
+| Field            | Description                              | Priority |
+| ---------------- | ---------------------------------------- | -------- |
+| Name             | Project title                            | HIGH     |
+| Code             | Short identifier (e.g., DT-2026)         | HIGH     |
+| Status           | DRAFT/ACTIVE/ON_HOLD/COMPLETED/CANCELLED | HIGH     |
+| Health           | GREEN/AMBER/RED indicator                | HIGH     |
+| Phase            | INITIATION/PLANNING/EXECUTION/CLOSURE    | MEDIUM   |
+| Progress         | Percentage bar based on initiatives      | HIGH     |
+| Team Count       | Number of members                        | MEDIUM   |
+| Initiative Count | Number of initiatives                    | MEDIUM   |
+| Date Range       | Planned start - end dates                | MEDIUM   |
+| Owner            | Project owner name/avatar                | LOW      |
 
 ### 3.3 Action Buttons
 
-| Action | Icon | Description | Permission |
-|--------|------|-------------|------------|
-| View Details | → | Navigate to full project view | All users |
-| Edit | ✏️ | Open edit modal | canEdit |
-| Settings | ⚙️ | Governance & AI settings | canEdit |
-| Archive | 📁 | Move to archive | canDelete |
-| Clone | 📋 | Create copy | canCreate |
-| Delete | 🗑️ | Permanent deletion | canDelete + confirm |
+| Action       | Icon | Description                   | Permission          |
+| ------------ | ---- | ----------------------------- | ------------------- |
+| View Details | →    | Navigate to full project view | All users           |
+| Edit         | ✏️   | Open edit modal               | canEdit             |
+| Settings     | ⚙️   | Governance & AI settings      | canEdit             |
+| Archive      | 📁   | Move to archive               | canDelete           |
+| Clone        | 📋   | Create copy                   | canCreate           |
+| Delete       | 🗑️   | Permanent deletion            | canDelete + confirm |
 
 ---
 
@@ -326,11 +324,13 @@ CREATE TABLE IF NOT EXISTS programs (
 ## 5. Implementation Plan
 
 ### Phase 1: Fix & Stabilize (DONE)
+
 - [x] Fix PMO context SQL error
 - [x] Fix double `/api/api/` prefix
 - [x] Verify project details loading
 
 ### Phase 2: Database & API Updates
+
 - [ ] Add new columns to projects table
 - [ ] Create project_templates table
 - [ ] Create programs table
@@ -338,6 +338,7 @@ CREATE TABLE IF NOT EXISTS programs (
 - [ ] Add validation for new fields
 
 ### Phase 3: Enhanced Project Cards
+
 - [ ] Add progress indicator
 - [ ] Add health status badge
 - [ ] Add phase indicator
@@ -345,6 +346,7 @@ CREATE TABLE IF NOT EXISTS programs (
 - [ ] Add project code
 
 ### Phase 4: Create/Edit Modal Redesign
+
 - [ ] Multi-tab modal structure
 - [ ] Basic Info tab
 - [ ] Planning tab
@@ -352,12 +354,14 @@ CREATE TABLE IF NOT EXISTS programs (
 - [ ] PMO Settings tab
 
 ### Phase 5: List View Enhancements
+
 - [ ] Advanced filters (status, owner, date)
 - [ ] Sort options
 - [ ] Bulk selection
 - [ ] Bulk actions (archive, change status)
 
 ### Phase 6: Additional Features
+
 - [ ] Project templates
 - [ ] Clone project
 - [ ] Archive functionality
@@ -369,50 +373,50 @@ CREATE TABLE IF NOT EXISTS programs (
 
 ### Projects API
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/projects` | List all projects |
-| POST | `/api/projects` | Create project |
-| GET | `/api/projects/:id` | Get project details |
-| PUT | `/api/projects/:id` | Update project |
-| DELETE | `/api/projects/:id` | Delete project |
-| POST | `/api/projects/:id/archive` | Archive project |
-| POST | `/api/projects/:id/clone` | Clone project |
-| PATCH | `/api/projects/:id/status` | Change status |
+| Method | Endpoint                    | Description         |
+| ------ | --------------------------- | ------------------- |
+| GET    | `/api/projects`             | List all projects   |
+| POST   | `/api/projects`             | Create project      |
+| GET    | `/api/projects/:id`         | Get project details |
+| PUT    | `/api/projects/:id`         | Update project      |
+| DELETE | `/api/projects/:id`         | Delete project      |
+| POST   | `/api/projects/:id/archive` | Archive project     |
+| POST   | `/api/projects/:id/clone`   | Clone project       |
+| PATCH  | `/api/projects/:id/status`  | Change status       |
 
 ### Templates API
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/project-templates` | List templates |
-| POST | `/api/project-templates` | Create template |
-| GET | `/api/project-templates/:id` | Get template |
-| DELETE | `/api/project-templates/:id` | Delete template |
-| POST | `/api/projects/from-template/:id` | Create from template |
+| Method | Endpoint                          | Description          |
+| ------ | --------------------------------- | -------------------- |
+| GET    | `/api/project-templates`          | List templates       |
+| POST   | `/api/project-templates`          | Create template      |
+| GET    | `/api/project-templates/:id`      | Get template         |
+| DELETE | `/api/project-templates/:id`      | Delete template      |
+| POST   | `/api/projects/from-template/:id` | Create from template |
 
 ### Programs API
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/programs` | List programs |
-| POST | `/api/programs` | Create program |
-| PUT | `/api/programs/:id` | Update program |
+| Method | Endpoint            | Description    |
+| ------ | ------------------- | -------------- |
+| GET    | `/api/programs`     | List programs  |
+| POST   | `/api/programs`     | Create program |
+| PUT    | `/api/programs/:id` | Update program |
 | DELETE | `/api/programs/:id` | Delete program |
 
 ---
 
 ## 7. Permissions Matrix
 
-| Action | OWNER | ADMIN | USER | CONSULTANT |
-|--------|-------|-------|------|------------|
-| View project list | ✓ | ✓ | ✓* | ✓* |
-| View project details | ✓ | ✓ | ✓* | ✓* |
-| Create project | ✓ | ✓ | ✗ | ✗ |
-| Edit project | ✓ | ✓ | ✗ | ✗ |
-| Delete project | ✓ | ✓ | ✗ | ✗ |
-| Archive project | ✓ | ✓ | ✗ | ✗ |
-| Manage team | ✓ | ✓ | PM only | ✗ |
-| Change governance | ✓ | ✓ | ✗ | ✗ |
+| Action               | OWNER | ADMIN | USER    | CONSULTANT |
+| -------------------- | ----- | ----- | ------- | ---------- |
+| View project list    | ✓     | ✓     | ✓\*     | ✓\*        |
+| View project details | ✓     | ✓     | ✓\*     | ✓\*        |
+| Create project       | ✓     | ✓     | ✗       | ✗          |
+| Edit project         | ✓     | ✓     | ✗       | ✗          |
+| Delete project       | ✓     | ✓     | ✗       | ✗          |
+| Archive project      | ✓     | ✓     | ✗       | ✗          |
+| Manage team          | ✓     | ✓     | PM only | ✗          |
+| Change governance    | ✓     | ✓     | ✗       | ✗          |
 
 \* Only for assigned projects
 
@@ -440,20 +444,15 @@ CREATE TABLE IF NOT EXISTS programs (
 ## 10. Notes
 
 ### PMO Compliance
+
 All project management features align with:
+
 - **ISO 21500:2021** - Project governance and lifecycle
 - **PMBOK 7** - Performance domains
 - **PRINCE2** - Organization theme and product-based planning
 
 ### Integration Points
+
 - Projects connect to: Initiatives, Assessments, Tasks, Knowledge Base
 - Teams can be assigned to multiple projects
 - Consultants have project-level access only
-
-
-
-
-
-
-
-

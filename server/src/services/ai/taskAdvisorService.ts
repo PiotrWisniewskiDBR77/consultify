@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadTaskadvisor = createCachedLazyService('../../services/ai/taskAdvisorService.js');
+const loadTaskadvisor = createCachedLazyService('../../ai/taskAdvisorService.js');
 
 // Export default instance (for backward compatibility)
 export default loadTaskadvisor();

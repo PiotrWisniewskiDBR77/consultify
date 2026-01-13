@@ -1,373 +1,629 @@
 # Settings API Documentation
 
-This document describes all API endpoints available for user settings and preferences.
+> Complete API reference for the Settings module endpoints
 
-## Authentication
+## Overview
 
-All Settings API endpoints require authentication via Bearer token:
+The Settings API provides endpoints for managing user preferences, AI settings, templates, history, API keys, webhooks, and GDPR compliance features.
+
+**Base URL:** `/api/settings`
+
+**Authentication:** All endpoints require Bearer token authentication.
+
+---
+
+## AI Settings Preferences
+
+### AI Instructions
 
 ```
-Authorization: Bearer <access_token>
+GET  /api/settings/preferences/ai-instructions
+PUT  /api/settings/preferences/ai-instructions
 ```
 
-## Base URL
+**Request Body (PUT):**
 
-All endpoints are prefixed with `/api/` or `/api/user/` or `/api/settings/`
-
-## Endpoints
-
-### Active Sessions
-
-#### GET /api/auth/sessions
-
-Returns active sessions for the current user.
-
-**Response:**
 ```json
 {
-  "sessions": [
+  "preferences": {
+    "systemPrompt": "Be concise and professional",
+    "responseStyle": "balanced",
+    "includeContext": true,
+    "maxContextLength": 4000
+  }
+}
+```
+
+### AI Model Selection
+
+```
+GET  /api/settings/preferences/ai-model
+PUT  /api/settings/preferences/ai-model
+```
+
+**Request Body (PUT):**
+
+```json
+{
+  "preferences": {
+    "preferredModel": "gpt-4",
+    "fallbackModel": "gpt-3.5-turbo",
+    "autoSelect": true,
+    "preferSpeed": false,
+    "preferQuality": true
+  }
+}
+```
+
+### AI Parameters
+
+```
+GET  /api/settings/preferences/ai-parameters
+PUT  /api/settings/preferences/ai-parameters
+```
+
+**Request Body (PUT):**
+
+```json
+{
+  "preferences": {
+    "temperature": 0.7,
+    "maxTokens": 2048,
+    "topP": 1,
+    "frequencyPenalty": 0,
+    "presencePenalty": 0,
+    "streamResponse": true
+  }
+}
+```
+
+### AI Personality
+
+```
+GET  /api/settings/preferences/ai-personality
+PUT  /api/settings/preferences/ai-personality
+```
+
+**Request Body (PUT):**
+
+```json
+{
+  "preferences": {
+    "tone": "professional",
+    "formality": "balanced",
+    "verbosity": "concise",
+    "creativity": "moderate",
+    "customInstructions": ""
+  }
+}
+```
+
+### AI Auto-Complete
+
+```
+GET  /api/settings/preferences/ai-autocomplete
+PUT  /api/settings/preferences/ai-autocomplete
+```
+
+**Request Body (PUT):**
+
+```json
+{
+  "preferences": {
+    "enabled": true,
+    "triggerDelay": 500,
+    "minChars": 3,
+    "suggestions": 3,
+    "contexts": ["tasks", "comments", "documents"]
+  }
+}
+```
+
+### AI Memory
+
+```
+GET     /api/settings/preferences/ai-memory
+PUT     /api/settings/preferences/ai-memory
+DELETE  /api/settings/preferences/ai-memory/clear
+```
+
+**Request Body (PUT):**
+
+```json
+{
+  "preferences": {
+    "enabled": true,
+    "retentionDays": 30,
+    "includeConversations": true,
+    "includePreferences": true,
+    "includeContext": true
+  }
+}
+```
+
+### AI Voice/TTS
+
+```
+GET  /api/settings/preferences/ai-voice
+PUT  /api/settings/preferences/ai-voice
+```
+
+**Request Body (PUT):**
+
+```json
+{
+  "preferences": {
+    "ttsEnabled": false,
+    "sttEnabled": false,
+    "voice": "alloy",
+    "speed": 1.0,
+    "autoPlay": false
+  }
+}
+```
+
+### AI Usage Statistics
+
+```
+GET /api/settings/ai-usage?period=30d
+```
+
+**Query Parameters:**
+
+- `period` - Time period: `7d`, `30d`, `90d` (default: `30d`)
+
+**Response:**
+
+```json
+{
+  "period": "30d",
+  "stats": {
+    "totalRequests": 1247,
+    "totalTokens": 892450,
+    "totalCost": 8.92,
+    "avgResponseTime": 1.5,
+    "successRate": 99.5,
+    "limit": 1000000,
+    "used": 892450
+  },
+  "usageByFeature": [...],
+  "dailyUsage": [...]
+}
+```
+
+---
+
+## Settings Templates
+
+### List Templates
+
+```
+GET /api/settings/templates
+```
+
+**Response:**
+
+```json
+{
+  "templates": [
     {
-      "id": "session_123",
-      "deviceInfo": "Desktop",
-      "device": "Desktop",
-      "browser": "Chrome 120",
-      "location": "New York, USA",
-      "ipAddress": "192.168.1.100",
-      "lastActive": "2025-01-15T10:30:00Z",
-      "current": true
+      "id": "minimal",
+      "name": "Minimal",
+      "description": "Clean, distraction-free settings",
+      "icon": "🎯",
+      "type": "system"
+    },
+    {
+      "id": "custom-123",
+      "name": "My Setup",
+      "description": "Personal configuration",
+      "icon": "⭐",
+      "type": "custom",
+      "createdAt": "2026-01-09T12:00:00Z"
     }
   ]
 }
 ```
 
-#### DELETE /api/auth/sessions/:id
+### Create Template
 
-Revokes a specific session.
+```
+POST /api/settings/templates
+```
 
-#### POST /api/auth/sessions/revoke-all
+**Request Body:**
 
-Revokes all sessions except the current one.
+```json
+{
+  "name": "My Custom Template",
+  "description": "Optional description",
+  "icon": "📋",
+  "settingsData": {
+    "ai": { "enabled": true },
+    "notifications": { "email": true }
+  }
+}
+```
 
-### Login History
+### Update Template
 
-#### GET /api/auth/login-history
+```
+PUT /api/settings/templates/:id
+```
 
-Returns login history for the current user.
+### Delete Template
 
-**Query Parameters:**
-- `limit` (optional): Number of results (default: 50)
+```
+DELETE /api/settings/templates/:id
+```
+
+### Apply Template
+
+```
+POST /api/settings/templates/:id/apply
+```
 
 **Response:**
+
 ```json
 {
   "success": true,
-  "data": [
-    {
-      "id": "login_123",
-      "ip_address": "192.168.1.100",
-      "user_agent": "Chrome on Windows",
-      "location": "New York, USA",
-      "status": "success",
-      "device": "Chrome on Windows",
-      "time": "2025-01-15T10:30:00Z",
-      "created_at": "2025-01-15T10:30:00Z"
-    }
-  ]
+  "applied": { ... }
 }
 ```
 
-### API Keys
+---
 
-#### GET /api/user/api-keys
+## Settings History
 
-Returns API keys for the current user.
+### Get History
+
+```
+GET /api/settings/history?category=all&days=30
+```
+
+**Query Parameters:**
+
+- `category` - Filter by category: `all`, `Profile`, `Security`, `Privacy`, `AI`, etc.
+- `days` - Limit to last N days (default: 30)
 
 **Response:**
+
+```json
+{
+  "entries": [
+    {
+      "id": "entry-123",
+      "category": "AI",
+      "setting": "Preferred Model",
+      "action": "updated",
+      "oldValue": "GPT-3.5",
+      "newValue": "GPT-4",
+      "timestamp": "2026-01-09T12:00:00Z",
+      "device": "Chrome on MacOS",
+      "ipAddress": "192.168.1.1"
+    }
+  ],
+  "stats": {
+    "total": 42,
+    "today": 3,
+    "categories": 7
+  }
+}
+```
+
+### Restore Setting
+
+```
+POST /api/settings/history/restore/:id
+```
+
+---
+
+## Settings Export/Import
+
+### Export Settings
+
+```
+POST /api/settings/export
+```
+
+**Request Body:**
+
+```json
+{
+  "categories": ["profile", "ai", "notifications"]
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "version": "1.0.0",
+    "exportedAt": "2026-01-09T12:00:00Z",
+    "userId": "user-123",
+    "settings": { ... }
+  }
+}
+```
+
+### Import Settings
+
+```
+POST /api/settings/import
+```
+
+**Request Body:**
+
+```json
+{
+  "data": { ... },
+  "overwrite": false
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "imported": ["profile", "ai"],
+  "skipped": ["notifications"]
+}
+```
+
+---
+
+## API Keys
+
+### List API Keys
+
+```
+GET /api/settings/api-keys
+```
+
+**Response:**
+
 ```json
 {
   "keys": [
     {
-      "id": "key_123",
-      "name": "Production Key",
-      "prefix": "ck_live_",
-      "createdAt": "2025-01-15T00:00:00Z",
-      "lastUsed": "2 hours ago",
+      "id": "key-123",
+      "name": "My API Key",
+      "keyPrefix": "ck_abcdef12",
       "rateLimit": 1000,
-      "quotaLimit": 100000,
-      "quotaUsed": 45000,
-      "quotaResetAt": "2025-01-22T00:00:00Z",
-      "expiresAt": "2026-01-15T00:00:00Z",
-      "ipWhitelist": ["192.168.1.1"],
-      "scopes": ["read", "write"]
+      "lastUsedAt": "2026-01-09T12:00:00Z",
+      "createdAt": "2026-01-01T00:00:00Z"
     }
   ]
 }
 ```
 
-#### POST /api/user/api-keys
+### Create API Key
 
-Creates a new API key.
+```
+POST /api/settings/api-keys
+```
 
-**Request:**
+**Request Body:**
+
 ```json
 {
   "name": "Production Key",
-  "scopes": ["read", "write"]
+  "permissions": ["read", "write"],
+  "rateLimit": 1000,
+  "expiresAt": "2027-01-01T00:00:00Z"
 }
 ```
 
-**Response:**
+**Response (key shown only once!):**
+
 ```json
 {
-  "key": "ck_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "keyInfo": {
-    "id": "key_123",
+  "success": true,
+  "key": {
+    "id": "key-123",
     "name": "Production Key",
-    "prefix": "ck_live_",
-    "createdAt": "2025-01-15T00:00:00Z"
+    "key": "ck_abcdefghijklmnopqrstuvwxyz12345",
+    "keyPrefix": "ck_abcdef12",
+    "createdAt": "2026-01-09T12:00:00Z"
   }
 }
 ```
 
-#### GET /api/user/api-keys/:keyId/usage
+### Update API Key
 
-Returns usage statistics for an API key.
+```
+PUT /api/settings/api-keys/:id
+```
+
+### Delete API Key
+
+```
+DELETE /api/settings/api-keys/:id
+```
+
+### Rotate API Key
+
+```
+POST /api/settings/api-keys/:id/rotate
+```
+
+---
+
+## Webhooks
+
+### List Webhooks
+
+```
+GET /api/settings/webhooks
+```
+
+### Create Webhook
+
+```
+POST /api/settings/webhooks
+```
+
+**Request Body:**
+
+```json
+{
+  "name": "Task Notifications",
+  "url": "https://example.com/webhook",
+  "events": ["task.created", "task.completed"],
+  "headers": { "X-Custom-Header": "value" }
+}
+```
 
 **Response:**
+
 ```json
 {
-  "requests": [
-    {
-      "date": "2025-01-15",
-      "count": 1200
-    }
-  ],
-  "period": "7d"
+  "success": true,
+  "webhook": {
+    "id": "webhook-123",
+    "name": "Task Notifications",
+    "url": "https://example.com/webhook",
+    "events": ["task.created", "task.completed"],
+    "secret": "whsec_abcdefghijklmnop"
+  }
 }
 ```
 
-#### PUT /api/user/api-keys/:keyId
+### Update Webhook
 
-Updates an API key.
-
-**Request:**
-```json
-{
-  "rateLimit": 2000,
-  "quotaLimit": 200000,
-  "expiresAt": "2026-01-15T00:00:00Z",
-  "ipWhitelist": ["192.168.1.1", "10.0.0.1"],
-  "scopes": ["read", "write", "delete"]
-}
+```
+PUT /api/settings/webhooks/:id
 ```
 
-#### PUT /api/user/api-keys/:keyId/rotate
+### Delete Webhook
 
-Rotates an API key (generates new key, invalidates old one).
+```
+DELETE /api/settings/webhooks/:id
+```
+
+### Test Webhook
+
+```
+POST /api/settings/webhooks/:id/test
+```
 
 **Response:**
+
 ```json
 {
-  "newKey": "ck_live_yyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+  "success": true,
+  "status": 200,
+  "message": "Webhook test successful"
 }
 ```
 
-#### DELETE /api/user/api-keys/:keyId
+---
 
-Deletes an API key.
+## GDPR Compliance
 
-### Webhooks
+### Export Status
 
-#### GET /api/integrations/webhooks
+```
+GET /api/settings/gdpr/export-status
+```
 
-Returns webhooks for the current user/organization.
+### Request Export
+
+```
+POST /api/settings/gdpr/export-request
+```
 
 **Response:**
+
 ```json
 {
-  "webhooks": [
-    {
-      "id": "webhook_123",
-      "name": "My Webhook",
-      "url": "https://api.example.com/webhook",
-      "eventTypes": ["task.created", "task.updated"],
-      "secret": "hmac_secret_hash",
-      "isActive": true,
-      "createdAt": "2025-01-15T00:00:00Z"
-    }
-  ]
-}
-```
-
-#### POST /api/integrations/webhooks
-
-Creates a new webhook.
-
-**Request:**
-```json
-{
-  "name": "My Webhook",
-  "url": "https://api.example.com/webhook",
-  "eventTypes": ["task.created", "task.updated"],
-  "secret": "hmac_secret"
-}
-```
-
-#### PUT /api/integrations/webhooks/:id
-
-Updates a webhook.
-
-#### DELETE /api/integrations/webhooks/:id
-
-Deletes a webhook.
-
-### Notification Preferences
-
-#### GET /api/settings/notifications
-
-Returns notification preferences for the user.
-
-**Query Parameters:**
-- `userId` (required): User ID
-
-**Response:**
-```json
-{
-  "email": {
-    "enabled": true,
-    "types": {
-      "task_assigned": true,
-      "project_updated": true
-    }
+  "request": {
+    "id": "export-123",
+    "status": "completed",
+    "requestedAt": "2026-01-09T12:00:00Z",
+    "expiresAt": "2026-01-16T12:00:00Z"
   },
-  "push": {
-    "enabled": true
+  "success": true
+}
+```
+
+### Download Export
+
+```
+GET /api/settings/gdpr/export-download/:requestId
+```
+
+Returns JSON file as download.
+
+### Deletion Status
+
+```
+GET /api/settings/gdpr/deletion-status
+```
+
+### Request Deletion
+
+```
+POST /api/settings/gdpr/deletion-request
+```
+
+**Request Body:**
+
+```json
+{
+  "reason": "No longer using the service"
+}
+```
+
+**Response:**
+
+```json
+{
+  "request": {
+    "id": "delete-123",
+    "status": "scheduled",
+    "scheduledAt": "2026-02-08T12:00:00Z",
+    "requestedAt": "2026-01-09T12:00:00Z"
   },
-  "quietHours": {
-    "enabled": false,
-    "start": "22:00",
-    "end": "08:00"
-  }
+  "success": true
 }
 ```
 
-#### POST /api/settings/notifications
+### Cancel Deletion
 
-Saves notification preferences.
-
-**Request:**
-```json
-{
-  "userId": "user_123",
-  "preferences": {
-    "email": {
-      "enabled": true,
-      "types": {
-        "task_assigned": true
-      }
-    }
-  }
-}
+```
+POST /api/settings/gdpr/cancel-deletion
 ```
 
-### AI Preferences
-
-#### GET /api/user/ai-preferences
-
-Returns AI preferences for the user.
-
-**Response:**
-```json
-{
-  "model": "gpt-4",
-  "temperature": 0.7,
-  "maxTokens": 2000,
-  "instructions": "You are a helpful assistant",
-  "personality": "professional"
-}
-```
-
-#### PUT /api/user/ai-preferences
-
-Updates AI preferences.
-
-**Request:**
-```json
-{
-  "model": "gpt-4",
-  "temperature": 0.7,
-  "maxTokens": 2000,
-  "instructions": "Updated instructions"
-}
-```
-
-### Profile Settings
-
-#### GET /api/profile
-
-Returns user profile information.
-
-**Response:**
-```json
-{
-  "id": "user_123",
-  "email": "john@example.com",
-  "firstName": "John",
-  "lastName": "Smith",
-  "avatarUrl": "https://example.com/avatar.jpg",
-  "jobTitle": "Product Manager",
-  "timezone": "America/New_York",
-  "locale": "en"
-}
-```
-
-#### PUT /api/profile
-
-Updates user profile.
-
-**Request:**
-```json
-{
-  "firstName": "John",
-  "lastName": "Smith",
-  "jobTitle": "Senior Product Manager",
-  "timezone": "America/New_York"
-}
-```
-
-### Password
-
-#### POST /api/auth/change-password
-
-Changes user password.
-
-**Request:**
-```json
-{
-  "currentPassword": "oldpassword",
-  "newPassword": "newpassword"
-}
-```
+---
 
 ## Error Responses
 
 All endpoints may return the following error responses:
 
 ### 401 Unauthorized
+
 ```json
 {
-  "error": "Authentication required"
+  "error": "User not authenticated"
 }
 ```
 
 ### 400 Bad Request
+
 ```json
 {
-  "error": "Invalid request parameters"
+  "error": "Invalid preferences payload"
 }
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "error": "Resource not found"
@@ -375,16 +631,32 @@ All endpoints may return the following error responses:
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
-  "error": "Internal server error"
+  "error": "Internal server error message"
 }
 ```
 
+---
 
+## Rate Limits
 
+- Standard endpoints: 100 requests/minute
+- AI Usage endpoint: 10 requests/minute
+- Export/Import: 5 requests/minute
+- API Key creation: 10 keys/user maximum
 
+---
 
+## Changelog
 
+### 2026-01-09
 
-
+- Added all AI Settings endpoints (Instructions, Model, Parameters, Personality, AutoComplete, Memory, Voice, Usage)
+- Added Templates CRUD with system templates
+- Added Settings History with restore capability
+- Added Export/Import functionality
+- Added User API Keys management
+- Added Webhooks management with test endpoint
+- Added full GDPR compliance (export, delete, cancel)

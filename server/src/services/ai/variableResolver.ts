@@ -8,7 +8,7 @@
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
 // Lazy load the JS service module
-const loadVariableresolver = createCachedLazyService('../../services/ai/variableResolver.js');
+const loadVariableresolver = createCachedLazyService('../../ai/variableResolver.js');
 
 // Export default instance (for backward compatibility)
 export default loadVariableresolver();
