@@ -124,7 +124,7 @@ const getContextConfig = (
     },
   };
 
-  return configs[type] || configs.empty;
+  return configs[type] ?? configs.empty!;
 };
 
 // ============================================================================
