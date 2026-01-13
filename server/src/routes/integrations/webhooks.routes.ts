@@ -29,6 +29,7 @@ const router = Router();
 // Apply rate limiting
 router.use(authRateLimiter);
 import Stripe from 'stripe';
+import type { Stripe as StripeTypes } from 'stripe';
 
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import type { DunningService as DunningServiceType } from '../../services/dunningService.js';
@@ -38,8 +39,8 @@ import logger from '../../utils/Logger.js';
 
 // Type definitions for lazy-loaded services
 interface DunningServiceInstance {
-  handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void>;
-  handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void>;
+  handlePaymentFailed(paymentIntent: StripeTypes.PaymentIntent): Promise<void>;
+  handlePaymentSucceeded(paymentIntent: StripeTypes.PaymentIntent): Promise<void>;
   processScheduledRetries(): Promise<void>;
   getDunningStatus(orgId: string): Promise<{
     inDunning: boolean;
@@ -56,7 +57,7 @@ interface DunningServiceInstance {
 }
 
 interface InvoiceServiceInstance {
-  createFromStripe(stripeInvoice: Stripe.Invoice): Promise<{
+  createFromStripe(stripeInvoice: StripeTypes.Invoice): Promise<{
     id: string;
     invoiceNumber: string;
     total: number;
@@ -74,7 +75,7 @@ let InvoiceService: InvoiceServiceInstance | null = null;
 // Lazy load services to avoid circular dependencies
 async function getDunningService(): Promise<DunningServiceInstance> {
   if (!DunningService) {
-    const module = (await import('../../services/DunningService.js')) as any;
+    const module = (await import('../../services/dunningService.js')) as any;
     DunningService = (module.default || module) as DunningServiceInstance;
   }
   return DunningService;
@@ -294,7 +295,7 @@ router.post(
                     code: 'payment_failed',
                     message: stripeInvoice.last_payment_error?.message || 'Payment failed',
                   },
-                } as unknown as Stripe.PaymentIntent;
+                } as unknown as StripeTypes.PaymentIntent;
 
                 await dunning.handlePaymentFailed(mockPaymentIntent);
               }
@@ -315,7 +316,7 @@ router.post(
               amount: stripeInvoiceSucceeded.amount_paid || 0,
               currency: stripeInvoiceSucceeded.currency || 'usd',
               metadata: stripeInvoiceSucceeded.metadata || {},
-            } as unknown as Stripe.PaymentIntent;
+            } as unknown as StripeTypes.PaymentIntent;
 
             await dunning.handlePaymentSucceeded(mockPaymentIntent);
           }

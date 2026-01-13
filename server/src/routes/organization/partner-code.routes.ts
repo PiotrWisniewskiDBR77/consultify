@@ -8,7 +8,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticateToken, AuthRequest } from '../../middleware/auth.js';
+import { verifyToken as authenticateToken, type AuthRequest } from '../../middleware/auth.middleware.js';
 import * as partnerReferralService from '../../services/partnerReferralService.js';
 import logger from '../../utils/Logger.js';
 import { getDatabase } from '../../database/Database.js';

@@ -8,6 +8,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import express from 'express';
 import Stripe from 'stripe';
+import type { Stripe as StripeTypes } from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -47,7 +48,7 @@ router.post(
   '/stripe',
   express.raw({ type: 'application/json' }),
   asyncHandler(async (req: Request, res: Response) => {
-    let event: Stripe.Event;
+    let event: StripeTypes.Event;
 
     // Verify webhook signature if secret is configured
     if (endpointSecret) {
@@ -69,20 +70,20 @@ router.post(
       // For development without signature verification
       if (Buffer.isBuffer(req.body)) {
         try {
-          event = JSON.parse(req.body.toString()) as Stripe.Event;
+          event = JSON.parse(req.body.toString()) as StripeTypes.Event;
         } catch (err) {
           logger.error('[Stripe Webhook] Error parsing Buffer body:', err);
           return res.status(400).send('Invalid JSON in Buffer');
         }
       } else if (typeof req.body === 'string') {
         try {
-          event = JSON.parse(req.body) as Stripe.Event;
+          event = JSON.parse(req.body) as StripeTypes.Event;
         } catch (err) {
           logger.error('[Stripe Webhook] Error parsing string body:', err);
           return res.status(400).send('Invalid JSON string');
         }
       } else if (typeof req.body === 'object' && req.body !== null) {
-        event = req.body as Stripe.Event;
+        event = req.body as StripeTypes.Event;
       } else {
         logger.error('[Stripe Webhook] Unknown body type:', typeof req.body);
         return res.status(400).send('Unknown body type');
@@ -156,7 +157,7 @@ router.post(
 /**
  * Handle subscription created event
  */
-async function handleSubscriptionCreated(subscription: Stripe.Subscription): Promise<void> {
+async function handleSubscriptionCreated(subscription: StripeTypes.Subscription): Promise<void> {
   const customerId = subscription.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -188,7 +189,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription): Pro
 /**
  * Handle subscription updated event
  */
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
+async function handleSubscriptionUpdated(subscription: StripeTypes.Subscription): Promise<void> {
   const customerId = subscription.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -208,7 +209,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
 /**
  * Handle subscription deleted event
  */
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
+async function handleSubscriptionDeleted(subscription: StripeTypes.Subscription): Promise<void> {
   const customerId = subscription.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -234,7 +235,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
 /**
  * Handle invoice paid event
  */
-async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
+async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<void> {
   const customerId = invoice.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -370,7 +371,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
 /**
  * Handle invoice payment failed event
  */
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
+async function handleInvoicePaymentFailed(invoice: StripeTypes.Invoice): Promise<void> {
   const customerId = invoice.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -397,7 +398,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void
 /**
  * Handle invoice created event
  */
-async function handleInvoiceCreated(invoice: Stripe.Invoice): Promise<void> {
+async function handleInvoiceCreated(invoice: StripeTypes.Invoice): Promise<void> {
   const customerId = invoice.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 
@@ -415,7 +416,7 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice): Promise<void> {
  * Handle invoice finalized event
  * GAP-INVOICE-003: Handle when invoice is finalized and ready for payment
  */
-async function handleInvoiceFinalized(invoice: Stripe.Invoice): Promise<void> {
+async function handleInvoiceFinalized(invoice: StripeTypes.Invoice): Promise<void> {
   const customerId = invoice.customer as string;
   const orgId = await getOrgIdFromCustomer(customerId);
 

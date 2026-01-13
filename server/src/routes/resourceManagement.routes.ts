@@ -4,8 +4,8 @@
  */
 
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.middleware.js';
-import { requireSuperAdmin } from '../middleware/superadmin.middleware.js';
+import { verifyToken as authenticateToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { requireSuperAdmin } from '../middleware/superAdmin.middleware.js';
 import { getDatabase } from '../database/Database.js';
 import { budgetTrackingService } from '../services/budgetTrackingService.js';
 import logger from '../utils/Logger.js';
@@ -157,10 +157,10 @@ router.delete('/subscription-plans/:id', authenticateToken, requireSuperAdmin, a
       [id]
     );
 
-    if (usage && usage.count > 0) {
+    if (usage && (usage as { count: number }).count > 0) {
       return res.status(400).json({
         error: 'Cannot delete plan in use',
-        organizationsUsing: usage.count,
+        organizationsUsing: (usage as { count: number }).count,
       });
     }
 
@@ -343,7 +343,7 @@ router.post(
  * GET /api/admin/budget
  * Get current organization's budget status
  */
-router.get('/admin/budget', authenticateToken, async (req, res) => {
+router.get('/admin/budget', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const orgId = req.user?.organizationId;
     if (!orgId) {
@@ -363,7 +363,7 @@ router.get('/admin/budget', authenticateToken, async (req, res) => {
  * GET /api/admin/budget/expenses
  * Get organization expense history
  */
-router.get('/admin/budget/expenses', authenticateToken, async (req, res) => {
+router.get('/admin/budget/expenses', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const orgId = req.user?.organizationId;
     if (!orgId) {

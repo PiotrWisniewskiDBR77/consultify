@@ -221,7 +221,8 @@ router.post('/:id/complete', async (req: AuthRequest, res: Response) => {
     const assessmentInitiativeService = (
       await import('../../services/assessmentInitiativeService.js')
     ).default;
-    const result = await assessmentInitiativeService.completeAssessment(id, organizationId);
+    const assessmentId = Array.isArray(id) ? id[0] : id;
+    const result = await assessmentInitiativeService.completeAssessment(assessmentId, organizationId);
 
     logger.info(`[Assessments] Completed assessment: ${id}`);
     res.json({ success: true, ...result });
@@ -249,8 +250,9 @@ router.post('/:id/generate-initiatives', async (req: AuthRequest, res: Response)
     const assessmentInitiativeService = (
       await import('../../services/assessmentInitiativeService.js')
     ).default;
+    const assessmentId = Array.isArray(id) ? id[0] : id;
     const result = await assessmentInitiativeService.generateInitiatives(
-      id,
+      assessmentId,
       projectId,
       organizationId,
       userId

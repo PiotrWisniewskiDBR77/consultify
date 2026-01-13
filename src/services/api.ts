@@ -431,17 +431,6 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to save notification preferences');
   },
 
-  getIntegrations: async (organizationId: string): Promise<any[]> => {
-    const res = await fetchWithRetry(
-      `${API_URL}/settings/integrations?organizationId=${organizationId}`,
-      {
-        headers: getHeaders(),
-      }
-    );
-    if (!res.ok) return [];
-    return res.json();
-  },
-
   saveIntegration: async (integration: any): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/settings/integrations`, {
       method: 'POST',
@@ -449,14 +438,6 @@ export const Api = {
       body: JSON.stringify(integration),
     });
     return handleResponse(res, 'Failed to save integration');
-  },
-
-  deleteIntegration: async (id: string): Promise<void> => {
-    const res = await fetchWithRetry(`${API_URL}/settings/integrations/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
-    if (!res.ok) throw new Error('Failed to delete integration');
   },
 
   // --- CONTACT FORM ---
@@ -4065,9 +4046,6 @@ export const Api = {
   triggerBackup: async () => {
     return { success: true };
   },
-  restoreBackup: async (backupId: string) => {
-    return { success: true };
-  },
   getBackups: async () => {
     return [];
   },
@@ -4137,12 +4115,6 @@ export const Api = {
     ];
   },
   // AI Actions
-  getPendingAIActions: async (filters?: any) => {
-    return [];
-  },
-  approveAIAction: async (actionId: string) => {
-    return { success: true };
-  },
   rejectAIAction: async (actionId: string, reason?: string) => {
     return { success: true };
   },
@@ -4552,10 +4524,6 @@ export const Api = {
   // User Status
   updateUserStatus: async (userId: string, data?: any): Promise<any> => {
     return { success: true };
-  },
-  // Webhooks
-  createWebhook: async (data: any): Promise<any> => {
-    return { id: '', ...data };
   },
   // Permission Requests
   createPermissionRequest: async (data: any): Promise<any> => {

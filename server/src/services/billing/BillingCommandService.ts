@@ -1,4 +1,5 @@
 import type Stripe from 'stripe';
+import type { Stripe as StripeTypes } from 'stripe';
 
 import logger from '../../utils/Logger.js';
 import { BillingEventService } from './BillingEventService.js';
@@ -202,7 +203,7 @@ export class BillingCommandService {
     orgId: string,
     email: string,
     orgName: string
-  ): Promise<Stripe.Customer | { id: string; email: string }> {
+  ): Promise<StripeTypes.Customer | { id: string; email: string }> {
     const deps = this.deps();
     const billing = await this.queryService.getOrganizationBilling(orgId);
 
@@ -211,7 +212,7 @@ export class BillingCommandService {
     }
 
     if (billing?.stripe_customer_id) {
-      return (await deps.stripe.customers.retrieve(billing.stripe_customer_id)) as Stripe.Customer;
+      return (await deps.stripe.customers.retrieve(billing.stripe_customer_id)) as StripeTypes.Customer;
     }
 
     // GAP-INVOICE-002: Get tax settings to include VAT ID

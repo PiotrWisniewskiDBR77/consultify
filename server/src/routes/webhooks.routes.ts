@@ -23,17 +23,18 @@ import {
 const router = Router();
 import StripeLib from 'stripe';
 import Stripe from 'stripe';
+import type { Stripe as StripeTypes } from 'stripe';
 
 import type { DunningService as DunningServiceType } from '../services/dunningService.js';
 import type { InvoiceServiceClass } from '../services/InvoiceService.js';
 import webhookService from '../services/WebhookService.js';
 
 // Type aliases for Stripe namespace types
-type StripePaymentIntent = Stripe.PaymentIntent;
-type StripeInvoice = Stripe.Invoice;
-type StripeCustomer = Stripe.Customer;
-type StripeSubscription = Stripe.Subscription;
-type StripeEvent = Stripe.Event;
+type StripePaymentIntent = StripeTypes.PaymentIntent;
+type StripeInvoice = StripeTypes.Invoice;
+type StripeCustomer = StripeTypes.Customer;
+type StripeSubscription = StripeTypes.Subscription;
+type StripeEvent = StripeTypes.Event;
 
 // Type definitions for lazy-loaded services
 interface DunningServiceInstance {
@@ -335,7 +336,7 @@ router.post(
                             amount: invoice.amount_paid || 0,
                             currency: invoice.currency || 'usd',
                             metadata: invoice.metadata || {},
-                        } as Stripe.PaymentIntent;
+                        } as StripeTypes.PaymentIntent;
 
                         await dunning.handlePaymentSucceeded(mockPaymentIntent);
                     }

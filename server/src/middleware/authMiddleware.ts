@@ -66,7 +66,7 @@ const verifyToken = (req, res, next) => {
 
             if (revokeAllRow) {
               // Check if token was issued before the revoke-all
-              const revokeTime = parseInt(revokeAllRow.jti.split('-').pop());
+              const revokeTime = parseInt((revokeAllRow as { jti: string }).jti.split('-').pop() || '0');
               const tokenIssuedAt = decoded.iat * 1000;
 
               if (tokenIssuedAt < revokeTime) {
