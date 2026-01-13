@@ -37,7 +37,7 @@ let _notificationService: any = null;
 const getNotificationService = async () => {
   if (!_notificationService) {
     try {
-      const mod = (await import('./NotificationService.js')) as any;
+      const mod = (await import('./notificationService.js')) as any;
       _notificationService = mod.default || mod;
     } catch (e: unknown) {
       logger.warn('[AIActionExecutor] NotificationService not available');

@@ -32,7 +32,7 @@ let NotificationService: {
 // Lazy load NotificationService
 async function getNotificationService() {
   if (!NotificationService) {
-    const module = await import('../services/NotificationService.js');
+    const module = await import('../services/notificationService.js');
     NotificationService = (module.default || module) as any;
   }
   return NotificationService;

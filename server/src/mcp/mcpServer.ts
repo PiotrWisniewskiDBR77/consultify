@@ -600,7 +600,7 @@ const MCPServer = {
   },
 
   _sendNotification: async (userId, organizationId, args) => {
-    const NotificationServiceModule = await import('../src/services/NotificationService.js');
+    const NotificationServiceModule = await import('../src/services/notificationService.js');
     const NotificationService = NotificationServiceModule.default || NotificationServiceModule;
 
     const notification = {
