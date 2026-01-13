@@ -111,7 +111,7 @@ async function initDeps() {
     import('./regulatoryModeGuard.js'),
     import('./aiExplainabilityService.js'),
     import('./accessPolicyService.js'),
-    import('./TokenBillingService.js'),
+    import('./tokenBillingService.js'),
     import('./aiResponsePostProcessor.js'),
     import('./ai/agents/index.js'),
   ])) as any[];

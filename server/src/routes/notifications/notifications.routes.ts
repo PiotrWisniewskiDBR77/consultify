@@ -9,7 +9,7 @@ import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 // import EscalationService from '../../services/EscalationService.js';
 const EscalationService = {} as any; // Stubbed missing service
-import NotificationService from '../../services/NotificationService.js';
+import NotificationService from '../../services/notificationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 // Apply rate limiting

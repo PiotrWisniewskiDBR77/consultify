@@ -31,7 +31,7 @@ router.use(authRateLimiter);
 import Stripe from 'stripe';
 
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
-import type { DunningService as DunningServiceType } from '../../services/DunningService.js';
+import type { DunningService as DunningServiceType } from '../../services/dunningService.js';
 import type { InvoiceServiceClass } from '../../services/InvoiceService.js';
 import webhookService from '../../services/WebhookService.js';
 import logger from '../../utils/Logger.js';

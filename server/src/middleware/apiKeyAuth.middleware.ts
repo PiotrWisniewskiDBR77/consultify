@@ -17,7 +17,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 
-import { API_KEY_PERMISSIONS, ApiKey, ApiKeyService } from '../services/ApiKeyService.js';
+import { API_KEY_PERMISSIONS, ApiKey, ApiKeyService } from '../services/apiKeyService.js';
 import logger from '../utils/Logger.js';
 
 // ==========================================

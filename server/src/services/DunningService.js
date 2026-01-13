@@ -1,2 +1,2 @@
-export * from './DunningService.ts';
-export { default } from './DunningService.ts';
+export * from './dunningService.ts';
+export { default } from './dunningService.ts';

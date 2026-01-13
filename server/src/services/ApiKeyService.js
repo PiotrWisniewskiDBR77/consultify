@@ -1,2 +1,2 @@
-export * from './ApiKeyService.ts';
-export { default } from './ApiKeyService.ts';
+export * from './apiKeyService.ts';
+export { default } from './apiKeyService.ts';

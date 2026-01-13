@@ -10,7 +10,7 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import ActivityService from '../services/ActivityService.js';
-import NotificationService from '../services/NotificationService.js';
+import NotificationService from '../services/notificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
 import type { AuthenticatedRequest } from '../types/index.js';

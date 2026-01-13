@@ -26,7 +26,7 @@ let UsageService: any = null;
 let stripe: any = null;
 
 try {
-  const tokenBillingModule = (await import('../../services/TokenBillingService.js')) as any;
+  const tokenBillingModule = (await import('../../services/tokenBillingService.js')) as any;
   TokenBillingService = tokenBillingModule.default || tokenBillingModule;
 } catch {
   logger.warn('[TokenBilling] TokenBillingService not available');
