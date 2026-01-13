@@ -68,7 +68,7 @@ class BillingCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.budgetManagementService) {
-            this.deps.budgetManagementService = await import('../../services/budgetManagementService.js').then(
+            this.deps.budgetManagementService = await import('../services/budgetManagementService.js').then(
                 (m) => m.default || m,
             );
         }

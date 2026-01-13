@@ -250,10 +250,6 @@ export class ProjectController {
             assessments: assessments as Assessment[],
             documents: documents as Document[],
             team: members,
-            workstreams,
-            initiatives,
-            assessments,
-            documents,
         });
     });
 
@@ -397,8 +393,9 @@ export class ProjectController {
     static getAIRole = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { id } = req.params;
 
-        const AIRoleGuard = await import('../../services/aiRoleGuard.js').then((m) => m.default || m);
-        const roleConfig = await AIRoleGuard.getRoleConfig(id);
+        const AIRoleGuardModule = await import('../../services/aiRoleGuard.js');
+        const AIRoleGuard = AIRoleGuardModule.default || AIRoleGuardModule;
+        const roleConfig = await (AIRoleGuard as any).getRoleConfig(id);
 
         res.json({
             projectId: id,
@@ -522,17 +519,16 @@ export class ProjectController {
                 return;
             }
 
-            const RegulatoryModeGuard = await import('../../services/regulatoryModeGuard.js').then(
-                (m) => m.default || m,
-            );
+            const RegulatoryModeGuardModule = await import('../../services/regulatoryModeGuard.js');
+            const RegulatoryModeGuard = RegulatoryModeGuardModule.default || RegulatoryModeGuardModule;
 
             const AIAuditLogger = await import('../../services/aiAuditLogger.js').then((m) => m.default || m);
 
             // Get current status for audit
-            const currentStatus = await RegulatoryModeGuard.isEnabled(projectId);
+            const currentStatus = await (RegulatoryModeGuard as any).isEnabled(projectId);
 
             // Update the setting
-            const result = await RegulatoryModeGuard.setEnabled(projectId, enabled);
+            const result = await (RegulatoryModeGuard as any).setEnabled(projectId, enabled);
 
             if (!result.success) {
                 res.status(404).json({ error: 'Project not found' });

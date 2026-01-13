@@ -24,7 +24,7 @@ let NotificationService: {
         relatedObjectType: string;
         relatedObjectId: string | null;
         isActionable: boolean;
-    }) => Promise<void>;
+    }) => Promise<{ id: string; type: any; severity: any; title: any; } | null>;
 };
 
 // Lazy load NotificationService

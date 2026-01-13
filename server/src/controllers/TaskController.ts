@@ -1077,8 +1077,9 @@ export class TaskController {
     static getUserWorkload = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
         const { userId } = req.params;
         const { projectId } = req.query;
+        const userIdStr = Array.isArray(userId) ? userId[0] : userId;
 
-        const workload = await TaskAssignmentService.getUserWorkload(userId, {
+        const workload = await TaskAssignmentService.getUserWorkload(userIdStr, {
             projectId: projectId as string | undefined,
         });
 

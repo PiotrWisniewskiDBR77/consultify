@@ -25,6 +25,7 @@ interface UsageService {
 }
 
 interface FileRequest extends Request {
+    query: Request['query'];
     file?: {
         path?: string;
     };

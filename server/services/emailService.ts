@@ -89,7 +89,7 @@ const EmailService: EmailServiceInterface = {
 
         const smtpConfig = {
             host: settings['smtp_host'] || process.env.SMTP_HOST,
-            port: settings['smtp_port'] || process.env.SMTP_PORT || 587,
+            port: Number(settings['smtp_port'] || process.env.SMTP_PORT || 587),
             secure: false, // true for 465, false for other ports
             auth: {
                 user: settings['smtp_user'] || process.env.SMTP_USER,

@@ -57,7 +57,8 @@ class BackupCron {
 
     private async ensureDeps(): Promise<Dependencies> {
         if (!this.deps.backupService) {
-            this.deps.backupService = await import('../../services/backupService.js').then((m) => m.default || m);
+            const backupModule = await import('../../services/backupService.js');
+            this.deps.backupService = (backupModule as any).default || backupModule;
         }
         return this.deps as Dependencies;
     }
@@ -113,9 +114,11 @@ class BackupCron {
                                     job: 'scheduled',
                                     failureCount: String(this.failureCount),
                                 },
-                                extra: {
-                                    successCount: this.successCount,
-                                    lastBackupTime: this.lastBackupTime?.toISOString() || null,
+                                contexts: {
+                                    backup: {
+                                        successCount: this.successCount,
+                                        lastBackupTime: this.lastBackupTime?.toISOString() || null,
+                                    },
                                 },
                             });
                         } catch (e: unknown) {

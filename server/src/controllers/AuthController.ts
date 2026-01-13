@@ -46,7 +46,7 @@ const getDeps = async (): Promise<Dependencies> => {
             const [dbModule, bcryptModule, activityModule, redisModule] = await Promise.all([
                 import('../../src/database/index.js'),
                 import('bcryptjs'),
-                import('../services/ActivityService.js').then((m) => m.default || m),
+                import('../services/ActivityService.js'),
                 import('../../utils/redisRateLimitStore.js'),
             ]);
 
@@ -54,10 +54,10 @@ const getDeps = async (): Promise<Dependencies> => {
             deps = {
                 db: getDatabase(),
                 bcrypt: bcryptModule.default || bcryptModule,
-                ActivityService: activityModule.default || activityModule,
+                ActivityService: (activityModule as any).default || activityModule,
                 MFAService: mfaService,
                 RefreshTokenService: refreshTokenService,
-                RedisStore: (redisModule.default || redisModule) as new (options: { windowMs: number }) => {
+                RedisStore: ((redisModule as any).default || redisModule) as new (options: { windowMs: number }) => {
                     resetKey: (key: string) => Promise<void>;
                 },
             };

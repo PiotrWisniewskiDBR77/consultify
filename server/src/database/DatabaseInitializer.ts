@@ -120,10 +120,10 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
                     );
                     // Try to initialize schema manually
                     logger.info('[DatabaseInitializer] Attempting to initialize schema...');
-                    const { initDb } = await import('./PostgresDatabase.js');
-                    // Note: initDb is not exported, so we'll trigger it by accessing the pool
+                    // Note: initDb is called automatically when PostgresDatabase pool is created
+                    // Trigger a query to ensure connection is established
                     await db.query('SELECT 1');
-                    // Wait again for initDb
+                    // Wait for schema initialization
                     await new Promise((resolve) => setTimeout(resolve, 3000));
                     // Verify again
                     const recheck = await verifySchema();

@@ -498,9 +498,22 @@ const ApiKeyService: ApiKeyServiceInterface = {
 
         const keys = (await dbAll(query, params)) as Array<Record<string, unknown>>;
         return keys.map((k) => ({
-            ...k,
+            id: k.id as string,
+            organization_id: k.organization_id as string,
+            user_id: k.user_id as string | null,
+            name: k.name as string,
+            description: k.description as string,
+            key_prefix: k.key_prefix as string,
+            key_type: k.key_type as string,
             scopes: JSON.parse((k.scopes as string) || '[]'),
-            allowedIps: JSON.parse((k.allowed_ips as string) || '[]'),
+            rate_limit_per_minute: k.rate_limit_per_minute as number,
+            rate_limit_per_day: k.rate_limit_per_day as number,
+            allowed_ips: JSON.parse((k.allowed_ips as string) || '[]'),
+            last_used_at: k.last_used_at as string,
+            usage_count: k.usage_count as number,
+            expires_at: k.expires_at as string,
+            is_active: k.is_active as number,
+            created_at: k.created_at as string,
             isActive: !!k.is_active,
         })) as ApiKeyRecord[];
     },

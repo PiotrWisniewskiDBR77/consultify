@@ -10,8 +10,10 @@
 
 import { Request, NextFunction, Response } from 'express';
 
-import db from '../../db/sqliteAsync.js';
+import * as sqliteAsync from '../../db/sqliteAsync.js';
 import UserStateMachine from '../../services/userStateMachine.js';
+
+const db = sqliteAsync as any;
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -57,7 +59,7 @@ interface Dependencies {
 // ==========================================
 
 let deps: Dependencies = {
-    UserStateMachine,
+    UserStateMachine: UserStateMachine as any,
     db: db as unknown as Database,
 };
 

@@ -36,7 +36,7 @@ const __dirname = path.dirname(__filename);
 
 // Initialize app
 const app: Express = express();
-const PORT = process.env.PORT || 3005;
+const PORT = Number(process.env.PORT || 3005);
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -146,15 +146,10 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
         try {
             const startupValidatorModule = await import('./services/ai/startupValidator.js');
             // Handle both named exports and default export wrapping (CJS/ESM interop)
-            // @ts-ignore
-            let validateOnStartup =
-                startupValidatorModule.validateOnStartup || startupValidatorModule.default?.validateOnStartup;
-
-            // Handle case where default export is a Promise (async module init)
-            if (!validateOnStartup && startupValidatorModule.default instanceof Promise) {
-                const resolvedDefault = await startupValidatorModule.default;
-                validateOnStartup = (resolvedDefault as any)?.validateOnStartup;
-            }
+            const resolvedModule = startupValidatorModule.default instanceof Promise 
+                ? await startupValidatorModule.default 
+                : startupValidatorModule.default || startupValidatorModule;
+            const validateOnStartup = (resolvedModule as any)?.validateOnStartup || (startupValidatorModule as any).validateOnStartup;
 
             if (typeof validateOnStartup === 'function') {
                 const healthReport = await validateOnStartup({
@@ -572,11 +567,14 @@ if (startServer && !isTest) {
     // Start token cleanup cron job
     (async () => {
         try {
-            const { startCleanupJob } = await import('../cron/cleanupRevokedTokens.js');
-            startCleanupJob();
+            const cleanupModule = await import('../cron/cleanupRevokedTokens.js');
+            const startCleanupJob = (cleanupModule as any).startCleanupJob || (cleanupModule.default as any)?.startCleanupJob;
+            if (startCleanupJob) {
+                startCleanupJob();
+            }
         } catch (err: unknown) {
             const error = err as Error;
-            logger.warn('[Server] Token cleanup job failed to start:', error.message);
+            logger.warn('[Server] Token cleanup job failed to start:', { message: error.message });
         }
     })();
 
@@ -590,7 +588,7 @@ if (startServer && !isTest) {
             }
         } catch (err: unknown) {
             const error = err as Error;
-            logger.warn('[Server] Metrics snapshot job failed to start:', error.message);
+            logger.warn('[Server] Metrics snapshot job failed to start:', { message: error.message });
         }
     })();
 
@@ -630,18 +628,21 @@ if (startServer && !isTest) {
             }
         } catch (err: unknown) {
             const error = err as Error;
-            logger.warn('[Server] AI Services failed to initialize:', error.message);
+            logger.warn('[Server] AI Services failed to initialize:', { message: error.message });
         }
     })();
 
     // Init AI Worker
     (async () => {
         try {
-            const { initWorker } = await import('../workers/aiWorker.js');
-            initWorker();
+            const workerModule = await import('../workers/aiWorker.js');
+            const initWorker = (workerModule as any).initWorker || (workerModule.default as any)?.initWorker;
+            if (initWorker) {
+                initWorker();
+            }
         } catch (err: unknown) {
             const error = err as Error;
-            logger.warn('[Server] AI Worker failed to start (likely Redis missing):', error.message);
+            logger.warn('[Server] AI Worker failed to start (likely Redis missing):', { message: error.message });
         }
     })();
 
@@ -767,7 +768,8 @@ if (startServer && !isTest) {
 
     // Handle unhandled rejections with graceful shutdown
     process.on('unhandledRejection', (reason: unknown) => {
-        logger.error('[Server] Unhandled Rejection:', reason);
+        const error = reason instanceof Error ? reason : new Error(String(reason));
+        logger.error('[Server] Unhandled Rejection:', error);
         shutdownManager.shutdown('unhandledRejection').finally(() => {
             process.exit(1);
         });

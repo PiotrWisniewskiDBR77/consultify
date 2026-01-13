@@ -420,7 +420,7 @@ const OrganizationService: OrganizationServiceInterface = {
                 (err, row) => {
                     if (err) return reject(err);
                     resolve(
-                        row || {
+                        (row as AISettings) || {
                             ai_assertiveness_level: 'MEDIUM',
                             ai_autonomy_level: 'SUGGEST_ONLY',
                         },
@@ -490,7 +490,7 @@ const OrganizationService: OrganizationServiceInterface = {
                 [organizationId, userId],
                 (err, row) => {
                     if (err) return reject(err);
-                    resolve(row ? row.role : null);
+                    resolve(row ? (row as { role: string }).role : null);
                 },
             );
         });
