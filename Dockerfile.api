@@ -99,26 +99,33 @@ COPY --from=frontend-builder /app/dist /app/dist
 # Copy built backend (server code) to /app/server/
 # Backend compiled output is in dist/ directory
 RUN mkdir -p /app/server
-# Copy dist directory from backend-builder - keep it as dist/ subdirectory
-# This matches the package.json "main": "dist/index.js" configuration
+# Copy dist directory from backend-builder
+# TypeScript preserves src/ directory structure, so we need to handle it correctly
 COPY --from=backend-builder /app/dist /app/server/dist-temp
-# TypeScript may preserve src/ directory structure, so we need to handle both cases
+# Check where index.js actually is and set up the correct structure
 RUN if [ -f /app/server/dist-temp/index.js ]; then \
-      echo "Found index.js at root, keeping structure"; \
+      echo "Found index.js at root level"; \
       mv /app/server/dist-temp /app/server/dist; \
     elif [ -f /app/server/dist-temp/src/index.js ]; then \
-      echo "Found index.js in src/, flattening structure..."; \
-      mkdir -p /app/server/dist; \
-      cp -r /app/server/dist-temp/src/* /app/server/dist/; \
-      rm -rf /app/server/dist-temp; \
+      echo "Found index.js in src/ subdirectory, preserving structure"; \
+      mv /app/server/dist-temp /app/server/dist; \
+      echo "Structure preserved: dist/src/index.js"; \
     else \
-      echo "ERROR: index.js not found in dist!" && \
+      echo "ERROR: index.js not found!" && \
       echo "Contents of /app/server/dist-temp:" && ls -la /app/server/dist-temp/ && \
-      echo "Checking for src subdirectory:" && ls -la /app/server/dist-temp/src/ 2>/dev/null || echo "src directory doesn't exist" && \
+      find /app/server/dist-temp -name "index.js" 2>/dev/null || echo "No index.js found anywhere" && \
       exit 1; \
     fi
-# Final verification
-RUN test -f /app/server/dist/index.js || (echo "ERROR: dist/index.js not found after copy!" && ls -la /app/server/dist/ && exit 1)
+# Verify index.js exists (check both possible locations)
+RUN if [ -f /app/server/dist/index.js ]; then \
+      echo "✓ index.js found at /app/server/dist/index.js"; \
+    elif [ -f /app/server/dist/src/index.js ]; then \
+      echo "✓ index.js found at /app/server/dist/src/index.js"; \
+    else \
+      echo "ERROR: index.js not found in expected locations!" && \
+      find /app/server/dist -name "index.js" 2>/dev/null || echo "No index.js found" && \
+      exit 1; \
+    fi
 COPY --from=backend-builder /app/package.json /app/server/
 # Copy node_modules from backend-builder (has all dependencies including cookie-parser)
 # This ensures all dependencies needed at runtime are available
@@ -150,6 +157,17 @@ EXPOSE 3001
 
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
-# Backend is at /app/server/dist/index.js, frontend at /app/dist
-# Backend code: path.join(__dirname, '../dist') from /app/server/dist = /app/dist ✓
-CMD ["node", "dist/index.js"]
+# Backend entry point - check both possible locations
+# TypeScript may output to dist/index.js or dist/src/index.js depending on structure
+RUN if [ -f /app/server/dist/index.js ]; then \
+      echo '#!/bin/sh' > /app/server/start.sh && \
+      echo 'exec node dist/index.js "$@"' >> /app/server/start.sh && \
+      chmod +x /app/server/start.sh; \
+    elif [ -f /app/server/dist/src/index.js ]; then \
+      echo '#!/bin/sh' > /app/server/start.sh && \
+      echo 'exec node dist/src/index.js "$@"' >> /app/server/start.sh && \
+      chmod +x /app/server/start.sh; \
+    else \
+      echo "ERROR: Cannot determine entry point!" && exit 1; \
+    fi
+CMD ["sh", "/app/server/start.sh"]
