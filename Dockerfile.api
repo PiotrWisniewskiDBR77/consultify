@@ -101,9 +101,24 @@ COPY --from=frontend-builder /app/dist /app/dist
 RUN mkdir -p /app/server
 # Copy dist directory from backend-builder - keep it as dist/ subdirectory
 # This matches the package.json "main": "dist/index.js" configuration
-COPY --from=backend-builder /app/dist /app/server/dist
-# Verify dist/index.js exists
-RUN test -f /app/server/dist/index.js || (echo "ERROR: dist/index.js not found!" && ls -la /app/server/ && ls -la /app/server/dist/ 2>/dev/null || echo "dist directory doesn't exist" && exit 1)
+COPY --from=backend-builder /app/dist /app/server/dist-temp
+# TypeScript may preserve src/ directory structure, so we need to handle both cases
+RUN if [ -f /app/server/dist-temp/index.js ]; then \
+      echo "Found index.js at root, keeping structure"; \
+      mv /app/server/dist-temp /app/server/dist; \
+    elif [ -f /app/server/dist-temp/src/index.js ]; then \
+      echo "Found index.js in src/, flattening structure..."; \
+      mkdir -p /app/server/dist; \
+      cp -r /app/server/dist-temp/src/* /app/server/dist/; \
+      rm -rf /app/server/dist-temp; \
+    else \
+      echo "ERROR: index.js not found in dist!" && \
+      echo "Contents of /app/server/dist-temp:" && ls -la /app/server/dist-temp/ && \
+      echo "Checking for src subdirectory:" && ls -la /app/server/dist-temp/src/ 2>/dev/null || echo "src directory doesn't exist" && \
+      exit 1; \
+    fi
+# Final verification
+RUN test -f /app/server/dist/index.js || (echo "ERROR: dist/index.js not found after copy!" && ls -la /app/server/dist/ && exit 1)
 COPY --from=backend-builder /app/package.json /app/server/
 # Copy node_modules from backend-builder (has all dependencies including cookie-parser)
 # This ensures all dependencies needed at runtime are available
