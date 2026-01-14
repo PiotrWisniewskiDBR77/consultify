@@ -97,17 +97,13 @@ RUN apk update && \
 COPY --from=frontend-builder /app/dist /app/dist
 
 # Copy built backend (server code) to /app/server/
-# Backend compiled output goes directly to /app/server/ (not /app/server/dist/)
+# Backend compiled output is in dist/ directory
 RUN mkdir -p /app/server
-# Copy dist directory contents - copy the directory first, then move contents
-# This handles the case where dist might be empty or have subdirectories
-COPY --from=backend-builder /app/dist /app/server/dist-temp
-RUN if [ -d /app/server/dist-temp ]; then \
-      cp -r /app/server/dist-temp/. /app/server/ && \
-      rm -rf /app/server/dist-temp; \
-    else \
-      echo "ERROR: dist directory not found in backend-builder stage!" && exit 1; \
-    fi
+# Copy dist directory from backend-builder - keep it as dist/ subdirectory
+# This matches the package.json "main": "dist/index.js" configuration
+COPY --from=backend-builder /app/dist /app/server/dist
+# Verify dist/index.js exists
+RUN test -f /app/server/dist/index.js || (echo "ERROR: dist/index.js not found!" && ls -la /app/server/ && ls -la /app/server/dist/ 2>/dev/null || echo "dist directory doesn't exist" && exit 1)
 COPY --from=backend-builder /app/package.json /app/server/
 # Copy node_modules from backend-builder (has all dependencies including cookie-parser)
 # This ensures all dependencies needed at runtime are available
@@ -139,6 +135,6 @@ EXPOSE 3001
 
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
-# Backend is at /app/server/index.js, frontend at /app/dist
-# Backend code: path.join(__dirname, '../dist') from /app/server = /app/dist ✓
-CMD ["node", "index.js"]
+# Backend is at /app/server/dist/index.js, frontend at /app/dist
+# Backend code: path.join(__dirname, '../dist') from /app/server/dist = /app/dist ✓
+CMD ["node", "dist/index.js"]
