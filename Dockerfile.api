@@ -72,6 +72,12 @@ RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!"
 RUN ./node_modules/.bin/tsc --build tsconfig.build.json || (echo "TypeScript build failed!" && exit 1)
 # Verify dist directory was created
 RUN test -d dist || (echo "ERROR: dist directory not created after build!" && ls -la && exit 1)
+# Verify critical modules exist in dist
+RUN echo "Checking compiled modules..." && \
+    (test -f dist/index.js || test -f dist/src/index.js) || (echo "ERROR: index.js not found!" && exit 1) && \
+    (test -f dist/config/index.js || test -f dist/src/config/index.js) || (echo "WARNING: config/index.js not found" && find dist -name "index.js" -path "*/config/*" || echo "config/index.js not found anywhere") && \
+    (test -f dist/Gateway.js || test -f dist/src/Gateway.js) || (echo "WARNING: Gateway.js not found" && find dist -name "Gateway.js" || echo "Gateway.js not found anywhere") && \
+    echo "Build verification complete"
 
 # ==========================================
 # STAGE 4: Production (Backend + Frontend)
@@ -116,14 +122,29 @@ RUN if [ -f /app/server/dist-temp/index.js ]; then \
       find /app/server/dist-temp -name "index.js" 2>/dev/null || echo "No index.js found anywhere" && \
       exit 1; \
     fi
-# Verify index.js exists (check both possible locations)
+# Verify index.js exists and check for required modules
 RUN if [ -f /app/server/dist/index.js ]; then \
       echo "✓ index.js found at /app/server/dist/index.js"; \
+      echo "Checking required modules from index.js location..."; \
+      test -f /app/server/dist/config/index.js || echo "WARNING: dist/config/index.js not found"; \
+      test -f /app/server/dist/Gateway.js || echo "WARNING: dist/Gateway.js not found"; \
+      test -f /app/server/dist/database/index.js || echo "WARNING: dist/database/index.js not found"; \
+      echo "Listing dist structure:" && ls -la /app/server/dist/ | head -20; \
+      echo "Module check complete"; \
     elif [ -f /app/server/dist/src/index.js ]; then \
       echo "✓ index.js found at /app/server/dist/src/index.js"; \
+      echo "Checking required modules from src/ location..."; \
+      test -f /app/server/dist/src/config/index.js || echo "WARNING: dist/src/config/index.js not found"; \
+      test -f /app/server/dist/src/Gateway.js || echo "WARNING: dist/src/Gateway.js not found"; \
+      test -f /app/server/dist/src/database/index.js || echo "WARNING: dist/src/database/index.js not found"; \
+      echo "Listing dist/src structure:" && ls -la /app/server/dist/src/ | head -20; \
+      echo "Module check complete"; \
     else \
       echo "ERROR: index.js not found in expected locations!" && \
+      echo "Searching for index.js:" && \
       find /app/server/dist -name "index.js" 2>/dev/null || echo "No index.js found" && \
+      echo "Dist directory structure:" && \
+      ls -la /app/server/dist/ && \
       exit 1; \
     fi
 COPY --from=backend-builder /app/package.json /app/server/
