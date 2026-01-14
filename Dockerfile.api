@@ -109,19 +109,14 @@ RUN if [ -d /app/server/dist-temp ]; then \
       echo "ERROR: dist directory not found in backend-builder stage!" && exit 1; \
     fi
 COPY --from=backend-builder /app/package.json /app/server/
-# Copy production dependencies from deps stage
-# Merge root and server node_modules to ensure all dependencies are available
-RUN mkdir -p /app/server/node_modules
-COPY --from=deps /app/node_modules /app/server/node_modules-root
-COPY --from=deps /app/server/node_modules /app/server/node_modules-server
-# Merge: copy root first, then server (server-specific packages override root if conflicts)
-RUN if [ -d /app/server/node_modules-root ]; then \
-      cp -r /app/server/node_modules-root/. /app/server/node_modules/ 2>/dev/null || true; \
-    fi && \
-    if [ -d /app/server/node_modules-server ]; then \
-      cp -r /app/server/node_modules-server/. /app/server/node_modules/ 2>/dev/null || true; \
-    fi && \
-    rm -rf /app/server/node_modules-root /app/server/node_modules-server
+# Copy node_modules from backend-builder (has all dependencies including cookie-parser)
+# This ensures all dependencies needed at runtime are available
+# Note: Includes devDependencies but ensures no missing runtime dependencies
+COPY --from=backend-builder /app/node_modules /app/server/node_modules
+# Verify critical dependencies are present
+RUN test -d /app/server/node_modules/cookie-parser || (echo "ERROR: cookie-parser not found!" && ls -la /app/server/node_modules/ | head -20 && exit 1)
+RUN test -d /app/server/node_modules/express || (echo "ERROR: express not found!" && exit 1)
+RUN test -d /app/server/node_modules/zod || (echo "ERROR: zod not found!" && exit 1)
 
 WORKDIR /app/server
 
