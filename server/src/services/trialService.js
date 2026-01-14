@@ -1,2 +1,2 @@
-export * from './trialService.ts';
-export { default } from './trialService.ts';
+export * from './trialService.js';
+export { default } from './trialService.js';

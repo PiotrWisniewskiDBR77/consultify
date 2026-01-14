@@ -1,2 +1,2 @@
-export * from './preferences.routes.ts';
-export { default } from './preferences.routes.ts';
+export * from './preferences.routes.js';
+export { default } from './preferences.routes.js';

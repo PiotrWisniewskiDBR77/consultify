@@ -1,2 +1,2 @@
-export * from './user-profile-completeness.routes.ts';
-export { default } from './user-profile-completeness.routes.ts';
+export * from './user-profile-completeness.routes.js';
+export { default } from './user-profile-completeness.routes.js';

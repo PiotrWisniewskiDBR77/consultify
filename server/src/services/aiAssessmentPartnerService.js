@@ -1,2 +1,2 @@
-export * from './aiAssessmentPartnerService.ts';
-export { default } from './aiAssessmentPartnerService.ts';
+export * from './aiAssessmentPartnerService.js';
+export { default } from './aiAssessmentPartnerService.js';

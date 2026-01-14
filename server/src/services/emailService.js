@@ -1,2 +1,2 @@
-export * from './emailService.ts';
-export { default } from './emailService.ts';
+export * from './emailService.js';
+export { default } from './emailService.js';

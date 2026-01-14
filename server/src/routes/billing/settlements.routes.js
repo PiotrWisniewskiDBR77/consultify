@@ -1,2 +1,2 @@
-export * from './settlements.routes.ts';
-export { default } from './settlements.routes.ts';
+export * from './settlements.routes.js';
+export { default } from './settlements.routes.js';

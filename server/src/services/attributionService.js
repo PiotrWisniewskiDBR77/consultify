@@ -1,2 +1,2 @@
-export * from './attributionService.ts';
-export { default } from './attributionService.ts';
+export * from './attributionService.js';
+export { default } from './attributionService.js';

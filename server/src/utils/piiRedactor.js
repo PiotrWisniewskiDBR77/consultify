@@ -1,2 +1,2 @@
-export * from './piiRedactor.ts';
-export { default } from './piiRedactor.ts';
+export * from './piiRedactor.js';
+export { default } from './piiRedactor.js';

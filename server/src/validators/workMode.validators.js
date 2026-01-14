@@ -1,2 +1,2 @@
-export * from './workMode.validators.ts';
-export { default } from './workMode.validators.ts';
+export * from './workMode.validators.js';
+export { default } from './workMode.validators.js';

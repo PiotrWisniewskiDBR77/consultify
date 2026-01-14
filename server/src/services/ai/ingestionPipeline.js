@@ -1,2 +1,2 @@
-export * from './ingestionPipeline.ts';
-export { default } from './ingestionPipeline.ts';
+export * from './ingestionPipeline.js';
+export { default } from './ingestionPipeline.js';

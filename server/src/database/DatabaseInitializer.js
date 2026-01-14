@@ -1,2 +1,2 @@
-export * from './DatabaseInitializer.ts';
-export { default } from './DatabaseInitializer.ts';
+export * from './DatabaseInitializer.js';
+export { default } from './DatabaseInitializer.js';

@@ -1,2 +1,2 @@
-export * from './seatManagementService.ts';
-export { default } from './seatManagementService.ts';
+export * from './seatManagementService.js';
+export { default } from './seatManagementService.js';

@@ -1,2 +1,2 @@
-export * from './baselines.validators.ts';
-export { default } from './baselines.validators.ts';
+export * from './baselines.validators.js';
+export { default } from './baselines.validators.js';

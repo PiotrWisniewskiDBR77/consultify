@@ -1,2 +1,2 @@
-export * from './calendarIntegrations.routes.ts';
-export { default } from './calendarIntegrations.routes.ts';
+export * from './calendarIntegrations.routes.js';
+export { default } from './calendarIntegrations.routes.js';

@@ -1,2 +1,2 @@
-export * from './systemConfig.routes.ts';
-export { default } from './systemConfig.routes.ts';
+export * from './systemConfig.routes.js';
+export { default } from './systemConfig.routes.js';

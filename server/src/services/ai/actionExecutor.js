@@ -1,2 +1,2 @@
-export * from './actionExecutor.ts';
-export { default } from './actionExecutor.ts';
+export * from './actionExecutor.js';
+export { default } from './actionExecutor.js';

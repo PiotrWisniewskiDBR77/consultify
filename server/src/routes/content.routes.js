@@ -1,2 +1,2 @@
-export * from './content.routes.ts';
-export { default } from './content.routes.ts';
+export * from './content.routes.js';
+export { default } from './content.routes.js';

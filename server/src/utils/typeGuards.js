@@ -1,2 +1,2 @@
-export * from './typeGuards.ts';
-export { default } from './typeGuards.ts';
+export * from './typeGuards.js';
+export { default } from './typeGuards.js';

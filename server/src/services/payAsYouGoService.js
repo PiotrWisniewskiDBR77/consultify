@@ -1,2 +1,2 @@
-export * from './payAsYouGoService.ts';
-export { default } from './payAsYouGoService.ts';
+export * from './payAsYouGoService.js';
+export { default } from './payAsYouGoService.js';

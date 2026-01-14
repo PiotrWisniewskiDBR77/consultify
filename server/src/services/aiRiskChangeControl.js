@@ -1,2 +1,2 @@
-export * from './aiRiskChangeControl.ts';
-export { default } from './aiRiskChangeControl.ts';
+export * from './aiRiskChangeControl.js';
+export { default } from './aiRiskChangeControl.js';

@@ -1,2 +1,2 @@
-export * from './errorHandler.ts';
-export { default } from './errorHandler.ts';
+export * from '../utils/errorHandler.js';
+export { default } from '../utils/errorHandler.js';

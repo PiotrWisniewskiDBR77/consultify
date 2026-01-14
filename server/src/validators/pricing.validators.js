@@ -1,2 +1,2 @@
-export * from './pricing.validators.ts';
-export { default } from './pricing.validators.ts';
+export * from './pricing.validators.js';
+export { default } from './pricing.validators.js';

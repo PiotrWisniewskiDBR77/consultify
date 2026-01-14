@@ -1,2 +1,2 @@
-export * from './siemService.ts';
-export { default } from './siemService.ts';
+export * from './siemService.js';
+export { default } from './siemService.js';

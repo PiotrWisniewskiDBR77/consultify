@@ -1,2 +1,2 @@
-export * from './admin-data.validators.ts';
-export { default } from './admin-data.validators.ts';
+export * from './admin-data.validators.js';
+export { default } from './admin-data.validators.js';

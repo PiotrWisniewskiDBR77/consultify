@@ -1,2 +1,2 @@
-export * from './aiPlaybookRoutingEngine.ts';
-export { default } from './aiPlaybookRoutingEngine.ts';
+export * from './aiPlaybookRoutingEngine.js';
+export { default } from './aiPlaybookRoutingEngine.js';

@@ -1,2 +1,2 @@
-export * from './SnapshotService.ts';
-export { default } from './SnapshotService.ts';
+export * from './SnapshotService.js';
+export { default } from './SnapshotService.js';

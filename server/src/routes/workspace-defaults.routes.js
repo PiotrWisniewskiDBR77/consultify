@@ -1,2 +1,2 @@
-export * from './workspace-defaults.routes.ts';
-export { default } from './workspace-defaults.routes.ts';
+export * from './workspace-defaults.routes.js';
+export { default } from './workspace-defaults.routes.js';

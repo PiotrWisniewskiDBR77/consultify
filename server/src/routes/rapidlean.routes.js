@@ -1,2 +1,2 @@
-export * from './rapidlean.routes.ts';
-export { default } from './rapidlean.routes.ts';
+export * from './rapidlean.routes.js';
+export { default } from './rapidlean.routes.js';

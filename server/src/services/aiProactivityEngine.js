@@ -1,2 +1,2 @@
-export * from './aiProactivityEngine.ts';
-export { default } from './aiProactivityEngine.ts';
+export * from './aiProactivityEngine.js';
+export { default } from './aiProactivityEngine.js';

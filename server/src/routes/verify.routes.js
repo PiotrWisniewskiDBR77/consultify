@@ -1,2 +1,2 @@
-export * from './verify.routes.ts';
-export { default } from './verify.routes.ts';
+export * from './verify.routes.js';
+export { default } from './verify.routes.js';

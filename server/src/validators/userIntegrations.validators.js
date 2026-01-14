@@ -1,2 +1,2 @@
-export * from './userIntegrations.validators.ts';
-export { default } from './userIntegrations.validators.ts';
+export * from './userIntegrations.validators.js';
+export { default } from './userIntegrations.validators.js';

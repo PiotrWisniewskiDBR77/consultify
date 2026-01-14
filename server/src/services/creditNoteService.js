@@ -1,2 +1,2 @@
-export * from './creditNoteService.ts';
-export { default } from './creditNoteService.ts';
+export * from './creditNoteService.js';
+export { default } from './creditNoteService.js';

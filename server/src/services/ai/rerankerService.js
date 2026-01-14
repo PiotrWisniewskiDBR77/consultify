@@ -1,2 +1,2 @@
-export * from './rerankerService.ts';
-export { default } from './rerankerService.ts';
+export * from './rerankerService.js';
+export { default } from './rerankerService.js';

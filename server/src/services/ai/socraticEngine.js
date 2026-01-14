@@ -1,2 +1,2 @@
-export * from './socraticEngine.ts';
-export { default } from './socraticEngine.ts';
+export * from './socraticEngine.js';
+export { default } from './socraticEngine.js';

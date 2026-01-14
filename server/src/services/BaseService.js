@@ -1,2 +1,2 @@
-export * from './BaseService.ts';
-export { default } from './BaseService.ts';
+export * from './BaseService.js';
+export { default } from './BaseService.js';

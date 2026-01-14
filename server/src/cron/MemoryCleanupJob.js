@@ -1,2 +1,2 @@
-export * from './MemoryCleanupJob.ts';
-export { default } from './MemoryCleanupJob.ts';
+export * from './MemoryCleanupJob.js';
+export { default } from './MemoryCleanupJob.js';

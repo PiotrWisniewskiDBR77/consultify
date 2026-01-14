@@ -1,2 +1,2 @@
-export * from './taskAdvisorService.ts';
-export { default } from './taskAdvisorService.ts';
+export * from './taskAdvisorService.js';
+export { default } from './taskAdvisorService.js';

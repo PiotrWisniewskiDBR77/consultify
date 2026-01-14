@@ -1,2 +1,2 @@
-export * from './mfa.validators.ts';
-export { default } from './mfa.validators.ts';
+export * from './mfa.validators.js';
+export { default } from './mfa.validators.js';

@@ -1,2 +1,2 @@
-export * from './raid.routes.ts';
-export { default } from './raid.routes.ts';
+export * from './raid.routes.js';
+export { default } from './raid.routes.js';

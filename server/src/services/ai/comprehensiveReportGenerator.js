@@ -1,2 +1,2 @@
-export * from './comprehensiveReportGenerator.ts';
-export { default } from './comprehensiveReportGenerator.ts';
+export * from './comprehensiveReportGenerator.js';
+export { default } from './comprehensiveReportGenerator.js';

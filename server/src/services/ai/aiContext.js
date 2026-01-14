@@ -1,2 +1,2 @@
-export * from './aiContext.ts';
-export { default } from './aiContext.ts';
+export * from './aiContext.js';
+export { default } from './aiContext.js';

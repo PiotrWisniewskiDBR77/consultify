@@ -1,2 +1,2 @@
-export * from './projectMemoryStore.ts';
-export { default } from './projectMemoryStore.ts';
+export * from './projectMemoryStore.js';
+export { default } from './projectMemoryStore.js';

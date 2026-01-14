@@ -1,2 +1,2 @@
-export * from './RefreshTokenService.ts';
-export { default } from './RefreshTokenService.ts';
+export * from './RefreshTokenService.js';
+export { default } from './RefreshTokenService.js';

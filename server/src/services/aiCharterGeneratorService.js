@@ -1,2 +1,2 @@
-export * from './aiCharterGeneratorService.ts';
-export { default } from './aiCharterGeneratorService.ts';
+export * from './aiCharterGeneratorService.js';
+export { default } from './aiCharterGeneratorService.js';

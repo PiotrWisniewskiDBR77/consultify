@@ -1,2 +1,2 @@
-export * from './locations.routes.ts';
-export { default } from './locations.routes.ts';
+export * from './locations.routes.js';
+export { default } from './locations.routes.js';

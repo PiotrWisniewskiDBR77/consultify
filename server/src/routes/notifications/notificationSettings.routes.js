@@ -1,2 +1,2 @@
-export * from './notificationSettings.routes.ts';
-export { default } from './notificationSettings.routes.ts';
+export * from './notificationSettings.routes.js';
+export { default } from './notificationSettings.routes.js';

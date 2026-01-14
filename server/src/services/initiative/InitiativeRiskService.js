@@ -1,2 +1,2 @@
-export * from './InitiativeRiskService.ts';
-export { default } from './InitiativeRiskService.ts';
+export * from './InitiativeRiskService.js';
+export { default } from './InitiativeRiskService.js';

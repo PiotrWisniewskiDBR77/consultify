@@ -1,2 +1,2 @@
-export * from './projectMemberService.ts';
-export { default } from './projectMemberService.ts';
+export * from './projectMemberService.js';
+export { default } from './projectMemberService.js';

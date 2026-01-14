@@ -1,2 +1,2 @@
-export * from './daily-brief.validators.ts';
-export { default } from './daily-brief.validators.ts';
+export * from './daily-brief.validators.js';
+export { default } from './daily-brief.validators.js';

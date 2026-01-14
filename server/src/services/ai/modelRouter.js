@@ -1,2 +1,2 @@
-export * from './modelRouter.ts';
-export { default } from './modelRouter.ts';
+export * from './modelRouter.js';
+export { default } from './modelRouter.js';

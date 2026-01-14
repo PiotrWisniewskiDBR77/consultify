@@ -1,2 +1,2 @@
-export * from './BillingEventService.ts';
-export { default } from './BillingEventService.ts';
+export * from './BillingEventService.js';
+export { default } from './BillingEventService.js';

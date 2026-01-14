@@ -1,2 +1,2 @@
-export * from './customerSuccessService.ts';
-export { default } from './customerSuccessService.ts';
+export * from './customerSuccessService.js';
+export { default } from './customerSuccessService.js';

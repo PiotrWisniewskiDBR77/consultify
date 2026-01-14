@@ -1,2 +1,2 @@
-export * from './pmoDomainRegistry.ts';
-export { default } from './pmoDomainRegistry.ts';
+export * from './pmoDomainRegistry.js';
+export { default } from './pmoDomainRegistry.js';

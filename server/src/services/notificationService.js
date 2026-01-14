@@ -1,2 +1,2 @@
-export * from './notificationService.ts';
-export { default } from './notificationService.ts';
+export * from './notificationService.js';
+export { default } from './notificationService.js';

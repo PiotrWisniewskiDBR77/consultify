@@ -1,2 +1,2 @@
-export * from './rateLimiter.ts';
-export { default } from './rateLimiter.ts';
+export * from './rateLimiter.js';
+export { default } from './rateLimiter.js';

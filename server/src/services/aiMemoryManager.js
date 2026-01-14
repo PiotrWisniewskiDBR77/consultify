@@ -1,2 +1,2 @@
-export * from './aiMemoryManager.ts';
-export { default } from './aiMemoryManager.ts';
+export * from './aiMemoryManager.js';
+export { default } from './aiMemoryManager.js';

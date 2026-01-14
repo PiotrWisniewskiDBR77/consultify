@@ -1,2 +1,2 @@
-export * from './userGoals.routes.ts';
-export { default } from './userGoals.routes.ts';
+export * from './userGoals.routes.js';
+export { default } from './userGoals.routes.js';

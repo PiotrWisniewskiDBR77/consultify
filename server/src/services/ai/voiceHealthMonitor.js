@@ -1,2 +1,2 @@
-export * from './voiceHealthMonitor.ts';
-export { default } from './voiceHealthMonitor.ts';
+export * from './voiceHealthMonitor.js';
+export { default } from './voiceHealthMonitor.js';

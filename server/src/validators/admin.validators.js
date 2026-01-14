@@ -1,2 +1,2 @@
-export * from './admin.validators.ts';
-export { default } from './admin.validators.ts';
+export * from './admin.validators.js';
+export { default } from './admin.validators.js';

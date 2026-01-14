@@ -1,2 +1,2 @@
-export * from './Config.test.ts';
-export { default } from './Config.test.ts';
+export * from './Config.test.js';
+export { default } from './Config.test.js';

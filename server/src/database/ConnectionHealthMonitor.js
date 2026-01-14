@@ -1,2 +1,2 @@
-export * from './ConnectionHealthMonitor.ts';
-export { default } from './ConnectionHealthMonitor.ts';
+export * from './ConnectionHealthMonitor.js';
+export { default } from './ConnectionHealthMonitor.js';

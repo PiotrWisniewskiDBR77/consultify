@@ -1,2 +1,2 @@
-export * from './memoryManager.ts';
-export { default } from './memoryManager.ts';
+export * from './memoryManager.js';
+export { default } from './memoryManager.js';

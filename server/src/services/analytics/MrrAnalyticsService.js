@@ -1,2 +1,2 @@
-export * from './MrrAnalyticsService.ts';
-export { default } from './MrrAnalyticsService.ts';
+export * from './MrrAnalyticsService.js';
+export { default } from './MrrAnalyticsService.js';

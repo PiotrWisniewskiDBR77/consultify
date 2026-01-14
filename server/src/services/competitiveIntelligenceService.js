@@ -1,2 +1,2 @@
-export * from './competitiveIntelligenceService.ts';
-export { default } from './competitiveIntelligenceService.ts';
+export * from './competitiveIntelligenceService.js';
+export { default } from './competitiveIntelligenceService.js';

@@ -1,2 +1,2 @@
-export * from './lazyServiceLoader.ts';
-export { default } from './lazyServiceLoader.ts';
+export * from './lazyServiceLoader.js';
+export { default } from './lazyServiceLoader.js';

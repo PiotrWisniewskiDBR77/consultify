@@ -1,2 +1,2 @@
-export * from './webhooks.validators.ts';
-export { default } from './webhooks.validators.ts';
+export * from './webhooks.validators.js';
+export { default } from './webhooks.validators.js';

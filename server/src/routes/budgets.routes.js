@@ -1,2 +1,2 @@
-export * from './budgets.routes.ts';
-export { default } from './budgets.routes.ts';
+export * from './budgets.routes.js';
+export { default } from './budgets.routes.js';

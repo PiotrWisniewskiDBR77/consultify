@@ -1,2 +1,2 @@
-export * from './startupValidator.ts';
-export { default } from './startupValidator.ts';
+export * from './startupValidator.js';
+export { default } from './startupValidator.js';

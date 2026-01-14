@@ -1,2 +1,2 @@
-export * from './adminAlerts.validators.ts';
-export { default } from './adminAlerts.validators.ts';
+export * from './adminAlerts.validators.js';
+export { default } from './adminAlerts.validators.js';

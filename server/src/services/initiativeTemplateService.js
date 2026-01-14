@@ -1,2 +1,2 @@
-export * from './initiativeTemplateService.ts';
-export { default } from './initiativeTemplateService.ts';
+export * from './initiativeTemplateService.js';
+export { default } from './initiativeTemplateService.js';

@@ -1,2 +1,2 @@
-export * from './connectorService.ts';
-export { default } from './connectorService.ts';
+export * from './connectorService.js';
+export { default } from './connectorService.js';

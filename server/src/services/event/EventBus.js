@@ -1,2 +1,2 @@
-export * from './EventBus.ts';
-export { default } from './EventBus.ts';
+export * from './EventBus.js';
+export { default } from './EventBus.js';

@@ -1,2 +1,2 @@
-export * from './adkarService.ts';
-export { default } from './adkarService.ts';
+export * from './adkarService.js';
+export { default } from './adkarService.js';

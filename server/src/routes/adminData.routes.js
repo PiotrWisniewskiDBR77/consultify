@@ -1,2 +1,2 @@
-export * from './adminData.routes.ts';
-export { default } from './adminData.routes.ts';
+export * from './adminData.routes.js';
+export { default } from './adminData.routes.js';

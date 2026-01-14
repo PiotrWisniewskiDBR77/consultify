@@ -1,2 +1,2 @@
-export * from './consultingFrameworks.ts';
-export { default } from './consultingFrameworks.ts';
+export * from './consultingFrameworks.js';
+export { default } from './consultingFrameworks.js';

@@ -1,2 +1,2 @@
-export * from './context.routes.ts';
-export { default } from './context.routes.ts';
+export * from './context.routes.js';
+export { default } from './context.routes.js';

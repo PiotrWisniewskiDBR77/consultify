@@ -1,2 +1,2 @@
-export * from './abTesting.ts';
-export { default } from './abTesting.ts';
+export * from './abTesting.js';
+export { default } from './abTesting.js';

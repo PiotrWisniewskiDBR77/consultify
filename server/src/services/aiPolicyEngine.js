@@ -1,2 +1,2 @@
-export * from './aiPolicyEngine.ts';
-export { default } from './aiPolicyEngine.ts';
+export * from './aiPolicyEngine.js';
+export { default } from './aiPolicyEngine.js';

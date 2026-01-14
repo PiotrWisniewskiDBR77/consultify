@@ -1,2 +1,2 @@
-export * from './MFAService.ts';
-export { default } from './MFAService.ts';
+export * from './MFAService.js';
+export { default } from './MFAService.js';

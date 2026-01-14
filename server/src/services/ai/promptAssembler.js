@@ -1,2 +1,2 @@
-export * from './promptAssembler.ts';
-export { default } from './promptAssembler.ts';
+export * from './promptAssembler.js';
+export { default } from './promptAssembler.js';

@@ -1,2 +1,2 @@
-export * from './baseAgent.ts';
-export { default } from './baseAgent.ts';
+export * from './baseAgent.js';
+export { default } from './baseAgent.js';

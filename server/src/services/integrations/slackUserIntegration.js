@@ -1,2 +1,2 @@
-export * from './slackUserIntegration.ts';
-export { default } from './slackUserIntegration.ts';
+export * from './slackUserIntegration.js';
+export { default } from './slackUserIntegration.js';

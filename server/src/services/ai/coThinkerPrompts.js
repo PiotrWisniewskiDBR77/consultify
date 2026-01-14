@@ -1,2 +1,2 @@
-export * from './coThinkerPrompts.ts';
-export { default } from './coThinkerPrompts.ts';
+export * from './coThinkerPrompts.js';
+export { default } from './coThinkerPrompts.js';

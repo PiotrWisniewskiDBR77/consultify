@@ -1,2 +1,2 @@
-export * from './PluginManager.ts';
-export { default } from './PluginManager.ts';
+export * from './PluginManager.js';
+export { default } from './PluginManager.js';

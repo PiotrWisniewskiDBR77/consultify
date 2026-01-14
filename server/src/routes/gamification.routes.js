@@ -1,2 +1,2 @@
-export * from './gamification.routes.ts';
-export { default } from './gamification.routes.ts';
+export * from './gamification.routes.js';
+export { default } from './gamification.routes.js';

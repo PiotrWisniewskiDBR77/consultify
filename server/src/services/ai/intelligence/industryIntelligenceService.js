@@ -1,2 +1,2 @@
-export * from './industryIntelligenceService.ts';
-export { default } from './industryIntelligenceService.ts';
+export * from './industryIntelligenceService.js';
+export { default } from './industryIntelligenceService.js';

@@ -1,2 +1,2 @@
-export * from './PostgresDatabase.ts';
-export { default } from './PostgresDatabase.ts';
+export * from './PostgresDatabase.js';
+export { default } from './PostgresDatabase.js';

@@ -1,2 +1,2 @@
-export * from './queryHelpers.ts';
-export { default } from './queryHelpers.ts';
+export * from './queryHelpers.js';
+export { default } from './queryHelpers.js';

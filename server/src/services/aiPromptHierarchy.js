@@ -1,2 +1,2 @@
-export * from './aiPromptHierarchy.ts';
-export { default } from './aiPromptHierarchy.ts';
+export * from './aiPromptHierarchy.js';
+export { default } from './aiPromptHierarchy.js';

@@ -1,2 +1,2 @@
-export * from './aiGateway.ts';
-export { default } from './aiGateway.ts';
+export * from './aiGateway.js';
+export { default } from './aiGateway.js';

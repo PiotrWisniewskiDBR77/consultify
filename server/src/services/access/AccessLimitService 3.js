@@ -1,2 +1,2 @@
-export * from './AccessLimitService.ts';
-export { default } from './AccessLimitService.ts';
+export * from './AccessLimitService.js';
+export { default } from './AccessLimitService.js';

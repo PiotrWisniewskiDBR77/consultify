@@ -1,2 +1,2 @@
-export * from './knowledgeIndexer.ts';
-export { default } from './knowledgeIndexer.ts';
+export * from './knowledgeIndexer.js';
+export { default } from './knowledgeIndexer.js';

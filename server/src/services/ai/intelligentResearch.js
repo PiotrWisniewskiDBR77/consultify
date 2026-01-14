@@ -1,2 +1,2 @@
-export * from './intelligentResearch.ts';
-export { default } from './intelligentResearch.ts';
+export * from './intelligentResearch.js';
+export { default } from './intelligentResearch.js';

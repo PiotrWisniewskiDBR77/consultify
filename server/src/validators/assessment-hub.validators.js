@@ -1,2 +1,2 @@
-export * from './assessment-hub.validators.ts';
-export { default } from './assessment-hub.validators.ts';
+export * from './assessment-hub.validators.js';
+export { default } from './assessment-hub.validators.js';

@@ -1,2 +1,2 @@
-export * from './benchmarkDataService.ts';
-export { default } from './benchmarkDataService.ts';
+export * from './benchmarkDataService.js';
+export { default } from './benchmarkDataService.js';

@@ -1,2 +1,2 @@
-export * from './slackService.ts';
-export { default } from './slackService.ts';
+export * from './slackService.js';
+export { default } from './slackService.js';

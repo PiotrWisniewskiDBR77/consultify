@@ -1,2 +1,2 @@
-export * from './webhooks.routes.ts';
-export { default } from './webhooks.routes.ts';
+export * from './webhooks.routes.js';
+export { default } from './webhooks.routes.js';

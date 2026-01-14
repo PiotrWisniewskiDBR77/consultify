@@ -1,2 +1,2 @@
-export * from './compliance.routes.ts';
-export { default } from './compliance.routes.ts';
+export * from './compliance.routes.js';
+export { default } from './compliance.routes.js';

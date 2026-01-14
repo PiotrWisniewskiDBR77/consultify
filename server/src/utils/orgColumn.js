@@ -1,2 +1,2 @@
-export * from './orgColumn.ts';
-export { default } from './orgColumn.ts';
+export * from './orgColumn.js';
+export { default } from './orgColumn.js';

@@ -1,2 +1,2 @@
-export * from './stabilizationService.ts';
-export { default } from './stabilizationService.ts';
+export * from './stabilizationService.js';
+export { default } from './stabilizationService.js';

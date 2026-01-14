@@ -1,2 +1,2 @@
-export * from './regulatoryModeGuard.ts';
-export { default } from './regulatoryModeGuard.ts';
+export * from './regulatoryModeGuard.js';
+export { default } from './regulatoryModeGuard.js';

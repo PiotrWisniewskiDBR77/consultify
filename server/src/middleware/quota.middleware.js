@@ -1,2 +1,2 @@
-export * from './quota.middleware.ts';
-export { default } from './quota.middleware.ts';
+export * from './quota.middleware.js';
+export { default } from './quota.middleware.js';

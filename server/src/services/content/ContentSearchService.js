@@ -1,2 +1,2 @@
-export * from './ContentSearchService.ts';
-export { default } from './ContentSearchService.ts';
+export * from './ContentSearchService.js';
+export { default } from './ContentSearchService.js';

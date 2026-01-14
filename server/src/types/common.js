@@ -1,2 +1,2 @@
-export * from './common.ts';
-export { default } from './common.ts';
+export * from './common.js';
+export { default } from './common.js';

@@ -1,2 +1,2 @@
-export * from './SnapshotMetrics.ts';
-export { default } from './SnapshotMetrics.ts';
+export * from './SnapshotMetrics.js';
+export { default } from './SnapshotMetrics.js';

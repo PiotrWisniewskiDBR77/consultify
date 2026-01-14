@@ -1,2 +1,2 @@
-export * from './aiCoach.routes.ts';
-export { default } from './aiCoach.routes.ts';
+export * from './aiCoach.routes.js';
+export { default } from './aiCoach.routes.js';

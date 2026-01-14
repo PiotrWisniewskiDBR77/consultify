@@ -1,2 +1,2 @@
-export * from './approvalPatternService.ts';
-export { default } from './approvalPatternService.ts';
+export * from './approvalPatternService.js';
+export { default } from './approvalPatternService.js';

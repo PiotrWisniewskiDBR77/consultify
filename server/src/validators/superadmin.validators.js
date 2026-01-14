@@ -1,2 +1,2 @@
-export * from './superadmin.validators.ts';
-export { default } from './superadmin.validators.ts';
+export * from './superadmin.validators.js';
+export { default } from './superadmin.validators.js';

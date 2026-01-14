@@ -1,2 +1,2 @@
-export * from './smsService.ts';
-export { default } from './smsService.ts';
+export * from './smsService.js';
+export { default } from './smsService.js';

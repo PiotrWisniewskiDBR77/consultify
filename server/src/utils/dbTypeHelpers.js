@@ -1,2 +1,2 @@
-export * from './dbTypeHelpers.ts';
-export { default } from './dbTypeHelpers.ts';
+export * from './dbTypeHelpers.js';
+export { default } from './dbTypeHelpers.js';

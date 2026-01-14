@@ -1,2 +1,2 @@
-export * from './enhancedContextBuilder.ts';
-export { default } from './enhancedContextBuilder.ts';
+export * from './enhancedContextBuilder.js';
+export { default } from './enhancedContextBuilder.js';

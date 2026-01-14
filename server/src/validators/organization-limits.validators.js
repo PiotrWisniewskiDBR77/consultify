@@ -1,2 +1,2 @@
-export * from './organization-limits.validators.ts';
-export { default } from './organization-limits.validators.ts';
+export * from './organization-limits.validators.js';
+export { default } from './organization-limits.validators.js';

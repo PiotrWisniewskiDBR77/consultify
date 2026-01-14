@@ -1,2 +1,2 @@
-export * from './QueueConfig.ts';
-export { default } from './QueueConfig.ts';
+export * from './QueueConfig.js';
+export { default } from './QueueConfig.js';

@@ -1,2 +1,2 @@
-export * from './permissionService.ts';
-export { default } from './permissionService.ts';
+export * from './permissionService.js';
+export { default } from './permissionService.js';

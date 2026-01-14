@@ -1,2 +1,2 @@
-export * from './analyticsAdvanced.validators.ts';
-export { default } from './analyticsAdvanced.validators.ts';
+export * from './analyticsAdvanced.validators.js';
+export { default } from './analyticsAdvanced.validators.js';

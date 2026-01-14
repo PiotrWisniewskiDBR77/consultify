@@ -1,2 +1,2 @@
-export * from './circuitBreaker.ts';
-export { default } from './circuitBreaker.ts';
+export * from './circuitBreaker.js';
+export { default } from './circuitBreaker.js';

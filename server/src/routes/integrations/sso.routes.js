@@ -1,2 +1,2 @@
-export * from './sso.routes.ts';
-export { default } from './sso.routes.ts';
+export * from './sso.routes.js';
+export { default } from './sso.routes.js';

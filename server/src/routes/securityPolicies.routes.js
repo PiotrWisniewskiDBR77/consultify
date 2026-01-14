@@ -1,2 +1,2 @@
-export * from './securityPolicies.routes.ts';
-export { default } from './securityPolicies.routes.ts';
+export * from './securityPolicies.routes.js';
+export { default } from './securityPolicies.routes.js';

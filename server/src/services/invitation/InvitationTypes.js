@@ -1,2 +1,2 @@
-export * from './InvitationTypes.ts';
-export { default } from './InvitationTypes.ts';
+export * from './InvitationTypes.js';
+export { default } from './InvitationTypes.js';

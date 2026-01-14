@@ -1,2 +1,2 @@
-export * from './SlowQueryLogger.ts';
-export { default } from './SlowQueryLogger.ts';
+export * from './SlowQueryLogger.js';
+export { default } from './SlowQueryLogger.js';

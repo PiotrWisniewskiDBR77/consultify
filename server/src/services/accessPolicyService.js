@@ -1,2 +1,2 @@
-export * from './accessPolicyService.ts';
-export { default } from './accessPolicyService.ts';
+export * from './accessPolicyService.js';
+export { default } from './accessPolicyService.js';

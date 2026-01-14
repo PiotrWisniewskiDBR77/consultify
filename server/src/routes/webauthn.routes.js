@@ -1,2 +1,2 @@
-export * from './webauthn.routes.ts';
-export { default } from './webauthn.routes.ts';
+export * from './webauthn.routes.js';
+export { default } from './webauthn.routes.js';

@@ -1,2 +1,2 @@
-export * from './pmo-analysis.validators.ts';
-export { default } from './pmo-analysis.validators.ts';
+export * from './pmo-analysis.validators.js';
+export { default } from './pmo-analysis.validators.js';

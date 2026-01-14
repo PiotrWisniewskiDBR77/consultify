@@ -1,2 +1,2 @@
-export * from './health.routes.ts';
-export { default } from './health.routes.ts';
+export * from './health.routes.js';
+export { default } from './health.routes.js';

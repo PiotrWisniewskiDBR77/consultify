@@ -1,2 +1,2 @@
-export * from './trialEntryGuard.middleware.ts';
-export { default } from './trialEntryGuard.middleware.ts';
+export * from './trialEntryGuard.middleware.js';
+export { default } from './trialEntryGuard.middleware.js';

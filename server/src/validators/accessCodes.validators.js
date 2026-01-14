@@ -1,2 +1,2 @@
-export * from './accessCodes.validators.ts';
-export { default } from './accessCodes.validators.ts';
+export * from './accessCodes.validators.js';
+export { default } from './accessCodes.validators.js';

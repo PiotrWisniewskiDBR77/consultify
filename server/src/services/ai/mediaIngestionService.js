@@ -1,2 +1,2 @@
-export * from './mediaIngestionService.ts';
-export { default } from './mediaIngestionService.ts';
+export * from './mediaIngestionService.js';
+export { default } from './mediaIngestionService.js';

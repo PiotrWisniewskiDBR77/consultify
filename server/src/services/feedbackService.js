@@ -1,2 +1,2 @@
-export * from './feedbackService.ts';
-export { default } from './feedbackService.ts';
+export * from './feedbackService.js';
+export { default } from './feedbackService.js';

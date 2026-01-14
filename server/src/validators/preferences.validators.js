@@ -1,2 +1,2 @@
-export * from './preferences.validators.ts';
-export { default } from './preferences.validators.ts';
+export * from './preferences.validators.js';
+export { default } from './preferences.validators.js';

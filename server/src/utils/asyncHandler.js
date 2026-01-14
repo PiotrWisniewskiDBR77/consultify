@@ -1,2 +1,2 @@
-export * from './asyncHandler.ts';
-export { default } from './asyncHandler.ts';
+export * from './asyncHandler.js';
+export { default } from './asyncHandler.js';

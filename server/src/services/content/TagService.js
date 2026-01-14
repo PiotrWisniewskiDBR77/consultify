@@ -1,2 +1,2 @@
-export * from './TagService.ts';
-export { default } from './TagService.ts';
+export * from './TagService.js';
+export { default } from './TagService.js';

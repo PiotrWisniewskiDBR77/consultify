@@ -1,2 +1,2 @@
-export * from './featureFlags.routes.ts';
-export { default } from './featureFlags.routes.ts';
+export * from './featureFlags.routes.js';
+export { default } from './featureFlags.routes.js';

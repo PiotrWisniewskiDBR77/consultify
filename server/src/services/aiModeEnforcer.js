@@ -1,2 +1,2 @@
-export * from './aiModeEnforcer.ts';
-export { default } from './aiModeEnforcer.ts';
+export * from './aiModeEnforcer.js';
+export { default } from './aiModeEnforcer.js';

@@ -1,2 +1,2 @@
-export * from './llmHealth.validators.ts';
-export { default } from './llmHealth.validators.ts';
+export * from './llmHealth.validators.js';
+export { default } from './llmHealth.validators.js';

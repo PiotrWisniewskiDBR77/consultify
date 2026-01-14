@@ -1,2 +1,2 @@
-export * from './HealthCheckJob.ts';
-export { default } from './HealthCheckJob.ts';
+export * from './HealthCheckJob.js';
+export { default } from './HealthCheckJob.js';

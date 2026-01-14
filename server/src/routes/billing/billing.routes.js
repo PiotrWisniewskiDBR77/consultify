@@ -1,2 +1,2 @@
-export * from './billing.routes.ts';
-export { default } from './billing.routes.ts';
+export * from './billing.routes.js';
+export { default } from './billing.routes.js';

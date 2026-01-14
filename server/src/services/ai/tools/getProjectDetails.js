@@ -1,2 +1,2 @@
-export * from './getProjectDetails.ts';
-export { default } from './getProjectDetails.ts';
+export * from './getProjectDetails.js';
+export { default } from './getProjectDetails.js';

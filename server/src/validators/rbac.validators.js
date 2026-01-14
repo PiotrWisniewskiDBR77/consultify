@@ -1,2 +1,2 @@
-export * from './rbac.validators.ts';
-export { default } from './rbac.validators.ts';
+export * from './rbac.validators.js';
+export { default } from './rbac.validators.js';

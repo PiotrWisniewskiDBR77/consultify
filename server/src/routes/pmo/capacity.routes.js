@@ -1,2 +1,2 @@
-export * from './capacity.routes.ts';
-export { default } from './capacity.routes.ts';
+export * from './capacity.routes.js';
+export { default } from './capacity.routes.js';

@@ -1,2 +1,2 @@
-export * from './media-ingestion.validators.ts';
-export { default } from './media-ingestion.validators.ts';
+export * from './media-ingestion.validators.js';
+export { default } from './media-ingestion.validators.js';

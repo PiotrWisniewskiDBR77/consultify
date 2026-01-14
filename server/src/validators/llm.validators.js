@@ -1,2 +1,2 @@
-export * from './llm.validators.ts';
-export { default } from './llm.validators.ts';
+export * from './llm.validators.js';
+export { default } from './llm.validators.js';

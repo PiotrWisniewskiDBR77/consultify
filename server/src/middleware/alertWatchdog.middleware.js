@@ -1,2 +1,2 @@
-export * from './alertWatchdog.middleware.ts';
-export { default } from './alertWatchdog.middleware.ts';
+export * from './alertWatchdog.middleware.js';
+export { default } from './alertWatchdog.middleware.js';

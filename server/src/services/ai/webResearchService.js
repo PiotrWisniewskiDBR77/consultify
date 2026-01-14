@@ -1,2 +1,2 @@
-export * from './webResearchService.ts';
-export { default } from './webResearchService.ts';
+export * from './webResearchService.js';
+export { default } from './webResearchService.js';

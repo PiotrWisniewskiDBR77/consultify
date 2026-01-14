@@ -1,2 +1,2 @@
-export * from './youtubeProcessor.ts';
-export { default } from './youtubeProcessor.ts';
+export * from './youtubeProcessor.js';
+export { default } from './youtubeProcessor.js';

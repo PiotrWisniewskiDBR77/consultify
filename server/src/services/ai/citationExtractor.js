@@ -1,2 +1,2 @@
-export * from './citationExtractor.ts';
-export { default } from './citationExtractor.ts';
+export * from './citationExtractor.js';
+export { default } from './citationExtractor.js';

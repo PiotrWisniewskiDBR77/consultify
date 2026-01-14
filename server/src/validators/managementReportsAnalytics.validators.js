@@ -1,2 +1,2 @@
-export * from './managementReportsAnalytics.validators.ts';
-export { default } from './managementReportsAnalytics.validators.ts';
+export * from './managementReportsAnalytics.validators.js';
+export { default } from './managementReportsAnalytics.validators.js';

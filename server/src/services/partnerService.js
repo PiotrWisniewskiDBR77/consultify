@@ -1,2 +1,2 @@
-export * from './partnerService.ts';
-export { default } from './partnerService.ts';
+export * from './partnerService.js';
+export { default } from './partnerService.js';

@@ -1,2 +1,2 @@
-export * from './aiDecisionGovernance.ts';
-export { default } from './aiDecisionGovernance.ts';
+export * from './aiDecisionGovernance.js';
+export { default } from './aiDecisionGovernance.js';

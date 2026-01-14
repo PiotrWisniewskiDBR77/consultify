@@ -1,2 +1,2 @@
-export * from './knowledge.validators.ts';
-export { default } from './knowledge.validators.ts';
+export * from './knowledge.validators.js';
+export { default } from './knowledge.validators.js';

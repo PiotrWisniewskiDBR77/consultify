@@ -1,2 +1,2 @@
-export * from './aiExternalDataControl.ts';
-export { default } from './aiExternalDataControl.ts';
+export * from './aiExternalDataControl.js';
+export { default } from './aiExternalDataControl.js';

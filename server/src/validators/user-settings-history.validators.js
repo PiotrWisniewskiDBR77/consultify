@@ -1,2 +1,2 @@
-export * from './user-settings-history.validators.ts';
-export { default } from './user-settings-history.validators.ts';
+export * from './user-settings-history.validators.js';
+export { default } from './user-settings-history.validators.js';

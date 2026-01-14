@@ -1,2 +1,2 @@
-export * from './invitationService.ts';
-export { default } from './invitationService.ts';
+export * from './invitationService.js';
+export { default } from './invitationService.js';

@@ -1,2 +1,2 @@
-export * from './gdpr.validators.ts';
-export { default } from './gdpr.validators.ts';
+export * from './gdpr.validators.js';
+export { default } from './gdpr.validators.js';

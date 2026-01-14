@@ -1,2 +1,2 @@
-export * from './user-security-advanced.routes.ts';
-export { default } from './user-security-advanced.routes.ts';
+export * from './user-security-advanced.routes.js';
+export { default } from './user-security-advanced.routes.js';

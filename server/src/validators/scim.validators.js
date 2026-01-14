@@ -1,2 +1,2 @@
-export * from './scim.validators.ts';
-export { default } from './scim.validators.ts';
+export * from './scim.validators.js';
+export { default } from './scim.validators.js';

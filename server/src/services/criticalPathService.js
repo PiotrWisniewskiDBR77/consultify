@@ -1,2 +1,2 @@
-export * from './criticalPathService.ts';
-export { default } from './criticalPathService.ts';
+export * from './criticalPathService.js';
+export { default } from './criticalPathService.js';

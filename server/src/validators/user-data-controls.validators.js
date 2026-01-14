@@ -1,2 +1,2 @@
-export * from './user-data-controls.validators.ts';
-export { default } from './user-data-controls.validators.ts';
+export * from './user-data-controls.validators.js';
+export { default } from './user-data-controls.validators.js';

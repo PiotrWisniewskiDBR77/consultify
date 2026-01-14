@@ -1,2 +1,2 @@
-export * from './speechToTextService.ts';
-export { default } from './speechToTextService.ts';
+export * from './speechToTextService.js';
+export { default } from './speechToTextService.js';

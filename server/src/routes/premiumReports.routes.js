@@ -1,2 +1,2 @@
-export * from './premiumReports.routes.ts';
-export { default } from './premiumReports.routes.ts';
+export * from './premiumReports.routes.js';
+export { default } from './premiumReports.routes.js';

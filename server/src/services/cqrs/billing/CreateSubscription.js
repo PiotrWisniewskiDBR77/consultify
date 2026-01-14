@@ -1,2 +1,2 @@
-export * from './CreateSubscription.ts';
-export { default } from './CreateSubscription.ts';
+export * from './CreateSubscription.js';
+export { default } from './CreateSubscription.js';

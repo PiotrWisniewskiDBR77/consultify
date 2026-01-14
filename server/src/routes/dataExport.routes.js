@@ -1,2 +1,2 @@
-export * from './dataExport.routes.ts';
-export { default } from './dataExport.routes.ts';
+export * from './dataExport.routes.js';
+export { default } from './dataExport.routes.js';

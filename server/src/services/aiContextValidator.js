@@ -1,2 +1,2 @@
-export * from './aiContextValidator.ts';
-export { default } from './aiContextValidator.ts';
+export * from './aiContextValidator.js';
+export { default } from './aiContextValidator.js';

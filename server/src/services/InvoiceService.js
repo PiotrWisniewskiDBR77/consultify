@@ -1,2 +1,2 @@
-export * from './InvoiceService.ts';
-export { default } from './InvoiceService.ts';
+export * from './InvoiceService.js';
+export { default } from './InvoiceService.js';

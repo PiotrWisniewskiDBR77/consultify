@@ -1,2 +1,2 @@
-export * from './aiOrchestrator.ts';
-export { default } from './aiOrchestrator.ts';
+export * from './aiOrchestrator.js';
+export { default } from './aiOrchestrator.js';

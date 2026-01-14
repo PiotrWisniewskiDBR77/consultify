@@ -1,2 +1,2 @@
-export * from './demoGuard.middleware.ts';
-export { default } from './demoGuard.middleware.ts';
+export * from './demoGuard.middleware.js';
+export { default } from './demoGuard.middleware.js';

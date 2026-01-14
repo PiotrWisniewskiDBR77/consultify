@@ -1,2 +1,2 @@
-export * from './reportPipeline.ts';
-export { default } from './reportPipeline.ts';
+export * from './reportPipeline.js';
+export { default } from './reportPipeline.js';

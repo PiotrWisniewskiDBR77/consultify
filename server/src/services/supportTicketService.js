@@ -1,2 +1,2 @@
-export * from './supportTicketService.ts';
-export { default } from './supportTicketService.ts';
+export * from './supportTicketService.js';
+export { default } from './supportTicketService.js';

@@ -1,2 +1,2 @@
-export * from './integrationService.ts';
-export { default } from './integrationService.ts';
+export * from './integrationService.js';
+export { default } from './integrationService.js';

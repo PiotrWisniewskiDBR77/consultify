@@ -1,2 +1,2 @@
-export * from './helpAnalytics.routes.ts';
-export { default } from './helpAnalytics.routes.ts';
+export * from './helpAnalytics.routes.js';
+export { default } from './helpAnalytics.routes.js';

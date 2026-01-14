@@ -1,2 +1,2 @@
-export * from './prompt-assistant.validators.ts';
-export { default } from './prompt-assistant.validators.ts';
+export * from './prompt-assistant.validators.js';
+export { default } from './prompt-assistant.validators.js';

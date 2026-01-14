@@ -1,2 +1,2 @@
-export * from './registry.ts';
-export { default } from './registry.ts';
+export * from './registry.js';
+export { default } from './registry.js';

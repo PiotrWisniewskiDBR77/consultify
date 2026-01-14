@@ -1,2 +1,2 @@
-export * from './demoSessionService.ts';
-export { default } from './demoSessionService.ts';
+export * from './demoSessionService.js';
+export { default } from './demoSessionService.js';

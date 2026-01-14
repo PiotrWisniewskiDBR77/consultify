@@ -1,2 +1,2 @@
-export * from './statusMachine.ts';
-export { default } from './statusMachine.ts';
+export * from './statusMachine.js';
+export { default } from './statusMachine.js';

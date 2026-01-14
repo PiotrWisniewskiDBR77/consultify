@@ -1,2 +1,2 @@
-export * from './workstreams.validators.ts';
-export { default } from './workstreams.validators.ts';
+export * from './workstreams.validators.js';
+export { default } from './workstreams.validators.js';

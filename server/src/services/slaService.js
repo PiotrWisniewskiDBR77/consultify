@@ -1,2 +1,2 @@
-export * from './slaService.ts';
-export { default } from './slaService.ts';
+export * from './slaService.js';
+export { default } from './slaService.js';

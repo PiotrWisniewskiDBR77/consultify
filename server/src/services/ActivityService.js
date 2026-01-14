@@ -1,2 +1,2 @@
-export * from './ActivityService.ts';
-export { default } from './ActivityService.ts';
+export * from './ActivityService.js';
+export { default } from './ActivityService.js';

@@ -1,2 +1,2 @@
-export * from './aiHealthService.ts';
-export { default } from './aiHealthService.ts';
+export * from './aiHealthService.js';
+export { default } from './aiHealthService.js';

@@ -1,2 +1,2 @@
-export * from './ai-infrastructure.routes.ts';
-export { default } from './ai-infrastructure.routes.ts';
+export * from './ai-infrastructure.routes.js';
+export { default } from './ai-infrastructure.routes.js';

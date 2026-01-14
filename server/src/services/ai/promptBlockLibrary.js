@@ -1,2 +1,2 @@
-export * from './promptBlockLibrary.ts';
-export { default } from './promptBlockLibrary.ts';
+export * from './promptBlockLibrary.js';
+export { default } from './promptBlockLibrary.js';

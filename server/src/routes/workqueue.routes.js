@@ -1,2 +1,2 @@
-export * from './workqueue.routes.ts';
-export { default } from './workqueue.routes.ts';
+export * from './workqueue.routes.js';
+export { default } from './workqueue.routes.js';

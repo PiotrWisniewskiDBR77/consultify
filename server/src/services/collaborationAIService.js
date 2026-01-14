@@ -1,2 +1,2 @@
-export * from './collaborationAIService.ts';
-export { default } from './collaborationAIService.ts';
+export * from './collaborationAIService.js';
+export { default } from './collaborationAIService.js';

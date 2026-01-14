@@ -1,2 +1,2 @@
-export * from './aiExplain.validators.ts';
-export { default } from './aiExplain.validators.ts';
+export * from './aiExplain.validators.js';
+export { default } from './aiExplain.validators.js';

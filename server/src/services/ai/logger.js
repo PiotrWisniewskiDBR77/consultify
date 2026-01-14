@@ -1,2 +1,2 @@
-export * from './logger.ts';
-export { default } from './logger.ts';
+export * from './logger.js';
+export { default } from './logger.js';

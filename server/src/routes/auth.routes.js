@@ -1,2 +1,2 @@
-export * from './auth.routes.ts';
-export { default } from './auth.routes.ts';
+export * from './auth.routes.js';
+export { default } from './auth.routes.js';

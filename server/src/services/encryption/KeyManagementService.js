@@ -1,2 +1,2 @@
-export * from './KeyManagementService.ts';
-export { default } from './KeyManagementService.ts';
+export * from './KeyManagementService.js';
+export { default } from './KeyManagementService.js';

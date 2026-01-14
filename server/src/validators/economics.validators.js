@@ -1,2 +1,2 @@
-export * from './economics.validators.ts';
-export { default } from './economics.validators.ts';
+export * from './economics.validators.js';
+export { default } from './economics.validators.js';

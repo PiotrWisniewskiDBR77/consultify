@@ -1,2 +1,2 @@
-export * from './learningSystem.ts';
-export { default } from './learningSystem.ts';
+export * from './learningSystem.js';
+export { default } from './learningSystem.js';

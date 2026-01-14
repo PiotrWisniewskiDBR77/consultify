@@ -1,2 +1,2 @@
-export * from './sso.validators.ts';
-export { default } from './sso.validators.ts';
+export * from './sso.validators.js';
+export { default } from './sso.validators.js';

@@ -1,2 +1,2 @@
-export * from './organizationMetadataService.ts';
-export { default } from './organizationMetadataService.ts';
+export * from './organizationMetadataService.js';
+export { default } from './organizationMetadataService.js';

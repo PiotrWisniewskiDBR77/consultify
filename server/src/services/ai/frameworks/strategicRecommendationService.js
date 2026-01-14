@@ -1,2 +1,2 @@
-export * from './strategicRecommendationService.ts';
-export { default } from './strategicRecommendationService.ts';
+export * from './strategicRecommendationService.js';
+export { default } from './strategicRecommendationService.js';

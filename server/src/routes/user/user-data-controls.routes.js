@@ -1,2 +1,2 @@
-export * from './user-data-controls.routes.ts';
-export { default } from './user-data-controls.routes.ts';
+export * from './user-data-controls.routes.js';
+export { default } from './user-data-controls.routes.js';

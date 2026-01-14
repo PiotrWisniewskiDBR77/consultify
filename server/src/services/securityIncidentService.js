@@ -1,2 +1,2 @@
-export * from './securityIncidentService.ts';
-export { default } from './securityIncidentService.ts';
+export * from './securityIncidentService.js';
+export { default } from './securityIncidentService.js';

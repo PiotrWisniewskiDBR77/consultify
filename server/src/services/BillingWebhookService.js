@@ -1,2 +1,2 @@
-export * from './BillingWebhookService.ts';
-export { default } from './BillingWebhookService.ts';
+export * from './BillingWebhookService.js';
+export { default } from './BillingWebhookService.js';

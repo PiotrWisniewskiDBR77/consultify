@@ -1,2 +1,2 @@
-export * from './ai.types.ts';
-export { default } from './ai.types.ts';
+export * from './ai.types.js';
+export { default } from './ai.types.js';

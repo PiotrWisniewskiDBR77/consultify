@@ -1,2 +1,2 @@
-export * from './aiRoleGuard.ts';
-export { default } from './aiRoleGuard.ts';
+export * from './aiRoleGuard.js';
+export { default } from './aiRoleGuard.js';

@@ -1,2 +1,2 @@
-export * from './budgets.validators.ts';
-export { default } from './budgets.validators.ts';
+export * from './budgets.validators.js';
+export { default } from './budgets.validators.js';

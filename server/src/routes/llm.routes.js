@@ -1,2 +1,2 @@
-export * from './llm.routes.ts';
-export { default } from './llm.routes.ts';
+export * from './llm.routes.js';
+export { default } from './llm.routes.js';

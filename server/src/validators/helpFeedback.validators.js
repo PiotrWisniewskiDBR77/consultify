@@ -1,2 +1,2 @@
-export * from './helpFeedback.validators.ts';
-export { default } from './helpFeedback.validators.ts';
+export * from './helpFeedback.validators.js';
+export { default } from './helpFeedback.validators.js';

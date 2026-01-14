@@ -1,2 +1,2 @@
-export * from './types.ts';
-export { default } from './types.ts';
+export * from './types.js';
+export { default } from './types.js';

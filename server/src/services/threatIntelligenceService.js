@@ -1,2 +1,2 @@
-export * from './threatIntelligenceService.ts';
-export { default } from './threatIntelligenceService.ts';
+export * from './threatIntelligenceService.js';
+export { default } from './threatIntelligenceService.js';

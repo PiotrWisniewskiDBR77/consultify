@@ -1,2 +1,2 @@
-export * from './DatabaseMetrics.ts';
-export { default } from './DatabaseMetrics.ts';
+export * from './DatabaseMetrics.js';
+export { default } from './DatabaseMetrics.js';

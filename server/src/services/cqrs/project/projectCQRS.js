@@ -1,2 +1,2 @@
-export * from './projectCQRS.ts';
-export { default } from './projectCQRS.ts';
+export * from './projectCQRS.js';
+export { default } from './projectCQRS.js';

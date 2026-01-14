@@ -1,2 +1,2 @@
-export * from './connectorHealthService.ts';
-export { default } from './connectorHealthService.ts';
+export * from './connectorHealthService.js';
+export { default } from './connectorHealthService.js';

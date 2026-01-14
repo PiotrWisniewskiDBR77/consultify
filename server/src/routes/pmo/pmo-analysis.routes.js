@@ -1,2 +1,2 @@
-export * from './pmo-analysis.routes.ts';
-export { default } from './pmo-analysis.routes.ts';
+export * from './pmo-analysis.routes.js';
+export { default } from './pmo-analysis.routes.js';

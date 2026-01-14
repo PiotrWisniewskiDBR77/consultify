@@ -1,2 +1,2 @@
-export * from './AIPipeline.ts';
-export { default } from './AIPipeline.ts';
+export * from './AIPipeline.js';
+export { default } from './AIPipeline.js';

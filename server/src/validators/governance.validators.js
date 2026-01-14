@@ -1,2 +1,2 @@
-export * from './governance.validators.ts';
-export { default } from './governance.validators.ts';
+export * from './governance.validators.js';
+export { default } from './governance.validators.js';

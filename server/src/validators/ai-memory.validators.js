@@ -1,2 +1,2 @@
-export * from './ai-memory.validators.ts';
-export { default } from './ai-memory.validators.ts';
+export * from './ai-memory.validators.js';
+export { default } from './ai-memory.validators.js';

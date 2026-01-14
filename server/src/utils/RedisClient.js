@@ -1,2 +1,2 @@
-export * from './RedisClient.ts';
-export { default } from './RedisClient.ts';
+export * from './RedisClient.js';
+export { default } from './RedisClient.js';

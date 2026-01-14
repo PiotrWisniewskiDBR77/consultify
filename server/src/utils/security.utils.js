@@ -1,2 +1,2 @@
-export * from './security.utils.ts';
-export { default } from './security.utils.ts';
+export * from './security.utils.js';
+export { default } from './security.utils.js';

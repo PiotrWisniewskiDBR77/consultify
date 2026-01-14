@@ -1,2 +1,2 @@
-export * from './cacheService.ts';
-export { default } from './cacheService.ts';
+export * from './cacheService.js';
+export { default } from './cacheService.js';

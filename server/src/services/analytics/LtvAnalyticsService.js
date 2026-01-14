@@ -1,2 +1,2 @@
-export * from './LtvAnalyticsService.ts';
-export { default } from './LtvAnalyticsService.ts';
+export * from './LtvAnalyticsService.js';
+export { default } from './LtvAnalyticsService.js';

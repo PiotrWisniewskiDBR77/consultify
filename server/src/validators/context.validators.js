@@ -1,2 +1,2 @@
-export * from './context.validators.ts';
-export { default } from './context.validators.ts';
+export * from './context.validators.js';
+export { default } from './context.validators.js';

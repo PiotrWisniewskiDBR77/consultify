@@ -1,2 +1,2 @@
-export * from './conversationTracker.ts';
-export { default } from './conversationTracker.ts';
+export * from './conversationTracker.js';
+export { default } from './conversationTracker.js';

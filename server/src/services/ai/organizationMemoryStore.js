@@ -1,2 +1,2 @@
-export * from './organizationMemoryStore.ts';
-export { default } from './organizationMemoryStore.ts';
+export * from './organizationMemoryStore.js';
+export { default } from './organizationMemoryStore.js';

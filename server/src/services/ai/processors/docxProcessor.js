@@ -1,2 +1,2 @@
-export * from './docxProcessor.ts';
-export { default } from './docxProcessor.ts';
+export * from './docxProcessor.js';
+export { default } from './docxProcessor.js';

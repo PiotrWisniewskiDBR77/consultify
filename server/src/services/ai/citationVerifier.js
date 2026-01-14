@@ -1,2 +1,2 @@
-export * from './citationVerifier.ts';
-export { default } from './citationVerifier.ts';
+export * from './citationVerifier.js';
+export { default } from './citationVerifier.js';

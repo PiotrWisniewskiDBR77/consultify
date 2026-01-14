@@ -1,2 +1,2 @@
-export * from './spreadsheetProcessor.ts';
-export { default } from './spreadsheetProcessor.ts';
+export * from './spreadsheetProcessor.js';
+export { default } from './spreadsheetProcessor.js';

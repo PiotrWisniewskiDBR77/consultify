@@ -1,2 +1,2 @@
-export * from './aiAsync.routes.ts';
-export { default } from './aiAsync.routes.ts';
+export * from './aiAsync.routes.js';
+export { default } from './aiAsync.routes.js';

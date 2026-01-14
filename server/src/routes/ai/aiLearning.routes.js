@@ -1,2 +1,2 @@
-export * from './aiLearning.routes.ts';
-export { default } from './aiLearning.routes.ts';
+export * from './aiLearning.routes.js';
+export { default } from './aiLearning.routes.js';

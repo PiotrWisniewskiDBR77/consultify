@@ -1,2 +1,2 @@
-export * from './auditLogger.ts';
-export { default } from './auditLogger.ts';
+export * from './auditLogger.js';
+export { default } from './auditLogger.js';

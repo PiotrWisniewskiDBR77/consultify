@@ -1,2 +1,2 @@
-export * from './performanceOptimizer.ts';
-export { default } from './performanceOptimizer.ts';
+export * from './performanceOptimizer.js';
+export { default } from './performanceOptimizer.js';

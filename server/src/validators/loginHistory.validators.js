@@ -1,2 +1,2 @@
-export * from './loginHistory.validators.ts';
-export { default } from './loginHistory.validators.ts';
+export * from './loginHistory.validators.js';
+export { default } from './loginHistory.validators.js';

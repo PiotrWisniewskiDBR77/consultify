@@ -1,2 +1,2 @@
-export * from './helpChat.validators.ts';
-export { default } from './helpChat.validators.ts';
+export * from './helpChat.validators.js';
+export { default } from './helpChat.validators.js';

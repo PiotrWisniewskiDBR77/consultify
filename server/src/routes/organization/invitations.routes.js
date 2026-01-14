@@ -1,2 +1,2 @@
-export * from './invitations.routes.ts';
-export { default } from './invitations.routes.ts';
+export * from './invitations.routes.js';
+export { default } from './invitations.routes.js';

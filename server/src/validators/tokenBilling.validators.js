@@ -1,2 +1,2 @@
-export * from './tokenBilling.validators.ts';
-export { default } from './tokenBilling.validators.ts';
+export * from './tokenBilling.validators.js';
+export { default } from './tokenBilling.validators.js';

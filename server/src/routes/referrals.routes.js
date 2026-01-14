@@ -1,2 +1,2 @@
-export * from './referrals.routes.ts';
-export { default } from './referrals.routes.ts';
+export * from './referrals.routes.js';
+export { default } from './referrals.routes.js';

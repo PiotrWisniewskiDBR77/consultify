@@ -1,2 +1,2 @@
-export * from './multi-framework-workflow.routes.ts';
-export { default } from './multi-framework-workflow.routes.ts';
+export * from './multi-framework-workflow.routes.js';
+export { default } from './multi-framework-workflow.routes.js';

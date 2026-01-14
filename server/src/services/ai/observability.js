@@ -1,2 +1,2 @@
-export * from './observability.ts';
-export { default } from './observability.ts';
+export * from './observability.js';
+export { default } from './observability.js';

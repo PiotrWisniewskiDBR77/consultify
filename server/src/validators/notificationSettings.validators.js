@@ -1,2 +1,2 @@
-export * from './notificationSettings.validators.ts';
-export { default } from './notificationSettings.validators.ts';
+export * from './notificationSettings.validators.js';
+export { default } from './notificationSettings.validators.js';

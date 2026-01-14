@@ -1,2 +1,2 @@
-export * from './AccessResourceService.ts';
-export { default } from './AccessResourceService.ts';
+export * from './AccessResourceService.js';
+export { default } from './AccessResourceService.js';

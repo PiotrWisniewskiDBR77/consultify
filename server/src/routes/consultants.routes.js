@@ -1,2 +1,2 @@
-export * from './consultants.routes.ts';
-export { default } from './consultants.routes.ts';
+export * from './consultants.routes.js';
+export { default } from './consultants.routes.js';

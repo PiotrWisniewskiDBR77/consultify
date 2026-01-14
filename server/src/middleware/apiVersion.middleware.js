@@ -1,2 +1,2 @@
-export * from './apiVersion.middleware.ts';
-export { default } from './apiVersion.middleware.ts';
+export * from './apiVersion.middleware.js';
+export { default } from './apiVersion.middleware.js';

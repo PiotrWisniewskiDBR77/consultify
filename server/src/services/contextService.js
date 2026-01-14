@@ -1,2 +1,2 @@
-export * from './contextService.ts';
-export { default } from './contextService.ts';
+export * from './contextService.js';
+export { default } from './contextService.js';

@@ -1,2 +1,2 @@
-export * from './urlProcessor.ts';
-export { default } from './urlProcessor.ts';
+export * from './urlProcessor.js';
+export { default } from './urlProcessor.js';

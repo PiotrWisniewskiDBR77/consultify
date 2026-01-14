@@ -1,2 +1,2 @@
-export * from './promptAssistant.ts';
-export { default } from './promptAssistant.ts';
+export * from './promptAssistant.js';
+export { default } from './promptAssistant.js';

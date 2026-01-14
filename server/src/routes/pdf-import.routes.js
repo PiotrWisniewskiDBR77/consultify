@@ -1,2 +1,2 @@
-export * from './pdf-import.routes.ts';
-export { default } from './pdf-import.routes.ts';
+export * from './pdf-import.routes.js';
+export { default } from './pdf-import.routes.js';

@@ -1,2 +1,2 @@
-export * from './systemConfig.validators.ts';
-export { default } from './systemConfig.validators.ts';
+export * from './systemConfig.validators.js';
+export { default } from './systemConfig.validators.js';

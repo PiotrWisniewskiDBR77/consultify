@@ -1,2 +1,2 @@
-export * from './onboarding.validators.ts';
-export { default } from './onboarding.validators.ts';
+export * from './onboarding.validators.js';
+export { default } from './onboarding.validators.js';

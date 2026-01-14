@@ -1,2 +1,2 @@
-export * from './FavoriteService.ts';
-export { default } from './FavoriteService.ts';
+export * from './FavoriteService.js';
+export { default } from './FavoriteService.js';

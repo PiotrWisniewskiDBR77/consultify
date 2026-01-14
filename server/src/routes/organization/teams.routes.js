@@ -1,2 +1,2 @@
-export * from './teams.routes.ts';
-export { default } from './teams.routes.ts';
+export * from './teams.routes.js';
+export { default } from './teams.routes.js';

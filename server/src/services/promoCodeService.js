@@ -1,2 +1,2 @@
-export * from './promoCodeService.ts';
-export { default } from './promoCodeService.ts';
+export * from './promoCodeService.js';
+export { default } from './promoCodeService.js';

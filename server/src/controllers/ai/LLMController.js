@@ -1,2 +1,2 @@
-export * from './LLMController.ts';
-export { default } from './LLMController.ts';
+export * from './LLMController.js';
+export { default } from './LLMController.js';

@@ -1,2 +1,2 @@
-export * from './performance-metrics.routes.ts';
-export { default } from './performance-metrics.routes.ts';
+export * from './performance-metrics.routes.js';
+export { default } from './performance-metrics.routes.js';

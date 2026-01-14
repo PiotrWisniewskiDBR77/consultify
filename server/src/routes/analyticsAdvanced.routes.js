@@ -1,2 +1,2 @@
-export * from './analyticsAdvanced.routes.ts';
-export { default } from './analyticsAdvanced.routes.ts';
+export * from './analyticsAdvanced.routes.js';
+export { default } from './analyticsAdvanced.routes.js';

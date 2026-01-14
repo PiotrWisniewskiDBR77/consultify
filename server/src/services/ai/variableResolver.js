@@ -1,2 +1,2 @@
-export * from './variableResolver.ts';
-export { default } from './variableResolver.ts';
+export * from './variableResolver.js';
+export { default } from './variableResolver.js';

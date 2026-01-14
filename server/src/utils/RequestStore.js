@@ -1,2 +1,2 @@
-export * from './RequestStore.ts';
-export { default } from './RequestStore.ts';
+export * from './RequestStore.js';
+export { default } from './RequestStore.js';

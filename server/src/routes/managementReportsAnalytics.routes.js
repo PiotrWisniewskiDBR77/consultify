@@ -1,2 +1,2 @@
-export * from './managementReportsAnalytics.routes.ts';
-export { default } from './managementReportsAnalytics.routes.ts';
+export * from './managementReportsAnalytics.routes.js';
+export { default } from './managementReportsAnalytics.routes.js';

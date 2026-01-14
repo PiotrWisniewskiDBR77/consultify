@@ -1,2 +1,2 @@
-export * from './currencyService.ts';
-export { default } from './currencyService.ts';
+export * from './currencyService.js';
+export { default } from './currencyService.js';

@@ -1,2 +1,2 @@
-export * from './promptTemplateService.ts';
-export { default } from './promptTemplateService.ts';
+export * from './promptTemplateService.js';
+export { default } from './promptTemplateService.js';

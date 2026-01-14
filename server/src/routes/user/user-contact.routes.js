@@ -1,2 +1,2 @@
-export * from './user-contact.routes.ts';
-export { default } from './user-contact.routes.ts';
+export * from './user-contact.routes.js';
+export { default } from './user-contact.routes.js';

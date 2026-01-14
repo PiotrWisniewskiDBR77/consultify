@@ -1,2 +1,2 @@
-export * from './AccessTypes.ts';
-export { default } from './AccessTypes.ts';
+export * from './AccessTypes.js';
+export { default } from './AccessTypes.js';

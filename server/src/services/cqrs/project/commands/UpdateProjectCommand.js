@@ -1,2 +1,2 @@
-export * from './UpdateProjectCommand.ts';
-export { default } from './UpdateProjectCommand.ts';
+export * from './UpdateProjectCommand.js';
+export { default } from './UpdateProjectCommand.js';

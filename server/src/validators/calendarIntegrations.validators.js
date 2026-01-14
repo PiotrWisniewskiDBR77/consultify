@@ -1,2 +1,2 @@
-export * from './calendarIntegrations.validators.ts';
-export { default } from './calendarIntegrations.validators.ts';
+export * from './calendarIntegrations.validators.js';
+export { default } from './calendarIntegrations.validators.js';

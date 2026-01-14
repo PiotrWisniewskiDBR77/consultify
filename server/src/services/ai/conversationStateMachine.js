@@ -1,2 +1,2 @@
-export * from './conversationStateMachine.ts';
-export { default } from './conversationStateMachine.ts';
+export * from './conversationStateMachine.js';
+export { default } from './conversationStateMachine.js';

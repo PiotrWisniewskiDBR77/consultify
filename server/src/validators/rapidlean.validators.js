@@ -1,2 +1,2 @@
-export * from './rapidlean.validators.ts';
-export { default } from './rapidlean.validators.ts';
+export * from './rapidlean.validators.js';
+export { default } from './rapidlean.validators.js';

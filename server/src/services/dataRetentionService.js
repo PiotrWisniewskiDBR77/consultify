@@ -1,2 +1,2 @@
-export * from './dataRetentionService.ts';
-export { default } from './dataRetentionService.ts';
+export * from './dataRetentionService.js';
+export { default } from './dataRetentionService.js';

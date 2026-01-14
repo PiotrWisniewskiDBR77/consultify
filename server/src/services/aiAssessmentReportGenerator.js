@@ -1,2 +1,2 @@
-export * from './aiAssessmentReportGenerator.ts';
-export { default } from './aiAssessmentReportGenerator.ts';
+export * from './aiAssessmentReportGenerator.js';
+export { default } from './aiAssessmentReportGenerator.js';

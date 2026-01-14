@@ -1,2 +1,2 @@
-export * from './decision.validators.ts';
-export { default } from './decision.validators.ts';
+export * from './decision.validators.js';
+export { default } from './decision.validators.js';

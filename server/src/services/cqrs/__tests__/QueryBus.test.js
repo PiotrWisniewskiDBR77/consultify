@@ -1,2 +1,2 @@
-export * from './QueryBus.test.ts';
-export { default } from './QueryBus.test.ts';
+export * from './QueryBus.test.js';
+export { default } from './QueryBus.test.js';

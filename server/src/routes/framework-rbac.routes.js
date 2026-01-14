@@ -1,2 +1,2 @@
-export * from './framework-rbac.routes.ts';
-export { default } from './framework-rbac.routes.ts';
+export * from './framework-rbac.routes.js';
+export { default } from './framework-rbac.routes.js';

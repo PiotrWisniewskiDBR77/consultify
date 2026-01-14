@@ -1,2 +1,2 @@
-export * from './userStateGuard.middleware.ts';
-export { default } from './userStateGuard.middleware.ts';
+export * from './userStateGuard.middleware.js';
+export { default } from './userStateGuard.middleware.js';

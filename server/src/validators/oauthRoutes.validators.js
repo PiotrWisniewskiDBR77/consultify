@@ -1,2 +1,2 @@
-export * from './oauthRoutes.validators.ts';
-export { default } from './oauthRoutes.validators.ts';
+export * from './oauthRoutes.validators.js';
+export { default } from './oauthRoutes.validators.js';

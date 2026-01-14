@@ -1,2 +1,2 @@
-export * from './aiPlaybooks.validators.ts';
-export { default } from './aiPlaybooks.validators.ts';
+export * from './aiPlaybooks.validators.js';
+export { default } from './aiPlaybooks.validators.js';

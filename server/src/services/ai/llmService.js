@@ -1,2 +1,2 @@
-export * from './llmService.ts';
-export { default } from './llmService.ts';
+export * from './llmService.js';
+export { default } from './llmService.js';

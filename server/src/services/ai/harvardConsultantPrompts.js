@@ -1,2 +1,2 @@
-export * from './harvardConsultantPrompts.ts';
-export { default } from './harvardConsultantPrompts.ts';
+export * from './harvardConsultantPrompts.js';
+export { default } from './harvardConsultantPrompts.js';

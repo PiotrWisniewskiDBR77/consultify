@@ -1,2 +1,2 @@
-export * from './permissionRequests.validators.ts';
-export { default } from './permissionRequests.validators.ts';
+export * from './permissionRequests.validators.js';
+export { default } from './permissionRequests.validators.js';

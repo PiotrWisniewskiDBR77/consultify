@@ -1,2 +1,2 @@
-export * from './EncryptionService.ts';
-export { default } from './EncryptionService.ts';
+export * from './EncryptionService.js';
+export { default } from './EncryptionService.js';

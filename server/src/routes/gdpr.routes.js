@@ -1,2 +1,2 @@
-export * from './gdpr.routes.ts';
-export { default } from './gdpr.routes.ts';
+export * from './gdpr.routes.js';
+export { default } from './gdpr.routes.js';

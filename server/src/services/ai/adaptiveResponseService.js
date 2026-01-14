@@ -1,2 +1,2 @@
-export * from './adaptiveResponseService.ts';
-export { default } from './adaptiveResponseService.ts';
+export * from './adaptiveResponseService.js';
+export { default } from './adaptiveResponseService.js';

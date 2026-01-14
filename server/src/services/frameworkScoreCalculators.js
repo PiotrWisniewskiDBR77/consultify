@@ -1,2 +1,2 @@
-export * from './frameworkScoreCalculators.ts';
-export { default } from './frameworkScoreCalculators.ts';
+export * from './frameworkScoreCalculators.js';
+export { default } from './frameworkScoreCalculators.js';

@@ -1,2 +1,2 @@
-export * from './financeAgent.ts';
-export { default } from './financeAgent.ts';
+export * from './financeAgent.js';
+export { default } from './financeAgent.js';

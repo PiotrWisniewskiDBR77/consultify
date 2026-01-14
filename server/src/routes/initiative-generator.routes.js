@@ -1,2 +1,2 @@
-export * from './initiative-generator.routes.ts';
-export { default } from './initiative-generator.routes.ts';
+export * from './initiative-generator.routes.js';
+export { default } from './initiative-generator.routes.js';

@@ -1,2 +1,2 @@
-export * from './intelligence.routes.ts';
-export { default } from './intelligence.routes.ts';
+export * from './intelligence.routes.js';
+export { default } from './intelligence.routes.js';

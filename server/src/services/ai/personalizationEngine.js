@@ -1,2 +1,2 @@
-export * from './personalizationEngine.ts';
-export { default } from './personalizationEngine.ts';
+export * from './personalizationEngine.js';
+export { default } from './personalizationEngine.js';

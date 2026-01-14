@@ -1,2 +1,2 @@
-export * from './llmHealth.routes.ts';
-export { default } from './llmHealth.routes.ts';
+export * from './llmHealth.routes.js';
+export { default } from './llmHealth.routes.js';

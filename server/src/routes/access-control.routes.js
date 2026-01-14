@@ -1,2 +1,2 @@
-export * from './access-control.routes.ts';
-export { default } from './access-control.routes.ts';
+export * from './access-control.routes.js';
+export { default } from './access-control.routes.js';

@@ -1,2 +1,2 @@
-export * from './summarizationService.ts';
-export { default } from './summarizationService.ts';
+export * from './summarizationService.js';
+export { default } from './summarizationService.js';

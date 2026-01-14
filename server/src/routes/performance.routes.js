@@ -1,2 +1,2 @@
-export * from './performance.routes.ts';
-export { default } from './performance.routes.ts';
+export * from './performance.routes.js';
+export { default } from './performance.routes.js';

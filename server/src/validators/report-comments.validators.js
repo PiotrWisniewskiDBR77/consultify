@@ -1,2 +1,2 @@
-export * from './report-comments.validators.ts';
-export { default } from './report-comments.validators.ts';
+export * from './report-comments.validators.js';
+export { default } from './report-comments.validators.js';

@@ -1,2 +1,2 @@
-export * from './responseQualityService.ts';
-export { default } from './responseQualityService.ts';
+export * from './responseQualityService.js';
+export { default } from './responseQualityService.js';

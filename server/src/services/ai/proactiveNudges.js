@@ -1,2 +1,2 @@
-export * from './proactiveNudges.ts';
-export { default } from './proactiveNudges.ts';
+export * from './proactiveNudges.js';
+export { default } from './proactiveNudges.js';

@@ -1,2 +1,2 @@
-export * from './jiraUserIntegration.ts';
-export { default } from './jiraUserIntegration.ts';
+export * from './jiraUserIntegration.js';
+export { default } from './jiraUserIntegration.js';

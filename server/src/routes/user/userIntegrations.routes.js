@@ -1,2 +1,2 @@
-export * from './userIntegrations.routes.ts';
-export { default } from './userIntegrations.routes.ts';
+export * from './userIntegrations.routes.js';
+export { default } from './userIntegrations.routes.js';

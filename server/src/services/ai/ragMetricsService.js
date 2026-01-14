@@ -1,2 +1,2 @@
-export * from './ragMetricsService.ts';
-export { default } from './ragMetricsService.ts';
+export * from './ragMetricsService.js';
+export { default } from './ragMetricsService.js';

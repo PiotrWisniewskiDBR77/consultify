@@ -1,2 +1,2 @@
-export * from './IPlugin.ts';
-export { default } from './IPlugin.ts';
+export * from './IPlugin.js';
+export { default } from './IPlugin.js';

@@ -1,2 +1,2 @@
-export * from './aiBudgetService.ts';
-export { default } from './aiBudgetService.ts';
+export * from './aiBudgetService.js';
+export { default } from './aiBudgetService.js';

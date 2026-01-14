@@ -1,2 +1,2 @@
-export * from './metrics.ts';
-export { default } from './metrics.ts';
+export * from './metrics.js';
+export { default } from './metrics.js';

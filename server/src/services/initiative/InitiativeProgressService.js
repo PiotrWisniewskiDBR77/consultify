@@ -1,2 +1,2 @@
-export * from './InitiativeProgressService.ts';
-export { default } from './InitiativeProgressService.ts';
+export * from './InitiativeProgressService.js';
+export { default } from './InitiativeProgressService.js';

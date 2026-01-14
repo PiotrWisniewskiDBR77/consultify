@@ -1,2 +1,2 @@
-export * from './AISchemaValidator.ts';
-export { default } from './AISchemaValidator.ts';
+export * from './AISchemaValidator.js';
+export { default } from './AISchemaValidator.js';

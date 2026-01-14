@@ -1,2 +1,2 @@
-export * from './ai-security.routes.ts';
-export { default } from './ai-security.routes.ts';
+export * from './ai-security.routes.js';
+export { default } from './ai-security.routes.js';

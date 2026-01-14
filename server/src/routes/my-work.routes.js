@@ -1,2 +1,2 @@
-export * from './my-work.routes.ts';
-export { default } from './my-work.routes.ts';
+export * from './my-work.routes.js';
+export { default } from './my-work.routes.js';

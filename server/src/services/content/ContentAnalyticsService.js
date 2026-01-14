@@ -1,2 +1,2 @@
-export * from './ContentAnalyticsService.ts';
-export { default } from './ContentAnalyticsService.ts';
+export * from './ContentAnalyticsService.js';
+export { default } from './ContentAnalyticsService.js';

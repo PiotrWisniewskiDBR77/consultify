@@ -1,2 +1,2 @@
-export * from './magicWandService.ts';
-export { default } from './magicWandService.ts';
+export * from './magicWandService.js';
+export { default } from './magicWandService.js';

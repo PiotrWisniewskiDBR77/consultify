@@ -1,2 +1,2 @@
-export * from './intentEngine.ts';
-export { default } from './intentEngine.ts';
+export * from './intentEngine.js';
+export { default } from './intentEngine.js';

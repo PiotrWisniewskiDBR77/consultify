@@ -1,2 +1,2 @@
-export * from './governance.routes.ts';
-export { default } from './governance.routes.ts';
+export * from './governance.routes.js';
+export { default } from './governance.routes.js';

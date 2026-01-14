@@ -1,2 +1,2 @@
-export * from './CommandBus.test.ts';
-export { default } from './CommandBus.test.ts';
+export * from './CommandBus.test.js';
+export { default } from './CommandBus.test.js';

@@ -1,2 +1,2 @@
-export * from './imageProcessor.ts';
-export { default } from './imageProcessor.ts';
+export * from './imageProcessor.js';
+export { default } from './imageProcessor.js';

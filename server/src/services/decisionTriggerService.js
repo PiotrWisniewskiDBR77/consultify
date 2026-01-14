@@ -1,2 +1,2 @@
-export * from './decisionTriggerService.ts';
-export { default } from './decisionTriggerService.ts';
+export * from './decisionTriggerService.js';
+export { default } from './decisionTriggerService.js';

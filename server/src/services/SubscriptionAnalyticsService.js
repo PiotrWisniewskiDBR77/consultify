@@ -1,2 +1,2 @@
-export * from './SubscriptionAnalyticsService.ts';
-export { default } from './SubscriptionAnalyticsService.ts';
+export * from './SubscriptionAnalyticsService.js';
+export { default } from './SubscriptionAnalyticsService.js';

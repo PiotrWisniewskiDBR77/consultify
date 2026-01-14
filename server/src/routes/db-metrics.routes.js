@@ -1,2 +1,2 @@
-export * from './db-metrics.routes.ts';
-export { default } from './db-metrics.routes.ts';
+export * from './db-metrics.routes.js';
+export { default } from './db-metrics.routes.js';

@@ -1,2 +1,2 @@
-export * from './api-keys.validators.ts';
-export { default } from './api-keys.validators.ts';
+export * from './api-keys.validators.js';
+export { default } from './api-keys.validators.js';

@@ -1,2 +1,2 @@
-export * from './pmoHealthService.ts';
-export { default } from './pmoHealthService.ts';
+export * from './pmoHealthService.js';
+export { default } from './pmoHealthService.js';

@@ -1,2 +1,2 @@
-export * from './verify.validators.ts';
-export { default } from './verify.validators.ts';
+export * from './verify.validators.js';
+export { default } from './verify.validators.js';

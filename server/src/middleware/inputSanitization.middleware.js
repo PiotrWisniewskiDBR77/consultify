@@ -1,2 +1,2 @@
-export * from './inputSanitization.middleware.ts';
-export { default } from './inputSanitization.middleware.ts';
+export * from './inputSanitization.middleware.js';
+export { default } from './inputSanitization.middleware.js';

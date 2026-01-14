@@ -1,2 +1,2 @@
-export * from './accessCodeService.ts';
-export { default } from './accessCodeService.ts';
+export * from './accessCodeService.js';
+export { default } from './accessCodeService.js';

@@ -1,2 +1,2 @@
-export * from './aiMemory.routes.ts';
-export { default } from './aiMemory.routes.ts';
+export * from './aiMemory.routes.js';
+export { default } from './aiMemory.routes.js';

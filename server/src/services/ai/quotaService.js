@@ -1,2 +1,2 @@
-export * from './quotaService.ts';
-export { default } from './quotaService.ts';
+export * from './quotaService.js';
+export { default } from './quotaService.js';

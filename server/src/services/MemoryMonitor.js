@@ -1,2 +1,2 @@
-export * from './MemoryMonitor.ts';
-export { default } from './MemoryMonitor.ts';
+export * from './MemoryMonitor.js';
+export { default } from './MemoryMonitor.js';

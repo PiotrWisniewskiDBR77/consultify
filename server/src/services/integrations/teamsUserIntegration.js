@@ -1,2 +1,2 @@
-export * from './teamsUserIntegration.ts';
-export { default } from './teamsUserIntegration.ts';
+export * from './teamsUserIntegration.js';
+export { default } from './teamsUserIntegration.js';

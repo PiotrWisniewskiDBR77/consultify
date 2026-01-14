@@ -1,2 +1,2 @@
-export * from './videos.routes.ts';
-export { default } from './videos.routes.ts';
+export * from './videos.routes.js';
+export { default } from './videos.routes.js';

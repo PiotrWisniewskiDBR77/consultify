@@ -1,2 +1,2 @@
-export * from './workspace-defaults.validators.ts';
-export { default } from './workspace-defaults.validators.ts';
+export * from './workspace-defaults.validators.js';
+export { default } from './workspace-defaults.validators.js';

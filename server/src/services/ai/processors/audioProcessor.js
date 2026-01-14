@@ -1,2 +1,2 @@
-export * from './audioProcessor.ts';
-export { default } from './audioProcessor.ts';
+export * from './audioProcessor.js';
+export { default } from './audioProcessor.js';

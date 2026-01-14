@@ -1,2 +1,2 @@
-export * from './ChurnAnalyticsService.ts';
-export { default } from './ChurnAnalyticsService.ts';
+export * from './ChurnAnalyticsService.js';
+export { default } from './ChurnAnalyticsService.js';

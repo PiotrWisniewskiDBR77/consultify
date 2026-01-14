@@ -1,2 +1,2 @@
-export * from './stabilization.routes.ts';
-export { default } from './stabilization.routes.ts';
+export * from './stabilization.routes.js';
+export { default } from './stabilization.routes.js';

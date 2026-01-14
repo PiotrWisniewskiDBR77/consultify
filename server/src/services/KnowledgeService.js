@@ -1,2 +1,2 @@
-export * from './KnowledgeService.ts';
-export { default } from './KnowledgeService.ts';
+export * from './KnowledgeService.js';
+export { default } from './KnowledgeService.js';

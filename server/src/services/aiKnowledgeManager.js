@@ -1,2 +1,2 @@
-export * from './aiKnowledgeManager.ts';
-export { default } from './aiKnowledgeManager.ts';
+export * from './aiKnowledgeManager.js';
+export { default } from './aiKnowledgeManager.js';

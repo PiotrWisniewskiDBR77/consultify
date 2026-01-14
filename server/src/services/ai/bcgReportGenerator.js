@@ -1,2 +1,2 @@
-export * from './bcgReportGenerator.ts';
-export { default } from './bcgReportGenerator.ts';
+export * from './bcgReportGenerator.js';
+export { default } from './bcgReportGenerator.js';

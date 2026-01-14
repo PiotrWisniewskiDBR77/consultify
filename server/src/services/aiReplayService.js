@@ -1,2 +1,2 @@
-export * from './aiReplayService.ts';
-export { default } from './aiReplayService.ts';
+export * from './aiReplayService.js';
+export { default } from './aiReplayService.js';

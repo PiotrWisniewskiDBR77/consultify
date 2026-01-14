@@ -1,2 +1,2 @@
-export * from './contentService.ts';
-export { default } from './contentService.ts';
+export * from './contentService.js';
+export { default } from './contentService.js';

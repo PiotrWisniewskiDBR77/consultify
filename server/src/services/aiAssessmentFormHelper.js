@@ -1,2 +1,2 @@
-export * from './aiAssessmentFormHelper.ts';
-export { default } from './aiAssessmentFormHelper.ts';
+export * from './aiAssessmentFormHelper.js';
+export { default } from './aiAssessmentFormHelper.js';

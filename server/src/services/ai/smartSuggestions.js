@@ -1,2 +1,2 @@
-export * from './smartSuggestions.ts';
-export { default } from './smartSuggestions.ts';
+export * from './smartSuggestions.js';
+export { default } from './smartSuggestions.js';

@@ -1,2 +1,2 @@
-export * from './persistentSessionStore.ts';
-export { default } from './persistentSessionStore.ts';
+export * from './persistentSessionStore.js';
+export { default } from './persistentSessionStore.js';

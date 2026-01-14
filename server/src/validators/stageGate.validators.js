@@ -1,2 +1,2 @@
-export * from './stageGate.validators.ts';
-export { default } from './stageGate.validators.ts';
+export * from './stageGate.validators.js';
+export { default } from './stageGate.validators.js';

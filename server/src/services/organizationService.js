@@ -1,2 +1,2 @@
-export * from './organizationService.ts';
-export { default } from './organizationService.ts';
+export * from './organizationService.js';
+export { default } from './organizationService.js';

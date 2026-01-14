@@ -1,2 +1,2 @@
-export * from './InitiativeDefinitionService.ts';
-export { default } from './InitiativeDefinitionService.ts';
+export * from './InitiativeDefinitionService.js';
+export { default } from './InitiativeDefinitionService.js';

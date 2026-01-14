@@ -1,2 +1,2 @@
-export * from './agents.routes.ts';
-export { default } from './agents.routes.ts';
+export * from './agents.routes.js';
+export { default } from './agents.routes.js';

@@ -1,2 +1,2 @@
-export * from './systemIntegrity.ts';
-export { default } from './systemIntegrity.ts';
+export * from './systemIntegrity.js';
+export { default } from './systemIntegrity.js';

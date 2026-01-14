@@ -1,2 +1,2 @@
-export * from './embeddingService.ts';
-export { default } from './embeddingService.ts';
+export * from './embeddingService.js';
+export { default } from './embeddingService.js';

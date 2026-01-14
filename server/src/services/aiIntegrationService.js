@@ -1,2 +1,2 @@
-export * from './aiIntegrationService.ts';
-export { default } from './aiIntegrationService.ts';
+export * from './aiIntegrationService.js';
+export { default } from './aiIntegrationService.js';

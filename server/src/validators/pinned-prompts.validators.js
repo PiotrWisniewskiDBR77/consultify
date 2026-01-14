@@ -1,2 +1,2 @@
-export * from './pinned-prompts.validators.ts';
-export { default } from './pinned-prompts.validators.ts';
+export * from './pinned-prompts.validators.js';
+export { default } from './pinned-prompts.validators.js';

@@ -1,2 +1,2 @@
-export * from './proactiveSuggestionsService.ts';
-export { default } from './proactiveSuggestionsService.ts';
+export * from './proactiveSuggestionsService.js';
+export { default } from './proactiveSuggestionsService.js';

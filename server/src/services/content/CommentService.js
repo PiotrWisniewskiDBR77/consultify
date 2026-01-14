@@ -1,2 +1,2 @@
-export * from './CommentService.ts';
-export { default } from './CommentService.ts';
+export * from './CommentService.js';
+export { default } from './CommentService.js';

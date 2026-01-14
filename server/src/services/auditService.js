@@ -1,2 +1,2 @@
-export * from './auditService.ts';
-export { default } from './auditService.ts';
+export * from './auditService.js';
+export { default } from './auditService.js';

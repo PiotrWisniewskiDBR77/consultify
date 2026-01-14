@@ -1,2 +1,2 @@
-export * from './BillingDependencyLoader.test.ts';
-export { default } from './BillingDependencyLoader.test.ts';
+export * from './BillingDependencyLoader.test.js';
+export { default } from './BillingDependencyLoader.test.js';

@@ -1,2 +1,2 @@
-export * from './userAdoptionService.ts';
-export { default } from './userAdoptionService.ts';
+export * from './userAdoptionService.js';
+export { default } from './userAdoptionService.js';

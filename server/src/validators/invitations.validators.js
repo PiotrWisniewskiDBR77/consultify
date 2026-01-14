@@ -1,2 +1,2 @@
-export * from './invitations.validators.ts';
-export { default } from './invitations.validators.ts';
+export * from './invitations.validators.js';
+export { default } from './invitations.validators.js';

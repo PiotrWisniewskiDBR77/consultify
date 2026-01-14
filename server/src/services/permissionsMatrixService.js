@@ -1,2 +1,2 @@
-export * from './permissionsMatrixService.ts';
-export { default } from './permissionsMatrixService.ts';
+export * from './permissionsMatrixService.js';
+export { default } from './permissionsMatrixService.js';

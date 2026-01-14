@@ -1,2 +1,2 @@
-export * from './featureGate.middleware.ts';
-export { default } from './featureGate.middleware.ts';
+export * from './featureGate.middleware.js';
+export { default } from './featureGate.middleware.js';

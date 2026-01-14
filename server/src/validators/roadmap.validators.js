@@ -1,2 +1,2 @@
-export * from './roadmap.validators.ts';
-export { default } from './roadmap.validators.ts';
+export * from './roadmap.validators.js';
+export { default } from './roadmap.validators.js';

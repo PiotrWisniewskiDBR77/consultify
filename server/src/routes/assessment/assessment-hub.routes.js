@@ -1,2 +1,2 @@
-export * from './assessment-hub.routes.ts';
-export { default } from './assessment-hub.routes.ts';
+export * from './assessment-hub.routes.js';
+export { default } from './assessment-hub.routes.js';

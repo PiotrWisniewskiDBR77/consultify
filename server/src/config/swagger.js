@@ -1,2 +1,2 @@
-export * from './swagger.ts';
-export { default } from './swagger.ts';
+export * from './swagger.js';
+export { default } from './swagger.js';

@@ -1,2 +1,2 @@
-export * from './QueryAdapter.ts';
-export { default } from './QueryAdapter.ts';
+export * from './QueryAdapter.js';
+export { default } from './QueryAdapter.js';

@@ -1,2 +1,2 @@
-export * from './organization-profiles.routes.ts';
-export { default } from './organization-profiles.routes.ts';
+export * from './organization-profiles.routes.js';
+export { default } from './organization-profiles.routes.js';

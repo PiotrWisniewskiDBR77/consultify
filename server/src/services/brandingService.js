@@ -1,2 +1,2 @@
-export * from './brandingService.ts';
-export { default } from './brandingService.ts';
+export * from './brandingService.js';
+export { default } from './brandingService.js';

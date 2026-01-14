@@ -1,2 +1,2 @@
-export * from './alerting.ts';
-export { default } from './alerting.ts';
+export * from './alerting.js';
+export { default } from './alerting.js';

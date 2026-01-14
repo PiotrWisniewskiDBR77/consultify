@@ -1,2 +1,2 @@
-export * from './videoProcessor.ts';
-export { default } from './videoProcessor.ts';
+export * from './videoProcessor.js';
+export { default } from './videoProcessor.js';

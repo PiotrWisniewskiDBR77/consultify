@@ -1,2 +1,2 @@
-export * from './systemHealthService.ts';
-export { default } from './systemHealthService.ts';
+export * from './systemHealthService.js';
+export { default } from './systemHealthService.js';

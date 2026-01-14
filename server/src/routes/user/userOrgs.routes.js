@@ -1,2 +1,2 @@
-export * from './userOrgs.routes.ts';
-export { default } from './userOrgs.routes.ts';
+export * from './userOrgs.routes.js';
+export { default } from './userOrgs.routes.js';

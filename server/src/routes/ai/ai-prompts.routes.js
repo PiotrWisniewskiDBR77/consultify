@@ -1,2 +1,2 @@
-export * from './ai-prompts.routes.ts';
-export { default } from './ai-prompts.routes.ts';
+export * from './ai-prompts.routes.js';
+export { default } from './ai-prompts.routes.js';

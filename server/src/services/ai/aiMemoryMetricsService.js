@@ -1,2 +1,2 @@
-export * from './aiMemoryMetricsService.ts';
-export { default } from './aiMemoryMetricsService.ts';
+export * from './aiMemoryMetricsService.js';
+export { default } from './aiMemoryMetricsService.js';

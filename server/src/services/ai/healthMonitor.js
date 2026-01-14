@@ -1,2 +1,2 @@
-export * from './healthMonitor.ts';
-export { default } from './healthMonitor.ts';
+export * from './healthMonitor.js';
+export { default } from './healthMonitor.js';

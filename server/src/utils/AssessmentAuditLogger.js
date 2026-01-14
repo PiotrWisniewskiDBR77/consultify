@@ -1,2 +1,2 @@
-export * from './AssessmentAuditLogger.ts';
-export { default } from './AssessmentAuditLogger.ts';
+export * from './AssessmentAuditLogger.js';
+export { default } from './AssessmentAuditLogger.js';

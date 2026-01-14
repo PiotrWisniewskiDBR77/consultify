@@ -1,2 +1,2 @@
-export * from './cacheHelper.ts';
-export { default } from './cacheHelper.ts';
+export * from './cacheHelper.js';
+export { default } from './cacheHelper.js';

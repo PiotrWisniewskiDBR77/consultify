@@ -1,2 +1,2 @@
-export * from './benchmarkingService.ts';
-export { default } from './benchmarkingService.ts';
+export * from './benchmarkingService.js';
+export { default } from './benchmarkingService.js';

@@ -1,2 +1,2 @@
-export * from './ReviewService.ts';
-export { default } from './ReviewService.ts';
+export * from './ReviewService.js';
+export { default } from './ReviewService.js';

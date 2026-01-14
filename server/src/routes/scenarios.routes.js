@@ -1,2 +1,2 @@
-export * from './scenarios.routes.ts';
-export { default } from './scenarios.routes.ts';
+export * from './scenarios.routes.js';
+export { default } from './scenarios.routes.js';

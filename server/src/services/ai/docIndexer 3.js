@@ -1,2 +1,2 @@
-export * from './docIndexer.ts';
-export { default } from './docIndexer.ts';
+export * from './docIndexer.js';
+export { default } from './docIndexer.js';

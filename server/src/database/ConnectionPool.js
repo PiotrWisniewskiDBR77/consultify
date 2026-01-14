@@ -1,2 +1,2 @@
-export * from './ConnectionPool.ts';
-export { default } from './ConnectionPool.ts';
+export * from './ConnectionPool.js';
+export { default } from './ConnectionPool.js';

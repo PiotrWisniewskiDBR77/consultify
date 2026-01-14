@@ -1,2 +1,2 @@
-export * from './searchKnowledgeBase.ts';
-export { default } from './searchKnowledgeBase.ts';
+export * from './searchKnowledgeBase.js';
+export { default } from './searchKnowledgeBase.js';

@@ -1,2 +1,2 @@
-export * from './assessment-workflow.routes.ts';
-export { default } from './assessment-workflow.routes.ts';
+export * from './assessment-workflow.routes.js';
+export { default } from './assessment-workflow.routes.js';

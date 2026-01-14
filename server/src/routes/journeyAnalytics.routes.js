@@ -1,2 +1,2 @@
-export * from './journeyAnalytics.routes.ts';
-export { default } from './journeyAnalytics.routes.ts';
+export * from './journeyAnalytics.routes.js';
+export { default } from './journeyAnalytics.routes.js';

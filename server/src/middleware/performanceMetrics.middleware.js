@@ -1,2 +1,2 @@
-export * from './performanceMetrics.middleware.ts';
-export { default } from './performanceMetrics.middleware.ts';
+export * from './performanceMetrics.middleware.js';
+export { default } from './performanceMetrics.middleware.js';

@@ -1,2 +1,2 @@
-export * from './aiActionExecutor.ts';
-export { default } from './aiActionExecutor.ts';
+export * from './aiActionExecutor.js';
+export { default } from './aiActionExecutor.js';

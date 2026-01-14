@@ -1,2 +1,2 @@
-export * from './consultingFlowEngine.ts';
-export { default } from './consultingFlowEngine.ts';
+export * from './consultingFlowEngine.js';
+export { default } from './consultingFlowEngine.js';

@@ -1,2 +1,2 @@
-export * from './pmoStandardsMapping.ts';
-export { default } from './pmoStandardsMapping.ts';
+export * from './pmoStandardsMapping.js';
+export { default } from './pmoStandardsMapping.js';

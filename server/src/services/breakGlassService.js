@@ -1,2 +1,2 @@
-export * from './breakGlassService.ts';
-export { default } from './breakGlassService.ts';
+export * from './breakGlassService.js';
+export { default } from './breakGlassService.js';

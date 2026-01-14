@@ -1,2 +1,2 @@
-export * from './csrf.middleware.ts';
-export { default } from './csrf.middleware.ts';
+export * from './csrf.middleware.js';
+export { default } from './csrf.middleware.js';

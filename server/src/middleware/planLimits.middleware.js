@@ -1,2 +1,2 @@
-export * from './planLimits.middleware.ts';
-export { default } from './planLimits.middleware.ts';
+export * from './planLimits.middleware.js';
+export { default } from './planLimits.middleware.js';

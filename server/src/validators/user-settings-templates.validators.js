@@ -1,2 +1,2 @@
-export * from './user-settings-templates.validators.ts';
-export { default } from './user-settings-templates.validators.ts';
+export * from './user-settings-templates.validators.js';
+export { default } from './user-settings-templates.validators.js';

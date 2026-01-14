@@ -1,2 +1,2 @@
-export * from './reportService.ts';
-export { default } from './reportService.ts';
+export * from './reportService.js';
+export { default } from './reportService.js';

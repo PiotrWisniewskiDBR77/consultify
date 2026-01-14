@@ -1,2 +1,2 @@
-export * from './decisions.routes.ts';
-export { default } from './decisions.routes.ts';
+export * from './decisions.routes.js';
+export { default } from './decisions.routes.js';

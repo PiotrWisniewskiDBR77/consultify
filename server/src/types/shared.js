@@ -1,2 +1,2 @@
-export * from './shared.ts';
-export { default } from './shared.ts';
+export * from './shared.js';
+export { default } from './shared.js';

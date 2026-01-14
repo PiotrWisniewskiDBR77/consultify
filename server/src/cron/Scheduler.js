@@ -1,2 +1,2 @@
-export * from './Scheduler.ts';
-export { default } from './Scheduler.ts';
+export * from './Scheduler.js';
+export { default } from './Scheduler.js';

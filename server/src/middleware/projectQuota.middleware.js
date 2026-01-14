@@ -1,2 +1,2 @@
-export * from './projectQuota.middleware.ts';
-export { default } from './projectQuota.middleware.ts';
+export * from './projectQuota.middleware.js';
+export { default } from './projectQuota.middleware.js';

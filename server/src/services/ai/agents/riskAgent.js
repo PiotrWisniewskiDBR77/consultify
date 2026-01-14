@@ -1,2 +1,2 @@
-export * from './riskAgent.ts';
-export { default } from './riskAgent.ts';
+export * from './riskAgent.js';
+export { default } from './riskAgent.js';

@@ -1,2 +1,2 @@
-export * from './areaContentTemplates.ts';
-export { default } from './areaContentTemplates.ts';
+export * from './areaContentTemplates.js';
+export { default } from './areaContentTemplates.js';

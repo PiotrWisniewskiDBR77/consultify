@@ -1,2 +1,2 @@
-export * from './adminAlerts.routes.ts';
-export { default } from './adminAlerts.routes.ts';
+export * from './adminAlerts.routes.js';
+export { default } from './adminAlerts.routes.js';

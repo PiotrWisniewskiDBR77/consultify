@@ -1,2 +1,2 @@
-export * from './consentManagementService.ts';
-export { default } from './consentManagementService.ts';
+export * from './consentManagementService.js';
+export { default } from './consentManagementService.js';

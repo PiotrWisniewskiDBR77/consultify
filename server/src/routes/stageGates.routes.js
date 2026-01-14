@@ -1,2 +1,2 @@
-export * from './stageGates.routes.ts';
-export { default } from './stageGates.routes.ts';
+export * from './stageGates.routes.js';
+export { default } from './stageGates.routes.js';

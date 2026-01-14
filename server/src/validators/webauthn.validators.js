@@ -1,2 +1,2 @@
-export * from './webauthn.validators.ts';
-export { default } from './webauthn.validators.ts';
+export * from './webauthn.validators.js';
+export { default } from './webauthn.validators.js';

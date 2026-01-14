@@ -1,2 +1,2 @@
-export * from './settings.routes.ts';
-export { default } from './settings.routes.ts';
+export * from './settings.routes.js';
+export { default } from './settings.routes.js';

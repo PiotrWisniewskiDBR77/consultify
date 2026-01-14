@@ -1,2 +1,2 @@
-export * from './connectors.routes.ts';
-export { default } from './connectors.routes.ts';
+export * from './connectors.routes.js';
+export { default } from './connectors.routes.js';

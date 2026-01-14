@@ -1,2 +1,2 @@
-export * from './integrations.routes.ts';
-export { default } from './integrations.routes.ts';
+export * from './integrations.routes.js';
+export { default } from './integrations.routes.js';

@@ -1,2 +1,2 @@
-export * from './lazyRouteLoader.ts';
-export { default } from './lazyRouteLoader.ts';
+export * from './lazyRouteLoader.js';
+export { default } from './lazyRouteLoader.js';

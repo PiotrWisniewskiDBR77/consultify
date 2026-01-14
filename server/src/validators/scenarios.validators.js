@@ -1,2 +1,2 @@
-export * from './scenarios.validators.ts';
-export { default } from './scenarios.validators.ts';
+export * from './scenarios.validators.js';
+export { default } from './scenarios.validators.js';

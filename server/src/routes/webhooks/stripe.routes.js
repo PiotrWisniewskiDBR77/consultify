@@ -1,2 +1,2 @@
-export * from './stripe.routes.ts';
-export { default } from './stripe.routes.ts';
+export * from './stripe.routes.js';
+export { default } from './stripe.routes.js';

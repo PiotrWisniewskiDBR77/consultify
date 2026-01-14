@@ -1,2 +1,2 @@
-export * from './aiMaturityMonitor.ts';
-export { default } from './aiMaturityMonitor.ts';
+export * from './aiMaturityMonitor.js';
+export { default } from './aiMaturityMonitor.js';

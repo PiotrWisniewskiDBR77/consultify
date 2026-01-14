@@ -1,2 +1,2 @@
-export * from './TrialCron.ts';
-export { default } from './TrialCron.ts';
+export * from './TrialCron.js';
+export { default } from './TrialCron.js';

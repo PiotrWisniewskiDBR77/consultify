@@ -1,2 +1,2 @@
-export * from './project-members.routes.ts';
-export { default } from './project-members.routes.ts';
+export * from './project-members.routes.js';
+export { default } from './project-members.routes.js';

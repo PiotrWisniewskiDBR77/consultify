@@ -1,2 +1,2 @@
-export * from './api-keys.routes.ts';
-export { default } from './api-keys.routes.ts';
+export * from './api-keys.routes.js';
+export { default } from './api-keys.routes.js';

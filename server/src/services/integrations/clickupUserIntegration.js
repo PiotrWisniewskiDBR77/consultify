@@ -1,2 +1,2 @@
-export * from './clickupUserIntegration.ts';
-export { default } from './clickupUserIntegration.ts';
+export * from './clickupUserIntegration.js';
+export { default } from './clickupUserIntegration.js';

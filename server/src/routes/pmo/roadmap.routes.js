@@ -1,2 +1,2 @@
-export * from './roadmap.routes.ts';
-export { default } from './roadmap.routes.ts';
+export * from './roadmap.routes.js';
+export { default } from './roadmap.routes.js';

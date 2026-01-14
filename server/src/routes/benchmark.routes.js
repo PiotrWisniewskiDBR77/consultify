@@ -1,2 +1,2 @@
-export * from './benchmark.routes.ts';
-export { default } from './benchmark.routes.ts';
+export * from './benchmark.routes.js';
+export { default } from './benchmark.routes.js';

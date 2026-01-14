@@ -1,2 +1,2 @@
-export * from './pptxProcessor.ts';
-export { default } from './pptxProcessor.ts';
+export * from './pptxProcessor.js';
+export { default } from './pptxProcessor.js';

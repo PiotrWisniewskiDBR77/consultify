@@ -1,2 +1,2 @@
-export * from './mcpServer.ts';
-export { default } from './mcpServer.ts';
+export * from './mcpServer.js';
+export { default } from './mcpServer.js';

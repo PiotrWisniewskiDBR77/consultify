@@ -1,2 +1,2 @@
-export * from './aiExecutiveReporting.ts';
-export { default } from './aiExecutiveReporting.ts';
+export * from './aiExecutiveReporting.js';
+export { default } from './aiExecutiveReporting.js';

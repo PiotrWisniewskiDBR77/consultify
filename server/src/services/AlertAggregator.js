@@ -1,2 +1,2 @@
-export * from './AlertAggregator.ts';
-export { default } from './AlertAggregator.ts';
+export * from './AlertAggregator.js';
+export { default } from './AlertAggregator.js';

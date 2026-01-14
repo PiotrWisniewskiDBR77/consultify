@@ -1,2 +1,2 @@
-export * from './BaselinesController.ts';
-export { default } from './BaselinesController.ts';
+export * from './BaselinesController.js';
+export { default } from './BaselinesController.js';

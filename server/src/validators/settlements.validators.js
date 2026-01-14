@@ -1,2 +1,2 @@
-export * from './settlements.validators.ts';
-export { default } from './settlements.validators.ts';
+export * from './settlements.validators.js';
+export { default } from './settlements.validators.js';

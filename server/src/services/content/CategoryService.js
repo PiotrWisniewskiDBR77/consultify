@@ -1,2 +1,2 @@
-export * from './CategoryService.ts';
-export { default } from './CategoryService.ts';
+export * from './CategoryService.js';
+export { default } from './CategoryService.js';

@@ -1,2 +1,2 @@
-export * from './agentCoordinator.ts';
-export { default } from './agentCoordinator.ts';
+export * from './agentCoordinator.js';
+export { default } from './agentCoordinator.js';

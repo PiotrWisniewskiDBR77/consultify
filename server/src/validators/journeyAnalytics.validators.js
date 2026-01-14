@@ -1,2 +1,2 @@
-export * from './journeyAnalytics.validators.ts';
-export { default } from './journeyAnalytics.validators.ts';
+export * from './journeyAnalytics.validators.js';
+export { default } from './journeyAnalytics.validators.js';

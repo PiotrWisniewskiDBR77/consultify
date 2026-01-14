@@ -1,2 +1,2 @@
-export * from './qualityChecker.ts';
-export { default } from './qualityChecker.ts';
+export * from './qualityChecker.js';
+export { default } from './qualityChecker.js';

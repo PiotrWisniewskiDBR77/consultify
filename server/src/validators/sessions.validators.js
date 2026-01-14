@@ -1,2 +1,2 @@
-export * from './sessions.validators.ts';
-export { default } from './sessions.validators.ts';
+export * from './sessions.validators.js';
+export { default } from './sessions.validators.js';

@@ -1,2 +1,2 @@
-export * from './assessment-workflow.validators.ts';
-export { default } from './assessment-workflow.validators.ts';
+export * from './assessment-workflow.validators.js';
+export { default } from './assessment-workflow.validators.js';

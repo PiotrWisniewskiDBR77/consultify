@@ -1,2 +1,2 @@
-export * from './premiumReports.validators.ts';
-export { default } from './premiumReports.validators.ts';
+export * from './premiumReports.validators.js';
+export { default } from './premiumReports.validators.js';

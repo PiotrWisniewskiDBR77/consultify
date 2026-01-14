@@ -1,2 +1,2 @@
-export * from './assessment-reports.routes.ts';
-export { default } from './assessment-reports.routes.ts';
+export * from './assessment-reports.routes.js';
+export { default } from './assessment-reports.routes.js';

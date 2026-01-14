@@ -1,2 +1,2 @@
-export * from './redisClient.ts';
-export { default } from './redisClient.ts';
+export * from './redisClient.js';
+export { default } from './redisClient.js';

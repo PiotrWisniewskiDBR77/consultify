@@ -1,2 +1,2 @@
-export * from './llmHealthMonitor.ts';
-export { default } from './llmHealthMonitor.ts';
+export * from './llmHealthMonitor.js';
+export { default } from './llmHealthMonitor.js';

@@ -1,2 +1,2 @@
-export * from './megatrend.validators.ts';
-export { default } from './megatrend.validators.ts';
+export * from './megatrend.validators.js';
+export { default } from './megatrend.validators.js';

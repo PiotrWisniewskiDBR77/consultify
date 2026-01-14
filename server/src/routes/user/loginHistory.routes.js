@@ -1,2 +1,2 @@
-export * from './loginHistory.routes.ts';
-export { default } from './loginHistory.routes.ts';
+export * from './loginHistory.routes.js';
+export { default } from './loginHistory.routes.js';

@@ -1,2 +1,2 @@
-export * from './assessmentOverviewService.ts';
-export { default } from './assessmentOverviewService.ts';
+export * from './assessmentOverviewService.js';
+export { default } from './assessmentOverviewService.js';

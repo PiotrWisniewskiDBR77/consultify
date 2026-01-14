@@ -1,2 +1,2 @@
-export * from './cohortService.ts';
-export { default } from './cohortService.ts';
+export * from './cohortService.js';
+export { default } from './cohortService.js';

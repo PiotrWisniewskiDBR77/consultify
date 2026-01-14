@@ -1,2 +1,2 @@
-export * from './automationEngineService.ts';
-export { default } from './automationEngineService.ts';
+export * from './automationEngineService.js';
+export { default } from './automationEngineService.js';

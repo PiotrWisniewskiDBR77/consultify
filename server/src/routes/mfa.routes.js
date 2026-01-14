@@ -1,2 +1,2 @@
-export * from './mfa.routes.ts';
-export { default } from './mfa.routes.ts';
+export * from './mfa.routes.js';
+export { default } from './mfa.routes.js';

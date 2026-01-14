@@ -1,2 +1,2 @@
-export * from './connectors.validators.ts';
-export { default } from './connectors.validators.ts';
+export * from './connectors.validators.js';
+export { default } from './connectors.validators.js';

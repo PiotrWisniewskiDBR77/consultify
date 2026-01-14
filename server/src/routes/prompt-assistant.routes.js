@@ -1,2 +1,2 @@
-export * from './prompt-assistant.routes.ts';
-export { default } from './prompt-assistant.routes.ts';
+export * from './prompt-assistant.routes.js';
+export { default } from './prompt-assistant.routes.js';

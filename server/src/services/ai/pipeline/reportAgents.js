@@ -1,2 +1,2 @@
-export * from './reportAgents.ts';
-export { default } from './reportAgents.ts';
+export * from './reportAgents.js';
+export { default } from './reportAgents.js';

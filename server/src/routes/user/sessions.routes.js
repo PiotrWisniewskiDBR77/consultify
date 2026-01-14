@@ -1,2 +1,2 @@
-export * from './sessions.routes.ts';
-export { default } from './sessions.routes.ts';
+export * from './sessions.routes.js';
+export { default } from './sessions.routes.js';

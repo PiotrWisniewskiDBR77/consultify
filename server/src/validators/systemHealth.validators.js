@@ -1,2 +1,2 @@
-export * from './systemHealth.validators.ts';
-export { default } from './systemHealth.validators.ts';
+export * from './systemHealth.validators.js';
+export { default } from './systemHealth.validators.js';

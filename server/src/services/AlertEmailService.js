@@ -1,2 +1,2 @@
-export * from './AlertEmailService.ts';
-export { default } from './AlertEmailService.ts';
+export * from './AlertEmailService.js';
+export { default } from './AlertEmailService.js';

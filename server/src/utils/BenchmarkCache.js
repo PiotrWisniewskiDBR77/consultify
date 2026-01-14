@@ -1,2 +1,2 @@
-export * from './BenchmarkCache.ts';
-export { default } from './BenchmarkCache.ts';
+export * from './BenchmarkCache.js';
+export { default } from './BenchmarkCache.js';

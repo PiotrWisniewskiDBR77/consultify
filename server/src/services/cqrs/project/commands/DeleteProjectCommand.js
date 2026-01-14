@@ -1,2 +1,2 @@
-export * from './DeleteProjectCommand.ts';
-export { default } from './DeleteProjectCommand.ts';
+export * from './DeleteProjectCommand.js';
+export { default } from './DeleteProjectCommand.js';
