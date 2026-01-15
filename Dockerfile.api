@@ -96,18 +96,18 @@ RUN apk update && \
 
 # Production dependencies will be copied later
 
-# Copy built frontend (at /app/dist)
+# Copy built frontend (at /app/dist) with correct ownership
 # Backend code serves from: path.join(__dirname, '../dist')
 # Structure: backend at /app/server/index.js, frontend at /app/dist
 # So: path.join('/app/server', '../dist') = /app/dist ✓
-COPY --from=frontend-builder /app/dist /app/dist
+COPY --from=frontend-builder --chown=nodejs:nodejs /app/dist /app/dist
 
 # Copy built backend (server code) to /app/server/
 # Backend compiled output is in dist/ directory
 RUN mkdir -p /app/server
-# Copy dist directory from backend-builder
+# Copy dist directory from backend-builder with correct ownership
 # TypeScript preserves src/ directory structure, so we need to handle it correctly
-COPY --from=backend-builder /app/dist /app/server/dist-temp
+COPY --from=backend-builder --chown=nodejs:nodejs /app/dist /app/server/dist-temp
 # Check where index.js actually is and set up the correct structure
 RUN if [ -f /app/server/dist-temp/index.js ]; then \
       echo "Found index.js at root level"; \
@@ -147,11 +147,12 @@ RUN if [ -f /app/server/dist/index.js ]; then \
       ls -la /app/server/dist/ && \
       exit 1; \
     fi
-COPY --from=backend-builder /app/package.json /app/server/
+COPY --from=backend-builder --chown=nodejs:nodejs /app/package.json /app/server/
 # Copy node_modules from backend-builder (has all dependencies including cookie-parser)
 # This ensures all dependencies needed at runtime are available
 # Note: Includes devDependencies but ensures no missing runtime dependencies
-COPY --from=backend-builder /app/node_modules /app/server/node_modules
+# Use --chown to set ownership during copy (much faster than chown -R afterwards)
+COPY --from=backend-builder --chown=nodejs:nodejs /app/node_modules /app/server/node_modules
 # Verify critical dependencies are present
 RUN test -d /app/server/node_modules/cookie-parser || (echo "ERROR: cookie-parser not found!" && ls -la /app/server/node_modules/ | head -20 && exit 1)
 RUN test -d /app/server/node_modules/express || (echo "ERROR: express not found!" && exit 1)
@@ -159,8 +160,10 @@ RUN test -d /app/server/node_modules/zod || (echo "ERROR: zod not found!" && exi
 
 WORKDIR /app/server
 
-# Set ownership
-RUN chown -R nodejs:nodejs /app
+# Set ownership only for directories that weren't copied with --chown
+# This is much faster than chown -R on the entire /app directory
+# Only chown the server directory itself and any runtime-created directories
+RUN chown nodejs:nodejs /app/server /app/dist || true
 
 # Switch to non-root user
 USER nodejs
