@@ -1,226 +1,86 @@
-{
-  "message": "[backend-builder 10/11] RUN ./node_modules/.bin/tsc --build tsconfig.build.json || (echo \"TypeScript build failed!\" && exit 1)",
-  "timestamp": "2026-01-13T19:30:39.029397294Z",
-  "children": [
-    {
-      "message": "src/config/Config.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885075093Z"
-    },
-    {
-      "message": "src/config/ConfigValidator.ts(10,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/config/DatabaseConfig.ts(12,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885111006Z"
-    },
-    {
-      "message": "src/config/FeatureFlags.ts(9,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885118357Z"
-    },
-    {
-      "message": "src/config/QueueConfig.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885170035Z"
-    },
-    {
-      "message": "src/config/SentryConfig.ts(9,25): error TS2307: Cannot find module '@sentry/node' or its corresponding type declarations.\nsrc/config/SentryConfig.ts(10,53): error TS2307: Cannot find module '@sentry/node' or its corresponding type declarations.\nsrc/config/SentryConfig.ts(11,42): error TS2307: Cannot find module '@sentry/profiling-node' or its corresponding type declarations.\nsrc/config/SentryConfig.ts(13,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885188693Z"
-    },
-    {
-      "message": "src/cron/BackupCron.ts(10,23): error TS2307: Cannot find module 'node-cron' or its corresponding type declarations.\nsrc/cron/DunningCron.ts(14,23): error TS2307: Cannot find module 'node-cron' or its corresponding type declarations.\nsrc/cron/HealthCheckJob.ts(8,23): error TS2307: Cannot find module 'node-cron' or its corresponding type declarations.\nsrc/cron/SnapshotMetrics.ts(8,23): error TS2307: Cannot find module 'node-cron' or its corresponding type declarations.\nsrc/database/PostgresDatabase.ts(9,56): error TS2307: Cannot find module 'pg' or its corresponding type declarations.\nsrc/index.ts(11,25): error TS2307: Cannot find module 'compression' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885386179Z"
-    },
-    {
-      "message": "src/index.ts(13,18): error TS2307: Cannot find module 'cors' or its corresponding type declarations.\nsrc/index.ts(15,23): error TS2307: Cannot find module 'express-rate-limit' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885405949Z"
-    },
-    {
-      "message": "src/index.ts(16,20): error TS2307: Cannot find module 'helmet' or its corresponding type declarations.\nsrc/index.ts(561,10): error TS2614: Module '\"./utils/errorHandler.js\"' has no exported member 'errorHandlerMiddleware'. Did you mean to use 'import errorHandlerMiddleware from \"./utils/errorHandler.js\"' instead?\n",
-      "timestamp": "2026-01-13T19:31:01.885545258Z"
-    },
-    {
-      "message": "src/middleware/fileUpload.middleware.ts(10,20): error TS2307: Cannot find module 'multer' or its corresponding type declarations.\nsrc/middleware/fileUpload.middleware.ts(20,18): error TS2694: Namespace 'global.Express' has no exported member 'Multer'.\nsrc/middleware/fileUpload.middleware.ts(33,20): error TS2694: Namespace 'global.Express' has no exported member 'Multer'.\nsrc/middleware/fileUpload.middleware.ts(48,19): error TS2694: Namespace 'global.Express' has no exported member 'Multer'.\nsrc/middleware/fileUpload.middleware.ts(64,17): error TS2694: Namespace 'global.Express' has no exported member 'Multer'.\nsrc/middleware/validation.middleware.ts(9,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/routes/accessCodes.routes.ts(14,23): error TS2307: Cannot find module 'express-rate-limit' or its corresponding type declarations.\nsrc/routes/ai.routes.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/routes/decisions.routes.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/routes/documents.routes.ts(10,20): error TS2307: Cannot find module 'multer' or its corresponding type declarations.\nsrc/routes/documents.routes.ts(264,16): error TS2339: Property 'file' does not exist on type 'AuthRequest'.\n",
-      "timestamp": "2026-01-13T19:31:01.885709875Z"
-    },
-    {
-      "message": "src/routes/documents.routes.ts(273,16): error TS2339: Property 'file' does not exist on type 'AuthRequest'.\nsrc/routes/documents.routes.ts(291,36): error TS2339: Property 'file' does not exist on type 'AuthRequest'.\nsrc/routes/documents.routes.ts(294,65): error TS2339: Property 'file' does not exist on type 'AuthRequest'.\nsrc/routes/helpChat.routes.ts(11,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/services/InvoiceService.ts(470,41): error TS2307: Cannot find module 'pdfkit' or its corresponding type declarations.\nsrc/services/TaskService.ts(7,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885758969Z"
-    },
-    {
-      "message": "src/services/ai/embeddingService.ts(11,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/services/ai/embeddingService.ts(109,19): error TS2339: Property 'data' does not exist on type 'unknown'.\nsrc/services/ai/llmService.ts(6,42): error TS2307: Cannot find module '@ai-sdk/google' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885787271Z"
-    },
-    {
-      "message": "src/services/ai/llmService.ts(7,30): error TS2307: Cannot find module '@ai-sdk/openai' or its corresponding type declarations.\nsrc/services/ai/llmService.ts(8,76): error TS2307: Cannot find module 'ai' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885807291Z"
-    },
-    {
-      "message": "src/services/ai/llmService.ts(10,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885821963Z"
-    },
-    {
-      "message": "src/services/ai/mcpServer.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/services/ai/rerankerService.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/services/ai/rerankerService.ts(105,33): error TS2307: Cannot find module 'openai' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885913571Z"
-    },
-    {
-      "message": "src/services/billing/BillingCommandService.ts(222,39): error TS2694: Namespace '\"stripe\".Stripe' has no exported member 'CustomerCreateParams'.\nsrc/services/billing/BillingCommandService.ts(265,56): error TS2694: Namespace '\"stripe\".Stripe' has no exported member 'CustomerCreateParams'.\nsrc/services/billing/BillingCommandService.ts(266,47): error TS2694: Namespace '\"stripe\".Stripe' has no exported member 'CustomerCreateParams'.\nsrc/services/billing/BillingCommandService.ts(295,37): error TS2694: Namespace '\"stripe\".Stripe' has no exported member 'CustomerUpdateParams'.\nsrc/services/billing/BillingCommandService.ts(425,43): error TS2694: Namespace '\"stripe\".Stripe' has no exported member 'SubscriptionCreateParams'.\nsrc/services/ragService.ts(6,24): error TS2307: Cannot find module 'openai' or its corresponding type declarations.\nsrc/services/ragService.ts(706,30): error TS2307: Cannot find module 'openai' or its corresponding type declarations.\nsrc/services/siemService.ts(1,41): error TS2307: Cannot find module 'axios' or its corresponding type declarations.\nsrc/services/slackService.ts(15,43): error TS2307: Cannot find module 'axios' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.885945068Z"
-    },
-    {
-      "message": "src/services/smsService.ts(24,37): error TS2307: Cannot find module 'twilio' or its corresponding type declarations.\nsrc/utils/AISchemaValidator.ts(9,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/utils/typeGuards.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/access-control.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/accessCodes.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886022204Z"
-    },
-    {
-      "message": "src/validators/actionDecisions.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886028133Z"
-    },
-    {
-      "message": "src/validators/admin-data.validators.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/admin.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/adminAlerts.validators.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/agents.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-ab-testing.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-analytics.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886107051Z"
-    },
-    {
-      "message": "src/validators/ai-budgets.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-development.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-drafts.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886113821Z"
-    },
-    {
-      "message": "src/validators/ai-feedback.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-infrastructure.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-memory.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886143415Z"
-    },
-    {
-      "message": "src/validators/ai-nudges.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-operations.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-preferences-extended.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-prompts.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai-security.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886178138Z"
-    },
-    {
-      "message": "src/validators/ai-settings.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886182274Z"
-    },
-    {
-      "message": "src/validators/ai-training.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/ai.validators.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/aiActions.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/aiAnalytics.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/aiAsync.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/aiCoach.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/aiExplain.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/aiLearning.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/aiMemory.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/aiPlaybooks.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/analytics.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/analyticsAdvanced.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/api-keys.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/apiKeys.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/assessment-hub.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/assessment-level-attachments.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/assessment-reports.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/assessment-workflow.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/assessment.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/assessments.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/audit.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/auditLog.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/auth.validators.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/backup.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/baselines.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/benchmark.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886500842Z"
-    },
-    {
-      "message": "src/validators/billing.validators.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/branding.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/budget.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/budgets.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/calendarIntegrations.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/capacity.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/chat-projects.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/connectors.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/consultant-project-access.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886582034Z"
-    },
-    {
-      "message": "src/validators/consultants.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/content.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/context.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/daily-brief.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/dataExport.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/dbr77.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886609815Z"
-    },
-    {
-      "message": "src/validators/decision.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/decisions.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/demo.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/documents.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/economics.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/execution.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/external-assessments.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/featureFlags.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/feedback.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/framework-rbac.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/gamification.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/gdpr.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886720862Z"
-    },
-    {
-      "message": "src/validators/generic-reports.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/governance.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/governanceAdmin.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.88673328Z"
-    },
-    {
-      "message": "src/validators/help.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/helpAnalytics.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/helpChat.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/helpFeedback.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/initiative-generator.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886785399Z"
-    },
-    {
-      "message": "src/validators/initiative.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/initiatives.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/integrations.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/intelligence.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886810967Z"
-    },
-    {
-      "message": "src/validators/invitation.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/invitations.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/journeyAnalytics.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/knowledge.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/legal.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/llm.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/llmHealth.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/locations.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/loginHistory.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/managementReports.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/managementReportsAnalytics.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/mcp.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/media-ingestion.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886902024Z"
-    },
-    {
-      "message": "src/validators/megatrend.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886914633Z"
-    },
-    {
-      "message": "src/validators/metrics.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/mfa.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886921894Z"
-    },
-    {
-      "message": "src/validators/multi-framework-assessment.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/multi-framework-workflow.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/my-work.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/myWork.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886962575Z"
-    },
-    {
-      "message": "src/validators/notification-rules.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886971838Z"
-    },
-    {
-      "message": "src/validators/notificationSettings.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886976165Z"
-    },
-    {
-      "message": "src/validators/notifications.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886980722Z"
-    },
-    {
-      "message": "src/validators/oauthRoutes.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.886985739Z"
-    },
-    {
-      "message": "src/validators/onboarding.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/organization-data.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/organization-limits.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887078328Z"
-    },
-    {
-      "message": "src/validators/organization-profiles.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/organization.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/organizations.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/partners.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/pdf-import.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/performance-metrics.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/permissionRequests.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/pinned-prompts.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/pmo-analysis.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/pmo-context.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/pmo.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/pmoDomains.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/pmoRoles.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887102304Z"
-    },
-    {
-      "message": "src/validators/preferences.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/premiumReports.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887109585Z"
-    },
-    {
-      "message": "src/validators/pricing.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887117387Z"
-    },
-    {
-      "message": "src/validators/project-members.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887125449Z"
-    },
-    {
-      "message": "src/validators/project.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/projects.validators.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/promo.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/prompt-assistant.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/raid.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/rapidlean.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887217487Z"
-    },
-    {
-      "message": "src/validators/rbac.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/referrals.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/report-comments.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/reports.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/roadmap.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/scenarios.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/scim.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/security.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/securityPolicies.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/sessions.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/settings.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/settlements.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/sso.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.88745965Z"
-    },
-    {
-      "message": "src/validators/stabilization.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/stage-gates.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/stageGate.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/status-reports.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/status.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.88748637Z"
-    },
-    {
-      "message": "src/validators/studio.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/superadmin.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/systemConfig.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/systemHealth.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/task-advisor.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887547893Z"
-    },
-    {
-      "message": "src/validators/task.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/tasks.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/teams.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/tokenBilling.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/trial.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/user-appearance.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/user-availability.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887593912Z"
-    },
-    {
-      "message": "src/validators/user-contact.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887601143Z"
-    },
-    {
-      "message": "src/validators/user-data-controls.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/user-keyboard-shortcuts.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/user-privacy-extended.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/user-professional-profile.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887631849Z"
-    },
-    {
-      "message": "src/validators/user-profile-completeness.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.88763953Z"
-    },
-    {
-      "message": "src/validators/user-profile-extended.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/user-security-advanced.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/user-settings-history.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/user-settings-templates.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887670797Z"
-    },
-    {
-      "message": "src/validators/user.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/userGoals.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/userIntegrations.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/userOrgs.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/users.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887713301Z"
-    },
-    {
-      "message": "src/validators/verify.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/videos.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/voice.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/webauthn.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.88774588Z"
-    },
-    {
-      "message": "src/validators/webhookSubscriptions.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/webhooks.validators.ts(6,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/workMode.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/workqueue.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/workspace-defaults.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\nsrc/validators/workstreams.validators.ts(8,19): error TS2307: Cannot find module 'zod' or its corresponding type declarations.\n",
-      "timestamp": "2026-01-13T19:31:01.887806821Z"
-    },
-    {
-      "message": "TypeScript build failed!\n",
-      "timestamp": "2026-01-13T19:31:01.99051259Z"
-    }
-  ]
-}
+[LazyServiceLoader] Error loading /app/server/dist/ai/mediaIngestionService.js: Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/app/server/dist/ai/mediaIngestionService.js' imported from /app/server/dist/src/utils/lazyServiceLoader.js
+2026-01-15T14:10:56.335849565Z [err]      at finalizeResolution (node:internal/modules/esm/resolve:283:11)
+2026-01-15T14:10:56.341530100Z [err]   → /app/server/node_modules/sqlite3/out/Debug/node_sqlite3.node
+2026-01-15T14:10:56.341537016Z [err]   → /app/server/node_modules/sqlite3/Debug/node_sqlite3.node
+2026-01-15T14:10:56.341543782Z [err]   → /app/server/node_modules/sqlite3/out/Release/node_sqlite3.node
+2026-01-15T14:10:56.341550279Z [err]   → /app/server/node_modules/sqlite3/Release/node_sqlite3.node
+2026-01-15T14:10:56.341559452Z [err]   → /app/server/node_modules/sqlite3/build/default/node_sqlite3.node
+2026-01-15T14:10:56.341565698Z [err]   → /app/server/node_modules/sqlite3/compiled/20.20.0/linux/x64/node_sqlite3.node
+2026-01-15T14:10:56.341571974Z [err]   → /app/server/node_modules/sqlite3/addon-build/release/install-root/node_sqlite3.node
+2026-01-15T14:10:56.341577782Z [err]   → /app/server/node_modules/sqlite3/addon-build/debug/install-root/node_sqlite3.node
+2026-01-15T14:10:56.341583632Z [err]   → /app/server/node_modules/sqlite3/addon-build/default/install-root/node_sqlite3.node
+2026-01-15T14:10:56.341589352Z [err]   → /app/server/node_modules/sqlite3/lib/binding/node-v115-linux-x64/node_sqlite3.node
+2026-01-15T14:10:56.341595565Z [err]      at bindings (/app/server/node_modules/bindings/bindings.js:126:9)
+2026-01-15T14:10:56.341601374Z [err]      at Object.<anonymous> (/app/server/node_modules/sqlite3/lib/sqlite3-binding.js:1:37)
+2026-01-15T14:10:56.341606725Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14)
+2026-01-15T14:10:56.341614208Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+2026-01-15T14:10:56.341620156Z [err]      at Module.load (node:internal/modules/cjs/loader:1266:32)
+2026-01-15T14:10:56.341627672Z [err]      at Module._load (node:internal/modules/cjs/loader:1091:12)
+2026-01-15T14:10:56.341633994Z [err]      at Module.require (node:internal/modules/cjs/loader:1289:19)
+2026-01-15T14:10:56.341640153Z [err]      at require (node:internal/modules/helpers:182:18)
+2026-01-15T14:10:56.344647794Z [err]      '/app/server/node_modules/sqlite3/out/Debug/node_sqlite3.node',
+2026-01-15T14:10:56.344665354Z [err]      '/app/server/node_modules/sqlite3/Debug/node_sqlite3.node',
+2026-01-15T14:10:56.344783516Z [err]      '/app/server/node_modules/sqlite3/out/Release/node_sqlite3.node',
+2026-01-15T14:10:56.344795876Z [err]      '/app/server/node_modules/sqlite3/Release/node_sqlite3.node',
+2026-01-15T14:10:56.344803483Z [err]      '/app/server/node_modules/sqlite3/build/default/node_sqlite3.node',
+2026-01-15T14:10:56.344811328Z [err]      '/app/server/node_modules/sqlite3/compiled/20.20.0/linux/x64/node_sqlite3.node',
+2026-01-15T14:10:56.344817798Z [err]      '/app/server/node_modules/sqlite3/addon-build/release/install-root/node_sqlite3.node',
+2026-01-15T14:10:56.344825397Z [err]      '/app/server/node_modules/sqlite3/addon-build/debug/install-root/node_sqlite3.node',
+2026-01-15T14:10:56.344832090Z [err]      '/app/server/node_modules/sqlite3/addon-build/default/install-root/node_sqlite3.node',
+2026-01-15T14:10:56.344836344Z [err]      at Object.<anonymous> (/app/server/node_modules/sqlite3/lib/sqlite3.js:2:17)
+2026-01-15T14:10:56.344838717Z [err]      '/app/server/node_modules/sqlite3/lib/binding/node-v115-linux-x64/node_sqlite3.node'
+2026-01-15T14:10:56.344844625Z [err]    ]
+2026-01-15T14:10:56.344851002Z [err]  }
+2026-01-15T14:10:56.344856677Z [inf]  2026-01-15 14:10:56:1056 [31merror[39m: [31m[DB:Promise] Query exception[39m {"error":"Database not initialized. Call getDatabaseAsync() first.","stack":"Error: Database not initialized. Call getDatabaseAsync() first.\n    at getDatabaseInstance (file:///app/server/dist/src/database/Database.js:117:15)\n    at Object.get (file:///app/server/dist/src/database/Database.js:165:26)\n    at file:///app/server/dist/src/utils/DbPromise.js:69:16\n    at new Promise (<anonymous>)\n    at Module.all (file:///app/server/dist/src/utils/DbPromise.js:57:12)\n    at Object.restoreStates (file:///app/server/dist/src/services/circuitBreakerService.js:469:42)\n    at initialize (file:///app/server/dist/src/services/ai/circuitBreaker.js:47:37)\n    at Immediate._onImmediate (file:///app/server/dist/src/services/ai/circuitBreaker.js:56:5)\n    at process.processImmediate (node:internal/timers:483:21)","sql":"SELECT * FROM circuit_breaker_state WHERE state = ?"}
+2026-01-15T14:10:56.344862644Z [err]      at Module._compile (node:internal/modules/cjs/loader:1521:14) {
+2026-01-15T14:10:56.344871767Z [err]    tries: [
+2026-01-15T14:10:56.344878644Z [err]      '/app/server/node_modules/sqlite3/build/node_sqlite3.node',
+2026-01-15T14:10:56.344886274Z [err]      '/app/server/node_modules/sqlite3/build/Debug/node_sqlite3.node',
+2026-01-15T14:10:56.344893722Z [err]      '/app/server/node_modules/sqlite3/build/Release/node_sqlite3.node',
+2026-01-15T14:10:56.347730279Z [inf]  [LazyServiceLoader] Loading: ./trialService.legacy.js -> /app/server/dist/src/services/trialService.legacy.js
+2026-01-15T14:10:56.347735337Z [err]  [LazyServiceLoader] Error loading /app/server/dist/src/services/trialService.legacy.js: Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/app/server/dist/src/services/trialService.legacy.js' imported from /app/server/dist/src/utils/lazyServiceLoader.js
+2026-01-15T14:10:56.347740149Z [err]      at finalizeResolution (node:internal/modules/esm/resolve:283:11)
+2026-01-15T14:10:56.347744628Z [err]      at moduleResolve (node:internal/modules/esm/resolve:952:10)
+2026-01-15T14:10:56.347749375Z [err]      at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+2026-01-15T14:10:56.347756419Z [err]      at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+2026-01-15T14:10:56.347761654Z [err]      at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+2026-01-15T14:10:56.347767288Z [err]      at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+2026-01-15T14:10:56.347772376Z [err]      at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+2026-01-15T14:10:56.347777933Z [err]      at ModuleLoader.import (node:internal/modules/esm/loader:605:34)
+2026-01-15T14:10:56.347785202Z [err]      at defaultImportModuleDynamicallyForModule (node:internal/modules/esm/utils:221:31)
+2026-01-15T14:10:56.347791309Z [err]      at importModuleDynamicallyCallback (node:internal/modules/esm/utils:260:12) {
+2026-01-15T14:10:56.347797287Z [err]    code: 'ERR_MODULE_NOT_FOUND',
+2026-01-15T14:10:56.347802752Z [err]    url: 'file:///app/server/dist/src/services/trialService.legacy.js'
+2026-01-15T14:10:56.347808098Z [err]  }
+2026-01-15T14:10:56.347813353Z [err]  [LazyServiceLoader] Failed to load: /app/server/dist/src/services/trialService.legacy.js
+2026-01-15T14:10:56.347818617Z [err]  [LazyServiceLoader] Returning stub proxy for: ./trialService.legacy.js
+2026-01-15T14:10:56.352254435Z [inf]  ✅ Environment variables validated successfully
+2026-01-15T14:10:56.352268610Z [err]  
+2026-01-15T14:10:56.352278162Z [err]  ⚠️  Environment Variable Warnings:
+2026-01-15T14:10:56.352286592Z [err]    - JWT_SECRET should be at least 64 characters in production
+2026-01-15T14:10:56.352295182Z [err]  
+2026-01-15T14:10:56.352304401Z [inf]  ✅ Environment variables validated successfully
+2026-01-15T14:10:56.352312960Z [err]  TypeError: Cannot read properties of undefined (reading 'errorHandler')
+2026-01-15T14:10:56.352322022Z [err]      at initSentry (file:///app/server/dist/src/config/SentryConfig.js:120:39)
+2026-01-15T14:10:56.352329820Z [err]      at file:///app/server/dist/src/index.js:71:24
+2026-01-15T14:10:56.352393874Z [inf]  2026-01-15 14:10:56:1056 [33mwarn[39m: [33m[TokenBilling] TokenBillingService not available[39m
+2026-01-15T14:10:56.352399780Z [inf]  2026-01-15 14:10:56:1056 [33mwarn[39m: [33m[Knowledge] Project quota middleware not available[39m
+2026-01-15T14:10:56.352405688Z [err]  
+2026-01-15T14:10:56.352411168Z [err]  ⚠️  Environment Variable Warnings:
+2026-01-15T14:10:56.352417276Z [err]    - JWT_SECRET should be at least 64 characters in production
+2026-01-15T14:10:56.352423325Z [err]  
+2026-01-15T14:10:59.757921126Z [inf]  [DB Config] Loading config. SQLITE_PATH env: undefined
+2026-01-15T14:10:59.757927545Z [inf]  [DB Config] Resolved sqlitePath: /app/server/dist/consultinity.db
+2026-01-15T14:10:59.757934169Z [inf]  2026-01-15 14:10:59:1059 [33mwarn[39m: [33m[DB Config] WARNING: DB_CONNECTION_TIMEOUT=3000ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)[39m
+2026-01-15T14:11:00.976989461Z [inf]    'getAccessRequests',
+2026-01-15T14:11:00.977076785Z [inf]    'approveAccessRequest',
+2026-01-15T14:11:00.977642387Z [inf]  [AuthRoutes] login handler is type: function
+2026-01-15T14:11:00.977648226Z [inf]  [Economics Routes] Module loaded - TypeScript version
+2026-01-15T14:11:00.977654744Z [inf]  [Economics Routes] Router type: function
+2026-01-15T14:11:00.977660366Z [inf]  [Economics Routes] Router created. Stack length: 0
+2026-01-15T14:11:00.977665998Z [inf]  [Economics Routes] After /analyses route. Stack length: 1
+2026-01-15T14:11:00.977671703Z [inf]  2026-01-15 14:10:59:1059 [33mwarn[39m: [33m[Gamification Routes] GamificationService not available[39m
+2026-01-15T14:11:00.977678639Z [inf]  2026-01-15 14:10:59:1059 [33mwarn[39m: [33m[Knowledge] StorageService not available[39m
+2026-01-15T14:11:00.977684996Z [inf]  2026-01-15 14:10:59:1059 [33mwarn[39m: [33m[Knowledge] NotificationOutboxService not available[39m
+2026-01-15T14:11:00.977690776Z [inf]  [LazyServiceLoader] Loading: ../../ai/mediaIngestionService.js -> /app/server/dist/ai/mediaIngestionService.js
+2026-01-15T14:11:00.977695881Z [inf]  

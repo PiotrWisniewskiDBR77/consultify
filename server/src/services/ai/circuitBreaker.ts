@@ -58,20 +58,37 @@ export async function execute<T>(
 
 export async function initialize(): Promise<void> {
   try {
+    // Wait for database to be initialized before restoring states
+    // Import here to avoid circular dependency
+    const { getDatabaseAsync } = await import('../../database/Database.js');
+    try {
+      await getDatabaseAsync();
+    } catch (dbError) {
+      // Database might not be ready yet, wait a bit and retry
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await getDatabaseAsync();
+    }
+    
     await CircuitBreakerService.restoreStates();
     aiLogger.info('CircuitBreaker', 'LLM circuit breakers initialized');
   } catch (error: unknown) {
     const err = error as Error;
-    aiLogger.warn('CircuitBreaker', `Initialization warning: ${err.message}`);
+    // Don't log as error if it's just a database initialization issue
+    if (err.message.includes('Database not initialized')) {
+      aiLogger.debug('CircuitBreaker', 'Database not ready yet, will retry later');
+    } else {
+      aiLogger.warn('CircuitBreaker', `Initialization warning: ${err.message}`);
+    }
   }
 }
 
-setImmediate(() => {
+// Delay initialization to allow database to initialize first
+setTimeout(() => {
   initialize().catch((error) => {
     const err = error as Error;
     logger.warn('[CircuitBreaker] Auto-init failed:', err.message);
   });
-});
+}, 3000); // Wait 3 seconds for database initialization
 
 export default {
   STATE,

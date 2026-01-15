@@ -7,7 +7,7 @@
  */
 
 import * as Sentry from '@sentry/node';
-import { expressIntegration, httpIntegration } from '@sentry/node';
+import { expressIntegration, httpIntegration, setupExpressErrorHandler } from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import type { Express, NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
@@ -168,19 +168,18 @@ export function initSentry(app: Express): SentryHandlers {
     tracingHandler: (_req: Request, _res: Response, next: NextFunction) => next(),
 
     // Error handler - must be after routes and before other error handlers
-    errorHandler: (Sentry as any).Handlers.errorHandler({
-      shouldHandleError(error: Error & { status?: number }) {
-        // Only report 500+ errors automatically
-        if (error.status && error.status >= 500) {
-          return true;
-        }
+    // Sentry v10: use setupExpressErrorHandler or custom middleware
+    errorHandler: (err: Error & { status?: number }, req: Request, res: Response, next: NextFunction) => {
+      // Only report 500+ errors automatically
+      if (err.status && err.status >= 500) {
+        Sentry.captureException(err);
+      } else if (err.status === 429) {
         // Also report 429 (rate limit) errors
-        if (error.status === 429) {
-          return true;
-        }
-        return false;
-      },
-    }),
+        Sentry.captureException(err);
+      }
+      // Always call next to pass error to Express error handling
+      next(err);
+    },
   };
 }
 
