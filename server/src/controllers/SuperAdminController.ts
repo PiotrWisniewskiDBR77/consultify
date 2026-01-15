@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { AppError, asyncHandler as catchAsync } from '../utils/errorHandler.js';
+import { AppError, asyncHandler as catchAsync } from '../utils/ErrorHandler.js';
 import { getDatabase } from '../database/index.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
