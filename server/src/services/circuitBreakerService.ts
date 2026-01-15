@@ -624,6 +624,30 @@ export const CircuitBreakerService = {
     if (stateRestored) return;
 
     try {
+      // Check if table exists first to avoid error logs
+      // For SQLite: use PRAGMA table_info
+      // For PostgreSQL: query will fail gracefully with fallback
+      let tableExists = false;
+      try {
+        const tableInfo = await DbPromise.all('PRAGMA table_info(circuit_breaker_state)', [], { fallback: true });
+        tableExists = Array.isArray(tableInfo) && tableInfo.length > 0;
+      } catch {
+        // If PRAGMA doesn't work (PostgreSQL), try a simple SELECT
+        // The fallback option will return empty array if table doesn't exist
+        try {
+          await DbPromise.all('SELECT 1 FROM circuit_breaker_state LIMIT 0', [], { fallback: true });
+          tableExists = true; // If query succeeds, table exists
+        } catch {
+          tableExists = false; // Table doesn't exist
+        }
+      }
+
+      if (!tableExists) {
+        aiLogger.debug('CircuitBreaker', 'Table circuit_breaker_state not ready yet, skipping state restoration');
+        stateRestored = true; // Mark as restored to avoid repeated attempts
+        return;
+      }
+
       const rows = await DbPromise.all<{
         id: string;
         service: string;
@@ -654,7 +678,13 @@ export const CircuitBreakerService = {
       stateRestored = true;
     } catch (error: unknown) {
       const err = error as Error;
-      aiLogger.warn('CircuitBreaker', `Failed to restore states: ${err.message}`);
+      // Only log as warning if it's not a "table doesn't exist" error
+      if (!err.message.includes('no such table') && !err.message.includes('does not exist') && !err.message.includes('relation') && !err.message.includes('Database not initialized')) {
+        aiLogger.warn('CircuitBreaker', `Failed to restore states: ${err.message}`);
+      } else {
+        aiLogger.debug('CircuitBreaker', 'Table circuit_breaker_state not ready yet, skipping state restoration');
+      }
+      stateRestored = true; // Mark as restored to avoid repeated attempts
     }
   },
 

@@ -387,11 +387,26 @@ const apiLimiter = rateLimit({
   skip: (req) => isTest || req.originalUrl.includes('/api/auth/'),
   message: { error: 'Too many requests, please try again later.' },
   keyGenerator: (req) => {
-    // Intelligent Rate Limiting: Key by User ID if auth, else IP
-    // This solves the "Office IP" problem where all users share one IP
-    // Using req.ip for IPv6 compatibility (trust proxy is set)
-    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-    return `api:ip:${ip}`;
+    try {
+      // Intelligent Rate Limiting: Key by User ID if auth, else IP
+      // This solves the "Office IP" problem where all users share one IP
+      // Using req.ip for IPv6 compatibility (trust proxy is set)
+      const ip = req.ip || 
+                 req.socket?.remoteAddress || 
+                 req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
+                 req.headers['x-real-ip']?.toString() ||
+                 'unknown';
+      // Ensure we return a valid string (express-rate-limit requires this)
+      const key = `api:ip:${ip}`;
+      if (!key || key === 'api:ip:') {
+        return 'api:ip:unknown';
+      }
+      return key;
+    } catch (error) {
+      // Fallback if keyGenerator throws an error
+      logger.warn('[RateLimit] keyGenerator error, using fallback:', error);
+      return 'api:ip:unknown';
+    }
   },
 });
 
@@ -409,15 +424,30 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   skipSuccessfulRequests: true,
   keyGenerator: (req) => {
-    const email = (req.body as { email?: string })?.email;
+    try {
+      const email = (req.body as { email?: string })?.email;
 
-    if (email) {
-      return `auth:${email.toLowerCase().trim()}`;
+      if (email && typeof email === 'string' && email.trim()) {
+        return `auth:${email.toLowerCase().trim()}`;
+      }
+
+      // Using req.ip for IPv6 compatibility (trust proxy is set)
+      const ip = req.ip || 
+                 req.socket?.remoteAddress || 
+                 req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
+                 req.headers['x-real-ip']?.toString() ||
+                 'unknown';
+      // Ensure we return a valid string (express-rate-limit requires this)
+      const key = `auth:ip:${ip}`;
+      if (!key || key === 'auth:ip:') {
+        return 'auth:ip:unknown';
+      }
+      return key;
+    } catch (error) {
+      // Fallback if keyGenerator throws an error
+      logger.warn('[RateLimit] authLimiter keyGenerator error, using fallback:', error);
+      return 'auth:ip:unknown';
     }
-
-    // Using req.ip for IPv6 compatibility (trust proxy is set)
-    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-    return `auth:ip:${ip}`;
   },
 });
 

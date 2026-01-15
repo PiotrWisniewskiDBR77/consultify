@@ -6,6 +6,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const SRC_ROOT = path.resolve(__dirname, '..');
 
+// Debug: Log SRC_ROOT in development to verify it's correct
+if (process.env.NODE_ENV !== 'production') {
+  console.debug(`[LazyServiceLoader] SRC_ROOT: ${SRC_ROOT}, __dirname: ${__dirname}`);
+}
+
 export async function createLazyService<T = unknown>(servicePath: string): Promise<T> {
   // In test mode, try to use mocks first
   if (process.env.NODE_ENV === 'test') {
@@ -23,9 +28,47 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
   // Try to find the file
   let absolutePath: string;
   if (servicePath.startsWith('./') || servicePath.startsWith('../')) {
-    absolutePath = path.resolve(SRC_ROOT, 'services', servicePath);
+    // Handle relative paths - resolve from services directory
+    // IMPORTANT: Strip ALL ../ BEFORE path.resolve, otherwise path.resolve will
+    // process them and go outside the services/ directory
+    let cleanPath = servicePath;
+    
+    // Remove all leading ../ (these incorrectly go outside services/)
+    // Must do this BEFORE path.resolve, not after
+    while (cleanPath.startsWith('../')) {
+      cleanPath = cleanPath.slice(3); // Remove '../'
+    }
+    
+    // Remove leading ./ if present
+    if (cleanPath.startsWith('./')) {
+      cleanPath = cleanPath.slice(2);
+    }
+    
+    // Remove any remaining ../ that might be in the middle (shouldn't happen, but be safe)
+    cleanPath = cleanPath.replace(/\/\.\.\//g, '/').replace(/\/\.\.$/g, '');
+    
+    // Always resolve from services/ directory
+    // Now cleanPath should be something like "ai/healthMonitor.js"
+    absolutePath = path.resolve(SRC_ROOT, 'services', cleanPath);
   } else {
+    // Absolute path from SRC_ROOT
     absolutePath = path.resolve(SRC_ROOT, servicePath);
+  }
+
+  // Double-check path is correct before TS mapping
+  // If path doesn't start with expected services path, recalculate
+  const expectedServicesPath = path.resolve(SRC_ROOT, 'services');
+  if (!absolutePath.startsWith(expectedServicesPath) && !absolutePath.includes('node_modules')) {
+    // Path resolution went wrong - recalculate
+    let cleanPath = servicePath;
+    while (cleanPath.startsWith('../')) {
+      cleanPath = cleanPath.slice(3);
+    }
+    if (cleanPath.startsWith('./')) {
+      cleanPath = cleanPath.slice(2);
+    }
+    cleanPath = cleanPath.replace(/\/\.\.\//g, '/').replace(/\/\.\.$/g, '');
+    absolutePath = path.resolve(SRC_ROOT, 'services', cleanPath);
   }
 
   // Handle TS mapping for dynamic imports
@@ -55,6 +98,22 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
     return createStubProxy(servicePath);
   }
 
+  // Final verification: ensure path is correct before attempting import
+  const expectedServicesPath = path.resolve(SRC_ROOT, 'services');
+  const normalizedAbsolutePath = path.normalize(absolutePath);
+  
+  // If the path doesn't start with expectedServicesPath, path resolution went wrong
+  // This should not happen with our fix, but add safety check
+  if (!normalizedAbsolutePath.startsWith(expectedServicesPath) && !normalizedAbsolutePath.includes('node_modules')) {
+    console.warn(`[LazyServiceLoader] Path resolution issue detected: ${servicePath} resolved to ${normalizedAbsolutePath}, expected under ${expectedServicesPath}. SRC_ROOT=${SRC_ROOT}, __dirname=${__dirname}`);
+    // Try one more time with absolute path from services/
+    const fallbackPath = path.resolve(SRC_ROOT, 'services', servicePath.replace(/^(\.\.\/)+/, ''));
+    if (fs.existsSync(fallbackPath) || fs.existsSync(fallbackPath.replace('.js', '.ts'))) {
+      absolutePath = fallbackPath;
+      console.log(`[LazyServiceLoader] Using fallback path: ${absolutePath}`);
+    }
+  }
+
   console.log(`[LazyServiceLoader] Loading: ${servicePath} -> ${absolutePath}`);
   try {
     const module = await import(absolutePath);
@@ -73,7 +132,21 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
       }
     }
 
-    console.error(`[LazyServiceLoader] Error loading ${absolutePath}:`, error);
+    // Only log error if it's not a "module not found" error for expected missing files
+    const err = error as Error & { code?: string };
+    const isModuleNotFound = err.code === 'ERR_MODULE_NOT_FOUND' || err.message.includes('Cannot find module');
+    const isExpectedMissingFile = 
+      servicePath.includes('.legacy.js') || 
+      servicePath.includes('trialService') ||
+      absolutePath.includes('.legacy.js');
+    
+    if (!isExpectedMissingFile || !isModuleNotFound) {
+      console.error(`[LazyServiceLoader] Error loading ${absolutePath}:`, error);
+    } else {
+      // For expected missing files, just log at debug level
+      console.debug(`[LazyServiceLoader] Expected missing file (returning stub): ${servicePath}`);
+    }
+    
     return createStubProxy(servicePath, absolutePath);
   }
 }

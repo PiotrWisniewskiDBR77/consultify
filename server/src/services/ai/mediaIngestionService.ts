@@ -7,9 +7,10 @@
 
 import { createCachedLazyService } from '../../utils/lazyServiceLoader.js';
 
-// Lazy load the JS service module - file is in the same directory
+// Lazy load the JS service module - file is in the ai directory
 // The .js file is a re-export wrapper that exports from the .ts file
-const loadMediaingestion = createCachedLazyService('./mediaIngestionService.js');
+// Path is relative to services/ directory: ./ai/mediaIngestionService.js
+const loadMediaingestion = createCachedLazyService('./ai/mediaIngestionService.js');
 
 // Export default instance (for backward compatibility)
 export default loadMediaingestion();

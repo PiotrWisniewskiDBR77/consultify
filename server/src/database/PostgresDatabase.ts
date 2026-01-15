@@ -862,8 +862,48 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(invited_by) REFERENCES users(id) ON DELETE SET NULL
         )`);
 
+    // Add token_hash column if it doesn't exist (for existing tables created before this column was added)
+    try {
+      const columnCheck = await getPool().query(
+        `SELECT column_name FROM information_schema.columns 
+         WHERE table_name = 'invitations' AND column_name = 'token_hash'`
+      );
+      if (columnCheck.rows.length === 0) {
+        await query(`ALTER TABLE invitations ADD COLUMN token_hash TEXT`);
+        // Add unique constraint separately if needed
+        try {
+          await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_token_hash_unique ON invitations(token_hash) WHERE token_hash IS NOT NULL`);
+        } catch {
+          // Unique constraint might already exist or fail, that's OK
+        }
+      }
+    } catch (alterError: unknown) {
+      // Column might already exist or have constraints, that's OK
+      const err = alterError as Error;
+      if (!err.message.includes('already exists') && !err.message.includes('duplicate')) {
+        logger.warn('[Postgres] Could not add token_hash column:', err.message);
+      }
+    }
+
     await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash)`);
+    
+    // Only create index on token_hash if the column exists
+    try {
+      const columnCheck = await getPool().query(
+        `SELECT column_name FROM information_schema.columns 
+         WHERE table_name = 'invitations' AND column_name = 'token_hash'`
+      );
+      if (columnCheck.rows.length > 0) {
+        await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash)`);
+      }
+    } catch (indexError: unknown) {
+      // Index creation failed, log but don't fail initialization
+      const err = indexError as Error;
+      if (!err.message.includes('does not exist')) {
+        logger.warn('[Postgres] Could not create token_hash index:', err.message);
+      }
+    }
+    
     await query(`CREATE INDEX IF NOT EXISTS idx_invitations_email ON invitations(email)`);
     await query(
       `CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`
@@ -1281,8 +1321,48 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )`);
 
+    // Add token_hash column if it doesn't exist (for existing tables created before this column was added)
+    try {
+      const columnCheck = await getPool().query(
+        `SELECT column_name FROM information_schema.columns 
+         WHERE table_name = 'refresh_tokens' AND column_name = 'token_hash'`
+      );
+      if (columnCheck.rows.length === 0) {
+        await query(`ALTER TABLE refresh_tokens ADD COLUMN token_hash TEXT NOT NULL`);
+        // Add unique constraint separately
+        try {
+          await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_hash_unique ON refresh_tokens(token_hash)`);
+        } catch {
+          // Unique constraint might already exist, that's OK
+        }
+      }
+    } catch (alterError: unknown) {
+      // Column might already exist or have constraints, that's OK
+      const err = alterError as Error;
+      if (!err.message.includes('already exists') && !err.message.includes('duplicate')) {
+        logger.warn('[Postgres] Could not add token_hash column to refresh_tokens:', err.message);
+      }
+    }
+
     await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`);
+    
+    // Only create index on token_hash if the column exists
+    try {
+      const columnCheck = await getPool().query(
+        `SELECT column_name FROM information_schema.columns 
+         WHERE table_name = 'refresh_tokens' AND column_name = 'token_hash'`
+      );
+      if (columnCheck.rows.length > 0) {
+        await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`);
+      }
+    } catch (indexError: unknown) {
+      // Index creation failed, log but don't fail initialization
+      const err = indexError as Error;
+      if (!err.message.includes('does not exist')) {
+        logger.warn('[Postgres] Could not create token_hash index on refresh_tokens:', err.message);
+      }
+    }
+    
     await query(
       `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_family ON refresh_tokens(token_family)`
     );
