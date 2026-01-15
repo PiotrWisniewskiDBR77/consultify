@@ -625,20 +625,30 @@ export const CircuitBreakerService = {
 
     try {
       // Check if table exists first to avoid error logs
-      // For SQLite: use PRAGMA table_info
-      // For PostgreSQL: query will fail gracefully with fallback
+      // Detect database type to use correct syntax
+      const { default: databaseConfig } = await import('../config/DatabaseConfig.js');
+      const isPostgres = databaseConfig.type === 'postgres';
+      
       let tableExists = false;
-      try {
-        const tableInfo = await DbPromise.all('PRAGMA table_info(circuit_breaker_state)', [], { fallback: true });
-        tableExists = Array.isArray(tableInfo) && tableInfo.length > 0;
-      } catch {
-        // If PRAGMA doesn't work (PostgreSQL), try a simple SELECT
-        // The fallback option will return empty array if table doesn't exist
+      if (isPostgres) {
+        // PostgreSQL: Check information_schema
         try {
-          await DbPromise.all('SELECT 1 FROM circuit_breaker_state LIMIT 0', [], { fallback: true });
-          tableExists = true; // If query succeeds, table exists
+          const result = await DbPromise.all<{ count: string }>(
+            `SELECT COUNT(*)::text as count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+            ['circuit_breaker_state'],
+            { fallback: true }
+          );
+          tableExists = parseInt(result?.[0]?.count || '0', 10) > 0;
         } catch {
-          tableExists = false; // Table doesn't exist
+          tableExists = false;
+        }
+      } else {
+        // SQLite: use PRAGMA table_info
+        try {
+          const tableInfo = await DbPromise.all('PRAGMA table_info(circuit_breaker_state)', [], { fallback: true });
+          tableExists = Array.isArray(tableInfo) && tableInfo.length > 0;
+        } catch {
+          tableExists = false;
         }
       }
 

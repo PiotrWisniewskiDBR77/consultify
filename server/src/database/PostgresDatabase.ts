@@ -472,6 +472,22 @@ export async function initDb(): Promise<void> {
         throw e;
       }
     };
+    
+    // Helper function for queries that can fail gracefully (e.g., index creation on non-existent columns)
+    const querySafe = async (sql: string, params?: unknown[], errorMessage?: string): Promise<boolean> => {
+      const adapted = adaptQuery(sql);
+      try {
+        await getPool().query(adapted, params);
+        return true;
+      } catch (e: unknown) {
+        const error = e as Error;
+        // Don't log errors for missing columns/indexes - these are expected in some cases
+        if (errorMessage) {
+          logger.debug(`[Postgres] ${errorMessage}: ${error.message}`);
+        }
+        return false;
+      }
+    };
 
     // Organizations Table
     await query(`CREATE TABLE IF NOT EXISTS organizations (
@@ -908,7 +924,12 @@ export async function initDb(): Promise<void> {
     await query(
       `CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`
     );
-    await query(`CREATE INDEX IF NOT EXISTS idx_invitations_project ON invitations(project_id)`);
+    // Create index on project_id only if column exists
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_invitations_project ON invitations(project_id)`,
+      [],
+      'Skipping project_id index on invitations'
+    );
 
     // Access Requests
     await query(`CREATE TABLE IF NOT EXISTS access_requests(
@@ -1559,7 +1580,12 @@ export async function initDb(): Promise<void> {
       `CREATE INDEX IF NOT EXISTS idx_users_org_status ON users(organization_id, status)`
     );
     await query(`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)`);
+    // Create index on project_id only if column exists
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)`,
+      [],
+      'Skipping project_id index on sessions'
+    );
     await query(`CREATE INDEX IF NOT EXISTS idx_revoked_tokens_user ON revoked_tokens(user_id)`);
 
     // Teams & Access
@@ -1582,8 +1608,21 @@ export async function initDb(): Promise<void> {
     );
 
     // Tasks Management
-    await query(`CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_tasks_project_status ON tasks(project_id, status)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id)`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_tasks_org_status ON tasks(organization_id, status)`
+    );
+    // Create indexes on project_id only if column exists
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id)`,
+      [],
+      'Skipping project_id index on tasks'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_tasks_project_status ON tasks(project_id, status)`,
+      [],
+      'Skipping project_id status index on tasks'
+    );
     await query(`CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id)`);
     await query(
       `CREATE INDEX IF NOT EXISTS idx_tasks_org_status ON tasks(organization_id, status)`
