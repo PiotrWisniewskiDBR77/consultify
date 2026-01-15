@@ -55,10 +55,13 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
     absolutePath = path.resolve(SRC_ROOT, servicePath);
   }
 
+  // Verify path is correct and handle TS mapping
+  const expectedServicesPath = path.resolve(SRC_ROOT, 'services');
+  const normalizedAbsolutePath = path.normalize(absolutePath);
+  
   // Double-check path is correct before TS mapping
   // If path doesn't start with expected services path, recalculate
-  const expectedServicesPath = path.resolve(SRC_ROOT, 'services');
-  if (!absolutePath.startsWith(expectedServicesPath) && !absolutePath.includes('node_modules')) {
+  if (!normalizedAbsolutePath.startsWith(expectedServicesPath) && !normalizedAbsolutePath.includes('node_modules')) {
     // Path resolution went wrong - recalculate
     let cleanPath = servicePath;
     while (cleanPath.startsWith('../')) {
@@ -99,13 +102,12 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
   }
 
   // Final verification: ensure path is correct before attempting import
-  const expectedServicesPath = path.resolve(SRC_ROOT, 'services');
-  const normalizedAbsolutePath = path.normalize(absolutePath);
+  const finalNormalizedPath = path.normalize(absolutePath);
   
   // If the path doesn't start with expectedServicesPath, path resolution went wrong
   // This should not happen with our fix, but add safety check
-  if (!normalizedAbsolutePath.startsWith(expectedServicesPath) && !normalizedAbsolutePath.includes('node_modules')) {
-    console.warn(`[LazyServiceLoader] Path resolution issue detected: ${servicePath} resolved to ${normalizedAbsolutePath}, expected under ${expectedServicesPath}. SRC_ROOT=${SRC_ROOT}, __dirname=${__dirname}`);
+  if (!finalNormalizedPath.startsWith(expectedServicesPath) && !finalNormalizedPath.includes('node_modules')) {
+    console.warn(`[LazyServiceLoader] Path resolution issue detected: ${servicePath} resolved to ${finalNormalizedPath}, expected under ${expectedServicesPath}. SRC_ROOT=${SRC_ROOT}, __dirname=${__dirname}`);
     // Try one more time with absolute path from services/
     const fallbackPath = path.resolve(SRC_ROOT, 'services', servicePath.replace(/^(\.\.\/)+/, ''));
     if (fs.existsSync(fallbackPath) || fs.existsSync(fallbackPath.replace('.js', '.ts'))) {
