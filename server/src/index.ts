@@ -821,6 +821,45 @@ if (!isTest) {
   });
 }
 
-// Note: Server startup moved earlier to execute before top-level awaits
+// ============================================================
+// START SERVER (after all routes are registered)
+// ============================================================
+
+const startServer = true; // Always start server when running via tsx
+
+if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
+  logger.info('[Server] Starting HTTP server after route registration...');
+  console.log('[Server] Starting HTTP server after route registration...');
+  const server = http.createServer(app);
+  const shutdownManager = getShutdownManager(30000); // 30 second timeout
+
+  // Handle server errors
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    logger.error('[Server] HTTP Server Error:', err);
+    console.error('[Server] HTTP Server Error:', err);
+    if (err.code === 'EADDRINUSE') {
+      logger.error(`Port ${PORT} is already in use`);
+      process.exit(1);
+    }
+  });
+
+  // Register shutdown handlers
+  process.on('SIGTERM', () => {
+    logger.info('[Shutdown] Received SIGTERM, closing server...');
+    server.close(() => process.exit(0));
+  });
+  process.on('SIGINT', () => {
+    logger.info('[Shutdown] Received SIGINT, closing server...');
+    server.close(() => process.exit(0));
+  });
+
+  // Start listening after all routes are registered
+  server.listen(PORT, '0.0.0.0', () => {
+    logger.info('✅ Server running on http://0.0.0.0:' + PORT);
+    logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
+    console.log(`[Server] ✅ Server started on port ${PORT}`);
+    console.log(`[Server] Frontend will be served from: ${frontendDistPath}`);
+  });
+}
 
 export default app;
