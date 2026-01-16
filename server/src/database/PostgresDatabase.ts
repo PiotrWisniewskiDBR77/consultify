@@ -563,6 +563,24 @@ export async function initDb(): Promise<void> {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
 
+    // Projects table (must come before sessions which references it)
+    await query(`CREATE TABLE IF NOT EXISTS projects(
+            id TEXT PRIMARY KEY,
+            organization_id TEXT,
+            name TEXT,
+            description TEXT,
+            goal TEXT,
+            status TEXT DEFAULT 'active',
+            owner_id TEXT,
+            initiative_count INTEGER DEFAULT 0,
+            assessment_count INTEGER DEFAULT 0,
+            member_count INTEGER DEFAULT 0,
+            document_count INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+            FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
+        )`);
+
     // Sessions (references users and projects - must come after both)
     await query(`CREATE TABLE IF NOT EXISTS sessions(
                 id TEXT PRIMARY KEY,
