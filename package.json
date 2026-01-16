@@ -176,7 +176,7 @@
     "react-router-dom": "^7.11.0",
     "react-virtuoso": "^4.18.1",
     "reactflow": "^11.11.4",
-    "recharts": "^3.5.1",
+    "recharts": "^2.15.1",
     "redis": "^5.10.0",
     "remark-gfm": "^4.0.1",
     "speakeasy": "^2.0.0",

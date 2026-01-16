@@ -5,6 +5,7 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
+    plugins: [react()],
     server: {
       port: 3000,
       host: '0.0.0.0',
@@ -21,7 +22,6 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    plugins: [react()],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
@@ -65,6 +65,13 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: true,
       rollupOptions: {
         output: {
+          // Ensure recharts loads as a separate async chunk
+          chunkFileNames: (chunkInfo) => {
+            if (chunkInfo.name === 'charts' || chunkInfo.moduleIds.some((id) => id.includes('recharts'))) {
+              return 'assets/charts-[hash].js';
+            }
+            return 'assets/[name]-[hash].js';
+          },
           manualChunks: (id) => {
             // React core ecosystem
             if (
@@ -89,9 +96,14 @@ export default defineConfig(({ mode }) => {
             }
 
             // Charts libraries (heavy)
-            // Note: recharts is excluded from optimizeDeps and loaded dynamically to avoid React 19 compatibility issues
+            // CRITICAL: recharts must load AFTER react-core to avoid React 19 compatibility issues
+            // Keep recharts separate from other chart libraries
+            if (id.includes('node_modules/recharts/')) {
+              // Don't put recharts in charts chunk - it needs to load after React
+              // Return undefined so it goes to vendor chunk, but ensure react-core loads first
+              return undefined;
+            }
             if (
-              id.includes('node_modules/recharts/') ||
               id.includes('node_modules/chart.js/') ||
               id.includes('node_modules/react-chartjs-2/') ||
               id.includes('node_modules/d3')
