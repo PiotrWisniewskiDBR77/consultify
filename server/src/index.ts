@@ -732,8 +732,15 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   });
 };
 
-// Explicit root route handler
+// Explicit root route handler - MUST be before static middleware
+console.log(`[Server] Registering root route handler with frontendDistPath: ${frontendDistPath}`);
+logger.info(`[Server] Registering root route handler with frontendDistPath: ${frontendDistPath}`);
+
 app.get('/', (req: Request, res: Response) => {
+  console.log(`[Server] ===== Root route handler EXECUTED for: ${req.path} =====`);
+  logger.info(`[Server] ===== Root route handler EXECUTED for: ${req.path} =====`);
+  console.log(`[Server] frontendDistPath: ${frontendDistPath}`);
+  console.log(`[Server] indexPath will be: ${path.join(frontendDistPath, 'index.html')}`);
   serveIndexHtml(req, res);
 });
 
