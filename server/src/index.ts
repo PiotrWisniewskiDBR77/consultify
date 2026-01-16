@@ -673,21 +673,23 @@ if (process.env.NODE_ENV === 'production') {
     console.error(`[Server] ✗ Frontend not found in any checked paths! Using fallback: ${frontendDistPath}`);
     logger.error(`[Server] ✗ Frontend not found in any checked paths! Using fallback: ${frontendDistPath}`);
   }
-} else {
-  // Development: frontend is at project root /dist
-  frontendDistPath = path.join(__dirname, '../../dist');
-  console.log(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
-  logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
-  const indexPath = path.join(frontendDistPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    console.log(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
-    logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
   } else {
-    console.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
-    logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
+    // Development: frontend is at project root /dist
+    frontendDistPath = path.join(__dirname, '../../dist');
+    console.log(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
+    logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
+    const indexPath = path.join(frontendDistPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      console.log(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
+      logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
+    } else {
+      console.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
+      logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
+    }
   }
-}
 
+// Store globally for test route and ensure it's set
+(global as any).frontendDistPath = frontendDistPath;
 console.log(`[Server] Final frontend dist path: ${frontendDistPath}`);
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
