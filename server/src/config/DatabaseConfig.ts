@@ -94,6 +94,10 @@ export function getDatabaseType(): DatabaseType {
   // Re-read environment variables inside the function for testing support
   const databaseUrl = getDatabaseUrl();
 
+  // Debug logging
+  logger.info(`[DB Config] DATABASE_URL: ${databaseUrl ? 'SET' : 'NOT SET'}`);
+  logger.info(`[DB Config] DB_TYPE: ${process.env.DB_TYPE || 'NOT SET'}`);
+
   // Validate database configuration (will crash in production if invalid)
   // validateDatabaseConfig();
 
@@ -108,9 +112,11 @@ export function getDatabaseType(): DatabaseType {
         logger.error('Please configure your .env file with the correct database credentials.\n');
         process.exit(1);
       }
+      logger.info('[DB Config] Using PostgreSQL (DB_TYPE=postgres)');
       return 'postgres';
     }
     if (process.env.DB_TYPE === 'sqlite') {
+      logger.info('[DB Config] Using SQLite (DB_TYPE=sqlite)');
       return 'sqlite';
     }
   }
@@ -118,8 +124,10 @@ export function getDatabaseType(): DatabaseType {
   // 2. Legacy/Auto-Detect Mode (Warn if falling back)
   if (databaseUrl) {
     if (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://')) {
+      logger.info('[DB Config] Auto-detected PostgreSQL from DATABASE_URL');
       return 'postgres';
     }
+    logger.warn(`[DB Config] DATABASE_URL exists but doesn't start with postgres:// or postgresql://: ${databaseUrl.substring(0, 50)}...`);
   }
 
   // Warn about implicit fallback

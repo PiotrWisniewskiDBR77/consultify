@@ -473,6 +473,20 @@ export async function initDb(): Promise<void> {
       }
     };
     
+    // Helper function to check if a column exists in a table
+    const columnExists = async (tableName: string, columnName: string): Promise<boolean> => {
+      try {
+        const result = await getPool().query(
+          `SELECT 1 FROM information_schema.columns 
+           WHERE table_name = $1 AND column_name = $2`,
+          [tableName, columnName]
+        );
+        return result.rows.length > 0;
+      } catch {
+        return false;
+      }
+    };
+
     // Helper function for queries that can fail gracefully (e.g., index creation on non-existent columns)
     const querySafe = async (sql: string, params?: unknown[], errorMessage?: string): Promise<boolean> => {
       const adapted = adaptQuery(sql);
@@ -1785,11 +1799,14 @@ export async function initDb(): Promise<void> {
     await query(`CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id)`);
 
     // AI & Customizations
-    await querySafe(
-      `CREATE INDEX IF NOT EXISTS idx_ai_feedback_org ON ai_feedback(organization_id)`,
-      [],
-      'Skipping organization_id index on ai_feedback'
-    );
+    // Only create index if organization_id column exists
+    if (await columnExists('ai_feedback', 'organization_id')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_ai_feedback_org ON ai_feedback(organization_id)`,
+        [],
+        'Skipping organization_id index on ai_feedback'
+      );
+    }
     await query(`CREATE INDEX IF NOT EXISTS idx_ai_feedback_user ON ai_feedback(user_id)`);
     await querySafe(
       `CREATE INDEX IF NOT EXISTS idx_custom_prompts_org ON custom_prompts(organization_id)`,
@@ -1812,11 +1829,20 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping organization_id index on initiatives'
     );
-    await querySafe(
-      `CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(doc_id)`,
-      [],
-      'Skipping doc_id index on knowledge_chunks'
-    );
+    // Check which column exists: document_id (newer schema) or doc_id (older schema)
+    if (await columnExists('knowledge_chunks', 'document_id')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(document_id)`,
+        [],
+        'Skipping document_id index on knowledge_chunks'
+      );
+    } else if (await columnExists('knowledge_chunks', 'doc_id')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(doc_id)`,
+        [],
+        'Skipping doc_id index on knowledge_chunks'
+      );
+    }
     await querySafe(
       `CREATE INDEX IF NOT EXISTS idx_usage_records_org_time ON usage_records(organization_id, recorded_at)`,
       [],

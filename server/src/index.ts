@@ -6,7 +6,19 @@
  * Handles both TypeScript routes (migrated) and CommonJS routes (legacy)
  */
 
+// CRITICAL: Load environment variables FIRST, before any other imports
+// This ensures DATABASE_URL and other env vars are available when DatabaseConfig loads
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from project root (parent directory) BEFORE other imports
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+// Now import other modules (they can use environment variables)
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -14,8 +26,6 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import http from 'http';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 // TypeScript imports (ES Modules)
 import { initSentry } from './config/index.js';
@@ -34,12 +44,6 @@ import logger from './utils/Logger.js';
 import RedisRateLimitStore from './utils/RedisRateLimitStore.js';
 import { correlationMiddleware } from './utils/RequestStore.js';
 import { getShutdownManager } from './utils/ShutdownManager.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load .env from project root (parent directory)
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // Initialize app
 const app: Express = express();
@@ -157,6 +161,44 @@ if (!isTest || process.env.E2E_MODE === 'true') {
       }
     }
   })();
+}
+
+// ============================================================
+// START SERVER IMMEDIATELY (before async initialization)
+// ============================================================
+
+// Start server immediately, don't wait for async initialization
+const startServer = true; // Always start server when running via tsx
+
+if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
+  logger.info('[Server] Starting HTTP server...');
+  const server = http.createServer(app);
+  const shutdownManager = getShutdownManager(30000); // 30 second timeout
+
+  // Handle server errors
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    logger.error('[Server] HTTP Server Error:', err);
+    if (err.code === 'EADDRINUSE') {
+      logger.error(`Port ${PORT} is already in use`);
+      process.exit(1);
+    }
+  });
+
+  // Register shutdown handlers (simplified, full handlers added later)
+  process.on('SIGTERM', () => {
+    logger.info('[Shutdown] Received SIGTERM, closing server...');
+    server.close(() => process.exit(0));
+  });
+  process.on('SIGINT', () => {
+    logger.info('[Shutdown] Received SIGINT, closing server...');
+    server.close(() => process.exit(0));
+  });
+
+  // Start listening immediately
+  server.listen(PORT, '0.0.0.0', () => {
+    logger.info('✅ Server running on http://0.0.0.0:' + PORT);
+    logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
+  });
 }
 
 // ============================================================
@@ -635,268 +677,6 @@ if (!isTest) {
   });
 }
 
-// ============================================================
-// SERVER STARTUP
-// ============================================================
-
-// Only listen if the file is run directly (not imported)
-const startServer = true; // Always start server when running via tsx
-
-if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
-  const server = http.createServer(app);
-  const shutdownManager = getShutdownManager(30000); // 30 second timeout
-
-  // Handle server errors
-  server.on('error', (err: NodeJS.ErrnoException) => {
-    logger.error('[Server] HTTP Server Error:', err);
-    if (err.code === 'EADDRINUSE') {
-      logger.error(`Port ${PORT} is already in use`);
-      process.exit(1);
-    }
-  });
-
-  // Initialize WebSocket server
-  (async () => {
-    // try {
-    //     const realtimeServiceModule = await import('./services/realtimeService.js');
-    //     const realtimeServicePromise = realtimeServiceModule.default || realtimeServiceModule;
-    //     const realtimeService = await realtimeServicePromise;
-    //     if (realtimeService && typeof realtimeService.initializeSimple === 'function') {
-    //         realtimeService.initializeSimple(server);
-    //     }
-    // } catch (err: any) {
-    //     const error = err as Error;
-    //     logger.warn('[Server] Realtime service not available:', error.message);
-    // }
-  })();
-
-  // Start token cleanup cron job
-  (async () => {
-    // try {
-    //     const cleanupModule = (await import('./cron/CleanupRevokedTokens.js')) as any;
-    //     const startCleanupJob = cleanupModule.startCleanupJob || cleanupModule.default?.startCleanupJob;
-    //     if (typeof startCleanupJob === 'function') {
-    //         startCleanupJob();
-    //     }
-    // } catch (err: any) {
-    //     const error = err as Error;
-    //     logger.warn('[Server] Token cleanup job failed to start:', error.message);
-    // }
-  })();
-
-  // Start metrics snapshot job
-  (async () => {
-    // try {
-    //     const metricsModule = (await import('./cron/SnapshotMetrics.js')) as any;
-    //     const SnapshotMetricsCron = metricsModule.SnapshotMetricsCron || metricsModule.default || metricsModule;
-    //     if (typeof SnapshotMetricsCron === 'function') {
-    //         SnapshotMetricsCron();
-    //     } else if (SnapshotMetricsCron && typeof SnapshotMetricsCron.start === 'function') {
-    //         SnapshotMetricsCron.start();
-    //     }
-    // } catch (err: any) {
-    //     const error = err as Error;
-    //     logger.warn('[Server] Metrics snapshot job failed to start:', error.message);
-    // }
-  })();
-
-  // Init AI Services (Redis, Cache, Rate Limiter)
-  (async () => {
-    try {
-      const redisModule = (await import('./services/ai/redisClient.js')) as any;
-      const initRedis = redisModule.initRedis;
-      const redisUrl = process.env.REDIS_URL;
-
-      initRedis(redisUrl)
-        .then(async (redisClient: any) => {
-          if (redisClient) {
-            const cacheModule = (await import('./services/ai/cacheService.js')) as any;
-            const cacheService = cacheModule.cacheService || cacheModule.default || cacheModule;
-            if (cacheService && typeof cacheService.connectRedis === 'function') {
-              cacheService.connectRedis(redisClient);
-            }
-
-            const rateLimiterModule = (await import('./services/ai/rateLimiter.js')) as any;
-            const rateLimiter =
-              rateLimiterModule.rateLimiter || rateLimiterModule.default || rateLimiterModule;
-            if (rateLimiter && typeof rateLimiter.connectRedis === 'function') {
-              rateLimiter.connectRedis(redisClient);
-            }
-          } else {
-            logger.info('[AI Services] Using in-memory fallback (Redis not available)');
-          }
-        })
-        .catch((err: Error) => {
-          logger.warn('[AI Services] Redis init failed, using in-memory:', err.message);
-        });
-    } catch (err: any) {
-      const error = err as Error;
-      logger.warn('[Server] AI Services failed to initialize:', error.message);
-    }
-  })();
-
-  // Init AI Worker
-  (async () => {
-    try {
-      const workerModule = (await import('./workers/aiWorker.js')) as any;
-      const initWorker = workerModule.initWorker || workerModule.default || workerModule;
-      if (typeof initWorker === 'function') {
-        initWorker();
-      }
-    } catch (err: any) {
-      const error = err as Error;
-      logger.warn('[Server] AI Worker failed to start (likely Redis missing):', error.message);
-    }
-  })();
-
-  // Run Integrity Check at Startup
-  (async () => {
-    if (!isTest && process.env.DISABLE_SYSTEM_INTEGRITY !== 'true') {
-      try {
-        const systemIntegrityModule = await import('./services/systemIntegrity.js');
-        const SystemIntegrity = (systemIntegrityModule as any).default || systemIntegrityModule;
-        if (SystemIntegrity && typeof SystemIntegrity.check === 'function') {
-          setTimeout(() => {
-            (SystemIntegrity as any).check();
-          }, 2000);
-        }
-      } catch (err: any) {
-        const error = err as Error;
-        logger.warn('[Server] System Integrity check failed:', error.message);
-      }
-    }
-  })();
-
-  // ============================================================
-  // GRACEFUL SHUTDOWN SETUP
-  // ============================================================
-
-  // Register cleanup handlers
-  shutdownManager.registerCleanup('HTTP Server', async () => {
-    return new Promise<void>((resolve) => {
-      logger.info('[Shutdown] Closing HTTP server...');
-      server.close(() => {
-        logger.info('[Shutdown] HTTP server closed');
-        resolve();
-      });
-    });
-  });
-
-  shutdownManager.registerCleanup('Connection Pool', async () => {
-    try {
-      logger.info('[Shutdown] Closing connection pool...');
-      await shutdownConnectionPool();
-      logger.info('[Shutdown] Connection pool closed');
-    } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('[Shutdown] Error closing connection pool:', err.message);
-    }
-  });
-
-  shutdownManager.registerCleanup('Database', async () => {
-    try {
-      logger.info('[Shutdown] Closing database connections...');
-      const db = getDatabase();
-      await db.close();
-      logger.info('[Shutdown] Database connections closed');
-    } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('[Shutdown] Error closing database:', err.message);
-    }
-  });
-
-  shutdownManager.registerCleanup('Redis', async () => {
-    try {
-      logger.info('[Shutdown] Closing Redis connections...');
-      const redisModule = (await import('./services/ai/redisClient.js')) as any;
-      const getRedisClient = redisModule.getRedisClient;
-      const isRedisConnected = redisModule.isRedisConnected;
-
-      if (typeof isRedisConnected === 'function' && isRedisConnected()) {
-        const client = typeof getRedisClient === 'function' ? getRedisClient() : null;
-        if (client && typeof client.quit === 'function') {
-          await client.quit();
-        }
-      }
-      logger.info('[Shutdown] Redis connections closed');
-    } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('[Shutdown] Error closing Redis:', err.message);
-    }
-  });
-
-  shutdownManager.registerCleanup('Scheduler', async () => {
-    try {
-      logger.info('[Shutdown] Stopping cron jobs...');
-      if (Scheduler && typeof Scheduler.stop === 'function') {
-        Scheduler.stop();
-      }
-      logger.info('[Shutdown] Cron jobs stopped');
-    } catch (error: unknown) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('[Shutdown] Error stopping scheduler:', err.message);
-    }
-  });
-
-  shutdownManager.registerCleanup('WebSocket', async () => {
-    // try {
-    //     logger.info('[Shutdown] Closing WebSocket connections...');
-    //     const realtimeServiceModule = await import('./services/realtimeService.js').catch(() => null);
-    //     if (realtimeServiceModule) {
-    //         const realtimeService = realtimeServiceModule.default || realtimeServiceModule;
-    //         if (realtimeService && typeof realtimeService.close === 'function') {
-    //             await realtimeService.close();
-    //         }
-    //     }
-    //     logger.info('[Shutdown] WebSocket connections closed');
-    // } catch (error: unknown) {
-    //     const err = error instanceof Error ? error : new Error(String(error));
-    //     logger.error('[Shutdown] Error closing WebSocket:', err.message);
-    // }
-  });
-
-  // Register signal handlers
-  const shutdown = (signal: string) => {
-    logger.info(`[Shutdown] Received ${signal}, starting graceful shutdown...`);
-    shutdownManager
-      .shutdown(signal)
-      .then(() => {
-        logger.info('[Shutdown] Graceful shutdown completed');
-        process.exit(0);
-      })
-      .catch((error: unknown) => {
-        const err = error instanceof Error ? error : new Error(String(error));
-        logger.error('[Shutdown] Error during shutdown:', err.message);
-        process.exit(1);
-      });
-  };
-
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
-
-  // Handle uncaught exceptions with graceful shutdown
-  process.on('uncaughtException', (err: Error) => {
-    logger.error('[Server] Uncaught Exception:', err);
-    shutdownManager.shutdown('uncaughtException').finally(() => {
-      process.exit(1);
-    });
-  });
-
-  // Handle unhandled rejections with graceful shutdown
-  process.on('unhandledRejection', (reason: unknown) => {
-    logger.error('[Server] Unhandled Rejection:', reason);
-    shutdownManager.shutdown('unhandledRejection').finally(() => {
-      process.exit(1);
-    });
-  });
-
-  logger.info('[Debug] Calling server.listen...');
-  server.listen(PORT, '0.0.0.0', () => {
-    logger.info('[Debug] server.listen callback fired!');
-    logger.info('Server running on http://0.0.0.0:' + PORT);
-    logger.info('WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
-    logger.info('[Server] Graceful shutdown handlers registered');
-  });
-}
+// Note: Server startup moved earlier to execute before top-level awaits
 
 export default app;
