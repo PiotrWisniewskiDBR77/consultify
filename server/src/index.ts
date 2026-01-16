@@ -630,23 +630,38 @@ if (process.env.NODE_ENV === 'production') {
     }
   } else {
     logger.info(`[Server] Frontend dist path: ${frontendDistPath}`);
+    // Verify index.html exists
+    const indexPath = path.join(frontendDistPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
+    } else {
+      logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
+    }
   }
 } else {
   // Development: frontend is at project root /dist
   frontendDistPath = path.join(__dirname, '../../dist');
   logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
+  } else {
+    logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
+  }
 }
 
 // Serve static files from the React app
+// fallthrough: false means don't call next() if file not found, let catchall handle it
 app.use(
   express.static(frontendDistPath, {
     maxAge: '1y', // Cache static assets for 1 year
     etag: true,
+    fallthrough: true, // Continue to next middleware if file not found
   })
 );
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
-app.use((req: Request, res: Response) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   // Only send index.html if it's not an API route
   if (req.path.startsWith('/api/')) {
     res.status(404).json({
@@ -660,9 +675,37 @@ app.use((req: Request, res: Response) => {
   }
   
   const indexPath = path.join(frontendDistPath, 'index.html');
-  logger.debug(`[Server] Serving index.html from: ${indexPath}`);
-  res.sendFile(indexPath);
-  return;
+  
+  // Check if index.html exists
+  if (!fs.existsSync(indexPath)) {
+    logger.error(`[Server] Frontend index.html not found at: ${indexPath}`);
+    logger.error(`[Server] __dirname: ${__dirname}`);
+    logger.error(`[Server] frontendDistPath: ${frontendDistPath}`);
+    logger.error(`[Server] Request path: ${req.path}`);
+    res.status(500).json({
+      error: {
+        code: 'FRONTEND_NOT_FOUND',
+        message: 'Frontend files not found',
+        path: indexPath,
+      },
+    });
+    return;
+  }
+  
+  logger.info(`[Server] Serving index.html from: ${indexPath} for path: ${req.path}`);
+  res.sendFile(indexPath, (err: Error | null) => {
+    if (err) {
+      logger.error(`[Server] Error sending index.html: ${err.message}`);
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: {
+            code: 'SERVE_ERROR',
+            message: 'Failed to serve frontend',
+          },
+        });
+      }
+    }
+  });
 });
 
 // ============================================================
@@ -680,8 +723,20 @@ app.use(alertWatchdog);
 import { errorHandlerMiddleware } from './utils/ErrorHandler.js';
 app.use(errorHandlerMiddleware);
 
-// 404 Handler (must be after error handler)
+// 404 Handler (must be after error handler and catchall)
+// Only handle API routes that weren't caught by catchall
 app.use((req: Request, res: Response) => {
+  // Don't handle non-API routes here - they should be handled by catchall
+  if (!req.path.startsWith('/api/')) {
+    // This shouldn't happen if catchall is working, but log it and try to serve frontend
+    logger.warn(`[Server] Non-API route reached 404 handler: ${req.path}`);
+    const indexPath = path.join(frontendDistPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      logger.info(`[Server] Fallback: Serving index.html from 404 handler for ${req.path}`);
+      return res.sendFile(indexPath);
+    }
+  }
+  
   res.status(404).json({
     error: {
       code: 'NOT_FOUND',
