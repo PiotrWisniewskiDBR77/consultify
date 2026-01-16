@@ -205,29 +205,35 @@ if (!isTest || process.env.E2E_MODE === 'true') {
 // ============================================================
 
 if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
-  // Init Scheduler (ES modules)
-  try {
-    await Scheduler.init();
-  } catch (err: any) {
-    const error = err as Error;
-    logger.error('[Server] Scheduler initialization failed:', error.message);
-  }
+  // Init Scheduler (ES modules) - non-blocking
+  (async () => {
+    try {
+      await Scheduler.init();
+    } catch (err: any) {
+      const error = err as Error;
+      logger.error('[Server] Scheduler initialization failed:', error.message);
+    }
+  })();
 
-  // Init Health Check Monitor (ES modules)
-  try {
-    startHealthCheck();
-  } catch (err: any) {
-    const error = err as Error;
-    logger.error('[Server] Health Check initialization failed:', error.message);
-  }
+  // Init Health Check Monitor (ES modules) - non-blocking
+  (async () => {
+    try {
+      startHealthCheck();
+    } catch (err: any) {
+      const error = err as Error;
+      logger.error('[Server] Health Check initialization failed:', error.message);
+    }
+  })();
 
-  // Init CQRS
-  try {
-    const { registerCQRSHandlers } = await import('./services/cqrs/registry.js');
-    registerCQRSHandlers();
-  } catch (err: any) {
-    logger.error('[Server] CQRS initialization failed:', { error: err });
-  }
+  // Init CQRS - non-blocking
+  (async () => {
+    try {
+      const { registerCQRSHandlers } = await import('./services/cqrs/registry.js');
+      registerCQRSHandlers();
+    } catch (err: any) {
+      logger.error('[Server] CQRS initialization failed:', { error: err });
+    }
+  })();
 
   // ============================================================
   // LLM STARTUP VALIDATION - Single Source of Truth
@@ -288,39 +294,41 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     logger.warn('[Server] LLM Fallback Service not available:', error.message);
   }
 
-  // Init AI Health Monitor (Self-Healing System)
-  try {
-    const healthMonitorModule = await import('./services/ai/healthMonitor.js');
-    // Debug: Log imported module keys
-    logger.info('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
-    // The module exports a Promise as default (from lazy service loader)
-    // We need to await it to get the actual healthMonitor service
-    let healthMonitor: any = null;
+  // Init AI Health Monitor (Self-Healing System) - non-blocking
+  (async () => {
+    try {
+      const healthMonitorModule = await import('./services/ai/healthMonitor.js');
+      // Debug: Log imported module keys
+      logger.info('[Debug] healthMonitorModule keys:', Object.keys(healthMonitorModule));
+      // The module exports a Promise as default (from lazy service loader)
+      // We need to await it to get the actual healthMonitor service
+      let healthMonitor: any = null;
 
-    // Handle case where default export is a Promise (lazy loaded service)
-    if (healthMonitorModule.default instanceof Promise) {
-      healthMonitor = await healthMonitorModule.default;
-    } else if (healthMonitorModule.default) {
-      // Direct default export
-      healthMonitor = healthMonitorModule.default;
+      // Handle case where default export is a Promise (lazy loaded service)
+      if (healthMonitorModule.default instanceof Promise) {
+        healthMonitor = await healthMonitorModule.default;
+      } else if (healthMonitorModule.default) {
+        // Direct default export
+        healthMonitor = healthMonitorModule.default;
+      }
+
+      if (healthMonitor) {
+        healthMonitor.start(60000);
+
+        healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
+          logger.error('[AI Health] CRITICAL ALERT:', alert.message);
+          logger.error('[AI Health] Failed checks:', alert.checks?.join(', '));
+        });
+
+        logger.info('[Server] AI Health Monitor started (self-healing enabled)');
+      } else {
+        logger.warn('[Server] AI Health Monitor not available (export not found)');
+      }
+    } catch (err: any) {
+      const error = err as Error;
+      logger.warn('[Server] AI Health Monitor not available:', error.message);
     }
-
-    if (healthMonitor) {
-      healthMonitor.start(60000);
-
-      healthMonitor.onAlert((alert: { message: string; checks?: string[] }) => {
-        logger.error('[AI Health] CRITICAL ALERT:', alert.message);
-        logger.error('[AI Health] Failed checks:', alert.checks?.join(', '));
-      });
-
-      logger.info('[Server] AI Health Monitor started (self-healing enabled)');
-    } else {
-      logger.warn('[Server] AI Health Monitor not available (export not found)');
-    }
-  } catch (err: any) {
-    const error = err as Error;
-    logger.warn('[Server] AI Health Monitor not available:', error.message);
-  }
+  })();
 }
 
 // ============================================================
