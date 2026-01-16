@@ -1267,6 +1267,11 @@ export async function initDb(): Promise<void> {
             display_name TEXT,
             encrypted_key TEXT NOT NULL,
             model_preference TEXT,
+            scopes TEXT DEFAULT '[]',
+            expires_at TIMESTAMP,
+            rate_limit_per_minute INTEGER,
+            rate_limit_per_day INTEGER,
+            quota_used INTEGER DEFAULT 0,
             is_active INTEGER DEFAULT 1,
             is_default INTEGER DEFAULT 0,
             usage_count INTEGER DEFAULT 0,
@@ -1275,6 +1280,41 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
         )`);
+
+    // Ensure user_api_keys table has required columns (migration for existing tables)
+    await query(`
+            DO $$
+        BEGIN
+            IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'user_api_keys') THEN
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'user_api_keys' AND column_name = 'scopes') THEN
+                    ALTER TABLE user_api_keys ADD COLUMN scopes TEXT DEFAULT '[]';
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'user_api_keys' AND column_name = 'expires_at') THEN
+                    ALTER TABLE user_api_keys ADD COLUMN expires_at TIMESTAMP;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'user_api_keys' AND column_name = 'rate_limit_per_minute') THEN
+                    ALTER TABLE user_api_keys ADD COLUMN rate_limit_per_minute INTEGER;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'user_api_keys' AND column_name = 'rate_limit_per_day') THEN
+                    ALTER TABLE user_api_keys ADD COLUMN rate_limit_per_day INTEGER;
+                END IF;
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'user_api_keys' AND column_name = 'quota_used') THEN
+                    ALTER TABLE user_api_keys ADD COLUMN quota_used INTEGER DEFAULT 0;
+                END IF;
+            END IF;
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Ignore errors (columns may already exist)
+                NULL;
+        END $$;
+        `).catch((err: Error | null) => {
+      logger.info('[Postgres] User API keys columns migration skipped (may already exist)');
+    });
 
     // GDPR Requests
     await query(`CREATE TABLE IF NOT EXISTS gdpr_requests(
