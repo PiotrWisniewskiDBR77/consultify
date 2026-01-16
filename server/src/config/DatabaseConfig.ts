@@ -151,9 +151,9 @@ function parsePostgresUrl(url: string): PostgresConfig | null {
 
     const connectionTimeout = (() => {
       const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
-      if (timeout < 10000) {
+      if (timeout < 30000) {
         logger.warn(
-          `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`
+          `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds). Auto-correcting to 30000ms.`
         );
         return 30000; // Force minimum 30 seconds
       }
@@ -205,9 +205,9 @@ function getPostgresConfig(): PostgresConfig {
 
   const connectionTimeout = (() => {
     const timeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '30000', 10);
-    if (timeout < 10000) {
+    if (timeout < 30000) {
       logger.warn(
-        `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds)`
+        `[DB Config] WARNING: DB_CONNECTION_TIMEOUT=${timeout}ms is too short for Railway. Minimum recommended: 30000ms (30 seconds). Auto-correcting to 30000ms.`
       );
       return 30000; // Force minimum 30 seconds
     }

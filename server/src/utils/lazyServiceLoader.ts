@@ -143,13 +143,14 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
       absolutePath.includes('.legacy.js');
     
     if (!isExpectedMissingFile || !isModuleNotFound) {
-      console.error(`[LazyServiceLoader] Error loading ${absolutePath}:`, error);
+      console.error(`[LazyServiceLoader] Failed to load: ${absolutePath}`);
+      console.error(`[LazyServiceLoader] Error:`, error);
     } else {
       // For expected missing files, just log at debug level
       console.debug(`[LazyServiceLoader] Expected missing file (returning stub): ${servicePath}`);
     }
     
-    return createStubProxy(servicePath, absolutePath);
+    return createStubProxy(servicePath, absolutePath, isExpectedMissingFile && isModuleNotFound);
   }
 }
 
@@ -193,11 +194,17 @@ async function tryLoadMock<T>(servicePath: string): Promise<T | null> {
   return null;
 }
 
-function createStubProxy<T>(servicePath: string, absolutePath?: string): T {
-  if (absolutePath) {
-    console.warn(`[LazyServiceLoader] Failed to load: ${absolutePath}`);
+function createStubProxy<T>(servicePath: string, absolutePath?: string, isExpectedMissingFile = false): T {
+  // Only log warnings/errors for unexpected missing files
+  if (!isExpectedMissingFile) {
+    if (absolutePath) {
+      // Error already logged in createLazyService, just log the stub creation
+      console.warn(`[LazyServiceLoader] Returning stub proxy for: ${servicePath}`);
+    } else {
+      console.warn(`[LazyServiceLoader] Returning stub proxy for: ${servicePath}`);
+    }
   }
-  console.warn(`[LazyServiceLoader] Returning stub proxy for: ${servicePath}`);
+  // For expected missing files, no logging needed (already logged at debug level in createLazyService)
 
   // Return a Proxy that provides stub methods for any property access
   const stubTarget = {} as Record<string | symbol, any>;

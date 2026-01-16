@@ -25,13 +25,15 @@ interface GamificationServiceInterface {
 // Dynamic import for GamificationService (may not be migrated yet)
 let GamificationService: GamificationServiceInterface | null = null;
 
-try {
-  //     const gamificationModule = (await import('../services/gamificationService.js')) as any;
-  GamificationService = (gamificationModule.default ||
-    gamificationModule) as GamificationServiceInterface;
-} catch {
-  logger.warn('[Gamification Routes] GamificationService not available');
-}
+// Service is currently not available - import commented out
+// Uncomment when service is ready:
+// try {
+//   const gamificationModule = (await import('../services/gamificationService.js')) as any;
+//   GamificationService = (gamificationModule.default ||
+//     gamificationModule) as GamificationServiceInterface;
+// } catch {
+//   logger.debug('[Gamification Routes] GamificationService not available');
+// }
 
 /**
  * GET /api/gamification/me

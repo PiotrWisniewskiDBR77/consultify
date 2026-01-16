@@ -79,19 +79,21 @@ router.use(authRateLimiter);
 let StorageService: any = null;
 let NotificationOutboxService: any = null;
 
-try {
-  //     const storageModule = (await import('../services/storageService.js')) as any;
-  StorageService = storageModule.default || storageModule;
-} catch {
-  logger.warn('[Knowledge] StorageService not available');
-}
+// Services are currently not available - imports commented out
+// Uncomment when services are ready:
+// try {
+//   const storageModule = (await import('../services/storageService.js')) as any;
+//   StorageService = storageModule.default || storageModule;
+// } catch {
+//   logger.debug('[Knowledge] StorageService not available');
+// }
 
-try {
-  //     const notificationModule = (await import('../services/notificationOutboxService.js')) as any;
-  NotificationOutboxService = notificationModule.default || notificationModule;
-} catch {
-  logger.warn('[Knowledge] NotificationOutboxService not available');
-}
+// try {
+//   const notificationModule = (await import('../services/notificationOutboxService.js')) as any;
+//   NotificationOutboxService = notificationModule.default || notificationModule;
+// } catch {
+//   logger.debug('[Knowledge] NotificationOutboxService not available');
+// }
 
 // Get directory paths
 const __filename = fileURLToPath(import.meta.url);

@@ -26,10 +26,16 @@ let UsageService: any = null;
 let stripe: any = null;
 
 try {
-  const tokenBillingModule = (await import('../../services/tokenBillingService.js')) as any;
+  // Try .ts first (TypeScript source), then .js (compiled)
+  let tokenBillingModule: any;
+  try {
+    tokenBillingModule = await import('../../services/tokenBillingService.ts');
+  } catch {
+    tokenBillingModule = await import('../../services/tokenBillingService.js');
+  }
   TokenBillingService = tokenBillingModule.default || tokenBillingModule;
-} catch {
-  logger.warn('[TokenBilling] TokenBillingService not available');
+} catch (error: any) {
+  logger.warn(`[TokenBilling] TokenBillingService not available: ${error.message}`);
 }
 
 try {
