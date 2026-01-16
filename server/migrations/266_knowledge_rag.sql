@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS knowledge_documents (
     -- Versioning
     version INTEGER DEFAULT 1,
     parent_version_id TEXT,
-    is_latest_version INTEGER DEFAULT 1,
+    is_latest_version BOOLEAN DEFAULT TRUE,
     
     -- Quality
     quality_score REAL, -- Auto-calculated content quality
@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS knowledge_documents (
     helpful_count INTEGER DEFAULT 0,
     
     -- Status
-    is_active INTEGER DEFAULT 1,
-    is_archived INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_archived BOOLEAN DEFAULT FALSE,
     archived_at TIMESTAMP,
     
     -- Audit
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS knowledge_chunks (
     char_count INTEGER,
     
     -- Embedding
-    embedding BLOB, -- Serialized vector
+    embedding BYTEA, -- Serialized vector
     embedding_model TEXT DEFAULT 'text-embedding-3-small',
     embedding_dimensions INTEGER DEFAULT 1536,
     
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS knowledge_queries (
     search_duration_ms INTEGER,
     
     -- Feedback
-    was_helpful INTEGER,
+    was_helpful BOOLEAN,
     feedback_text TEXT,
     feedback_at TIMESTAMP,
     
@@ -214,7 +214,7 @@ CREATE TABLE IF NOT EXISTS knowledge_collections (
     document_count INTEGER DEFAULT 0,
     
     -- Visibility
-    is_public INTEGER DEFAULT 0,
+    is_public BOOLEAN DEFAULT FALSE,
     
     created_by TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

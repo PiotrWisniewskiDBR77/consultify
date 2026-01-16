@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS report_templates (
     type TEXT NOT NULL, -- 'assessment', 'project', 'portfolio', 'initiative', 'custom'
     description TEXT,
     template_data TEXT NOT NULL, -- JSON with sections, styling
-    is_default INTEGER DEFAULT 0,
-    is_active INTEGER DEFAULT 1,
+    is_default BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
     created_by TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -23,21 +23,22 @@ CREATE INDEX IF NOT EXISTS idx_report_templates_org ON report_templates(organiza
 CREATE INDEX IF NOT EXISTS idx_report_templates_type ON report_templates(type);
 
 -- Seed default templates
-INSERT OR IGNORE INTO report_templates (id, organization_id, name, type, description, template_data, is_default) VALUES
+INSERT INTO report_templates (id, organization_id, name, type, description, template_data, is_default) VALUES
     ('tpl-assessment-default', NULL, 'Standard Assessment Report', 'assessment', 
      'Default template for assessment reports',
      '{"sections":["executive_summary","methodology","results_by_dimension","benchmarking","roadmap","appendix"],"styling":{"primaryColor":"#3B82F6","font":"Inter"}}',
-     1),
+     TRUE),
     
     ('tpl-project-default', NULL, 'Project Status Report', 'project',
      'Default template for project status reports', 
      '{"sections":["overview","progress","milestones","risks","next_steps"],"styling":{"primaryColor":"#3B82F6","font":"Inter"}}',
-     1),
+     TRUE),
     
     ('tpl-portfolio-default', NULL, 'Portfolio Overview Report', 'portfolio',
      'Default template for portfolio reports',
      '{"sections":["executive_summary","projects_overview","resource_allocation","timeline","recommendations"],"styling":{"primaryColor":"#3B82F6","font":"Inter"}}',
-     1);
+     TRUE)
+ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================
 -- REPORT EXPORTS
@@ -76,8 +77,8 @@ CREATE TABLE IF NOT EXISTS report_public_links (
     expires_at TIMESTAMP,
     
     -- Branding
-    show_company_logo INTEGER DEFAULT 1,
-    show_consultinity_branding INTEGER DEFAULT 1,
+    show_company_logo BOOLEAN DEFAULT TRUE,
+    show_consultinity_branding BOOLEAN DEFAULT TRUE,
     custom_message TEXT,
     
     -- Tracking
@@ -120,7 +121,7 @@ CREATE TABLE IF NOT EXISTS custom_reports (
     
     -- Sharing
     shared_with TEXT, -- JSON array of user IDs
-    is_public INTEGER DEFAULT 0,
+    is_public BOOLEAN DEFAULT FALSE,
     
     created_by TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

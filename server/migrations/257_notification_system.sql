@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS notification_types (
     display_name TEXT NOT NULL,
     description TEXT,
     default_channels TEXT NOT NULL, -- JSON array: ['in_app', 'email']
-    is_user_configurable INTEGER DEFAULT 1,
-    is_critical INTEGER DEFAULT 0, -- Cannot be disabled by user
+    is_user_configurable BOOLEAN DEFAULT TRUE,
+    is_critical BOOLEAN DEFAULT FALSE, -- Cannot be disabled by user
     template_subject TEXT,
     template_body TEXT,
     icon TEXT,
@@ -22,42 +22,43 @@ CREATE TABLE IF NOT EXISTS notification_types (
 );
 
 -- Seed notification types
-INSERT OR IGNORE INTO notification_types (id, name, category, display_name, default_channels, icon, is_critical) VALUES
+INSERT INTO notification_types (id, name, category, display_name, default_channels, icon, is_critical) VALUES
     -- Tasks
-    ('nt-task-assigned', 'task_assigned', 'tasks', 'Task Assigned', '["in_app","email"]', '📋', 0),
-    ('nt-task-due-soon', 'task_due_soon', 'tasks', 'Task Due Soon', '["in_app"]', '⏰', 0),
-    ('nt-task-overdue', 'task_overdue', 'tasks', 'Task Overdue', '["in_app","email"]', '🚨', 0),
-    ('nt-task-completed', 'task_completed', 'tasks', 'Task Completed', '["in_app"]', '✅', 0),
-    ('nt-task-comment', 'task_comment', 'tasks', 'New Comment', '["in_app"]', '💬', 0),
+    ('nt-task-assigned', 'task_assigned', 'tasks', 'Task Assigned', '["in_app","email"]', '📋', FALSE),
+    ('nt-task-due-soon', 'task_due_soon', 'tasks', 'Task Due Soon', '["in_app"]', '⏰', FALSE),
+    ('nt-task-overdue', 'task_overdue', 'tasks', 'Task Overdue', '["in_app","email"]', '🚨', FALSE),
+    ('nt-task-completed', 'task_completed', 'tasks', 'Task Completed', '["in_app"]', '✅', FALSE),
+    ('nt-task-comment', 'task_comment', 'tasks', 'New Comment', '["in_app"]', '💬', FALSE),
     
     -- Decisions
-    ('nt-decision-needed', 'decision_needed', 'decisions', 'Decision Needed', '["in_app","email"]', '🔴', 0),
-    ('nt-decision-made', 'decision_made', 'decisions', 'Decision Made', '["in_app"]', '✅', 0),
-    ('nt-decision-escalated', 'decision_escalated', 'decisions', 'Decision Escalated', '["in_app","email"]', '⬆️', 0),
+    ('nt-decision-needed', 'decision_needed', 'decisions', 'Decision Needed', '["in_app","email"]', '🔴', FALSE),
+    ('nt-decision-made', 'decision_made', 'decisions', 'Decision Made', '["in_app"]', '✅', FALSE),
+    ('nt-decision-escalated', 'decision_escalated', 'decisions', 'Decision Escalated', '["in_app","email"]', '⬆️', FALSE),
     
     -- Initiatives
-    ('nt-initiative-approved', 'initiative_approved', 'initiatives', 'Initiative Approved', '["in_app","email"]', '🎉', 0),
-    ('nt-initiative-blocked', 'initiative_blocked', 'initiatives', 'Initiative Blocked', '["in_app","email"]', '🚫', 0),
-    ('nt-initiative-status', 'initiative_status_change', 'initiatives', 'Initiative Status Changed', '["in_app"]', '📊', 0),
+    ('nt-initiative-approved', 'initiative_approved', 'initiatives', 'Initiative Approved', '["in_app","email"]', '🎉', FALSE),
+    ('nt-initiative-blocked', 'initiative_blocked', 'initiatives', 'Initiative Blocked', '["in_app","email"]', '🚫', FALSE),
+    ('nt-initiative-status', 'initiative_status_change', 'initiatives', 'Initiative Status Changed', '["in_app"]', '📊', FALSE),
     
     -- Assessments
-    ('nt-assessment-completed', 'assessment_completed', 'assessments', 'Assessment Completed', '["in_app","email"]', '📝', 0),
-    ('nt-assessment-shared', 'assessment_shared', 'assessments', 'Assessment Shared', '["in_app"]', '🔗', 0),
+    ('nt-assessment-completed', 'assessment_completed', 'assessments', 'Assessment Completed', '["in_app","email"]', '📝', FALSE),
+    ('nt-assessment-shared', 'assessment_shared', 'assessments', 'Assessment Shared', '["in_app"]', '🔗', FALSE),
     
     -- Projects
-    ('nt-project-member-added', 'project_member_added', 'projects', 'Added to Project', '["in_app","email"]', '👥', 0),
-    ('nt-project-archived', 'project_archived', 'projects', 'Project Archived', '["in_app"]', '📦', 0),
+    ('nt-project-member-added', 'project_member_added', 'projects', 'Added to Project', '["in_app","email"]', '👥', FALSE),
+    ('nt-project-archived', 'project_archived', 'projects', 'Project Archived', '["in_app"]', '📦', FALSE),
     
     -- AI
-    ('nt-ai-suggestion', 'ai_suggestion', 'ai', 'AI Suggestion', '["in_app"]', '💡', 0),
-    ('nt-ai-action-pending', 'ai_action_pending', 'ai', 'AI Action Pending Approval', '["in_app"]', '🤖', 0),
-    ('nt-ai-insight', 'ai_insight', 'ai', 'AI Insight', '["in_app"]', '🔍', 0),
+    ('nt-ai-suggestion', 'ai_suggestion', 'ai', 'AI Suggestion', '["in_app"]', '💡', FALSE),
+    ('nt-ai-action-pending', 'ai_action_pending', 'ai', 'AI Action Pending Approval', '["in_app"]', '🤖', FALSE),
+    ('nt-ai-insight', 'ai_insight', 'ai', 'AI Insight', '["in_app"]', '🔍', FALSE),
     
     -- System (critical)
-    ('nt-system-maintenance', 'system_maintenance', 'system', 'System Maintenance', '["in_app","email"]', '🔧', 1),
-    ('nt-subscription-change', 'subscription_change', 'billing', 'Subscription Updated', '["in_app","email"]', '💳', 1),
-    ('nt-usage-alert', 'usage_alert', 'billing', 'Usage Alert', '["in_app","email"]', '📈', 1),
-    ('nt-payment-failed', 'payment_failed', 'billing', 'Payment Failed', '["in_app","email"]', '❌', 1);
+    ('nt-system-maintenance', 'system_maintenance', 'system', 'System Maintenance', '["in_app","email"]', '🔧', TRUE),
+    ('nt-subscription-change', 'subscription_change', 'billing', 'Subscription Updated', '["in_app","email"]', '💳', TRUE),
+    ('nt-usage-alert', 'usage_alert', 'billing', 'Usage Alert', '["in_app","email"]', '📈', TRUE),
+    ('nt-payment-failed', 'payment_failed', 'billing', 'Payment Failed', '["in_app","email"]', '❌', TRUE)
+ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================
 -- USER NOTIFICATION PREFERENCES
@@ -68,16 +69,16 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
     user_id TEXT NOT NULL UNIQUE,
     
     -- Global settings
-    global_enabled INTEGER DEFAULT 1,
-    quiet_hours_enabled INTEGER DEFAULT 0,
+    global_enabled BOOLEAN DEFAULT TRUE,
+    quiet_hours_enabled BOOLEAN DEFAULT FALSE,
     quiet_hours_start TEXT DEFAULT '22:00',
     quiet_hours_end TEXT DEFAULT '08:00',
     quiet_hours_timezone TEXT DEFAULT 'UTC',
-    quiet_hours_weekends_only INTEGER DEFAULT 0,
+    quiet_hours_weekends_only BOOLEAN DEFAULT FALSE,
     
     -- Email settings
-    email_enabled INTEGER DEFAULT 1,
-    email_digest_enabled INTEGER DEFAULT 0,
+    email_enabled BOOLEAN DEFAULT TRUE,
+    email_digest_enabled BOOLEAN DEFAULT FALSE,
     email_digest_frequency TEXT DEFAULT 'daily', -- 'daily', 'weekly'
     email_digest_time TEXT DEFAULT '09:00',
     email_digest_day TEXT DEFAULT 'monday', -- For weekly
@@ -86,9 +87,9 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
     type_settings TEXT DEFAULT '{}', -- {notificationType: {enabled, channels[]}}
     
     -- Integration preferences
-    slack_enabled INTEGER DEFAULT 1,
-    slack_dm_enabled INTEGER DEFAULT 1,
-    teams_enabled INTEGER DEFAULT 1,
+    slack_enabled BOOLEAN DEFAULT TRUE,
+    slack_dm_enabled BOOLEAN DEFAULT TRUE,
+    teams_enabled BOOLEAN DEFAULT TRUE,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -125,24 +126,24 @@ CREATE TABLE IF NOT EXISTS notifications (
     metadata TEXT DEFAULT '{}', -- JSON: extra data for templating
     
     -- Status
-    is_read INTEGER DEFAULT 0,
+    is_read BOOLEAN DEFAULT FALSE,
     read_at TIMESTAMP,
-    is_dismissed INTEGER DEFAULT 0,
+    is_dismissed BOOLEAN DEFAULT FALSE,
     dismissed_at TIMESTAMP,
     
     -- Delivery tracking
     channels_sent TEXT DEFAULT '[]', -- JSON array of channels used
     
     -- Email tracking
-    email_sent INTEGER DEFAULT 0,
+    email_sent BOOLEAN DEFAULT FALSE,
     email_sent_at TIMESTAMP,
     email_message_id TEXT,
-    email_delivered INTEGER DEFAULT 0,
-    email_opened INTEGER DEFAULT 0,
+    email_delivered BOOLEAN DEFAULT FALSE,
+    email_opened BOOLEAN DEFAULT FALSE,
     email_opened_at TIMESTAMP,
     
     -- Slack tracking
-    slack_sent INTEGER DEFAULT 0,
+    slack_sent BOOLEAN DEFAULT FALSE,
     slack_sent_at TIMESTAMP,
     slack_message_ts TEXT,
     
@@ -235,7 +236,7 @@ CREATE TABLE IF NOT EXISTS notification_templates (
     -- For Slack/Teams
     blocks_template TEXT, -- JSON blocks template
     
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     

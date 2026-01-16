@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS user_contact_emails (
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_contact_emails_user_id ON user_contact_emails(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_contact_emails_primary ON user_contact_emails(user_id, is_primary) WHERE is_primary = 1;
+CREATE INDEX IF NOT EXISTS idx_user_contact_emails_primary ON user_contact_emails(user_id, is_primary) WHERE is_primary = TRUE;
 
 -- =========================================
 -- USER CONTACT PHONES
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS user_addresses (
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_addresses_user_id ON user_addresses(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_addresses_primary ON user_addresses(user_id, is_primary) WHERE is_primary = 1;
+CREATE INDEX IF NOT EXISTS idx_user_addresses_primary ON user_addresses(user_id, is_primary) WHERE is_primary = TRUE;
 
 -- =========================================
 -- USER EMERGENCY CONTACTS

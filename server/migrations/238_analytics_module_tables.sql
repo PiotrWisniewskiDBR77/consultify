@@ -26,13 +26,13 @@ CREATE TABLE IF NOT EXISTS analytics_dashboards (
     widgets_json TEXT DEFAULT '[]', -- Widget configurations
     
     -- Sharing
-    is_shared INTEGER DEFAULT 0,
+    is_shared BOOLEAN DEFAULT FALSE,
     shared_with TEXT DEFAULT '[]', -- JSON array of user IDs
     
     -- Metadata
     created_by TEXT,
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS analytics_reports (
     
     -- Metadata
     created_by TEXT,
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS analytics_report_executions (
     results_json TEXT,
     
     -- Metadata
-    executed_at TEXT DEFAULT (datetime('now')),
+    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     executed_by TEXT,
     
     FOREIGN KEY (report_id) REFERENCES analytics_reports(id) ON DELETE CASCADE,
@@ -120,11 +120,11 @@ CREATE TABLE IF NOT EXISTS business_metrics (
     threshold_critical REAL,
     
     -- Status
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     
     -- Metadata
     created_by TEXT,
-    created_at TEXT DEFAULT (datetime('now')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS business_metric_values (
     value REAL NOT NULL,
     
     -- Metadata
-    recorded_at TEXT DEFAULT (datetime('now')),
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (metric_id) REFERENCES business_metrics(id) ON DELETE CASCADE
 );
@@ -169,8 +169,8 @@ CREATE TABLE IF NOT EXISTS predictive_models (
     
     -- Metadata
     created_by TEXT,
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS predictive_model_runs (
     error_message TEXT,
     
     -- Metadata
-    run_at TEXT DEFAULT (datetime('now')),
+    run_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (model_id) REFERENCES predictive_models(id) ON DELETE CASCADE
 );
@@ -217,7 +217,7 @@ CREATE TABLE IF NOT EXISTS predictive_model_predictions (
     actual_value REAL, -- For tracking accuracy
     
     -- Metadata
-    predicted_at TEXT DEFAULT (datetime('now')),
+    predicted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (model_id) REFERENCES predictive_models(id) ON DELETE CASCADE
 );
@@ -230,73 +230,79 @@ CREATE INDEX IF NOT EXISTS idx_predictive_model_predictions_date ON predictive_m
 -- ============================================================
 
 -- Demo dashboards
-INSERT OR IGNORE INTO analytics_dashboards (id, name, description, layout_json, widgets_json, is_shared, created_at)
+INSERT INTO analytics_dashboards (id, name, description, layout_json, widgets_json, is_shared, created_at)
 VALUES 
     ('dash-exec-001', 'Executive Overview', 'High-level KPIs for leadership', 
      '{"columns": 3, "rows": 2}',
      '[{"id": "w1", "type": "kpi", "metric": "mrr", "title": "MRR"}, {"id": "w2", "type": "kpi", "metric": "users", "title": "Active Users"}, {"id": "w3", "type": "chart", "chartType": "line", "metric": "revenue_trend"}]',
-     1, datetime('now')),
+     TRUE, CURRENT_TIMESTAMP),
     ('dash-ops-001', 'Operations Dashboard', 'System health and usage metrics',
      '{"columns": 4, "rows": 3}',
      '[{"id": "w1", "type": "kpi", "metric": "api_requests", "title": "API Requests"}, {"id": "w2", "type": "kpi", "metric": "error_rate", "title": "Error Rate"}, {"id": "w3", "type": "chart", "chartType": "bar", "metric": "usage_by_org"}]',
-     1, datetime('now')),
+     TRUE, CURRENT_TIMESTAMP),
     ('dash-rev-001', 'Revenue Analytics', 'Detailed revenue breakdown',
      '{"columns": 2, "rows": 2}',
      '[{"id": "w1", "type": "chart", "chartType": "pie", "metric": "revenue_by_plan"}, {"id": "w2", "type": "chart", "chartType": "line", "metric": "mrr_trend"}]',
-     1, datetime('now'));
+     TRUE, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
 -- Demo reports
-INSERT OR IGNORE INTO analytics_reports (id, name, description, report_type, query_sql, visualization_type, status, created_at)
+INSERT INTO analytics_reports (id, name, description, report_type, query_sql, visualization_type, status, created_at)
 VALUES 
     ('rep-mrr-001', 'Monthly MRR Report', 'Monthly recurring revenue breakdown by plan', 'revenue',
      'SELECT sp.name as plan, COUNT(s.id) as subscribers, SUM(sp.price_monthly) as mrr FROM subscriptions s JOIN subscription_plans sp ON s.plan_id = sp.id WHERE s.status = ''active'' GROUP BY sp.id',
-     'table', 'active', datetime('now')),
+     'table', 'active', CURRENT_TIMESTAMP),
     ('rep-usage-001', 'API Usage Report', 'API usage by organization', 'usage',
      'SELECT o.name as organization, COUNT(r.id) as requests FROM ai_request_logs r JOIN organizations o ON r.organization_id = o.id GROUP BY r.organization_id ORDER BY requests DESC LIMIT 20',
-     'table', 'active', datetime('now')),
+     'table', 'active', CURRENT_TIMESTAMP),
     ('rep-churn-001', 'Churn Analysis', 'Customer churn analysis', 'revenue',
-     'SELECT strftime(''%Y-%m'', canceled_at) as month, COUNT(*) as churned FROM subscriptions WHERE status = ''canceled'' GROUP BY month ORDER BY month DESC',
-     'chart', 'active', datetime('now'));
+     'SELECT to_char(canceled_at, ''YYYY-MM'') as month, COUNT(*) as churned FROM subscriptions WHERE status = ''canceled'' GROUP BY month ORDER BY month DESC',
+     'chart', 'active', CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
 -- Demo business metrics
-INSERT OR IGNORE INTO business_metrics (id, name, description, category, formula, unit, target_value, threshold_warning, threshold_critical, is_active, created_at)
+INSERT INTO business_metrics (id, name, description, category, formula, unit, target_value, threshold_warning, threshold_critical, is_active, created_at)
 VALUES 
-    ('metric-mrr-001', 'Monthly Recurring Revenue', 'Total MRR from active subscriptions', 'revenue', 'SUM(price_monthly) FROM active_subscriptions', 'currency', 50000, 40000, 30000, 1, datetime('now')),
-    ('metric-arr-001', 'Annual Recurring Revenue', 'Projected annual revenue', 'revenue', 'MRR * 12', 'currency', 600000, 480000, 360000, 1, datetime('now')),
-    ('metric-users-001', 'Active Users', 'Total active users across all organizations', 'engagement', 'COUNT(*) FROM users WHERE is_active = 1', 'number', 1000, 800, 500, 1, datetime('now')),
-    ('metric-churn-001', 'Monthly Churn Rate', 'Percentage of customers churned', 'revenue', 'churned_customers / total_customers * 100', 'percentage', 3, 5, 10, 1, datetime('now')),
-    ('metric-nps-001', 'Net Promoter Score', 'Customer satisfaction score', 'engagement', 'AVG(nps_score)', 'number', 50, 30, 10, 1, datetime('now'));
+    ('metric-mrr-001', 'Monthly Recurring Revenue', 'Total MRR from active subscriptions', 'revenue', 'SUM(price_monthly) FROM active_subscriptions', 'currency', 50000, 40000, 30000, TRUE, CURRENT_TIMESTAMP),
+    ('metric-arr-001', 'Annual Recurring Revenue', 'Projected annual revenue', 'revenue', 'MRR * 12', 'currency', 600000, 480000, 360000, TRUE, CURRENT_TIMESTAMP),
+    ('metric-users-001', 'Active Users', 'Total active users across all organizations', 'engagement', 'COUNT(*) FROM users WHERE is_active = 1', 'number', 1000, 800, 500, TRUE, CURRENT_TIMESTAMP),
+    ('metric-churn-001', 'Monthly Churn Rate', 'Percentage of customers churned', 'revenue', 'churned_customers / total_customers * 100', 'percentage', 3, 5, 10, TRUE, CURRENT_TIMESTAMP),
+    ('metric-nps-001', 'Net Promoter Score', 'Customer satisfaction score', 'engagement', 'AVG(nps_score)', 'number', 50, 30, 10, TRUE, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
 -- Demo metric values
-INSERT OR IGNORE INTO business_metric_values (id, metric_id, value, recorded_at)
+INSERT INTO business_metric_values (id, metric_id, value, recorded_at)
 SELECT 
     'val-' || m.id || '-' || d.day_offset,
     m.id,
     CASE m.id
-        WHEN 'metric-mrr-001' THEN 35000 + (30 - d.day_offset) * 500 + ABS(RANDOM() % 2000)
+        WHEN 'metric-mrr-001' THEN 35000 + (30 - d.day_offset) * 500 + ABS(FLOOR(RANDOM() * 2000)::integer)
         WHEN 'metric-arr-001' THEN (35000 + (30 - d.day_offset) * 500) * 12
-        WHEN 'metric-users-001' THEN 750 + (30 - d.day_offset) * 5 + ABS(RANDOM() % 20)
-        WHEN 'metric-churn-001' THEN 2.5 + (ABS(RANDOM() % 30) / 10.0)
-        WHEN 'metric-nps-001' THEN 40 + ABS(RANDOM() % 20)
+        WHEN 'metric-users-001' THEN 750 + (30 - d.day_offset) * 5 + ABS(FLOOR(RANDOM() * 20)::integer)
+        WHEN 'metric-churn-001' THEN 2.5 + (ABS(FLOOR(RANDOM() * 30)::integer) / 10.0)
+        WHEN 'metric-nps-001' THEN 40 + ABS(FLOOR(RANDOM() * 20)::integer)
     END,
-    datetime('now', '-' || d.day_offset || ' days')
+    CURRENT_TIMESTAMP - (d.day_offset || ' days')::interval
 FROM business_metrics m
 CROSS JOIN (SELECT 0 day_offset UNION SELECT 7 UNION SELECT 14 UNION SELECT 21 UNION SELECT 28) d
-WHERE m.id IN ('metric-mrr-001', 'metric-arr-001', 'metric-users-001', 'metric-churn-001', 'metric-nps-001');
+WHERE m.id IN ('metric-mrr-001', 'metric-arr-001', 'metric-users-001', 'metric-churn-001', 'metric-nps-001')
+ON CONFLICT (id) DO NOTHING;
 
 -- Demo predictive models
-INSERT OR IGNORE INTO predictive_models (id, name, description, model_type, target_metric, features_json, status, created_at)
+INSERT INTO predictive_models (id, name, description, model_type, target_metric, features_json, status, created_at)
 VALUES 
     ('model-churn-001', 'Churn Prediction', 'Predict customer churn likelihood', 'logistic', 'churn_probability',
-     '["last_login_days", "usage_decline", "support_tickets", "billing_issues"]', 'trained', datetime('now')),
+     '["last_login_days", "usage_decline", "support_tickets", "billing_issues"]', 'trained', CURRENT_TIMESTAMP),
     ('model-rev-001', 'Revenue Forecast', 'Forecast MRR growth', 'linear_regression', 'mrr_forecast',
-     '["current_mrr", "new_customers", "churn_rate", "expansion_rate"]', 'trained', datetime('now')),
+     '["current_mrr", "new_customers", "churn_rate", "expansion_rate"]', 'trained', CURRENT_TIMESTAMP),
     ('model-growth-001', 'Growth Prediction', 'Predict user growth', 'random_forest', 'user_growth',
-     '["marketing_spend", "feature_releases", "market_trends", "competitor_activity"]', 'draft', datetime('now'));
+     '["marketing_spend", "feature_releases", "market_trends", "competitor_activity"]', 'draft', CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
 -- Demo model runs
-INSERT OR IGNORE INTO predictive_model_runs (id, model_id, accuracy_score, precision_score, recall_score, f1_score, training_samples, status, run_at)
+INSERT INTO predictive_model_runs (id, model_id, accuracy_score, precision_score, recall_score, f1_score, training_samples, status, run_at)
 VALUES 
-    ('run-001', 'model-churn-001', 0.87, 0.85, 0.82, 0.83, 5000, 'completed', datetime('now', '-7 days')),
-    ('run-002', 'model-churn-001', 0.89, 0.87, 0.84, 0.85, 6500, 'completed', datetime('now', '-1 day')),
-    ('run-003', 'model-rev-001', 0.92, 0.90, 0.88, 0.89, 3000, 'completed', datetime('now', '-3 days'));
+    ('run-001', 'model-churn-001', 0.87, 0.85, 0.82, 0.83, 5000,     'completed', CURRENT_TIMESTAMP - INTERVAL '7 days'),
+    ('run-002', 'model-churn-001', 0.89, 0.87, 0.84, 0.85, 6500, 'completed', CURRENT_TIMESTAMP - INTERVAL '1 day'),
+    ('run-003', 'model-rev-001', 0.92, 0.90, 0.88, 0.89, 3000, 'completed', CURRENT_TIMESTAMP - INTERVAL '3 days')
+ON CONFLICT (id) DO NOTHING;

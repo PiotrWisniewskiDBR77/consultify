@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS integration_providers (
     auth_type TEXT NOT NULL, -- 'oauth2', 'api_key', 'webhook'
     oauth_config TEXT, -- JSON: {authUrl, tokenUrl, scopes, clientIdEnv, clientSecretEnv}
     webhook_config TEXT, -- JSON: webhook configuration
-    is_active INTEGER DEFAULT 1,
-    is_beta INTEGER DEFAULT 0,
-    is_enterprise_only INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_beta BOOLEAN DEFAULT FALSE,
+    is_enterprise_only BOOLEAN DEFAULT FALSE,
     documentation_url TEXT,
     setup_guide_url TEXT,
     sort_order INTEGER DEFAULT 0,
@@ -25,43 +25,44 @@ CREATE TABLE IF NOT EXISTS integration_providers (
 );
 
 -- Seed providers
-INSERT OR IGNORE INTO integration_providers (id, name, display_name, category, description, auth_type, is_active, sort_order) VALUES
+INSERT INTO integration_providers (id, name, display_name, category, description, auth_type, is_active, sort_order) VALUES
     -- Communication (P0)
-    ('int-slack', 'slack', 'Slack', 'communication', 'Real-time notifications and decision requests in Slack', 'oauth2', 1, 1),
-    ('int-teams', 'microsoft_teams', 'Microsoft Teams', 'communication', 'Notifications and collaboration in Teams', 'oauth2', 1, 2),
+    ('int-slack', 'slack', 'Slack', 'communication', 'Real-time notifications and decision requests in Slack', 'oauth2', TRUE, 1),
+    ('int-teams', 'microsoft_teams', 'Microsoft Teams', 'communication', 'Notifications and collaboration in Teams', 'oauth2', TRUE, 2),
     
     -- Project Management (P0)
-    ('int-jira', 'jira', 'Jira', 'project_management', 'Bi-directional sync with Jira issues', 'oauth2', 1, 10),
-    ('int-asana', 'asana', 'Asana', 'project_management', 'Sync tasks with Asana', 'oauth2', 1, 11),
-    ('int-monday', 'monday', 'Monday.com', 'project_management', 'Sync with Monday.com boards', 'oauth2', 1, 12),
+    ('int-jira', 'jira', 'Jira', 'project_management', 'Bi-directional sync with Jira issues', 'oauth2', TRUE, 10),
+    ('int-asana', 'asana', 'Asana', 'project_management', 'Sync tasks with Asana', 'oauth2', TRUE, 11),
+    ('int-monday', 'monday', 'Monday.com', 'project_management', 'Sync with Monday.com boards', 'oauth2', TRUE, 12),
     
     -- Google Workspace (P1)
-    ('int-gdrive', 'google_drive', 'Google Drive', 'storage', 'Store files and reports in Google Drive', 'oauth2', 1, 20),
-    ('int-gcalendar', 'google_calendar', 'Google Calendar', 'productivity', 'Sync deadlines and meetings', 'oauth2', 1, 21),
+    ('int-gdrive', 'google_drive', 'Google Drive', 'storage', 'Store files and reports in Google Drive', 'oauth2', TRUE, 20),
+    ('int-gcalendar', 'google_calendar', 'Google Calendar', 'productivity', 'Sync deadlines and meetings', 'oauth2', TRUE, 21),
     
     -- Microsoft 365 (P1)
-    ('int-onedrive', 'onedrive', 'OneDrive', 'storage', 'Store files in OneDrive/SharePoint', 'oauth2', 1, 30),
-    ('int-outlook', 'outlook', 'Outlook Calendar', 'productivity', 'Sync with Outlook calendar', 'oauth2', 1, 31),
+    ('int-onedrive', 'onedrive', 'OneDrive', 'storage', 'Store files in OneDrive/SharePoint', 'oauth2', TRUE, 30),
+    ('int-outlook', 'outlook', 'Outlook Calendar', 'productivity', 'Sync with Outlook calendar', 'oauth2', TRUE, 31),
     
     -- Cloud Storage (P1)
-    ('int-s3', 'aws_s3', 'AWS S3', 'storage', 'Store files in Amazon S3', 'api_key', 1, 40),
-    ('int-azure-blob', 'azure_blob', 'Azure Blob Storage', 'storage', 'Store files in Azure', 'api_key', 1, 41),
+    ('int-s3', 'aws_s3', 'AWS S3', 'storage', 'Store files in Amazon S3', 'api_key', TRUE, 40),
+    ('int-azure-blob', 'azure_blob', 'Azure Blob Storage', 'storage', 'Store files in Azure', 'api_key', TRUE, 41),
     
     -- Automation (P2)
-    ('int-zapier', 'zapier', 'Zapier', 'automation', 'Connect with 5000+ apps via Zapier', 'api_key', 1, 50),
-    ('int-make', 'make', 'Make (Integromat)', 'automation', 'Advanced automation workflows', 'api_key', 1, 51),
+    ('int-zapier', 'zapier', 'Zapier', 'automation', 'Connect with 5000+ apps via Zapier', 'api_key', TRUE, 50),
+    ('int-make', 'make', 'Make (Integromat)', 'automation', 'Advanced automation workflows', 'api_key', TRUE, 51),
     
     -- CRM (P2)
-    ('int-salesforce', 'salesforce', 'Salesforce', 'crm', 'Sync with Salesforce CRM', 'oauth2', 0, 60),
-    ('int-hubspot', 'hubspot', 'HubSpot', 'crm', 'Connect with HubSpot CRM', 'oauth2', 0, 61),
+    ('int-salesforce', 'salesforce', 'Salesforce', 'crm', 'Sync with Salesforce CRM', 'oauth2', FALSE, 60),
+    ('int-hubspot', 'hubspot', 'HubSpot', 'crm', 'Connect with HubSpot CRM', 'oauth2', FALSE, 61),
     
     -- BI (P2)
-    ('int-powerbi', 'power_bi', 'Power BI', 'bi', 'Export data to Power BI', 'oauth2', 0, 70),
-    ('int-tableau', 'tableau', 'Tableau', 'bi', 'Connect to Tableau dashboards', 'api_key', 0, 71);
+    ('int-powerbi', 'power_bi', 'Power BI', 'bi', 'Export data to Power BI', 'oauth2', FALSE, 70),
+    ('int-tableau', 'tableau', 'Tableau', 'bi', 'Connect to Tableau dashboards', 'api_key', FALSE, 71)
+ON CONFLICT (id) DO NOTHING;
 
 -- Mark beta/enterprise
-UPDATE integration_providers SET is_beta = 1 WHERE name IN ('salesforce', 'hubspot', 'power_bi', 'tableau');
-UPDATE integration_providers SET is_enterprise_only = 1 WHERE name IN ('azure_blob', 'salesforce', 'power_bi', 'tableau');
+UPDATE integration_providers SET is_beta = TRUE WHERE name IN ('salesforce', 'hubspot', 'power_bi', 'tableau');
+UPDATE integration_providers SET is_enterprise_only = TRUE WHERE name IN ('azure_blob', 'salesforce', 'power_bi', 'tableau');
 
 -- ==========================================
 -- ORGANIZATION INTEGRATIONS
@@ -134,7 +135,7 @@ CREATE TABLE IF NOT EXISTS integration_webhooks (
     events TEXT NOT NULL, -- JSON array of event types
     
     -- Status
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     last_triggered_at TIMESTAMP,
     trigger_count INTEGER DEFAULT 0,
     failure_count INTEGER DEFAULT 0,
@@ -255,7 +256,7 @@ CREATE TABLE IF NOT EXISTS integration_api_keys (
     request_count INTEGER DEFAULT 0,
     
     -- Status
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     expires_at TIMESTAMP,
     
     -- Audit

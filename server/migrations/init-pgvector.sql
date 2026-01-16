@@ -25,10 +25,10 @@ CREATE TABLE IF NOT EXISTS ai_audit_logs (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_ai_audit_logs_user ON ai_audit_logs(user_id);
-CREATE INDEX idx_ai_audit_logs_org ON ai_audit_logs(organization_id);
-CREATE INDEX idx_ai_audit_logs_timestamp ON ai_audit_logs(timestamp);
-CREATE INDEX idx_ai_audit_logs_capability ON ai_audit_logs(capability);
+CREATE INDEX IF NOT EXISTS idx_ai_audit_logs_user ON ai_audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_audit_logs_org ON ai_audit_logs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_ai_audit_logs_timestamp ON ai_audit_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_ai_audit_logs_capability ON ai_audit_logs(capability);
 
 -- =====================================================
 -- AI System Prompts - DB-managed prompts for AI Hub
@@ -46,13 +46,14 @@ CREATE TABLE IF NOT EXISTS ai_system_prompts (
 );
 
 -- Insert default prompts
-INSERT INTO ai_system_prompts (key, description, content, is_active) VALUES
-('system_chat', 'Main AI Chat System Prompt', 'You are a senior digital transformation consultant specializing in PMO methodologies (ISO 21500, PMBOK 7, PRINCE2). Provide strategic, actionable advice based on the user''s context.', TRUE),
-('system_magic_wand', 'Magic Wand Field Suggestions', 'You help users fill form fields by suggesting relevant content based on their project context. Be concise and directly applicable.', TRUE),
-('system_reports', 'Report Generation System Prompt', 'You are an expert report writer. Generate professional, structured reports for digital transformation assessments. Use data provided to create insightful analysis.', TRUE),
-('system_initiative', 'Initiative Analysis Prompt', 'Analyze and score initiatives based on strategic alignment, feasibility, ROI potential, and resource requirements. Provide structured recommendations.', TRUE),
-('system_max_reasoner', 'MAX Mode Deep Reasoning', 'You are in MAX Mode - use chain-of-thought reasoning to solve complex strategic problems. Think step by step and consider multiple perspectives.', TRUE),
-('system_coach', 'PMO Coach System Prompt', 'You are a PMO coach helping users understand and apply best practices from ISO 21500, PMBOK, and PRINCE2. Provide educational, supportive guidance.', TRUE)
+-- Note: Table may already exist from migration 210 with TEXT id, so we provide explicit ids
+INSERT INTO ai_system_prompts (id, key, description, content, is_active) VALUES
+(gen_random_uuid()::text, 'system_chat', 'Main AI Chat System Prompt', 'You are a senior digital transformation consultant specializing in PMO methodologies (ISO 21500, PMBOK 7, PRINCE2). Provide strategic, actionable advice based on the user''s context.', TRUE),
+(gen_random_uuid()::text, 'system_magic_wand', 'Magic Wand Field Suggestions', 'You help users fill form fields by suggesting relevant content based on their project context. Be concise and directly applicable.', TRUE),
+(gen_random_uuid()::text, 'system_reports', 'Report Generation System Prompt', 'You are an expert report writer. Generate professional, structured reports for digital transformation assessments. Use data provided to create insightful analysis.', TRUE),
+(gen_random_uuid()::text, 'system_initiative', 'Initiative Analysis Prompt', 'Analyze and score initiatives based on strategic alignment, feasibility, ROI potential, and resource requirements. Provide structured recommendations.', TRUE),
+(gen_random_uuid()::text, 'system_max_reasoner', 'MAX Mode Deep Reasoning', 'You are in MAX Mode - use chain-of-thought reasoning to solve complex strategic problems. Think step by step and consider multiple perspectives.', TRUE),
+(gen_random_uuid()::text, 'system_coach', 'PMO Coach System Prompt', 'You are a PMO coach helping users understand and apply best practices from ISO 21500, PMBOK, and PRINCE2. Provide educational, supportive guidance.', TRUE)
 ON CONFLICT (key) DO NOTHING;
 
 -- =====================================================
@@ -69,10 +70,12 @@ CREATE TABLE IF NOT EXISTS ai_knowledge_embeddings (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_ai_embeddings_doc ON ai_knowledge_embeddings(document_id);
-CREATE INDEX idx_ai_embeddings_source ON ai_knowledge_embeddings(source_type);
+CREATE INDEX IF NOT EXISTS idx_ai_embeddings_doc ON ai_knowledge_embeddings(document_id);
+CREATE INDEX IF NOT EXISTS idx_ai_embeddings_source ON ai_knowledge_embeddings(source_type);
 
 -- Create HNSW index for fast similarity search (requires pgvector 0.5.0+)
+-- Drop and recreate to handle potential conflicts
+DROP INDEX IF EXISTS idx_ai_embeddings_vector;
 CREATE INDEX idx_ai_embeddings_vector ON ai_knowledge_embeddings 
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 64);
@@ -118,8 +121,8 @@ CREATE TABLE IF NOT EXISTS ai_conversations (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_ai_conversations_user ON ai_conversations(user_id);
-CREATE INDEX idx_ai_conversations_project ON ai_conversations(project_id);
+CREATE INDEX IF NOT EXISTS idx_ai_conversations_user ON ai_conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_conversations_project ON ai_conversations(project_id);
 
 -- =====================================================
 -- AI Cost Tracking - Budget management per organization
@@ -135,7 +138,7 @@ CREATE TABLE IF NOT EXISTS ai_cost_tracking (
     UNIQUE(organization_id, month)
 );
 
-CREATE INDEX idx_ai_cost_tracking_org_month ON ai_cost_tracking(organization_id, month);
+CREATE INDEX IF NOT EXISTS idx_ai_cost_tracking_org_month ON ai_cost_tracking(organization_id, month);
 
 -- =====================================================
 -- Helper function for vector similarity search
@@ -171,11 +174,16 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =====================================================
--- Grant permissions
+-- Grant permissions (skip if role doesn't exist)
 -- =====================================================
-GRANT ALL ON ALL TABLES IN SCHEMA public TO consultinity;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO consultinity;
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO consultinity;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'consultinity') THEN
+        GRANT ALL ON ALL TABLES IN SCHEMA public TO consultinity;
+        GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO consultinity;
+        GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO consultinity;
+    END IF;
+END $$;
 
 
 

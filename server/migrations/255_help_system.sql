@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS help_articles (
     related_module TEXT, -- Which module this helps with
     tags TEXT DEFAULT '[]', -- JSON array
     sort_order INTEGER DEFAULT 0,
-    is_published INTEGER DEFAULT 1,
-    is_featured INTEGER DEFAULT 0,
+    is_published BOOLEAN DEFAULT TRUE,
+    is_featured BOOLEAN DEFAULT FALSE,
     view_count INTEGER DEFAULT 0,
     helpful_count INTEGER DEFAULT 0,
     not_helpful_count INTEGER DEFAULT 0,
@@ -36,7 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_help_articles_module ON help_articles(related_mod
 CREATE INDEX IF NOT EXISTS idx_help_articles_published ON help_articles(is_published);
 
 -- Seed some basic articles
-INSERT OR IGNORE INTO help_articles (id, category, title, slug, content, excerpt, sort_order) VALUES
+INSERT INTO help_articles (id, category, title, slug, content, excerpt, sort_order) VALUES
     ('help-getting-started', 'getting_started', 'Quick Start Guide', 'quick-start-guide', 
      '# Quick Start Guide\n\nWelcome to Consultinity! This guide will help you get started.\n\n## Step 1: Set Up Your Profile\n...',
      'Get up and running with Consultinity in minutes', 1),
@@ -51,7 +51,8 @@ INSERT OR IGNORE INTO help_articles (id, category, title, slug, content, excerpt
     
     ('help-ai-assistant', 'ai', 'Using the AI Assistant', 'ai-assistant-guide',
      '# Using the AI Assistant\n\nThe AI assistant is available throughout the application to help you...',
-     'Learn how to get the most from AI features', 1);
+     'Learn how to get the most from AI features', 1)
+ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================
 -- MODULE HELP (for ? button)
@@ -68,7 +69,7 @@ CREATE TABLE IF NOT EXISTS module_help (
     video_duration_seconds INTEGER,
     article_id TEXT, -- Link to full article
     tips TEXT DEFAULT '[]', -- JSON array of quick tips
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (article_id) REFERENCES help_articles(id)
 );
@@ -76,7 +77,7 @@ CREATE TABLE IF NOT EXISTS module_help (
 CREATE INDEX IF NOT EXISTS idx_module_help_key ON module_help(module_key);
 
 -- Seed module help
-INSERT OR IGNORE INTO module_help (id, module_key, title, short_description, tips) VALUES
+INSERT INTO module_help (id, module_key, title, short_description, tips) VALUES
     ('mh-initiatives', 'initiatives', 'Initiatives', 
      'Initiatives are the building blocks of your transformation roadmap. Create them from assessment results or manually.',
      '["Start with assessment-generated initiatives","Use status workflow: Draft → Planning → Review → Approved","Assign owners for accountability"]'),
@@ -95,7 +96,8 @@ INSERT OR IGNORE INTO module_help (id, module_key, title, short_description, tip
     
     ('mh-decisions', 'decisions', 'Decisions',
      'Track decisions that need to be made. Tasks can be blocked until decisions are resolved.',
-     '["Set clear deadlines","Provide context and options","Escalate if needed"]');
+     '["Set clear deadlines","Provide context and options","Escalate if needed"]')
+ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================
 -- USER HELP INTERACTIONS
@@ -178,7 +180,7 @@ CREATE TABLE IF NOT EXISTS support_tickets (
     first_response_at TIMESTAMP,
     sla_first_response_hours INTEGER DEFAULT 24,
     sla_resolution_hours INTEGER DEFAULT 72,
-    is_sla_breached INTEGER DEFAULT 0,
+    is_sla_breached BOOLEAN DEFAULT FALSE,
     
     -- Timestamps
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -204,8 +206,8 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
     sender_name TEXT,
     message TEXT NOT NULL,
     attachments TEXT DEFAULT '[]', -- JSON array of file IDs
-    is_internal INTEGER DEFAULT 0, -- Internal notes for support team
-    is_solution INTEGER DEFAULT 0, -- Mark as solution message
+    is_internal BOOLEAN DEFAULT FALSE, -- Internal notes for support team
+    is_solution BOOLEAN DEFAULT FALSE, -- Mark as solution message
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE
 );
@@ -214,15 +216,38 @@ CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket ON ticket_messages(ticket_
 CREATE INDEX IF NOT EXISTS idx_ticket_messages_internal ON ticket_messages(is_internal);
 
 -- ==========================================
--- HELP SEARCH INDEX
+-- HELP SEARCH INDEX (PostgreSQL Full-Text Search)
 -- ==========================================
 
--- FTS virtual table for full-text search (SQLite)
-CREATE VIRTUAL TABLE IF NOT EXISTS help_search USING fts5(
-    article_id,
-    title,
-    content,
-    tags,
-    content='help_articles',
-    content_rowid='rowid'
-);
+-- Add tsvector column for full-text search
+ALTER TABLE help_articles ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+-- Create function to update search vector
+CREATE OR REPLACE FUNCTION help_articles_search_vector_update() RETURNS trigger AS $$
+BEGIN
+    NEW.search_vector := 
+        setweight(to_tsvector('english', COALESCE(NEW.title, '')), 'A') ||
+        setweight(to_tsvector('english', COALESCE(NEW.content, '')), 'B') ||
+        setweight(to_tsvector('english', COALESCE(NEW.excerpt, '')), 'C') ||
+        setweight(to_tsvector('english', COALESCE(NEW.tags::text, '')), 'D');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to automatically update search vector
+DROP TRIGGER IF EXISTS help_articles_search_vector_trigger ON help_articles;
+CREATE TRIGGER help_articles_search_vector_trigger
+    BEFORE INSERT OR UPDATE ON help_articles
+    FOR EACH ROW
+    EXECUTE FUNCTION help_articles_search_vector_update();
+
+-- Create GIN index for fast full-text search
+CREATE INDEX IF NOT EXISTS idx_help_articles_search ON help_articles USING GIN(search_vector);
+
+-- Update existing rows
+UPDATE help_articles SET search_vector = 
+    setweight(to_tsvector('english', COALESCE(title, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(content, '')), 'B') ||
+    setweight(to_tsvector('english', COALESCE(excerpt, '')), 'C') ||
+    setweight(to_tsvector('english', COALESCE(tags::text, '')), 'D')
+WHERE search_vector IS NULL;

@@ -37,16 +37,16 @@ CREATE TABLE IF NOT EXISTS organization_branding (
     login_welcome_message TEXT,
     -- Custom Domain
     custom_domain TEXT,
-    custom_domain_verified INTEGER DEFAULT 0,
+    custom_domain_verified BOOLEAN DEFAULT FALSE,
     custom_domain_ssl_status TEXT DEFAULT 'pending', -- 'pending', 'active', 'failed'
     -- Branding Options
-    hide_powered_by INTEGER DEFAULT 0,
+    hide_powered_by BOOLEAN DEFAULT FALSE,
     custom_support_email TEXT,
     custom_terms_url TEXT,
     custom_privacy_url TEXT,
     -- Timestamps
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 );
 
@@ -67,13 +67,13 @@ CREATE TABLE IF NOT EXISTS legal_documents (
     url TEXT, -- External URL if hosted elsewhere
     status TEXT DEFAULT 'active', -- 'draft', 'active', 'archived'
     effective_date TEXT,
-    requires_acceptance INTEGER DEFAULT 0,
+    requires_acceptance BOOLEAN DEFAULT FALSE,
     acceptance_required_for TEXT, -- 'all', 'new_users', 'admins'
     created_by TEXT,
     published_by TEXT,
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
-    published_at TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    published_at TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (published_by) REFERENCES users(id)
 );
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS legal_document_acceptances (
     document_id TEXT NOT NULL,
     document_type TEXT NOT NULL,
     document_version TEXT NOT NULL,
-    accepted_at TEXT DEFAULT (datetime('now')),
+    accepted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ip_address TEXT,
     user_agent TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS superadmin_audit_log (
     ip_address TEXT,
     user_agent TEXT,
     metadata TEXT DEFAULT '{}', -- Additional context JSON
-    created_at TEXT DEFAULT (datetime('now')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (admin_user_id) REFERENCES users(id)
 );
 
@@ -136,13 +136,13 @@ CREATE INDEX IF NOT EXISTS idx_superadmin_audit_created ON superadmin_audit_log(
 -- ===========================================
 
 CREATE TABLE IF NOT EXISTS settings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     key TEXT UNIQUE NOT NULL,
     value TEXT,
     description TEXT,
     category TEXT DEFAULT 'general', -- 'general', 'security', 'email', 'legal', 'appearance'
-    is_sensitive INTEGER DEFAULT 0,
-    updated_at TEXT DEFAULT (datetime('now')),
+    is_sensitive BOOLEAN DEFAULT FALSE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_by TEXT
 );
 
@@ -159,13 +159,13 @@ CREATE TABLE IF NOT EXISTS compliance_frameworks (
     name TEXT NOT NULL, -- 'GDPR', 'SOC2', 'ISO27001', 'HIPAA'
     display_name TEXT NOT NULL,
     status TEXT DEFAULT 'compliant', -- 'compliant', 'in_progress', 'not_applicable'
-    certification_date TEXT,
-    expiry_date TEXT,
+    certification_date TIMESTAMP,
+    expiry_date TIMESTAMP,
     certificate_url TEXT,
     auditor TEXT,
     notes TEXT,
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_compliance_name ON compliance_frameworks(name);

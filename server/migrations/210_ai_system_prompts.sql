@@ -13,10 +13,10 @@ CREATE TABLE IF NOT EXISTS ai_system_prompts (
     variables TEXT, -- JSON array
     context_config TEXT, -- JSON object
     version INTEGER DEFAULT 1,
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     created_by TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS ai_prompt_versions (
     user_prompt_template TEXT,
     change_reason TEXT,
     changed_by TEXT,
-    changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (prompt_id) REFERENCES ai_system_prompts(id) ON DELETE CASCADE
 );
 
@@ -49,19 +49,20 @@ CREATE TABLE IF NOT EXISTS ai_prompt_blocks (
     category TEXT DEFAULT 'general',
     content TEXT NOT NULL,
     variables TEXT, -- JSON array
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     usage_count INTEGER DEFAULT 0,
     created_by TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_prompt_blocks_category ON ai_prompt_blocks(category);
 CREATE INDEX IF NOT EXISTS idx_prompt_blocks_active ON ai_prompt_blocks(is_active);
 
 -- Seed some default prompts
-INSERT OR IGNORE INTO ai_system_prompts (id, key, name, content, description, category, is_active, version)
+INSERT INTO ai_system_prompts (id, key, name, content, description, category, is_active, version)
 VALUES 
-    ('default-chat', 'chat_default', 'Default Chat', 'You are a helpful AI assistant.', 'Capability: chat, Language: en', 'chat', 1, 1),
-    ('default-analysis', 'analysis_default', 'Analysis Prompt', 'You are an expert analyst. Analyze the following data and provide insights.', 'Capability: analysis, Language: en', 'analysis', 1, 1),
-    ('default-generation', 'generation_default', 'Content Generation', 'You are a creative writer. Generate content based on the following requirements.', 'Capability: generation, Language: en', 'generation', 1, 1);
+    ('default-chat', 'chat_default', 'Default Chat', 'You are a helpful AI assistant.', 'Capability: chat, Language: en', 'chat', TRUE, 1),
+    ('default-analysis', 'analysis_default', 'Analysis Prompt', 'You are an expert analyst. Analyze the following data and provide insights.', 'Capability: analysis, Language: en', 'analysis', TRUE, 1),
+    ('default-generation', 'generation_default', 'Content Generation', 'You are a creative writer. Generate content based on the following requirements.', 'Capability: generation, Language: en', 'generation', TRUE, 1)
+ON CONFLICT (key) DO NOTHING;

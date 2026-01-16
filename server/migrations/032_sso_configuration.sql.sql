@@ -33,29 +33,32 @@ CREATE TABLE IF NOT EXISTS sso_configurations (
     attribute_mapping TEXT DEFAULT '{"email": "email", "firstName": "given_name", "lastName": "family_name"}',
     
     -- Policies
-    enforce_sso INTEGER DEFAULT 0, -- Force SSO for all users
-    allow_password_login INTEGER DEFAULT 1, -- Allow password as fallback
-    auto_provision_users INTEGER DEFAULT 1, -- Create users on first SSO login
+    enforce_sso BOOLEAN DEFAULT FALSE, -- Force SSO for all users
+    allow_password_login BOOLEAN DEFAULT TRUE, -- Allow password as fallback
+    auto_provision_users BOOLEAN DEFAULT TRUE, -- Create users on first SSO login
     default_role TEXT DEFAULT 'USER',
     
     -- Status
-    is_active INTEGER DEFAULT 0,
-    is_verified INTEGER DEFAULT 0,
-    verified_at TEXT,
+    is_active BOOLEAN DEFAULT FALSE,
+    is_verified BOOLEAN DEFAULT FALSE,
+    verified_at TIMESTAMP,
     
     -- Metadata
     metadata_url TEXT, -- IdP metadata URL for auto-configuration
     raw_metadata TEXT, -- Cached IdP metadata XML
     
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by TEXT,
     
     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_sso_config_org ON sso_configurations(organization_id);
-CREATE INDEX IF NOT EXISTS idx_sso_config_active ON sso_configurations(is_active) WHERE is_active = 1;
+-- Drop index if it exists (may have been created with old INTEGER column type)
+DROP INDEX IF EXISTS idx_sso_config_active;
+-- Recreate index - cast to boolean to handle both INTEGER and BOOLEAN column types
+CREATE INDEX idx_sso_config_active ON sso_configurations(is_active) WHERE (is_active::boolean) = TRUE;
 
 -- SSO sessions for tracking
 CREATE TABLE IF NOT EXISTS sso_sessions (
@@ -69,9 +72,9 @@ CREATE TABLE IF NOT EXISTS sso_sessions (
     session_index TEXT, -- SAML SessionIndex for SLO
     
     -- Timestamps
-    authenticated_at TEXT DEFAULT (datetime('now')),
-    expires_at TEXT,
-    terminated_at TEXT,
+    authenticated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    terminated_at TIMESTAMP,
     termination_reason TEXT,
     
     -- Request info
@@ -103,13 +106,13 @@ CREATE TABLE IF NOT EXISTS sso_login_attempts (
     
     -- User created/matched
     user_id TEXT,
-    user_created INTEGER DEFAULT 0,
+    user_created BOOLEAN DEFAULT FALSE,
     
     -- Request info
     ip_address TEXT,
     user_agent TEXT,
     
-    created_at TEXT DEFAULT (datetime('now'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_sso_attempts_org ON sso_login_attempts(organization_id);

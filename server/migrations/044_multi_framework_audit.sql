@@ -202,8 +202,8 @@ $$ LANGUAGE plpgsql;
 -- Function to log audit entry with automatic diff calculation
 CREATE OR REPLACE FUNCTION log_mf_audit(
     p_assessment_id UUID,
-    p_framework VARCHAR,
-    p_action VARCHAR,
+    p_framework TEXT,
+    p_action TEXT,
     p_actor_id UUID,
     p_old_data JSONB DEFAULT NULL,
     p_new_data JSONB DEFAULT NULL,
@@ -261,6 +261,7 @@ CREATE OR REPLACE FUNCTION cleanup_old_audit_logs()
 RETURNS INTEGER AS $$
 DECLARE
     deleted_count INTEGER := 0;
+    v_row_count INTEGER;
     r RECORD;
 BEGIN
     FOR r IN SELECT category, retention_days FROM multi_framework_audit_retention LOOP
@@ -270,7 +271,8 @@ BEGIN
         )
         AND created_at < NOW() - (r.retention_days || ' days')::INTERVAL;
         
-        GET DIAGNOSTICS deleted_count = deleted_count + ROW_COUNT;
+        GET DIAGNOSTICS v_row_count = ROW_COUNT;
+        deleted_count := deleted_count + v_row_count;
     END LOOP;
     
     RETURN deleted_count;
@@ -284,7 +286,7 @@ $$ LANGUAGE plpgsql;
 COMMENT ON TABLE multi_framework_audit_log IS 'Complete audit trail for all multi-framework assessment actions';
 COMMENT ON TABLE multi_framework_audit_actions IS 'Definitions of auditable actions with severity levels';
 COMMENT ON TABLE multi_framework_audit_retention IS 'Retention policies for different audit categories';
-COMMENT ON FUNCTION log_mf_audit IS 'Helper function to log audit entries with automatic diff calculation';
+-- COMMENT ON FUNCTION log_mf_audit IS 'Helper function to log audit entries with automatic diff calculation';
 
 
 

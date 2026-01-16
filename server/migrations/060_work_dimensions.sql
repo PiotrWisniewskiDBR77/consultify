@@ -22,8 +22,8 @@ ALTER TABLE organizations ADD COLUMN work_mode TEXT DEFAULT 'SIMPLE'
     CHECK(work_mode IN ('SIMPLE', 'LOCATION_BASED', 'PROJECT_BASED', 'FULL'));
 
 -- Feature flags
-ALTER TABLE organizations ADD COLUMN has_projects INTEGER DEFAULT 0;
-ALTER TABLE organizations ADD COLUMN has_locations INTEGER DEFAULT 0;
+ALTER TABLE organizations ADD COLUMN has_projects BOOLEAN DEFAULT FALSE;
+ALTER TABLE organizations ADD COLUMN has_locations BOOLEAN DEFAULT FALSE;
 
 -- Custom labels for terminology
 ALTER TABLE organizations ADD COLUMN project_label TEXT DEFAULT 'Project';
@@ -47,7 +47,7 @@ ALTER TABLE organization_facilities ADD COLUMN address TEXT;
 -- Status tracking
 ALTER TABLE organization_facilities ADD COLUMN status TEXT DEFAULT 'active' 
     CHECK(status IN ('active', 'inactive', 'closed'));
-ALTER TABLE organization_facilities ADD COLUMN is_headquarters INTEGER DEFAULT 0;
+ALTER TABLE organization_facilities ADD COLUMN is_headquarters BOOLEAN DEFAULT FALSE;
 
 -- Timestamps
 ALTER TABLE organization_facilities ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
@@ -75,9 +75,9 @@ CREATE TABLE IF NOT EXISTS facility_users (
         CHECK(role IN ('manager', 'lead', 'member', 'viewer')),
     
     -- Access control flags
-    can_view_all_tasks INTEGER DEFAULT 0,
-    can_manage_users INTEGER DEFAULT 0,
-    can_edit_facility INTEGER DEFAULT 0,
+    can_view_all_tasks BOOLEAN DEFAULT FALSE,
+    can_manage_users BOOLEAN DEFAULT FALSE,
+    can_edit_facility BOOLEAN DEFAULT FALSE,
     
     -- Assignment metadata
     assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -122,16 +122,16 @@ CREATE TABLE IF NOT EXISTS pmo_role_definitions (
     default_capabilities TEXT DEFAULT '[]',
     
     -- Configuration
-    is_required INTEGER DEFAULT 0,
+    is_required BOOLEAN DEFAULT FALSE,
     max_per_project INTEGER,
-    can_be_external INTEGER DEFAULT 0,
+    can_be_external BOOLEAN DEFAULT FALSE,
     
     -- Descriptions
     description TEXT,
     description_pl TEXT,
     
-    -- System flag (1=built-in, 0=custom)
-    is_system INTEGER DEFAULT 1,
+    -- System flag (TRUE=built-in, FALSE=custom)
+    is_system BOOLEAN DEFAULT TRUE,
     
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -206,165 +206,178 @@ CREATE INDEX IF NOT EXISTS idx_tasks_facility ON tasks(facility_id);
 -- Insert PRINCE2/PMBOK aligned roles
 
 -- Executive Level (0)
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-exec', 'PROJECT_EXECUTIVE', 'Project Executive', 'Dyrektor Projektu', 
- 'Executive', 'Project Sponsor', 'ISO 21500 Clause 4.3.2', 0, 
+ 'Executive', 'Project Sponsor', 'ISO 21500 Clause 4.3.2', 0::integer, 
  '["approve_business_case","approve_stage_gates","authorize_budget","escalate_decisions"]', 
- 1, 'Ultimate authority for the project. Approves business case and major decisions.',
- 'Najwyższa władza w projekcie. Zatwierdza business case i kluczowe decyzje.');
+ (TRUE::boolean)::integer, 'Ultimate authority for the project. Approves business case and major decisions.',
+ 'Najwyższa władza w projekcie. Zatwierdza business case i kluczowe decyzje.')
+ON CONFLICT (code) DO NOTHING;
 
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-sponsor', 'SENIOR_USER', 'Senior User / Business Owner', 'Właściciel Biznesowy', 
- 'Senior User', 'Business Owner', 'ISO 21500 Clause 4.3.5', 0, 
+ 'Senior User', 'Business Owner', 'ISO 21500 Clause 4.3.5', 0::integer, 
  '["define_requirements","accept_deliverables","represent_users","specify_benefits"]', 
- 1, 'Represents users who will use the products. Defines requirements and acceptance criteria.',
- 'Reprezentuje użytkowników produktów. Definiuje wymagania i kryteria akceptacji.');
+ (TRUE::boolean)::integer, 'Represents users who will use the products. Defines requirements and acceptance criteria.',
+ 'Reprezentuje użytkowników produktów. Definiuje wymagania i kryteria akceptacji.')
+ON CONFLICT (code) DO NOTHING;
 
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-supplier', 'SENIOR_SUPPLIER', 'Senior Supplier', 'Główny Dostawca', 
- 'Senior Supplier', 'Resource Manager', 'ISO 21500 Clause 4.6.2', 0, 
+ 'Senior Supplier', 'Resource Manager', 'ISO 21500 Clause 4.6.2', 0::integer, 
  '["provide_resources","technical_expertise","supplier_commitments"]', 
- 0, 'Represents suppliers providing resources or expertise.',
- 'Reprezentuje dostawców zasobów lub ekspertyzy.');
+ (FALSE::boolean)::integer, 'Represents suppliers providing resources or expertise.',
+ 'Reprezentuje dostawców zasobów lub ekspertyzy.')
+ON CONFLICT (code) DO NOTHING;
 
 -- Manager Level (1)
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-pm', 'PROJECT_MANAGER', 'Project Manager', 'Kierownik Projektu', 
- 'Project Manager', 'Project Manager', 'ISO 21500 Clause 4.3.3', 1, 
+ 'Project Manager', 'Project Manager', 'ISO 21500 Clause 4.3.3', 1::integer, 
  '["manage_project","create_plans","assign_tasks","manage_risks","manage_issues","report_progress","manage_scope","manage_schedule"]', 
- 1, 'Day-to-day management of the project within agreed tolerances.',
- 'Bieżące zarządzanie projektem w uzgodnionych tolerancjach.');
+ (TRUE::boolean)::integer, 'Day-to-day management of the project within agreed tolerances.',
+ 'Bieżące zarządzanie projektem w uzgodnionych tolerancjach.')
+ON CONFLICT (code) DO NOTHING;
 
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-pmo', 'PMO_SUPPORT', 'PMO Support', 'Wsparcie PMO', 
- 'Project Support', 'PMO Analyst', 'ISO 21500 Clause 4.3.6', 1, 
+ 'Project Support', 'PMO Analyst', 'ISO 21500 Clause 4.3.6', 1::integer, 
  '["maintain_documentation","track_metrics","quality_assurance","admin_support"]', 
- 0, 'Administrative support for project management activities.',
- 'Wsparcie administracyjne dla działań zarządzania projektem.');
+ (FALSE::boolean)::integer, 'Administrative support for project management activities.',
+ 'Wsparcie administracyjne dla działań zarządzania projektem.')
+ON CONFLICT (code) DO NOTHING;
 
 -- Lead Level (2)
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-tech', 'TECHNICAL_LEAD', 'Technical Lead', 'Lider Techniczny', 
- 'Team Manager', 'Technical Lead', 'ISO 21500 Clause 4.6.3', 2, 
+ 'Team Manager', 'Technical Lead', 'ISO 21500 Clause 4.6.3', 2::integer, 
  '["technical_decisions","code_review","architecture","technical_guidance"]', 
- 0, 'Leads technical work and provides technical direction to team.',
- 'Kieruje pracami technicznymi i zapewnia kierunek techniczny zespołowi.');
+ (FALSE::boolean)::integer, 'Leads technical work and provides technical direction to team.',
+ 'Kieruje pracami technicznymi i zapewnia kierunek techniczny zespołowi.')
+ON CONFLICT (code) DO NOTHING;
 
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-ba', 'BUSINESS_ANALYST', 'Business Analyst', 'Analityk Biznesowy', 
- 'Project Assurance', 'Business Analyst', 'ISO 21500 Clause 4.4.2', 2, 
+ 'Project Assurance', 'Business Analyst', 'ISO 21500 Clause 4.4.2', 2::integer, 
  '["analyze_requirements","document_processes","validate_solutions","stakeholder_liaison"]', 
- 0, 'Analyzes business requirements and ensures solutions meet needs.',
- 'Analizuje wymagania biznesowe i zapewnia zgodność rozwiązań z potrzebami.');
+ (FALSE::boolean)::integer, 'Analyzes business requirements and ensures solutions meet needs.',
+ 'Analizuje wymagania biznesowe i zapewnia zgodność rozwiązań z potrzebami.')
+ON CONFLICT (code) DO NOTHING;
 
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-change', 'CHANGE_AUTHORITY', 'Change Authority', 'Organ Zmian', 
- 'Change Authority', 'Change Control Board', 'ISO 21500 Clause 4.4.6', 2, 
+ 'Change Authority', 'Change Control Board', 'ISO 21500 Clause 4.4.6', 2::integer, 
  '["approve_changes","evaluate_impact","manage_change_requests"]', 
- 0, 'Approves changes within delegated authority.',
- 'Zatwierdza zmiany w ramach delegowanych uprawnień.');
+ (FALSE::boolean)::integer, 'Approves changes within delegated authority.',
+ 'Zatwierdza zmiany w ramach delegowanych uprawnień.')
+ON CONFLICT (code) DO NOTHING;
 
 -- Member Level (3)
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-member', 'TEAM_MEMBER', 'Team Member', 'Członek Zespołu', 
- 'Team Member', 'Team Member', 'ISO 21500 Clause 4.6.4', 3, 
+ 'Team Member', 'Team Member', 'ISO 21500 Clause 4.6.4', 3::integer, 
  '["execute_tasks","update_status","report_blockers","collaborate"]', 
- 0, 'Executes assigned work packages and reports progress.',
- 'Wykonuje przypisane pakiety prac i raportuje postępy.');
+ (FALSE::boolean)::integer, 'Executes assigned work packages and reports progress.',
+ 'Wykonuje przypisane pakiety prac i raportuje postępy.')
+ON CONFLICT (code) DO NOTHING;
 
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-qa', 'QUALITY_ASSURANCE', 'Quality Assurance', 'Kontrola Jakości', 
- 'Project Assurance', 'Quality Analyst', 'ISO 21500 Clause 4.7.3', 3, 
+ 'Project Assurance', 'Quality Analyst', 'ISO 21500 Clause 4.7.3', 3::integer, 
  '["test_deliverables","verify_quality","report_defects","audit_processes"]', 
- 0, 'Verifies quality of deliverables and processes.',
- 'Weryfikuje jakość produktów i procesów.');
+ (FALSE::boolean)::integer, 'Verifies quality of deliverables and processes.',
+ 'Weryfikuje jakość produktów i procesów.')
+ON CONFLICT (code) DO NOTHING;
 
 -- Stakeholder Level (4)
-INSERT OR IGNORE INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
+INSERT INTO pmo_role_definitions (id, code, name, name_pl, prince2_role, pmbok_role, iso21500_reference, level, default_capabilities, is_required, description, description_pl) VALUES
 ('pmo-role-stakeholder', 'STAKEHOLDER', 'Stakeholder', 'Interesariusz', 
- 'N/A', 'Stakeholder', 'ISO 21500 Clause 4.3.1', 4, 
+ 'N/A', 'Stakeholder', 'ISO 21500 Clause 4.3.1', 4::integer, 
  '["view_progress","provide_feedback","attend_reviews"]', 
- 0, 'Interested party who may be affected by project outcomes.',
- 'Strona zainteresowana, na którą mogą wpływać wyniki projektu.');
+ (FALSE::boolean)::integer, 'Interested party who may be affected by project outcomes.',
+ 'Strona zainteresowana, na którą mogą wpływać wyniki projektu.')
+ON CONFLICT (code) DO NOTHING;
 
 -- ============================================
 -- 10. SEED CAPABILITIES
 -- ============================================
 
 -- Project capabilities
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
-('cap-p1', 'project:create', 'Create Projects', 'Tworzenie projektów', 'project', 'Ability to create new projects');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
-('cap-p2', 'project:edit', 'Edit Project Settings', 'Edycja ustawień projektu', 'project', 'Ability to edit project settings');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
+('cap-p1', 'project:create', 'Create Projects', 'Tworzenie projektów', 'project', 'Ability to create new projects')
+ON CONFLICT (code) DO NOTHING;
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
+('cap-p2', 'project:edit', 'Edit Project Settings', 'Edycja ustawień projektu', 'project', 'Ability to edit project settings')
+ON CONFLICT (code) DO NOTHING;
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-p3', 'project:delete', 'Delete Projects', 'Usuwanie projektów', 'project', 'Ability to delete projects');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-p4', 'project:archive', 'Archive Projects', 'Archiwizacja projektów', 'project', 'Ability to archive projects');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-p5', 'project:assign_users', 'Assign Users to Project', 'Przypisywanie użytkowników', 'project', 'Ability to assign users to project');
 
 -- Task capabilities
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-t1', 'task:create', 'Create Tasks', 'Tworzenie zadań', 'task', 'Ability to create tasks');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-t2', 'task:edit_own', 'Edit Own Tasks', 'Edycja własnych zadań', 'task', 'Ability to edit own assigned tasks');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-t3', 'task:edit_all', 'Edit All Tasks', 'Edycja wszystkich zadań', 'task', 'Ability to edit any task in scope');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-t4', 'task:delete', 'Delete Tasks', 'Usuwanie zadań', 'task', 'Ability to delete tasks');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-t5', 'task:assign', 'Assign Tasks', 'Przypisywanie zadań', 'task', 'Ability to assign tasks to users');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-t6', 'task:change_status', 'Change Task Status', 'Zmiana statusu zadań', 'task', 'Ability to change task status');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-t7', 'task:approve', 'Approve Tasks', 'Zatwierdzanie zadań', 'task', 'Ability to approve completed tasks');
 
 -- Initiative capabilities
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-i1', 'initiative:create', 'Create Initiatives', 'Tworzenie inicjatyw', 'initiative', 'Ability to create initiatives');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-i2', 'initiative:edit', 'Edit Initiatives', 'Edycja inicjatyw', 'initiative', 'Ability to edit initiatives');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-i3', 'initiative:delete', 'Delete Initiatives', 'Usuwanie inicjatyw', 'initiative', 'Ability to delete initiatives');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-i4', 'initiative:approve', 'Approve Initiatives', 'Zatwierdzanie inicjatyw', 'initiative', 'Ability to approve initiatives');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-i5', 'initiative:prioritize', 'Prioritize Initiatives', 'Priorytetyzacja inicjatyw', 'initiative', 'Ability to change initiative priority');
 
 -- Stage Gate capabilities
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-sg1', 'stagegate:create', 'Create Stage Gates', 'Tworzenie Stage Gate', 'governance', 'Ability to create stage gates');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-sg2', 'stagegate:approve', 'Approve Stage Gates', 'Zatwierdzanie Stage Gate', 'governance', 'Ability to approve stage gate reviews');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-sg3', 'stagegate:reject', 'Reject Stage Gates', 'Odrzucanie Stage Gate', 'governance', 'Ability to reject stage gate reviews');
 
 -- Risk & Issue capabilities
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-r1', 'risk:create', 'Create Risks', 'Tworzenie ryzyk', 'risk', 'Ability to create risk entries');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-r2', 'risk:manage', 'Manage Risks', 'Zarządzanie ryzykami', 'risk', 'Ability to manage and update risks');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-r3', 'issue:create', 'Create Issues', 'Zgłaszanie problemów', 'issue', 'Ability to create issue entries');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-r4', 'issue:resolve', 'Resolve Issues', 'Rozwiązywanie problemów', 'issue', 'Ability to resolve issues');
 
 -- Document capabilities
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-d1', 'document:create', 'Create Documents', 'Tworzenie dokumentów', 'document', 'Ability to create documents');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-d2', 'document:edit', 'Edit Documents', 'Edycja dokumentów', 'document', 'Ability to edit documents');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-d3', 'document:delete', 'Delete Documents', 'Usuwanie dokumentów', 'document', 'Ability to delete documents');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-d4', 'document:approve', 'Approve Documents', 'Zatwierdzanie dokumentów', 'document', 'Ability to approve documents');
 
 -- Report capabilities
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-rep1', 'report:view', 'View Reports', 'Podgląd raportów', 'report', 'Ability to view reports');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-rep2', 'report:create', 'Create Reports', 'Tworzenie raportów', 'report', 'Ability to create reports');
-INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, description) VALUES
+INSERT INTO capabilities (id, code, name, name_pl, category, description) VALUES
 ('cap-rep3', 'report:export', 'Export Reports', 'Eksport raportów', 'report', 'Ability to export reports');
 
 -- ============================================
@@ -372,101 +385,101 @@ INSERT OR IGNORE INTO capabilities (id, code, name, name_pl, category, descripti
 -- ============================================
 
 -- PROJECT_EXECUTIVE capabilities
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-exec', 'cap-p1', 'all');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-exec', 'cap-p2', 'all');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-exec', 'cap-p5', 'all');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-exec', 'cap-sg2', 'all');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-exec', 'cap-sg3', 'all');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-exec', 'cap-i4', 'all');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-exec', 'cap-rep1', 'all');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-exec', 'cap-rep3', 'all');
 
 -- PROJECT_MANAGER capabilities
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-p2', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-p5', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-t1', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-t3', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-t4', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-t5', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-t6', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-t7', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-i1', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-i2', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-i5', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-sg1', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-r1', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-r2', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-r3', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-r4', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-d1', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-d2', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-rep1', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-rep2', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-pm', 'cap-rep3', 'project');
 
 -- TEAM_MEMBER capabilities
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-member', 'cap-t1', 'assigned');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-member', 'cap-t2', 'assigned');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-member', 'cap-t6', 'assigned');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-member', 'cap-r3', 'assigned');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-member', 'cap-d1', 'assigned');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-member', 'cap-rep1', 'assigned');
 
 -- TECHNICAL_LEAD capabilities
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-tech', 'cap-t1', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-tech', 'cap-t3', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-tech', 'cap-t5', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-tech', 'cap-t6', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-tech', 'cap-t7', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-tech', 'cap-d1', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-tech', 'cap-d2', 'project');
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-tech', 'cap-rep1', 'project');
 
 -- STAKEHOLDER capabilities (read-only)
-INSERT OR IGNORE INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
+INSERT INTO pmo_role_capabilities (pmo_role_id, capability_id, scope) VALUES
 ('pmo-role-stakeholder', 'cap-rep1', 'project');
 
 -- ============================================

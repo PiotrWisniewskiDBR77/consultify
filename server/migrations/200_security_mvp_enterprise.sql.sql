@@ -227,7 +227,10 @@ CREATE TABLE IF NOT EXISTS webauthn_credentials (
 
 CREATE INDEX IF NOT EXISTS idx_webauthn_creds_user ON webauthn_credentials(user_id);
 CREATE INDEX IF NOT EXISTS idx_webauthn_creds_credential ON webauthn_credentials(credential_id);
-CREATE INDEX IF NOT EXISTS idx_webauthn_creds_active ON webauthn_credentials(is_active) WHERE is_active = 1;
+-- Drop index if it exists (may have been created with old INTEGER column type)
+DROP INDEX IF EXISTS idx_webauthn_creds_active;
+-- Recreate index - cast to boolean to handle both INTEGER and BOOLEAN column types
+CREATE INDEX idx_webauthn_creds_active ON webauthn_credentials(is_active) WHERE (is_active::boolean) = TRUE;
 
 -- WebAuthn Challenges (for registration and authentication)
 CREATE TABLE IF NOT EXISTS webauthn_challenges (
@@ -316,7 +319,10 @@ CREATE TABLE IF NOT EXISTS ai_budgets (
 CREATE INDEX IF NOT EXISTS idx_ai_budgets_org ON ai_budgets(organization_id);
 CREATE INDEX IF NOT EXISTS idx_ai_budgets_user ON ai_budgets(user_id);
 CREATE INDEX IF NOT EXISTS idx_ai_budgets_type ON ai_budgets(budget_type);
-CREATE INDEX IF NOT EXISTS idx_ai_budgets_active ON ai_budgets(is_active) WHERE is_active = 1;
+-- Drop index if it exists (may have been created with old INTEGER column type)
+DROP INDEX IF EXISTS idx_ai_budgets_active;
+-- Recreate index - cast to boolean to handle both INTEGER and BOOLEAN column types
+CREATE INDEX idx_ai_budgets_active ON ai_budgets(is_active) WHERE (is_active::boolean) = TRUE;
 
 -- AI Spending Alerts
 CREATE TABLE IF NOT EXISTS ai_spending_alerts (
@@ -427,10 +433,10 @@ CREATE TABLE IF NOT EXISTS permission_definitions (
     risk_level TEXT DEFAULT 'low' CHECK(risk_level IN ('low', 'medium', 'high', 'critical')),
     
     -- Status
-    is_active INTEGER DEFAULT 1,
-    is_system INTEGER DEFAULT 1, -- System permissions can't be deleted
+    is_active BOOLEAN DEFAULT TRUE,
+    is_system BOOLEAN DEFAULT TRUE, -- System permissions can't be deleted
     
-    created_at TEXT DEFAULT (datetime('now'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_permission_defs_name ON permission_definitions(name);
@@ -462,8 +468,8 @@ CREATE TABLE IF NOT EXISTS custom_roles (
     priority INTEGER DEFAULT 0,
     
     -- Status
-    is_active INTEGER DEFAULT 1,
-    is_default INTEGER DEFAULT 0, -- Default role for new users
+    is_active BOOLEAN DEFAULT TRUE,
+    is_default BOOLEAN DEFAULT FALSE, -- Default role for new users
     
     -- Metadata
     user_count INTEGER DEFAULT 0, -- Cached count
@@ -479,7 +485,10 @@ CREATE TABLE IF NOT EXISTS custom_roles (
 
 CREATE INDEX IF NOT EXISTS idx_custom_roles_org ON custom_roles(organization_id);
 CREATE INDEX IF NOT EXISTS idx_custom_roles_name ON custom_roles(name);
-CREATE INDEX IF NOT EXISTS idx_custom_roles_active ON custom_roles(is_active) WHERE is_active = 1;
+-- Drop index if it exists (may have been created with old INTEGER column type)
+DROP INDEX IF EXISTS idx_custom_roles_active;
+-- Recreate index - cast to boolean to handle both INTEGER and BOOLEAN column types
+CREATE INDEX idx_custom_roles_active ON custom_roles(is_active) WHERE (is_active::boolean) = TRUE;
 
 -- Role Permissions (M:M between roles and permissions)
 CREATE TABLE IF NOT EXISTS role_permissions (
@@ -624,70 +633,71 @@ CREATE INDEX IF NOT EXISTS idx_audit_exports_created ON audit_exports(created_at
 -- ============================================================
 
 -- Insert default permission definitions
-INSERT OR IGNORE INTO permission_definitions (id, name, display_name, description, category, resource, action, risk_level, is_system) VALUES
+INSERT INTO permission_definitions (id, name, display_name, description, category, resource, action, risk_level, is_system) VALUES
 -- Projects
-('perm_projects_read', 'projects:read', 'View Projects', 'View project details and contents', 'Projects', 'projects', 'read', 'low', 1),
-('perm_projects_write', 'projects:write', 'Edit Projects', 'Create and edit projects', 'Projects', 'projects', 'write', 'medium', 1),
-('perm_projects_delete', 'projects:delete', 'Delete Projects', 'Delete projects', 'Projects', 'projects', 'delete', 'high', 1),
-('perm_projects_admin', 'projects:admin', 'Manage Projects', 'Full project administration', 'Projects', 'projects', 'admin', 'high', 1),
+('perm_projects_read', 'projects:read', 'View Projects', 'View project details and contents', 'Projects', 'projects', 'read', 'low', TRUE),
+('perm_projects_write', 'projects:write', 'Edit Projects', 'Create and edit projects', 'Projects', 'projects', 'write', 'medium', TRUE),
+('perm_projects_delete', 'projects:delete', 'Delete Projects', 'Delete projects', 'Projects', 'projects', 'delete', 'high', TRUE),
+('perm_projects_admin', 'projects:admin', 'Manage Projects', 'Full project administration', 'Projects', 'projects', 'admin', 'high', TRUE),
 
 -- Users
-('perm_users_read', 'users:read', 'View Users', 'View user profiles', 'Users', 'users', 'read', 'low', 1),
-('perm_users_write', 'users:write', 'Edit Users', 'Edit user profiles', 'Users', 'users', 'write', 'medium', 1),
-('perm_users_delete', 'users:delete', 'Delete Users', 'Delete user accounts', 'Users', 'users', 'delete', 'critical', 1),
-('perm_users_invite', 'users:invite', 'Invite Users', 'Invite new users', 'Users', 'users', 'invite', 'medium', 1),
-('perm_users_admin', 'users:admin', 'Manage Users', 'Full user administration', 'Users', 'users', 'admin', 'critical', 1),
+('perm_users_read', 'users:read', 'View Users', 'View user profiles', 'Users', 'users', 'read', 'low', TRUE),
+('perm_users_write', 'users:write', 'Edit Users', 'Edit user profiles', 'Users', 'users', 'write', 'medium', TRUE),
+('perm_users_delete', 'users:delete', 'Delete Users', 'Delete user accounts', 'Users', 'users', 'delete', 'critical', TRUE),
+('perm_users_invite', 'users:invite', 'Invite Users', 'Invite new users', 'Users', 'users', 'invite', 'medium', TRUE),
+('perm_users_admin', 'users:admin', 'Manage Users', 'Full user administration', 'Users', 'users', 'admin', 'critical', TRUE),
 
 -- Assessments
-('perm_assessments_read', 'assessments:read', 'View Assessments', 'View assessment data', 'Assessments', 'assessments', 'read', 'low', 1),
-('perm_assessments_write', 'assessments:write', 'Edit Assessments', 'Create and edit assessments', 'Assessments', 'assessments', 'write', 'medium', 1),
-('perm_assessments_delete', 'assessments:delete', 'Delete Assessments', 'Delete assessments', 'Assessments', 'assessments', 'delete', 'high', 1),
+('perm_assessments_read', 'assessments:read', 'View Assessments', 'View assessment data', 'Assessments', 'assessments', 'read', 'low', TRUE),
+('perm_assessments_write', 'assessments:write', 'Edit Assessments', 'Create and edit assessments', 'Assessments', 'assessments', 'write', 'medium', TRUE),
+('perm_assessments_delete', 'assessments:delete', 'Delete Assessments', 'Delete assessments', 'Assessments', 'assessments', 'delete', 'high', TRUE),
 
 -- Initiatives
-('perm_initiatives_read', 'initiatives:read', 'View Initiatives', 'View initiatives', 'Initiatives', 'initiatives', 'read', 'low', 1),
-('perm_initiatives_write', 'initiatives:write', 'Edit Initiatives', 'Create and edit initiatives', 'Initiatives', 'initiatives', 'write', 'medium', 1),
-('perm_initiatives_delete', 'initiatives:delete', 'Delete Initiatives', 'Delete initiatives', 'Initiatives', 'initiatives', 'delete', 'high', 1),
-('perm_initiatives_approve', 'initiatives:approve', 'Approve Initiatives', 'Approve initiative workflows', 'Initiatives', 'initiatives', 'approve', 'high', 1),
+('perm_initiatives_read', 'initiatives:read', 'View Initiatives', 'View initiatives', 'Initiatives', 'initiatives', 'read', 'low', TRUE),
+('perm_initiatives_write', 'initiatives:write', 'Edit Initiatives', 'Create and edit initiatives', 'Initiatives', 'initiatives', 'write', 'medium', TRUE),
+('perm_initiatives_delete', 'initiatives:delete', 'Delete Initiatives', 'Delete initiatives', 'Initiatives', 'initiatives', 'delete', 'high', TRUE),
+('perm_initiatives_approve', 'initiatives:approve', 'Approve Initiatives', 'Approve initiative workflows', 'Initiatives', 'initiatives', 'approve', 'high', TRUE),
 
 -- Tasks
-('perm_tasks_read', 'tasks:read', 'View Tasks', 'View tasks', 'Tasks', 'tasks', 'read', 'low', 1),
-('perm_tasks_write', 'tasks:write', 'Edit Tasks', 'Create and edit tasks', 'Tasks', 'tasks', 'write', 'low', 1),
-('perm_tasks_delete', 'tasks:delete', 'Delete Tasks', 'Delete tasks', 'Tasks', 'tasks', 'delete', 'medium', 1),
-('perm_tasks_assign', 'tasks:assign', 'Assign Tasks', 'Assign tasks to users', 'Tasks', 'tasks', 'assign', 'low', 1),
+('perm_tasks_read', 'tasks:read', 'View Tasks', 'View tasks', 'Tasks', 'tasks', 'read', 'low', TRUE),
+('perm_tasks_write', 'tasks:write', 'Edit Tasks', 'Create and edit tasks', 'Tasks', 'tasks', 'write', 'low', TRUE),
+('perm_tasks_delete', 'tasks:delete', 'Delete Tasks', 'Delete tasks', 'Tasks', 'tasks', 'delete', 'medium', TRUE),
+('perm_tasks_assign', 'tasks:assign', 'Assign Tasks', 'Assign tasks to users', 'Tasks', 'tasks', 'assign', 'low', TRUE),
 
 -- Reports
-('perm_reports_read', 'reports:read', 'View Reports', 'View reports', 'Reports', 'reports', 'read', 'low', 1),
-('perm_reports_write', 'reports:write', 'Create Reports', 'Create and edit reports', 'Reports', 'reports', 'write', 'medium', 1),
-('perm_reports_export', 'reports:export', 'Export Reports', 'Export reports to PDF/Excel', 'Reports', 'reports', 'export', 'medium', 1),
-('perm_reports_share', 'reports:share', 'Share Reports', 'Share reports externally', 'Reports', 'reports', 'share', 'high', 1),
+('perm_reports_read', 'reports:read', 'View Reports', 'View reports', 'Reports', 'reports', 'read', 'low', TRUE),
+('perm_reports_write', 'reports:write', 'Create Reports', 'Create and edit reports', 'Reports', 'reports', 'write', 'medium', TRUE),
+('perm_reports_export', 'reports:export', 'Export Reports', 'Export reports to PDF/Excel', 'Reports', 'reports', 'export', 'medium', TRUE),
+('perm_reports_share', 'reports:share', 'Share Reports', 'Share reports externally', 'Reports', 'reports', 'share', 'high', TRUE),
 
 -- AI Features
-('perm_ai_chat', 'ai:chat', 'AI Chat', 'Use AI chat features', 'AI', 'ai', 'chat', 'low', 1),
-('perm_ai_generate', 'ai:generate', 'AI Generation', 'Use AI content generation', 'AI', 'ai', 'generate', 'medium', 1),
-('perm_ai_analyze', 'ai:analyze', 'AI Analysis', 'Use AI analysis features', 'AI', 'ai', 'analyze', 'medium', 1),
-('perm_ai_admin', 'ai:admin', 'AI Administration', 'Manage AI settings and budgets', 'AI', 'ai', 'admin', 'high', 1),
+('perm_ai_chat', 'ai:chat', 'AI Chat', 'Use AI chat features', 'AI', 'ai', 'chat', 'low', TRUE),
+('perm_ai_generate', 'ai:generate', 'AI Generation', 'Use AI content generation', 'AI', 'ai', 'generate', 'medium', TRUE),
+('perm_ai_analyze', 'ai:analyze', 'AI Analysis', 'Use AI analysis features', 'AI', 'ai', 'analyze', 'medium', TRUE),
+('perm_ai_admin', 'ai:admin', 'AI Administration', 'Manage AI settings and budgets', 'AI', 'ai', 'admin', 'high', TRUE),
 
 -- Settings
-('perm_settings_read', 'settings:read', 'View Settings', 'View organization settings', 'Settings', 'settings', 'read', 'low', 1),
-('perm_settings_write', 'settings:write', 'Edit Settings', 'Edit organization settings', 'Settings', 'settings', 'write', 'high', 1),
+('perm_settings_read', 'settings:read', 'View Settings', 'View organization settings', 'Settings', 'settings', 'read', 'low', TRUE),
+('perm_settings_write', 'settings:write', 'Edit Settings', 'Edit organization settings', 'Settings', 'settings', 'write', 'high', TRUE),
 
 -- Security
-('perm_security_read', 'security:read', 'View Security', 'View security settings and logs', 'Security', 'security', 'read', 'medium', 1),
-('perm_security_write', 'security:write', 'Edit Security', 'Edit security settings', 'Security', 'security', 'write', 'critical', 1),
-('perm_security_audit', 'security:audit', 'Audit Access', 'Access audit logs', 'Security', 'security', 'audit', 'high', 1),
+('perm_security_read', 'security:read', 'View Security', 'View security settings and logs', 'Security', 'security', 'read', 'medium', TRUE),
+('perm_security_write', 'security:write', 'Edit Security', 'Edit security settings', 'Security', 'security', 'write', 'critical', TRUE),
+('perm_security_audit', 'security:audit', 'Audit Access', 'Access audit logs', 'Security', 'security', 'audit', 'high', TRUE),
 
 -- Billing
-('perm_billing_read', 'billing:read', 'View Billing', 'View billing information', 'Billing', 'billing', 'read', 'medium', 1),
-('perm_billing_write', 'billing:write', 'Manage Billing', 'Manage billing and subscriptions', 'Billing', 'billing', 'write', 'critical', 1),
+('perm_billing_read', 'billing:read', 'View Billing', 'View billing information', 'Billing', 'billing', 'read', 'medium', TRUE),
+('perm_billing_write', 'billing:write', 'Manage Billing', 'Manage billing and subscriptions', 'Billing', 'billing', 'write', 'critical', TRUE),
 
 -- Integrations
-('perm_integrations_read', 'integrations:read', 'View Integrations', 'View integrations', 'Integrations', 'integrations', 'read', 'low', 1),
-('perm_integrations_write', 'integrations:write', 'Manage Integrations', 'Configure integrations', 'Integrations', 'integrations', 'write', 'high', 1),
+('perm_integrations_read', 'integrations:read', 'View Integrations', 'View integrations', 'Integrations', 'integrations', 'read', 'low', TRUE),
+('perm_integrations_write', 'integrations:write', 'Manage Integrations', 'Configure integrations', 'Integrations', 'integrations', 'write', 'high', TRUE),
 
 -- Roles
-('perm_roles_read', 'roles:read', 'View Roles', 'View role definitions', 'Roles', 'roles', 'read', 'low', 1),
-('perm_roles_write', 'roles:write', 'Manage Roles', 'Create and edit roles', 'Roles', 'roles', 'write', 'critical', 1),
-('perm_roles_assign', 'roles:assign', 'Assign Roles', 'Assign roles to users', 'Roles', 'roles', 'assign', 'high', 1);
+('perm_roles_read', 'roles:read', 'View Roles', 'View role definitions', 'Roles', 'roles', 'read', 'low', TRUE),
+('perm_roles_write', 'roles:write', 'Manage Roles', 'Create and edit roles', 'Roles', 'roles', 'write', 'critical', TRUE),
+('perm_roles_assign', 'roles:assign', 'Assign Roles', 'Assign roles to users', 'Roles', 'roles', 'assign', 'high', TRUE)
+ON CONFLICT (name) DO NOTHING;
 
 -- ============================================================
 -- SECTION 8: TRIGGERS

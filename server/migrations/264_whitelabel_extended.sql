@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS white_label_assets (
     variants TEXT DEFAULT '{}', -- JSON: {small: url, medium: url, large: url}
     
     -- Status
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     processing_status TEXT DEFAULT 'ready', -- 'uploading', 'processing', 'ready', 'failed'
     
     uploaded_by TEXT,
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS domain_verifications (
     ssl_certificate_id TEXT,
     ssl_provisioned_at TIMESTAMP,
     ssl_expires_at TIMESTAMP,
-    ssl_auto_renew INTEGER DEFAULT 1,
+    ssl_auto_renew BOOLEAN DEFAULT TRUE,
     
     -- Errors
     last_error TEXT,
@@ -130,9 +130,9 @@ CREATE TABLE IF NOT EXISTS email_sender_verifications (
     
     -- Status
     status TEXT DEFAULT 'pending', -- 'pending', 'verifying', 'verified', 'failed'
-    dkim_verified INTEGER DEFAULT 0,
-    spf_verified INTEGER DEFAULT 0,
-    dmarc_verified INTEGER DEFAULT 0,
+    dkim_verified BOOLEAN DEFAULT FALSE,
+    spf_verified BOOLEAN DEFAULT FALSE,
+    dmarc_verified BOOLEAN DEFAULT FALSE,
     
     verified_at TIMESTAMP,
     last_check_at TIMESTAMP,
@@ -175,19 +175,20 @@ CREATE TABLE IF NOT EXISTS white_label_themes (
     -- Preview
     preview_image_url TEXT,
     
-    is_system INTEGER DEFAULT 0, -- System preset
-    is_public INTEGER DEFAULT 1, -- Available to all
+    is_system BOOLEAN DEFAULT FALSE, -- System preset
+    is_public BOOLEAN DEFAULT TRUE, -- Available to all
     organization_id TEXT, -- If org-specific
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Seed default themes
-INSERT OR IGNORE INTO white_label_themes (id, name, description, color_primary, color_secondary, is_system) VALUES
-    ('theme-default', 'Consultinity Blue', 'Default blue theme', '#3B82F6', '#10B981', 1),
-    ('theme-dark', 'Dark Professional', 'Dark mode professional', '#6366F1', '#8B5CF6', 1),
-    ('theme-corporate', 'Corporate Gray', 'Neutral corporate look', '#475569', '#0EA5E9', 1),
-    ('theme-green', 'Nature Green', 'Eco-friendly green', '#059669', '#10B981', 1),
-    ('theme-orange', 'Energetic Orange', 'Vibrant orange theme', '#EA580C', '#F59E0B', 1);
+INSERT INTO white_label_themes (id, name, description, color_primary, color_secondary, is_system) VALUES
+    ('theme-default', 'Consultinity Blue', 'Default blue theme', '#3B82F6', '#10B981', TRUE),
+    ('theme-dark', 'Dark Professional', 'Dark mode professional', '#6366F1', '#8B5CF6', TRUE),
+    ('theme-corporate', 'Corporate Gray', 'Neutral corporate look', '#475569', '#0EA5E9', TRUE),
+    ('theme-green', 'Nature Green', 'Eco-friendly green', '#059669', '#10B981', TRUE),
+    ('theme-orange', 'Energetic Orange', 'Vibrant orange theme', '#EA580C', '#F59E0B', TRUE)
+ON CONFLICT (id) DO NOTHING;
 
 CREATE INDEX IF NOT EXISTS idx_themes_public ON white_label_themes(is_public);

@@ -5,20 +5,20 @@
 -- =========================================================
 
 -- Add owner_id to organizations (the billing/account owner)
-ALTER TABLE organizations ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES users(id);
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS owner_id TEXT REFERENCES users(id);
 
 -- Add is_owner flag to users for quick lookup
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_owner BOOLEAN DEFAULT FALSE;
 
 -- Create ownership_transfers audit table
 CREATE TABLE IF NOT EXISTS ownership_transfers (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    from_user_id UUID NOT NULL REFERENCES users(id),
-    to_user_id UUID NOT NULL REFERENCES users(id),
+    id TEXT PRIMARY KEY,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    from_user_id TEXT NOT NULL REFERENCES users(id),
+    to_user_id TEXT NOT NULL REFERENCES users(id),
     reason TEXT,
     transferred_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    transferred_by UUID NOT NULL REFERENCES users(id)
+    transferred_by TEXT NOT NULL REFERENCES users(id)
 );
 
 -- Create indexes for faster lookups

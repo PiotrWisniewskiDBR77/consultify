@@ -13,14 +13,14 @@ CREATE TABLE IF NOT EXISTS prompt_versions (
     description TEXT, -- Human-readable description of changes
     
     -- Status
-    is_active INTEGER DEFAULT 0,
-    is_archived INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT FALSE,
+    is_archived BOOLEAN DEFAULT FALSE,
     
     -- Authoring
     created_by TEXT, -- user_id
-    created_at TEXT DEFAULT (datetime('now')),
-    activated_at TEXT,
-    deactivated_at TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    activated_at TIMESTAMP,
+    deactivated_at TIMESTAMP,
     
     -- Performance metrics (updated async)
     total_uses INTEGER DEFAULT 0,
@@ -38,7 +38,10 @@ CREATE TABLE IF NOT EXISTS prompt_versions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_prompt_versions_key ON prompt_versions(prompt_key);
-CREATE INDEX IF NOT EXISTS idx_prompt_versions_active ON prompt_versions(prompt_key, is_active) WHERE is_active = 1;
+-- Drop index if it exists (may have been created with old INTEGER column type)
+DROP INDEX IF EXISTS idx_prompt_versions_active;
+-- Recreate index - cast to boolean to handle both INTEGER and BOOLEAN column types
+CREATE INDEX idx_prompt_versions_active ON prompt_versions(prompt_key, is_active) WHERE (is_active::boolean) = TRUE;
 
 -- Prompt usage log (for A/B testing and metrics)
 CREATE TABLE IF NOT EXISTS prompt_usage_log (
@@ -56,14 +59,14 @@ CREATE TABLE IF NOT EXISTS prompt_usage_log (
     -- Performance
     tokens_used INTEGER,
     latency_ms INTEGER,
-    success INTEGER DEFAULT 1,
+    success BOOLEAN DEFAULT TRUE,
     error_message TEXT,
     
     -- Quality (optional, from feedback)
     quality_score REAL,
     feedback TEXT,
     
-    created_at TEXT DEFAULT (datetime('now')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (prompt_version_id) REFERENCES prompt_versions(id)
 );
 
@@ -82,15 +85,15 @@ CREATE TABLE IF NOT EXISTS prompt_ab_tests (
     
     -- Status
     status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'running', 'completed', 'cancelled')),
-    started_at TEXT,
-    ended_at TEXT,
+    started_at TIMESTAMP,
+    ended_at TIMESTAMP,
     
     -- Results
     winner_version_id TEXT,
     results TEXT, -- JSON with detailed results
     
     created_by TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_prompt_ab_tests_key ON prompt_ab_tests(prompt_key);

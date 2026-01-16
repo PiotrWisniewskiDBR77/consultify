@@ -49,10 +49,10 @@ CREATE TABLE IF NOT EXISTS audit_log (
     -- Compliance
     retention_category TEXT DEFAULT 'standard', -- 'security', 'compliance', 'standard', 'debug'
     retention_until DATE,
-    is_archived INTEGER DEFAULT 0,
+    is_archived BOOLEAN DEFAULT FALSE,
     
     -- For GDPR
-    contains_pii INTEGER DEFAULT 0,
+    contains_pii BOOLEAN DEFAULT FALSE,
     anonymized_at TIMESTAMP
 );
 
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS audit_log_archive (
     result TEXT NOT NULL,
     
     -- Compressed full data
-    compressed_data BLOB, -- GZIP compressed JSON
+    compressed_data BYTEA, -- GZIP compressed JSON
     
     archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     archive_reason TEXT -- 'retention_policy', 'manual', 'compliance'
@@ -149,11 +149,11 @@ CREATE TABLE IF NOT EXISTS audit_retention_policies (
     debug_retention_days INTEGER DEFAULT 30, -- 30 days
     
     -- Auto-archive settings
-    auto_archive_enabled INTEGER DEFAULT 1,
+    auto_archive_enabled BOOLEAN DEFAULT TRUE,
     archive_after_days INTEGER DEFAULT 365,
     
     -- Delete settings
-    auto_delete_enabled INTEGER DEFAULT 0,
+    auto_delete_enabled BOOLEAN DEFAULT FALSE,
     delete_after_days INTEGER DEFAULT 2555,
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -163,7 +163,8 @@ CREATE TABLE IF NOT EXISTS audit_retention_policies (
 );
 
 -- Default retention policy
-INSERT OR IGNORE INTO audit_retention_policies (id, organization_id) VALUES ('default', NULL);
+INSERT INTO audit_retention_policies (id, organization_id) VALUES ('default', NULL)
+ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================
 -- AUDIT ALERTS
@@ -185,7 +186,7 @@ CREATE TABLE IF NOT EXISTS audit_alerts (
     notify_recipients TEXT, -- JSON array of user IDs or emails
     
     -- Status
-    is_enabled INTEGER DEFAULT 1,
+    is_enabled BOOLEAN DEFAULT TRUE,
     last_triggered_at TIMESTAMP,
     trigger_count INTEGER DEFAULT 0,
     

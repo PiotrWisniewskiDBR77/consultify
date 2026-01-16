@@ -18,26 +18,26 @@ CREATE TABLE IF NOT EXISTS management_report_templates (
     -- Template configuration
     sections JSON NOT NULL,                   -- Ordered list of sections with config
     default_period_days INTEGER DEFAULT 7,
-    default_ai_enhancement BOOLEAN DEFAULT 1,
+    default_ai_enhancement BOOLEAN DEFAULT TRUE,
     default_approval_config JSON,
     
     -- Branding overrides
     custom_header_text TEXT,
     custom_footer_text TEXT,
-    include_logo BOOLEAN DEFAULT 1,
+    include_logo BOOLEAN DEFAULT TRUE,
     
     -- Export settings
     pdf_orientation TEXT DEFAULT 'portrait',  -- 'portrait' | 'landscape'
     pptx_theme TEXT DEFAULT 'professional',   -- 'professional' | 'modern' | 'minimal'
     
     -- Status
-    is_default BOOLEAN DEFAULT 0,
-    is_active BOOLEAN DEFAULT 1,
+    is_default BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
     
     -- Audit
     created_by TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
@@ -60,9 +60,9 @@ CREATE TABLE IF NOT EXISTS management_report_section_definitions (
     
     -- Display settings
     display_order INTEGER DEFAULT 100,
-    is_required_default BOOLEAN DEFAULT 0,
+    is_required_default BOOLEAN DEFAULT FALSE,
     
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =====================================================
@@ -74,44 +74,50 @@ CREATE INDEX IF NOT EXISTS idx_mrt_default ON management_report_templates(organi
 CREATE INDEX IF NOT EXISTS idx_mrt_active ON management_report_templates(organization_id, is_active);
 
 -- =====================================================
--- Trigger for updated_at
+-- Trigger for updated_at (PostgreSQL function-based trigger)
 -- =====================================================
-CREATE TRIGGER IF NOT EXISTS trg_mrt_updated
-    AFTER UPDATE ON management_report_templates
+CREATE OR REPLACE FUNCTION update_management_report_templates_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_mrt_updated ON management_report_templates;
+CREATE TRIGGER trg_mrt_updated
+    BEFORE UPDATE ON management_report_templates
     FOR EACH ROW
-    BEGIN
-        UPDATE management_report_templates 
-        SET updated_at = CURRENT_TIMESTAMP 
-        WHERE id = NEW.id;
-    END;
+    EXECUTE FUNCTION update_management_report_templates_updated_at();
 
 -- =====================================================
 -- Seed default section definitions
 -- =====================================================
-INSERT OR IGNORE INTO management_report_section_definitions (id, code, name, description, report_types, default_config, display_order, is_required_default) VALUES
+INSERT INTO management_report_section_definitions (id, code, name, description, report_types, default_config, display_order, is_required_default) VALUES
 -- Team Meeting sections
-('sec_status_summary', 'statusSummary', 'Status Overview', 'High-level status metrics and RAG indicators', '["TEAM_MEETING", "STEERING_COMMITTEE"]', '{"showTrends": true}', 10, 1),
-('sec_completed_work', 'completedWork', 'Completed Work', 'Tasks and deliverables completed during the period', '["TEAM_MEETING"]', '{"maxItems": 10}', 20, 1),
-('sec_work_in_progress', 'workInProgress', 'Work in Progress', 'Current active tasks and their status', '["TEAM_MEETING"]', '{"showProgress": true}', 30, 1),
-('sec_blockers', 'blockers', 'Blockers & Issues', 'Current impediments requiring attention', '["TEAM_MEETING"]', '{"showAge": true}', 40, 1),
-('sec_pending_decisions', 'pendingDecisions', 'Pending Decisions', 'Decisions awaiting resolution', '["TEAM_MEETING", "STEERING_COMMITTEE"]', '{"showDeadlines": true}', 50, 0),
-('sec_next_period', 'nextPeriodPlan', 'Next Period Plan', 'Planned work for the upcoming period', '["TEAM_MEETING"]', '{"periodDays": 7}', 60, 1),
+('sec_status_summary', 'statusSummary', 'Status Overview', 'High-level status metrics and RAG indicators', '["TEAM_MEETING", "STEERING_COMMITTEE"]', '{"showTrends": true}', 10, TRUE),
+('sec_completed_work', 'completedWork', 'Completed Work', 'Tasks and deliverables completed during the period', '["TEAM_MEETING"]', '{"maxItems": 10}', 20, TRUE),
+('sec_work_in_progress', 'workInProgress', 'Work in Progress', 'Current active tasks and their status', '["TEAM_MEETING"]', '{"showProgress": true}', 30, TRUE),
+('sec_blockers', 'blockers', 'Blockers & Issues', 'Current impediments requiring attention', '["TEAM_MEETING"]', '{"showAge": true}', 40, TRUE),
+('sec_pending_decisions', 'pendingDecisions', 'Pending Decisions', 'Decisions awaiting resolution', '["TEAM_MEETING", "STEERING_COMMITTEE"]', '{"showDeadlines": true}', 50, FALSE),
+('sec_next_period', 'nextPeriodPlan', 'Next Period Plan', 'Planned work for the upcoming period', '["TEAM_MEETING"]', '{"periodDays": 7}', 60, TRUE),
 
 -- Steering Committee sections
-('sec_exec_summary', 'executiveSummary', 'Executive Summary', 'AI-generated executive overview', '["STEERING_COMMITTEE"]', '{"maxLength": 500}', 10, 1),
-('sec_overall_status', 'overallStatus', 'RAG Status', 'Traffic light status across key dimensions', '["STEERING_COMMITTEE"]', '{"categories": ["SCHEDULE", "BUDGET", "SCOPE", "QUALITY", "RISK"]}', 20, 1),
-('sec_kpis', 'kpis', 'Key Performance Indicators', 'Project KPIs with targets and actuals', '["STEERING_COMMITTEE"]', '{"showTrends": true, "showSparklines": true}', 30, 1),
-('sec_risks_issues', 'risksAndIssues', 'Risks & Issues', 'Current risks and active issues', '["STEERING_COMMITTEE"]', '{"maxCritical": 5, "maxHigh": 10}', 40, 1),
-('sec_decisions_required', 'decisionsRequired', 'Decisions Required', 'Decisions requiring board/sponsor input', '["STEERING_COMMITTEE"]', '{"showUrgency": true}', 50, 1),
-('sec_forecast', 'forecast', 'Forecast & Milestones', 'Project forecast with milestone status', '["STEERING_COMMITTEE"]', '{"showConfidence": true, "showEVM": false}', 60, 1),
-('sec_evm', 'evmMetrics', 'Earned Value Metrics', 'EVM performance indicators (SPI, CPI, etc.)', '["STEERING_COMMITTEE"]', '{"showCharts": true}', 70, 0),
-('sec_period_comparison', 'periodComparison', 'Period Comparison', 'Changes since last report', '["TEAM_MEETING", "STEERING_COMMITTEE"]', '{"showTrends": true}', 80, 0),
-('sec_ai_insights', 'aiInsights', 'AI Insights', 'AI-generated observations and recommendations', '["TEAM_MEETING", "STEERING_COMMITTEE"]', '{"maxInsights": 5}', 90, 0);
+('sec_exec_summary', 'executiveSummary', 'Executive Summary', 'AI-generated executive overview', '["STEERING_COMMITTEE"]', '{"maxLength": 500}', 10, TRUE),
+('sec_overall_status', 'overallStatus', 'RAG Status', 'Traffic light status across key dimensions', '["STEERING_COMMITTEE"]', '{"categories": ["SCHEDULE", "BUDGET", "SCOPE", "QUALITY", "RISK"]}', 20, TRUE),
+('sec_kpis', 'kpis', 'Key Performance Indicators', 'Project KPIs with targets and actuals', '["STEERING_COMMITTEE"]', '{"showTrends": true, "showSparklines": true}', 30, TRUE),
+('sec_risks_issues', 'risksAndIssues', 'Risks & Issues', 'Current risks and active issues', '["STEERING_COMMITTEE"]', '{"maxCritical": 5, "maxHigh": 10}', 40, TRUE),
+('sec_decisions_required', 'decisionsRequired', 'Decisions Required', 'Decisions requiring board/sponsor input', '["STEERING_COMMITTEE"]', '{"showUrgency": true}', 50, TRUE),
+('sec_forecast', 'forecast', 'Forecast & Milestones', 'Project forecast with milestone status', '["STEERING_COMMITTEE"]', '{"showConfidence": true, "showEVM": false}', 60, TRUE),
+('sec_evm', 'evmMetrics', 'Earned Value Metrics', 'EVM performance indicators (SPI, CPI, etc.)', '["STEERING_COMMITTEE"]', '{"showCharts": true}', 70, FALSE),
+('sec_period_comparison', 'periodComparison', 'Period Comparison', 'Changes since last report', '["TEAM_MEETING", "STEERING_COMMITTEE"]', '{"showTrends": true}', 80, FALSE),
+('sec_ai_insights', 'aiInsights', 'AI Insights', 'AI-generated observations and recommendations', '["TEAM_MEETING", "STEERING_COMMITTEE"]', '{"maxInsights": 5}', 90, FALSE)
+ON CONFLICT (code) DO NOTHING;
 
 -- =====================================================
 -- Seed a default template for each type
 -- =====================================================
-INSERT OR IGNORE INTO management_report_templates (
+INSERT INTO management_report_templates (
     id, organization_id, name, description, report_type, scope, 
     sections, default_period_days, is_default, created_by
 ) VALUES 
@@ -131,7 +137,7 @@ INSERT OR IGNORE INTO management_report_templates (
         {"code": "nextPeriodPlan", "required": true, "config": {}}
     ]',
     7,
-    1,
+    TRUE,
     'system'
 ),
 (
@@ -150,9 +156,10 @@ INSERT OR IGNORE INTO management_report_templates (
         {"code": "forecast", "required": true, "config": {}}
     ]',
     30,
-    1,
+    TRUE,
     'system'
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 
 

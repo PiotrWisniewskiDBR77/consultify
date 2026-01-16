@@ -24,20 +24,21 @@ CREATE TABLE IF NOT EXISTS tools (
 );
 
 -- Seed tools
-INSERT OR IGNORE INTO tools (id, name, display_name, category, description, is_licensed, sort_order) VALUES
-    ('tool-drd', 'drd', 'DRD Assessment', 'assessment', 'Digital Readiness Diagnosis - comprehensive digital transformation assessment', 0, 1),
-    ('tool-siri', 'siri', 'SIRI Assessment', 'assessment', 'Smart Industry Readiness Index for Industry 4.0', 1, 2),
-    ('tool-adma', 'adma', 'ADMA Assessment', 'assessment', 'Advanced Manufacturing Assessment', 1, 3),
-    ('tool-lean40', 'lean40', 'Lean 4.0 Assessment', 'assessment', 'Lean principles adapted for digital age', 0, 4),
-    ('tool-cmmi', 'cmmi', 'CMMI Assessment', 'assessment', 'Capability Maturity Model Integration', 0, 5),
-    ('tool-process-flow', 'process-flow', 'Process Flow Automation', 'process', 'Map, measure, optimize and automate business processes', 0, 10),
-    ('tool-a3-pdca', 'a3-pdca', 'A3 + PDCA', 'process', 'Lean problem-solving worksheet with PDCA cycle', 0, 11),
-    ('tool-economic-eval', 'economic-eval', 'Economic Evaluation', 'analysis', 'ROI and business case calculator', 0, 12),
-    ('tool-ai-adviser', 'ai-adviser', 'AI Adviser', 'ai', 'AI-powered brainstorming and recommendations', 0, 20),
-    ('tool-studio', 'studio', 'Studio', 'ai', 'Create diagrams, flowcharts and visualizations', 0, 21);
+INSERT INTO tools (id, name, display_name, category, description, is_licensed, sort_order) VALUES
+    ('tool-drd', 'drd', 'DRD Assessment', 'assessment', 'Digital Readiness Diagnosis - comprehensive digital transformation assessment', FALSE, 1),
+    ('tool-siri', 'siri', 'SIRI Assessment', 'assessment', 'Smart Industry Readiness Index for Industry 4.0', TRUE, 2),
+    ('tool-adma', 'adma', 'ADMA Assessment', 'assessment', 'Advanced Manufacturing Assessment', TRUE, 3),
+    ('tool-lean40', 'lean40', 'Lean 4.0 Assessment', 'assessment', 'Lean principles adapted for digital age', FALSE, 4),
+    ('tool-cmmi', 'cmmi', 'CMMI Assessment', 'assessment', 'Capability Maturity Model Integration', FALSE, 5),
+    ('tool-process-flow', 'process-flow', 'Process Flow Automation', 'process', 'Map, measure, optimize and automate business processes', FALSE, 10),
+    ('tool-a3-pdca', 'a3-pdca', 'A3 + PDCA', 'process', 'Lean problem-solving worksheet with PDCA cycle', FALSE, 11),
+    ('tool-economic-eval', 'economic-eval', 'Economic Evaluation', 'analysis', 'ROI and business case calculator', FALSE, 12),
+    ('tool-ai-adviser', 'ai-adviser', 'AI Adviser', 'ai', 'AI-powered brainstorming and recommendations', FALSE, 20),
+    ('tool-studio', 'studio', 'Studio', 'ai', 'Create diagrams, flowcharts and visualizations', FALSE, 21)
+ON CONFLICT (id) DO NOTHING;
 
 -- Mark coming soon tools
-UPDATE tools SET is_coming_soon = 1 WHERE name IN ('studio', 'economic-eval');
+UPDATE tools SET is_coming_soon = TRUE WHERE name IN ('studio', 'economic-eval');
 
 -- ==========================================
 -- TOOL WORKS (user work items)
@@ -218,7 +219,7 @@ CREATE INDEX IF NOT EXISTS idx_ai_adviser_user ON ai_adviser_sessions(user_id);
 -- ==========================================
 
 -- Sandbox is a special project per organization
-INSERT OR IGNORE INTO projects (id, organization_id, name, description, status, created_at)
+INSERT INTO projects (id, organization_id, name, description, status, created_at)
 SELECT 
     'sandbox-' || id,
     id,
@@ -229,4 +230,5 @@ SELECT
 FROM organizations
 WHERE NOT EXISTS (
     SELECT 1 FROM projects WHERE id = 'sandbox-' || organizations.id
-);
+)
+ON CONFLICT (id) DO NOTHING;

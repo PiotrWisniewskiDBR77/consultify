@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS kpi_definitions (
     critical_threshold_percentage REAL DEFAULT 40,
     
     -- Data collection
-    is_manual INTEGER DEFAULT 1,
+    is_manual BOOLEAN DEFAULT TRUE,
     data_source_type TEXT, -- 'manual', 'api', 'integration', 'calculated'
     data_source_config TEXT, -- JSON: API endpoint or formula
     collection_frequency TEXT DEFAULT 'monthly', -- 'daily', 'weekly', 'monthly', 'quarterly'
@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS kpi_definitions (
     chart_type TEXT DEFAULT 'line', -- 'line', 'bar', 'gauge'
     color TEXT,
     
-    is_global INTEGER DEFAULT 0, -- Available to all orgs
-    is_active INTEGER DEFAULT 1,
+    is_global BOOLEAN DEFAULT FALSE, -- Available to all orgs
+    is_active BOOLEAN DEFAULT TRUE,
     created_by TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -47,17 +47,18 @@ CREATE INDEX IF NOT EXISTS idx_kpi_org ON kpi_definitions(organization_id);
 CREATE INDEX IF NOT EXISTS idx_kpi_category ON kpi_definitions(category);
 
 -- Seed default KPIs
-INSERT OR IGNORE INTO kpi_definitions (id, organization_id, name, category, unit, direction, is_global) VALUES
-    ('kpi-cost-savings', '*', 'Cost Savings', 'financial', '$', 'higher_better', 1),
-    ('kpi-revenue-growth', '*', 'Revenue Growth', 'financial', '%', 'higher_better', 1),
-    ('kpi-cycle-time', '*', 'Cycle Time', 'operational', 'days', 'lower_better', 1),
-    ('kpi-throughput', '*', 'Throughput', 'operational', 'count', 'higher_better', 1),
-    ('kpi-defect-rate', '*', 'Defect Rate', 'quality', '%', 'lower_better', 1),
-    ('kpi-first-pass-yield', '*', 'First Pass Yield', 'quality', '%', 'higher_better', 1),
-    ('kpi-nps', '*', 'Net Promoter Score', 'customer', 'score', 'higher_better', 1),
-    ('kpi-csat', '*', 'Customer Satisfaction', 'customer', '%', 'higher_better', 1),
-    ('kpi-employee-engagement', '*', 'Employee Engagement', 'employee', 'score', 'higher_better', 1),
-    ('kpi-turnover-rate', '*', 'Turnover Rate', 'employee', '%', 'lower_better', 1);
+INSERT INTO kpi_definitions (id, organization_id, name, category, unit, direction, is_global) VALUES
+    ('kpi-cost-savings', '*', 'Cost Savings', 'financial', '$', 'higher_better', TRUE),
+    ('kpi-revenue-growth', '*', 'Revenue Growth', 'financial', '%', 'higher_better', TRUE),
+    ('kpi-cycle-time', '*', 'Cycle Time', 'operational', 'days', 'lower_better', TRUE),
+    ('kpi-throughput', '*', 'Throughput', 'operational', 'count', 'higher_better', TRUE),
+    ('kpi-defect-rate', '*', 'Defect Rate', 'quality', '%', 'lower_better', TRUE),
+    ('kpi-first-pass-yield', '*', 'First Pass Yield', 'quality', '%', 'higher_better', TRUE),
+    ('kpi-nps', '*', 'Net Promoter Score', 'customer', 'score', 'higher_better', TRUE),
+    ('kpi-csat', '*', 'Customer Satisfaction', 'customer', '%', 'higher_better', TRUE),
+    ('kpi-employee-engagement', '*', 'Employee Engagement', 'employee', 'score', 'higher_better', TRUE),
+    ('kpi-turnover-rate', '*', 'Turnover Rate', 'employee', '%', 'lower_better', TRUE)
+ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================
 -- INITIATIVE BENEFITS
@@ -82,7 +83,7 @@ CREATE TABLE IF NOT EXISTS initiative_benefits (
     target_value REAL NOT NULL,
     target_date DATE,
     current_value REAL,
-    current_date DATE,
+    "current_date" DATE,
     
     -- Progress
     progress_percentage REAL DEFAULT 0,
@@ -146,7 +147,7 @@ CREATE TABLE IF NOT EXISTS benefit_measurements (
     vs_target_progress REAL,
     
     -- Quality
-    is_verified INTEGER DEFAULT 0,
+    is_verified BOOLEAN DEFAULT FALSE,
     verified_by TEXT,
     verified_at TIMESTAMP,
     

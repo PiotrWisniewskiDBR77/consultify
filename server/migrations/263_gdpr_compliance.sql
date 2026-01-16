@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS data_subject_requests (
     specific_data_categories TEXT DEFAULT '[]', -- JSON: specific data requested
     
     -- Identity verification
-    identity_verified INTEGER DEFAULT 0,
+    identity_verified BOOLEAN DEFAULT FALSE,
     verification_method TEXT, -- 'email_code', 'account_login', 'document', 'phone'
     verification_document_url TEXT,
     verified_at TIMESTAMP,
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS consent_records (
     withdrawal_reason TEXT,
     
     -- For double opt-in
-    confirmation_required INTEGER DEFAULT 0,
+    confirmation_required BOOLEAN DEFAULT FALSE,
     confirmation_sent_at TIMESTAMP,
     confirmed_at TIMESTAMP,
     confirmation_token TEXT,
@@ -188,10 +188,10 @@ CREATE TABLE IF NOT EXISTS retention_policies (
     archive_location TEXT, -- 'cold_storage', 'encrypted_archive'
     
     -- Exceptions
-    legal_hold_override INTEGER DEFAULT 0, -- Can be overridden by legal hold
+    legal_hold_override BOOLEAN DEFAULT FALSE, -- Can be overridden by legal hold
     minimum_retention_days INTEGER, -- Cannot delete before this (legal requirement)
     
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -199,16 +199,17 @@ CREATE TABLE IF NOT EXISTS retention_policies (
 );
 
 -- Seed default retention policies
-INSERT OR IGNORE INTO retention_policies (id, organization_id, data_category, active_retention_days, grace_period_days, archive_period_days, final_deletion_days, action_on_expiry, minimum_retention_days) VALUES
-    ('ret-def-audit', NULL, 'audit_logs', NULL, 0, 2555, 2555, 'archive', 2555),
-    ('ret-def-billing', NULL, 'billing_data', NULL, 0, 2555, 2555, 'archive', 2555),
-    ('ret-def-sessions', NULL, 'session_logs', 90, 0, 0, 90, 'delete', 0),
-    ('ret-def-ai-conv', NULL, 'ai_conversations', 730, 30, 0, 760, 'delete', 0),
-    ('ret-def-ai-mem', NULL, 'ai_memory', 365, 30, 0, 395, 'anonymize', 0),
-    ('ret-def-projects', NULL, 'project_data', NULL, 90, 365, 455, 'archive', 0),
-    ('ret-def-users', NULL, 'user_profile', NULL, 30, 0, 30, 'anonymize', 0),
-    ('ret-def-files', NULL, 'file_uploads', NULL, 30, 90, 120, 'delete', 0),
-    ('ret-def-notif', NULL, 'notification_logs', 180, 0, 0, 180, 'delete', 0);
+INSERT INTO retention_policies (id, organization_id, data_category, active_retention_days, grace_period_days, archive_period_days, final_deletion_days, action_on_expiry, minimum_retention_days) VALUES
+    ('ret-def-audit', NULL, 'audit_logs', NULL, 0::integer, 2555::integer, 2555::integer, 'archive', 2555::integer),
+    ('ret-def-billing', NULL, 'billing_data', NULL, 0::integer, 2555::integer, 2555::integer, 'archive', 2555::integer),
+    ('ret-def-sessions', NULL, 'session_logs', 90::integer, 0::integer, 0::integer, 90::integer, 'delete', 0::integer),
+    ('ret-def-ai-conv', NULL, 'ai_conversations', 730::integer, 30::integer, 0::integer, 760::integer, 'delete', 0::integer),
+    ('ret-def-ai-mem', NULL, 'ai_memory', 365::integer, 30::integer, 0::integer, 395::integer, 'anonymize', 0::integer),
+    ('ret-def-projects', NULL, 'project_data', NULL, 90::integer, 365::integer, 455::integer, 'archive', 0::integer),
+    ('ret-def-users', NULL, 'user_profile', NULL, 30::integer, 0::integer, 30::integer, 'anonymize', 0::integer),
+    ('ret-def-files', NULL, 'file_uploads', NULL, 30::integer, 90::integer, 120::integer, 'delete', 0::integer),
+    ('ret-def-notif', NULL, 'notification_logs', 180::integer, 0::integer, 0::integer, 180::integer, 'delete', 0::integer)
+ON CONFLICT (organization_id, data_category) DO NOTHING;
 
 -- ==========================================
 -- DATA DELETION LOG
@@ -242,7 +243,7 @@ CREATE TABLE IF NOT EXISTS data_deletion_log (
     executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Verification
-    deletion_verified INTEGER DEFAULT 0,
+    deletion_verified BOOLEAN DEFAULT FALSE,
     verified_by TEXT,
     verified_at TIMESTAMP,
     verification_method TEXT, -- 'automated_check', 'manual_review'
@@ -282,12 +283,12 @@ CREATE TABLE IF NOT EXISTS sub_processors (
     region TEXT, -- 'EU', 'EEA', 'US', 'UK', 'APAC', 'OTHER'
     
     -- GDPR compliance
-    gdpr_compliant INTEGER DEFAULT 1,
-    adequacy_decision INTEGER DEFAULT 0, -- EU adequacy decision exists
+    gdpr_compliant BOOLEAN DEFAULT TRUE,
+    adequacy_decision BOOLEAN DEFAULT FALSE, -- EU adequacy decision exists
     transfer_mechanism TEXT, -- 'adequacy', 'scc', 'bcr', 'derogation', 'consent'
     
     -- Agreements
-    dpa_signed INTEGER DEFAULT 1,
+    dpa_signed BOOLEAN DEFAULT TRUE,
     dpa_url TEXT,
     dpa_signed_date DATE,
     scc_version TEXT, -- '2021' for new SCCs
@@ -300,7 +301,7 @@ CREATE TABLE IF NOT EXISTS sub_processors (
     security_contact TEXT,
     
     -- Status
-    is_active INTEGER DEFAULT 1,
+    is_active BOOLEAN DEFAULT TRUE,
     deactivated_at TIMESTAMP,
     deactivation_reason TEXT,
     
@@ -313,12 +314,13 @@ CREATE TABLE IF NOT EXISTS sub_processors (
 );
 
 -- Seed common sub-processors
-INSERT OR IGNORE INTO sub_processors (id, name, purpose, data_categories, country, country_code, region, gdpr_compliant, transfer_mechanism) VALUES
-    ('sp-stripe', 'Stripe', 'Payment processing', '["billing_data","user_email"]', 'United States', 'US', 'US', 1, 'scc'),
-    ('sp-aws', 'Amazon Web Services', 'Cloud infrastructure', '["all_data"]', 'Ireland', 'IE', 'EU', 1, 'adequacy'),
-    ('sp-openai', 'OpenAI', 'AI processing', '["ai_conversations","user_prompts"]', 'United States', 'US', 'US', 1, 'scc'),
-    ('sp-anthropic', 'Anthropic', 'AI processing', '["ai_conversations","user_prompts"]', 'United States', 'US', 'US', 1, 'scc'),
-    ('sp-sendgrid', 'SendGrid', 'Email delivery', '["user_email","notification_content"]', 'United States', 'US', 'US', 1, 'scc');
+INSERT INTO sub_processors (id, name, purpose, data_categories, country, country_code, region, gdpr_compliant, transfer_mechanism) VALUES
+    ('sp-stripe', 'Stripe', 'Payment processing', '["billing_data","user_email"]', 'United States', 'US', 'US', TRUE, 'scc'),
+    ('sp-aws', 'Amazon Web Services', 'Cloud infrastructure', '["all_data"]', 'Ireland', 'IE', 'EU', TRUE, 'adequacy'),
+    ('sp-openai', 'OpenAI', 'AI processing', '["ai_conversations","user_prompts"]', 'United States', 'US', 'US', TRUE, 'scc'),
+    ('sp-anthropic', 'Anthropic', 'AI processing', '["ai_conversations","user_prompts"]', 'United States', 'US', 'US', TRUE, 'scc'),
+    ('sp-sendgrid', 'SendGrid', 'Email delivery', '["user_email","notification_content"]', 'United States', 'US', 'US', TRUE, 'scc')
+ON CONFLICT (id) DO NOTHING;
 
 CREATE INDEX IF NOT EXISTS idx_subprocessors_active ON sub_processors(is_active);
 CREATE INDEX IF NOT EXISTS idx_subprocessors_region ON sub_processors(region);

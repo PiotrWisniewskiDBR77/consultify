@@ -758,6 +758,26 @@ export async function initDb(): Promise<void> {
       logger.info('[Postgres] User token columns migration skipped (may already exist)');
     });
 
+    // Ensure tasks table has organization_id column (migration for existing tables)
+    await query(`
+            DO $$
+        BEGIN
+            IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'tasks') THEN
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'tasks' AND column_name = 'organization_id') THEN
+                    ALTER TABLE tasks ADD COLUMN organization_id TEXT;
+                    -- Add foreign key constraint if organizations table exists
+                    IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'organizations') THEN
+                        ALTER TABLE tasks ADD CONSTRAINT tasks_organization_id_fkey 
+                            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE;
+                    END IF;
+                END IF;
+            END IF;
+        END $$;
+        `).catch((err: Error | null) => {
+      logger.info('[Postgres] Tasks organization_id column migration skipped (may already exist)');
+    });
+
     // AI Feedback
     await query(`CREATE TABLE IF NOT EXISTS ai_feedback(
             id TEXT PRIMARY KEY,
@@ -1608,9 +1628,16 @@ export async function initDb(): Promise<void> {
     );
 
     // Tasks Management
-    await query(`CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id)`);
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_tasks_org_status ON tasks(organization_id, status)`
+    // Create indexes on organization_id only if column exists
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id)`,
+      [],
+      'Skipping organization_id index on tasks'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_tasks_org_status ON tasks(organization_id, status)`,
+      [],
+      'Skipping organization_id status index on tasks'
     );
     // Create indexes on project_id only if column exists
     await querySafe(
@@ -1622,10 +1649,6 @@ export async function initDb(): Promise<void> {
       `CREATE INDEX IF NOT EXISTS idx_tasks_project_status ON tasks(project_id, status)`,
       [],
       'Skipping project_id status index on tasks'
-    );
-    await query(`CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id)`);
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_tasks_org_status ON tasks(organization_id, status)`
     );
     await query(`CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id)`);
     await query(
