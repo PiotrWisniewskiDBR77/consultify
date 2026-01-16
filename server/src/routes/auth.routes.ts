@@ -126,7 +126,8 @@ router.get(
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const user = await dbGet<{
+      // Try query with impersonator_id first, fallback if column doesn't exist
+      let user: {
         id: string;
         email: string;
         role: string;
@@ -138,14 +139,57 @@ router.get(
         organization_name: string | null;
         organization_plan: string | null;
         organization_status: string | null;
-      }>(
-        `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, u.impersonator_id,
-                        o.name as organization_name, o.plan as organization_plan, o.status as organization_status
-                 FROM users u
-                 LEFT JOIN organizations o ON u.organization_id = o.id
-                 WHERE u.id = ?`,
-        [req.user!.id]
-      );
+      } | null = null;
+
+      try {
+        // Try with impersonator_id column
+        user = await dbGet<{
+          id: string;
+          email: string;
+          role: string;
+          organization_id: string;
+          first_name: string;
+          last_name: string;
+          avatar_url: string | null;
+          impersonator_id: string | null;
+          organization_name: string | null;
+          organization_plan: string | null;
+          organization_status: string | null;
+        }>(
+          `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, u.impersonator_id,
+                          o.name as organization_name, o.plan as organization_plan, o.status as organization_status
+                   FROM users u
+                   LEFT JOIN organizations o ON u.organization_id = o.id
+                   WHERE u.id = ?`,
+          [req.user!.id]
+        );
+      } catch (err: any) {
+        // If column doesn't exist, retry without impersonator_id
+        if (err.message?.includes('impersonator_id') || err.message?.includes('does not exist')) {
+          user = await dbGet<{
+            id: string;
+            email: string;
+            role: string;
+            organization_id: string;
+            first_name: string;
+            last_name: string;
+            avatar_url: string | null;
+            impersonator_id: string | null;
+            organization_name: string | null;
+            organization_plan: string | null;
+            organization_status: string | null;
+          }>(
+            `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, NULL as impersonator_id,
+                            o.name as organization_name, o.plan as organization_plan, o.status as organization_status
+                     FROM users u
+                     LEFT JOIN organizations o ON u.organization_id = o.id
+                     WHERE u.id = ?`,
+            [req.user!.id]
+          );
+        } else {
+          throw err;
+        }
+      }
 
       if (!user) {
         return res.status(404).json({ error: 'User not found' });

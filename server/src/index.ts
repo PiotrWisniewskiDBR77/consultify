@@ -23,7 +23,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import helmet from 'helmet';
 import fs from 'fs';
 import http from 'http';
@@ -441,14 +441,19 @@ const apiLimiter = rateLimit({
     try {
       // Intelligent Rate Limiting: Key by User ID if auth, else IP
       // This solves the "Office IP" problem where all users share one IP
-      // Using req.ip for IPv6 compatibility (trust proxy is set)
+      // Using ipKeyGenerator for IPv6 compatibility (masks IPv6 to /56 subnet)
       const ip = req.ip || 
                  req.socket?.remoteAddress || 
                  req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
                  req.headers['x-real-ip']?.toString() ||
                  'unknown';
+      
+      // Use ipKeyGenerator helper to properly handle IPv6 addresses
+      // This prevents IPv6 users from bypassing limits by rotating addresses
+      const safeIpKey = ip !== 'unknown' ? ipKeyGenerator(ip, 56) : 'unknown';
+      
       // Ensure we return a valid string (express-rate-limit requires this)
-      const key = `api:ip:${ip}`;
+      const key = `api:ip:${safeIpKey}`;
       if (!key || key === 'api:ip:') {
         return 'api:ip:unknown';
       }
@@ -482,14 +487,19 @@ const authLimiter = rateLimit({
         return `auth:${email.toLowerCase().trim()}`;
       }
 
-      // Using req.ip for IPv6 compatibility (trust proxy is set)
+      // Using ipKeyGenerator for IPv6 compatibility (masks IPv6 to /56 subnet)
+      // This prevents IPv6 users from bypassing limits by rotating addresses
       const ip = req.ip || 
                  req.socket?.remoteAddress || 
                  req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
                  req.headers['x-real-ip']?.toString() ||
                  'unknown';
+      
+      // Use ipKeyGenerator helper to properly handle IPv6 addresses
+      const safeIpKey = ip !== 'unknown' ? ipKeyGenerator(ip, 56) : 'unknown';
+      
       // Ensure we return a valid string (express-rate-limit requires this)
-      const key = `auth:ip:${ip}`;
+      const key = `auth:ip:${safeIpKey}`;
       if (!key || key === 'auth:ip:') {
         return 'auth:ip:unknown';
       }

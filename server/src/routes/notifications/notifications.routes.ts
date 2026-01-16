@@ -6,11 +6,20 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
-import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 // import EscalationService from '../../services/EscalationService.js';
 const EscalationService = {} as any; // Stubbed missing service
 import NotificationService from '../../services/notificationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+
+// Validate verifyToken is available at module load time
+if (!verifyToken || typeof verifyToken !== 'function') {
+  const error = new Error(
+    `verifyToken middleware is not properly exported from auth.middleware.js. ` +
+    `Type: ${typeof verifyToken}, Value: ${verifyToken}`
+  );
+  console.error('[NotificationsRoutes] Critical error:', error);
+  throw error;
+}
 
 // Apply rate limiting
 const router = Router();
