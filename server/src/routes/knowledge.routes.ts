@@ -133,9 +133,10 @@ try {
 
 try {
   const projectQuotaModule = await import('../middleware/projectQuota.middleware.js');
-  enforceProjectQuota = projectQuotaModule.default || projectQuotaModule;
-} catch {
-  logger.warn('[Knowledge] Project quota middleware not available');
+  // enforceProjectQuota is a named export, not default
+  enforceProjectQuota = projectQuotaModule.enforceProjectQuota || projectQuotaModule.default || projectQuotaModule;
+} catch (error: any) {
+  logger.warn(`[Knowledge] Project quota middleware not available: ${error.message}`);
 }
 
 /**
