@@ -12,7 +12,8 @@
  *   railway run node server/scripts/seed_dbr77_postgres.js
  */
 
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -173,21 +174,47 @@ async function seedDBR77() {
     console.log(`✅ Created Default Project: ${PROJECT_ID}`);
 
     // 7. Create LLM Provider (if table exists and no providers exist)
-    // Note: is_active and is_default are INTEGER (0/1) in PostgreSQL, not BOOLEAN
-    // Note: llm_providers table doesn't have created_at column in PostgreSQL schema
-    const llmCheck = await client.query(
-      'SELECT COUNT(*) as count FROM llm_providers WHERE is_active = 1'
-    );
+    // Note: Check if table exists first, and handle boolean vs integer types
+    let llmCheck;
+    try {
+      // Try boolean first (PostgreSQL standard)
+      llmCheck = await client.query(
+        'SELECT COUNT(*) as count FROM llm_providers WHERE is_active = true'
+      );
+    } catch (err) {
+      // Fallback to integer (0/1) if boolean doesn't work
+      try {
+        llmCheck = await client.query(
+          'SELECT COUNT(*) as count FROM llm_providers WHERE is_active = 1'
+        );
+      } catch (err2) {
+        // Table might not exist, skip LLM provider creation
+        console.log('⚠️  llm_providers table not found, skipping LLM provider creation');
+        llmCheck = { rows: [{ count: '1' }] }; // Set to non-zero to skip
+      }
+    }
     if (llmCheck.rows[0].count === '0') {
       // Try to insert a default LLM provider if GEMINI_API_KEY is set
       if (process.env.GEMINI_API_KEY) {
-        await client.query(
-          `INSERT INTO llm_providers (id, name, provider, api_key, is_active, is_default)
-                     VALUES (gen_random_uuid(), $1, $2, $3, 1, 1)
-                     ON CONFLICT DO NOTHING`,
-          ['Google Gemini', 'gemini', process.env.GEMINI_API_KEY]
-        );
-        console.log(`✅ Created default LLM Provider: Google Gemini`);
+        try {
+          // Try boolean values first
+          await client.query(
+            `INSERT INTO llm_providers (id, name, provider, api_key, is_active, is_default)
+                       VALUES (gen_random_uuid(), $1, $2, $3, true, true)
+                       ON CONFLICT DO NOTHING`,
+            ['Google Gemini', 'gemini', process.env.GEMINI_API_KEY]
+          );
+          console.log(`✅ Created default LLM Provider: Google Gemini`);
+        } catch (err) {
+          // Fallback to integer values if boolean doesn't work
+          await client.query(
+            `INSERT INTO llm_providers (id, name, provider, api_key, is_active, is_default)
+                       VALUES (gen_random_uuid(), $1, $2, $3, 1, 1)
+                       ON CONFLICT DO NOTHING`,
+            ['Google Gemini', 'gemini', process.env.GEMINI_API_KEY]
+          );
+          console.log(`✅ Created default LLM Provider: Google Gemini`);
+        }
       } else {
         console.log(
           `⚠️  No LLM providers found and GEMINI_API_KEY not set. Add LLM providers manually.`

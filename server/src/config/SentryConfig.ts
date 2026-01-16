@@ -169,13 +169,38 @@ export function initSentry(app: Express): SentryHandlers {
 
     // Error handler - must be after routes and before other error handlers
     // Sentry v10: use setupExpressErrorHandler or custom middleware
-    errorHandler: (err: Error & { status?: number }, req: Request, res: Response, next: NextFunction) => {
+    errorHandler: (err: Error & { status?: number; statusCode?: number }, req: Request, res: Response, next: NextFunction) => {
+      // Ensure error has a message for Sentry
+      if (err instanceof Error && !err.message) {
+        err.message = err.name || 'Unknown error';
+      }
+      
+      // Determine status code
+      const statusCode = err.statusCode || err.status || 500;
+      
       // Only report 500+ errors automatically
-      if (err.status && err.status >= 500) {
-        Sentry.captureException(err);
-      } else if (err.status === 429) {
+      if (statusCode >= 500) {
+        Sentry.captureException(err, {
+          tags: {
+            path: req.path,
+            method: req.method,
+            statusCode: String(statusCode),
+          },
+          extra: {
+            userId: (req as any).user?.id,
+            query: req.query,
+            body: req.body,
+          },
+        });
+      } else if (statusCode === 429) {
         // Also report 429 (rate limit) errors
-        Sentry.captureException(err);
+        Sentry.captureException(err, {
+          tags: {
+            path: req.path,
+            method: req.method,
+            statusCode: '429',
+          },
+        });
       }
       // Always call next to pass error to Express error handling
       next(err);

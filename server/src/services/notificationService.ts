@@ -152,7 +152,7 @@ class NotificationService {
    */
   async getNotifications(
     userId: string,
-    options?: { limit?: number; unreadOnly?: boolean; type?: string }
+    options?: { limit?: number; unreadOnly?: boolean; type?: string; projectId?: string }
   ): Promise<Notification[]> {
     const db = await this.getDb();
 
@@ -166,6 +166,11 @@ class NotificationService {
     if (options?.type) {
       query += ` AND type = ?`;
       params.push(options.type);
+    }
+
+    if (options?.projectId) {
+      query += ` AND entity_id = ? AND entity_type = 'project'`;
+      params.push(options.projectId);
     }
 
     query += ` ORDER BY created_at DESC`;
@@ -229,6 +234,14 @@ class NotificationService {
   }
 
   /**
+   * Get notification counts for user
+   */
+  async getCounts(userId: string): Promise<{ unread: number }> {
+    const unread = await this.getUnreadCount(userId);
+    return { unread };
+  }
+
+  /**
    * Mark notification as read
    */
   async markAsRead(notificationId: string, userId: string): Promise<void> {
@@ -268,6 +281,18 @@ class NotificationService {
       `UPDATE notifications SET is_dismissed = 1, dismissed_at = ? WHERE id = ? AND user_id = ?`,
       [now, notificationId, userId]
     );
+  }
+
+  /**
+   * Delete notification
+   */
+  async delete(notificationId: string, userId: string): Promise<void> {
+    const db = await this.getDb();
+
+    await db.run(`DELETE FROM notifications WHERE id = ? AND user_id = ?`, [
+      notificationId,
+      userId,
+    ]);
   }
 
   /**
@@ -503,6 +528,9 @@ export const markAsRead = (notificationId: string, userId: string) =>
 export const markAllAsRead = (userId: string) => notificationService.markAllAsRead(userId);
 export const dismiss = (notificationId: string, userId: string) =>
   notificationService.dismiss(notificationId, userId);
+export const deleteNotification = (notificationId: string, userId: string) =>
+  notificationService.delete(notificationId, userId);
+export const getCounts = (userId: string) => notificationService.getCounts(userId);
 export const getPreferences = (userId: string) => notificationService.getPreferences(userId);
 export const updatePreferences = (userId: string, updates: Partial<NotificationPreferences>) =>
   notificationService.updatePreferences(userId, updates);

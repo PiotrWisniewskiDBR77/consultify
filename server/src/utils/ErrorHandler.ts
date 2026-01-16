@@ -70,6 +70,22 @@ export function createError(
 }
 
 /**
+ * Safely extract error message from various error types
+ */
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    return err.message || err.name || 'Unknown error';
+  }
+  if (typeof err === 'string') {
+    return err;
+  }
+  if (err && typeof err === 'object' && 'message' in err) {
+    return String(err.message) || 'Unknown error';
+  }
+  return 'Unknown error';
+}
+
+/**
  * Express error handler middleware
  */
 export function errorHandlerMiddleware(
@@ -83,6 +99,11 @@ export function errorHandlerMiddleware(
   res: Response,
   _next: NextFunction
 ): void {
+  // Safely extract error message
+  const errorMessage = getErrorMessage(err);
+  const errorStack = err instanceof Error ? err.stack : undefined;
+  const errorName = err instanceof Error ? err.name : 'Error';
+
   // Standardize status code
   let statusCode = 500;
   if (err.statusCode) {
@@ -98,18 +119,26 @@ export function errorHandlerMiddleware(
   err.statusCode = statusCode;
   const status = statusCode >= 500 ? 'error' : 'fail';
 
-  // Log the error
+  // Log the error with comprehensive context
   if (err.statusCode >= 500) {
-    logger.error(`[ErrorHandler] ${err.message}`, {
-      stack: err.stack,
+    logger.error(`[ErrorHandler] ${errorName}: ${errorMessage}`, {
+      errorName,
+      message: errorMessage,
+      stack: errorStack,
       path: req.path,
       method: req.method,
       userId: (req as any).user?.id,
+      statusCode: err.statusCode,
+      code: err.code,
     });
   } else {
-    logger.warn(`[ErrorHandler] ${err.message}`, {
+    logger.warn(`[ErrorHandler] ${errorName}: ${errorMessage}`, {
+      errorName,
+      message: errorMessage,
       statusCode: err.statusCode,
       path: req.path,
+      method: req.method,
+      code: err.code,
     });
   }
 
@@ -117,9 +146,14 @@ export function errorHandlerMiddleware(
   if (process.env.NODE_ENV === 'development') {
     res.status(err.statusCode).json({
       status: status,
-      error: err,
-      message: err.message,
-      stack: err.stack,
+      error: {
+        name: errorName,
+        message: errorMessage,
+        stack: errorStack,
+        statusCode: err.statusCode,
+        code: err.code,
+        ...(err.details || {}),
+      },
     });
     return;
   }
@@ -132,7 +166,7 @@ export function errorHandlerMiddleware(
       status: status,
       error: {
         code: err.code || 'ERROR',
-        message: err.message,
+        message: errorMessage,
         ...(err.details || {}),
         timestamp: new Date().toISOString(),
       },

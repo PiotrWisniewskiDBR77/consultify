@@ -7,11 +7,11 @@
 -- ============================================
 -- Main table for storing conversation metadata
 CREATE TABLE IF NOT EXISTS conversations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
-    project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
-    chat_project_id UUID REFERENCES chat_projects(id) ON DELETE SET NULL,
+    id TEXT PRIMARY KEY DEFAULT (gen_random_uuid()::text),
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id TEXT REFERENCES organizations(id) ON DELETE SET NULL,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    chat_project_id TEXT,
     
     -- Conversation metadata
     title VARCHAR(255) NOT NULL DEFAULT 'New conversation',
@@ -22,10 +22,11 @@ CREATE TABLE IF NOT EXISTS conversations (
     archived BOOLEAN DEFAULT FALSE,
     
     -- Auto-tags for categorization (assessment, initiative, roadmap, report, general)
-    tags TEXT[] DEFAULT '{}',
+    -- Using JSONB array representation for PostgreSQL compatibility
+    tags JSONB DEFAULT '[]'::jsonb,
     
     -- PMO context linking
-    pmo_context JSONB DEFAULT '{}',
+    pmo_context JSONB DEFAULT '{}'::jsonb,
     -- Example: { "assessmentId": "uuid", "initiativeIds": ["uuid"], "roadmapId": "uuid" }
     
     -- Conversation state tracking
@@ -43,8 +44,8 @@ CREATE TABLE IF NOT EXISTS conversations (
 -- ============================================
 -- Separate table for messages (for performance and query optimization)
 CREATE TABLE IF NOT EXISTS conversation_messages (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY DEFAULT (gen_random_uuid()::text),
+    conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     
     -- Message content
     role VARCHAR(10) NOT NULL CHECK (role IN ('user', 'ai')),
@@ -54,7 +55,7 @@ CREATE TABLE IF NOT EXISTS conversation_messages (
     message_type VARCHAR(20) DEFAULT 'text' CHECK (message_type IN ('text', 'action_request', 'summary', 'file', 'tool_call')),
     
     -- Rich metadata (citations, actions, tool calls, etc.)
-    metadata JSONB DEFAULT '{}',
+    metadata JSONB DEFAULT '{}'::jsonb,
     -- Example: { 
     --   "citations": [{ "id": "1", "type": "assessment", "title": "...", "reference": "..." }],
     --   "actions": [{ "id": "1", "type": "navigate", "label": "...", "payload": {...} }],
@@ -91,6 +92,19 @@ WHERE starred = TRUE;
 CREATE INDEX IF NOT EXISTS idx_conversations_chat_project
 ON conversations(chat_project_id)
 WHERE chat_project_id IS NOT NULL;
+
+-- Add foreign key constraint to chat_projects if the table exists
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'chat_projects') THEN
+        -- Drop existing constraint if it exists
+        ALTER TABLE conversations DROP CONSTRAINT IF EXISTS conversations_chat_project_id_fkey;
+        -- Add foreign key constraint
+        ALTER TABLE conversations 
+        ADD CONSTRAINT conversations_chat_project_id_fkey 
+        FOREIGN KEY (chat_project_id) REFERENCES chat_projects(id) ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- Conversations: Full-text search on title
 CREATE INDEX IF NOT EXISTS idx_conversations_title_search 

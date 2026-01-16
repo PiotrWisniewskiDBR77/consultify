@@ -30,7 +30,7 @@ router.get(
 
     try {
       const { unreadOnly, limit, projectId } = req.query;
-      const notifications = await (service as any).getForUser(userId, {
+      const notifications = await service.getNotifications(userId, {
         unreadOnly: unreadOnly === 'true',
         limit: limit ? parseInt(limit as string) : 50,
         projectId: projectId as string | undefined,
@@ -57,7 +57,7 @@ router.get(
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
-      const counts = await (service as any).getCounts(userId);
+      const counts = await service.getCounts(userId);
       return res.json(counts);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -78,7 +78,7 @@ router.get(
     if (!userId) return res.status(401).json({ error: 'Unauthorized', count: 0 });
 
     try {
-      const counts = await (service as any).getCounts(userId);
+      const counts = await service.getCounts(userId);
       return res.json({ count: counts.unread || 0 });
     } catch (err: any) {
       return res.status(500).json({ error: err.message, count: 0 });
@@ -99,8 +99,8 @@ router.patch(
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
-      const result = await (service as any).markRead(req.params.id, userId);
-      return res.json(result);
+      await service.markAsRead(req.params.id, userId);
+      return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -120,8 +120,8 @@ router.post(
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
-      const result = await (service as any).markAllRead(userId);
-      return res.json(result);
+      const count = await service.markAllAsRead(userId);
+      return res.json({ success: true, count });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -190,8 +190,8 @@ router.delete(
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
-      const result = await (service as any).delete(req.params.id, userId);
-      return res.json(result);
+      await service.delete(req.params.id, userId);
+      return res.json({ success: true });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

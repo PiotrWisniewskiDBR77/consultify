@@ -10,20 +10,24 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Detect database type
 const isPostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');
 
 let db;
 if (isPostgres) {
-  require('dotenv').config();
-  const { Pool } = require('pg');
+  const { Pool } = await import('pg');
   db = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   });
 } else {
-  db = require('../database');
+  const dbModule = await import('../database/index.js');
+  db = dbModule.default || dbModule;
 }
 
 // ============================================================
@@ -89,10 +93,13 @@ async function seedDBR77Users() {
   console.log(`   Database: ${isPostgres ? 'PostgreSQL' : 'SQLite'}\n`);
 
   try {
-    // 1. Find DBR77 organization
-    const org = await dbGet(`SELECT id FROM organizations WHERE name LIKE '%DBR77%' LIMIT 1`);
+    // 1. Find DBR77 organization (try ID first, then name)
+    let org = await dbGet(`SELECT id FROM organizations WHERE id = 'dbr77' LIMIT 1`);
     if (!org) {
-      console.error('❌ DBR77 organization not found. Run seed_dbr77 first.');
+      org = await dbGet(`SELECT id FROM organizations WHERE name LIKE '%DBR77%' OR name LIKE '%Consultinity%' LIMIT 1`);
+    }
+    if (!org) {
+      console.error('❌ DBR77 organization not found. Run seed_dbr77_postgres.js first.');
       process.exit(1);
     }
     const organizationId = org.id;
@@ -156,7 +163,7 @@ async function seedDBR77Users() {
 }
 
 // Run
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   seedDBR77Users()
     .then(() => {
       console.log('\n🎉 Done!');
