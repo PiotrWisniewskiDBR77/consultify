@@ -302,6 +302,27 @@ export function loadDatabaseConfig(): DatabaseConfig {
   return result.data;
 }
 
-export const databaseConfig = loadDatabaseConfig();
+// Lazy-load database config to ensure dotenv has loaded first
+let _databaseConfig: DatabaseConfig | null = null;
+
+export function getDatabaseConfig(): DatabaseConfig {
+  if (!_databaseConfig) {
+    _databaseConfig = loadDatabaseConfig();
+  }
+  return _databaseConfig;
+}
+
+// For backward compatibility, export as const (but it's actually lazy-loaded)
+export const databaseConfig = new Proxy({} as DatabaseConfig, {
+  get(_target, prop) {
+    return getDatabaseConfig()[prop as keyof DatabaseConfig];
+  },
+  ownKeys() {
+    return Object.keys(getDatabaseConfig());
+  },
+  getOwnPropertyDescriptor(_target, prop) {
+    return Object.getOwnPropertyDescriptor(getDatabaseConfig(), prop);
+  },
+});
 
 export default databaseConfig;

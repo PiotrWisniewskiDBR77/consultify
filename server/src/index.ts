@@ -25,6 +25,7 @@ import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import fs from 'fs';
 import http from 'http';
 
 // TypeScript imports (ES Modules)
@@ -595,9 +596,50 @@ apiGateway.initializeRoutes(app);
 // STATIC FILES & CATCHALL
 // ============================================================
 
+// Determine frontend dist path
+// In Docker: frontend is at /app/dist, backend runs from /app/server/dist/src or /app/server/dist
+// In development: frontend is at project root /dist
+let frontendDistPath: string;
+if (process.env.NODE_ENV === 'production') {
+  // Production (Docker): frontend is at /app/dist (absolute path)
+  frontendDistPath = '/app/dist';
+  
+  // Verify the path exists
+  if (!fs.existsSync(frontendDistPath)) {
+    logger.warn(`[Server] Frontend dist path not found at ${frontendDistPath}, trying alternatives...`);
+    // Try alternative paths
+    const alternatives = [
+      path.join(__dirname, '../../dist'),
+      path.join(__dirname, '../../../dist'),
+      path.resolve(__dirname, '../../dist'),
+    ];
+    
+    const found = alternatives.find(p => {
+      try {
+        return fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'));
+      } catch {
+        return false;
+      }
+    });
+    
+    if (found) {
+      frontendDistPath = found;
+      logger.info(`[Server] Found frontend at alternative path: ${frontendDistPath}`);
+    } else {
+      logger.error(`[Server] Frontend dist not found! Checked: ${frontendDistPath} and alternatives`);
+    }
+  } else {
+    logger.info(`[Server] Frontend dist path: ${frontendDistPath}`);
+  }
+} else {
+  // Development: frontend is at project root /dist
+  frontendDistPath = path.join(__dirname, '../../dist');
+  logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
+}
+
 // Serve static files from the React app
 app.use(
-  express.static(path.join(__dirname, '../dist'), {
+  express.static(frontendDistPath, {
     maxAge: '1y', // Cache static assets for 1 year
     etag: true,
   })
@@ -616,7 +658,10 @@ app.use((req: Request, res: Response) => {
     });
     return;
   }
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+  
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  logger.debug(`[Server] Serving index.html from: ${indexPath}`);
+  res.sendFile(indexPath);
   return;
 });
 
