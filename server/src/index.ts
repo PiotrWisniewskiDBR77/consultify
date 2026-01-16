@@ -611,54 +611,45 @@ logger.info(`[Server] __dirname: ${__dirname}`);
 
 let frontendDistPath: string;
 if (process.env.NODE_ENV === 'production') {
-  // Production (Docker): frontend is at /app/dist (absolute path)
-  frontendDistPath = '/app/dist';
+  // Production (Docker): frontend is at /app/dist
+  // Backend runs from /app/server/dist/src/index.js, so __dirname is /app/server/dist/src
+  // We need to go up 3 levels: ../../../dist = /app/dist
+  const possiblePaths = [
+    '/app/dist', // Absolute path (most reliable)
+    path.join(__dirname, '../../../dist'), // From /app/server/dist/src -> /app/dist
+    path.join(__dirname, '../../dist'), // Fallback
+  ];
   
-  console.log(`[Server] Checking frontend at: ${frontendDistPath}`);
-  logger.info(`[Server] Checking frontend at: ${frontendDistPath}`);
+  console.log(`[Server] __dirname: ${__dirname}`);
+  console.log(`[Server] Checking frontend paths: ${possiblePaths.join(', ')}`);
+  logger.info(`[Server] __dirname: ${__dirname}`);
+  logger.info(`[Server] Checking frontend paths: ${possiblePaths.join(', ')}`);
   
-  // Verify the path exists
-  if (!fs.existsSync(frontendDistPath)) {
-    console.warn(`[Server] Frontend dist path not found at ${frontendDistPath}, trying alternatives...`);
-    logger.warn(`[Server] Frontend dist path not found at ${frontendDistPath}, trying alternatives...`);
-    // Try alternative paths
-    const alternatives = [
-      path.join(__dirname, '../../dist'),
-      path.join(__dirname, '../../../dist'),
-      path.resolve(__dirname, '../../dist'),
-    ];
-    
-    const found = alternatives.find(p => {
-      try {
-        const exists = fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'));
-        console.log(`[Server] Checking alternative: ${p} - ${exists ? 'EXISTS' : 'NOT FOUND'}`);
-        return exists;
-      } catch (e) {
-        console.log(`[Server] Error checking alternative: ${p} - ${e}`);
-        return false;
-      }
-    });
-    
-    if (found) {
-      frontendDistPath = found;
-      console.log(`[Server] Found frontend at alternative path: ${frontendDistPath}`);
-      logger.info(`[Server] Found frontend at alternative path: ${frontendDistPath}`);
-    } else {
-      console.error(`[Server] Frontend dist not found! Checked: ${frontendDistPath} and alternatives`);
-      logger.error(`[Server] Frontend dist not found! Checked: ${frontendDistPath} and alternatives`);
+  // Find the first path that exists and has index.html
+  const found = possiblePaths.find(p => {
+    try {
+      const exists = fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'));
+      console.log(`[Server] Checking: ${p} - ${exists ? '✓ EXISTS' : '✗ NOT FOUND'}`);
+      logger.info(`[Server] Checking: ${p} - ${exists ? '✓ EXISTS' : '✗ NOT FOUND'}`);
+      return exists;
+    } catch (e) {
+      console.log(`[Server] Error checking ${p}: ${e}`);
+      logger.error(`[Server] Error checking ${p}: ${e}`);
+      return false;
     }
-  } else {
-    console.log(`[Server] Frontend dist path found: ${frontendDistPath}`);
-    logger.info(`[Server] Frontend dist path: ${frontendDistPath}`);
-    // Verify index.html exists
+  });
+  
+  if (found) {
+    frontendDistPath = found;
+    console.log(`[Server] ✓ Using frontend path: ${frontendDistPath}`);
+    logger.info(`[Server] ✓ Using frontend path: ${frontendDistPath}`);
     const indexPath = path.join(frontendDistPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      console.log(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
-      logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
-    } else {
-      console.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
-      logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
-    }
+    console.log(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
+    logger.info(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
+  } else {
+    frontendDistPath = '/app/dist'; // Fallback to expected location
+    console.error(`[Server] ✗ Frontend not found in any checked paths! Using fallback: ${frontendDistPath}`);
+    logger.error(`[Server] ✗ Frontend not found in any checked paths! Using fallback: ${frontendDistPath}`);
   }
 } else {
   // Development: frontend is at project root /dist
