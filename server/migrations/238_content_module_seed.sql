@@ -310,30 +310,32 @@ INSERT OR IGNORE INTO ai_playbook_templates (
 -- 3. SEED CONTENT CATEGORIES (if not exists)
 -- ==========================================
 
-INSERT OR IGNORE INTO content_categories (id, name, slug, content_type, color, sort_order, is_active, created_at)
+INSERT INTO content_categories (id, name, slug, content_type, color, sort_order, is_active, created_at)
 VALUES 
-    ('cat_email_onboarding', 'Onboarding', 'onboarding', 'EMAIL', '#10B981', 1, 1, datetime('now')),
-    ('cat_email_notifications', 'Notifications', 'notifications', 'EMAIL', '#6366F1', 2, 1, datetime('now')),
-    ('cat_email_reports', 'Reports', 'reports', 'EMAIL', '#F59E0B', 3, 1, datetime('now')),
-    ('cat_email_security', 'Security', 'security', 'EMAIL', '#EF4444', 4, 1, datetime('now')),
-    ('cat_email_marketing', 'Marketing', 'marketing', 'EMAIL', '#8B5CF6', 5, 1, datetime('now')),
-    ('cat_playbook_automation', 'Automation', 'automation', 'PLAYBOOK', '#3B82F6', 1, 1, datetime('now')),
-    ('cat_playbook_workflow', 'Workflows', 'workflows', 'PLAYBOOK', '#10B981', 2, 1, datetime('now')),
-    ('cat_playbook_notifications', 'Notifications', 'notifications', 'PLAYBOOK', '#F59E0B', 3, 1, datetime('now'));
+    ('cat_email_onboarding', 'Onboarding', 'onboarding', 'EMAIL', '#10B981', 1::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('cat_email_notifications', 'Notifications', 'notifications', 'EMAIL', '#6366F1', 2::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('cat_email_reports', 'Reports', 'reports', 'EMAIL', '#F59E0B', 3::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('cat_email_security', 'Security', 'security', 'EMAIL', '#EF4444', 4::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('cat_email_marketing', 'Marketing', 'marketing', 'EMAIL', '#8B5CF6', 5::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('cat_playbook_automation', 'Automation', 'automation', 'PLAYBOOK', '#3B82F6', 1::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('cat_playbook_workflow', 'Workflows', 'workflows', 'PLAYBOOK', '#10B981', 2::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('cat_playbook_notifications', 'Notifications', 'notifications', 'PLAYBOOK', '#F59E0B', 3::integer, 1::integer, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
 -- ==========================================
 -- 4. SEED CONTENT TAGS (if not exists)
 -- ==========================================
 
-INSERT OR IGNORE INTO content_tags (id, name, slug, content_type, color, usage_count, is_active, created_at)
+INSERT INTO content_tags (id, name, slug, content_type, color, usage_count, is_active, created_at)
 VALUES
-    ('tag_critical', 'Critical', 'critical', 'ALL', '#EF4444', 45, 1, datetime('now')),
-    ('tag_automated', 'Automated', 'automated', 'ALL', '#3B82F6', 89, 1, datetime('now')),
-    ('tag_production', 'Production', 'production', 'ALL', '#10B981', 156, 1, datetime('now')),
-    ('tag_draft', 'Draft', 'draft', 'ALL', '#F59E0B', 23, 1, datetime('now')),
-    ('tag_transactional', 'Transactional', 'transactional', 'EMAIL', '#8B5CF6', 78, 1, datetime('now')),
-    ('tag_marketing', 'Marketing', 'marketing', 'EMAIL', '#EC4899', 34, 1, datetime('now')),
-    ('tag_ai_powered', 'AI-Powered', 'ai-powered', 'PLAYBOOK', '#6366F1', 67, 1, datetime('now'));
+    ('tag_critical', 'Critical', 'critical', 'ALL', '#EF4444', 45::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('tag_automated', 'Automated', 'automated', 'ALL', '#3B82F6', 89::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('tag_production', 'Production', 'production', 'ALL', '#10B981', 156::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('tag_draft', 'Draft', 'draft', 'ALL', '#F59E0B', 23::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('tag_transactional', 'Transactional', 'transactional', 'EMAIL', '#8B5CF6', 78::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('tag_marketing', 'Marketing', 'marketing', 'EMAIL', '#EC4899', 34::integer, 1::integer, CURRENT_TIMESTAMP),
+    ('tag_ai_powered', 'AI-Powered', 'ai-powered', 'PLAYBOOK', '#6366F1', 67::integer, 1::integer, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
 
 -- Log migration completion
 SELECT 'Content module seed data inserted successfully' as status;

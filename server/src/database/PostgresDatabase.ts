@@ -572,6 +572,7 @@ export async function initDb(): Promise<void> {
             goal TEXT,
             status TEXT DEFAULT 'active',
             owner_id TEXT,
+            current_phase TEXT DEFAULT 'Context',
             initiative_count INTEGER DEFAULT 0,
             assessment_count INTEGER DEFAULT 0,
             member_count INTEGER DEFAULT 0,
@@ -580,6 +581,25 @@ export async function initDb(): Promise<void> {
             FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
             FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE SET NULL
         )`);
+
+    // Ensure projects table has current_phase column (migration for existing tables)
+    await query(`
+            DO $$
+        BEGIN
+            IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'projects') THEN
+                IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
+                               WHERE table_name = 'projects' AND column_name = 'current_phase') THEN
+                    ALTER TABLE projects ADD COLUMN current_phase TEXT DEFAULT 'Context';
+                END IF;
+            END IF;
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Ignore errors (column may already exist)
+                NULL;
+        END $$;
+        `).catch((err: Error | null) => {
+      logger.info('[Postgres] Projects current_phase column migration skipped (may already exist)');
+    });
 
     // Sessions (references users and projects - must come after both)
     await query(`CREATE TABLE IF NOT EXISTS sessions(

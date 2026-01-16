@@ -503,9 +503,20 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     // Final verification
     const finalVerification = await verifySchema();
     if (!finalVerification.valid) {
+      const missingTables = finalVerification.missing.length > 0 
+        ? `Missing tables: ${finalVerification.missing.join(', ')}` 
+        : '';
+      const missingCols = Object.keys(finalVerification.missingColumns).length > 0
+        ? `Missing columns: ${Object.entries(finalVerification.missingColumns).map(([table, cols]) => `${table}(${cols.join(', ')})`).join(', ')}`
+        : '';
+      const errors = finalVerification.errors.length > 0
+        ? `Errors: ${finalVerification.errors.join(', ')}`
+        : '';
+      
+      const parts = [missingTables, missingCols, errors].filter(Boolean);
       return {
         success: false,
-        message: `Database schema verification failed. Missing: ${finalVerification.missing.join(', ')}. Errors: ${finalVerification.errors.join(', ')}`,
+        message: `Database schema verification failed. ${parts.join('. ')}`,
       };
     }
 
