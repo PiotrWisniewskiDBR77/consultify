@@ -1734,7 +1734,11 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping organization_id index on initiatives'
     );
-    await query(`CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(doc_id)`);
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(doc_id)`,
+      [],
+      'Skipping doc_id index on knowledge_chunks'
+    );
     await querySafe(
       `CREATE INDEX IF NOT EXISTS idx_usage_records_org_time ON usage_records(organization_id, recorded_at)`,
       [],

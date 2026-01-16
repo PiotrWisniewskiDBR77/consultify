@@ -231,7 +231,7 @@ SELECT
         ELSE 'reactivate'
     END,
     datetime('now', '-' || (x * 3) || ' days'),
-    ROUND(RANDOM() % 100 + 20, 2),
+    ROUND((FLOOR(RANDOM() * 100)::integer + 20)::real, 2),
     CASE (x % 4)
         WHEN 0 THEN 'pending'
         WHEN 1 THEN 'approved'
@@ -255,19 +255,19 @@ SELECT
         ELSE 'reactivation'
     END,
     CASE (x % 5)
-        WHEN 0 THEN ABS(RANDOM() % 500) + 100
-        WHEN 1 THEN ABS(RANDOM() % 200) + 50
-        WHEN 2 THEN -(ABS(RANDOM() % 100) + 20)
-        WHEN 3 THEN -(ABS(RANDOM() % 300) + 50)
-        ELSE ABS(RANDOM() % 200) + 50
+        WHEN 0 THEN ABS(FLOOR(RANDOM() * 500)::integer) + 100
+        WHEN 1 THEN ABS(FLOOR(RANDOM() * 200)::integer) + 50
+        WHEN 2 THEN -(ABS(FLOOR(RANDOM() * 100)::integer) + 20)
+        WHEN 3 THEN -(ABS(FLOOR(RANDOM() * 300)::integer) + 50)
+        ELSE ABS(FLOOR(RANDOM() * 200)::integer) + 50
     END,
     10000 + (x * 500),
     10000 + (x * 500) + (CASE (x % 5)
-        WHEN 0 THEN ABS(RANDOM() % 500) + 100
-        WHEN 1 THEN ABS(RANDOM() % 200) + 50
-        WHEN 2 THEN -(ABS(RANDOM() % 100) + 20)
-        WHEN 3 THEN -(ABS(RANDOM() % 300) + 50)
-        ELSE ABS(RANDOM() % 200) + 50
+        WHEN 0 THEN ABS(FLOOR(RANDOM() * 500)::integer) + 100
+        WHEN 1 THEN ABS(FLOOR(RANDOM() * 200)::integer) + 50
+        WHEN 2 THEN -(ABS(FLOOR(RANDOM() * 100)::integer) + 20)
+        WHEN 3 THEN -(ABS(FLOOR(RANDOM() * 300)::integer) + 50)
+        ELSE ABS(FLOOR(RANDOM() * 200)::integer) + 50
     END),
     datetime('now', '-' || x || ' days')
 FROM (SELECT 1 x UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 
@@ -282,7 +282,7 @@ INSERT OR IGNORE INTO revenue_recognition (id, organization_id, amount, recognit
 SELECT 
     'rr-demo-' || x,
     (SELECT id FROM organizations ORDER BY RANDOM() LIMIT 1),
-    ROUND(ABS(RANDOM() % 2000) + 500, 2),
+    ROUND(ABS(FLOOR(RANDOM() * 2000)::integer) + 500, 2),
     date('now', '-' || (x * 2) || ' days'),
     CASE (x % 4)
         WHEN 0 THEN 'subscription'
@@ -319,14 +319,14 @@ INSERT OR IGNORE INTO mrr_snapshots (id, snapshot_date, total_mrr, new_mrr, expa
 SELECT 
     'mrr-' || date('now', '-' || x || ' days'),
     date('now', '-' || x || ' days'),
-    12000 + (30 - x) * 200 + ABS(RANDOM() % 500),
-    ABS(RANDOM() % 800) + 200,
-    ABS(RANDOM() % 400) + 100,
-    ABS(RANDOM() % 200) + 50,
-    ABS(RANDOM() % 300) + 100,
+    12000 + (30 - x) * 200 + ABS(FLOOR(RANDOM() * 500)::integer),
+    ABS(FLOOR(RANDOM() * 800)::integer) + 200,
+    ABS(FLOOR(RANDOM() * 400)::integer) + 100,
+    ABS(FLOOR(RANDOM() * 200)::integer) + 50,
+    ABS(FLOOR(RANDOM() * 300)::integer) + 100,
     80 + (30 - x),
-    ABS(RANDOM() % 5) + 1,
-    ABS(RANDOM() % 3)
+    ABS(FLOOR(RANDOM() * 5)::integer) + 1,
+    ABS(FLOOR(RANDOM() * 3)::integer)
 FROM (SELECT 0 x UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
       UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9
       UNION SELECT 10 UNION SELECT 11 UNION SELECT 12 UNION SELECT 13 UNION SELECT 14
