@@ -701,7 +701,7 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   if (!fs.existsSync(indexPath)) {
     console.error(`[Server] Frontend index.html not found at: ${indexPath}`);
     logger.error(`[Server] Frontend index.html not found at: ${indexPath}`);
-    return res.status(500).json({
+    res.status(500).json({
       error: {
         code: 'FRONTEND_NOT_FOUND',
         message: 'Frontend files not found',
@@ -710,6 +710,7 @@ const serveIndexHtml = (req: Request, res: Response): void => {
         frontendDistPath,
       },
     });
+    return;
   }
   
   res.sendFile(indexPath, (err: Error | null) => {
