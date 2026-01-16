@@ -596,6 +596,11 @@ apiGateway.initializeRoutes(app);
 // STATIC FILES & CATCHALL
 // ============================================================
 
+logger.info('[Server] ==========================================');
+logger.info('[Server] Setting up frontend static file serving...');
+logger.info(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
+logger.info(`[Server] __dirname: ${__dirname}`);
+
 // Determine frontend dist path
 // In Docker: frontend is at /app/dist, backend runs from /app/server/dist/src or /app/server/dist
 // In development: frontend is at project root /dist
