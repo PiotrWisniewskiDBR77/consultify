@@ -18,6 +18,7 @@ export class HealthCheckController {
   /**
    * Basic health check endpoint
    * Returns status and critical component connectivity
+   * Optimized for speed - non-blocking checks
    */
   static async checkHealth(_req: Request, res: Response): Promise<void> {
     const health: {
@@ -35,10 +36,18 @@ export class HealthCheckController {
       environment: process.env.NODE_ENV || 'development',
     };
 
-    // Check Redis connectivity (dynamically imported to avoid hard dependency)
+    // Check Redis connectivity (non-blocking, timeout after 50ms)
+    // Use Promise.race to avoid blocking the healthcheck
     try {
-      const { isRedisConnected } = await import('../services/ai/redisClient.js');
-      health.redis = isRedisConnected() ? 'connected' : 'disconnected';
+      const redisCheck = import('../services/ai/redisClient.js').then(
+        ({ isRedisConnected }) => isRedisConnected() ? 'connected' : 'disconnected'
+      ).catch(() => 'error');
+      
+      const timeout = new Promise<string>((resolve) => 
+        setTimeout(() => resolve('timeout'), 50)
+      );
+      
+      health.redis = await Promise.race([redisCheck, timeout]);
     } catch (error) {
       health.redis = 'error';
     }
