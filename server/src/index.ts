@@ -85,6 +85,28 @@ import systemHealthRoutes from './routes/system-health.routes.js';
 // Health Check (Ping) - synchronous
 app.get('/ping', HealthCheckController.ping);
 
+// Test route to verify server is working
+app.get('/test-frontend-path', (req: Request, res: Response) => {
+  const testPaths = [
+    '/app/dist',
+    path.join(__dirname, '../../../dist'),
+    path.join(__dirname, '../../dist'),
+  ];
+  
+  const results = testPaths.map(p => ({
+    path: p,
+    exists: fs.existsSync(p),
+    hasIndex: fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html')),
+  }));
+  
+  res.json({
+    __dirname,
+    NODE_ENV: process.env.NODE_ENV,
+    paths: results,
+    frontendDistPath: (global as any).frontendDistPath || 'not set',
+  });
+});
+
 // Mount Health Check Routes
 app.use('/api/health', healthRoutes);
 app.use('/api/health', dbHealthRoutes);
@@ -680,49 +702,61 @@ app.use(
 );
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
-app.use((req: Request, res: Response, next: NextFunction) => {
-  // Only send index.html if it's not an API route
+app.get('*', (req: Request, res: Response, next: NextFunction) => {
+  // Skip API routes
   if (req.path.startsWith('/api/')) {
-    res.status(404).json({
-      error: {
-        code: 'NOT_FOUND',
-        message: `Route ${req.method} ${req.path} not found`,
-        timestamp: new Date().toISOString(),
-      },
-    });
-    return;
+    return next(); // Let 404 handler catch it
+  }
+  
+  // Skip static assets (they should be handled by express.static)
+  if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    return next(); // Let 404 handler catch missing static files
   }
   
   const indexPath = path.join(frontendDistPath, 'index.html');
   
+  console.log(`[Server] Catchall handler: serving ${req.path} from ${indexPath}`);
+  logger.info(`[Server] Catchall handler: serving ${req.path} from ${indexPath}`);
+  
   // Check if index.html exists
   if (!fs.existsSync(indexPath)) {
+    console.error(`[Server] Frontend index.html not found at: ${indexPath}`);
+    console.error(`[Server] __dirname: ${__dirname}`);
+    console.error(`[Server] frontendDistPath: ${frontendDistPath}`);
+    console.error(`[Server] Request path: ${req.path}`);
     logger.error(`[Server] Frontend index.html not found at: ${indexPath}`);
     logger.error(`[Server] __dirname: ${__dirname}`);
     logger.error(`[Server] frontendDistPath: ${frontendDistPath}`);
     logger.error(`[Server] Request path: ${req.path}`);
-    res.status(500).json({
+    return res.status(500).json({
       error: {
         code: 'FRONTEND_NOT_FOUND',
         message: 'Frontend files not found',
         path: indexPath,
+        __dirname,
+        frontendDistPath,
       },
     });
-    return;
   }
   
-  logger.info(`[Server] Serving index.html from: ${indexPath} for path: ${req.path}`);
+  console.log(`[Server] ✓ Serving index.html from: ${indexPath} for path: ${req.path}`);
+  logger.info(`[Server] ✓ Serving index.html from: ${indexPath} for path: ${req.path}`);
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
+      console.error(`[Server] Error sending index.html: ${err.message}`);
       logger.error(`[Server] Error sending index.html: ${err.message}`);
       if (!res.headersSent) {
         res.status(500).json({
           error: {
             code: 'SERVE_ERROR',
             message: 'Failed to serve frontend',
+            error: err.message,
           },
         });
       }
+    } else {
+      console.log(`[Server] ✓ Successfully sent index.html for ${req.path}`);
+      logger.info(`[Server] ✓ Successfully sent index.html for ${req.path}`);
     }
   });
 });
