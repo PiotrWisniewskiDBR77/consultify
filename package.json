@@ -82,6 +82,9 @@
     "i18n:translate": "npx ts-node scripts/i18n/translate-help.ts --translate",
     "i18n:validate": "npx ts-node scripts/i18n/translate-help.ts --validate"
   },
+  "overrides": {
+    "react-is": "^19.0.0"
+  },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.1",
     "@ai-sdk/google": "^3.0.1",
@@ -165,6 +168,7 @@
     "react": "^19.2.1",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.1",
+    "react-is": "^19.0.0",
     "react-dropzone": "^14.3.8",
     "react-hot-toast": "^2.6.0",
     "react-i18next": "^16.4.1",

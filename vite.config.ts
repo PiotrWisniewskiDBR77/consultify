@@ -47,8 +47,8 @@ export default defineConfig(({ mode }) => {
         'use-sync-external-store',
         'use-sync-external-store/shim',
         'use-sync-external-store/shim/with-selector',
-        // Pre-bundle recharts with React to ensure compatibility
-        'recharts',
+        // Ensure react-is matches React 19 version
+        'react-is',
       ],
       exclude: [
         // Large libs that should be lazy loaded
@@ -56,6 +56,9 @@ export default defineConfig(({ mode }) => {
         '@tiptap/react',
         'jspdf',
         'xlsx',
+        // Exclude recharts from pre-bundling to prevent React 19 compatibility issues
+        // It will be loaded dynamically when needed
+        'recharts',
       ],
     },
     build: {
@@ -86,7 +89,7 @@ export default defineConfig(({ mode }) => {
             }
 
             // Charts libraries (heavy)
-            // Note: recharts is pre-bundled with React in optimizeDeps to ensure React 19 compatibility
+            // Note: recharts is excluded from optimizeDeps and loaded dynamically to avoid React 19 compatibility issues
             if (
               id.includes('node_modules/recharts/') ||
               id.includes('node_modules/chart.js/') ||
