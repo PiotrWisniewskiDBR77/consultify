@@ -691,43 +691,16 @@ try {
 console.log(`[Server] Final frontend dist path: ${frontendDistPath}`);
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
-// Serve static files from the React app
-// fallthrough: false means don't call next() if file not found, let catchall handle it
-app.use(
-  express.static(frontendDistPath, {
-    maxAge: '1y', // Cache static assets for 1 year
-    etag: true,
-    fallthrough: true, // Continue to next middleware if file not found
-  })
-);
-
-// The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
-app.get('*', (req: Request, res: Response, next: NextFunction) => {
-  // Skip API routes
-  if (req.path.startsWith('/api/')) {
-    return next(); // Let 404 handler catch it
-  }
-  
-  // Skip static assets (they should be handled by express.static)
-  if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
-    return next(); // Let 404 handler catch missing static files
-  }
-  
+// Helper function to serve index.html
+const serveIndexHtml = (req: Request, res: Response): void => {
   const indexPath = path.join(frontendDistPath, 'index.html');
   
-  console.log(`[Server] Catchall handler: serving ${req.path} from ${indexPath}`);
-  logger.info(`[Server] Catchall handler: serving ${req.path} from ${indexPath}`);
+  console.log(`[Server] Serving index.html for ${req.path} from ${indexPath}`);
+  logger.info(`[Server] Serving index.html for ${req.path} from ${indexPath}`);
   
-  // Check if index.html exists
   if (!fs.existsSync(indexPath)) {
     console.error(`[Server] Frontend index.html not found at: ${indexPath}`);
-    console.error(`[Server] __dirname: ${__dirname}`);
-    console.error(`[Server] frontendDistPath: ${frontendDistPath}`);
-    console.error(`[Server] Request path: ${req.path}`);
     logger.error(`[Server] Frontend index.html not found at: ${indexPath}`);
-    logger.error(`[Server] __dirname: ${__dirname}`);
-    logger.error(`[Server] frontendDistPath: ${frontendDistPath}`);
-    logger.error(`[Server] Request path: ${req.path}`);
     return res.status(500).json({
       error: {
         code: 'FRONTEND_NOT_FOUND',
@@ -739,8 +712,6 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
     });
   }
   
-  console.log(`[Server] ✓ Serving index.html from: ${indexPath} for path: ${req.path}`);
-  logger.info(`[Server] ✓ Serving index.html from: ${indexPath} for path: ${req.path}`);
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
       console.error(`[Server] Error sending index.html: ${err.message}`);
@@ -759,6 +730,43 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
       logger.info(`[Server] ✓ Successfully sent index.html for ${req.path}`);
     }
   });
+};
+
+// Explicit root route handler
+app.get('/', (req: Request, res: Response) => {
+  serveIndexHtml(req, res);
+});
+
+// Serve static files from the React app
+// fallthrough: true means continue to next middleware if file not found
+app.use(
+  express.static(frontendDistPath, {
+    maxAge: '1y', // Cache static assets for 1 year
+    etag: true,
+    fallthrough: true, // Continue to next middleware if file not found
+  })
+);
+
+// The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
+// Use app.use to catch all HTTP methods and routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return next(); // Let 404 handler catch it
+  }
+  
+  // Skip static assets (they should be handled by express.static)
+  if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    return next(); // Let 404 handler catch missing static files
+  }
+  
+  // Skip root path (already handled above)
+  if (req.path === '/') {
+    return next();
+  }
+  
+  // Serve index.html for all other routes (SPA routing)
+  serveIndexHtml(req, res);
 });
 
 // ============================================================
