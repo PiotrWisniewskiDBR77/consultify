@@ -596,21 +596,30 @@ apiGateway.initializeRoutes(app);
 // STATIC FILES & CATCHALL
 // ============================================================
 
+// Determine frontend dist path
+// In Docker: frontend is at /app/dist, backend runs from /app/server/dist/src or /app/server/dist
+// In development: frontend is at project root /dist
+console.log('[Server] ==========================================');
+console.log('[Server] Setting up frontend static file serving...');
+console.log(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`[Server] __dirname: ${__dirname}`);
+
 logger.info('[Server] ==========================================');
 logger.info('[Server] Setting up frontend static file serving...');
 logger.info(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
 logger.info(`[Server] __dirname: ${__dirname}`);
 
-// Determine frontend dist path
-// In Docker: frontend is at /app/dist, backend runs from /app/server/dist/src or /app/server/dist
-// In development: frontend is at project root /dist
 let frontendDistPath: string;
 if (process.env.NODE_ENV === 'production') {
   // Production (Docker): frontend is at /app/dist (absolute path)
   frontendDistPath = '/app/dist';
   
+  console.log(`[Server] Checking frontend at: ${frontendDistPath}`);
+  logger.info(`[Server] Checking frontend at: ${frontendDistPath}`);
+  
   // Verify the path exists
   if (!fs.existsSync(frontendDistPath)) {
+    console.warn(`[Server] Frontend dist path not found at ${frontendDistPath}, trying alternatives...`);
     logger.warn(`[Server] Frontend dist path not found at ${frontendDistPath}, trying alternatives...`);
     // Try alternative paths
     const alternatives = [
@@ -621,39 +630,53 @@ if (process.env.NODE_ENV === 'production') {
     
     const found = alternatives.find(p => {
       try {
-        return fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'));
-      } catch {
+        const exists = fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'));
+        console.log(`[Server] Checking alternative: ${p} - ${exists ? 'EXISTS' : 'NOT FOUND'}`);
+        return exists;
+      } catch (e) {
+        console.log(`[Server] Error checking alternative: ${p} - ${e}`);
         return false;
       }
     });
     
     if (found) {
       frontendDistPath = found;
+      console.log(`[Server] Found frontend at alternative path: ${frontendDistPath}`);
       logger.info(`[Server] Found frontend at alternative path: ${frontendDistPath}`);
     } else {
+      console.error(`[Server] Frontend dist not found! Checked: ${frontendDistPath} and alternatives`);
       logger.error(`[Server] Frontend dist not found! Checked: ${frontendDistPath} and alternatives`);
     }
   } else {
+    console.log(`[Server] Frontend dist path found: ${frontendDistPath}`);
     logger.info(`[Server] Frontend dist path: ${frontendDistPath}`);
     // Verify index.html exists
     const indexPath = path.join(frontendDistPath, 'index.html');
     if (fs.existsSync(indexPath)) {
+      console.log(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
       logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
     } else {
+      console.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
       logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
     }
   }
 } else {
   // Development: frontend is at project root /dist
   frontendDistPath = path.join(__dirname, '../../dist');
+  console.log(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
   logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
   const indexPath = path.join(frontendDistPath, 'index.html');
   if (fs.existsSync(indexPath)) {
+    console.log(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
     logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
   } else {
+    console.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
     logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
   }
 }
+
+console.log(`[Server] Final frontend dist path: ${frontendDistPath}`);
+logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
 // Serve static files from the React app
 // fallthrough: false means don't call next() if file not found, let catchall handle it
