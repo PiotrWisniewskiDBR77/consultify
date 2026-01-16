@@ -47,6 +47,8 @@ export default defineConfig(({ mode }) => {
         'use-sync-external-store',
         'use-sync-external-store/shim',
         'use-sync-external-store/shim/with-selector',
+        // Pre-bundle recharts with React to ensure compatibility
+        'recharts',
       ],
       exclude: [
         // Large libs that should be lazy loaded
@@ -84,6 +86,7 @@ export default defineConfig(({ mode }) => {
             }
 
             // Charts libraries (heavy)
+            // Note: recharts is pre-bundled with React in optimizeDeps to ensure React 19 compatibility
             if (
               id.includes('node_modules/recharts/') ||
               id.includes('node_modules/chart.js/') ||
