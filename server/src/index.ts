@@ -195,42 +195,10 @@ if (!isTest || process.env.E2E_MODE === 'true') {
 }
 
 // ============================================================
-// START SERVER IMMEDIATELY (before async initialization)
+// SERVER STARTUP (moved to end of file after all routes registered)
 // ============================================================
 
-// Start server immediately, don't wait for async initialization
-const startServer = true; // Always start server when running via tsx
-
-if (startServer && (!isTest || process.env.E2E_MODE === 'true')) {
-  logger.info('[Server] Starting HTTP server...');
-  const server = http.createServer(app);
-  const shutdownManager = getShutdownManager(30000); // 30 second timeout
-
-  // Handle server errors
-  server.on('error', (err: NodeJS.ErrnoException) => {
-    logger.error('[Server] HTTP Server Error:', err);
-    if (err.code === 'EADDRINUSE') {
-      logger.error(`Port ${PORT} is already in use`);
-      process.exit(1);
-    }
-  });
-
-  // Register shutdown handlers (simplified, full handlers added later)
-  process.on('SIGTERM', () => {
-    logger.info('[Shutdown] Received SIGTERM, closing server...');
-    server.close(() => process.exit(0));
-  });
-  process.on('SIGINT', () => {
-    logger.info('[Shutdown] Received SIGINT, closing server...');
-    server.close(() => process.exit(0));
-  });
-
-  // Start listening immediately
-  server.listen(PORT, '0.0.0.0', () => {
-    logger.info('✅ Server running on http://0.0.0.0:' + PORT);
-    logger.info('✅ WebSocket available at ws://0.0.0.0:' + PORT + '/ws');
-  });
-}
+// Server will be started after all routes are registered (see end of file)
 
 // ============================================================
 // SCHEDULER & HEALTH CHECKS INITIALIZATION
@@ -693,9 +661,13 @@ logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
 // Helper function to serve index.html
 const serveIndexHtml = (req: Request, res: Response): void => {
-  const indexPath = path.join(frontendDistPath, 'index.html');
+  // Use absolute path for res.sendFile (required for Railway/Docker)
+  const indexPath = path.resolve(frontendDistPath, 'index.html');
   
-  console.log(`[Server] Serving index.html for ${req.path} from ${indexPath}`);
+  console.log(`[Server] Serving index.html for ${req.path}`);
+  console.log(`[Server] Frontend dist path: ${frontendDistPath}`);
+  console.log(`[Server] Index file path: ${indexPath}`);
+  console.log(`[Server] Index file exists: ${fs.existsSync(indexPath)}`);
   logger.info(`[Server] Serving index.html for ${req.path} from ${indexPath}`);
   
   if (!fs.existsSync(indexPath)) {
@@ -708,11 +680,13 @@ const serveIndexHtml = (req: Request, res: Response): void => {
         path: indexPath,
         __dirname,
         frontendDistPath,
+        resolvedPath: path.resolve(frontendDistPath, 'index.html'),
       },
     });
     return;
   }
   
+  // Use absolute path - res.sendFile works with absolute paths
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
       console.error(`[Server] Error sending index.html: ${err.message}`);
@@ -723,6 +697,7 @@ const serveIndexHtml = (req: Request, res: Response): void => {
             code: 'SERVE_ERROR',
             message: 'Failed to serve frontend',
             error: err.message,
+            path: indexPath,
           },
         });
       }
