@@ -99,11 +99,19 @@ app.get('/test-frontend-path', (req: Request, res: Response) => {
     hasIndex: fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html')),
   }));
   
+  // Try to detect frontend path if not set
+  let detectedPath = (global as any).frontendDistPath;
+  if (!detectedPath || detectedPath === 'not set') {
+    const found = testPaths.find(p => fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html')));
+    detectedPath = found || 'not found';
+  }
+  
   res.json({
     __dirname,
     NODE_ENV: process.env.NODE_ENV,
     paths: results,
-    frontendDistPath: (global as any).frontendDistPath || 'not set',
+    frontendDistPath: detectedPath,
+    globalFrontendDistPath: (global as any).frontendDistPath || 'not set',
   });
 });
 
@@ -631,47 +639,29 @@ logger.info('[Server] Setting up frontend static file serving...');
 logger.info(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
 logger.info(`[Server] __dirname: ${__dirname}`);
 
+// Determine frontend dist path
+// In production Docker: frontend is at /app/dist (confirmed by test route)
 let frontendDistPath: string;
 if (process.env.NODE_ENV === 'production') {
   // Production (Docker): frontend is at /app/dist
-  // Backend runs from /app/server/dist/src/index.js, so __dirname is /app/server/dist/src
-  // We need to go up 3 levels: ../../../dist = /app/dist
-  const possiblePaths = [
-    '/app/dist', // Absolute path (most reliable)
-    path.join(__dirname, '../../../dist'), // From /app/server/dist/src -> /app/dist
-    path.join(__dirname, '../../dist'), // Fallback
-  ];
+  frontendDistPath = '/app/dist';
   
-  console.log(`[Server] __dirname: ${__dirname}`);
-  console.log(`[Server] Checking frontend paths: ${possiblePaths.join(', ')}`);
-  logger.info(`[Server] __dirname: ${__dirname}`);
-  logger.info(`[Server] Checking frontend paths: ${possiblePaths.join(', ')}`);
+  console.log(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
+  logger.info(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
   
-  // Find the first path that exists and has index.html
-  const found = possiblePaths.find(p => {
-    try {
-      const exists = fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'));
-      console.log(`[Server] Checking: ${p} - ${exists ? '✓ EXISTS' : '✗ NOT FOUND'}`);
-      logger.info(`[Server] Checking: ${p} - ${exists ? '✓ EXISTS' : '✗ NOT FOUND'}`);
-      return exists;
-    } catch (e) {
-      console.log(`[Server] Error checking ${p}: ${e}`);
-      logger.error(`[Server] Error checking ${p}: ${e}`);
-      return false;
-    }
-  });
-  
-  if (found) {
-    frontendDistPath = found;
-    console.log(`[Server] ✓ Using frontend path: ${frontendDistPath}`);
-    logger.info(`[Server] ✓ Using frontend path: ${frontendDistPath}`);
+  // Verify it exists
+  if (fs.existsSync(frontendDistPath)) {
     const indexPath = path.join(frontendDistPath, 'index.html');
-    console.log(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
-    logger.info(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
+    if (fs.existsSync(indexPath)) {
+      console.log(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
+      logger.info(`[Server] ✓ Frontend index.html confirmed at: ${indexPath}`);
+    } else {
+      console.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
+      logger.error(`[Server] ✗ Frontend index.html NOT found at: ${indexPath}`);
+    }
   } else {
-    frontendDistPath = '/app/dist'; // Fallback to expected location
-    console.error(`[Server] ✗ Frontend not found in any checked paths! Using fallback: ${frontendDistPath}`);
-    logger.error(`[Server] ✗ Frontend not found in any checked paths! Using fallback: ${frontendDistPath}`);
+    console.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
+    logger.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
   }
   } else {
     // Development: frontend is at project root /dist
@@ -689,7 +679,15 @@ if (process.env.NODE_ENV === 'production') {
   }
 
 // Store globally for test route and ensure it's set
-(global as any).frontendDistPath = frontendDistPath;
+try {
+  (global as any).frontendDistPath = frontendDistPath;
+  console.log(`[Server] ✓ Stored frontend dist path globally: ${frontendDistPath}`);
+  logger.info(`[Server] ✓ Stored frontend dist path globally: ${frontendDistPath}`);
+} catch (e) {
+  console.error(`[Server] Error storing frontend dist path: ${e}`);
+  logger.error(`[Server] Error storing frontend dist path: ${e}`);
+}
+
 console.log(`[Server] Final frontend dist path: ${frontendDistPath}`);
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
