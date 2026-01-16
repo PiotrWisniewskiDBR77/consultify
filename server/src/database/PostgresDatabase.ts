@@ -766,13 +766,23 @@ export async function initDb(): Promise<void> {
                 IF NOT EXISTS(SELECT 1 FROM information_schema.columns 
                                WHERE table_name = 'tasks' AND column_name = 'organization_id') THEN
                     ALTER TABLE tasks ADD COLUMN organization_id TEXT;
-                    -- Add foreign key constraint if organizations table exists
+                    -- Add foreign key constraint if organizations table exists and constraint doesn't exist
                     IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'organizations') THEN
-                        ALTER TABLE tasks ADD CONSTRAINT tasks_organization_id_fkey 
-                            FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE;
+                        IF NOT EXISTS(
+                            SELECT 1 FROM information_schema.table_constraints 
+                            WHERE table_name = 'tasks' 
+                            AND constraint_name = 'tasks_organization_id_fkey'
+                        ) THEN
+                            ALTER TABLE tasks ADD CONSTRAINT tasks_organization_id_fkey 
+                                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE;
+                        END IF;
                     END IF;
                 END IF;
             END IF;
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Ignore errors (column or constraint may already exist)
+                NULL;
         END $$;
         `).catch((err: Error | null) => {
       logger.info('[Postgres] Tasks organization_id column migration skipped (may already exist)');
@@ -941,8 +951,10 @@ export async function initDb(): Promise<void> {
     }
     
     await query(`CREATE INDEX IF NOT EXISTS idx_invitations_email ON invitations(email)`);
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`,
+      [],
+      'Skipping organization_id status index on invitations'
     );
     // Create index on project_id only if column exists
     await querySafe(
@@ -1595,9 +1607,15 @@ export async function initDb(): Promise<void> {
     logger.info('[Postgres] Verifying/Creating Indexes...');
 
     // Users & Auth
-    await query(`CREATE INDEX IF NOT EXISTS idx_users_org ON users(organization_id)`);
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_users_org_status ON users(organization_id, status)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_users_org ON users(organization_id)`,
+      [],
+      'Skipping organization_id index on users'
+    );
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_users_org_status ON users(organization_id, status)`,
+      [],
+      'Skipping organization_id status index on users'
     );
     await query(`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)`);
     // Create index on project_id only if column exists
@@ -1609,16 +1627,26 @@ export async function initDb(): Promise<void> {
     await query(`CREATE INDEX IF NOT EXISTS idx_revoked_tokens_user ON revoked_tokens(user_id)`);
 
     // Teams & Access
-    await query(`CREATE INDEX IF NOT EXISTS idx_teams_org ON teams(organization_id)`);
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_teams_org ON teams(organization_id)`,
+      [],
+      'Skipping organization_id index on teams'
+    );
     await query(`CREATE INDEX IF NOT EXISTS idx_teams_lead ON teams(lead_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_invitations_inviter ON invitations(invited_by)`);
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_access_requests_org ON access_requests(organization_id)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_access_requests_org ON access_requests(organization_id)`,
+      [],
+      'Skipping organization_id index on access_requests'
     );
     await query(
       `CREATE INDEX IF NOT EXISTS idx_access_requests_reviewer ON access_requests(reviewed_by)`
     );
-    await query(`CREATE INDEX IF NOT EXISTS idx_access_codes_org ON access_codes(organization_id)`);
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_access_codes_org ON access_codes(organization_id)`,
+      [],
+      'Skipping organization_id index on access_codes'
+    );
     await query(`CREATE INDEX IF NOT EXISTS idx_access_codes_creator ON access_codes(created_by)`);
     await query(
       `CREATE INDEX IF NOT EXISTS idx_access_code_usage_code ON access_code_usage(code_id)`
@@ -1662,11 +1690,15 @@ export async function initDb(): Promise<void> {
 
     // System Activities & Logs
     await query(`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)`);
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_activity_logs_org ON activity_logs(organization_id)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_activity_logs_org ON activity_logs(organization_id)`,
+      [],
+      'Skipping organization_id index on activity_logs'
     );
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_activity_logs_org_time ON activity_logs(organization_id, created_at DESC)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_activity_logs_org_time ON activity_logs(organization_id, created_at DESC)`,
+      [],
+      'Skipping organization_id time index on activity_logs'
     );
     await query(`CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id)`);
     await query(
@@ -1675,22 +1707,38 @@ export async function initDb(): Promise<void> {
     await query(`CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id)`);
 
     // AI & Customizations
-    await query(`CREATE INDEX IF NOT EXISTS idx_ai_feedback_org ON ai_feedback(organization_id)`);
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_ai_feedback_org ON ai_feedback(organization_id)`,
+      [],
+      'Skipping organization_id index on ai_feedback'
+    );
     await query(`CREATE INDEX IF NOT EXISTS idx_ai_feedback_user ON ai_feedback(user_id)`);
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_custom_prompts_org ON custom_prompts(organization_id)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_custom_prompts_org ON custom_prompts(organization_id)`,
+      [],
+      'Skipping organization_id index on custom_prompts'
     );
     await query(
       `CREATE INDEX IF NOT EXISTS idx_custom_prompts_creator ON custom_prompts(created_by)`
     );
-    await query(`CREATE INDEX IF NOT EXISTS idx_webhooks_org ON webhooks(organization_id)`);
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_webhooks_org ON webhooks(organization_id)`,
+      [],
+      'Skipping organization_id index on webhooks'
+    );
     await query(`CREATE INDEX IF NOT EXISTS idx_webhooks_creator ON webhooks(created_by)`);
 
     // Core Modules
-    await query(`CREATE INDEX IF NOT EXISTS idx_initiatives_org ON initiatives(organization_id)`);
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_initiatives_org ON initiatives(organization_id)`,
+      [],
+      'Skipping organization_id index on initiatives'
+    );
     await query(`CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_doc ON knowledge_chunks(doc_id)`);
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_usage_records_org_time ON usage_records(organization_id, recorded_at)`
+    await querySafe(
+      `CREATE INDEX IF NOT EXISTS idx_usage_records_org_time ON usage_records(organization_id, recorded_at)`,
+      [],
+      'Skipping organization_id time index on usage_records'
     );
 
     logger.info('[Postgres] Schema Check Complete.');
