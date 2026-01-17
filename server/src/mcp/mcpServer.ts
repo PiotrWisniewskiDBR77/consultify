@@ -585,7 +585,7 @@ const MCPServer = {
     const params = [userId];
 
     if (unreadOnly) {
-      sql += ` AND is_read = 0`;
+      sql += ` AND read = 0`;
     }
 
     sql += ` ORDER BY created_at DESC LIMIT ?`;
@@ -730,7 +730,7 @@ const MCPServer = {
   _getUnreadNotifications: async (userId) => {
     return new Promise((resolve, reject) => {
       db.all(
-        `SELECT * FROM notifications WHERE user_id = ? AND is_read = 0 ORDER BY created_at DESC`,
+        `SELECT * FROM notifications WHERE user_id = ? AND read = 0 ORDER BY created_at DESC`,
         [userId],
         (err, rows) => {
           if (err) return reject(err);

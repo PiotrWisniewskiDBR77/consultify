@@ -2,7 +2,8 @@ import SignalEngine from './signalEngine.js';
 import RecommendationEngine from './recommendationEngine.js';
 import SimulationEngine from './simulationEngine.js';
 import ActionProposalMapper from './actionProposalMapper.js';
-const PolicyEngine = await import('./policyEngine.js');
+// PolicyEngine is imported lazily if needed in the future
+// const PolicyEngine = await import('./policyEngine.js');
 import * as auditLogger from '../utils/auditLogger.js';
 import { getDatabase } from '../database/index.js';
 const db = getDatabase();

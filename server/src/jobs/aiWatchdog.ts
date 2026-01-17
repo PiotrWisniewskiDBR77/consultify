@@ -399,7 +399,7 @@ const AIWatchdog = {
               `
                         INSERT INTO notifications (
                             id, user_id, organization_id, type, title, message,
-                            entity_type, entity_id, action_url, is_read, created_at
+                            entity_type, entity_id, action_url, read, created_at
                         ) VALUES (?, ?, ?, 'ai_alert', ?, ?, 'alert', ?, ?, 0, CURRENT_TIMESTAMP)
                     `,
               [
@@ -627,7 +627,7 @@ const AIWatchdog = {
               `
                         INSERT INTO notifications (
                             id, user_id, organization_id, type, title, message,
-                            entity_type, entity_id, is_read, created_at
+                            entity_type, entity_id, read, created_at
                         ) VALUES (?, ?, ?, 'escalation', ?, ?, 'alert', ?, 0, CURRENT_TIMESTAMP)
                     `,
               [

@@ -45,12 +45,19 @@ interface AIOrchestratorInterface {
 // Dynamic import for AIOrchestrator (may not be migrated yet)
 let AIOrchestrator: any = null;
 
-try {
-  const orchestratorModule = (await import('../services/aiOrchestrator.js')) as any;
-  AIOrchestrator = orchestratorModule.default || orchestratorModule;
-} catch {
-  logger.warn('[Agents Routes] AIOrchestrator not available');
-}
+// Lazy load AIOrchestrator to avoid top-level await issues
+const getAIOrchestrator = async () => {
+  if (!AIOrchestrator) {
+    try {
+      const orchestratorModule = (await import('../services/aiOrchestrator.js')) as any;
+      AIOrchestrator = orchestratorModule.default || orchestratorModule;
+    } catch (error) {
+      logger.warn('[Agents Routes] AIOrchestrator not available:', error);
+      AIOrchestrator = null;
+    }
+  }
+  return AIOrchestrator;
+};
 
 /**
  * POST /api/agents/query
@@ -60,7 +67,8 @@ router.post(
   '/query',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AIOrchestrator?.processMessageWithAgents) {
+    const orchestrator = await getAIOrchestrator();
+    if (!orchestrator?.processMessageWithAgents) {
       return res.status(503).json({ error: 'AI Orchestrator not available' });
     }
 
@@ -77,7 +85,7 @@ router.post(
         return res.status(400).json({ error: 'Message is required' });
       }
 
-      const result = (await AIOrchestrator.processMessageWithAgents(
+      const result = (await orchestrator.processMessageWithAgents(
         message,
         userId,
         organizationId,
@@ -107,7 +115,8 @@ router.post(
   '/query/:domain',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AIOrchestrator?.querySpecialistAgent) {
+    const orchestrator = await getAIOrchestrator();
+    if (!orchestrator?.querySpecialistAgent) {
       return res.status(503).json({ error: 'AI Orchestrator not available' });
     }
 
@@ -132,7 +141,7 @@ router.post(
         });
       }
 
-      const result = await AIOrchestrator.querySpecialistAgent(
+      const result = await orchestrator.querySpecialistAgent(
         domain,
         message,
         userId,
@@ -158,7 +167,8 @@ router.post(
   '/recommendations',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AIOrchestrator?.getMultiAgentRecommendations) {
+    const orchestrator = await getAIOrchestrator();
+    if (!orchestrator?.getMultiAgentRecommendations) {
       return res.status(503).json({ error: 'AI Orchestrator not available' });
     }
 
@@ -175,7 +185,7 @@ router.post(
         return res.status(400).json({ error: 'Topic is required' });
       }
 
-      const recommendations = await AIOrchestrator.getMultiAgentRecommendations(
+      const recommendations = await orchestrator.getMultiAgentRecommendations(
         topic,
         userId,
         organizationId,
@@ -200,12 +210,13 @@ router.get(
   '/',
   verifyToken,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    if (!AIOrchestrator?.getAvailableAgents) {
+    const orchestrator = await getAIOrchestrator();
+    if (!orchestrator?.getAvailableAgents) {
       return res.status(503).json({ error: 'AI Orchestrator not available' });
     }
 
     try {
-      const agents = AIOrchestrator.getAvailableAgents();
+      const agents = orchestrator.getAvailableAgents();
       return res.json({ agents });
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting agents:', error);
@@ -225,12 +236,13 @@ router.get(
   verifyToken,
   verifyAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
-    if (!AIOrchestrator?.getAgentMetrics) {
+    const orchestrator = await getAIOrchestrator();
+    if (!orchestrator?.getAgentMetrics) {
       return res.status(503).json({ error: 'AI Orchestrator not available' });
     }
 
     try {
-      const metrics = AIOrchestrator.getAgentMetrics();
+      const metrics = orchestrator.getAgentMetrics();
       return res.json(metrics);
     } catch (error: unknown) {
       logger.error('[Agents API] Error getting metrics:', error);
@@ -249,7 +261,8 @@ router.post(
   '/analyze-initiative',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AIOrchestrator?.processMessageWithAgents) {
+    const orchestrator = await getAIOrchestrator();
+    if (!orchestrator?.processMessageWithAgents) {
       return res.status(503).json({ error: 'AI Orchestrator not available' });
     }
 
@@ -268,7 +281,7 @@ router.post(
 
       const query = `Analyze initiative ${initiativeId} from the following perspectives: ${aspects.join(', ')}. Provide comprehensive assessment including strategic fit, financial viability, key risks, and implementation considerations.`;
 
-      const result = await AIOrchestrator.processMessageWithAgents(
+      const result = await orchestrator.processMessageWithAgents(
         query,
         userId,
         organizationId,
@@ -300,7 +313,8 @@ router.post(
   '/strategic-review',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!AIOrchestrator?.processMessageWithAgents) {
+    const orchestrator = await getAIOrchestrator();
+    if (!orchestrator?.processMessageWithAgents) {
       return res.status(503).json({ error: 'AI Orchestrator not available' });
     }
 
@@ -321,7 +335,7 @@ router.post(
         ? `Conduct a strategic review focusing on: ${focus}. Include perspectives from strategy, finance, risk management, change management, and PMO.`
         : `Conduct a comprehensive strategic review of this project. Assess strategic alignment, financial health, key risks, change readiness, and execution status.`;
 
-      const result = await AIOrchestrator.processMessageWithAgents(
+      const result = await orchestrator.processMessageWithAgents(
         query,
         userId,
         organizationId,

@@ -1376,10 +1376,10 @@ router.get(
 
       // Fetch all unread notifications of signal types
       const signals = await dbAll(`
-                SELECT id, user_id, type, title, message, severity, created_at, is_read, data
+                SELECT id, user_id, type, title, message, severity, created_at, read, data
                 FROM notifications
                 WHERE type IN ('SYSTEM_ALERT', 'CLIENT_TICKET', 'USER_FEEDBACK')
-                AND is_read = 0
+                AND read = 0
                 ORDER BY 
                     CASE severity 
                         WHEN 'CRITICAL' THEN 1 

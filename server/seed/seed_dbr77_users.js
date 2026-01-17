@@ -19,15 +19,22 @@ dotenv.config();
 const isPostgres = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres');
 
 let db;
-if (isPostgres) {
-  const { Pool } = await import('pg');
-  db = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  });
-} else {
-  const dbModule = await import('../database/index.js');
-  db = dbModule.default || dbModule;
+async function initializeDatabase() {
+  try {
+    if (isPostgres) {
+      const { Pool } = await import('pg');
+      db = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+      });
+    } else {
+      const dbModule = await import('../database/index.js');
+      db = dbModule.default || dbModule;
+    }
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    throw error;
+  }
 }
 
 // ============================================================
@@ -93,6 +100,10 @@ async function seedDBR77Users() {
   console.log(`   Database: ${isPostgres ? 'PostgreSQL' : 'SQLite'}\n`);
 
   try {
+    // Initialize database connection if not already initialized
+    if (!db) {
+      await initializeDatabase();
+    }
     // 1. Find DBR77 organization (try ID first, then name)
     let org = await dbGet(`SELECT id FROM organizations WHERE id = 'dbr77' LIMIT 1`);
     if (!org) {
@@ -164,7 +175,9 @@ async function seedDBR77Users() {
 
 // Run
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seedDBR77Users()
+  // Initialize database first, then run seed
+  initializeDatabase()
+    .then(() => seedDBR77Users())
     .then(() => {
       console.log('\n🎉 Done!');
       process.exit(0);

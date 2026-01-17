@@ -160,7 +160,7 @@ class NotificationService {
     const params: (string | number)[] = [userId];
 
     if (options?.unreadOnly) {
-      query += ` AND is_read = 0`;
+      query += ` AND read = 0`;
     }
 
     if (options?.type) {
@@ -194,7 +194,7 @@ class NotificationService {
       action_url: string;
       actor_id: string;
       actor_name: string;
-      is_read: number;
+      read: number;
       read_at: string;
       created_at: string;
     }>(query, params);
@@ -213,7 +213,7 @@ class NotificationService {
       actionUrl: r.action_url,
       actorId: r.actor_id,
       actorName: r.actor_name,
-      isRead: r.is_read === 1,
+      isRead: r.read === 1,
       readAt: r.read_at,
       createdAt: r.created_at,
     }));
@@ -226,7 +226,7 @@ class NotificationService {
     const db = await this.getDb();
 
     const result = await db.get<{ count: number }>(
-      `SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0`,
+      `SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND read = 0`,
       [userId]
     );
 
@@ -248,7 +248,7 @@ class NotificationService {
     const db = await this.getDb();
     const now = new Date().toISOString();
 
-    await db.run(`UPDATE notifications SET is_read = 1, read_at = ? WHERE id = ? AND user_id = ?`, [
+    await db.run(`UPDATE notifications SET read = 1, read_at = ? WHERE id = ? AND user_id = ?`, [
       now,
       notificationId,
       userId,
@@ -263,7 +263,7 @@ class NotificationService {
     const now = new Date().toISOString();
 
     const result = await db.run(
-      `UPDATE notifications SET is_read = 1, read_at = ? WHERE user_id = ? AND is_read = 0`,
+      `UPDATE notifications SET read = 1, read_at = ? WHERE user_id = ? AND read = 0`,
       [now, userId]
     );
 

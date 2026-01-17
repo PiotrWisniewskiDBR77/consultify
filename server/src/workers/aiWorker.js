@@ -1,35 +1,49 @@
 import { Worker } from 'bullmq';
 import redisConfig from '../config/QueueConfig.js';
-const AiService = await import('../services/aiService.js');
 import AsyncJobProcessor from './asyncJobProcessor.js';
 
 const workerName = 'ai-tasks-worker';
+
+// Lazy load AiService to avoid top-level await issues
+let AiService = null;
+const getAiService = async () => {
+  if (!AiService) {
+    try {
+      AiService = await import('../services/aiService.js');
+    } catch (error) {
+      console.error(`[${workerName}] Failed to load AiService:`, error);
+      throw new Error(`Failed to load AiService: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  return AiService;
+};
 
 const processor = async (job) => {
   console.log(`[${workerName}] Processing job ${job.id} of type ${job.name}`);
   const { taskType, payload, userId } = job.data;
 
   try {
+    const aiService = await getAiService();
     let result;
     switch (taskType) {
       case 'generate_initiatives':
-        result = await AiService.generateInitiatives(payload.diagnosisReport, userId);
+        result = await aiService.generateInitiatives(payload.diagnosisReport, userId);
         break;
       case 'build_roadmap':
-        result = await AiService.buildRoadmap(payload.initiatives, userId);
+        result = await aiService.buildRoadmap(payload.initiatives, userId);
         break;
       case 'simulate_economics':
-        result = await AiService.simulateEconomics(
+        result = await aiService.simulateEconomics(
           payload.initiatives,
           payload.revenueBase,
           userId
         );
         break;
       case 'suggest_tasks':
-        result = await AiService.suggestTasks(payload.initiativeContext, userId);
+        result = await aiService.suggestTasks(payload.initiativeContext, userId);
         break;
       case 'validate_initiative':
-        result = await AiService.validateInitiative(payload.initiativeContext, userId);
+        result = await aiService.validateInitiative(payload.initiativeContext, userId);
         break;
       // Step 11: Async Job Types
       case 'EXECUTE_DECISION':
