@@ -9,7 +9,7 @@
 import { NextFunction, Request, Response } from 'express';
 import * as fs from 'fs';
 
-import usageService from '../../services/usageService.js';
+import usageService from '../services/usageService.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
