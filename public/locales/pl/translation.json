@@ -4348,12 +4348,53 @@
       }
     },
     "sidePanel": {
+      "title": "Centrum Pomocy",
+      "fullDocs": "Pełna Dokumentacja",
       "tabs": {
-        "ai": "Asystent AI",
         "overview": "Przegląd",
-        "howto": "Instrukcja",
         "faq": "FAQ",
-        "video": "Wideo"
+        "knowledge": "Baza Wiedzy"
+      },
+      "overview": {
+        "title": "Witaj w Consultinity",
+        "intro": "Twoja kompletna platforma PMO do transformacji cyfrowej. Oceń, zaplanuj i śledź podróż swojej organizacji do cyfrowej doskonałości dzięki wglądom opartym na AI i sprawdzonym metodologiom.",
+        "watchVideo": "Obejrzyj film wprowadzający",
+        "videoDuration": "3 min przeglądu",
+        "guides": "Szybkie przewodniki",
+        "guidesList": {
+          "gettingStarted": "Pierwsze kroki",
+          "assessment": "Jak przeprowadzić ocenę",
+          "initiatives": "Zarządzanie inicjatywami",
+          "reports": "Tworzenie raportów",
+          "aiFeatures": "Przewodnik po funkcjach AI"
+        },
+        "whatToKnow": "Co warto wiedzieć",
+        "tip1": "Zacznij od oceny, aby zrozumieć swoją dojrzałość cyfrową",
+        "tip2": "Wykorzystaj wglądy AI do priorytetyzacji inicjatyw",
+        "tip3": "Śledź postępy za pomocą dashboardów i raportów w czasie rzeczywistym"
+      },
+      "faq": {
+        "searchPlaceholder": "Szukaj pytań...",
+        "noResults": "Nie znaleziono pasujących pytań.",
+        "noFAQ": "Brak dostępnych FAQ."
+      },
+      "knowledge": {
+        "title": "Baza Wiedzy",
+        "description": "Kompleksowe zasoby dotyczące narzędzi transformacji cyfrowej, metodologii i najlepszych praktyk.",
+        "comingSoon": "Wkrótce",
+        "categories": {
+          "tools": "Narzędzia transformacji cyfrowej",
+          "methodologies": "Metodologie (DRD, SIRI, Lean)",
+          "caseStudies": "Studia przypadków",
+          "bestPractices": "Najlepsze praktyki"
+        },
+        "notify": {
+          "title": "Otrzymaj powiadomienie gdy będzie gotowa",
+          "placeholder": "Twój email",
+          "button": "Powiadom mnie",
+          "success": "Powiadomimy Cię, gdy Baza Wiedzy będzie gotowa!",
+          "description": "Otrzymaj email, gdy nasza kompleksowa baza wiedzy z narzędziami, metodologiami i studiami przypadków będzie gotowa."
+        }
       },
       "modules": {
         "dashboard": {
