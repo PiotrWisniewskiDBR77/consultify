@@ -21,8 +21,8 @@ import {
   UserX,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { cn } from '../../utils/cn';
@@ -98,7 +98,7 @@ export const ClientAccessView: React.FC = () => {
   const handleGetAccessLink = useCallback(async () => {
     try {
       setGeneratingLink(true);
-      const response = await Api.post('/api/partners/access-links');
+      const response = await Api.post('/api/partners/access-links', {});
       if (response?.data?.success && response?.data?.data?.link) {
         setAccessLink(response.data.data.link);
         toast.success(t('partner.clientAccess.linkGenerated', 'Access link generated!'));

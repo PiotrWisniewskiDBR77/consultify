@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Api } from '@/services/api';
+
 import { KeyboardShortcuts, ShortcutAction, ShortcutPreset } from '../types';
 
 // Default keyboard shortcuts

@@ -4,7 +4,8 @@
  * Enforces token and storage quotas before allowing API requests
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
+
 import usageService from '../services/usageService.js';
 
 interface QuotaInfo {
@@ -213,10 +214,10 @@ async function recordStorageAfterUpload(
 }
 
 export {
-  enforceTokenQuota,
   enforceStorageQuota,
-  recordTokenUsageAfterResponse,
+  enforceTokenQuota,
   recordStorageAfterUpload,
+  recordTokenUsageAfterResponse,
 };
 
 export default {

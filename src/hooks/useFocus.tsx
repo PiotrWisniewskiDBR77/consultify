@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
 import type { FocusBoard, FocusSuggestion, FocusTask, TimeBlock } from '../types/myWork';
 
 interface UseFocusOptions {

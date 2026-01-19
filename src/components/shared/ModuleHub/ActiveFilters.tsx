@@ -32,7 +32,7 @@ export const ActiveFilters: React.FC<ActiveFiltersProps> = ({
   return (
     <div className="flex items-center gap-2 px-4 py-2 bg-navy-900/50 border-b border-navy-700">
       <span className="text-xs text-slate-500 uppercase tracking-wider">Filters:</span>
-      
+
       <div className="flex items-center gap-2 flex-wrap">
         {filters.map((filter) => (
           <div

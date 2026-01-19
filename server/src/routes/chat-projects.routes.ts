@@ -5,9 +5,10 @@
  * CRUD routes for managing chat projects (folders/categories).
  * Allows organizing conversations into projects like Claude AI or OpenAI's project feature.
  */
-import { Router, Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
 

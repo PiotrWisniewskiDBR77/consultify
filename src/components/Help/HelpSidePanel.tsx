@@ -2,11 +2,13 @@
  * Help Side Panel
  *
  * A sliding panel that displays contextual help documentation.
- * Contains 4 tabs: Overview, How to Use, FAQ, Video tutorials.
+ * Contains 3 tabs: AI Assistant, Overview, FAQ (styled like FeedbackSidePanel)
  * Content is dynamically loaded based on current view.
  *
  * Features:
- * - Context breadcrumb showing current module/card
+ * - AI Assistant with context-aware quick prompts
+ * - Overview combining purpose, features, workflow, tips and videos
+ * - FAQ with default questions for all modules
  * - Related modules quick links
  * - Video progress tracking (localStorage)
  * - Search highlighting for FAQs
@@ -45,13 +47,11 @@ import { useTranslation } from 'react-i18next';
 import { getModuleHelp } from '../../config/moduleHelpContent';
 import { HelpTab, useHelpSidePanel } from '../../contexts/HelpContext';
 
-// Tab configuration
-const TABS: { id: HelpTab; labelKey: string; icon: React.ReactNode }[] = [
-  { id: 'ai', labelKey: 'help.sidePanel.tabs.ai', icon: <Bot size={16} /> },
-  { id: 'overview', labelKey: 'help.sidePanel.tabs.overview', icon: <BookOpen size={16} /> },
-  { id: 'howto', labelKey: 'help.sidePanel.tabs.howto', icon: <Lightbulb size={16} /> },
-  { id: 'faq', labelKey: 'help.sidePanel.tabs.faq', icon: <HelpCircle size={16} /> },
-  { id: 'video', labelKey: 'help.sidePanel.tabs.video', icon: <PlayCircle size={16} /> },
+// Tab configuration - simplified to 3 tabs like Feedback panel
+const TABS: { id: HelpTab; icon: typeof Bot; label: string; labelKey: string }[] = [
+  { id: 'ai', icon: Bot, label: 'AI Assistant', labelKey: 'help.sidePanel.tabs.ai' },
+  { id: 'overview', icon: BookOpen, label: 'Overview', labelKey: 'help.sidePanel.tabs.overview' },
+  { id: 'faq', icon: HelpCircle, label: 'FAQ', labelKey: 'help.sidePanel.tabs.faq' },
 ];
 
 // Dynamic icon component
@@ -260,11 +260,159 @@ interface AIMessage {
   content: string;
 }
 
-const QUICK_PROMPTS = [
-  { key: 'howto', icon: <Lightbulb size={14} />, labelKey: 'help.ai.quick.howto' },
-  { key: 'explain', icon: <Info size={14} />, labelKey: 'help.ai.quick.explain' },
-  { key: 'troubleshoot', icon: <HelpCircle size={14} />, labelKey: 'help.ai.quick.troubleshoot' },
-];
+// Dynamic quick prompts based on module context
+const getQuickPromptsForModule = (moduleId: string, t: any) => {
+  // Module-specific prompts
+  const modulePrompts: Record<
+    string,
+    { key: string; icon: React.ReactNode; label: string; prompt: string }[]
+  > = {
+    dashboard: [
+      {
+        key: 'metrics',
+        icon: <Target size={14} />,
+        label: t('help.ai.quick.metrics', 'Explain my metrics'),
+        prompt: 'What do the metrics on my dashboard mean and how can I improve them?',
+      },
+      {
+        key: 'actions',
+        icon: <ArrowRight size={14} />,
+        label: t('help.ai.quick.nextSteps', 'What should I do next?'),
+        prompt: 'Based on my dashboard, what should I focus on next?',
+      },
+      {
+        key: 'help',
+        icon: <HelpCircle size={14} />,
+        label: t('help.ai.quick.troubleshoot', 'Help me troubleshoot'),
+        prompt: "I'm having trouble understanding my dashboard. Can you help?",
+      },
+    ],
+    assessment: [
+      {
+        key: 'framework',
+        icon: <BookOpen size={14} />,
+        label: t('help.ai.quick.framework', 'Which framework?'),
+        prompt: 'Which assessment framework should I use for my organization?',
+      },
+      {
+        key: 'interpret',
+        icon: <Eye size={14} />,
+        label: t('help.ai.quick.interpret', 'Interpret results'),
+        prompt: 'How do I interpret my assessment results and what do the scores mean?',
+      },
+      {
+        key: 'improve',
+        icon: <Target size={14} />,
+        label: t('help.ai.quick.improve', 'How to improve?'),
+        prompt: 'Based on my assessment, what areas should I prioritize for improvement?',
+      },
+    ],
+    initiatives: [
+      {
+        key: 'create',
+        icon: <Sparkles size={14} />,
+        label: t('help.ai.quick.create', 'Create initiative'),
+        prompt: 'How do I create a new initiative and what information do I need?',
+      },
+      {
+        key: 'stagegate',
+        icon: <CheckCircle2 size={14} />,
+        label: t('help.ai.quick.stagegate', 'Stage gates'),
+        prompt: 'Explain how stage gates work and how to move initiatives through them.',
+      },
+      {
+        key: 'track',
+        icon: <Info size={14} />,
+        label: t('help.ai.quick.track', 'Track progress'),
+        prompt: 'How can I effectively track and report on initiative progress?',
+      },
+    ],
+    reports: [
+      {
+        key: 'create',
+        icon: <Sparkles size={14} />,
+        label: t('help.ai.quick.createReport', 'Create report'),
+        prompt: 'How do I create a custom report and what data can I include?',
+      },
+      {
+        key: 'share',
+        icon: <ExternalLink size={14} />,
+        label: t('help.ai.quick.share', 'Share reports'),
+        prompt: 'How can I share reports with external stakeholders securely?',
+      },
+      {
+        key: 'template',
+        icon: <BookOpen size={14} />,
+        label: t('help.ai.quick.template', 'Use templates'),
+        prompt: 'What report templates are available and how do I use them?',
+      },
+    ],
+    settings: [
+      {
+        key: 'notifications',
+        icon: <Info size={14} />,
+        label: t('help.ai.quick.notifications', 'Notifications'),
+        prompt: 'How do I configure my notification preferences?',
+      },
+      {
+        key: 'security',
+        icon: <HelpCircle size={14} />,
+        label: t('help.ai.quick.security', 'Security settings'),
+        prompt: 'What security settings should I enable for my account?',
+      },
+      {
+        key: 'integrations',
+        icon: <Link2 size={14} />,
+        label: t('help.ai.quick.integrations', 'Integrations'),
+        prompt: 'What integrations are available and how do I set them up?',
+      },
+    ],
+    admin: [
+      {
+        key: 'invite',
+        icon: <Users size={14} />,
+        label: t('help.ai.quick.invite', 'Invite team'),
+        prompt: 'How do I invite team members and manage their access?',
+      },
+      {
+        key: 'roles',
+        icon: <HelpCircle size={14} />,
+        label: t('help.ai.quick.roles', 'Manage roles'),
+        prompt: 'What are the different user roles and their permissions?',
+      },
+      {
+        key: 'billing',
+        icon: <Info size={14} />,
+        label: t('help.ai.quick.billing', 'Billing help'),
+        prompt: 'How do I manage billing, subscriptions, and view invoices?',
+      },
+    ],
+  };
+
+  // Default prompts for unknown modules
+  const defaultPrompts = [
+    {
+      key: 'howto',
+      icon: <Lightbulb size={14} />,
+      label: t('help.ai.quick.howto', 'How do I use this module?'),
+      prompt: `How do I use the ${moduleId} module effectively?`,
+    },
+    {
+      key: 'explain',
+      icon: <Info size={14} />,
+      label: t('help.ai.quick.explain', 'Explain what I can do here'),
+      prompt: `What can I do in the ${moduleId} module and what are its main features?`,
+    },
+    {
+      key: 'troubleshoot',
+      icon: <HelpCircle size={14} />,
+      label: t('help.ai.quick.troubleshoot', 'Help me troubleshoot an issue'),
+      prompt: `I'm having trouble with ${moduleId}. Can you help me troubleshoot?`,
+    },
+  ];
+
+  return modulePrompts[moduleId] || defaultPrompts;
+};
 
 const AIHelpChat: React.FC<{ moduleId: string }> = ({ moduleId }) => {
   const { t } = useTranslation();
@@ -272,6 +420,9 @@ const AIHelpChat: React.FC<{ moduleId: string }> = ({ moduleId }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  // Get dynamic quick prompts for current module
+  const quickPrompts = useMemo(() => getQuickPromptsForModule(moduleId, t), [moduleId, t]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -334,16 +485,8 @@ const AIHelpChat: React.FC<{ moduleId: string }> = ({ moduleId }) => {
     }
   };
 
-  const handleQuickPrompt = (key: string) => {
-    const prompts: Record<string, string> = {
-      howto: t('help.ai.prompts.howto', `How do I use the ${moduleId} module?`),
-      explain: t('help.ai.prompts.explain', `Explain what I can do in the ${moduleId} module.`),
-      troubleshoot: t(
-        'help.ai.prompts.troubleshoot',
-        `I'm having trouble with ${moduleId}. Can you help?`
-      ),
-    };
-    sendMessage(prompts[key] || prompts.howto);
+  const handleQuickPrompt = (prompt: string) => {
+    sendMessage(prompt);
   };
 
   return (
@@ -370,14 +513,14 @@ const AIHelpChat: React.FC<{ moduleId: string }> = ({ moduleId }) => {
               <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
                 {t('help.ai.quick.label', 'Quick questions:')}
               </p>
-              {QUICK_PROMPTS.map((prompt) => (
+              {quickPrompts.map((prompt) => (
                 <button
                   key={prompt.key}
-                  onClick={() => handleQuickPrompt(prompt.key)}
+                  onClick={() => handleQuickPrompt(prompt.prompt)}
                   className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 text-left text-sm text-slate-600 dark:text-slate-300 transition-colors"
                 >
                   <span className="text-violet-500">{prompt.icon}</span>
-                  {t(prompt.labelKey, prompt.key)}
+                  {prompt.label}
                 </button>
               ))}
             </div>
@@ -532,20 +675,20 @@ export const HelpSidePanel: React.FC = () => {
           </button>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - styled like FeedbackSidePanel */}
         <div className="flex border-b border-slate-200 dark:border-navy-700 px-2 shrink-0">
-          {TABS.map((tab) => (
+          {TABS.map(({ id, icon: Icon, label, labelKey }) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              key={id}
+              onClick={() => setActiveTab(id)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all border-b-2 ${
-                activeTab === tab.id
+                activeTab === id
                   ? 'border-purple-500 text-purple-600 dark:text-purple-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              {tab.icon}
-              <span>{t(tab.labelKey)}</span>
+              <Icon size={14} />
+              {t(labelKey, label)}
             </button>
           ))}
         </div>
@@ -573,126 +716,170 @@ export const HelpSidePanel: React.FC = () => {
           {/* AI Assistant Tab */}
           {activeTab === 'ai' && <AIHelpChat moduleId={help.moduleId} />}
 
-          {/* Overview Tab */}
-          {activeTab === 'overview' && moduleHelp && moduleHelp.translationKey && (
+          {/* Overview Tab - Combined with How to Use and Videos */}
+          {activeTab === 'overview' && (
             <div className="space-y-5">
+              {/* Module Title */}
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                {moduleHelp?.translationKey
+                  ? t(
+                      `${moduleHelp.translationKey}.name`,
+                      moduleHelp?.title ||
+                        t('help.sidePanel.content.welcome', 'Welcome to Consultinity')
+                    )
+                  : moduleHelp?.title ||
+                    t('help.sidePanel.content.welcome', 'Welcome to Consultinity')}
+              </h3>
+
               {/* Description */}
-              <div>
+              {moduleHelp && (
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {moduleHelp.translationKey
                     ? t(`${moduleHelp.translationKey}.description`, moduleHelp.description)
                     : moduleHelp.description}
                 </p>
-              </div>
+              )}
 
               {/* Purpose */}
-              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target size={16} className="text-purple-600 dark:text-purple-400" />
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {t('help.sidePanel.content.purpose')}
-                  </h4>
+              {moduleHelp?.translationKey && (
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target size={16} className="text-purple-600 dark:text-purple-400" />
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {t('help.sidePanel.content.purpose', 'Purpose')}
+                    </h4>
+                  </div>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">
+                    {t(`${moduleHelp.translationKey}.purpose`, 'Purpose of this module')}
+                  </p>
                 </div>
-                <p className="text-sm text-slate-700 dark:text-slate-100">
-                  {moduleHelp.translationKey
-                    ? t(`${moduleHelp.translationKey}.purpose`, 'Purpose of this module')
-                    : 'Purpose of this module'}
-                </p>
-              </div>
+              )}
 
               {/* Target Audience */}
-              <div className="flex items-center gap-2">
-                <Users size={14} className="text-slate-400 dark:text-slate-500" />
-                <span className="text-xs text-slate-400 dark:text-slate-500">
-                  {t('help.sidePanel.audience.for')}
-                </span>
-                {(moduleHelp.targetAudience || []).map((audience: any) => {
-                  const badge = getAudienceBadge([audience]);
-                  return (
-                    <span
-                      key={audience}
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.color}`}
-                    >
-                      {badge.label}
-                    </span>
-                  );
-                })}
-              </div>
+              {moduleHelp?.targetAudience && moduleHelp.targetAudience.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Users size={14} className="text-slate-400 dark:text-slate-500" />
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                    {t('help.sidePanel.audience.for', 'For:')}
+                  </span>
+                  {moduleHelp.targetAudience.map((audience: any) => {
+                    const badge = getAudienceBadge([audience]);
+                    return (
+                      <span
+                        key={audience}
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.color}`}
+                      >
+                        {badge.label}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Key Features */}
-              <div>
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                  <Sparkles size={16} className="text-amber-500 dark:text-amber-400" />
-                  {t('help.sidePanel.content.keyFeatures')}
-                </h4>
-                <ul className="space-y-2">
-                  {(moduleHelp.translationKey
-                    ? getTranslatedArray(t, `${moduleHelp.translationKey}.keyFeatures`)
-                    : []
-                  ).map((feature, idx: number) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
-                    >
-                      <CheckCircle2
-                        size={14}
-                        className="text-emerald-500 dark:text-emerald-400 flex-shrink-0 mt-0.5"
-                      />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {moduleHelp?.translationKey && (
+                <div>
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    <Sparkles size={16} className="text-amber-500 dark:text-amber-400" />
+                    {t('help.sidePanel.content.keyFeatures', 'Key Features')}
+                  </h4>
+                  <ul className="space-y-2">
+                    {getTranslatedArray(t, `${moduleHelp.translationKey}.keyFeatures`).map(
+                      (feature, idx: number) => (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
+                        >
+                          <CheckCircle2
+                            size={14}
+                            className="text-emerald-500 dark:text-emerald-400 flex-shrink-0 mt-0.5"
+                          />
+                          {feature}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )}
 
-              {/* Workflow */}
-              <div>
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                  <Info size={16} className="text-blue-500 dark:text-blue-400" />
-                  {t('help.sidePanel.content.workflow')}
-                </h4>
-                <ol className="space-y-2">
-                  {(moduleHelp.translationKey
-                    ? getTranslatedArray(t, `${moduleHelp.translationKey}.workflow`)
-                    : []
-                  ).map((step, idx: number) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
-                    >
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        {idx + 1}
-                      </span>
-                      {step}
-                    </li>
-                  ))}
-                </ol>
-              </div>
+              {/* Workflow / How to Use */}
+              {moduleHelp?.translationKey && (
+                <div>
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    <Info size={16} className="text-blue-500 dark:text-blue-400" />
+                    {t('help.sidePanel.content.workflow', 'How to Use')}
+                  </h4>
+                  <ol className="space-y-2">
+                    {getTranslatedArray(t, `${moduleHelp.translationKey}.workflow`).map(
+                      (step, idx: number) => (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300"
+                        >
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            {idx + 1}
+                          </span>
+                          {step}
+                        </li>
+                      )
+                    )}
+                  </ol>
+                </div>
+              )}
 
               {/* Tips */}
-              <div className="bg-amber-500/10 border border-amber-400/30 rounded-lg p-4">
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-amber-200 mb-3">
-                  <Lightbulb size={16} className="text-amber-300" />
-                  {t('help.sidePanel.content.tips')}
-                </h4>
-                <ul className="space-y-2">
-                  {(moduleHelp.translationKey
-                    ? getTranslatedArray(t, `${moduleHelp.translationKey}.tips`)
-                    : []
-                  ).map((tip, idx: number) => (
-                    <li key={idx} className="text-sm text-amber-100 flex items-start gap-2">
-                      <span className="text-amber-500">•</span>
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {moduleHelp?.translationKey &&
+                getTranslatedArray(t, `${moduleHelp.translationKey}.tips`).length > 0 && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-lg p-4">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-200 mb-3">
+                      <Lightbulb size={16} className="text-amber-600 dark:text-amber-400" />
+                      {t('help.sidePanel.content.tips', 'Tips')}
+                    </h4>
+                    <ul className="space-y-2">
+                      {getTranslatedArray(t, `${moduleHelp.translationKey}.tips`).map(
+                        (tip, idx: number) => (
+                          <li
+                            key={idx}
+                            className="text-sm text-amber-700 dark:text-amber-100 flex items-start gap-2"
+                          >
+                            <span className="text-amber-500">•</span>
+                            {tip}
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+              {/* Video Tutorials Section */}
+              {videos.length > 0 && (
+                <div>
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    <PlayCircle size={16} className="text-purple-500 dark:text-purple-400" />
+                    {t('help.sidePanel.tabs.video', 'Video Tutorials')}
+                  </h4>
+                  <div className="space-y-2">
+                    {videos.slice(0, 3).map((video: any) => (
+                      <VideoCard
+                        key={video.id}
+                        id={video.id}
+                        title={lang === 'pl' ? video.titlePl : video.title}
+                        description={lang === 'pl' ? video.descriptionPl : video.description}
+                        duration={video.duration}
+                        difficulty={video.difficulty}
+                        url={video.url}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Related Modules Quick Links */}
-              {moduleHelp.relatedModules && moduleHelp.relatedModules.length > 0 && (
-                <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                  <h4 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                    <Link2 size={16} className="text-blue-300" />
-                    {t('help.sidePanel.content.relatedModules')}
+              {moduleHelp?.relatedModules && moduleHelp.relatedModules.length > 0 && (
+                <div className="bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg p-4">
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    <Link2 size={16} className="text-blue-500 dark:text-blue-400" />
+                    {t('help.sidePanel.content.relatedModules', 'Related Modules')}
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {moduleHelp.relatedModules.map((relModuleId) => {
@@ -709,124 +896,31 @@ export const HelpSidePanel: React.FC = () => {
                             className="text-slate-500 dark:text-slate-400"
                           />
                           <span className="text-slate-700 dark:text-slate-300">
-                            {t(`${relModule.translationKey}.name`)}
+                            {relModule.translationKey
+                              ? t(`${relModule.translationKey}.name`, relModule.title)
+                              : relModule.title}
                           </span>
                         </div>
                       );
                     })}
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                    {t('help.sidePanel.content.relatedModulesDesc')}
-                  </p>
                 </div>
               )}
-            </div>
-          )}
 
-          {/* How to Use Tab */}
-          {activeTab === 'howto' && (
-            <div className="space-y-5">
-              {cardHelp ? (
-                <>
-                  {/* Current Context Badge */}
-                  <div className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-500/20 dark:to-indigo-500/20 border border-purple-200 dark:border-purple-800/30 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="flex items-center gap-1.5 px-2 py-0.5 bg-purple-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
-                        <MapPin size={10} />
-                        {t('help.sidePanel.content.actualContext')}
-                      </span>
-                    </div>
-                    <p className="text-xs text-purple-700 dark:text-purple-300">
-                      {t('help.sidePanel.content.contextDesc')}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-base font-semibold text-white mb-2">{cardHelp.title}</h3>
-                    <p className="text-sm text-slate-200 leading-relaxed">{cardHelp.description}</p>
-                  </div>
-
-                  {/* Features */}
-                  <div>
-                    <h4 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                      <Sparkles size={16} className="text-amber-400" />
-                      {t('help.sidePanel.content.features') || 'Features'}
-                    </h4>
-                    <ul className="space-y-2">
-                      {cardHelp.features.map((feature: any, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-200">
-                          <CheckCircle2
-                            size={14}
-                            className="text-emerald-400 flex-shrink-0 mt-0.5"
-                          />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* How to Use Steps */}
-                  <div>
-                    <h4 className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                      <Info size={16} className="text-blue-400" />
-                      {t('help.sidePanel.tabs.howto')}
-                    </h4>
-                    <ol className="space-y-2">
-                      {cardHelp.howToUse.map((step: any, idx: number) => (
-                        <li key={idx} className="flex items-start gap-3 text-sm text-slate-200">
-                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs font-semibold text-white">
-                            {idx + 1}
-                          </span>
-                          {step}
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-
-                  {/* Tips */}
-                  <div className="bg-amber-500/10 border border-amber-400/30 rounded-lg p-4">
-                    <h4 className="flex items-center gap-2 text-sm font-semibold text-amber-200 mb-3">
-                      <Lightbulb size={16} className="text-amber-300" />
-                      {t('help.sidePanel.content.tips')}
-                    </h4>
-                    <ul className="space-y-2">
-                      {cardHelp.tips.map((tip: any, idx: number) => (
-                        <li key={idx} className="text-sm text-amber-100 flex items-start gap-2">
-                          <span className="text-amber-500">•</span>
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Related Docs */}
-                  {cardHelp.relatedDocs && cardHelp.relatedDocs.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                        {t('help.sidePanel.content.relatedDocs')}
-                      </h4>
-                      <div className="space-y-2">
-                        {cardHelp.relatedDocs.map((doc: any, idx: number) => (
-                          <a
-                            key={idx}
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400 hover:underline"
-                          >
-                            <ExternalLink size={14} />
-                            {doc.title}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
+              {/* Welcome state when no specific module help */}
+              {!moduleHelp && (
                 <div className="text-center py-8">
-                  <Info size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('help.sidePanel.content.selectView')}
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                    <HelpCircle size={32} className="text-white" />
+                  </div>
+                  <h3 className="font-semibold text-slate-900 dark:text-white mb-2">
+                    {t('help.sidePanel.content.welcomeTitle', 'Welcome to Help Center')}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[280px] mx-auto">
+                    {t(
+                      'help.sidePanel.content.welcomeDesc',
+                      'Get contextual help for the current page. Navigate to different modules to see specific documentation.'
+                    )}
                   </p>
                 </div>
               )}
@@ -836,14 +930,18 @@ export const HelpSidePanel: React.FC = () => {
           {/* FAQ Tab */}
           {activeTab === 'faq' && (
             <div className="space-y-4">
-              {/* Search */}
+              {/* Search in FAQ */}
               <div className="relative">
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('help.sidePanel.faq.searchPlaceholder')}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder={t('help.sidePanel.faq.searchPlaceholder', 'Search questions...')}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
@@ -865,67 +963,19 @@ export const HelpSidePanel: React.FC = () => {
                     size={32}
                     className="mx-auto text-slate-300 dark:text-slate-600 mb-3"
                   />
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                     {searchQuery
-                      ? t('help.sidePanel.faq.noResults')
-                      : t('help.sidePanel.faq.noFAQ')}
+                      ? t('help.sidePanel.faq.noResults', 'No matching questions found.')
+                      : t('help.sidePanel.faq.noFAQ', 'No FAQ available for this module.')}
                   </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Video Tab */}
-          {activeTab === 'video' && (
-            <div className="space-y-4">
-              {videos.length > 0 ? (
-                <>
-                  {/* Video Progress Summary */}
-                  <div className="bg-slate-100 dark:bg-navy-800 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                        {t('help.sidePanel.video.progress')}
-                      </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {videos.filter((v: any) => isVideoWatched(v.id)).length} / {videos.length}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 dark:bg-navy-700 rounded-full h-2">
-                      <div
-                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                        style={{
-                          width: `${(videos.filter((v: any) => isVideoWatched(v.id)).length / videos.length) * 100}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {videos.map((video: any) => (
-                      <VideoCard
-                        key={video.id}
-                        id={video.id}
-                        title={lang === 'pl' ? video.titlePl : video.title}
-                        description={lang === 'pl' ? video.descriptionPl : video.description}
-                        duration={video.duration}
-                        difficulty={video.difficulty}
-                        url={video.url}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <PlayCircle
-                    size={32}
-                    className="mx-auto text-slate-300 dark:text-slate-600 mb-3"
-                  />
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('help.sidePanel.video.noVideos') ||
-                      (lang === 'pl'
-                        ? 'Brak tutoriali wideo dla tego modułu.'
-                        : 'No video tutorials available for this module.')}
-                  </p>
+                  {/* Suggestion to use AI */}
+                  <button
+                    onClick={() => setActiveTab('ai')}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                  >
+                    <Bot size={16} />
+                    {t('help.sidePanel.faq.askAI', 'Ask AI Assistant')}
+                  </button>
                 </div>
               )}
             </div>

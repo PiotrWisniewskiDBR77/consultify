@@ -976,10 +976,10 @@ const calculateAxisScore = (areaScores) => {
 // Exports
 // ============================================
 export {
-  DIGITIZATION_AXES,
-  getAxisById,
-  getAreaByCode,
-  getTotalAreas,
-  getLevelColor,
   calculateAxisScore,
+  DIGITIZATION_AXES,
+  getAreaByCode,
+  getAxisById,
+  getLevelColor,
+  getTotalAreas,
 };

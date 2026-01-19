@@ -1,39 +1,37 @@
 /**
  * ToolsMenu
  *
- * Redesigned dropdown menu for AI tools and integrations:
+ * Dropdown menu for AI tools and integrations:
  * - AI Modes (toggles with visual feedback)
- * - PMO Actions (quick actions to navigate)
  * - Knowledge Sources (toggles for data sources)
  *
- * @version 2.0.0
+ * @version 2.1.0
  */
 
 import {
   BookOpen,
   Brain,
   Building2,
-  Calculator,
-  CheckCircle2,
+  Check,
   ChevronRight,
   Database,
-  ExternalLink,
-  FileText,
   Globe,
-  Lightbulb,
+  GraduationCap,
+  MessageSquare,
+  Pen,
   Search,
   Settings,
   Sparkles,
-  Target,
   ToggleLeft,
   ToggleRight,
-  Users,
+  Volume2,
+  Zap,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useAppStore } from '../../store/useAppStore';
-import { AppView } from '../../types';
 
 interface ToolsMenuProps {
   onToolSelect: (tool: string) => void;
@@ -59,14 +57,22 @@ interface KnowledgeSource {
   enabled: boolean;
 }
 
-interface PmoAction {
-  id: string;
+// Response Style definitions
+type ResponseStyle = 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+
+interface StyleOption {
+  id: ResponseStyle;
   icon: React.ElementType;
-  labelKey: string;
   label: string;
-  view: AppView;
-  color: string;
 }
+
+const RESPONSE_STYLES: StyleOption[] = [
+  { id: 'normal', icon: MessageSquare, label: 'Normalny' },
+  { id: 'learning', icon: GraduationCap, label: 'Edukacyjny' },
+  { id: 'concise', icon: Zap, label: 'Zwięzły' },
+  { id: 'explanatory', icon: BookOpen, label: 'Wyjaśniający' },
+  { id: 'formal', icon: Pen, label: 'Formalny' },
+];
 
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   onToolSelect,
@@ -74,26 +80,49 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   icon: IconComponent = Brain,
 }) => {
   const { t } = useTranslation();
-  const { setCurrentView, aiConfig, setAIConfig } = useAppStore();
+  const { aiConfig, setAIConfig } = useAppStore();
   const [isOpen, setIsOpen] = useState(false);
-  const [modes, setModes] = useState({
-    deepResearch: false,
-    webSearch: false,
-    showReasoning: aiConfig.maxMode,
-  });
-  const [knowledgeSources, setKnowledgeSources] = useState({
-    pmoDocuments: true,
-    projectData: true,
-    organizationData: false,
-    webSearch: false,
-  });
+  const [showStyleSubmenu, setShowStyleSubmenu] = useState(false);
+  const [showTTSSubmenu, setShowTTSSubmenu] = useState(false);
+  const [submenuPosition, setSubmenuPosition] = useState<'right' | 'left'>('right');
   const menuRef = useRef<HTMLDivElement>(null);
+  const styleButtonRef = useRef<HTMLButtonElement>(null);
+  const ttsButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Get available voices
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        setAvailableVoices(voices);
+      };
+      loadVoices();
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+      return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+    }
+  }, []);
+
+  // Use global store values
+  const {
+    deepResearch,
+    webSearch,
+    showReasoning,
+    knowledgeSources,
+    responseStyle,
+    textToSpeech,
+    ttsRate,
+    ttsVoice,
+  } = aiConfig;
 
   // Count active modes for badge
-  const activeModeCount = Object.values(modes).filter(Boolean).length;
-  const activeSourceCount = Object.values(knowledgeSources).filter(Boolean).length;
+  const activeModeCount = [deepResearch, webSearch, showReasoning, textToSpeech].filter(
+    Boolean
+  ).length;
+  const activeSourceCount = Object.values(knowledgeSources || {}).filter(Boolean).length;
 
-  // AI Modes
+  // AI Modes - using global store values
   const AI_MODES: ToolMode[] = [
     {
       id: 'deepResearch',
@@ -101,7 +130,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.deepResearch',
       label: 'Głęboka analiza',
       description: 'Dogłębne badanie tematu',
-      enabled: modes.deepResearch,
+      enabled: deepResearch,
     },
     {
       id: 'webSearch',
@@ -109,7 +138,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.webSearch',
       label: 'Wyszukiwanie web',
       description: 'Dane w czasie rzeczywistym',
-      enabled: modes.webSearch,
+      enabled: webSearch,
     },
     {
       id: 'showReasoning',
@@ -117,11 +146,19 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.showReasoning',
       label: 'Pokaż rozumowanie',
       description: 'Widoczny tok myślenia AI',
-      enabled: modes.showReasoning,
+      enabled: showReasoning,
+    },
+    {
+      id: 'textToSpeech',
+      icon: Volume2,
+      labelKey: 'aiChat.menu.textToSpeech',
+      label: 'Czytaj odpowiedzi',
+      description: 'Automatyczne czytanie na głos',
+      enabled: textToSpeech,
     },
   ];
 
-  // Knowledge Sources
+  // Knowledge Sources - using global store values (all disabled by default)
   const KNOWLEDGE_SOURCES: KnowledgeSource[] = [
     {
       id: 'pmoDocuments',
@@ -129,7 +166,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.pmoDocuments',
       label: 'Dokumenty PMO',
       description: 'ISO 21500, PMBOK, PRINCE2',
-      enabled: knowledgeSources.pmoDocuments,
+      enabled: knowledgeSources?.pmoDocuments ?? false,
     },
     {
       id: 'projectData',
@@ -137,7 +174,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.projectData',
       label: 'Dane projektu',
       description: 'Inicjatywy, zadania, decyzje',
-      enabled: knowledgeSources.projectData,
+      enabled: knowledgeSources?.projectData ?? false,
     },
     {
       id: 'organizationData',
@@ -145,51 +182,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       labelKey: 'aiChat.menu.organizationData',
       label: 'Dane organizacji',
       description: 'Zespoły, role, procesy',
-      enabled: knowledgeSources.organizationData,
-    },
-    {
-      id: 'webSearch',
-      icon: Globe,
-      labelKey: 'aiChat.menu.webSearchSource',
-      label: 'Wyszukiwanie Web',
-      description: 'Aktualne informacje z sieci',
-      enabled: knowledgeSources.webSearch,
-    },
-  ];
-
-  // PMO Actions
-  const PMO_ACTIONS: PmoAction[] = [
-    {
-      id: 'start-assessment',
-      icon: Target,
-      labelKey: 'aiChat.menu.startAssessment',
-      label: 'Rozpocznij Assessment',
-      view: AppView.ASSESSMENT_OVERVIEW,
-      color: 'text-purple-500',
-    },
-    {
-      id: 'generate-initiatives',
-      icon: Lightbulb,
-      labelKey: 'aiChat.menu.generateInitiatives',
-      label: 'Generuj inicjatywy',
-      view: AppView.INITIATIVE_GENERATOR,
-      color: 'text-amber-500',
-    },
-    {
-      id: 'calculate-roi',
-      icon: Calculator,
-      labelKey: 'aiChat.menu.calculateRoi',
-      label: 'Oblicz ROI',
-      view: AppView.ECONOMICS,
-      color: 'text-green-500',
-    },
-    {
-      id: 'build-report',
-      icon: FileText,
-      labelKey: 'aiChat.menu.buildReport',
-      label: 'Zbuduj raport',
-      view: AppView.FULL_STEP6_REPORTS,
-      color: 'text-blue-500',
+      enabled: knowledgeSources?.organizationData ?? false,
     },
   ];
 
@@ -210,32 +203,51 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     };
   }, [isOpen]);
 
+  // Toggle AI modes - persists to global store
   const toggleMode = (modeId: string) => {
-    setModes((prev) => {
-      const newModes = { ...prev, [modeId]: !prev[modeId as keyof typeof prev] };
+    const currentValue = aiConfig[modeId as keyof typeof aiConfig];
+    const newValue = !currentValue;
+    setAIConfig({ [modeId]: newValue });
 
-      // Sync showReasoning with MAX Mode
-      if (modeId === 'showReasoning') {
-        setAIConfig({ maxMode: newModes.showReasoning });
-      }
+    // Also sync maxMode when toggling showReasoning
+    if (modeId === 'showReasoning') {
+      setAIConfig({ maxMode: newValue });
+    }
 
-      return newModes;
-    });
+    // Show toast notification
+    const modeLabels: Record<string, string> = {
+      deepResearch: 'Głęboka analiza',
+      webSearch: 'Wyszukiwanie web',
+      showReasoning: 'Pokaż rozumowanie',
+      textToSpeech: 'Czytanie odpowiedzi',
+    };
+    const label = modeLabels[modeId] || modeId;
+    const icon = modeId === 'textToSpeech' ? '🔊' : '✓';
+    toast.success(`${label}: ${newValue ? 'włączone' : 'wyłączone'}`, { duration: 2000, icon });
+
     onToolSelect(`toggle:${modeId}`);
   };
 
+  // Toggle knowledge sources - persists to global store
   const toggleKnowledgeSource = (sourceId: string) => {
-    setKnowledgeSources((prev) => ({
-      ...prev,
-      [sourceId]: !prev[sourceId as keyof typeof prev],
-    }));
-    onToolSelect(`source:${sourceId}`);
-  };
+    const currentValue = knowledgeSources?.[sourceId as keyof typeof knowledgeSources] ?? false;
+    const newValue = !currentValue;
+    const newSources = {
+      ...knowledgeSources,
+      [sourceId]: newValue,
+    };
+    setAIConfig({ knowledgeSources: newSources });
 
-  const handlePmoAction = (action: PmoAction) => {
-    setCurrentView(action.view);
-    setIsOpen(false);
-    onToolSelect(`pmo:${action.id}`);
+    // Show toast notification
+    const sourceLabels: Record<string, string> = {
+      pmoDocuments: 'Dokumenty PMO',
+      projectData: 'Dane projektu',
+      organizationData: 'Dane organizacji',
+    };
+    const label = sourceLabels[sourceId] || sourceId;
+    toast.success(`${label}: ${newValue ? 'włączone' : 'wyłączone'}`, { duration: 2000 });
+
+    onToolSelect(`source:${sourceId}`);
   };
 
   return (
@@ -297,7 +309,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 key={mode.id}
                 onClick={() => toggleMode(mode.id)}
                 className={`
-                                    w-full flex items-center gap-3 px-3 py-2.5 text-left
+                                    w-full flex items-center gap-3 px-3 py-2 text-left
                                     transition-colors
                                     ${isEnabled ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
                                 `}
@@ -312,15 +324,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     }
                   />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={`text-sm font-medium ${isEnabled ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
-                  >
-                    {t(mode.labelKey, mode.label)}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {mode.description}
-                  </div>
+                <div
+                  className={`flex-1 text-sm font-medium ${isEnabled ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}
+                >
+                  {t(mode.labelKey, mode.label)}
                 </div>
                 {isEnabled ? (
                   <ToggleRight size={22} className="text-primary-500 shrink-0" />
@@ -355,21 +362,27 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 className={`
                                     w-full flex items-center gap-3 px-3 py-2 text-left
                                     transition-colors
-                                    ${isEnabled ? 'bg-green-50 dark:bg-green-900/10' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
+                                    ${isEnabled ? 'bg-green-50 dark:bg-green-900/20' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
                                 `}
               >
-                <Icon
-                  size={14}
-                  className={isEnabled ? 'text-green-500' : 'text-slate-400 dark:text-slate-500'}
-                />
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={`text-sm ${isEnabled ? 'text-green-700 dark:text-green-300' : 'text-slate-600 dark:text-slate-400'}`}
-                  >
-                    {t(source.labelKey, source.label)}
-                  </div>
+                <div
+                  className={`p-1.5 rounded-lg ${isEnabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-slate-100 dark:bg-navy-700'}`}
+                >
+                  <Icon
+                    size={14}
+                    className={isEnabled ? 'text-green-500' : 'text-slate-400 dark:text-slate-500'}
+                  />
                 </div>
-                {isEnabled && <CheckCircle2 size={14} className="text-green-500 shrink-0" />}
+                <div
+                  className={`flex-1 text-sm font-medium ${isEnabled ? 'text-green-700 dark:text-green-300' : 'text-slate-700 dark:text-slate-300'}`}
+                >
+                  {t(source.labelKey, source.label)}
+                </div>
+                {isEnabled ? (
+                  <ToggleRight size={22} className="text-green-500 shrink-0" />
+                ) : (
+                  <ToggleLeft size={22} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                )}
               </button>
             );
           })}
@@ -377,59 +390,204 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           {/* Divider */}
           <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
 
-          {/* PMO Actions Section */}
-          <div className="px-3 py-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {t('aiChat.menu.pmoActions', 'Akcje PMO')}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-1 px-2 pb-2">
-            {PMO_ACTIONS.map((action) => {
-              const Icon = action.icon;
-
-              return (
-                <button
-                  key={action.id}
-                  onClick={() => handlePmoAction(action)}
-                  className="
-                                        flex flex-col items-center gap-1.5 p-3
-                                        bg-slate-50 dark:bg-navy-700/50
-                                        hover:bg-slate-100 dark:hover:bg-navy-700
-                                        rounded-lg transition-colors text-center
-                                    "
-                >
-                  <Icon size={18} className={action.color} />
-                  <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-tight">
-                    {t(action.labelKey, action.label)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Settings Link */}
-          <div className="border-t border-slate-200 dark:border-navy-700 mt-1">
+          {/* Response Style Section */}
+          <div className="relative">
             <button
+              ref={styleButtonRef}
               onClick={() => {
-                setCurrentView(AppView.SETTINGS_PROFILE);
-                setIsOpen(false);
-                onToolSelect('settings');
+                // Check if submenu would go off-screen
+                if (styleButtonRef.current) {
+                  const rect = styleButtonRef.current.getBoundingClientRect();
+                  const submenuWidth = 192; // w-48 = 12rem = 192px
+                  const wouldOverflow = rect.right + submenuWidth > window.innerWidth;
+                  setSubmenuPosition(wouldOverflow ? 'left' : 'right');
+                }
+                setShowStyleSubmenu(!showStyleSubmenu);
+                setShowTTSSubmenu(false);
               }}
-              className="
-                                w-full flex items-center justify-between px-3 py-2.5 text-sm
-                                text-slate-500 dark:text-slate-400
-                                hover:bg-slate-50 dark:hover:bg-navy-700
-                                transition-colors
-                            "
+              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
             >
-              <div className="flex items-center gap-2">
-                <Settings size={14} />
-                {t('aiChat.menu.aiSettings', 'Ustawienia AI')}
+              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-navy-700">
+                <Pen size={14} className="text-slate-400 dark:text-slate-500" />
               </div>
-              <ChevronRight size={14} />
+              <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('aiChat.menu.responseStyle', 'Styl odpowiedzi')}
+              </div>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {RESPONSE_STYLES.find((s) => s.id === responseStyle)?.label || 'Normalny'}
+              </span>
+              <ChevronRight
+                size={14}
+                className={`text-slate-400 shrink-0 transition-transform ${submenuPosition === 'left' ? 'rotate-180' : ''}`}
+              />
             </button>
+
+            {/* Style Submenu - positions left or right based on viewport */}
+            {showStyleSubmenu && (
+              <div
+                className={`absolute top-0 w-48 py-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 ${submenuPosition === 'right' ? 'left-full ml-1' : 'right-full mr-1'}`}
+              >
+                {RESPONSE_STYLES.map((style) => {
+                  const StyleIcon = style.icon;
+                  const isSelected = responseStyle === style.id;
+
+                  return (
+                    <button
+                      key={style.id}
+                      onClick={() => {
+                        setAIConfig({ responseStyle: style.id });
+                        setShowStyleSubmenu(false);
+                        toast.success(`Styl odpowiedzi: ${style.label}`, { duration: 2000 });
+                        onToolSelect(`style:${style.id}`);
+                      }}
+                      className={`
+                        w-full flex items-center gap-3 px-3 py-2 text-left transition-colors
+                        ${isSelected ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-slate-50 dark:hover:bg-navy-700'}
+                      `}
+                    >
+                      <StyleIcon
+                        size={14}
+                        className={
+                          isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
+                        }
+                      />
+                      <span
+                        className={`flex-1 text-sm ${isSelected ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
+                      >
+                        {style.label}
+                      </span>
+                      {isSelected && <Check size={14} className="text-primary-500 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {/* TTS Settings Section - only show when TTS is enabled */}
+          {textToSpeech && (
+            <>
+              <div className="my-2 border-t border-slate-200 dark:border-navy-700" />
+              <div className="relative">
+                <button
+                  ref={ttsButtonRef}
+                  onClick={() => {
+                    if (ttsButtonRef.current) {
+                      const rect = ttsButtonRef.current.getBoundingClientRect();
+                      const submenuWidth = 240;
+                      const wouldOverflow = rect.right + submenuWidth > window.innerWidth;
+                      setSubmenuPosition(wouldOverflow ? 'left' : 'right');
+                    }
+                    setShowTTSSubmenu(!showTTSSubmenu);
+                    setShowStyleSubmenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
+                >
+                  <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-navy-700">
+                    <Settings size={14} className="text-slate-400 dark:text-slate-500" />
+                  </div>
+                  <div className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {t('aiChat.menu.ttsSettings', 'Ustawienia głosu')}
+                  </div>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{ttsRate}x</span>
+                  <ChevronRight
+                    size={14}
+                    className={`text-slate-400 shrink-0 transition-transform ${submenuPosition === 'left' ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {/* TTS Settings Submenu */}
+                {showTTSSubmenu && (
+                  <div
+                    className={`absolute top-0 w-60 py-2 px-3 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-50 ${submenuPosition === 'right' ? 'left-full ml-1' : 'right-full mr-1'}`}
+                  >
+                    {/* Speed slider */}
+                    <div className="mb-3">
+                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+                        {t('aiChat.menu.ttsSpeed', 'Szybkość')} ({ttsRate}x)
+                      </label>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value={ttsRate ?? 1}
+                        onChange={(e) => {
+                          const newRate = parseFloat(e.target.value);
+                          setAIConfig({ ttsRate: newRate });
+                        }}
+                        className="w-full h-2 bg-slate-200 dark:bg-navy-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <span>0.5x</span>
+                        <span>1x</span>
+                        <span>2x</span>
+                      </div>
+                    </div>
+
+                    {/* Voice selection */}
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+                        {t('aiChat.menu.ttsVoice', 'Głos')}
+                      </label>
+                      <select
+                        value={ttsVoice || ''}
+                        onChange={(e) => {
+                          setAIConfig({ ttsVoice: e.target.value || null });
+                          toast.success('Głos zmieniony', { duration: 1500, icon: '🔊' });
+                        }}
+                        className="w-full px-2 py-1.5 text-sm bg-slate-100 dark:bg-navy-700 border-0 rounded-lg text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">
+                          {t('aiChat.menu.ttsAutoVoice', 'Auto (wykryj język)')}
+                        </option>
+                        {availableVoices
+                          .filter((v) => v.lang.startsWith('pl') || v.lang.startsWith('en'))
+                          .map((voice) => (
+                            <option key={voice.voiceURI} value={voice.voiceURI}>
+                              {voice.name} ({voice.lang})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    {/* Test button */}
+                    <button
+                      onClick={() => {
+                        if ('speechSynthesis' in window) {
+                          window.speechSynthesis.cancel();
+                          const utterance = new SpeechSynthesisUtterance(
+                            'Cześć, to jest test głosu.'
+                          );
+                          utterance.rate = ttsRate ?? 1;
+                          if (ttsVoice) {
+                            const voice = availableVoices.find((v) => v.voiceURI === ttsVoice);
+                            if (voice) {
+                              utterance.voice = voice;
+                              utterance.lang = voice.lang;
+                            }
+                          } else {
+                            const polishVoice = availableVoices.find((v) =>
+                              v.lang.startsWith('pl')
+                            );
+                            if (polishVoice) {
+                              utterance.voice = polishVoice;
+                              utterance.lang = 'pl-PL';
+                            }
+                          }
+                          window.speechSynthesis.speak(utterance);
+                        }
+                      }}
+                      className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
+                    >
+                      <Volume2 size={14} />
+                      {t('aiChat.menu.ttsTest', 'Testuj głos')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
-import React, { forwardRef } from 'react';
 import { ChevronDown } from 'lucide-react';
+import React, { forwardRef } from 'react';
 
 export interface SelectOption {
   value: string;

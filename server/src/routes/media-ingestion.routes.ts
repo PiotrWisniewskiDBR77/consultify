@@ -3,8 +3,9 @@
  * media-ingestion Routes
  */
 import { Router } from 'express';
-import logger from '../utils/Logger.js';
+
 import mediaIngestionService from '../services/ai/mediaIngestionService.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 

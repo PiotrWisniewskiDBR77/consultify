@@ -303,7 +303,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
 
       // Verify schema - but only check truly critical tables
       const verification = await verifySchema();
-      
+
       // Define truly critical tables that must exist for basic functionality
       const TRULY_CRITICAL_TABLES = [
         'organizations',
@@ -318,12 +318,12 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         'revoked_tokens',
         'refresh_tokens',
       ];
-      
+
       // Filter missing tables to only truly critical ones
       const criticalMissing = verification.missing.filter((table) =>
         TRULY_CRITICAL_TABLES.includes(table)
       );
-      
+
       if (criticalMissing.length > 0) {
         logger.error(
           `[DatabaseInitializer] Missing CRITICAL tables: ${criticalMissing.join(', ')}`
@@ -339,14 +339,14 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
         const criticalMissingRecheck = recheck.missing.filter((table) =>
           TRULY_CRITICAL_TABLES.includes(table)
         );
-        
+
         if (criticalMissingRecheck.length > 0) {
           return {
             success: false,
             message: `Schema initialization incomplete. Missing critical tables: ${criticalMissingRecheck.join(', ')}`,
           };
         }
-        
+
         // Log non-critical missing tables as warnings, not errors
         const nonCriticalMissing = recheck.missing.filter(
           (table) => !TRULY_CRITICAL_TABLES.includes(table)
@@ -362,7 +362,7 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           `[DatabaseInitializer] Some non-critical tables are missing (this is OK if using migrations): ${verification.missing.join(', ')}`
         );
       }
-      
+
       if (verification.errors.length > 0) {
         logger.error(
           `[DatabaseInitializer] Schema verification errors: ${verification.errors.join(', ')}`
@@ -503,16 +503,19 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     // Final verification
     const finalVerification = await verifySchema();
     if (!finalVerification.valid) {
-      const missingTables = finalVerification.missing.length > 0 
-        ? `Missing tables: ${finalVerification.missing.join(', ')}` 
-        : '';
-      const missingCols = Object.keys(finalVerification.missingColumns).length > 0
-        ? `Missing columns: ${Object.entries(finalVerification.missingColumns).map(([table, cols]) => `${table}(${cols.join(', ')})`).join(', ')}`
-        : '';
-      const errors = finalVerification.errors.length > 0
-        ? `Errors: ${finalVerification.errors.join(', ')}`
-        : '';
-      
+      const missingTables =
+        finalVerification.missing.length > 0
+          ? `Missing tables: ${finalVerification.missing.join(', ')}`
+          : '';
+      const missingCols =
+        Object.keys(finalVerification.missingColumns).length > 0
+          ? `Missing columns: ${Object.entries(finalVerification.missingColumns)
+              .map(([table, cols]) => `${table}(${cols.join(', ')})`)
+              .join(', ')}`
+          : '';
+      const errors =
+        finalVerification.errors.length > 0 ? `Errors: ${finalVerification.errors.join(', ')}` : '';
+
       const parts = [missingTables, missingCols, errors].filter(Boolean);
       return {
         success: false,

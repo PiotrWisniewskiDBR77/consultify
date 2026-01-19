@@ -4,8 +4,9 @@
  */
 
 import { Router } from 'express';
-import { verifyToken } from '../../middleware/auth.middleware.js';
+
 import PMOAnalysisController from '../../controllers/PMOAnalysisController.js';
+import { verifyToken } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 

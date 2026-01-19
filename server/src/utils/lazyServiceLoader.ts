@@ -1,5 +1,5 @@
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -32,21 +32,21 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
     // IMPORTANT: Strip ALL ../ BEFORE path.resolve, otherwise path.resolve will
     // process them and go outside the services/ directory
     let cleanPath = servicePath;
-    
+
     // Remove all leading ../ (these incorrectly go outside services/)
     // Must do this BEFORE path.resolve, not after
     while (cleanPath.startsWith('../')) {
       cleanPath = cleanPath.slice(3); // Remove '../'
     }
-    
+
     // Remove leading ./ if present
     if (cleanPath.startsWith('./')) {
       cleanPath = cleanPath.slice(2);
     }
-    
+
     // Remove any remaining ../ that might be in the middle (shouldn't happen, but be safe)
     cleanPath = cleanPath.replace(/\/\.\.\//g, '/').replace(/\/\.\.$/g, '');
-    
+
     // Always resolve from services/ directory
     // Now cleanPath should be something like "ai/healthMonitor.js"
     absolutePath = path.resolve(SRC_ROOT, 'services', cleanPath);
@@ -58,10 +58,13 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
   // Verify path is correct and handle TS mapping
   const expectedServicesPath = path.resolve(SRC_ROOT, 'services');
   const normalizedAbsolutePath = path.normalize(absolutePath);
-  
+
   // Double-check path is correct before TS mapping
   // If path doesn't start with expected services path, recalculate
-  if (!normalizedAbsolutePath.startsWith(expectedServicesPath) && !normalizedAbsolutePath.includes('node_modules')) {
+  if (
+    !normalizedAbsolutePath.startsWith(expectedServicesPath) &&
+    !normalizedAbsolutePath.includes('node_modules')
+  ) {
     // Path resolution went wrong - recalculate
     let cleanPath = servicePath;
     while (cleanPath.startsWith('../')) {
@@ -103,11 +106,16 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
 
   // Final verification: ensure path is correct before attempting import
   const finalNormalizedPath = path.normalize(absolutePath);
-  
+
   // If the path doesn't start with expectedServicesPath, path resolution went wrong
   // This should not happen with our fix, but add safety check
-  if (!finalNormalizedPath.startsWith(expectedServicesPath) && !finalNormalizedPath.includes('node_modules')) {
-    console.warn(`[LazyServiceLoader] Path resolution issue detected: ${servicePath} resolved to ${finalNormalizedPath}, expected under ${expectedServicesPath}. SRC_ROOT=${SRC_ROOT}, __dirname=${__dirname}`);
+  if (
+    !finalNormalizedPath.startsWith(expectedServicesPath) &&
+    !finalNormalizedPath.includes('node_modules')
+  ) {
+    console.warn(
+      `[LazyServiceLoader] Path resolution issue detected: ${servicePath} resolved to ${finalNormalizedPath}, expected under ${expectedServicesPath}. SRC_ROOT=${SRC_ROOT}, __dirname=${__dirname}`
+    );
     // Try one more time with absolute path from services/
     const fallbackPath = path.resolve(SRC_ROOT, 'services', servicePath.replace(/^(\.\.\/)+/, ''));
     if (fs.existsSync(fallbackPath) || fs.existsSync(fallbackPath.replace('.js', '.ts'))) {
@@ -136,12 +144,13 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
 
     // Only log error if it's not a "module not found" error for expected missing files
     const err = error as Error & { code?: string };
-    const isModuleNotFound = err.code === 'ERR_MODULE_NOT_FOUND' || err.message.includes('Cannot find module');
-    const isExpectedMissingFile = 
-      servicePath.includes('.legacy.js') || 
+    const isModuleNotFound =
+      err.code === 'ERR_MODULE_NOT_FOUND' || err.message.includes('Cannot find module');
+    const isExpectedMissingFile =
+      servicePath.includes('.legacy.js') ||
       servicePath.includes('trialService') ||
       absolutePath.includes('.legacy.js');
-    
+
     if (!isExpectedMissingFile || !isModuleNotFound) {
       console.error(`[LazyServiceLoader] Failed to load: ${absolutePath}`);
       console.error(`[LazyServiceLoader] Error:`, error);
@@ -149,7 +158,7 @@ export async function createLazyService<T = unknown>(servicePath: string): Promi
       // For expected missing files, just log at debug level
       console.debug(`[LazyServiceLoader] Expected missing file (returning stub): ${servicePath}`);
     }
-    
+
     return createStubProxy(servicePath, absolutePath, isExpectedMissingFile && isModuleNotFound);
   }
 }
@@ -194,7 +203,11 @@ async function tryLoadMock<T>(servicePath: string): Promise<T | null> {
   return null;
 }
 
-function createStubProxy<T>(servicePath: string, absolutePath?: string, isExpectedMissingFile = false): T {
+function createStubProxy<T>(
+  servicePath: string,
+  absolutePath?: string,
+  isExpectedMissingFile = false
+): T {
   // Only log warnings/errors for unexpected missing files
   if (!isExpectedMissingFile) {
     if (absolutePath) {

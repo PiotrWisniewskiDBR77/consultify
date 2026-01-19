@@ -15,11 +15,12 @@
  * @module routes/partners
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
+
 import { authenticateToken } from '../middleware/authMiddleware.js';
-import logger from '../utils/Logger.js';
-import PartnerReferralService from '../services/partnerReferralService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
+import PartnerReferralService from '../services/partnerReferralService.js';
+import logger from '../utils/Logger.js';
 
 const router = Router();
 

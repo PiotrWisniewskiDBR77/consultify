@@ -9,9 +9,9 @@
  *   npm run i18n:validate           - Validate JSON structure
  */
 
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 // ESM compatibility

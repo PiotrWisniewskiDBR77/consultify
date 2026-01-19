@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router, type RequestHandler } from 'express';
+import { type RequestHandler, Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 const module = await import('../../routes/project-members.js');
 const project_membersRoutesJS = module.default || module;
@@ -18,13 +18,16 @@ const router = Router();
 // Re-export the JS router (maintains backward compatibility)
 // The JS route file exports a router that we can use directly
 if (typeof project_membersRoutesJS === 'function') {
-    // If it's a router function, use it
-    router.use(project_membersRoutesJS as unknown as unknown as unknown as RequestHandler);
-} else if (project_membersRoutesJS && typeof (project_membersRoutesJS as { handle?: unknown }).handle === 'function') {
-    // If it's a router function or Router object, use it
-    router.use(project_membersRoutesJS as unknown as unknown as unknown as RequestHandler);
+  // If it's a router function, use it
+  router.use(project_membersRoutesJS as unknown as unknown as unknown as RequestHandler);
+} else if (
+  project_membersRoutesJS &&
+  typeof (project_membersRoutesJS as { handle?: unknown }).handle === 'function'
+) {
+  // If it's a router function or Router object, use it
+  router.use(project_membersRoutesJS as unknown as unknown as unknown as RequestHandler);
 } else {
-    // Fallback or error
-    console.error('project-members.js did not export a valid router');
+  // Fallback or error
+  console.error('project-members.js did not export a valid router');
 }
 export default router;

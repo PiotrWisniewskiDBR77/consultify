@@ -3,14 +3,7 @@
  * Table with filterable column headers and row actions
  */
 
-import {
-  ChevronDown,
-  Edit,
-  Eye,
-  FileText,
-  MoreVertical,
-  Trash2,
-} from 'lucide-react';
+import { ChevronDown, Edit, Eye, FileText, MoreVertical, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { FilterChip } from './ActiveFilters';
@@ -47,9 +40,24 @@ interface FilterableTableProps {
 const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
   const config: Record<ItemStatus, { bg: string; text: string; dot: string; label: string }> = {
     draft: { bg: 'bg-slate-500/20', text: 'text-slate-300', dot: 'bg-slate-400', label: 'Draft' },
-    in_review: { bg: 'bg-amber-500/20', text: 'text-amber-300', dot: 'bg-amber-400', label: 'In Review' },
-    approved: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', dot: 'bg-emerald-400', label: 'Approved' },
-    completed: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', dot: 'bg-emerald-400', label: 'Completed' },
+    in_review: {
+      bg: 'bg-amber-500/20',
+      text: 'text-amber-300',
+      dot: 'bg-amber-400',
+      label: 'In Review',
+    },
+    approved: {
+      bg: 'bg-emerald-500/20',
+      text: 'text-emerald-300',
+      dot: 'bg-emerald-400',
+      label: 'Approved',
+    },
+    completed: {
+      bg: 'bg-emerald-500/20',
+      text: 'text-emerald-300',
+      dot: 'bg-emerald-400',
+      label: 'Completed',
+    },
   };
 
   const { bg, text, dot, label } = config[status] || config.draft;
@@ -124,10 +132,7 @@ const FilterDropdown: React.FC<{
 
       {isOpen && (
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
             <div className="max-h-[200px] overflow-y-auto p-2">
               {column.filterOptions.map((option) => (
@@ -141,9 +146,7 @@ const FilterDropdown: React.FC<{
                     onChange={() => handleToggle(option.value)}
                     className="rounded border-navy-600 bg-navy-700 text-primary-500 focus:ring-primary-500"
                   />
-                  {option.color && (
-                    <span className={`w-2 h-2 rounded-full ${option.color}`} />
-                  )}
+                  {option.color && <span className={`w-2 h-2 rounded-full ${option.color}`} />}
                   <span className="text-sm text-slate-300">{option.label}</span>
                 </label>
               ))}
@@ -183,9 +186,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   // Get active filter values for a column
   const getActiveFilterValues = useCallback(
     (columnId: string) => {
-      return activeFilters
-        .filter((f) => f.column === columnId)
-        .map((f) => f.value);
+      return activeFilters.filter((f) => f.column === columnId).map((f) => f.value);
     },
     [activeFilters]
   );
@@ -281,10 +282,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         <tbody className="divide-y divide-navy-700">
           {filteredData.length === 0 ? (
             <tr>
-              <td
-                colSpan={columns.length + 1}
-                className="px-4 py-12 text-center text-slate-500"
-              >
+              <td colSpan={columns.length + 1} className="px-4 py-12 text-center text-slate-500">
                 {emptyMessage}
               </td>
             </tr>

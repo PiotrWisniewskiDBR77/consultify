@@ -17,8 +17,9 @@ import { Bot, Send, User } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ReportBuilder } from '../components/Reports/ReportBuilder';
 import { Api, api } from '@/services/api';
+
+import { ReportBuilder } from '../components/Reports/ReportBuilder';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 

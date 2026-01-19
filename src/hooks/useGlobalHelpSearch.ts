@@ -7,7 +7,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { HelpModuleId } from '../config/viewToModuleMapping';
 import {
   clearRecentSearches,
   getPopularSearches,
@@ -18,6 +17,8 @@ import {
   SearchResult,
   SearchResultType,
 } from '@/services/helpSearchService';
+
+import { HelpModuleId } from '../config/viewToModuleMapping';
 
 export interface UseGlobalHelpSearchResult {
   // State

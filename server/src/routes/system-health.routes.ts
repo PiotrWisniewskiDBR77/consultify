@@ -3,8 +3,9 @@
  * Comprehensive health monitoring with auto-repair
  */
 
-import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import { Request, Response, Router } from 'express';
+
 import { getDatabaseAsync } from '../database/index.js';
 import logger from '../utils/Logger.js';
 

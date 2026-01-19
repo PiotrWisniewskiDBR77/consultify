@@ -54,7 +54,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
     // Force page refresh to clear all state
     window.location.href = '/';
 
-    return set((state) => ({
+    set({
       // Auth Reset
       currentUser: null,
       currentOrganization: null,
@@ -74,6 +74,19 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         multiModel: false,
         selectedModelId: null,
         selectedTier: 'BUDGET',
+        deepResearch: false,
+        webSearch: false,
+        showReasoning: false,
+        knowledgeSources: {
+          pmoDocuments: false,
+          projectData: false,
+          organizationData: false,
+        },
+        responseStyle: 'normal' as const,
+        textToSpeech: false,
+        ttsVoice: 'default',
+        ttsRate: 1.0,
+        ttsPitch: 1.0,
       },
 
       // Project/Session Reset
@@ -109,6 +122,6 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         step4Completed: false,
         step5Completed: false,
       },
-    }));
+    });
   },
 });

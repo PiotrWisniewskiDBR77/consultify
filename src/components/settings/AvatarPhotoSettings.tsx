@@ -157,8 +157,8 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
   };
 
   const getInitials = () => {
-    const firstName = currentUser?.firstName || currentUser?.name?.split(' ')[0] || '';
-    const lastName = currentUser?.lastName || currentUser?.name?.split(' ')[1] || '';
+    const firstName = currentUser?.firstName || '';
+    const lastName = currentUser?.lastName || '';
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || '?';
   };
 

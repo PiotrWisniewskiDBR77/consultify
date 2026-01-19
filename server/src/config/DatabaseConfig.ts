@@ -127,7 +127,9 @@ export function getDatabaseType(): DatabaseType {
       logger.info('[DB Config] Auto-detected PostgreSQL from DATABASE_URL');
       return 'postgres';
     }
-    logger.warn(`[DB Config] DATABASE_URL exists but doesn't start with postgres:// or postgresql://: ${databaseUrl.substring(0, 50)}...`);
+    logger.warn(
+      `[DB Config] DATABASE_URL exists but doesn't start with postgres:// or postgresql://: ${databaseUrl.substring(0, 50)}...`
+    );
   }
 
   // Warn about implicit fallback

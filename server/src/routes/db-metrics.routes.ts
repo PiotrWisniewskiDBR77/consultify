@@ -3,10 +3,11 @@
  * API endpoints for database performance metrics
  */
 
-import { Router, Request, Response } from 'express';
-import { getSlowQueryLogger } from '../database/SlowQueryLogger.js';
+import { Request, Response, Router } from 'express';
+
 import { getDatabaseMetrics } from '../database/DatabaseMetrics.js';
 import { getDatabase } from '../database/index.js';
+import { getSlowQueryLogger } from '../database/SlowQueryLogger.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();

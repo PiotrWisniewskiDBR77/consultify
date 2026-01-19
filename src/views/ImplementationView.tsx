@@ -32,7 +32,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { SplitLayout } from '../components/layout/SplitLayout';
+import { Api } from '@/services/api';
+
 import { BudgetTrackingView } from '../components/Implementation/BudgetTrackingView';
 import { CapacityView } from '../components/Implementation/CapacityView';
 import { DecisionBoard } from '../components/Implementation/DecisionBoard';
@@ -41,8 +42,8 @@ import { ExecutiveDashboard } from '../components/Implementation/ExecutiveDashbo
 import { InitiativeKanban } from '../components/Implementation/InitiativeKanban';
 import { RAIDLog } from '../components/Implementation/RAIDLog';
 import { StatusReportBuilder } from '../components/Implementation/StatusReportBuilder';
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { TaskDetailModal } from '../components/TaskDetailModal';
-import { Api } from '@/services/api';
 import { useAppStore } from '../store/useAppStore';
 import { AppView, Initiative, InitiativeStatus, Task, TaskStatus } from '../types';
 

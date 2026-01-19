@@ -162,11 +162,11 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
         failureCount: s.failureCount,
         version: '1.0',
       }));
-      setWebhooks(formatted);
+      setWebhooks(formatted as WebhookConfig[]);
 
       // Initialize settings
       const settings: Record<string, any> = {};
-      formatted.forEach((w: WebhookConfig) => {
+      (formatted as WebhookConfig[]).forEach((w: WebhookConfig) => {
         settings[w.id] = {
           signatureSecret: w.signatureSecret || '',
           retryConfig: w.retryConfig || {
@@ -253,7 +253,7 @@ export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
     }
   };
 
-  const retryDelivery = async (_webhookId: string, _deliveryId: string) => {
+  const retryDelivery = async (webhookId: string, _deliveryId: string) => {
     try {
       // Retry functionality would be implemented in a full solution
       toast.success(t('settings.webhooks.retryStarted', 'Retry started'));

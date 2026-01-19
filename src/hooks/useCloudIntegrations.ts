@@ -9,6 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+
 import { Api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
@@ -44,7 +45,7 @@ interface CloudIntegrationsState {
 
 export const useCloudIntegrations = () => {
   const { setCurrentView } = useAppStore();
-  
+
   const [state, setState] = useState<CloudIntegrationsState>({
     providers: [
       { id: 'google-drive', name: 'Google Drive', connected: false },
@@ -76,26 +77,27 @@ export const useCloudIntegrations = () => {
   }, []);
 
   // Get list of connected provider IDs (for AddFilesMenu)
-  const connectedProviderIds = state.providers
-    .filter((p) => p.connected)
-    .map((p) => p.id);
+  const connectedProviderIds = state.providers.filter((p) => p.connected).map((p) => p.id);
 
   // Connect to a cloud provider
-  const connectProvider = useCallback(async (providerId: CloudProvider['id']) => {
-    setState((s) => ({ ...s, isLoading: true, error: null }));
-    try {
-      // Navigate to integrations settings
-      setCurrentView(AppView.SETTINGS_INTEGRATIONS);
-      console.log(`[CloudIntegrations] Redirecting to settings to connect ${providerId}`);
-      setState((s) => ({ ...s, isLoading: false }));
-    } catch (error: any) {
-      setState((s) => ({
-        ...s,
-        error: error?.message || 'Failed to connect provider',
-        isLoading: false,
-      }));
-    }
-  }, [setCurrentView]);
+  const connectProvider = useCallback(
+    async (providerId: CloudProvider['id']) => {
+      setState((s) => ({ ...s, isLoading: true, error: null }));
+      try {
+        // Navigate to integrations settings
+        setCurrentView(AppView.SETTINGS_INTEGRATIONS);
+        console.log(`[CloudIntegrations] Redirecting to settings to connect ${providerId}`);
+        setState((s) => ({ ...s, isLoading: false }));
+      } catch (error: any) {
+        setState((s) => ({
+          ...s,
+          error: error?.message || 'Failed to connect provider',
+          isLoading: false,
+        }));
+      }
+    },
+    [setCurrentView]
+  );
 
   // Disconnect from a cloud provider
   const disconnectProvider = useCallback(async (providerId: CloudProvider['id']) => {
@@ -119,24 +121,27 @@ export const useCloudIntegrations = () => {
   }, []);
 
   // Open file picker for a provider
-  const openFilePicker = useCallback((providerId: CloudProvider['id']) => {
-    const provider = state.providers.find((p) => p.id === providerId);
-    
-    if (!provider?.connected) {
-      // Not connected - redirect to settings
-      connectProvider(providerId);
-      return;
-    }
+  const openFilePicker = useCallback(
+    (providerId: CloudProvider['id']) => {
+      const provider = state.providers.find((p) => p.id === providerId);
 
-    // Open picker modal
-    setState((s) => ({
-      ...s,
-      isPickerOpen: true,
-      activeProvider: providerId,
-    }));
-    
-    console.log(`[CloudIntegrations] Opening file picker for ${providerId}`);
-  }, [state.providers, connectProvider]);
+      if (!provider?.connected) {
+        // Not connected - redirect to settings
+        connectProvider(providerId);
+        return;
+      }
+
+      // Open picker modal
+      setState((s) => ({
+        ...s,
+        isPickerOpen: true,
+        activeProvider: providerId,
+      }));
+
+      console.log(`[CloudIntegrations] Opening file picker for ${providerId}`);
+    },
+    [state.providers, connectProvider]
+  );
 
   // Close file picker
   const closeFilePicker = useCallback(() => {
@@ -148,34 +153,40 @@ export const useCloudIntegrations = () => {
   }, []);
 
   // List files from a provider
-  const listFiles = useCallback(async (providerId: CloudProvider['id'], folderId?: string): Promise<CloudFile[]> => {
-    try {
-      const response = await Api.listCloudFiles(providerId, folderId);
-      return response.files;
-    } catch (error: any) {
-      console.error('[CloudIntegrations] Failed to list files:', error);
-      setState((s) => ({ ...s, error: error?.message || 'Failed to list files' }));
-      return [];
-    }
-  }, []);
+  const listFiles = useCallback(
+    async (providerId: CloudProvider['id'], folderId?: string): Promise<CloudFile[]> => {
+      try {
+        const response = await Api.listCloudFiles(providerId, folderId);
+        return response.files;
+      } catch (error: any) {
+        console.error('[CloudIntegrations] Failed to list files:', error);
+        setState((s) => ({ ...s, error: error?.message || 'Failed to list files' }));
+        return [];
+      }
+    },
+    []
+  );
 
   // Select a file from cloud storage
-  const selectFile = useCallback(async (file: CloudFile, providerId: CloudProvider['id']): Promise<File | null> => {
-    try {
-      // Download the file
-      const blob = await Api.downloadCloudFile(providerId, file.id);
-      
-      // Create File object
-      return new File([blob], file.name, { type: file.mimeType });
-    } catch (error: any) {
-      console.error('[CloudIntegrations] Failed to download file:', error);
-      setState((s) => ({
-        ...s,
-        error: error?.message || 'Failed to download file',
-      }));
-      return null;
-    }
-  }, []);
+  const selectFile = useCallback(
+    async (file: CloudFile, providerId: CloudProvider['id']): Promise<File | null> => {
+      try {
+        // Download the file
+        const blob = await Api.downloadCloudFile(providerId, file.id);
+
+        // Create File object
+        return new File([blob], file.name, { type: file.mimeType });
+      } catch (error: any) {
+        console.error('[CloudIntegrations] Failed to download file:', error);
+        setState((s) => ({
+          ...s,
+          error: error?.message || 'Failed to download file',
+        }));
+        return null;
+      }
+    },
+    []
+  );
 
   // Refresh providers list
   const refreshProviders = useCallback(async () => {
@@ -200,7 +211,7 @@ export const useCloudIntegrations = () => {
     error: state.error,
     isPickerOpen: state.isPickerOpen,
     activeProvider: state.activeProvider,
-    
+
     // Actions
     connectProvider,
     disconnectProvider,

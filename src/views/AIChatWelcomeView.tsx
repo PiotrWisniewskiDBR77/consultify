@@ -12,9 +12,12 @@
  * - Action execution capabilities
  */
 
-import { PanelLeft, Plus } from 'lucide-react';
+import { PanelLeft } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useAIContext } from '@/contexts/AIContext';
+import { Api } from '@/services/api';
 
 import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 // Components
@@ -24,12 +27,11 @@ import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
-import { useAIContext } from '@/contexts/AIContext';
+import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { cleanTextForSpeech, useTextToSpeech } from '../hooks/useTextToSpeech';
 import { useVoiceConversation } from '../hooks/useVoiceConversation';
-import { Api } from '@/services/api';
 import { useAppStore } from '../store/useAppStore';
 import { Conversation, useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
@@ -595,7 +597,7 @@ For example: REMEMBER: preferred_language: Polish`;
 
         {/* Main Chat Area - Full width, sidebar is overlay */}
         <div className="h-full flex flex-col overflow-hidden">
-          {/* Header with Sidebar Toggle and New Chat */}
+          {/* Header with Sidebar Toggle */}
           <div className="shrink-0 h-14 border-b border-slate-200 dark:border-navy-700 flex items-center px-4 justify-between bg-white/50 dark:bg-navy-950/50 backdrop-blur-sm z-10">
             <div className="flex items-center gap-2">
               <button
@@ -604,17 +606,6 @@ For example: REMEMBER: preferred_language: Polish`;
                 title={t('aiChat.openSidebar', 'Open Sidebar')}
               >
                 <PanelLeft size={20} />
-              </button>
-              <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
-              <button
-                onClick={handleNewChat}
-                className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-600 dark:text-slate-300 transition-colors"
-                title={t('aiChat.newChat', 'New Chat')}
-              >
-                <Plus size={18} className="text-primary-600 dark:text-primary-400" />
-                <span className="font-medium text-sm hidden sm:inline">
-                  {t('aiChat.newChat', 'New Chat')}
-                </span>
               </button>
             </div>
           </div>
@@ -780,22 +771,6 @@ For example: REMEMBER: preferred_language: Polish`;
                 voiceModeEnabled={voiceModeEnabled}
                 onVoiceModeChange={handleVoiceModeChange}
               />
-
-              {/* Continuous Voice Toggle */}
-              {voiceSupported && (
-                <div className="flex justify-center mt-2">
-                  <button
-                    onClick={handleContinuousVoiceToggle}
-                    className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                      continuousVoiceMode
-                        ? 'bg-primary-500 text-white'
-                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                    }`}
-                  >
-                    {continuousVoiceMode ? '🎙️ Tryb rozmowy włączony' : '🎙️ Włącz rozmowę głosową'}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -818,7 +793,7 @@ For example: REMEMBER: preferred_language: Polish`;
 
       {/* Main Welcome Area - Full width, sidebar is overlay */}
       <div className="h-full flex flex-col overflow-hidden">
-        {/* Header with Sidebar Toggle and New Chat */}
+        {/* Header with Sidebar Toggle */}
         <div className="shrink-0 h-14 flex items-center px-4 justify-between absolute top-0 left-0 right-0 z-10">
           <div className="flex items-center gap-2">
             <button
@@ -827,17 +802,6 @@ For example: REMEMBER: preferred_language: Polish`;
               title={t('aiChat.openSidebar', 'Open Sidebar')}
             >
               <PanelLeft size={20} />
-            </button>
-            <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
-            <button
-              onClick={handleNewChat}
-              className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-600 dark:text-slate-300 transition-colors"
-              title={t('aiChat.newChat', 'New Chat')}
-            >
-              <Plus size={18} className="text-primary-600 dark:text-primary-400" />
-              <span className="font-medium text-sm hidden sm:inline">
-                {t('aiChat.newChat', 'New Chat')}
-              </span>
             </button>
           </div>
         </div>
@@ -864,25 +828,6 @@ For example: REMEMBER: preferred_language: Polish`;
               voiceModeEnabled={voiceModeEnabled}
               onVoiceModeChange={handleVoiceModeChange}
             />
-
-            {/* Continuous Voice Toggle */}
-            {voiceSupported && (
-              <div className="flex justify-center mt-3">
-                <button
-                  onClick={handleContinuousVoiceToggle}
-                  className={`text-xs px-4 py-2 rounded-full transition-colors flex items-center gap-2 ${
-                    continuousVoiceMode
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                  }`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full ${continuousVoiceMode ? 'bg-white animate-pulse' : 'bg-slate-400'}`}
-                  />
-                  {continuousVoiceMode ? 'Rozmowa głosowa aktywna' : 'Rozpocznij rozmowę głosową'}
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Minimal Suggestions */}
@@ -905,6 +850,9 @@ For example: REMEMBER: preferred_language: Polish`;
 
       {/* Export Modal */}
       <ChatExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} />
+
+      {/* TTS Indicator - shows when speaking */}
+      <TTSIndicator />
     </div>
   );
 };

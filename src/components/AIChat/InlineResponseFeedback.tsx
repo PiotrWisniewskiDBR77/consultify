@@ -26,8 +26,8 @@ interface InlineResponseFeedbackProps {
   compact?: boolean;
 }
 
-type LengthFeedback = 'too_short' | 'just_right' | 'too_long';
-type DetailFeedback = 'too_basic' | 'just_right' | 'too_detailed';
+type LengthFeedback = 'too-short' | 'just-right' | 'too-long';
+type DetailFeedback = 'too-little' | 'just-right' | 'too-much';
 type StyleFeedback = 'too-formal' | 'just-right' | 'too-casual';
 
 export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
@@ -81,14 +81,8 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
       messageId,
       conversationId: conversationId || '',
       rating: r,
-      lengthFeedback: lengthFeedback ? 
-        (lengthFeedback === 'too_short' ? 'too-short' : 
-         lengthFeedback === 'just_right' ? 'just-right' : 
-         'too-long') as 'too-short' | 'just-right' | 'too-long' : undefined,
-      detailFeedback: detailFeedback ?
-        (detailFeedback === 'too_basic' ? 'too-little' :
-         detailFeedback === 'just_right' ? 'just-right' :
-         'too-much') as 'too-little' | 'just-right' | 'too-much' : undefined,
+      lengthFeedback: lengthFeedback || undefined,
+      detailFeedback: detailFeedback || undefined,
       styleFeedback: styleFeedback || undefined,
       responseLength,
       focusMode,
@@ -130,11 +124,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           </button>
           <button
             onClick={() => handleInitialRating('negative')}
-            className={`p-1 rounded transition-colors ${
-              rating !== null && rating !== 'positive'
-                ? 'bg-red-100 dark:bg-red-900/30 text-red-500'
-                : 'hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500'
-            }`}
+            className="p-1 rounded transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500"
             title={t('chat.actions.notHelpful', 'Niepomocne')}
           >
             <ThumbsDown size={12} />
@@ -169,7 +159,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           {t('chat.feedback.length', 'Długość odpowiedzi:')}
         </span>
         <div className="flex gap-1">
-          {(['too_short', 'just_right', 'too_long'] as LengthFeedback[]).map((opt) => (
+          {(['too-short', 'just-right', 'too-long'] as LengthFeedback[]).map((opt) => (
             <button
               key={opt}
               onClick={() => setLengthFeedback(opt)}
@@ -179,9 +169,9 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {opt === 'too_short' && t('chat.feedback.tooShort', 'Za krótka')}
-              {opt === 'just_right' && t('chat.feedback.justRight', 'W sam raz')}
-              {opt === 'too_long' && t('chat.feedback.tooLong', 'Za długa')}
+              {opt === 'too-short' && t('chat.feedback.tooShort', 'Za krótka')}
+              {opt === 'just-right' && t('chat.feedback.justRight', 'W sam raz')}
+              {opt === 'too-long' && t('chat.feedback.tooLong', 'Za długa')}
             </button>
           ))}
         </div>
@@ -193,7 +183,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           {t('chat.feedback.detail', 'Poziom szczegółowości:')}
         </span>
         <div className="flex gap-1">
-          {(['too_basic', 'just_right', 'too_detailed'] as DetailFeedback[]).map((opt) => (
+          {(['too-little', 'just-right', 'too-much'] as DetailFeedback[]).map((opt) => (
             <button
               key={opt}
               onClick={() => setDetailFeedback(opt)}
@@ -203,9 +193,9 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {opt === 'too_basic' && t('chat.feedback.tooLittle', 'Za mało')}
-              {opt === 'just_right' && t('chat.feedback.justRight', 'W sam raz')}
-              {opt === 'too_detailed' && t('chat.feedback.tooMuch', 'Za dużo')}
+              {opt === 'too-little' && t('chat.feedback.tooLittle', 'Za mało')}
+              {opt === 'just-right' && t('chat.feedback.justRight', 'W sam raz')}
+              {opt === 'too-much' && t('chat.feedback.tooMuch', 'Za dużo')}
             </button>
           ))}
         </div>

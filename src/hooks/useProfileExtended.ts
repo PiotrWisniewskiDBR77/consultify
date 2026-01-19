@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ProfileExtendedApi } from '@/services/profileExtendedApi';
+
 import {
   EmailPreferences,
   ExtendedContactInfo,

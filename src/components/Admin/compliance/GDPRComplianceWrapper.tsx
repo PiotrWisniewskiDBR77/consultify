@@ -1,11 +1,11 @@
 /**
  * GDPRComplianceWrapper - Wrapper with API integration for GDPR dashboard
  */
+import { RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { RefreshCw } from 'lucide-react';
 import { GDPRComplianceDashboard, GDPRConfig, GDPRFeature } from './GDPRComplianceDashboard';
 
 const API_URL = import.meta.env.VITE_API_URL || '';

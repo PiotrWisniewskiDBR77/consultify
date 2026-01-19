@@ -150,6 +150,7 @@ export default {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         display: ['Inter', 'sans-serif'], // Can swap for a more display-oriented font later
+        japanese: ['Noto Sans JP', 'Inter', 'sans-serif'], // Japanese font with full character support
       },
       boxShadow: {
         // Legacy shadows

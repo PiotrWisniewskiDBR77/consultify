@@ -7,32 +7,36 @@
 import _db from '../database.js';
 
 interface Database {
-    all: (sql: string, params: unknown[], callback: (err: Error | null, rows: unknown[]) => void) => void;
+  all: (
+    sql: string,
+    params: unknown[],
+    callback: (err: Error | null, rows: unknown[]) => void
+  ) => void;
 }
 
 export interface RetentionRow {
-    week_start: string;
-    cohort_size: number;
-    week_0: number;
-    week_1: number;
-    week_2: number;
-    week_4: number;
+  week_start: string;
+  cohort_size: number;
+  week_0: number;
+  week_1: number;
+  week_2: number;
+  week_4: number;
 }
 
 export interface CohortServiceInterface {
-    getRetentionMatrix: () => Promise<RetentionRow[]>;
+  getRetentionMatrix: () => Promise<RetentionRow[]>;
 }
 
 const CohortService: CohortServiceInterface = {
-    /**
-     * Get retention matrix
-     * Rows: Cohort (Week Start)
-     * Cols: Weeks since signup (0, 1, 2, 4, 8)
-     */
-    async getRetentionMatrix(): Promise<RetentionRow[]> {
-        const db = _db as Database;
+  /**
+   * Get retention matrix
+   * Rows: Cohort (Week Start)
+   * Cols: Weeks since signup (0, 1, 2, 4, 8)
+   */
+  async getRetentionMatrix(): Promise<RetentionRow[]> {
+    const db = _db as Database;
 
-        const sql = `
+    const sql = `
             WITH UserCohorts AS (
                 SELECT 
                     id as user_id,
@@ -61,13 +65,13 @@ const CohortService: CohortServiceInterface = {
             LIMIT 12
         `;
 
-        return new Promise((resolve, reject) => {
-            (db as Database).all(sql, [], (err, rows) => {
-                if (err) reject(err);
-                else resolve((rows as RetentionRow[]) || []);
-            });
-        });
-    },
+    return new Promise((resolve, reject) => {
+      (db as Database).all(sql, [], (err, rows) => {
+        if (err) reject(err);
+        else resolve((rows as RetentionRow[]) || []);
+      });
+    });
+  },
 };
 
 export default CohortService;

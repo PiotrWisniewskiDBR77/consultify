@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Api } from '@/services/api';
+
 import {
   AcademyModule,
   ClientAccess,

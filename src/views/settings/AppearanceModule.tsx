@@ -28,6 +28,12 @@ import { QuietHoursSettings } from '../../components/settings/QuietHoursSettings
 import { RegionalSettings } from '../../components/settings/RegionalSettings';
 import { WorkPreferencesSettings } from '../../components/settings/WorkPreferencesSettings';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import {
+  changeLanguage,
+  LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
+  type SupportedLanguage,
+} from '../../i18n';
 import { Language, User } from '../../types';
 
 // Accent color options
@@ -190,23 +196,28 @@ const LanguageSettings: React.FC<{
   );
 
   // SuperAdmin: only Polish and English
-  // Regular users: all 6 languages
+  // Regular users: all supported languages
   const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPERADMIN';
-  const allLanguages = [
-    { code: 'EN', name: 'English', flag: '🇬🇧' },
-    { code: 'PL', name: 'Polski', flag: '🇵🇱' },
-    { code: 'DE', name: 'Deutsch', flag: '🇩🇪' },
-    { code: 'ES', name: 'Español', flag: '🇪🇸' },
-    { code: 'AR', name: 'العربية', flag: '🇸🇦' },
-    { code: 'JA', name: '日本語', flag: '🇯🇵' },
-  ] as const;
+  const languageFlags: Record<SupportedLanguage, string> = {
+    en: '🇬🇧',
+    pl: '🇵🇱',
+    de: '🇩🇪',
+    es: '🇪🇸',
+    ar: '🇸🇦',
+    ja: '🇯🇵',
+  };
+  const allLanguages = SUPPORTED_LANGUAGES.map((code) => ({
+    code: code.toUpperCase() as Language,
+    name: LANGUAGE_NAMES[code],
+    flag: languageFlags[code],
+  }));
   const languages = isSuperAdmin
     ? allLanguages.filter((lang) => ['EN', 'PL'].includes(lang.code))
     : allLanguages;
 
-  const handleLanguageChange = (code: Language) => {
+  const handleLanguageChange = async (code: Language) => {
     setSelectedLanguage(code);
-    i18n.changeLanguage(code.toLowerCase());
+    await changeLanguage(code.toLowerCase());
     onUpdateUser({ preferredLanguage: code });
   };
 
@@ -225,7 +236,7 @@ const LanguageSettings: React.FC<{
         {languages.map((lang) => (
           <button
             key={lang.code}
-            onClick={() => handleLanguageChange(lang.code)}
+            onClick={() => handleLanguageChange(lang.code as Language)}
             className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-4 ${
               selectedLanguage === lang.code
                 ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/20'

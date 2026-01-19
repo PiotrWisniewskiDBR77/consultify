@@ -12,11 +12,11 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { requireSuperAdmin, verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { type AuthRequest, requireSuperAdmin, verifyToken } from '../middleware/auth.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import KnowledgeService from '../services/KnowledgeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
-import KnowledgeService from '../services/KnowledgeService.js';
 
 // ==========================================
 // TYPES
@@ -76,8 +76,8 @@ const router = Router();
 router.use(authRateLimiter);
 
 // Services
-let StorageService: any = null;
-let NotificationOutboxService: any = null;
+const StorageService: any = null;
+const NotificationOutboxService: any = null;
 
 // Services are currently not available - imports commented out
 // Uncomment when services are ready:
@@ -134,7 +134,8 @@ try {
 try {
   const projectQuotaModule = await import('../middleware/projectQuota.middleware.js');
   // enforceProjectQuota is a named export, not default
-  enforceProjectQuota = projectQuotaModule.enforceProjectQuota || projectQuotaModule.default || projectQuotaModule;
+  enforceProjectQuota =
+    projectQuotaModule.enforceProjectQuota || projectQuotaModule.default || projectQuotaModule;
 } catch (error: any) {
   logger.warn(`[Knowledge] Project quota middleware not available: ${error.message}`);
 }

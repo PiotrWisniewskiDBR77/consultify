@@ -10,8 +10,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { Api } from '@/services/api';
 import {
-  CanvasCategory,
   CANVAS_CATEGORIES,
+  CanvasCategory,
   ClientContext,
   DiscoveryEdge,
   DiscoveryNode,
@@ -399,13 +399,14 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       },
 
       updateNode: (id, data) => {
-        set((state) => ({
-          nodes: state.nodes.map((node) =>
+        set((state) => {
+          const updatedNodes = state.nodes.map((node) =>
             node.id === id
               ? { ...node, data: { ...node.data, ...data }, updatedAt: new Date() }
               : node
-          ),
-        }));
+          );
+          return { nodes: updatedNodes } as Partial<DiscoveryState>;
+        });
       },
 
       removeNode: (id) => {

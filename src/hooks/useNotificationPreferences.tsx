@@ -9,10 +9,11 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
 import type {
   ChannelSettings,
-  NotificationCategory,
   MyWorkNotificationPreferences as NotificationPreferences,
+  NotificationCategory,
 } from '../types/myWork';
 
 interface UseNotificationPreferencesOptions {

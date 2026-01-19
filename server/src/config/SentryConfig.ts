@@ -169,15 +169,20 @@ export function initSentry(app: Express): SentryHandlers {
 
     // Error handler - must be after routes and before other error handlers
     // Sentry v10: use setupExpressErrorHandler or custom middleware
-    errorHandler: (err: Error & { status?: number; statusCode?: number }, req: Request, res: Response, next: NextFunction) => {
+    errorHandler: (
+      err: Error & { status?: number; statusCode?: number },
+      req: Request,
+      res: Response,
+      next: NextFunction
+    ) => {
       // Ensure error has a message for Sentry
       if (err instanceof Error && !err.message) {
         err.message = err.name || 'Unknown error';
       }
-      
+
       // Determine status code
       const statusCode = err.statusCode || err.status || 500;
-      
+
       // Only report 500+ errors automatically
       if (statusCode >= 500) {
         Sentry.captureException(err, {

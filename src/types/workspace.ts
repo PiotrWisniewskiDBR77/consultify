@@ -20,6 +20,8 @@ export type WorkspaceType =
   | 'decision'
   | 'report'
   | 'dashboard'
+  | 'project'
+  | 'general'
   | 'empty';
 
 /**

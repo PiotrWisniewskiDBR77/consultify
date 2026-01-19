@@ -67,7 +67,7 @@ const alertWatchdog = async (
   try {
     // Determine status code (default to 500 if not specified)
     const statusCode = err.statusCode || err.status || 500;
-    
+
     // Safely extract error message
     const errorMessage = getErrorMessage(err);
     const errorName = err instanceof Error ? err.name : 'Error';

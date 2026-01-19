@@ -134,9 +134,7 @@ export const RechartsWrapper: React.FC<{
     );
   }
 
-  return (
-    <RechartsErrorBoundary fallback={fallback}>{children(recharts)}</RechartsErrorBoundary>
-  );
+  return <RechartsErrorBoundary fallback={fallback}>{children(recharts)}</RechartsErrorBoundary>;
 };
 
 export default RechartsWrapper;

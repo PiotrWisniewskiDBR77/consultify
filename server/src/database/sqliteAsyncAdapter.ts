@@ -1,6 +1,6 @@
 /**
  * SQLite Async Adapter
- * 
+ *
  * Provides sqliteAsync-compatible interface using IDatabase API
  * This allows legacy code to work with the new database abstraction
  */
@@ -52,14 +52,11 @@ export async function allAsync<T = unknown>(
  * Execute a function within a transaction
  * Compatible with sqliteAsync.withTransaction interface
  */
-export async function withTransaction<T>(
-  db: IDatabase,
-  fn: () => Promise<T>
-): Promise<T> {
+export async function withTransaction<T>(db: IDatabase, fn: () => Promise<T>): Promise<T> {
   // Determine database type to use correct transaction syntax
   const dbType = getDatabaseType();
   const isPostgres = dbType === 'postgres';
-  
+
   try {
     // PostgreSQL uses BEGIN, SQLite uses BEGIN IMMEDIATE for better concurrency
     if (isPostgres) {
@@ -67,9 +64,9 @@ export async function withTransaction<T>(
     } else {
       await db.run('BEGIN IMMEDIATE');
     }
-    
+
     const result = await fn();
-    
+
     await db.run('COMMIT');
     return result;
   } catch (e) {

@@ -15,6 +15,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+
 import { Api } from '@/services/api';
 
 type OnboardingStep = 1 | 2 | 3 | 4;
@@ -109,7 +110,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
     // Skip payment for now - directly complete onboarding
     setLoading(true);
     try {
-      await Api.post('/onboarding/complete');
+      await Api.post('/onboarding/complete', {});
       toast.success('Onboarding completed!');
       navigate('/app');
     } catch (error) {
@@ -121,7 +122,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
   const handleSetupPayment = async () => {
     // TODO: Integrate Stripe Elements here
-    toast.info('Stripe integration coming soon');
+    toast('Stripe integration coming soon');
     // For now, just skip to completion
     handleSkipPayment();
   };

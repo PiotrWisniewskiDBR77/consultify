@@ -1,7 +1,7 @@
 // @ts-nocheck
-import SignalEngine from './signalEngine.js';
-import AIPlaybookService from './aiPlaybookService.js';
 import AICoach from './aiCoach.js';
+import AIPlaybookService from './aiPlaybookService.js';
+import SignalEngine from './signalEngine.js';
 
 /**
  * AI Playbook Engine

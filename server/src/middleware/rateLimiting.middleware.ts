@@ -1,7 +1,7 @@
 /**
  * Mock Rate Limiting Middleware
  */
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 export const aiRateLimiter = (req: Request, res: Response, next: NextFunction) => {
   next();

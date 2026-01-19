@@ -20,7 +20,7 @@ import logger from '../utils/Logger.js';
 const router = Router();
 
 // Dynamic import for DocumentService (may not be migrated yet)
-let DocumentService: any = null;
+const DocumentService: any = null;
 
 try {
   // const documentModule = await import('../services/documentService.js');

@@ -2,6 +2,7 @@ import { Bot, CheckCircle, Send, User, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Agent } from '@/services/ai/agent';
+
 import { useAppStore } from '../store/useAppStore';
 
 interface AIInterviewModalProps {

@@ -3,12 +3,14 @@
  * Manage subscription plans with resource limits
  */
 
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../services/api';
-import { useToast } from '../../components/ui/ToastNotification';
-import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
 import './SubscriptionPlansManager.css';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+
+import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
+import { useToast } from '../../components/ui/ToastNotification';
+import api from '../../services/api';
 
 interface SubscriptionPlan {
   id: string;
@@ -73,7 +75,7 @@ export const SubscriptionPlansManager: React.FC = () => {
 
   // Filter plans by search term
   const filteredPlans =
-    plans?.filter((plan) => plan.name.toLowerCase().includes(searchTerm.toLowerCase())) || [];
+    plans?.filter((plan: any) => plan.name.toLowerCase().includes(searchTerm.toLowerCase())) || [];
 
   // Create plan mutation
   const createPlanMutation = useMutation({
@@ -252,7 +254,7 @@ export const SubscriptionPlansManager: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredPlans.map((plan) => (
+            {filteredPlans.map((plan: any) => (
               <tr key={plan.id} className={plan.is_active === 0 ? 'inactive' : ''}>
                 <td className="plan-name">{plan.name}</td>
                 <td>${plan.price_monthly.toFixed(2)}</td>

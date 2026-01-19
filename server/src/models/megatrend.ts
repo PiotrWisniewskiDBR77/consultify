@@ -442,7 +442,7 @@ function updateCustomTrend(id, payload, companyId) {
   });
 }
 
-export { getBaselineTrends, getRadarData, getTrendDetail, createCustomTrend, updateCustomTrend };
+export { createCustomTrend, getBaselineTrends, getRadarData, getTrendDetail, updateCustomTrend };
 
 export default {
   getBaselineTrends,

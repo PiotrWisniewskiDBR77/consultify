@@ -9,6 +9,7 @@ import 'reactflow/dist/style.css';
 
 import { Download, Expand, Maximize2, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -18,7 +19,6 @@ import ReactFlow, {
   Node,
   ReactFlowProvider,
 } from 'reactflow';
-import { useTranslation } from 'react-i18next';
 
 import { diagramNodeTypes } from '@/components/shared/DiagramNodes';
 

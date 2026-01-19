@@ -65,7 +65,7 @@ const getContextConfig = (
   type: WorkspaceType,
   t: (key: string, fallback: string) => string
 ): ContextConfig => {
-  const configs: Partial<Record<WorkspaceType, ContextConfig>> & Record<string, ContextConfig> = {
+  const configs: Record<WorkspaceType, ContextConfig> = {
     empty: {
       icon: Sparkles,
       label: t('aiChat.context.general', 'Rozmowa ogólna'),
@@ -122,9 +122,37 @@ const getContextConfig = (
       bgColor: 'bg-cyan-50 dark:bg-cyan-900/20',
       borderColor: 'border-cyan-200 dark:border-cyan-800',
     },
+    roadmap: {
+      icon: FolderKanban,
+      label: t('aiChat.context.roadmap', 'Roadmap'),
+      color: 'text-teal-600 dark:text-teal-400',
+      bgColor: 'bg-teal-50 dark:bg-teal-900/20',
+      borderColor: 'border-teal-200 dark:border-teal-800',
+    },
+    general: {
+      icon: Sparkles,
+      label: t('aiChat.context.general', 'Rozmowa ogólna'),
+      color: 'text-slate-500 dark:text-slate-400',
+      bgColor: 'bg-slate-50 dark:bg-slate-800/50',
+      borderColor: 'border-slate-200 dark:border-slate-700',
+    },
+    document: {
+      icon: ClipboardList,
+      label: t('aiChat.context.document', 'Dokument'),
+      color: 'text-orange-600 dark:text-orange-400',
+      bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+      borderColor: 'border-orange-200 dark:border-orange-800',
+    },
+    artifact: {
+      icon: Sparkles,
+      label: t('aiChat.context.artifact', 'Artefakt'),
+      color: 'text-pink-600 dark:text-pink-400',
+      bgColor: 'bg-pink-50 dark:bg-pink-900/20',
+      borderColor: 'border-pink-200 dark:border-pink-800',
+    },
   };
 
-  return configs[type] ?? configs.empty!;
+  return configs[type] || configs.empty;
 };
 
 // ============================================================================
@@ -190,7 +218,7 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
             </div>
 
             {/* Project context (if different from main entity) */}
-            {context.projectName && (
+            {context.projectName && context.type !== 'project' && (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <FolderKanban size={10} className="text-slate-400 dark:text-slate-500" />
                 <span className="text-[10px] text-slate-500 dark:text-slate-400">
@@ -209,13 +237,15 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
                 )}
                 {(context.entityData as any).initiativeProgress !== undefined && (
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                    {t('aiChat.context.progress', 'Postęp')}: {(context.entityData as any).initiativeProgress}%
+                    {t('aiChat.context.progress', 'Postęp')}:{' '}
+                    {(context.entityData as any).initiativeProgress}%
                   </span>
                 )}
                 {(context.entityData as any).currentScore !== undefined &&
                   (context.entityData as any).targetScore !== undefined && (
                     <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {(context.entityData as any).currentScore} → {(context.entityData as any).targetScore}
+                      {(context.entityData as any).currentScore} →{' '}
+                      {(context.entityData as any).targetScore}
                     </span>
                   )}
               </div>
@@ -241,7 +271,7 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
       <span className={`text-[11px] font-medium ${config.color}`}>
         {context.entityName || config.label}
       </span>
-      {context.projectName && (
+      {context.projectName && context.type !== 'project' && (
         <>
           <span className="text-slate-300 dark:text-slate-600">•</span>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[100px]">
@@ -289,12 +319,10 @@ export const InputContextBadge: React.FC<InputContextBadgeProps> = ({
         <span className={`font-medium ${config.color}`}>{config.label}:</span>{' '}
         {context.entityName || t('aiChat.context.unnamed', 'Bez nazwy')}
       </span>
-      {context.projectName && (
+      {context.projectName && context.type !== 'project' && (
         <>
           <span className="text-slate-300 dark:text-slate-600">•</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            {context.projectName}
-          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">{context.projectName}</span>
         </>
       )}
     </div>

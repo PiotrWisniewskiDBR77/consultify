@@ -19,7 +19,18 @@ export const ROUTES = {
 
   // Main App Routes
   AI_CHAT: '/chat',
-  DISCOVERY_CONSULTANT: '/discovery',
+  INTERVIEW: '/interview',
+  DISCOVERY_CONSULTANT: '/discovery', // Legacy alias for Interview
+
+  // Discovery Tools Module
+  DISCOVERY_TOOLS: {
+    ROOT: '/discovery-tools',
+    STRATEGIC: '/discovery-tools/strategic',
+    OPERATIONAL: '/discovery-tools/operational',
+    DIGITAL: '/discovery-tools/digital',
+    PROCESS_AUTOMATION: '/discovery-tools/process-automation',
+  },
+
   MY_WORK: '/my-work',
   DASHBOARD: '/dashboard',
 
@@ -218,8 +229,17 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.INITIATIVE_MANAGEMENT]: ROUTES.PORTFOLIO,
   [AppView.BENEFITS_REALIZATION]: ROUTES.BENEFITS,
 
-  // Project Intelligence
+  // Interview (was Project Intelligence)
   [AppView.PROJECT_INTELLIGENCE]: ROUTES.PROJECT_INTELLIGENCE,
+  [AppView.INTERVIEW]: ROUTES.INTERVIEW,
+  [AppView.DISCOVERY_CONSULTANT]: ROUTES.DISCOVERY_CONSULTANT,
+
+  // Discovery Tools Module
+  [AppView.DISCOVERY_TOOLS]: ROUTES.DISCOVERY_TOOLS.ROOT,
+  [AppView.DISCOVERY_TOOLS_STRATEGIC]: ROUTES.DISCOVERY_TOOLS.STRATEGIC,
+  [AppView.DISCOVERY_TOOLS_OPERATIONAL]: ROUTES.DISCOVERY_TOOLS.OPERATIONAL,
+  [AppView.DISCOVERY_TOOLS_DIGITAL]: ROUTES.DISCOVERY_TOOLS.DIGITAL,
+  [AppView.DISCOVERY_TOOLS_PROCESS_AUTOMATION]: ROUTES.DISCOVERY_TOOLS.PROCESS_AUTOMATION,
 
   // Studio
   [AppView.STUDIO]: ROUTES.STUDIO,

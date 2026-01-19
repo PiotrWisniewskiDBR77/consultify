@@ -8,8 +8,9 @@
 import React from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
+
 import { ROUTES } from './routeConfig';
 
 // ============================================================================
@@ -57,7 +58,18 @@ const ContextBuilderView = React.lazy(() =>
   }))
 );
 
-// Transformation Modules
+// Transformation Modules - New Hubs (ModuleHub pattern)
+const InitiativesHub = React.lazy(() =>
+  import('@/components/Initiatives/InitiativesHub').then((m) => ({ default: m.InitiativesHub }))
+);
+const ExecutionHub = React.lazy(() =>
+  import('@/components/Execution/ExecutionHub').then((m) => ({ default: m.ExecutionHub }))
+);
+const BenefitsHub = React.lazy(() =>
+  import('@/components/Benefits/BenefitsHub').then((m) => ({ default: m.BenefitsHub }))
+);
+
+// Legacy Transformation Modules
 const FullInitiativesView = React.lazy(() =>
   import('@/views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView }))
 );
@@ -134,7 +146,7 @@ const PartnerDashboardView = React.lazy(() =>
 
 // Wizards
 const EnterpriseOnboardingWizard = React.lazy(() =>
-  import('@/components/onboarding/EnterpriseOnboardingWizard').then((m) => ({
+  import('@/components/Onboarding/EnterpriseOnboardingWizard').then((m) => ({
     default: m.EnterpriseOnboardingWizard,
   }))
 );
@@ -328,12 +340,12 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Transformation Routes
+      // Transformation Routes - New Hubs
       {
         path: ROUTES.INITIATIVES,
         element: (
           <AnimatedSuspenseWrapper variant="slideUp">
-            <FullInitiativesView />
+            <InitiativesHub />
           </AnimatedSuspenseWrapper>
         ),
       },
@@ -373,7 +385,7 @@ export const router = createBrowserRouter([
         path: ROUTES.EXECUTION,
         element: (
           <AnimatedSuspenseWrapper variant="slideUp">
-            <FullExecutionView />
+            <ExecutionHub />
           </AnimatedSuspenseWrapper>
         ),
       },
@@ -413,7 +425,7 @@ export const router = createBrowserRouter([
         path: ROUTES.BENEFITS,
         element: (
           <AnimatedSuspenseWrapper variant="slideUp">
-            <BenefitsRealizationView />
+            <BenefitsHub />
           </AnimatedSuspenseWrapper>
         ),
       },

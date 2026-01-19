@@ -6,4 +6,4 @@
  */
 
 // Re-export everything from the real implementation
-export { DocIndexer, PROMPT_ENGINEERING_KB, default } from '../../ai/docIndexer.js';
+export { default, DocIndexer, PROMPT_ENGINEERING_KB } from '../../ai/docIndexer.js';

@@ -5,7 +5,6 @@
  * Glass morphism design with subtle glow animation.
  */
 
-import { HelpCircle } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,14 +22,14 @@ export const HelpToggleButton: React.FC = () => {
       onClick={() => toggleSidePanel('HELP')}
       className="
                 group relative
-                w-11 h-11 
+                w-9 h-9 
                 flex items-center justify-center 
-                rounded-l-xl rounded-r-none
+                rounded-l-lg rounded-r-none
                 bg-gradient-to-br from-violet-500 to-purple-600
                 hover:from-violet-400 hover:to-purple-500
                 text-white
-                shadow-lg shadow-violet-500/30
-                hover:shadow-xl hover:shadow-violet-500/40
+                shadow-md shadow-violet-500/25
+                hover:shadow-lg hover:shadow-violet-500/35
                 hover:scale-105
                 active:scale-95
                 transition-all duration-200
@@ -41,12 +40,11 @@ export const HelpToggleButton: React.FC = () => {
       aria-label={t('widgets.help.title', 'Help Center')}
     >
       {/* Glow effect */}
-      <div className="absolute inset-0 rounded-l-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+      <div className="absolute inset-0 rounded-l-lg bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
-      <HelpCircle
-        size={20}
-        className="relative z-10 transition-transform duration-200 group-hover:scale-110"
-      />
+      <span className="relative z-10 text-base font-bold transition-transform duration-200 group-hover:scale-110">
+        ?
+      </span>
 
       {/* Tooltip */}
       <div

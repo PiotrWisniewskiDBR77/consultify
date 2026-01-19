@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import { describe, expect, it } from 'vitest';
 
 describe('Migration 210_sso_scim.sql', () => {
   const migrationPath = path.resolve(__dirname, '../../../../src/../migrations/210_sso_scim.sql');

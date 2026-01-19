@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Worker } from 'bullmq';
+
 import redisConfig from '../config/QueueConfig.js';
 import AsyncJobProcessor from './asyncJobProcessor.js';
 
@@ -13,7 +14,9 @@ const getAiService = async () => {
       AiService = await import('../services/aiService.js');
     } catch (error) {
       console.error(`[${workerName}] Failed to load AiService:`, error);
-      throw new Error(`Failed to load AiService: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to load AiService: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
   return AiService;

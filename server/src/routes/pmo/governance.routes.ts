@@ -4,8 +4,9 @@
  */
 
 import { Router } from 'express';
-import { verifyToken } from '../../middleware/auth.middleware.js';
+
 import GovernanceController from '../../controllers/GovernanceController.js';
+import { verifyToken } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 

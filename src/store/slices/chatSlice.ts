@@ -15,6 +15,23 @@ export interface ChatSlice {
     multiModel: boolean;
     selectedModelId: string | null;
     selectedTier: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING' | null;
+    // AI Modes (Tryby AI)
+    deepResearch: boolean; // Głęboka analiza - dogłębne badanie tematu
+    webSearch: boolean; // Wyszukiwanie web - dane w czasie rzeczywistym
+    showReasoning: boolean; // Pokaż rozumowanie - widoczny tok myślenia AI
+    // Knowledge Sources (Źródła wiedzy)
+    knowledgeSources: {
+      pmoDocuments: boolean; // Dokumenty PMO - ISO 21500, PMBOK, PRINCE2
+      projectData: boolean; // Dane projektu - inicjatywy, zadania, decyzje
+      organizationData: boolean; // Dane organizacji - zespoły, role, procesy
+    };
+    // Response Style (Styl odpowiedzi - jak w Claude)
+    responseStyle: 'normal' | 'learning' | 'concise' | 'explanatory' | 'formal';
+    // Text-to-Speech (Czytanie odpowiedzi na głos)
+    textToSpeech: boolean; // Włącz/wyłącz czytanie odpowiedzi
+    ttsVoice: string | null; // Wybrany głos (voice URI)
+    ttsRate: number; // Szybkość czytania (0.5-2.0)
+    ttsPitch: number; // Wysokość głosu (0.5-2.0)
   };
 
   aiFreezeStatus: {
@@ -60,6 +77,23 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (set) 
     multiModel: false,
     selectedModelId: null,
     selectedTier: 'BUDGET',
+    // AI Modes
+    deepResearch: false,
+    webSearch: false,
+    showReasoning: false,
+    // Knowledge Sources (all disabled by default)
+    knowledgeSources: {
+      pmoDocuments: false,
+      projectData: false,
+      organizationData: false,
+    },
+    // Response Style (default: normal)
+    responseStyle: 'normal',
+    // Text-to-Speech (default: disabled)
+    textToSpeech: false,
+    ttsVoice: null,
+    ttsRate: 1.0,
+    ttsPitch: 1.0,
   },
 
   aiFreezeStatus: {

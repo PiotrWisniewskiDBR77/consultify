@@ -3,8 +3,8 @@
  * FLOW-SECURITY-001: Advanced security features (SSO, SCIM, Sessions)
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';

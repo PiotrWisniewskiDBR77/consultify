@@ -2,6 +2,7 @@ import { AlertTriangle, Lightbulb, RefreshCw, Sparkles, TrendingUp } from 'lucid
 import React, { useEffect, useState } from 'react';
 
 import { Agent } from '@/services/ai/agent';
+
 import { useAppStore } from '../store/useAppStore';
 import { FullSession } from '../types';
 

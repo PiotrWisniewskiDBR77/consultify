@@ -2,7 +2,7 @@
  * DataGovernancePanel - Data governance and retention settings
  */
 
-import { Database, Shield, Clock, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Clock, Database, Shield } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 

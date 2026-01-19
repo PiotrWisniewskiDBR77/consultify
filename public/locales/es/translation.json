@@ -1,4 +1,7 @@
 {
+  "partner": {
+    "becomePartner": "Conviértete en socio"
+  },
   "sidebar": {
     "dashboard": "Tablero",
     "quickAssessment": "Evaluación Rápida",
@@ -487,9 +490,12 @@
       "subtext": "Llamada gratuita de 30 min • Ve Consultinity en acción"
     },
     "topBar": {
+      "demo": "Demo",
+      "trial": "Prueba",
       "exploreDemo": "Explorar Demo",
       "talkToExpert": "Hablar con Experto",
       "login": "Iniciar sesión",
+      "signUp": "Registrarse",
       "startTrial": "Iniciar Prueba",
       "goToWorkspace": "Ir al Espacio de Trabajo"
     },
@@ -2552,10 +2558,22 @@
       "loading": "Starting..."
     },
     "banner": {
-      "mode": "Demo Mode",
-      "description": "Exploring with sample data",
-      "limitations": "Limitations",
-      "contactSales": "Get Full Access"
+      "mode": "Modo Demo",
+      "description": "Explorando con datos de muestra",
+      "projects": "proyectos",
+      "initiatives": "iniciativas",
+      "hints": "Consejos",
+      "exit": "Salir del demo",
+      "readOnlyTitle": "Modo solo lectura",
+      "readOnlyDesc": "Los cambios no se guardan",
+      "exploreTitle": "Explorar funciones",
+      "exploreDesc": "Navegar todos los módulos",
+      "hintTitle": "Consejo",
+      "defaultHint": "Haz clic en iniciativas para ver detalles",
+      "help": "Ayuda",
+      "partnerProgram": "Programa de Socios",
+      "limitations": "Limitaciones",
+      "contactSales": "Obtener Acceso Completo"
     },
     "limitations": {
       "readOnly": "Shared demo environment — changes may not persist",

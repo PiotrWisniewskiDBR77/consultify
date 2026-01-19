@@ -111,7 +111,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-xl lg:text-2xl text-white/90 leading-relaxed font-medium"
+            className="text-xl lg:text-2xl text-slate-700 dark:text-white/90 leading-relaxed font-medium"
           >
             {t('landing.hero.subtitleLine1', 'Your')}{' '}
             <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold">

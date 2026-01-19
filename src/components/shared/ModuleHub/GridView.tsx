@@ -29,12 +29,28 @@ interface GridViewProps {
 }
 
 // Status config
-const STATUS_CONFIG: Record<ItemStatus, { bg: string; text: string; dot: string; label: string }> = {
-  draft: { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400', label: 'Draft' },
-  in_review: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400', label: 'In Review' },
-  approved: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400', label: 'Approved' },
-  completed: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400', label: 'Completed' },
-};
+const STATUS_CONFIG: Record<ItemStatus, { bg: string; text: string; dot: string; label: string }> =
+  {
+    draft: { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400', label: 'Draft' },
+    in_review: {
+      bg: 'bg-amber-500/10',
+      text: 'text-amber-400',
+      dot: 'bg-amber-400',
+      label: 'In Review',
+    },
+    approved: {
+      bg: 'bg-emerald-500/10',
+      text: 'text-emerald-400',
+      dot: 'bg-emerald-400',
+      label: 'Approved',
+    },
+    completed: {
+      bg: 'bg-emerald-500/10',
+      text: 'text-emerald-400',
+      dot: 'bg-emerald-400',
+      label: 'Completed',
+    },
+  };
 
 // Type colors map
 const TYPE_COLORS: Record<string, string> = {
@@ -77,9 +93,7 @@ export const GridView: React.FC<GridViewProps> = ({
 
   if (items.length === 0 && !onNewItem) {
     return (
-      <div className="flex items-center justify-center py-12 text-slate-500">
-        {emptyMessage}
-      </div>
+      <div className="flex items-center justify-center py-12 text-slate-500">{emptyMessage}</div>
     );
   }
 
@@ -88,7 +102,10 @@ export const GridView: React.FC<GridViewProps> = ({
       {/* Item Cards */}
       {items.map((item) => {
         const statusConfig = STATUS_CONFIG[item.status] || STATUS_CONFIG.draft;
-        const typeColor = TYPE_COLORS[item.type] || TYPE_COLORS[item.typeColor] || 'from-slate-500/20 to-slate-600/10 border-slate-500/30';
+        const typeColor =
+          TYPE_COLORS[item.type] ||
+          TYPE_COLORS[item.typeColor] ||
+          'from-slate-500/20 to-slate-600/10 border-slate-500/30';
 
         return (
           <div
@@ -166,9 +183,7 @@ export const GridView: React.FC<GridViewProps> = ({
 
             {/* Content */}
             <div className="px-4 pb-2">
-              <h3 className="text-white font-medium leading-tight line-clamp-2">
-                {item.name}
-              </h3>
+              <h3 className="text-white font-medium leading-tight line-clamp-2">{item.name}</h3>
             </div>
 
             {/* Progress */}
@@ -198,9 +213,7 @@ export const GridView: React.FC<GridViewProps> = ({
                 <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`} />
                 <span className="text-xs font-medium">{statusConfig.label}</span>
               </div>
-              <span className="text-xs text-slate-500">
-                {formatRelativeTime(item.updatedAt)}
-              </span>
+              <span className="text-xs text-slate-500">{formatRelativeTime(item.updatedAt)}</span>
             </div>
 
             {/* Quick View Button (on hover) */}

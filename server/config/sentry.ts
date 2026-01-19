@@ -15,213 +15,219 @@ const isStaging = process.env.NODE_ENV === 'staging';
 const isEnabled = (isProduction || isStaging) && !!process.env.SENTRY_DSN;
 
 interface SentryHandlers {
-    requestHandler: (req: Request, res: Response, next: NextFunction) => void;
-    tracingHandler: (req: Request, res: Response, next: NextFunction) => void;
-    errorHandler: (err: Error, req: Request, res: Response, next: NextFunction) => void;
+  requestHandler: (req: Request, res: Response, next: NextFunction) => void;
+  tracingHandler: (req: Request, res: Response, next: NextFunction) => void;
+  errorHandler: (err: Error, req: Request, res: Response, next: NextFunction) => void;
 }
 
 interface User {
-    id?: string;
-    email?: string;
-    role?: string;
-    organizationId?: string;
+  id?: string;
+  email?: string;
+  role?: string;
+  organizationId?: string;
 }
 
 interface Context {
-    user?: User;
-    tags?: Record<string, string>;
-    extra?: Record<string, unknown>;
+  user?: User;
+  tags?: Record<string, string>;
+  extra?: Record<string, unknown>;
 }
 
 /**
  * Initialize Sentry
  */
 export function initSentry(_app: Express): SentryHandlers {
-    if (!isEnabled) {
-        console.log('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
-        return {
-            requestHandler: () => (_req: Request, _res: Response, next: NextFunction) => next(),
-            tracingHandler: () => (_req: Request, _res: Response, next: NextFunction) => next(),
-            errorHandler: () => (err: Error, _req: Request, _res: Response, next: NextFunction) => next(err),
-        };
-    }
-
-    Sentry.init({
-        dsn: process.env.SENTRY_DSN,
-        environment: process.env.NODE_ENV || 'development',
-        release: process.env.npm_package_version || '1.0.0',
-
-        // Integrations
-        integrations: [
-            // Express integration
-            expressIntegration(),
-            // HTTP integration for tracing outgoing requests
-            httpIntegration(),
-            // Profiling (optional, requires @sentry/profiling-node)
-            nodeProfilingIntegration(),
-        ],
-
-        // Performance Monitoring
-        tracesSampleRate: isProduction ? 0.1 : 1.0, // 10% in prod, 100% in staging
-        profilesSampleRate: isProduction ? 0.1 : 1.0,
-
-        // Filter sensitive data
-        beforeSend(event: Sentry.ErrorEvent, _hint: Sentry.EventHint) {
-            // Remove sensitive headers
-            if (event.request?.headers) {
-                delete event.request.headers['authorization'];
-                delete event.request.headers['cookie'];
-                delete event.request.headers['x-access-token'];
-            }
-
-            // Remove sensitive data from request body
-            if (event.request?.data) {
-                const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'mfaToken', 'backupCode'];
-                const requestData = event.request.data;
-                sensitiveFields.forEach((field) => {
-                    if (typeof requestData === 'object' && requestData && field in requestData) {
-                        (requestData as Record<string, unknown>)[field] = '[REDACTED]';
-                    }
-                });
-            }
-
-            return event;
-        },
-
-        // Ignore specific errors
-        ignoreErrors: [
-            // Network errors
-            'Network request failed',
-            'Failed to fetch',
-            // Common client errors
-            'ResizeObserver loop limit exceeded',
-            'Non-Error exception captured',
-        ],
-    });
-
-    console.log(`[Sentry] Initialized for ${process.env.NODE_ENV} environment`);
-
-    // In Sentry v10+, handlers are middleware functions
-    // The expressIntegration handles request/tracing automatically
-    // We need to create middleware wrappers for compatibility
+  if (!isEnabled) {
+    console.log('[Sentry] Disabled (no SENTRY_DSN or not in production/staging)');
     return {
-        // Request handler - must be first middleware
-        requestHandler: (_req: Request, _res: Response, next: NextFunction) => {
-            // Sentry automatically handles this via expressIntegration
-            next();
-        },
-
-        // Tracing handler - must be after request handler and before routes
-        tracingHandler: (_req: Request, _res: Response, next: NextFunction) => {
-            // Sentry automatically handles this via expressIntegration
-            next();
-        },
-
-        // Error handler - must be after routes and before other error handlers
-        errorHandler: (err: Error & { status?: number }, _req: Request, _res: Response, next: NextFunction) => {
-            // Only report 500+ errors automatically
-            if (err.status && err.status >= 500) {
-                Sentry.captureException(err);
-            } else if (err.status === 429) {
-                // Also report 429 (rate limit) errors
-                Sentry.captureException(err);
-            }
-            next(err);
-        },
+      requestHandler: () => (_req: Request, _res: Response, next: NextFunction) => next(),
+      tracingHandler: () => (_req: Request, _res: Response, next: NextFunction) => next(),
+      errorHandler: () => (err: Error, _req: Request, _res: Response, next: NextFunction) =>
+        next(err),
     };
+  }
+
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    release: process.env.npm_package_version || '1.0.0',
+
+    // Integrations
+    integrations: [
+      // Express integration
+      expressIntegration(),
+      // HTTP integration for tracing outgoing requests
+      httpIntegration(),
+      // Profiling (optional, requires @sentry/profiling-node)
+      nodeProfilingIntegration(),
+    ],
+
+    // Performance Monitoring
+    tracesSampleRate: isProduction ? 0.1 : 1.0, // 10% in prod, 100% in staging
+    profilesSampleRate: isProduction ? 0.1 : 1.0,
+
+    // Filter sensitive data
+    beforeSend(event: Sentry.ErrorEvent, _hint: Sentry.EventHint) {
+      // Remove sensitive headers
+      if (event.request?.headers) {
+        delete event.request.headers['authorization'];
+        delete event.request.headers['cookie'];
+        delete event.request.headers['x-access-token'];
+      }
+
+      // Remove sensitive data from request body
+      if (event.request?.data) {
+        const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'mfaToken', 'backupCode'];
+        const requestData = event.request.data;
+        sensitiveFields.forEach((field) => {
+          if (typeof requestData === 'object' && requestData && field in requestData) {
+            (requestData as Record<string, unknown>)[field] = '[REDACTED]';
+          }
+        });
+      }
+
+      return event;
+    },
+
+    // Ignore specific errors
+    ignoreErrors: [
+      // Network errors
+      'Network request failed',
+      'Failed to fetch',
+      // Common client errors
+      'ResizeObserver loop limit exceeded',
+      'Non-Error exception captured',
+    ],
+  });
+
+  console.log(`[Sentry] Initialized for ${process.env.NODE_ENV} environment`);
+
+  // In Sentry v10+, handlers are middleware functions
+  // The expressIntegration handles request/tracing automatically
+  // We need to create middleware wrappers for compatibility
+  return {
+    // Request handler - must be first middleware
+    requestHandler: (_req: Request, _res: Response, next: NextFunction) => {
+      // Sentry automatically handles this via expressIntegration
+      next();
+    },
+
+    // Tracing handler - must be after request handler and before routes
+    tracingHandler: (_req: Request, _res: Response, next: NextFunction) => {
+      // Sentry automatically handles this via expressIntegration
+      next();
+    },
+
+    // Error handler - must be after routes and before other error handlers
+    errorHandler: (
+      err: Error & { status?: number },
+      _req: Request,
+      _res: Response,
+      next: NextFunction
+    ) => {
+      // Only report 500+ errors automatically
+      if (err.status && err.status >= 500) {
+        Sentry.captureException(err);
+      } else if (err.status === 429) {
+        // Also report 429 (rate limit) errors
+        Sentry.captureException(err);
+      }
+      next(err);
+    },
+  };
 }
 
 /**
  * Capture exception manually
  */
 export function captureException(error: Error, context: Context = {}): void {
-    if (!isEnabled) {
-        console.error('[Error]', error, context);
-        return;
-    }
+  if (!isEnabled) {
+    console.error('[Error]', error, context);
+    return;
+  }
 
-    Sentry.withScope((scope) => {
-        if (context.user) {
-            scope.setUser({
-                id: context.user.id,
-                email: context.user.email,
-                role: context.user.role,
-            });
-        }
-        if (context.tags) {
-            Object.entries(context.tags).forEach(([key, value]) => {
-                scope.setTag(key, value);
-            });
-        }
-        if (context.extra) {
-            Object.entries(context.extra).forEach(([key, value]) => {
-                scope.setExtra(key, value);
-            });
-        }
-        Sentry.captureException(error);
-    });
+  Sentry.withScope((scope) => {
+    if (context.user) {
+      scope.setUser({
+        id: context.user.id,
+        email: context.user.email,
+        role: context.user.role,
+      });
+    }
+    if (context.tags) {
+      Object.entries(context.tags).forEach(([key, value]) => {
+        scope.setTag(key, value);
+      });
+    }
+    if (context.extra) {
+      Object.entries(context.extra).forEach(([key, value]) => {
+        scope.setExtra(key, value);
+      });
+    }
+    Sentry.captureException(error);
+  });
 }
 
 /**
  * Capture message manually
  */
 export function captureMessage(
-    message: string,
-    level: 'info' | 'warning' | 'error' = 'info',
-    context: Context = {},
+  message: string,
+  level: 'info' | 'warning' | 'error' = 'info',
+  context: Context = {}
 ): void {
-    if (!isEnabled) {
-        console.log(`[${level.toUpperCase()}]`, message, context);
-        return;
-    }
+  if (!isEnabled) {
+    console.log(`[${level.toUpperCase()}]`, message, context);
+    return;
+  }
 
-    Sentry.withScope((scope) => {
-        if (context.tags) {
-            Object.entries(context.tags).forEach(([key, value]) => {
-                scope.setTag(key, value);
-            });
-        }
-        if (context.extra) {
-            Object.entries(context.extra).forEach(([key, value]) => {
-                scope.setExtra(key, value);
-            });
-        }
-        Sentry.captureMessage(message, level);
-    });
+  Sentry.withScope((scope) => {
+    if (context.tags) {
+      Object.entries(context.tags).forEach(([key, value]) => {
+        scope.setTag(key, value);
+      });
+    }
+    if (context.extra) {
+      Object.entries(context.extra).forEach(([key, value]) => {
+        scope.setExtra(key, value);
+      });
+    }
+    Sentry.captureMessage(message, level);
+  });
 }
 
 /**
  * Add breadcrumb for debugging
  */
 export function addBreadcrumb(breadcrumb: Sentry.Breadcrumb): void {
-    if (!isEnabled) return;
+  if (!isEnabled) return;
 
-    Sentry.addBreadcrumb({
-        timestamp: Date.now() / 1000,
-        ...breadcrumb,
-    });
+  Sentry.addBreadcrumb({
+    timestamp: Date.now() / 1000,
+    ...breadcrumb,
+  });
 }
 
 /**
  * Set user context
  */
 export function setUser(user: User): void {
-    if (!isEnabled) return;
+  if (!isEnabled) return;
 
-    Sentry.setUser({
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        organizationId: user.organizationId,
-    });
+  Sentry.setUser({
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    organizationId: user.organizationId,
+  });
 }
 
 /**
  * Clear user context (on logout)
  */
 export function clearUser(): void {
-    if (!isEnabled) return;
-    Sentry.setUser(null);
+  if (!isEnabled) return;
+  Sentry.setUser(null);
 }
 
 // Export raw Sentry for advanced usage

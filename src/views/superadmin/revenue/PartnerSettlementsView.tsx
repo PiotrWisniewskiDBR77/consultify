@@ -34,8 +34,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';

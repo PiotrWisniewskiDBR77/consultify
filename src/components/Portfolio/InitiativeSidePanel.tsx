@@ -28,11 +28,11 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { Api } from '../../services/api';
 import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config/portfolioColors';
+import { Api } from '../../services/api';
 import { InitiativeStatus, PortfolioInitiative, Task, User as UserType } from '../../types';
-import { TaskDetailModal } from '../TaskDetailModal';
 import { DecisionDetailModal } from '../MyWork/DecisionDetailModal';
+import { TaskDetailModal } from '../TaskDetailModal';
 
 // Decision type for this component
 interface Decision {

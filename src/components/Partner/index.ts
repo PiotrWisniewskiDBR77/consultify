@@ -14,8 +14,8 @@
  */
 
 // Layout components
-export { PartnerLayout, type Breadcrumb } from './PartnerLayout';
-export { PartnerSidebar, type PartnerSection } from './PartnerSidebar';
+export { type Breadcrumb, PartnerLayout } from './PartnerLayout';
+export { type PartnerSection, PartnerSidebar } from './PartnerSidebar';
 
 // Analytics & Dashboard components
 export { AcademyProgress } from './AcademyProgress';

@@ -4,16 +4,15 @@
  * Unified component library for consistent Settings UI/UX
  */
 
+export type { default as SettingsSectionType } from './SettingsSection';
 export {
-  SettingsSection,
-  SettingsSectionSkeleton,
+  SettingsButtonGroup,
+  SettingsDivider,
   SettingsFormRow,
   SettingsInput,
-  SettingsTextarea,
+  SettingsSection,
+  SettingsSectionSkeleton,
   SettingsSelect,
+  SettingsTextarea,
   SettingsToggle,
-  SettingsDivider,
-  SettingsButtonGroup,
 } from './SettingsSection';
-
-export type { default as SettingsSectionType } from './SettingsSection';

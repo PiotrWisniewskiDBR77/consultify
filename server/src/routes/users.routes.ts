@@ -8,14 +8,14 @@
  */
 
 import { Response, Router } from 'express';
+import fs from 'fs';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AuthRequest, verifyToken } from '../middleware/auth';
-import { asyncHandler } from '../middleware/asyncHandler';
 import { dbGet, dbRun } from '../database/dbHelpers';
+import { asyncHandler } from '../middleware/asyncHandler';
+import { AuthRequest, verifyToken } from '../middleware/auth';
 import { logger } from '../utils/logger';
 
 const router = Router();

@@ -1,7 +1,7 @@
 /**
  * Mock Admin Middleware
  */
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 export const verifyAdmin = (req: Request, res: Response, next: NextFunction) => {
   next();

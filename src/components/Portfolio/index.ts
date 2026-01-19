@@ -5,6 +5,7 @@
  */
 
 export { InitiativeSidePanel } from './InitiativeSidePanel';
+export { PortfolioGridView } from './PortfolioGridView';
 export { PortfolioKanbanView } from './PortfolioKanbanView';
 export { PortfolioListView } from './PortfolioListView';
 export { PortfolioMatrixView } from './PortfolioMatrixView';

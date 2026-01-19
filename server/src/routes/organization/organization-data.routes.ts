@@ -3,7 +3,7 @@
  * Organization Data Routes
  * Provides data export, stats, and retention settings for Data Management UI.
  */
-import { Router, Response } from 'express';
+import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';

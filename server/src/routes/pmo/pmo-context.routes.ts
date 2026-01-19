@@ -9,7 +9,7 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { get as dbGet, all as dbAll } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();

@@ -4,8 +4,8 @@
  * Minimal responses to keep Security UI functional.
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';

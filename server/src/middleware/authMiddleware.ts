@@ -1,4 +1,5 @@
 import defaultJwt from 'jsonwebtoken';
+
 import defaultConfig from '../config/Config.js';
 import defaultDb from '../database/Database.js';
 import * as PermissionServiceModule from '../services/permissionService.js';
@@ -66,7 +67,9 @@ const verifyToken = (req, res, next) => {
 
             if (revokeAllRow) {
               // Check if token was issued before the revoke-all
-              const revokeTime = parseInt((revokeAllRow as { jti: string }).jti.split('-').pop() || '0');
+              const revokeTime = parseInt(
+                (revokeAllRow as { jti: string }).jti.split('-').pop() || '0'
+              );
               const tokenIssuedAt = decoded.iat * 1000;
 
               if (tokenIssuedAt < revokeTime) {

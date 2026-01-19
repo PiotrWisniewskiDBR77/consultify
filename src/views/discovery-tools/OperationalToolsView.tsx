@@ -57,8 +57,10 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     name: 'Digital Value Stream Map Builder',
     namePl: 'Cyfrowy Kreator Mapy Strumienia Wartości',
     classicFramework: 'Value Stream Mapping',
-    description: 'Chat-guided VSM creation with templates for O2C, P2P, and more - identify bottlenecks and waste',
-    descriptionPl: 'Tworzenie VSM prowadzone przez czat z szablonami dla O2C, P2P i więcej - identyfikacja wąskich gardeł i marnotrawstwa',
+    description:
+      'Chat-guided VSM creation with templates for O2C, P2P, and more - identify bottlenecks and waste',
+    descriptionPl:
+      'Tworzenie VSM prowadzone przez czat z szablonami dla O2C, P2P i więcej - identyfikacja wąskich gardeł i marnotrawstwa',
     icon: Workflow,
     outputs: ['Current State VSM', 'Future State VSM', 'Improvement Initiatives'],
     outputsPl: ['VSM stanu obecnego', 'VSM stanu docelowego', 'Inicjatywy usprawnienia'],
@@ -69,8 +71,10 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     name: 'Standard Work & SOP Builder',
     namePl: 'Kreator Pracy Standaryzowanej i SOP',
     classicFramework: 'Standard Work',
-    description: 'Create operational standards with checklists, quality criteria, and drift detection',
-    descriptionPl: 'Tworzenie standardów operacyjnych z checklistami, kryteriami jakości i wykrywaniem odchyleń',
+    description:
+      'Create operational standards with checklists, quality criteria, and drift detection',
+    descriptionPl:
+      'Tworzenie standardów operacyjnych z checklistami, kryteriami jakości i wykrywaniem odchyleń',
     icon: FileText,
     outputs: ['SOP Document', 'Checklists', 'Training Materials'],
     outputsPl: ['Dokument SOP', 'Checklisty', 'Materiały szkoleniowe'],
@@ -82,7 +86,8 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     namePl: 'Rozwiązywanie Problemów A3',
     classicFramework: 'Toyota A3',
     description: 'Structured root cause analysis with 5 Why, countermeasures, and follow-up KPIs',
-    descriptionPl: 'Strukturalna analiza przyczyn źródłowych z 5 Why, środkami zaradczymi i KPI monitorowania',
+    descriptionPl:
+      'Strukturalna analiza przyczyn źródłowych z 5 Why, środkami zaradczymi i KPI monitorowania',
     icon: Target,
     outputs: ['A3 Report', 'Countermeasures List', 'Follow-up KPIs'],
     outputsPl: ['Raport A3', 'Lista środków zaradczych', 'KPI monitorowania'],
@@ -93,8 +98,10 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     name: 'SMED / Changeover Reduction Planner',
     namePl: 'Planer Redukcji Przezbrojeń SMED',
     classicFramework: 'SMED',
-    description: 'Analyze changeover activities, separate internal/external, calculate ROI of improvements',
-    descriptionPl: 'Analiza czynności przezbrojeń, separacja wewnętrzne/zewnętrzne, kalkulacja ROI usprawnień',
+    description:
+      'Analyze changeover activities, separate internal/external, calculate ROI of improvements',
+    descriptionPl:
+      'Analiza czynności przezbrojeń, separacja wewnętrzne/zewnętrzne, kalkulacja ROI usprawnień',
     icon: Clock,
     outputs: ['SMED Analysis', 'Quick Wins List', 'Investment ROI'],
     outputsPl: ['Analiza SMED', 'Lista szybkich usprawnień', 'ROI inwestycji'],
@@ -105,7 +112,8 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     name: 'Daily Management System Builder',
     namePl: 'Kreator Systemu Zarządzania Dziennego',
     classicFramework: 'Lean DMS',
-    description: 'Configure tier meetings, KPIs, escalation rules, and issue-to-initiative pipeline',
+    description:
+      'Configure tier meetings, KPIs, escalation rules, and issue-to-initiative pipeline',
     descriptionPl: 'Konfiguracja spotkań tier, KPI, reguł eskalacji i ścieżki problem-inicjatywa',
     icon: BarChart3,
     outputs: ['Tier Meeting Structure', 'KPI Boards', 'Escalation Rules'],
@@ -117,8 +125,10 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     name: 'Operational Automation Pipeline Builder',
     namePl: 'Kreator Ścieżki Automatyzacji Operacyjnej',
     classicFramework: 'Automation Backlog',
-    description: 'Build prioritized automation backlog from VSM insights - RPA, workflow, AI, integrations',
-    descriptionPl: 'Budowanie priorytetyzowanego backlogu automatyzacji z wniosków VSM - RPA, workflow, AI, integracje',
+    description:
+      'Build prioritized automation backlog from VSM insights - RPA, workflow, AI, integrations',
+    descriptionPl:
+      'Budowanie priorytetyzowanego backlogu automatyzacji z wniosków VSM - RPA, workflow, AI, integracje',
     icon: Bot,
     outputs: ['Automation Backlog', 'Technology Recommendations', 'ROI Estimates'],
     outputsPl: ['Backlog automatyzacji', 'Rekomendacje technologii', 'Estymacje ROI'],
@@ -130,7 +140,8 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     namePl: 'Pętla Sterowania Ograniczeniami',
     classicFramework: 'Theory of Constraints',
     description: 'Define bottlenecks, prioritization rules, dispatch logic, and capacity alerts',
-    descriptionPl: 'Definiowanie wąskich gardeł, reguł priorytetyzacji, logiki dyspozycji i alertów pojemności',
+    descriptionPl:
+      'Definiowanie wąskich gardeł, reguł priorytetyzacji, logiki dyspozycji i alertów pojemności',
     icon: Gauge,
     outputs: ['Constraint Map', 'Priority Rules', 'Alert Configuration'],
     outputsPl: ['Mapa ograniczeń', 'Reguły priorytetów', 'Konfiguracja alertów'],
@@ -142,7 +153,8 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     namePl: 'Silnik Automatyzacji Decyzji',
     classicFramework: 'Policy-as-Code',
     description: 'Map decision points, define policy rules, simulate impact of automation',
-    descriptionPl: 'Mapowanie punktów decyzyjnych, definiowanie reguł polityki, symulacja wpływu automatyzacji',
+    descriptionPl:
+      'Mapowanie punktów decyzyjnych, definiowanie reguł polityki, symulacja wpływu automatyzacji',
     icon: Settings,
     outputs: ['Decision Catalog', 'Policy Rules', 'Automation Impact'],
     outputsPl: ['Katalog decyzji', 'Reguły polityki', 'Wpływ automatyzacji'],
@@ -154,7 +166,8 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     namePl: 'Cyfrowa Wieża Kontroli Produkcji',
     classicFramework: 'Visual Management',
     description: 'Design visibility dashboard for physical operations - states, anomalies, actions',
-    descriptionPl: 'Projektowanie dashboardu widoczności dla operacji fizycznych - stany, anomalie, akcje',
+    descriptionPl:
+      'Projektowanie dashboardu widoczności dla operacji fizycznych - stany, anomalie, akcje',
     icon: Layers,
     outputs: ['Dashboard Design', 'Anomaly Detection', 'Action Protocols'],
     outputsPl: ['Projekt dashboardu', 'Wykrywanie anomalii', 'Protokoły akcji'],
@@ -166,7 +179,8 @@ const OPERATIONAL_TOOLS: OperationalTool[] = [
     namePl: 'Autopilot Zapasów',
     classicFramework: 'ABC/XYZ Analysis',
     description: 'Classify SKUs, define replenishment policies, simulate cash and stockout impact',
-    descriptionPl: 'Klasyfikacja SKU, definiowanie polityk uzupełniania, symulacja wpływu na gotówkę i braki',
+    descriptionPl:
+      'Klasyfikacja SKU, definiowanie polityk uzupełniania, symulacja wpływu na gotówkę i braki',
     icon: Package,
     outputs: ['ABC/XYZ Map', 'Replenishment Policies', 'Cash Impact Simulation'],
     outputsPl: ['Mapa ABC/XYZ', 'Polityki uzupełniania', 'Symulacja wpływu na gotówkę'],
@@ -210,7 +224,10 @@ export const OperationalToolsView: React.FC = () => {
                 {t('discoveryTools.operational.title', 'Operational Excellence Tools')}
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
-                {t('discoveryTools.operational.subtitle', '10 Lean and process excellence tools powered by AI')}
+                {t(
+                  'discoveryTools.operational.subtitle',
+                  '10 Lean and process excellence tools powered by AI'
+                )}
               </p>
             </div>
           </div>
@@ -229,9 +246,10 @@ export const OperationalToolsView: React.FC = () => {
                 key={tool.id}
                 className={`
                   p-5 rounded-xl border-2 transition-all cursor-pointer
-                  ${isSelected
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-blue-300'
+                  ${
+                    isSelected
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-blue-300'
                   }
                 `}
                 onClick={() => handleStartTool(tool.id)}

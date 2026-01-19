@@ -2,8 +2,9 @@
  * User Preferences Routes
  * API endpoints for user preferences management
  */
-import { Router, Response } from 'express';
-import { verifyToken, AuthRequest } from '../../middleware/auth.middleware.js';
+import { Response, Router } from 'express';
+
+import { AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
 

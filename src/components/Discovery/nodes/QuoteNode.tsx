@@ -6,8 +6,8 @@
 
 import { MessageSquareQuote, Trash2 } from 'lucide-react';
 import React, { memo } from 'react';
-import { Handle, NodeProps, Position } from 'reactflow';
 import { useTranslation } from 'react-i18next';
+import { Handle, NodeProps, Position } from 'reactflow';
 
 import { QuoteNodeData } from '@/types/discovery';
 

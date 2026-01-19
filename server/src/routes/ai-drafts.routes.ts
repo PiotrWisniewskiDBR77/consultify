@@ -14,60 +14,60 @@ const router = Router();
 
 // Service interfaces
 interface DraftServiceInterface {
-    getPendingDrafts?: (
-        userId: string,
-        options: {
-            organizationId: string;
-            projectId?: string;
-            draftType?: string;
-            limit?: number;
-        },
-    ) => Promise<unknown[]>;
-    getDraft?: (id: string) => Promise<unknown>;
-    getDraftsForEntity?: (type: string, id: string) => Promise<unknown[]>;
-    createDraft?: (data: {
-        organizationId: string;
-        projectId?: string;
-        userId: string;
-        draftType: string;
-        targetEntityType?: string;
-        targetEntityId?: string;
-        targetField?: string;
-        originalContent?: string;
-        suggestedContent: string;
-        confidence?: number;
-        reasoning?: string;
-        modelUsed?: string;
-        tokensUsed?: number;
-    }) => Promise<unknown>;
-    approveDraft?: (
-        id: string,
-        options: {
-            reviewedBy: string;
-            notes?: string;
-            modifications?: unknown;
-        },
-    ) => Promise<{ success: boolean; status?: string; reason?: string }>;
-    rejectDraft?: (
-        id: string,
-        options: {
-            reviewedBy: string;
-            notes?: string;
-        },
-    ) => Promise<{ success: boolean; status?: string; reason?: string }>;
-    getDraftStats?: (
-        userId: string,
-        organizationId: string,
-    ) => Promise<{
-        total: number;
-        approved?: number;
-        modified?: number;
-    }>;
-    expireOldDrafts?: () => Promise<{ expired: number }>;
+  getPendingDrafts?: (
+    userId: string,
+    options: {
+      organizationId: string;
+      projectId?: string;
+      draftType?: string;
+      limit?: number;
+    }
+  ) => Promise<unknown[]>;
+  getDraft?: (id: string) => Promise<unknown>;
+  getDraftsForEntity?: (type: string, id: string) => Promise<unknown[]>;
+  createDraft?: (data: {
+    organizationId: string;
+    projectId?: string;
+    userId: string;
+    draftType: string;
+    targetEntityType?: string;
+    targetEntityId?: string;
+    targetField?: string;
+    originalContent?: string;
+    suggestedContent: string;
+    confidence?: number;
+    reasoning?: string;
+    modelUsed?: string;
+    tokensUsed?: number;
+  }) => Promise<unknown>;
+  approveDraft?: (
+    id: string,
+    options: {
+      reviewedBy: string;
+      notes?: string;
+      modifications?: unknown;
+    }
+  ) => Promise<{ success: boolean; status?: string; reason?: string }>;
+  rejectDraft?: (
+    id: string,
+    options: {
+      reviewedBy: string;
+      notes?: string;
+    }
+  ) => Promise<{ success: boolean; status?: string; reason?: string }>;
+  getDraftStats?: (
+    userId: string,
+    organizationId: string
+  ) => Promise<{
+    total: number;
+    approved?: number;
+    modified?: number;
+  }>;
+  expireOldDrafts?: () => Promise<{ expired: number }>;
 }
 
 interface DraftTypes {
-    [key: string]: unknown;
+  [key: string]: unknown;
 }
 
 // Dynamic imports for services (may not be migrated yet)
@@ -76,19 +76,19 @@ let DRAFT_TYPES: DraftTypes | null = null;
 let aiLogger: { error?: (category: string, message: string) => void } | null = null;
 
 try {
-    const draftModule = await import('../../services/ai/draftService.js');
-    const module = (draftModule as any).default || draftModule;
-    draftService = (module as any).draftService || module;
-    DRAFT_TYPES = (module as any).DRAFT_TYPES || module;
+  const draftModule = await import('../../services/ai/draftService.js');
+  const module = (draftModule as any).default || draftModule;
+  draftService = (module as any).draftService || module;
+  DRAFT_TYPES = (module as any).DRAFT_TYPES || module;
 } catch {
-    console.warn('[AI Drafts Routes] draftService not available');
+  console.warn('[AI Drafts Routes] draftService not available');
 }
 
 try {
-    const loggerModule = await import('../../services/ai/logger.js');
-    aiLogger = (loggerModule as any).aiLogger || (loggerModule as any).default || loggerModule;
+  const loggerModule = await import('../../services/ai/logger.js');
+  aiLogger = (loggerModule as any).aiLogger || (loggerModule as any).default || loggerModule;
 } catch {
-    console.warn('[AI Drafts Routes] aiLogger not available');
+  console.warn('[AI Drafts Routes] aiLogger not available');
 }
 
 // All routes require authentication
@@ -99,40 +99,43 @@ router.use(verifyToken);
  * Get pending drafts for the current user
  */
 router.get(
-    '/',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!draftService?.getPendingDrafts) {
-            return res.status(503).json({ error: 'Draft service not available' });
-        }
+  '/',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!draftService?.getPendingDrafts) {
+      return res.status(503).json({ error: 'Draft service not available' });
+    }
 
-        try {
-            const { projectId, draftType, limit } = req.query;
-            const userId = req.user?.id;
-            const organizationId = req.user?.organizationId;
+    try {
+      const { projectId, draftType, limit } = req.query;
+      const userId = req.user?.id;
+      const organizationId = req.user?.organizationId;
 
-            if (!userId || !organizationId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const drafts = await draftService.getPendingDrafts(userId, {
-                organizationId,
-                projectId: projectId as string | undefined,
-                draftType: draftType as string | undefined,
-                limit: limit ? parseInt(limit as string, 10) : 20,
-            });
+      const drafts = await draftService.getPendingDrafts(userId, {
+        organizationId,
+        projectId: projectId as string | undefined,
+        draftType: draftType as string | undefined,
+        limit: limit ? parseInt(limit as string, 10) : 20,
+      });
 
-            res.json({
-                success: true,
-                drafts,
-                count: Array.isArray(drafts) ? drafts.length : 0,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error('DraftsAPI', `GET / error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
-            res.status(500).json({ error: 'Failed to fetch drafts' });
-        }
-    }),
+      res.json({
+        success: true,
+        drafts,
+        count: Array.isArray(drafts) ? drafts.length : 0,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'DraftsAPI',
+          `GET / error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to fetch drafts' });
+    }
+  })
 );
 
 /**
@@ -140,41 +143,41 @@ router.get(
  * Get a specific draft
  */
 router.get(
-    '/:id',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!draftService?.getDraft) {
-            return res.status(503).json({ error: 'Draft service not available' });
-        }
+  '/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!draftService?.getDraft) {
+      return res.status(503).json({ error: 'Draft service not available' });
+    }
 
-        try {
-            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const draft = (await draftService.getDraft(id)) as {
-                user_id?: string;
-                organization_id?: string;
-            } | null;
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const draft = (await draftService.getDraft(id)) as {
+        user_id?: string;
+        organization_id?: string;
+      } | null;
 
-            if (!draft) {
-                return res.status(404).json({ error: 'Draft not found' });
-            }
+      if (!draft) {
+        return res.status(404).json({ error: 'Draft not found' });
+      }
 
-            // Verify access
-            const userId = req.user?.id;
-            const organizationId = req.user?.organizationId;
-            if (draft.user_id !== userId && draft.organization_id !== organizationId) {
-                return res.status(403).json({ error: 'Access denied' });
-            }
+      // Verify access
+      const userId = req.user?.id;
+      const organizationId = req.user?.organizationId;
+      if (draft.user_id !== userId && draft.organization_id !== organizationId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
 
-            res.json({ success: true, draft });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'DraftsAPI',
-                    `GET /:id error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to fetch draft' });
-        }
-    }),
+      res.json({ success: true, draft });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'DraftsAPI',
+          `GET /:id error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to fetch draft' });
+    }
+  })
 );
 
 /**
@@ -182,32 +185,32 @@ router.get(
  * Get drafts for a specific entity (e.g., task, initiative)
  */
 router.get(
-    '/entity/:type/:id',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!draftService?.getDraftsForEntity) {
-            return res.status(503).json({ error: 'Draft service not available' });
-        }
+  '/entity/:type/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!draftService?.getDraftsForEntity) {
+      return res.status(503).json({ error: 'Draft service not available' });
+    }
 
-        try {
-            const type = Array.isArray(req.params.type) ? req.params.type[0] : req.params.type;
-            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const drafts = await draftService.getDraftsForEntity(type, id);
+    try {
+      const type = Array.isArray(req.params.type) ? req.params.type[0] : req.params.type;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const drafts = await draftService.getDraftsForEntity(type, id);
 
-            res.json({
-                success: true,
-                drafts,
-                count: Array.isArray(drafts) ? drafts.length : 0,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'DraftsAPI',
-                    `GET /entity error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to fetch entity drafts' });
-        }
-    }),
+      res.json({
+        success: true,
+        drafts,
+        count: Array.isArray(drafts) ? drafts.length : 0,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'DraftsAPI',
+          `GET /entity error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to fetch entity drafts' });
+    }
+  })
 );
 
 /**
@@ -215,75 +218,75 @@ router.get(
  * Create a new draft (typically called by AI services)
  */
 router.post(
-    '/',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!draftService?.createDraft || !DRAFT_TYPES) {
-            return res.status(503).json({ error: 'Draft service not available' });
-        }
+  '/',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!draftService?.createDraft || !DRAFT_TYPES) {
+      return res.status(503).json({ error: 'Draft service not available' });
+    }
 
-        try {
-            const {
-                draftType,
-                targetEntityType,
-                targetEntityId,
-                targetField,
-                originalContent,
-                suggestedContent,
-                confidence,
-                reasoning,
-                modelUsed,
-                tokensUsed,
-            } = req.body;
+    try {
+      const {
+        draftType,
+        targetEntityType,
+        targetEntityId,
+        targetField,
+        originalContent,
+        suggestedContent,
+        confidence,
+        reasoning,
+        modelUsed,
+        tokensUsed,
+      } = req.body;
 
-            const userId = req.user?.id;
-            const organizationId = req.user?.organizationId;
+      const userId = req.user?.id;
+      const organizationId = req.user?.organizationId;
 
-            if (!userId || !organizationId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            if (!draftType || !suggestedContent) {
-                return res.status(400).json({
-                    error: 'Missing required fields: draftType, suggestedContent',
-                });
-            }
+      if (!draftType || !suggestedContent) {
+        return res.status(400).json({
+          error: 'Missing required fields: draftType, suggestedContent',
+        });
+      }
 
-            if (!DRAFT_TYPES[draftType]) {
-                return res.status(400).json({
-                    error: `Invalid draft type. Valid types: ${Object.keys(DRAFT_TYPES).join(', ')}`,
-                });
-            }
+      if (!DRAFT_TYPES[draftType]) {
+        return res.status(400).json({
+          error: `Invalid draft type. Valid types: ${Object.keys(DRAFT_TYPES).join(', ')}`,
+        });
+      }
 
-            const result = await draftService.createDraft({
-                organizationId,
-                projectId: req.body.projectId,
-                userId,
-                draftType,
-                targetEntityType,
-                targetEntityId,
-                targetField,
-                originalContent,
-                suggestedContent,
-                confidence,
-                reasoning,
-                modelUsed,
-                tokensUsed,
-            });
+      const result = await draftService.createDraft({
+        organizationId,
+        projectId: req.body.projectId,
+        userId,
+        draftType,
+        targetEntityType,
+        targetEntityId,
+        targetField,
+        originalContent,
+        suggestedContent,
+        confidence,
+        reasoning,
+        modelUsed,
+        tokensUsed,
+      });
 
-            res.status(201).json({
-                success: true,
-                draft: result,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'DraftsAPI',
-                    `POST / error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to create draft' });
-        }
-    }),
+      res.status(201).json({
+        success: true,
+        draft: result,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'DraftsAPI',
+          `POST / error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to create draft' });
+    }
+  })
 );
 
 /**
@@ -291,50 +294,50 @@ router.post(
  * Approve a draft (optionally with modifications)
  */
 router.patch(
-    '/:id/approve',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!draftService?.approveDraft || !draftService?.getDraft) {
-            return res.status(503).json({ error: 'Draft service not available' });
-        }
+  '/:id/approve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!draftService?.approveDraft || !draftService?.getDraft) {
+      return res.status(503).json({ error: 'Draft service not available' });
+    }
 
-        try {
-            const { notes, modifications } = req.body;
-            const userId = req.user?.id;
+    try {
+      const { notes, modifications } = req.body;
+      const userId = req.user?.id;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const result = await draftService.approveDraft(id, {
-                reviewedBy: userId,
-                notes,
-                modifications,
-            });
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const result = await draftService.approveDraft(id, {
+        reviewedBy: userId,
+        notes,
+        modifications,
+      });
 
-            if (!result.success) {
-                return res.status(404).json({ error: result.reason || 'Failed to approve draft' });
-            }
+      if (!result.success) {
+        return res.status(404).json({ error: result.reason || 'Failed to approve draft' });
+      }
 
-            // Fetch the updated draft to return full details
-            const draftId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const draft = await draftService.getDraft(draftId);
+      // Fetch the updated draft to return full details
+      const draftId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const draft = await draftService.getDraft(draftId);
 
-            res.json({
-                success: true,
-                status: result.status,
-                draft,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'DraftsAPI',
-                    `PATCH /approve error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to approve draft' });
-        }
-    }),
+      res.json({
+        success: true,
+        status: result.status,
+        draft,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'DraftsAPI',
+          `PATCH /approve error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to approve draft' });
+    }
+  })
 );
 
 /**
@@ -342,44 +345,44 @@ router.patch(
  * Reject a draft
  */
 router.patch(
-    '/:id/reject',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!draftService?.rejectDraft) {
-            return res.status(503).json({ error: 'Draft service not available' });
-        }
+  '/:id/reject',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!draftService?.rejectDraft) {
+      return res.status(503).json({ error: 'Draft service not available' });
+    }
 
-        try {
-            const { notes } = req.body;
-            const userId = req.user?.id;
+    try {
+      const { notes } = req.body;
+      const userId = req.user?.id;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const result = await draftService.rejectDraft(id, {
-                reviewedBy: userId,
-                notes,
-            });
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const result = await draftService.rejectDraft(id, {
+        reviewedBy: userId,
+        notes,
+      });
 
-            if (!result.success) {
-                return res.status(404).json({ error: result.reason || 'Failed to reject draft' });
-            }
+      if (!result.success) {
+        return res.status(404).json({ error: result.reason || 'Failed to reject draft' });
+      }
 
-            res.json({
-                success: true,
-                status: result.status,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'DraftsAPI',
-                    `PATCH /reject error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to reject draft' });
-        }
-    }),
+      res.json({
+        success: true,
+        status: result.status,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'DraftsAPI',
+          `PATCH /reject error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to reject draft' });
+    }
+  })
 );
 
 /**
@@ -387,42 +390,42 @@ router.patch(
  * Get draft statistics for the current user
  */
 router.get(
-    '/user/stats',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!draftService?.getDraftStats) {
-            return res.status(503).json({ error: 'Draft service not available' });
-        }
+  '/user/stats',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!draftService?.getDraftStats) {
+      return res.status(503).json({ error: 'Draft service not available' });
+    }
 
-        try {
-            const userId = req.user?.id;
-            const organizationId = req.user?.organizationId;
+    try {
+      const userId = req.user?.id;
+      const organizationId = req.user?.organizationId;
 
-            if (!userId || !organizationId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId || !organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const stats = await draftService.getDraftStats(userId, organizationId);
+      const stats = await draftService.getDraftStats(userId, organizationId);
 
-            res.json({
-                success: true,
-                stats: {
-                    ...stats,
-                    acceptanceRate:
-                        stats.total > 0
-                            ? Math.round((((stats.approved || 0) + (stats.modified || 0)) / stats.total) * 100)
-                            : null,
-                },
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'DraftsAPI',
-                    `GET /stats error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to fetch stats' });
-        }
-    }),
+      res.json({
+        success: true,
+        stats: {
+          ...stats,
+          acceptanceRate:
+            stats.total > 0
+              ? Math.round((((stats.approved || 0) + (stats.modified || 0)) / stats.total) * 100)
+              : null,
+        },
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'DraftsAPI',
+          `GET /stats error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+  })
 );
 
 /**
@@ -430,35 +433,35 @@ router.get(
  * Clean up expired drafts (admin only)
  */
 router.delete(
-    '/expired',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!draftService?.expireOldDrafts) {
-            return res.status(503).json({ error: 'Draft service not available' });
-        }
+  '/expired',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!draftService?.expireOldDrafts) {
+      return res.status(503).json({ error: 'Draft service not available' });
+    }
 
-        try {
-            // Check if user has admin role
-            const userRole = req.user?.role;
-            if (userRole !== 'administrator' && userRole !== 'owner') {
-                return res.status(403).json({ error: 'Admin access required' });
-            }
+    try {
+      // Check if user has admin role
+      const userRole = req.user?.role;
+      if (userRole !== 'administrator' && userRole !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
 
-            const result = await draftService.expireOldDrafts();
+      const result = await draftService.expireOldDrafts();
 
-            res.json({
-                success: true,
-                expiredCount: result.expired,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'DraftsAPI',
-                    `DELETE /expired error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to expire drafts' });
-        }
-    }),
+      res.json({
+        success: true,
+        expiredCount: result.expired,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'DraftsAPI',
+          `DELETE /expired error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to expire drafts' });
+    }
+  })
 );
 
 export default router;

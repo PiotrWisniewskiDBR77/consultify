@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Globe, Menu, Moon, Sun, X } from 'lucide-react';
+import { ChevronDown, Globe, Handshake, Menu, Moon, Sun, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { changeLanguage, LANGUAGE_NAMES, SUPPORTED_LANGUAGES } from '../../i18n';
 import { useAppStore } from '../../store/useAppStore';
 
 interface EntryTopBarProps {
@@ -31,14 +32,11 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useAppStore();
 
-  const languages = [
-    { code: 'en', label: 'English' },
-    { code: 'pl', label: 'Polski' },
-    { code: 'de', label: 'Deutsch' },
-    { code: 'ja', label: '日本語' },
-    { code: 'ar', label: 'العربية' },
-    { code: 'es', label: 'Español' },
-  ];
+  // Use centralized language configuration
+  const languages = SUPPORTED_LANGUAGES.map((code) => ({
+    code,
+    label: LANGUAGE_NAMES[code],
+  }));
 
   const currentLang = languages.find((l) => l.code === i18n.language.split('-')[0]) || languages[0];
 
@@ -66,8 +64,8 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleLangChange = (code: string) => {
-    i18n.changeLanguage(code);
+  const handleLangChange = async (code: string) => {
+    await changeLanguage(code);
     setIsLangOpen(false);
   };
 
@@ -75,51 +73,62 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     <header className="fixed top-0 left-0 right-0 h-20 bg-white/70 dark:bg-navy-950/70 backdrop-blur-xl border-b border-white/20 dark:border-navy-700 z-[100] transition-colors duration-300">
       <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
         {/* Logo + Brand Name */}
-        <div className="flex items-center gap-3">
-          {/* DBR77 Logo - links to company website */}
-          <a
-            href="https://dbr77.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group"
-            title="DBR77 Robotics - Company Website"
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            {/* DBR77 Logo - links to company website */}
+            <a
+              href="https://dbr77.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group"
+              title="DBR77 Robotics - Company Website"
+            >
+              <img
+                src="/assets/logos/logo-dark.png"
+                alt="DBR77"
+                className="h-8 transition-transform duration-300 group-hover:scale-110 group-hover:brightness-110"
+              />
+            </a>
+            {/* Consultinity - links to homepage */}
+            <a
+              href="/"
+              className="text-xl font-black tracking-tight text-navy-950 dark:text-white uppercase font-sans hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+            >
+              Consultinity
+            </a>
+          </div>
+
+          {/* Partner Program Button - Desktop Only */}
+          <button
+            onClick={() => navigate('/become-partner')}
+            className="hidden md:inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 rounded-lg transition-all duration-300 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-105 group"
           >
-            <img
-              src="/assets/logos/logo-dark.png"
-              alt="DBR77"
-              className="h-8 transition-transform duration-300 group-hover:scale-110 group-hover:brightness-110"
+            <Handshake
+              size={18}
+              className="group-hover:rotate-12 transition-transform duration-300"
             />
-          </a>
-          {/* Consultinity - links to homepage */}
-          <a
-            href="/"
-            className="text-xl font-black tracking-tight text-navy-950 dark:text-white uppercase font-sans hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-          >
-            Consultinity
-          </a>
+            <span>{t('partner.becomePartner', 'Zostań Partnerem')}</span>
+          </button>
         </div>
 
-        {/* Center Navigation - Demo & Trial */}
-        <nav className="hidden md:flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
+        {/* Right Navigation - Demo, Trial, Auth & Settings */}
+        <div className="hidden md:flex items-center gap-3">
           {/* Demo Button */}
           <button
             onClick={onDemoClick}
-            className="min-w-24 p-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-navy-700 cursor-pointer"
+            className="min-w-24 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-navy-700 cursor-pointer"
           >
-            Demo
+            {t('landing.topBar.demo', 'Demo')}
           </button>
 
           {/* Trial Button */}
           <button
             onClick={onTrialClick}
-            className="min-w-24 p-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-navy-700 cursor-pointer"
+            className="min-w-24 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-navy-700 cursor-pointer mr-8"
           >
-            Trial
+            {t('landing.topBar.trial', 'Trial')}
           </button>
-        </nav>
 
-        {/* Right Navigation - Auth & Settings */}
-        <div className="hidden md:flex items-center gap-3">
           {/* Log in Button - using useNavigate for reliable navigation */}
           <button
             onClick={() => {
@@ -128,7 +137,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
             }}
             className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all border border-slate-200 dark:border-navy-700 cursor-pointer"
           >
-            Log in
+            {t('landing.topBar.login', 'Log in')}
           </button>
 
           {/* Sign up Button - using useNavigate for reliable navigation */}
@@ -139,7 +148,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
             }}
             className="px-5 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/25 dark:shadow-purple-900/25 cursor-pointer"
           >
-            Sign up
+            {t('landing.topBar.signUp', 'Sign up')}
           </button>
 
           <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
@@ -237,6 +246,20 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                 className="absolute top-full left-0 right-0 bg-white dark:bg-navy-950 border-b border-slate-200 dark:border-navy-700 shadow-xl"
               >
                 <nav className="flex flex-col p-4 gap-2 max-w-7xl mx-auto">
+                  {/* Partner Program Button - Featured */}
+                  <button
+                    onClick={() => {
+                      navigate('/become-partner');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full px-4 py-3 text-base font-semibold text-white bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 rounded-lg transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
+                  >
+                    <Handshake size={20} />
+                    <span>{t('partner.becomePartner', 'Zostań Partnerem')}</span>
+                  </button>
+
+                  <div className="h-px bg-slate-200 dark:bg-white/10 my-2" />
+
                   {/* Navigation Links */}
                   <button
                     onClick={() => {
@@ -245,7 +268,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     }}
                     className="w-full text-left px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
                   >
-                    Demo
+                    {t('landing.topBar.demo', 'Demo')}
                   </button>
                   <button
                     onClick={() => {
@@ -254,7 +277,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                     }}
                     className="w-full text-left px-4 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-all"
                   >
-                    Trial
+                    {t('landing.topBar.trial', 'Trial')}
                   </button>
 
                   <div className="h-px bg-slate-200 dark:bg-white/10 my-2" />

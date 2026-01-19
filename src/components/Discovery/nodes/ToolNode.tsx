@@ -6,8 +6,8 @@
 
 import { Wrench } from 'lucide-react';
 import React, { memo } from 'react';
-import { Handle, NodeProps, Position } from 'reactflow';
 import { useTranslation } from 'react-i18next';
+import { Handle, NodeProps, Position } from 'reactflow';
 
 import { ToolNodeData } from '@/types/discovery';
 

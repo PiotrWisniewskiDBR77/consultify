@@ -56,6 +56,14 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Japanese language font - Noto Sans JP for full character support */
+  :lang(ja),
+  [lang="ja"],
+  html[lang="ja"] body,
+  .lang-ja {
+    font-family: 'Noto Sans JP', 'Inter', sans-serif;
+  }
 }
 
 /* Admin Module Styles - Clean Enterprise Design */

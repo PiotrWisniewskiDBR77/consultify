@@ -3,7 +3,7 @@
  * Provides automatic translation overlay for entities based on Accept-Language header
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 // Extend Express Request type
 declare global {

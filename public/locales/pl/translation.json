@@ -1,6 +1,9 @@
 {
+  "partner": {
+    "becomePartner": "Zostań Partnerem"
+  },
   "sidebar": {
-    "aiChat": "Czat AI",
+    "aiChat": "Czat",
     "dashboard": "Pulpit",
     "quickAssessment": "Szybka Diagnoza",
     "fullProject": "Pełna Transformacja",
@@ -85,11 +88,51 @@
     "assessmentOther": "Inne",
     "affiliateDashboard": "Wpływ Ekosystemu",
     "discoveryConsultant": "Discovery",
+    "interview": "Wywiad",
+    "discoveryTools": "Narzędzia",
+    "strategicAnalysis": "Analiza Strategiczna",
+    "operationalTools": "Narzędzia Operacyjne",
+    "digitalTransformation": "Transformacja Cyfrowa",
+    "processAutomation": "Automatyzacja Procesów AI",
+    "initiatives": "Inicjatywy",
+    "execution": "Wdrożenie",
+    "benefits": "Realizacja",
+    "reports": "Raporty",
     "collapse": "Zwiń",
     "expand": "Rozwiń",
     "metrics": "Metryki & Konwersja",
     "portfolioRoadmap": "Inicjatywy",
-    "superAdmin": "Super Admin"
+    "superAdmin": "Super Admin",
+    "initiativeManagement": "Zarządzanie Inicjatywami"
+  },
+  "discoveryTools": {
+    "title": "Discovery Tools",
+    "subtitle": "31 narzędzi AI do analizy strategicznej, operacyjnej i transformacji cyfrowej",
+    "stats": {
+      "aiPowered": "Analiza wspierana przez AI",
+      "initiatives": "Generuje inicjatywy",
+      "visualizations": "Interaktywne wizualizacje"
+    },
+    "explore": "Przeglądaj narzędzia",
+    "howItWorks": {
+      "title": "Jak działają Discovery Tools"
+    },
+    "strategic": {
+      "title": "Narzędzia Analizy Strategicznej",
+      "subtitle": "10 klasycznych frameworków strategicznych wspieranych przez AI"
+    },
+    "operational": {
+      "title": "Narzędzia Doskonałości Operacyjnej",
+      "subtitle": "10 narzędzi Lean i doskonałości procesowej wspieranych przez AI"
+    },
+    "digital": {
+      "title": "Narzędzia Transformacji Cyfrowej",
+      "subtitle": "10 narzędzi oceny gotowości technologicznej i automatyzacji"
+    },
+    "processAutomation": {
+      "title": "Automatyzacja Procesów AI",
+      "subtitle": "Interaktywny warsztat optymalizacji i automatyzacji procesów"
+    }
   },
   "portfolio": {
     "title": "Inicjatywy",
@@ -297,6 +340,18 @@
       "mode": "Tryb Demo",
       "description": "Eksplorujesz z przykładowymi danymi",
       "exploring": "Eksplorujesz z przykładowymi danymi",
+      "projects": "projektów",
+      "initiatives": "inicjatyw",
+      "hints": "Wskazówki",
+      "exit": "Zakończ demo",
+      "readOnlyTitle": "Tryb tylko do odczytu",
+      "readOnlyDesc": "Zmiany nie są zapisywane",
+      "exploreTitle": "Eksploruj funkcje",
+      "exploreDesc": "Przeglądaj wszystkie moduły",
+      "hintTitle": "Wskazówka",
+      "defaultHint": "Kliknij na inicjatywy, aby zobaczyć szczegóły",
+      "help": "Pomoc",
+      "partnerProgram": "Program Partnerski",
       "limitations": {
         "readOnly": "Tryb tylko do odczytu — zmiany nie zostaną zapisane",
         "sampleData": "Przykładowe dane — eksploruj z realistycznymi przykładami",
@@ -1292,7 +1347,10 @@
             ],
             "level4Formula": "Doświadczenie klienta",
             "level5Desc": "Model e-commerce wykorzystuje AI, VR, IoT i zaawansowaną analitykę do tworzenia inteligentnych doświadczeń zakupowych. System sam optymalizuje ofertę, ceny i kanały sprzedaży.",
-            "level5Questions": ["Czy AI steruje ofertą?", "Czy doświadczenie jest inteligentne?"],
+            "level5Questions": [
+              "Czy AI steruje ofertą?",
+              "Czy doświadczenie jest inteligentne?"
+            ],
             "level5Formula": "Inteligentna wartość"
           },
           "platform": {
@@ -1307,13 +1365,20 @@
               "7": "Autonomiczny Ekosystem"
             },
             "level1Desc": "Firma korzysta z istniejących platform do realizacji prostych transakcji, bez tworzenia własnego ekosystemu.",
-            "level1Questions": ["Czy firma tylko korzysta z platform?"],
+            "level1Questions": [
+              "Czy firma tylko korzysta z platform?"
+            ],
             "level1Formula": "Dostęp do rynku",
             "level2Desc": "Firma udostępnia platformę umożliwiającą sprzedaż produktów lub usług przez podmioty trzecie.",
-            "level2Questions": ["Czy inni sprzedają na platformie?"],
+            "level2Questions": [
+              "Czy inni sprzedają na platformie?"
+            ],
             "level2Formula": "Pośrednictwo",
             "level3Desc": "Platforma łączy dostawców, partnerów i klientów, tworząc wartość poprzez ekosystem.",
-            "level3Questions": ["Czy istnieje ekosystem?", "Czy platforma tworzy synergie?"],
+            "level3Questions": [
+              "Czy istnieje ekosystem?",
+              "Czy platforma tworzy synergie?"
+            ],
             "level3Formula": "Synergia",
             "level4Desc": "Platforma oferuje dodatkowo aplikacje i narzędzia SaaS dla uczestników rynku.",
             "level4Questions": [
@@ -1322,7 +1387,10 @@
             ],
             "level4Formula": "Produktywność",
             "level5Desc": "Platforma łączy SEM z aktywną społecznością i inteligentnym wsparciem użytkowników.",
-            "level5Questions": ["Czy użytkownicy współpracują?", "Czy AI wspiera społeczność?"],
+            "level5Questions": [
+              "Czy użytkownicy współpracują?",
+              "Czy AI wspiera społeczność?"
+            ],
             "level5Formula": "Ekosystem wiedzy"
           },
           "aas": {
@@ -1337,19 +1405,29 @@
               "7": "Wszystko-jako-Usługa (XaaS)"
             },
             "level1Desc": "Usługi cyfrowe są realizowane w formie długoterminowych umów, przypominających tradycyjny outsourcing.",
-            "level1Questions": ["Czy usługa przypomina outsourcing?"],
+            "level1Questions": [
+              "Czy usługa przypomina outsourcing?"
+            ],
             "level1Formula": "Wygoda",
             "level2Desc": "Firma oferuje usługi w modelu subskrypcyjnym z jasno zdefiniowanym zakresem.",
-            "level2Questions": ["Czy klient płaci abonament?"],
+            "level2Questions": [
+              "Czy klient płaci abonament?"
+            ],
             "level2Formula": "Dostępność",
             "level3Desc": "Klient płaci za faktyczne użycie zasobów lub funkcji.",
-            "level3Questions": ["Czy klient płaci za użycie?"],
+            "level3Questions": [
+              "Czy klient płaci za użycie?"
+            ],
             "level3Formula": "Elastyczność",
             "level4Desc": "Klient płaci za osiągnięcie konkretnego rezultatu, a dostawca przejmuje odpowiedzialność za wynik.",
-            "level4Questions": ["Czy płatność zależy od wyniku?"],
+            "level4Questions": [
+              "Czy płatność zależy od wyniku?"
+            ],
             "level4Formula": "Wynik",
             "level5Desc": "Dostawca przejmuje całościowe procesy biznesowe klienta, działając jako główny operator.",
-            "level5Questions": ["Czy dostawca zarządza procesem klienta?"],
+            "level5Questions": [
+              "Czy dostawca zarządza procesem klienta?"
+            ],
             "level5Formula": "Delegacja"
           },
           "sharing": {
@@ -1364,19 +1442,29 @@
               "7": "Autonomiczna Pula Zasobów"
             },
             "level1Desc": "Platforma umożliwia współdzielenie zasobów cyfrowych.",
-            "level1Questions": ["Czy zasoby są cyfrowe?"],
+            "level1Questions": [
+              "Czy zasoby są cyfrowe?"
+            ],
             "level1Formula": "Współdzielenie",
             "level2Desc": "Platforma umożliwia współdzielenie fizycznych aktywów.",
-            "level2Questions": ["Czy zasoby są fizyczne?"],
+            "level2Questions": [
+              "Czy zasoby są fizyczne?"
+            ],
             "level2Formula": "Dostęp",
             "level3Desc": "Platforma umożliwia współdzielenie wiedzy i kompetencji.",
-            "level3Questions": ["Czy użytkownicy dzielą się wiedzą?"],
+            "level3Questions": [
+              "Czy użytkownicy dzielą się wiedzą?"
+            ],
             "level3Formula": "Know-how",
             "level4Desc": "Platforma zarządza zasobami w imieniu klientów.",
-            "level4Questions": ["Czy platforma zarządza zasobami?"],
+            "level4Questions": [
+              "Czy platforma zarządza zasobami?"
+            ],
             "level4Formula": "Elastyczność",
             "level5Desc": "Platforma udostępnia złożone rozwiązania biznesowe jako wspólne zasoby.",
-            "level5Questions": ["Czy rozwiązania są kompleksowe?"],
+            "level5Questions": [
+              "Czy rozwiązania są kompleksowe?"
+            ],
             "level5Formula": "Efektywność"
           },
           "monetization": {
@@ -1391,19 +1479,29 @@
               "7": "Dane jako Główny Zasób"
             },
             "level1Desc": "Firma gromadzi dane i wykorzystuje je do poprawy własnych działań.",
-            "level1Questions": ["Czy dane są wykorzystywane wewnętrznie?"],
+            "level1Questions": [
+              "Czy dane są wykorzystywane wewnętrznie?"
+            ],
             "level1Formula": "Zrozumienie",
             "level2Desc": "Firma analizuje dane w celu wspierania decyzji biznesowych.",
-            "level2Questions": ["Czy dane wspierają decyzje?"],
+            "level2Questions": [
+              "Czy dane wspierają decyzje?"
+            ],
             "level2Formula": "Insight",
             "level3Desc": "Dane są wykorzystywane do personalizacji produktów i usług.",
-            "level3Questions": ["Czy dane personalizują ofertę?"],
+            "level3Questions": [
+              "Czy dane personalizują ofertę?"
+            ],
             "level3Formula": "Dopasowanie",
             "level4Desc": "Firma sprzedaje dane lub usługi analityczne innym podmiotom.",
-            "level4Questions": ["Czy dane są sprzedawane?"],
+            "level4Questions": [
+              "Czy dane są sprzedawane?"
+            ],
             "level4Formula": "Monetyzacja",
             "level5Desc": "Dane stanowią fundament nowych produktów, modeli biznesowych i algorytmów AI.",
-            "level5Questions": ["Czy dane są podstawą nowych modeli?"],
+            "level5Questions": [
+              "Czy dane są podstawą nowych modeli?"
+            ],
             "level5Formula": "Innowacja"
           }
         }
@@ -1424,22 +1522,35 @@
               "7": "Przywództwo Sieciowe"
             },
             "level1Desc": "Leadership avoids involvement in innovation and change. Employees are left without guidance, motivation or feedback, which leads to stagnation and loss of competitiveness.",
-            "level1Questions": ["Are leaders disengaged from change?", "Are ideas ignored?"],
+            "level1Questions": [
+              "Are leaders disengaged from change?",
+              "Are ideas ignored?"
+            ],
             "level1Formula": "High risk of failure",
             "level2Desc": "Decisions are made centrally without employee involvement. Innovation is limited due to lack of trust and empowerment.",
-            "level2Questions": ["Are decisions top-down only?"],
+            "level2Questions": [
+              "Are decisions top-down only?"
+            ],
             "level2Formula": "Low adaptability",
             "level3Desc": "Leaders set ambitious goals and provide resources but tightly control execution.",
-            "level3Questions": ["Are goals clear but rigid?"],
+            "level3Questions": [
+              "Are goals clear but rigid?"
+            ],
             "level3Formula": "Fast results, limited learning",
             "level4Desc": "Leaders encourage ideas, psychological safety and initiative.",
-            "level4Questions": ["Do employees feel safe proposing ideas?"],
+            "level4Questions": [
+              "Do employees feel safe proposing ideas?"
+            ],
             "level4Formula": "Strong engagement",
             "level5Desc": "Leaders actively experiment, accept risk and learn from failure.",
-            "level5Questions": ["Is experimentation encouraged?"],
+            "level5Questions": [
+              "Is experimentation encouraged?"
+            ],
             "level5Formula": "High innovation capacity",
             "level6Desc": "Leadership drives vision, values and long-term transformation across the organization.",
-            "level6Questions": ["Is there a strong transformation vision?"],
+            "level6Questions": [
+              "Is there a strong transformation vision?"
+            ],
             "level6Formula": "Sustainable transformation"
           },
           "readiness": {
@@ -1454,22 +1565,34 @@
               "7": "Ciągłe Wymyślanie Się na Nowo"
             },
             "level1Desc": "The organization understands that change is necessary but has not yet organized action.",
-            "level1Questions": ["Is change acknowledged but not executed?"],
+            "level1Questions": [
+              "Is change acknowledged but not executed?"
+            ],
             "level1Formula": "High inertia",
             "level2Desc": "A dedicated group supports and promotes transformation initiatives.",
-            "level2Questions": ["Is there a change coalition?"],
+            "level2Questions": [
+              "Is there a change coalition?"
+            ],
             "level2Formula": "Medium risk",
             "level3Desc": "A clear transformation vision and strategy are being developed collaboratively.",
-            "level3Questions": ["Is there a shared vision?"],
+            "level3Questions": [
+              "Is there a shared vision?"
+            ],
             "level3Formula": "Lower risk",
             "level4Desc": "Vision is communicated clearly and continuously across the organization.",
-            "level4Questions": ["Is communication two-way?"],
+            "level4Questions": [
+              "Is communication two-way?"
+            ],
             "level4Formula": "Low risk",
             "level5Desc": "Transformation initiatives are actively executed and monitored.",
-            "level5Questions": ["Are initiatives implemented?"],
+            "level5Questions": [
+              "Are initiatives implemented?"
+            ],
             "level5Formula": "Controlled risk",
             "level6Desc": "Change is embedded in culture and daily operations.",
-            "level6Questions": ["Is change part of culture?"],
+            "level6Questions": [
+              "Is change part of culture?"
+            ],
             "level6Formula": "Very low risk"
           },
           "improvement": {
@@ -1484,22 +1607,34 @@
               "7": "Samo-Optymalizująca się Organizacja"
             },
             "level1Desc": "Learning occurs mainly through fairs, conferences and external events.",
-            "level1Questions": ["Is learning external only?"],
+            "level1Questions": [
+              "Is learning external only?"
+            ],
             "level1Formula": "Skill gaps",
             "level2Desc": "Regular internal training programmes exist.",
-            "level2Questions": ["Are trainings systematic?"],
+            "level2Questions": [
+              "Are trainings systematic?"
+            ],
             "level2Formula": "Moderate risk",
             "level3Desc": "External experts complement internal learning.",
-            "level3Questions": ["Are external experts used?"],
+            "level3Questions": [
+              "Are external experts used?"
+            ],
             "level3Formula": "Lower risk",
             "level4Desc": "Employees actively pursue self-learning.",
-            "level4Questions": ["Is self-learning encouraged?"],
+            "level4Questions": [
+              "Is self-learning encouraged?"
+            ],
             "level4Formula": "Low risk",
             "level5Desc": "Cross-functional teams learn through real projects.",
-            "level5Questions": ["Are teams cross-functional?"],
+            "level5Questions": [
+              "Are teams cross-functional?"
+            ],
             "level5Formula": "Very low risk",
             "level6Desc": "Formal mentoring accelerates competence transfer.",
-            "level6Questions": ["Is mentoring systematic?"],
+            "level6Questions": [
+              "Is mentoring systematic?"
+            ],
             "level6Formula": "Minimal risk"
           },
           "innovation": {
@@ -1514,22 +1649,34 @@
               "7": "DNA Innowacji"
             },
             "level1Desc": "Employees are encouraged to submit ideas.",
-            "level1Questions": ["Are ideas rewarded?"],
+            "level1Questions": [
+              "Are ideas rewarded?"
+            ],
             "level1Formula": "Low maturity",
             "level2Desc": "Ideas are tested through pilots and prototypes.",
-            "level2Questions": ["Are experiments allowed?"],
+            "level2Questions": [
+              "Are experiments allowed?"
+            ],
             "level2Formula": "Moderate risk",
             "level3Desc": "Organization actively analyzes market and technology trends.",
-            "level3Questions": ["Are trends monitored?"],
+            "level3Questions": [
+              "Are trends monitored?"
+            ],
             "level3Formula": "Lower risk",
             "level4Desc": "Failures are accepted as learning opportunities.",
-            "level4Questions": ["Are mistakes tolerated?"],
+            "level4Questions": [
+              "Are mistakes tolerated?"
+            ],
             "level4Formula": "Low risk",
             "level5Desc": "R&D is embedded in company strategy.",
-            "level5Questions": ["Is R&D strategic?"],
+            "level5Questions": [
+              "Is R&D strategic?"
+            ],
             "level5Formula": "Very low risk",
             "level6Desc": "Innovation ecosystem partnerships are strategic.",
-            "level6Questions": ["Are external partners used?"],
+            "level6Questions": [
+              "Are external partners used?"
+            ],
             "level6Formula": "Minimal risk"
           },
           "resources": {
@@ -1544,22 +1691,34 @@
               "7": "Zasoby Obfitego Ekosystemu"
             },
             "level1Desc": "Financial resources for transformation are identified.",
-            "level1Questions": ["Is budget allocated?"],
+            "level1Questions": [
+              "Is budget allocated?"
+            ],
             "level1Formula": "High risk",
             "level2Desc": "Employees have access to training resources.",
-            "level2Questions": ["Are trainings accessible?"],
+            "level2Questions": [
+              "Are trainings accessible?"
+            ],
             "level2Formula": "Medium risk",
             "level3Desc": "Internal and external experts are accessible.",
-            "level3Questions": ["Are experts engaged?"],
+            "level3Questions": [
+              "Are experts engaged?"
+            ],
             "level3Formula": "Lower risk",
             "level4Desc": "Reliable data supports decision-making.",
-            "level4Questions": ["Is data available?"],
+            "level4Questions": [
+              "Is data available?"
+            ],
             "level4Formula": "Low risk",
             "level5Desc": "Modern tools and technologies are available.",
-            "level5Questions": ["Are tools modern?"],
+            "level5Questions": [
+              "Are tools modern?"
+            ],
             "level5Formula": "Very low risk",
             "level6Desc": "Strategic partners extend organizational capabilities.",
-            "level6Questions": ["Are partnerships strategic?"],
+            "level6Questions": [
+              "Are partnerships strategic?"
+            ],
             "level6Formula": "Minimal risk"
           }
         }
@@ -1586,22 +1745,35 @@
             ],
             "level1Formula": "Dane opisują przeszłość",
             "level2Desc": "Część danych jest zbierana automatycznie, ale proces nadal wymaga ręcznych korekt. Dane są dostępne szybciej, ale ich jakość bywa nierówna.",
-            "level2Questions": ["Czy część danych zbiera się automatycznie?"],
+            "level2Questions": [
+              "Czy część danych zbiera się automatycznie?"
+            ],
             "level2Formula": "Lepsza widoczność",
             "level3Desc": "Dane są zbierane automatycznie w sposób ciągły i spójny, tworząc wiarygodną bazę operacyjną.",
-            "level3Questions": ["Czy dane zbierają się automatycznie?", "Czy są spójne?"],
+            "level3Questions": [
+              "Czy dane zbierają się automatycznie?",
+              "Czy są spójne?"
+            ],
             "level3Formula": "Dane operacyjne",
             "level4Desc": "Dane są dostępne w czasie rzeczywistym i pokazują aktualny stan procesów.",
-            "level4Questions": ["Czy dane są real-time?"],
+            "level4Questions": [
+              "Czy dane są real-time?"
+            ],
             "level4Formula": "Bieżący obraz",
             "level5Desc": "Dane są zbierane według wspólnych standardów w całej organizacji.",
-            "level5Questions": ["Czy dane są standaryzowane?"],
+            "level5Questions": [
+              "Czy dane są standaryzowane?"
+            ],
             "level5Formula": "Jedna wersja prawdy",
             "level6Desc": "Dane są kompletne i wysokiej jakości, gotowe do analiz predykcyjnych.",
-            "level6Questions": ["Czy dane są kompletne i jakościowe?"],
+            "level6Questions": [
+              "Czy dane są kompletne i jakościowe?"
+            ],
             "level6Formula": "Przewidywalność",
             "level7Desc": "System sam optymalizuje zbieranie danych, wykrywa luki i poprawia jakość.",
-            "level7Questions": ["Czy system sam poprawia dane?"],
+            "level7Questions": [
+              "Czy system sam poprawia dane?"
+            ],
             "level7Formula": "Autonomiczna baza"
           },
           "storage": {
@@ -1616,25 +1788,39 @@
               "7": "Zdecentralizowana Sieć (Mesh)"
             },
             "level1Desc": "Dane są przechowywane lokalnie w plikach i systemach rozproszonych, bez centralnej struktury i kontroli.",
-            "level1Questions": ["Czy dane są w plikach lokalnych?"],
+            "level1Questions": [
+              "Czy dane są w plikach lokalnych?"
+            ],
             "level1Formula": "Brak spójności",
             "level2Desc": "Dane są przechowywane w jednej centralnej bazie, ale bez zaawansowanej architektury.",
-            "level2Questions": ["Czy istnieje jedna baza danych?"],
+            "level2Questions": [
+              "Czy istnieje jedna baza danych?"
+            ],
             "level2Formula": "Podstawowa spójność",
             "level3Desc": "Dane są uporządkowane w hurtowni danych i przygotowane do analiz.",
-            "level3Questions": ["Czy istnieje hurtownia danych?"],
+            "level3Questions": [
+              "Czy istnieje hurtownia danych?"
+            ],
             "level3Formula": "Porządek danych",
             "level4Desc": "Firma przechowuje dane w różnych formatach w data lake.",
-            "level4Questions": ["Czy dane są w różnych formatach?"],
+            "level4Questions": [
+              "Czy dane są w różnych formatach?"
+            ],
             "level4Formula": "Elastyczność",
             "level5Desc": "Architektura łączy zalety hurtowni i data lake.",
-            "level5Questions": ["Czy istnieje jedna architektura?"],
+            "level5Questions": [
+              "Czy istnieje jedna architektura?"
+            ],
             "level5Formula": "Jedna platforma",
             "level6Desc": "Platforma danych spełnia standardy enterprise.",
-            "level6Questions": ["Czy spełnione są standardy?"],
+            "level6Questions": [
+              "Czy spełnione są standardy?"
+            ],
             "level6Formula": "Zaufanie",
             "level7Desc": "System sam zarządza przechowywaniem danych.",
-            "level7Questions": ["Czy system sam zarządza?"],
+            "level7Questions": [
+              "Czy system sam zarządza?"
+            ],
             "level7Formula": "Autonomia"
           },
           "communication": {
@@ -1649,25 +1835,39 @@
               "7": "Komunikacja Sieci Neuronowej"
             },
             "level1Desc": "Dane są przekazywane ręcznie pomiędzy systemami.",
-            "level1Questions": ["Czy dane są przesyłane ręcznie?"],
+            "level1Questions": [
+              "Czy dane są przesyłane ręcznie?"
+            ],
             "level1Formula": "Opóźnienia",
             "level2Desc": "Dane są przesyłane cyklicznie w paczkach.",
-            "level2Questions": ["Czy dane są batch?"],
+            "level2Questions": [
+              "Czy dane są batch?"
+            ],
             "level2Formula": "Okresowa spójność",
             "level3Desc": "Systemy komunikują się przez API.",
-            "level3Questions": ["Czy istnieją API?"],
+            "level3Questions": [
+              "Czy istnieją API?"
+            ],
             "level3Formula": "Bieżąca spójność",
             "level4Desc": "Dane są przesyłane w reakcji na zdarzenia.",
-            "level4Questions": ["Czy architektura jest event-driven?"],
+            "level4Questions": [
+              "Czy architektura jest event-driven?"
+            ],
             "level4Formula": "Natychmiastowość",
             "level5Desc": "Przepływy danych są centralnie orkiestrwane.",
-            "level5Questions": ["Czy przepływy są orkiestrwane?"],
+            "level5Questions": [
+              "Czy przepływy są orkiestrwane?"
+            ],
             "level5Formula": "Kontrola",
             "level6Desc": "Spójna warstwa komunikacji danych w skali enterprise.",
-            "level6Questions": ["Czy istnieje data fabric?"],
+            "level6Questions": [
+              "Czy istnieje data fabric?"
+            ],
             "level6Formula": "Jednolitość",
             "level7Desc": "System sam optymalizuje przepływy danych.",
-            "level7Questions": ["Czy system działa autonomicznie?"],
+            "level7Questions": [
+              "Czy system działa autonomicznie?"
+            ],
             "level7Formula": "Autonomia"
           },
           "analysis": {
@@ -1682,25 +1882,39 @@
               "7": "AI Preskryptywne"
             },
             "level1Desc": "Analiza danych opisuje przeszłość.",
-            "level1Questions": ["Czy raporty opisują przeszłość?"],
+            "level1Questions": [
+              "Czy raporty opisują przeszłość?"
+            ],
             "level1Formula": "Historia",
             "level2Desc": "Analiza przyczyn zdarzeń.",
-            "level2Questions": ["Czy znane są przyczyny?"],
+            "level2Questions": [
+              "Czy znane są przyczyny?"
+            ],
             "level2Formula": "Zrozumienie",
             "level3Desc": "Prognozowanie przyszłych zdarzeń.",
-            "level3Questions": ["Czy firma prognozuje?"],
+            "level3Questions": [
+              "Czy firma prognozuje?"
+            ],
             "level3Formula": "Przewidywanie",
             "level4Desc": "System rekomenduje działania.",
-            "level4Questions": ["Czy system rekomenduje?"],
+            "level4Questions": [
+              "Czy system rekomenduje?"
+            ],
             "level4Formula": "Rekomendacje",
             "level5Desc": "Modele uczą się na bieżąco.",
-            "level5Questions": ["Czy modele się uczą?"],
+            "level5Questions": [
+              "Czy modele się uczą?"
+            ],
             "level5Formula": "Uczenie",
             "level6Desc": "System sam podejmuje decyzje.",
-            "level6Questions": ["Czy system decyduje sam?"],
+            "level6Questions": [
+              "Czy system decyduje sam?"
+            ],
             "level6Formula": "Autonomia",
             "level7Desc": "System sam rozwija modele analityczne.",
-            "level7Questions": ["Czy system się rozwija?"],
+            "level7Questions": [
+              "Czy system się rozwija?"
+            ],
             "level7Formula": "Ewolucja"
           },
           "computing": {
@@ -1715,25 +1929,39 @@
               "7": "Przetwarzanie Wszechobecne"
             },
             "level1Desc": "Obliczenia wykonywane lokalnie.",
-            "level1Questions": ["Czy obliczenia są lokalne?"],
+            "level1Questions": [
+              "Czy obliczenia są lokalne?"
+            ],
             "level1Formula": "Ograniczenia",
             "level2Desc": "Obliczenia na serwerach centralnych.",
-            "level2Questions": ["Czy istnieją centralne serwery?"],
+            "level2Questions": [
+              "Czy istnieją centralne serwery?"
+            ],
             "level2Formula": "Stabilność",
             "level3Desc": "Elastyczna moc obliczeniowa w chmurze.",
-            "level3Questions": ["Czy firma korzysta z chmury?"],
+            "level3Questions": [
+              "Czy firma korzysta z chmury?"
+            ],
             "level3Formula": "Elastyczność",
             "level4Desc": "Połączenie chmury i on-prem.",
-            "level4Questions": ["Czy architektura jest hybrydowa?"],
+            "level4Questions": [
+              "Czy architektura jest hybrydowa?"
+            ],
             "level4Formula": "Optymalizacja",
             "level5Desc": "Obliczenia rozproszone.",
-            "level5Questions": ["Czy system jest rozproszony?"],
+            "level5Questions": [
+              "Czy system jest rozproszony?"
+            ],
             "level5Formula": "Skala",
             "level6Desc": "Wykorzystanie GPU/TPU.",
-            "level6Questions": ["Czy są akceleratory?"],
+            "level6Questions": [
+              "Czy są akceleratory?"
+            ],
             "level6Formula": "Wydajność",
             "level7Desc": "System sam zarządza mocą obliczeniową.",
-            "level7Questions": ["Czy system sam zarządza?"],
+            "level7Questions": [
+              "Czy system sam zarządza?"
+            ],
             "level7Formula": "Autonomia"
           }
         }
@@ -1754,22 +1982,35 @@
               "7": "Autonomiczny System Immunologiczny"
             },
             "level1Desc": "Organizacja nie posiada strategii ani polityk cyberbezpieczeństwa. Działania są reaktywne i przypadkowe, a ryzyko biznesowe jest niekontrolowane.",
-            "level1Questions": ["Czy istnieje formalna strategia?", "Czy ryzyka są mapowane?"],
+            "level1Questions": [
+              "Czy istnieje formalna strategia?",
+              "Czy ryzyka są mapowane?"
+            ],
             "level1Formula": "Wysokie ryzyko reputacyjne",
             "level2Desc": "Organizacja identyfikuje podstawowe ryzyka cybernetyczne, ale nie posiada spójnego planu działania.",
-            "level2Questions": ["Czy ryzyka są identyfikowane?"],
+            "level2Questions": [
+              "Czy ryzyka są identyfikowane?"
+            ],
             "level2Formula": "Świadomość zagrożeń",
             "level3Desc": "Istnieje plan działań ograniczających ryzyko, jednak jego realizacja nie jest systematycznie monitorowana.",
-            "level3Questions": ["Czy istnieje plan działań?"],
+            "level3Questions": [
+              "Czy istnieje plan działań?"
+            ],
             "level3Formula": "Kontrola ryzyka",
             "level4Desc": "Funkcjonują formalne polityki bezpieczeństwa regulujące standardy i procedury.",
-            "level4Questions": ["Czy polityki są egzekwowane?"],
+            "level4Questions": [
+              "Czy polityki są egzekwowane?"
+            ],
             "level4Formula": "Zaufanie operacyjne",
             "level5Desc": "Strategia obejmuje kompetencje ludzi, szkolenia i role odpowiedzialne za cyberbezpieczeństwo.",
-            "level5Questions": ["Czy ludzie są szkoleni?"],
+            "level5Questions": [
+              "Czy ludzie są szkoleni?"
+            ],
             "level5Formula": "Odporność organizacji",
             "level6Desc": "Strategia jest stale monitorowana, audytowana i aktualizowana w odpowiedzi na nowe zagrożenia.",
-            "level6Questions": ["Czy strategia jest audytowana?"],
+            "level6Questions": [
+              "Czy strategia jest audytowana?"
+            ],
             "level6Formula": "Zaufanie strategiczne"
           },
           "network": {
@@ -1784,22 +2025,34 @@
               "7": "Samo-Naprawiające się Sieci"
             },
             "level1Desc": "Podstawowa ochrona sieci oparta na firewallach.",
-            "level1Questions": ["Czy istnieją firewalle?"],
+            "level1Questions": [
+              "Czy istnieją firewalle?"
+            ],
             "level1Formula": "Minimalna ochrona",
             "level2Desc": "Systemy zabezpieczone przed podstawowym malware.",
-            "level2Questions": ["Czy antivirus jest aktualny?"],
+            "level2Questions": [
+              "Czy antivirus jest aktualny?"
+            ],
             "level2Formula": "Stabilność systemów",
             "level3Desc": "Wykrywanie prób naruszeń i ataków.",
-            "level3Questions": ["Czy ataki są wykrywane?"],
+            "level3Questions": [
+              "Czy ataki są wykrywane?"
+            ],
             "level3Formula": "Szybka reakcja",
             "level4Desc": "Centralna analiza zdarzeń bezpieczeństwa.",
-            "level4Questions": ["Czy zdarzenia są korelowane?"],
+            "level4Questions": [
+              "Czy zdarzenia są korelowane?"
+            ],
             "level4Formula": "Kontrola operacyjna",
             "level5Desc": "Zaawansowane systemy uwierzytelniania i autoryzacji.",
-            "level5Questions": ["Czy dostęp jest kontrolowany?"],
+            "level5Questions": [
+              "Czy dostęp jest kontrolowany?"
+            ],
             "level5Formula": "Zaufanie systemowe",
             "level6Desc": "Bezpieczna komunikacja sieciowa w skali organizacji.",
-            "level6Questions": ["Czy komunikacja jest szyfrowana?"],
+            "level6Questions": [
+              "Czy komunikacja jest szyfrowana?"
+            ],
             "level6Formula": "Ciągłość operacyjna"
           },
           "dataProtection": {
@@ -1814,22 +2067,34 @@
               "7": "Szyfrowanie Odporne na Quantum"
             },
             "level1Desc": "Dane są szyfrowane w podstawowym zakresie.",
-            "level1Questions": ["Czy dane są szyfrowane?"],
+            "level1Questions": [
+              "Czy dane są szyfrowane?"
+            ],
             "level1Formula": "Ochrona danych",
             "level2Desc": "Stosowane są zasady silnych haseł.",
-            "level2Questions": ["Czy hasła są zarządzane?"],
+            "level2Questions": [
+              "Czy hasła są zarządzane?"
+            ],
             "level2Formula": "Dostęp kontrolowany",
             "level3Desc": "Dostęp do danych jest kontrolowany rolami.",
-            "level3Questions": ["Czy role są zdefiniowane?"],
+            "level3Questions": [
+              "Czy role są zdefiniowane?"
+            ],
             "level3Formula": "Minimalizacja ryzyka",
             "level4Desc": "Systematyczne kopie zapasowe i procedury odtwarzania.",
-            "level4Questions": ["Czy backupy są testowane?"],
+            "level4Questions": [
+              "Czy backupy są testowane?"
+            ],
             "level4Formula": "Ciągłość biznesu",
             "level5Desc": "Stały monitoring zagrożeń związanych z danymi.",
-            "level5Questions": ["Czy zagrożenia są monitorowane?"],
+            "level5Questions": [
+              "Czy zagrożenia są monitorowane?"
+            ],
             "level5Formula": "Wczesne ostrzeganie",
             "level6Desc": "Zaawansowane mechanizmy weryfikacji tożsamości.",
-            "level6Questions": ["Czy stosowane jest MFA/biometria?"],
+            "level6Questions": [
+              "Czy stosowane jest MFA/biometria?"
+            ],
             "level6Formula": "Wysokie zaufanie"
           },
           "education": {
@@ -1844,22 +2109,34 @@
               "7": "Mentalność Security-First"
             },
             "level1Desc": "Zdefiniowany jest system szkoleń cyberbezpieczeństwa.",
-            "level1Questions": ["Czy istnieje plan szkoleń?"],
+            "level1Questions": [
+              "Czy istnieje plan szkoleń?"
+            ],
             "level1Formula": "Świadomość",
             "level2Desc": "Szkolenia są realizowane według planu.",
-            "level2Questions": ["Czy szkolenia są realizowane?"],
+            "level2Questions": [
+              "Czy szkolenia są realizowane?"
+            ],
             "level2Formula": "Zmniejszenie ryzyka",
             "level3Desc": "Prowadzone są testy bezpieczeństwa.",
-            "level3Questions": ["Czy system jest testowany?"],
+            "level3Questions": [
+              "Czy system jest testowany?"
+            ],
             "level3Formula": "Wykrywanie luk",
             "level4Desc": "Istnieją kompetencje audytorskie wewnątrz organizacji.",
-            "level4Questions": ["Czy są auditorzy?"],
+            "level4Questions": [
+              "Czy są auditorzy?"
+            ],
             "level4Formula": "Kontrola jakości",
             "level5Desc": "Audyt bezpieczeństwa jest planowany i systematyczny.",
-            "level5Questions": ["Czy audyty są planowane?"],
+            "level5Questions": [
+              "Czy audyty są planowane?"
+            ],
             "level5Formula": "Zaufanie",
             "level6Desc": "Organizacja posiada certyfikację ISO 27001.",
-            "level6Questions": ["Czy istnieje certyfikacja?"],
+            "level6Questions": [
+              "Czy istnieje certyfikacja?"
+            ],
             "level6Formula": "Wiarygodność rynkowa"
           },
           "contingency": {
@@ -1874,22 +2151,34 @@
               "7": "Operacje Antykruche"
             },
             "level1Desc": "Zidentyfikowano potencjalne zagrożenia.",
-            "level1Questions": ["Czy zagrożenia są znane?"],
+            "level1Questions": [
+              "Czy zagrożenia są znane?"
+            ],
             "level1Formula": "Świadomość",
             "level2Desc": "Zdefiniowano priorytety reagowania.",
-            "level2Questions": ["Czy priorytety są znane?"],
+            "level2Questions": [
+              "Czy priorytety są znane?"
+            ],
             "level2Formula": "Szybka reakcja",
             "level3Desc": "Istnieją procedury reagowania.",
-            "level3Questions": ["Czy procedury są opisane?"],
+            "level3Questions": [
+              "Czy procedury są opisane?"
+            ],
             "level3Formula": "Kontrola kryzysu",
             "level4Desc": "Pracownicy są szkoleni w reagowaniu kryzysowym.",
-            "level4Questions": ["Czy szkolenia są prowadzone?"],
+            "level4Questions": [
+              "Czy szkolenia są prowadzone?"
+            ],
             "level4Formula": "Gotowość",
             "level5Desc": "Plany awaryjne są regularnie testowane.",
-            "level5Questions": ["Czy plany są testowane?"],
+            "level5Questions": [
+              "Czy plany są testowane?"
+            ],
             "level5Formula": "Odporność",
             "level6Desc": "Dokumentacja awaryjna jest aktualna i używana.",
-            "level6Questions": ["Czy dokumentacja jest aktualna?"],
+            "level6Questions": [
+              "Czy dokumentacja jest aktualna?"
+            ],
             "level6Formula": "Ciągłość"
           }
         }
@@ -2379,11 +2668,12 @@
     "backToDashboard": "Powrót do pulpitu",
     "level": "Poziom",
     "status": {
-      "saved": "Automatycznie zapisano",
-      "saving": "Zapisywanie...",
-      "unsaved": "Niezapisane zmiany",
-      "error": "Zapis nie powiódł się",
-      "underConstruction": "Komponent w budowie"
+      "saved": "Auto-saved",
+      "saving": "Saving...",
+      "unsaved": "Unsaved changes",
+      "error": "Save failed",
+      "underConstruction": "Component Under Construction",
+      "title": "Status"
     },
     "impersonation": {
       "banner": "PODSZYWANIE: {{email}}",
@@ -2393,7 +2683,7 @@
     "backToHome": "Powrót do strony głównej",
     "close": "Zamknij",
     "cancel": "Anuluj",
-    "save": "Zapisz zmiany",
+    "save": "Zapisz",
     "add": "Dodaj",
     "apply": "Zastosuj",
     "confirm": "Potwierdź",
@@ -2417,10 +2707,88 @@
       "ar": "العربية",
       "ja": "日本語",
       "es": "Español"
-    }
+    },
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "processing": "Processing...",
+    "verify": "Verify",
+    "copy": "Kopiuj",
+    "loadingOnboarding": "Loading Onboarding...",
+    "loadingConsultantPanel": "Loading Consultant Panel...",
+    "loadingInviteTool": "Loading Invite Tool...",
+    "loadingOrgSetup": "Loading Organization Setup...",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "view": "Zobacz",
+    "error": "Błąd",
+    "success": "Sukces",
+    "create": "Utwórz",
+    "update": "Aktualizuj",
+    "search": "Szukaj",
+    "filter": "Filtruj",
+    "sort": "Sortuj",
+    "all": "Wszystkie",
+    "none": "Brak",
+    "select": "Wybierz",
+    "clear": "Wyczyść",
+    "reset": "Resetuj",
+    "finish": "Zakończ",
+    "open": "Otwórz",
+    "download": "Pobierz",
+    "upload": "Prześlij",
+    "export": "Eksportuj",
+    "import": "Importuj",
+    "paste": "Wklej",
+    "duplicate": "Duplikuj",
+    "refresh": "Odśwież",
+    "retry": "Ponów",
+    "yes": "Tak",
+    "no": "Nie",
+    "ok": "OK",
+    "more": "Więcej",
+    "less": "Mniej",
+    "expand": "Rozwiń",
+    "collapse": "Zwiń",
+    "show": "Pokaż",
+    "hide": "Ukryj",
+    "enable": "Włącz",
+    "disable": "Wyłącz",
+    "enabled": "Włączony",
+    "disabled": "Wyłączony",
+    "active": "Aktywny",
+    "inactive": "Nieaktywny",
+    "new": "Nowy",
+    "old": "Stary",
+    "required": "Wymagane",
+    "optional": "Opcjonalne",
+    "actions": "Akcje",
+    "settings": "Ustawienia",
+    "options": "Opcje",
+    "details": "Szczegóły",
+    "info": "Informacje",
+    "warning": "Ostrzeżenie",
+    "name": "Nazwa",
+    "description": "Opis",
+    "type": "Typ",
+    "date": "Data",
+    "time": "Czas",
+    "dateTime": "Data i czas",
+    "from": "Od",
+    "to": "Do",
+    "today": "Dzisiaj",
+    "yesterday": "Wczoraj",
+    "tomorrow": "Jutro",
+    "thisWeek": "Ten tydzień",
+    "lastWeek": "Ostatni tydzień",
+    "thisMonth": "Ten miesiąc",
+    "lastMonth": "Ostatni miesiąc",
+    "thisYear": "Ten rok",
+    "lastYear": "Ostatni rok"
   },
   "settings": {
-    "title": "USTAWIENIA",
+    "title": "Ustawienia",
     "subtitle": "Preferencje",
     "backToApp": "Powrót do Aplikacji",
     "user": "Użytkownik",
@@ -2481,7 +2849,8 @@
       "quietHours": "Godziny Ciszy",
       "dataPrivacy": "Dane i Prywatność",
       "visibility": "Widoczność",
-      "rules": "Reguły"
+      "rules": "Reguły",
+      "recovery": "Recovery"
     },
     "menu": {
       "header": "Ustawienia",
@@ -2503,94 +2872,95 @@
       "demoModeOff": "Tryb Demo WYŁĄCZONY"
     },
     "profile": {
-      "header": "Informacje Osobiste",
-      "manage": "Zarządzaj swoimi danymi osobowymi i preferencjami",
-      "photo": "Zdjęcie Profilowe",
-      "change": "Zmień",
-      "changePhoto": "Zmień Zdjęcie",
-      "photoHint": "Akceptuje JPG, PNG (Auto-optymalizacja)",
-      "firstName": "Imię",
-      "lastName": "Nazwisko",
-      "company": "Firma",
-      "role": "Stanowisko",
-      "emailAddress": "Adres Email",
-      "preferences": "Preferencje",
-      "theme": "Motyw Interfejsu",
-      "light": "Jasny",
-      "dark": "Ciemny",
-      "language": "Język",
-      "save": "Zapisz Zmiany",
-      "saving": "Zapisuję...",
-      "saved": "Zapisano!",
+      "header": "Personal Information",
+      "manage": "Manage your personal information and preferences",
+      "photo": "Profile Photo",
+      "change": "Change",
+      "changePhoto": "Change Photo",
+      "photoHint": "Accepts JPG, PNG (Auto-optimized)",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "company": "Company",
+      "role": "Role / Job Title",
+      "emailAddress": "Email Address (Managed by Admin)",
+      "preferences": "Preferences",
+      "theme": "Interface Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "language": "Language",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "saved": "Saved!",
       "bioAbout": {
-        "title": "Bio i O mnie",
-        "description": "Opowiedz innym o sobie i swoim doświadczeniu",
-        "shortBio": "Krótkie Bio",
-        "shortBioPlaceholder": "Krótki opis o sobie...",
-        "shortBioHint": "Wyświetlane na karcie profilu",
-        "longBio": "O mnie",
-        "longBioPlaceholder": "Opowiedz swoją historię, podziel się swoim doświadczeniem, zainteresowaniami i tym, co Cię motywuje...",
-        "longBioHint": "Obsługiwane formatowanie Markdown",
-        "skills": "Umiejętności i Ekspertyza",
-        "noSkills": "Brak dodanych umiejętności",
-        "addSkill": "Dodaj umiejętność...",
-        "experience": "Doświadczenie",
-        "yearsExperience": "Lata doświadczenia",
-        "tip": "Wskazówka dotycząca profilu",
-        "tipText": "Kompletny profil pomaga członkom zespołu zrozumieć Twoje doświadczenie i wiedzę. Pomaga również AI dostarczać bardziej spersonalizowaną pomoc."
+        "title": "Bio & About",
+        "description": "Tell others about yourself and your expertise",
+        "shortBio": "Short Bio",
+        "shortBioPlaceholder": "A brief one-liner about yourself...",
+        "shortBioHint": "Displayed on your profile card",
+        "longBio": "About Me",
+        "longBioPlaceholder": "Tell your story, share your background, interests, and what drives you...",
+        "longBioHint": "Markdown formatting supported",
+        "skills": "Skills & Expertise",
+        "noSkills": "No skills added yet",
+        "addSkill": "Add a skill...",
+        "experience": "Experience",
+        "yearsExperience": "Years of Experience",
+        "tip": "Profile Tip",
+        "tipText": "A complete profile helps your team members understand your background and expertise. It also helps AI provide more personalized assistance."
       },
       "social": {
-        "title": "Social Media i Linki",
-        "description": "Połącz swoje profile społecznościowe i podziel się swoją obecnością online",
-        "socialProfiles": "Profile społecznościowe",
-        "customLinks": "Własne linki",
-        "addCustomLink": "Dodaj własny link do portfolio, bloga lub innej strony",
-        "linkName": "Nazwa linku (np. Mój Blog)",
-        "addLink": "Dodaj Link"
+        "title": "Social & Links",
+        "description": "Connect your social profiles and share your online presence",
+        "socialProfiles": "Social Profiles",
+        "customLinks": "Custom Links",
+        "addCustomLink": "Add a custom link to your portfolio, blog, or any other website",
+        "linkName": "Link name (e.g. My Blog)",
+        "addLink": "Add Link"
       },
       "visibility": {
-        "title": "Prywatność i Widoczność",
-        "description": "Kontroluj kto może widzieć Twój profil i kontaktować się z Tobą",
-        "profileVisibility": "Widoczność profilu",
-        "contactVisibility": "Informacje kontaktowe",
-        "showEmail": "Pokaż adres email",
-        "showEmailDesc": "Pozwól innym zobaczyć Twój email na profilu",
-        "showPhone": "Pokaż numer telefonu",
-        "showPhoneDesc": "Pozwól innym zobaczyć Twój numer telefonu",
-        "showInDirectory": "Pokaż w katalogu zespołu",
-        "showInDirectoryDesc": "Pojawiaj się w katalogu organizacji",
-        "activityStatus": "Status aktywności",
-        "showActivity": "Pokaż status online",
-        "showActivityDesc": "Pozwól innym widzieć kiedy jesteś online lub nieobecny",
-        "showLastSeen": "Pokaż ostatnią aktywność",
-        "showLastSeenDesc": "Wyświetlaj kiedy byłeś ostatnio aktywny",
-        "communication": "Ustawienia komunikacji",
-        "allowMentions": "Pozwól na @wzmianki od",
-        "allowDMs": "Pozwól na wiadomości bezpośrednie od",
-        "note": "Uwaga dotycząca prywatności",
-        "noteText": "Administratorzy zawsze mogą zobaczyć podstawowe informacje z Twojego profilu niezależnie od tych ustawień. Twoje imię i stanowisko zawsze będą widoczne dla członków zespołu."
+        "title": "Privacy & Visibility",
+        "description": "Control who can see your profile and contact you",
+        "profileVisibility": "Profile Visibility",
+        "contactVisibility": "Contact Information",
+        "showEmail": "Show email address",
+        "showEmailDesc": "Allow others to see your email on your profile",
+        "showPhone": "Show phone number",
+        "showPhoneDesc": "Allow others to see your phone number",
+        "showInDirectory": "Show in team directory",
+        "showInDirectoryDesc": "Appear in the organization team directory",
+        "activityStatus": "Activity Status",
+        "showActivity": "Show online status",
+        "showActivityDesc": "Let others see when you are online or away",
+        "showLastSeen": "Show last seen",
+        "showLastSeenDesc": "Display when you were last active",
+        "communication": "Communication Settings",
+        "allowMentions": "Allow @mentions from",
+        "allowDMs": "Allow direct messages from",
+        "note": "Privacy Note",
+        "noteText": "Administrators can always view your basic profile information regardless of these settings. Your name and role will always be visible to team members."
       },
       "email": {
-        "title": "Email i Komunikacja",
-        "description": "Zarządzaj podpisem email, aliasami i preferencjami powiadomień",
-        "signature": "Podpis email",
-        "signatureText": "Tekst podpisu",
-        "signaturePlaceholder": "Z poważaniem,\nTwoje Imię\nStanowisko | Firma",
-        "signatureHint": "Ten podpis będzie dodawany do Twoich wychodzących emaili",
-        "aliases": "Aliasy email",
-        "addAlias": "Dodaj alias email...",
-        "digest": "Częstotliwość podsumowania email",
-        "outOfOffice": "Poza biurem",
-        "enableOOO": "Włącz Poza biurem",
-        "enableOOODesc": "Automatycznie odpowiadaj gdy jesteś nieobecny",
-        "startDate": "Data rozpoczęcia",
-        "endDate": "Data zakończenia",
-        "oooMessage": "Wiadomość automatycznej odpowiedzi",
-        "oooPlaceholder": "Jestem obecnie poza biurem i odpowiem po powrocie...",
-        "autoReply": "Wysyłaj automatyczną odpowiedź",
-        "autoReplyDesc": "Automatycznie wysyłaj powyższą wiadomość do osób, które Ci piszą",
-        "oooNote": "Twój status będzie wyświetlany jako \"Poza biurem\" dla innych członków zespołu w tym okresie."
-      }
+        "title": "Email & Communication",
+        "description": "Manage your email signature, aliases, and notification preferences",
+        "signature": "Email Signature",
+        "signatureText": "Signature Text",
+        "signaturePlaceholder": "Best regards,\nYour Name\nTitle | Company",
+        "signatureHint": "This signature will be added to your outgoing emails",
+        "aliases": "Email Aliases",
+        "addAlias": "Add email alias...",
+        "digest": "Email Digest Frequency",
+        "outOfOffice": "Out of Office",
+        "enableOOO": "Enable Out of Office",
+        "enableOOODesc": "Automatically respond when you are away",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "oooMessage": "Auto-reply Message",
+        "oooPlaceholder": "I'm currently out of office and will respond when I return...",
+        "autoReply": "Send auto-reply",
+        "autoReplyDesc": "Automatically send the message above to people who email you",
+        "oooNote": "Your status will be shown as \"Out of Office\" to other team members during this period."
+      },
+      "title": "Profil"
     },
     "shortcuts": {
       "title": "Skróty Klawiszowe",
@@ -2676,69 +3046,156 @@
     },
     "accessibility": {
       "title": "Dostępność",
-      "description": "Dostosuj aplikację do swoich potrzeb dostępności",
-      "saved": "Preferencje dostępności zapisane",
-      "error": "Nie udało się zapisać preferencji",
-      "fontSizeTitle": "Rozmiar Czcionki",
-      "fontSizeDescription": "Dostosuj bazowy rozmiar czcionki dla całego tekstu w aplikacji",
+      "description": "Customize the application to match your accessibility needs",
+      "saved": "Accessibility preferences saved",
+      "error": "Failed to save preferences",
+      "fontSizeTitle": "Font Size",
+      "fontSizeDescription": "Adjust the base font size for all text in the application",
       "fontSize": {
-        "small": "Mały",
-        "medium": "Średni",
-        "large": "Duży",
-        "extraLarge": "Bardzo Duży"
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "extraLarge": "Extra Large"
       },
-      "visualTitle": "Ustawienia Wizualne",
-      "highContrast": "Tryb Wysokiego Kontrastu",
-      "highContrastDescription": "Zwiększ kontrast dla lepszej widoczności",
-      "reduceMotion": "Ogranicz Animacje",
-      "reduceMotionDescription": "Wyłącz animacje i przejścia",
-      "underlineLinks": "Podkreślaj Linki",
-      "underlineLinksDescription": "Zawsze pokazuj podkreślenia na klikalnych linkach",
-      "textSpacing": "Odstępy Tekstu",
-      "textSpacingDescription": "Dostosuj odstępy między liniami i literami",
+      "visualTitle": "Visual Settings",
+      "highContrast": "High Contrast Mode",
+      "highContrastDescription": "Increase contrast for better visibility",
+      "reduceMotion": "Reduce Motion",
+      "reduceMotionDescription": "Disable animations and transitions",
+      "underlineLinks": "Underline Links",
+      "underlineLinksDescription": "Always show underlines on clickable links",
+      "textSpacing": "Text Spacing",
+      "textSpacingDescription": "Adjust spacing between lines and letters",
       "spacing": {
-        "default": "Domyślne",
-        "relaxed": "Rozluźnione",
-        "spacious": "Przestronne"
+        "default": "Default",
+        "relaxed": "Relaxed",
+        "spacious": "Spacious"
       },
-      "navigationTitle": "Nawigacja i Wprowadzanie",
-      "keyboardShortcuts": "Pokaż Skróty Klawiszowe",
-      "keyboardShortcutsDescription": "Wyświetlaj podpowiedzi skrótów w tooltipach",
-      "focusHighlight": "Ulepszone Wskazanie Fokusa",
-      "focusHighlightDescription": "Pokazuj wyraźne obramowania fokusa podczas nawigacji klawiaturą",
-      "cursorSize": "Rozmiar Kursora",
-      "cursorSizeDescription": "Zwiększ widoczność kursora",
+      "navigationTitle": "Navigation & Input",
+      "keyboardShortcuts": "Show Keyboard Shortcuts",
+      "keyboardShortcutsDescription": "Display keyboard shortcut hints in tooltips",
+      "focusHighlight": "Enhanced Focus Indicator",
+      "focusHighlightDescription": "Show clear visual focus rings when navigating with keyboard",
+      "cursorSize": "Cursor Size",
+      "cursorSizeDescription": "Increase cursor visibility",
       "cursor": {
-        "default": "Domyślny",
-        "large": "Duży"
+        "default": "Default",
+        "large": "Large"
       },
-      "screenReaderTitle": "Czytnik Ekranu",
-      "screenReaderOptimized": "Optymalizacje dla Czytnika Ekranu",
-      "screenReaderOptimizedDescription": "Popraw kompatybilność z czytnikami ekranu jak NVDA i VoiceOver",
-      "colorVisionTitle": "Widzenie Kolorów",
-      "colorVisionDescription": "Dostosuj kolory dla różnych typów ślepoty barw",
-      "fontFamilyTitle": "Rodzina Czcionek",
-      "fontFamilyDescription": "Wybierz czcionkę która najlepiej Ci odpowiada",
-      "readabilityTitle": "Czytelność",
-      "lineHeight": "Wysokość Linii",
-      "lineHeightDescription": "Odstęp między liniami tekstu",
-      "letterSpacing": "Odstępy Liter",
-      "letterSpacingDescription": "Odstęp między znakami",
-      "caretWidth": "Szerokość Kursora Tekstu",
-      "caretWidthDescription": "Spraw aby migający kursor tekstu był bardziej widoczny",
-      "voiceSpeechTitle": "Głos i Mowa",
-      "textToSpeech": "Tekst na Mowę",
-      "textToSpeechDescription": "Czytaj zaznaczony tekst na głos",
-      "speechToText": "Mowa na Tekst",
-      "speechToTextDescription": "Używaj dyktowania głosowego do wprowadzania tekstu",
-      "voiceCommands": "Polecenia Głosowe",
-      "voiceCommandsDescription": "Steruj aplikacją za pomocą poleceń głosowych",
-      "focusStyleTitle": "Styl Wskaźnika Fokusa",
-      "focusStyleDescription": "Wybierz jak podświetlane są elementy z fokusem podczas nawigacji klawiaturą"
-    }
+      "screenReaderTitle": "Screen Reader",
+      "screenReaderOptimized": "Screen Reader Optimizations",
+      "screenReaderOptimizedDescription": "Improve compatibility with screen readers like NVDA and VoiceOver",
+      "colorVisionTitle": "Color Vision",
+      "colorVisionDescription": "Adjust colors for different types of color blindness",
+      "fontFamilyTitle": "Font Family",
+      "fontFamilyDescription": "Choose a font that works best for you",
+      "readabilityTitle": "Readability",
+      "lineHeight": "Line Height",
+      "lineHeightDescription": "Space between lines of text",
+      "letterSpacing": "Letter Spacing",
+      "letterSpacingDescription": "Space between characters",
+      "caretWidth": "Text Cursor Width",
+      "caretWidthDescription": "Make the blinking text cursor more visible",
+      "voiceSpeechTitle": "Voice & Speech",
+      "textToSpeech": "Text to Speech",
+      "textToSpeechDescription": "Read selected text aloud",
+      "speechToText": "Speech to Text",
+      "speechToTextDescription": "Use voice dictation for text input",
+      "voiceCommands": "Voice Commands",
+      "voiceCommandsDescription": "Control the app using voice commands",
+      "focusStyleTitle": "Focus Indicator Style",
+      "focusStyleDescription": "Choose how focused elements are highlighted when using keyboard navigation"
+    },
+    "recovery": {
+      "title": "Account Recovery",
+      "description": "Set up backup options to recover your account if you lose access",
+      "backupEmail": "Backup Email",
+      "backupEmailDesc": "Use to recover your account if you lose access",
+      "enterBackupEmail": "Enter backup email address",
+      "differentEmail": "Please use a different email address",
+      "emailSaved": "Verification email sent",
+      "emailError": "Failed to save backup email",
+      "phone": "Phone Number",
+      "phoneDesc": "Receive SMS codes for account recovery",
+      "enterPhone": "+1 (555) 123-4567",
+      "validPhone": "Please enter a valid phone number",
+      "phoneSaved": "Verification code sent",
+      "phoneError": "Failed to save phone number",
+      "recoveryCodes": "Recovery Codes",
+      "recoveryCodesDesc": "One-time use codes for emergency access",
+      "generateCodes": "Generate New Codes",
+      "saveThese": "Save these codes in a secure place",
+      "codesGenerated": "Recovery codes generated",
+      "codesError": "Failed to generate codes",
+      "codesCopied": "Recovery codes copied to clipboard",
+      "codesWarning": "Each code can only be used once. Store them securely and do not share them.",
+      "trustedDevices": "Trusted Devices",
+      "trustedDevicesDesc": "Devices that can access your account without additional verification",
+      "current": "This device",
+      "deviceRemoved": "Device removed",
+      "deviceRemoveError": "Failed to remove device"
+    },
+    "notifications": {
+      "title": "Powiadomienia",
+      "rules": {
+        "title": "Reguły powiadomień",
+        "description": "Skonfiguruj reguły powiadomień dla projektów",
+        "projectRules": "Reguły projektów",
+        "addRule": "Dodaj regułę",
+        "selectProject": "Wybierz projekt",
+        "ruleType": "Typ reguły",
+        "all": "Wszystkie",
+        "mentions_only": "Tylko wzmianki",
+        "custom": "Niestandardowe",
+        "muted": "Wyciszone",
+        "priorityFilter": "Priority Filter",
+        "allPriorities": "All priorities",
+        "highMedium": "High & Medium only",
+        "highOnly": "High priority only",
+        "rulesSaved": "Notification rules saved",
+        "saveError": "Failed to save rules"
+      },
+      "digest": {
+        "title": "Email Digest",
+        "description": "Bundle notifications into periodic summaries",
+        "frequency": "Frequency",
+        "time": "Preferred Time"
+      },
+      "keywords": {
+        "title": "Priority Keywords",
+        "description": "Always notify when these keywords appear"
+      },
+      "vip": {
+        "title": "VIP Contacts",
+        "description": "Always receive notifications from these people",
+        "empty": "No VIP contacts configured. Messages from VIP contacts will always notify you."
+      }
+    },
+    "general": "Ogólne",
+    "account": "Konto",
+    "security": "Bezpieczeństwo",
+    "privacy": "Prywatność",
+    "appearance": "Wygląd",
+    "language": "Język",
+    "regional": "Regionalne",
+    "timezone": "Strefa czasowa",
+    "dateFormat": "Format daty",
+    "timeFormat": "Format czasu",
+    "currency": "Waluta",
+    "keyboard": "Skróty klawiszowe",
+    "integrations": "Integracje",
+    "connectedApps": "Połączone aplikacje",
+    "api": "API",
+    "webhooks": "Webhooks",
+    "export": "Eksport danych",
+    "import": "Import danych",
+    "deleteAccount": "Usuń konto",
+    "changePassword": "Zmień hasło",
+    "twoFactor": "Uwierzytelnianie dwuskładnikowe",
+    "sessions": "Aktywne sesje"
   },
   "admin": {
-    "title": "ADMIN",
+    "title": "Panel Administracyjny",
     "panel": "Panel",
     "role": "Administrator",
     "backToApp": "Powrót do Aplikacji",
@@ -2822,57 +3279,57 @@
       }
     },
     "security": {
-      "title": "Bezpieczeństwo i zgodność",
-      "subtitle": "Uwierzytelnianie, kontrola dostępu, logi audytu i zarządzanie danymi",
+      "title": "Bezpieczeństwo",
+      "subtitle": "Authentication, access control, audit logs, and data management",
       "tabs": {
-        "settings": "Ustawienia bezpieczeństwa",
-        "authentication": "SSO i Auth",
-        "access": "Klucze API",
-        "audit": "Log audytu",
-        "data": "Zarządzanie danymi",
+        "settings": "Security Settings",
+        "authentication": "SSO & Auth",
+        "access": "API Keys",
+        "audit": "Audit Log",
+        "data": "Data Management",
         "feedback": "Feedback"
       },
       "settings": {
-        "title": "Ustawienia bezpieczeństwa",
-        "overview": "Przegląd",
+        "title": "Security Settings",
+        "overview": "Overview",
         "2fa": "2FA",
-        "password": "Polityka haseł",
-        "sessions": "Sesje",
-        "history": "Historia logowań"
+        "password": "Password Policy",
+        "sessions": "Sessions",
+        "history": "Login History"
       },
       "2fa": {
-        "title": "Uwierzytelnianie dwuskładnikowe",
-        "require": "Wymagaj 2FA dla wszystkich użytkowników",
-        "requireDesc": "Po włączeniu wszyscy użytkownicy muszą skonfigurować uwierzytelnianie dwuskładnikowe.",
-        "status": "Status 2FA użytkowników",
-        "enabled": "Włączone",
-        "notEnabled": "Nie włączone",
-        "adoption": "Adopcja 2FA",
-        "usersEnabled": "użytkowników włączonych"
+        "title": "Two-Factor Authentication",
+        "require": "Require 2FA for All Users",
+        "requireDesc": "When enabled, all users must set up two-factor authentication to access the system.",
+        "status": "User 2FA Status",
+        "enabled": "Enabled",
+        "notEnabled": "Not Enabled",
+        "adoption": "2FA Adoption",
+        "usersEnabled": "users enabled"
       },
       "password": {
-        "title": "Wymagania hasła",
-        "minLength": "Minimalna długość hasła",
-        "characters": "znaków",
-        "requireUppercase": "Wymagaj wielkiej litery (A-Z)",
-        "requireNumber": "Wymagaj cyfry (0-9)",
-        "requireSpecial": "Wymagaj znaku specjalnego (!@#$%^&*)",
-        "expiry": "Wygaśnięcie hasła (dni, 0 = nigdy)"
+        "title": "Password Requirements",
+        "minLength": "Minimum Password Length",
+        "characters": "characters",
+        "requireUppercase": "Require uppercase letter (A-Z)",
+        "requireNumber": "Require number (0-9)",
+        "requireSpecial": "Require special character (!@#$%^&*)",
+        "expiry": "Password Expiry (days, 0 = never)"
       },
       "sessions": {
-        "title": "Ustawienia sesji",
-        "timeout": "Limit czasu sesji (minuty)",
-        "maxPerUser": "Maks. sesji na użytkownika",
-        "active": "Aktywne sesje",
-        "terminate": "Zakończ sesję",
-        "terminateAll": "Zakończ wszystkie",
-        "noSessions": "Brak aktywnych sesji"
+        "title": "Session Settings",
+        "timeout": "Session Timeout (minutes)",
+        "maxPerUser": "Max Sessions Per User",
+        "active": "Active Sessions",
+        "terminate": "Terminate session",
+        "terminateAll": "Terminate All",
+        "noSessions": "No active sessions"
       },
       "loginHistory": {
-        "title": "Historia logowań",
-        "success": "Pomyślne logowanie",
-        "failed": "Nieudane logowanie",
-        "noHistory": "Brak historii logowań"
+        "title": "Login History",
+        "success": "Successful login",
+        "failed": "Failed login",
+        "noHistory": "No login history"
       }
     },
     "overview": {
@@ -2905,43 +3362,43 @@
       "subtitle": "Plany, płatności, faktury i kontrola wydatków"
     },
     "roles": {
-      "title": "Role i Uprawnienia",
-      "subtitle": "Zarządzaj poziomami dostępu i uprawnieniami w organizacji",
-      "infoTitle": "O Rolach",
-      "infoContent": "Role definiują, jakie akcje mogą wykonywać użytkownicy. Role systemowe zapewniają podstawowy zestaw uprawnień, podczas gdy role niestandardowe można dostosować do potrzeb organizacji.",
-      "systemRoles": "Role Systemowe",
-      "customRoles": "Role Niestandardowe",
-      "system": "Systemowa",
-      "users": "użytkowników",
-      "permissions": "uprawnień",
-      "edit": "Edytuj",
-      "duplicate": "Duplikuj",
-      "delete": "Usuń",
-      "createRole": "Utwórz Rolę",
-      "createNewRole": "Utwórz Nową Rolę",
-      "editRole": "Edytuj Rolę",
-      "selectToEdit": "Wybierz Rolę",
-      "selectToEditDesc": "Wybierz rolę z listy, aby wyświetlić lub edytować jej uprawnienia",
-      "name": "Nazwa Roli",
-      "namePlaceholder": "Wprowadź nazwę roli",
-      "nameRequired": "Nazwa roli jest wymagana",
-      "color": "Kolor",
-      "description": "Opis",
-      "descriptionPlaceholder": "Opisz tę rolę",
-      "permissionsMatrix": "Uprawnienia",
-      "selectAll": "Zaznacz Wszystko",
-      "deselectAll": "Odznacz Wszystko",
-      "systemWarning": "Ról systemowych nie można zmienić nazwy ani usunąć. Możesz tylko dostosować uprawnienia.",
-      "created": "Rola utworzona pomyślnie",
-      "updated": "Rola zaktualizowana pomyślnie",
-      "deleted": "Rola usunięta pomyślnie",
-      "permissionsUpdated": "Uprawnienia roli zaktualizowane",
-      "cannotDeleteSystem": "Nie można usunąć ról systemowych",
-      "hasUsers": "Nie można usunąć roli z przypisanymi użytkownikami",
-      "loadError": "Nie udało się załadować ról",
-      "saveError": "Nie udało się zapisać roli",
-      "deleteError": "Nie udało się usunąć roli",
-      "noResults": "Nie znaleziono ról"
+      "title": "Role",
+      "subtitle": "Manage access levels and permissions for your organization",
+      "infoTitle": "About Roles",
+      "infoContent": "Roles define what actions users can perform. System roles provide a base set of permissions, while custom roles can be tailored to your organization's needs.",
+      "systemRoles": "System Roles",
+      "customRoles": "Custom Roles",
+      "system": "System",
+      "users": "users",
+      "permissions": "permissions",
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "createRole": "Create Role",
+      "createNewRole": "Create New Role",
+      "editRole": "Edit Role",
+      "selectToEdit": "Select a Role",
+      "selectToEditDesc": "Select a role from the list to view or edit its permissions",
+      "name": "Role Name",
+      "namePlaceholder": "Enter role name",
+      "nameRequired": "Role name is required",
+      "color": "Color",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe this role",
+      "permissionsMatrix": "Permissions",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "systemWarning": "System roles cannot be renamed or deleted. You can only customize permissions.",
+      "created": "Role created successfully",
+      "updated": "Role updated successfully",
+      "deleted": "Role deleted successfully",
+      "permissionsUpdated": "Role permissions updated",
+      "cannotDeleteSystem": "Cannot delete system roles",
+      "hasUsers": "Cannot delete role with assigned users",
+      "loadError": "Failed to load roles",
+      "saveError": "Failed to save role",
+      "deleteError": "Failed to delete role",
+      "noResults": "No roles found"
     },
     "templates": {
       "title": "Szablony",
@@ -3080,42 +3537,138 @@
     },
     "integrations": {
       "title": "Integracje",
-      "subtitle": "Połącz z zewnętrznymi usługami i webhookami",
-      "infoTitle": "O Integracjach",
-      "infoContent": "Połącz swoją przestrzeń roboczą z zewnętrznymi usługami. Skonfiguruj webhooki do otrzymywania powiadomień w czasie rzeczywistym lub połącz aplikacje zewnętrzne.",
-      "webhooks": "Webhooki",
-      "connectedApps": "Połączone Aplikacje",
-      "addWebhook": "Dodaj Webhook",
-      "createWebhook": "Utwórz Webhook",
-      "editWebhook": "Edytuj Webhook",
-      "selectOrCreate": "Wybierz lub Utwórz",
-      "selectOrCreateDesc": "Wybierz webhook do edycji lub utwórz nowy",
-      "webhookName": "Nazwa Webhooka",
-      "webhookNamePlaceholder": "Mój Webhook",
-      "endpointUrl": "URL Punktu Końcowego",
-      "signingSecret": "Sekret Podpisu",
-      "events": "Zdarzenia",
-      "activateImmediately": "Aktywuj natychmiast",
-      "test": "Testuj",
-      "connect": "Połącz",
-      "disconnect": "Rozłącz",
-      "connectRedirect": "Przekierowywanie do autoryzacji...",
-      "disconnected": "Integracja rozłączona",
-      "requiredFields": "Nazwa i URL są wymagane",
-      "selectEvents": "Wybierz co najmniej jedno zdarzenie",
-      "searchPlaceholder": "Szukaj integracji...",
-      "noWebhooks": "Brak skonfigurowanych webhooków",
-      "webhookCreated": "Webhook utworzony",
-      "webhookUpdated": "Webhook zaktualizowany",
-      "webhookDeleted": "Webhook usunięty",
-      "webhookEnabled": "Webhook włączony",
-      "webhookDisabled": "Webhook wyłączony",
-      "testingWebhook": "Testowanie webhooka...",
-      "testSuccess": "Test webhooka pomyślny",
-      "testFailed": "Test webhooka nieudany",
-      "loadError": "Nie udało się załadować integracji",
-      "saveError": "Nie udało się zapisać webhooka"
-    }
+      "subtitle": "Connect with external services and webhooks",
+      "infoTitle": "About Integrations",
+      "infoContent": "Connect your workspace with external services. Set up webhooks to receive real-time notifications or connect third-party apps.",
+      "webhooks": "Webhooks",
+      "connectedApps": "Connected Apps",
+      "addWebhook": "Add Webhook",
+      "createWebhook": "Create Webhook",
+      "editWebhook": "Edit Webhook",
+      "selectOrCreate": "Select or Create",
+      "selectOrCreateDesc": "Select a webhook to edit or create a new one",
+      "webhookName": "Webhook Name",
+      "webhookNamePlaceholder": "My Webhook",
+      "endpointUrl": "Endpoint URL",
+      "signingSecret": "Signing Secret",
+      "events": "Events",
+      "activateImmediately": "Activate immediately",
+      "test": "Test",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "connectRedirect": "Redirecting to authorization...",
+      "disconnected": "Integration disconnected",
+      "requiredFields": "Name and URL are required",
+      "selectEvents": "Select at least one event",
+      "searchPlaceholder": "Search integrations...",
+      "noWebhooks": "No webhooks configured",
+      "webhookCreated": "Webhook created",
+      "webhookUpdated": "Webhook updated",
+      "webhookDeleted": "Webhook deleted",
+      "webhookEnabled": "Webhook enabled",
+      "webhookDisabled": "Webhook disabled",
+      "testingWebhook": "Testing webhook...",
+      "testSuccess": "Webhook test successful",
+      "testFailed": "Webhook test failed",
+      "loadError": "Failed to load integrations",
+      "saveError": "Failed to save webhook"
+    },
+    "licenses": {
+      "title": "License Management",
+      "totalSeats": "Total Seats",
+      "usedSeats": "Used",
+      "available": "Available",
+      "utilization": "Utilization",
+      "byType": "Licenses by Type",
+      "searchUsers": "Search users...",
+      "allLicenses": "All Licenses",
+      "noLicense": "No License",
+      "user": "User",
+      "currentLicense": "Current License",
+      "assignedDate": "Assigned",
+      "actions": "Actions",
+      "none": "No license",
+      "noUsersFound": "No users found",
+      "bulkAssign": "Assign",
+      "bulkAssignTitle": "Bulk Assign Licenses",
+      "bulkAssignDesc": "Assign license to selected users",
+      "selectLicense": "Select License Type",
+      "removeLicense": "Remove License",
+      "assign": "Assign",
+      "fetchError": "Failed to load license data",
+      "assigned": "License updated",
+      "assignError": "Failed to update license",
+      "bulkAssigned": "licenses updated",
+      "bulkAssignError": "Failed to update some licenses"
+    },
+    "dataGovernance": {
+      "title": "Data Governance",
+      "description": "Configure data retention, residency, and compliance settings",
+      "residency": "Data Residency",
+      "residencyDesc": "Primary region where your data is stored",
+      "crossBorder": "Cross-Border Data Transfer",
+      "crossBorderDesc": "Allow data processing in other regions for performance",
+      "crossBorderNote": "Data will only be stored and processed in the selected region (GDPR compliant)",
+      "encryption": "Encryption",
+      "retention": "Data Retention Policies",
+      "retentionDesc": "Configure how long different types of data are kept",
+      "auditRetention": "Audit Log Retention",
+      "auditRetentionDesc": "Security and compliance audit logs",
+      "warning": "Important",
+      "warningText": "Changing data retention policies will affect data available for compliance audits. Purged data cannot be recovered.",
+      "saved": "Data governance settings saved",
+      "saveError": "Failed to save settings"
+    },
+    "audit": {
+      "title": "Audyt",
+      "description": "Export audit logs and generate compliance reports",
+      "tabs": {
+        "export": "Export",
+        "scheduled": "Scheduled",
+        "anomalies": "Anomalies"
+      },
+      "quickExport": "Quick Export Audit Log",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "format": "Format",
+      "exportBtn": "Export Audit Log",
+      "complianceReports": "Compliance Reports",
+      "generateReport": "Generate Report",
+      "recentExports": "Recent Exports",
+      "addSchedule": "Add Scheduled Report",
+      "anomalyInfo": "Anomaly Detection Active",
+      "anomalyInfoDesc": "AI-powered monitoring detects unusual patterns in user activity and data access.",
+      "resolve": "Mark Resolved",
+      "resolved": "Resolved",
+      "exportStarted": "Export started. You will be notified when ready.",
+      "exportError": "Failed to start export",
+      "reportStarted": "Report generation started.",
+      "reportError": "Failed to generate report"
+    },
+    "users": "Użytkownicy",
+    "userManagement": "Zarządzanie użytkownikami",
+    "addUser": "Dodaj użytkownika",
+    "editUser": "Edytuj użytkownika",
+    "deleteUser": "Usuń użytkownika",
+    "permissions": "Uprawnienia",
+    "teams": "Zespoły",
+    "organizations": "Organizacje",
+    "settings": "Ustawienia",
+    "logs": "Logi",
+    "api": "API",
+    "webhooks": "Webhooks",
+    "backup": "Kopia zapasowa",
+    "restore": "Przywróć",
+    "export": "Eksport",
+    "import": "Import",
+    "maintenance": "Konserwacja",
+    "system": "System",
+    "health": "Stan systemu",
+    "performance": "Wydajność",
+    "storage": "Przechowywanie",
+    "database": "Baza danych",
+    "cache": "Pamięć podręczna",
+    "clearCache": "Wyczyść pamięć podręczną"
   },
   "fullInitiatives": {
     "intro": "Na podstawie Twoich wyników dojrzałości, wygenerowałem zestaw inicjatyw transformacyjnych. Możesz je przejrzeć i edytować w tabeli po prawej.",
@@ -3345,9 +3898,12 @@
       }
     },
     "topBar": {
+      "demo": "Demo",
+      "trial": "Trial",
       "exploreDemo": "Poznaj Demo",
       "talkToExpert": "Porozmawiaj z Ekspertem",
       "login": "Zaloguj się",
+      "signUp": "Zarejestruj się",
       "startTrial": "Rozpocznij Trial",
       "goToWorkspace": "Przejdź do Workspace"
     },
@@ -3768,31 +4324,36 @@
       "contact": "Kontakt"
     },
     "ai": {
+      "applyProposedSchedule": "Zastosuj Proponowany Harmonogram",
+      "autoGenerateInsights": "Auto-Generuj Wnioski",
+      "observations": "Kluczowe Obserwacje i Ryzyka",
+      "recommendations": "Zalecane Działania",
+      "optimization": "Strategia Optymalizacji",
       "welcome": {
         "title": "Asystent AI",
-        "subtitle": "Zapytaj mnie o cokolwiek związanego z Consultinity. Jestem tu, żeby pomóc!"
+        "subtitle": "W czym mogę pomóc?"
       },
-      "placeholder": "Zadaj pytanie...",
-      "error": "Przepraszam, wystąpił błąd. Spróbuj ponownie.",
+      "placeholder": "Zapytaj o cokolwiek...",
+      "error": "Przepraszamy, wystąpił błąd. Spróbuj ponownie.",
       "quick": {
         "label": "Szybkie pytania:",
-        "howto": "Jak używać tego modułu?",
-        "explain": "Wyjaśnij co mogę tu zrobić",
-        "troubleshoot": "Pomóż mi rozwiązać problem"
+        "howto": "Jak to zrobić?",
+        "explain": "Wyjaśnij to",
+        "troubleshoot": "Rozwiąż problem"
       },
       "prompts": {
-        "howto": "Jak efektywnie korzystać z tego modułu?",
-        "explain": "Jakie funkcje i możliwości są tu dostępne?",
-        "troubleshoot": "Mam problem. Czy możesz mi pomóc go rozwiązać?"
+        "howto": "Jak mogę {{action}}?",
+        "explain": "Wyjaśnij {{topic}}",
+        "troubleshoot": "Pomóż rozwiązać problem z {{issue}}"
       }
     },
     "sidePanel": {
       "tabs": {
         "ai": "Asystent AI",
         "overview": "Przegląd",
-        "howto": "Jak używać",
+        "howto": "Instrukcja",
         "faq": "FAQ",
-        "video": "Filmy"
+        "video": "Wideo"
       },
       "modules": {
         "dashboard": {
@@ -4282,7 +4843,11 @@
             "Alokacja zasobów",
             "Raportowanie dla klientów"
           ],
-          "workflow": ["Przeglądaj listę klientów", "Wybierz projekt", "Generuj raporty"],
+          "workflow": [
+            "Przeglądaj listę klientów",
+            "Wybierz projekt",
+            "Generuj raporty"
+          ],
           "tips": [
             "Używaj widoku portfolio dla statusu ogólnego",
             "Standaryzuj raporty między klientami"
@@ -4292,20 +4857,21 @@
           "name": "Ekosystem",
           "description": "Połącz się z partnerami, firmami stowarzyszonymi i innymi organizacjami w ekosystemie DBR77.",
           "purpose": "Rozszerz swoją sieć i wykorzystaj zewnętrzną wiedzę ekspercką.",
-          "keyFeatures": ["Katalog partnerów", "Panel partnerski", "Narzędzia współpracy"],
+          "keyFeatures": [
+            "Katalog partnerów",
+            "Panel partnerski",
+            "Narzędzia współpracy"
+          ],
           "workflow": [
             "Przeglądaj partnerów",
             "Połącz się z ekspertami",
             "Śledź wyniki partnerskie"
           ],
-          "tips": ["Szukaj certyfikowanych partnerów", "Monitoruj swój wpływ partnerski"]
+          "tips": [
+            "Szukaj certyfikowanych partnerów",
+            "Monitoruj swój wpływ partnerski"
+          ]
         }
-      },
-      "tabs": {
-        "overview": "Przegląd",
-        "howto": "Instrukcja",
-        "faq": "FAQ",
-        "video": "Wideo"
       },
       "audience": {
         "user": "Użytkownik",
@@ -4315,10 +4881,24 @@
       },
       "video": {
         "watched": "Obejrzane",
+        "chapters": "Rozdziały",
+        "settings": "Ustawienia",
+        "speed": "Prędkość",
+        "controls": {
+          "play": "Odtwórz (k)",
+          "pause": "Pauza (k)",
+          "mute": "Wycisz (m)",
+          "unmute": "Włącz dźwięk (m)",
+          "fullscreen": "Pełny ekran (f)",
+          "exitFullscreen": "Zamknij pełny ekran (f)",
+          "prev10": "-10s",
+          "next10": "+10s"
+        },
+        "shortcuts": "Spacja/K: Odtwórz · ←/→: Przewiń · M: Wycisz · F: Pełny ekran",
         "watch": "Obejrzyj",
         "watchAgain": "Obejrzyj ponownie",
-        "progress": "Postęp oglądania",
-        "progressSummary": "{{watched}} / {{total}}"
+        "progress": "Postęp",
+        "progressSummary": "{{completed}} z {{total}} obejrzanych"
       },
       "faq": {
         "searchPlaceholder": "Szukaj pytań...",
@@ -4828,7 +5408,11 @@
               "Alokacja zasobów",
               "Raportowanie dla klientów"
             ],
-            "workflow": ["Przeglądaj listę klientów", "Wybierz projekt", "Generuj raporty"],
+            "workflow": [
+              "Przeglądaj listę klientów",
+              "Wybierz projekt",
+              "Generuj raporty"
+            ],
             "tips": [
               "Używaj widoku portfolio dla statusu ogólnego",
               "Standaryzuj raporty między klientami"
@@ -4838,13 +5422,69 @@
             "name": "Ekosystem",
             "description": "Połącz się z partnerami, firmami stowarzyszonymi i innymi organizacjami w ekosystemie DBR77.",
             "purpose": "Rozszerz swoją sieć i wykorzystaj zewnętrzną wiedzę ekspercką.",
-            "keyFeatures": ["Katalog partnerów", "Panel partnerski", "Narzędzia współpracy"],
+            "keyFeatures": [
+              "Katalog partnerów",
+              "Panel partnerski",
+              "Narzędzia współpracy"
+            ],
             "workflow": [
               "Przeglądaj partnerów",
               "Połącz się z ekspertami",
               "Śledź wyniki partnerskie"
             ],
-            "tips": ["Szukaj certyfikowanych partnerów", "Monitoruj swój wpływ partnerski"]
+            "tips": [
+              "Szukaj certyfikowanych partnerów",
+              "Monitoruj swój wpływ partnerski"
+            ]
+          },
+          "superadmin-overview": {
+            "name": "SuperAdmin Overview",
+            "description": "Central command center for platform administrators. Monitor system health, track key metrics, and respond to real-time signals across all organizations in the Consultinity platform.",
+            "purpose": "Provide platform operators with a comprehensive view of system health, user activity, business metrics, and alerts requiring immediate attention.",
+            "keyFeatures": [
+              "Real-time dashboard with key platform KPIs",
+              "Organization and user counts at a glance",
+              "AI usage monitoring (calls, tokens, costs)",
+              "Live user sessions tracking",
+              "Revenue metrics (MRR, ARR estimates)",
+              "Recent activity feed across all organizations",
+              "Conversion intelligence and funnel analytics",
+              "Early warning system for churn risk",
+              "Attribution channel performance tracking",
+              "System signals: alerts, tickets, and user feedback"
+            ],
+            "workflow": [
+              "Start on Dashboard tab to review platform-wide KPIs",
+              "Click metric cards to drill down into specific areas",
+              "Switch to Metrics tab for conversion funnels and attribution data",
+              "Review Early Warnings for organizations at risk of churning",
+              "Check Partners Leaderboard for affiliate performance",
+              "Use Signals tab to monitor system alerts and client tickets",
+              "Navigate to Customers module for organization management",
+              "Navigate to Revenue module for billing details"
+            ],
+            "tips": [
+              "Check Signals regularly for critical system alerts requiring immediate action",
+              "Monitor conversion funnels weekly to track growth and identify bottlenecks",
+              "Use Early Warnings proactively to prevent customer churn before it happens",
+              "Review Attribution data to optimize marketing spend across channels",
+              "Track Help Effectiveness to identify playbooks that need improvement",
+              "Use the header status indicators for quick health assessment"
+            ],
+            "tabs": {
+              "dashboard": {
+                "title": "Dashboard",
+                "description": "Real-time platform KPIs including organizations, users, AI usage, and revenue metrics. Quick actions for common administrative tasks."
+              },
+              "metrics": {
+                "title": "Conversion Intelligence",
+                "description": "Enterprise analytics including conversion funnels, early warning signals, attribution channels, partner leaderboard, and help system effectiveness."
+              },
+              "signals": {
+                "title": "Signals",
+                "description": "System alerts, client support tickets, and user feedback requiring administrator attention. Signals are grouped by type and sorted by priority."
+              }
+            }
           }
         },
         "difficulty": {
@@ -4890,28 +5530,145 @@
           "skip": "Pomiń",
           "thanks": "Dziękujemy za opinię!",
           "error": "Nie udało się wysłać opinii"
+        },
+        "dashboard": {
+          "0": {
+            "title": "How to use the dashboard?",
+            "content": "The dashboard shows an overview of your organization and current activities. Click on cards to see details."
+          },
+          "1": {
+            "title": "Dashboard Video Tutorial",
+            "content": "Watch this 2-minute video to learn how to customize your dashboard views."
+          }
+        },
+        "assessment": {
+          "0": {
+            "title": "How to assess maturity?",
+            "content": "Maturity assessment involves defining the current state (Actual) and target state (Target) for each area."
+          },
+          "1": {
+            "title": "Assessment FAQ",
+            "content": "Find answers to common questions about maturity levels and scoring."
+          },
+          "2": {
+            "title": "Helper Questions",
+            "content": "Use helper questions to better understand each maturity level requirements."
+          }
+        },
+        "initiatives": {
+          "0": {
+            "title": "What is an initiative?",
+            "content": "An initiative is a specific transformation action with a defined goal, scope, and schedule."
+          },
+          "1": {
+            "title": "Prioritizing Initiatives",
+            "content": "Use the Impact/Effort matrix to prioritize your transformation actions."
+          }
+        },
+        "roadmap": {
+          "0": {
+            "title": "How to read the roadmap?",
+            "content": "The roadmap shows a timeline with project phases and dependencies."
+          },
+          "1": {
+            "title": "Roadmap Video Guide",
+            "content": "Learn how to edit schedules and manage dependencies in the roadmap."
+          }
+        },
+        "team": {
+          "0": {
+            "title": "Inviting Members",
+            "content": "Click 'Invite', enter email and choose a role for your team members."
+          },
+          "1": {
+            "title": "Roles & Permissions",
+            "content": "Information about different user roles (Admin, Member, Viewer) in the system."
+          }
+        },
+        "drd_workspace": {
+          "0": {
+            "title": "What is a decision axis?",
+            "content": "A decision axis (DRD Axis) is a space to structure one strategic topic."
+          },
+          "1": {
+            "title": "Adding Perspectives",
+            "content": "Learn how to collect different points of view to reach consensus."
+          },
+          "2": {
+            "title": "Using Snapshots",
+            "content": "Snapshots save the current state of discussion for future reference."
+          }
+        },
+        "sso": {
+          "0": {
+            "title": "What is SSO?",
+            "content": "Single Sign-On (SSO) allows users to log in using corporate accounts."
+          },
+          "1": {
+            "title": "Google SSO Setup",
+            "content": "Detailed guide on configuring Google Workspace as an Identity Provider."
+          },
+          "2": {
+            "title": "SSO FAQ",
+            "content": "Common questions about modern authentication and SSO integration."
+          }
+        },
+        "security": {
+          "0": {
+            "title": "Security Policies",
+            "content": "Define requirements for passwords, sessions, MFA, and IP access."
+          },
+          "1": {
+            "title": "Compliance Presets",
+            "content": "Configure policies according to industry standards like SOC2 or HIPAA."
+          },
+          "2": {
+            "title": "Account Lockout",
+            "content": "Settings for handling failed login attempts and account recovery."
+          }
+        },
+        "whitelabel": {
+          "0": {
+            "title": "What is white-label?",
+            "content": "Customize the platform's appearance to match your organization's brand."
+          },
+          "1": {
+            "title": "Changing Colors & Logos",
+            "content": "How to update theme colors and upload your company logo."
+          },
+          "2": {
+            "title": "Custom Domains",
+            "content": "Configuring your own domain (e.g. pmo.yourcompany.com) for the platform."
+          }
+        },
+        "integrations": {
+          "0": {
+            "title": "What are integrations?",
+            "content": "Connect Consultinity with external tools like Slack, Teams, or Jira."
+          },
+          "1": {
+            "title": "Webhook Configuration",
+            "content": "Learn how to set up real-time event notifications via webhooks."
+          },
+          "2": {
+            "title": "API Keys",
+            "content": "Managing secure access tokens for direct API integrations."
+          }
+        },
+        "default": {
+          "0": {
+            "title": "First Steps",
+            "content": "Start with the dashboard or explore the available modules."
+          },
+          "1": {
+            "title": "Need Help?",
+            "content": "Contact us via chat or email at support@consultinity.com"
+          }
         }
       },
       "toggle": {
         "open": "Otwórz Centrum Pomocy",
         "close": "Zamknij Centrum Pomocy"
-      },
-      "video": {
-        "watched": "Obejrzane",
-        "chapters": "Rozdziały",
-        "settings": "Ustawienia",
-        "speed": "Prędkość",
-        "controls": {
-          "play": "Odtwórz (k)",
-          "pause": "Pauza (k)",
-          "mute": "Wycisz (m)",
-          "unmute": "Włącz dźwięk (m)",
-          "fullscreen": "Pełny ekran (f)",
-          "exitFullscreen": "Zamknij pełny ekran (f)",
-          "prev10": "-10s",
-          "next10": "+10s"
-        },
-        "shortcuts": "Spacja/K: Odtwórz · ←/→: Przewiń · M: Wycisz · F: Pełny ekran"
       },
       "whatsNew": {
         "title": "Co Nowego",
@@ -4925,6 +5682,11 @@
         "learnMore": "Dowiedz się więcej",
         "changelog": "Zobacz pełną historię zmian",
         "watchDemo": "Obejrzyj demo"
+      },
+      "difficulty": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
       }
     },
     "playbooks": {
@@ -5633,13 +6395,6 @@
       "PARENT_OF": "Rodzic dla",
       "CHILD_OF": "Dziecko dla"
     },
-    "ai": {
-      "applyProposedSchedule": "Zastosuj Proponowany Harmonogram",
-      "autoGenerateInsights": "Auto-Generuj Wnioski",
-      "observations": "Kluczowe Obserwacje i Ryzyka",
-      "recommendations": "Zalecane Działania",
-      "optimization": "Strategia Optymalizacji"
-    },
     "widgets": {
       "help": {
         "title": "Centrum Pomocy",
@@ -5726,9 +6481,7 @@
         "feature": "Prośba o funkcję przesłana!",
         "featureWithAI": "Prośba o funkcję przesłana! AI znalazło podobne zgłoszenia."
       },
-      "error": {
-        "submit": "Nie udało się wysłać feedbacku"
-      },
+      "error": "Failed to submit feedback",
       "intro": "Twoja opinia pomaga nam ulepszać platformę. Zgłoś błąd lub podziel się pomysłem.",
       "footer": "Feedback wysłany jako",
       "pulse": {
@@ -5751,7 +6504,13 @@
       "ai": {
         "insights": "Spostrzeżenia AI",
         "loading": "Ładowanie spostrzeżeń AI..."
-      }
+      },
+      "yes": "Yes",
+      "no": "No",
+      "addComment": "Add feedback",
+      "commentPlaceholder": "Tell us how we can improve...",
+      "skip": "Skip",
+      "thanks": "Thank you for your feedback!"
     },
     "documents": {
       "library": "Biblioteka Dokumentów",
@@ -5767,6 +6526,790 @@
       "projectHint": "Dokumenty dostępne dla wszystkich w projekcie",
       "userHint": "Twoje prywatne dokumenty",
       "confirmDelete": "Czy na pewno chcesz usunąć ten dokument?"
+    },
+    "search": {
+      "placeholder": "Search help...",
+      "noResults": "No results for",
+      "tryDifferentKeywords": "Try different keywords",
+      "suggestions": "Suggestions",
+      "recentSearches": "Recent Searches",
+      "clear": "Clear",
+      "popular": "Popular",
+      "types": {
+        "module": "Module",
+        "card": "Documentation",
+        "faq": "FAQ",
+        "video": "Video"
+      },
+      "filters": {
+        "all": "All",
+        "module": "Modules",
+        "card": "Docs",
+        "faq": "FAQs",
+        "video": "Videos"
+      },
+      "footer": {
+        "navigate": "navigate",
+        "select": "select",
+        "close": "close",
+        "results": "results"
+      }
+    },
+    "toggle": {
+      "open": "Open Help Center",
+      "close": "Close Help Center"
+    },
+    "video": {
+      "watched": "Watched",
+      "chapters": "Chapters",
+      "settings": "Settings",
+      "speed": "Speed",
+      "controls": {
+        "play": "Play (k)",
+        "pause": "Pause (k)",
+        "mute": "Mute (m)",
+        "unmute": "Unmute (m)",
+        "fullscreen": "Fullscreen (f)",
+        "exitFullscreen": "Exit fullscreen (f)",
+        "prev10": "-10s",
+        "next10": "+10s"
+      },
+      "shortcuts": "Space/K: Play · ←/→: Seek · M: Mute · F: Fullscreen"
+    },
+    "whatsNew": {
+      "title": "What's New",
+      "version": "Version",
+      "features": "New Features",
+      "improvements": "Improvements",
+      "fixes": "Bug Fixes",
+      "breaking": "Breaking Changes",
+      "dontShow": "Don't show for this version",
+      "gotIt": "Got it!",
+      "learnMore": "Learn More",
+      "changelog": "View full changelog",
+      "watchDemo": "Watch demo"
     }
+  },
+  "billing": {
+    "paymentMethods": {
+      "title": "Payment Methods",
+      "description": "Manage your saved payment methods",
+      "securityNote": "Your payment information is securely processed by Stripe. We never store your full card details.",
+      "empty": "No payment methods saved",
+      "add": "Add Card",
+      "addFirst": "Add Your First Card",
+      "default": "Default",
+      "setDefault": "Set Default",
+      "defaultSet": "Default payment method updated",
+      "defaultError": "Failed to update default",
+      "expires": "Expires",
+      "removeConfirm": "Are you sure you want to remove this payment method?",
+      "removed": "Payment method removed",
+      "removeError": "Failed to remove payment method",
+      "fetchError": "Failed to load payment methods"
+    },
+    "addCard": {
+      "title": "Add Payment Method",
+      "subtitle": "Securely add a new card",
+      "secureNote": "Secured by Stripe",
+      "holderName": "Cardholder Name",
+      "cardNumber": "Card Number",
+      "expiry": "Expiry",
+      "cvc": "CVC",
+      "submit": "Add Card",
+      "processing": "Processing...",
+      "success": "Card added successfully",
+      "error": "Failed to add card",
+      "setupError": "Failed to initialize card form",
+      "invalidCard": "Please enter a valid card number",
+      "invalidExpiry": "Please enter a valid expiry date",
+      "invalidCvc": "Please enter a valid CVC",
+      "termsNote": "By adding a card, you agree to our Terms of Service and authorize future charges according to your subscription."
+    },
+    "subscription": {
+      "currentPlan": "CURRENT PLAN",
+      "trial": "TRIAL",
+      "trialEnds": "Trial ends",
+      "availablePlans": "Available Plans",
+      "popular": "Most Popular",
+      "current": "Current",
+      "yourPlan": "Your Current Plan",
+      "upgrade": "Upgrade",
+      "switch": "Switch",
+      "select": "Select",
+      "confirmUpgrade": "Confirm Upgrade",
+      "confirmChange": "Confirm Plan Change",
+      "newPrice": "New Monthly Price",
+      "discountCode": "Discount Code",
+      "apply": "Apply",
+      "invalidDiscount": "Invalid discount code",
+      "proratedNote": "You will be charged the prorated difference immediately.",
+      "downgradeNote": "Changes will take effect at the end of your current billing period.",
+      "confirm": "Confirm Change",
+      "changed": "Subscription updated successfully",
+      "changeError": "Failed to update subscription",
+      "fetchError": "Failed to load subscription data",
+      "title": "Subskrypcja"
+    },
+    "alerts": {
+      "title": "Usage Alerts & Limits",
+      "description": "Configure notifications when you approach usage limits",
+      "emailNotifications": "Email Notifications",
+      "emailNotificationsDesc": "Receive alerts via email",
+      "tokenUsage": "Token Usage Alerts",
+      "storageUsage": "Storage Usage Alerts",
+      "threshold80": "Alert at 80% usage",
+      "threshold90": "Alert at 90% usage",
+      "threshold100": "Alert at 100% usage",
+      "storageThreshold80": "Alert at 80% storage",
+      "storageThreshold90": "Alert at 90% storage",
+      "storageThreshold100": "Alert at 100% storage",
+      "costCap": "Monthly Cost Cap",
+      "costCapDesc": "Set a hard limit on monthly spending (overage charges will be blocked)",
+      "noCap": "No limit",
+      "autoUpgrade": "Auto-Upgrade",
+      "autoUpgradeDesc": "Automatically upgrade plan when limits are reached",
+      "selectPlan": "Select upgrade plan...",
+      "saved": "Alert settings saved",
+      "saveError": "Failed to save settings",
+      "fetchError": "Failed to load settings"
+    },
+    "tax": {
+      "title": "Tax & Invoice Settings",
+      "description": "Configure your tax ID and billing information for invoices",
+      "taxId": "Tax ID / VAT Number",
+      "taxIdType": "Tax ID Type",
+      "selectType": "Select type...",
+      "taxIdNumber": "Tax ID Number",
+      "taxExempt": "Tax Exempt",
+      "taxExemptDesc": "Check if your organization is tax exempt",
+      "billingAddress": "Billing Address",
+      "billingName": "Company / Name",
+      "billingEmail": "Billing Email",
+      "addressLine1": "Address Line 1",
+      "addressLine2": "Address Line 2",
+      "city": "City",
+      "state": "State / Region",
+      "postalCode": "Postal Code",
+      "country": "Country",
+      "selectCountry": "Select...",
+      "invoiceCustomization": "Invoice Customization",
+      "invoicePrefix": "Invoice Prefix",
+      "poNumber": "Default PO Number",
+      "saved": "Tax settings saved",
+      "saveError": "Failed to save settings",
+      "fetchError": "Failed to load tax settings"
+    },
+    "title": "Rozliczenia",
+    "plan": "Plan",
+    "currentPlan": "Aktualny Plan",
+    "upgrade": "Zmień na wyższy",
+    "downgrade": "Zmień na niższy",
+    "cancel": "Anuluj subskrypcję",
+    "renew": "Odnów",
+    "payment": "Płatność",
+    "paymentMethod": "Metoda płatności",
+    "addPayment": "Dodaj metodę płatności",
+    "invoices": "Faktury",
+    "invoice": "Faktura",
+    "downloadInvoice": "Pobierz fakturę",
+    "history": "Historia płatności",
+    "amount": "Kwota",
+    "date": "Data",
+    "status": "Status",
+    "paid": "Opłacona",
+    "pending": "Oczekująca",
+    "failed": "Nieudana",
+    "usage": "Zużycie",
+    "usageDetails": "Szczegóły zużycia",
+    "tokens": "Tokeny",
+    "tokensUsed": "Wykorzystane tokeny",
+    "tokensRemaining": "Pozostałe tokeny",
+    "nextBilling": "Następne rozliczenie",
+    "billingCycle": "Cykl rozliczeniowy",
+    "monthly": "Miesięcznie",
+    "yearly": "Rocznie",
+    "discount": "Rabat",
+    "promo": "Kod promocyjny",
+    "applyPromo": "Zastosuj kod",
+    "taxId": "NIP",
+    "billingAddress": "Adres rozliczeniowy",
+    "companyName": "Nazwa firmy"
+  },
+  "initiative": {
+    "autoFill": "Auto-fill with AI",
+    "charterTitle": "Initiative Charter",
+    "idLabel": "ID:",
+    "newInitiative": "New Initiative",
+    "progressLabel": "Progress:",
+    "readinessLabel": "Readiness:",
+    "tabs": {
+      "overview": "Overview",
+      "tasks": "Tasks",
+      "definition": "Definition & Scope",
+      "execution": "Execution & Risks",
+      "economics": "Value & Finance",
+      "governance": "Governance",
+      "team": "Team",
+      "discussion": "Discussion",
+      "history": "History",
+      "intelligence": "Intelligence"
+    },
+    "decisionToMake": "Decision to be made",
+    "decisionOwner": "Decision Owner",
+    "oneLiner": "Executive One-Liner",
+    "problemStatement": "Problem Statement (The Why)",
+    "symptom": "Symptom",
+    "rootCause": "Root Cause",
+    "costOfInaction": "Cost of Inaction",
+    "fullDescription": "Full Description (Legacy)",
+    "nameLabel": "Initiative Name",
+    "strategicIntentLabel": "Strategic Intent",
+    "strategicFitTitle": "Strategic Fit",
+    "alignmentWithAxis": "Alignment with Axis",
+    "corporateGoal": "Corporate Goal",
+    "painPoint": "Pain Point",
+    "charterReadiness": "Charter Readiness",
+    "incompleteLabel": "Incomplete:",
+    "targetStateSnapshot": "Target State Snapshot (After Initiative)",
+    "processChanges": "Process Changes",
+    "behaviorChanges": "Behavior Changes",
+    "capabilityChanges": "Capability Changes",
+    "addBullet": "+ Add bullet",
+    "evidenceTitle": "Evidence & Attachments",
+    "strategicChangeLog": "Strategic Change Log",
+    "addAttachmentMock": "+ Add Attachment (Mock)",
+    "addLogEntry": "+ Add Log Entry",
+    "strategicRoadmapAttributes": "Strategic Roadmap Attributes",
+    "strategicRole": "Strategic Role",
+    "placementReason": "Placement Reason",
+    "autoFillWithAI": "Auto-fill with AI",
+    "effortProfileLabel": "Effort Profile (1-5)",
+    "analytical": "Analytical",
+    "operational": "Operational",
+    "changeMgmt": "Change Mgmt",
+    "successCriteriaTyped": "Success Criteria (Typed)",
+    "autoSuggest": "Auto-Suggest",
+    "metric": "Metric",
+    "behavior": "Behavior",
+    "process": "Process",
+    "capability": "Capability",
+    "criteriaDescriptionPlaceholder": "Criteria description...",
+    "addCriteria": "+ Add Criteria",
+    "explicitAssumptions": "Explicit Assumptions",
+    "organizational": "Organizational",
+    "dataTech": "Data / Tech",
+    "budgetResources": "Budget / Resources",
+    "peopleSkills": "People / Skills",
+    "keyDeliverables": "Key Deliverables",
+    "addDeliverable": "+ Add Deliverable",
+    "scopeGuard": "Scope Guard (Target)",
+    "inScope": "In Scope",
+    "outOfScope": "Out of Scope",
+    "timelineMilestones": "Timeline & Milestones",
+    "autoFillExecution": "Auto-fill Execution",
+    "killCriteriaMandatory": "Kill Criteria (Mandatory) *",
+    "stopConditions": "Stop Conditions",
+    "killCriteriaPlaceholder": "Describe conditions to stop this initiative...",
+    "startDate": "Data rozpoczęcia",
+    "endDate": "Data zakończenia",
+    "pilotEnd": "Pilot End",
+    "milestonesAndGates": "Key Milestones & Gates",
+    "milestoneNamePlaceholder": "Milestone name...",
+    "decisionGate": "Decision Gate",
+    "decision": "Decision:",
+    "continue": "Continue",
+    "adjust": "Adjust",
+    "stop": "Stop",
+    "requiredCompetencies": "Required Competencies",
+    "competenciesPlaceholder": "Search or add competencies...",
+    "keyRisks": "Key Risks",
+    "keyRisksDescription": "Identify and track critical risks for this initiative.",
+    "riskDescriptionPlaceholder": "Risk description...",
+    "mitigationStrategyPlaceholder": "Mitigation strategy...",
+    "maxRisksReached": "Max 5 Risks reached",
+    "addRisk": "+ Add Risk",
+    "financialCase": "Financial Case",
+    "capexLabel": "CAPEX",
+    "opexLabel": "OPEX",
+    "annualBenefitLabel": "Annual Benefit",
+    "roiLabel": "ROI (Calculated)",
+    "strategicValue": "Strategic Value",
+    "businessValueLabel": "Business Value Description",
+    "businessValuePlaceholder": "Describe major business impact...",
+    "ownershipAccountability": "Ownership & Accountability",
+    "businessOwner": "Business Owner",
+    "executionOwner": "Execution Owner",
+    "executiveSponsor": "Executive Sponsor",
+    "sponsor": "Sponsor",
+    "assignedTeam": "Assigned Team",
+    "addMember": "Add Member",
+    "rolePlaceholder": "Role...",
+    "actions": "Actions",
+    "businessValue": "Business Value",
+    "valueDriver": "Value Driver",
+    "selectDriverPlaceholder": "Select Driver...",
+    "costOptimization": "Cost Optimization",
+    "revenueGrowth": "Revenue Growth",
+    "capitalEfficiency": "Capital Efficiency",
+    "riskReduction": "Risk Reduction",
+    "strategicCapability": "Strategic Capability",
+    "confidenceLevel": "Confidence Level",
+    "confidencePlaceholder": "Confidence...",
+    "capexEst": "CAPEX Est. ($)",
+    "opexEst": "OPEX Est. ($)",
+    "valueTiming": "Value Timing",
+    "expectedRealizationPlaceholder": "Expected Realization...",
+    "valueTimingImmediate": "Immediate (<3mo)",
+    "valueTimingShortTerm": "Short term (3-12mo)",
+    "valueTimingLongTerm": "Long term (>12mo)",
+    "financialSummary": "Financial Summary",
+    "capabilityPlay": "CAPABILITY PLAY",
+    "cashPlay": "CASH PLAY",
+    "totalInvestment": "Total Investment",
+    "missingValueDriverWarning": "Missing Value Driver for Investment",
+    "socialImpact": "Social Impact",
+    "rolesOwnership": "Roles & Ownership",
+    "businessOwnerDescription": "Accountable for VALUE delivery",
+    "executionOwnerDescription": "Accountable for DELIVERY",
+    "sponsorDescription": "Final APPROVAL authority",
+    "selectBusinessOwnerPlaceholder": "Select Business Owner...",
+    "selectExecutionOwnerPlaceholder": "Select Execution Owner...",
+    "selectSponsorPlaceholder": "Select Sponsor...",
+    "approvalWorkflow": "Approval Workflow",
+    "currentStatus": "Current Status",
+    "nextAction": "Next Action",
+    "nextActionDraft": "Complete charter and submit to",
+    "nextActionPlanning": "Finalize details and submit for",
+    "nextActionReview": "Awaiting",
+    "sponsorApproval": "Sponsor approval",
+    "nextActionApproved": "Ready to start",
+    "nextActionExecuting": "Complete all tasks to mark as",
+    "completedSuccessfully": "Initiative completed successfully",
+    "decisionRequired": "Decision Required",
+    "viewBrief": "View Brief",
+    "governanceAuditTrail": "Governance Audit Trail",
+    "noGovernanceEvents": "No governance events recorded yet.",
+    "teamMembers": "Team Members",
+    "selectMember": "Select member...",
+    "noTeamMembersAssigned": "No team members assigned yet",
+    "allocation": "Allocation",
+    "relatedInitiatives": "Related Initiatives",
+    "linkInitiative": "Link Initiative",
+    "noLinkedInitiatives": "No linked initiatives",
+    "initiativeIdOrNamePlaceholder": "Initiative ID or name...",
+    "addCommentPlaceholder": "Add a comment or question...",
+    "postComment": "Post Comment",
+    "noCommentsYet": "No comments yet",
+    "startDiscussion": "Start the discussion!",
+    "exportCharter": "Export Charter",
+    "cloneAsTemplate": "Clone as Template",
+    "versionHistory": "Version History",
+    "currentVersion": "Current Version",
+    "live": "LIVE",
+    "initialCreation": "Initial creation",
+    "title": "Inicjatywy",
+    "create": "Utwórz Inicjatywę",
+    "edit": "Edytuj Inicjatywę",
+    "delete": "Usuń Inicjatywę",
+    "details": "Szczegóły Inicjatywy",
+    "list": "Lista Inicjatyw",
+    "name": "Nazwa Inicjatywy",
+    "description": "Opis",
+    "status": "Status",
+    "priority": "Priorytet",
+    "owner": "Właściciel",
+    "budget": "Budżet",
+    "progress": "Postęp",
+    "milestones": "Kamienie milowe",
+    "tasks": "Zadania",
+    "team": "Zespół",
+    "risks": "Ryzyka",
+    "dependencies": "Zależności",
+    "attachments": "Załączniki",
+    "comments": "Komentarze",
+    "history": "Historia",
+    "kpis": "KPI",
+    "objectives": "Cele",
+    "outcomes": "Rezultaty",
+    "benefits": "Korzyści",
+    "roi": "ROI",
+    "noInitiatives": "Brak inicjatyw",
+    "addFirst": "Dodaj pierwszą inicjatywę",
+    "filter": {
+      "all": "Wszystkie",
+      "active": "Aktywne",
+      "completed": "Zakończone",
+      "onHold": "Wstrzymane",
+      "cancelled": "Anulowane"
+    }
+  },
+  "intelligence": {
+    "title": "Inteligencja Projektu",
+    "autoGenerate": "Auto-Generate Insights",
+    "analyzing": "Analyzing...",
+    "learnedTitle": "What we learned (Successes)",
+    "learnedPlaceholder": "Document key insights that drove success...",
+    "surprisedTitle": "What surprised us (Unexpected)",
+    "surprisedPlaceholder": "Document unexpected challenges or outcomes...",
+    "differentlyTitle": "What we would do differently",
+    "differentlyPlaceholder": "Actionable advice for future comparisons...",
+    "patternsTitle": "Cross-Initiative Patterns",
+    "noPatterns": "No patterns detected yet.",
+    "noPatternsDesc": "Run AI analysis to compare with other initiatives.",
+    "detectPatterns": "Detect Patterns",
+    "detectedPatternsLabel": "Detected Patterns",
+    "knowledgeGraphTitle": "BCG Knowledge Graph",
+    "knowledgeGraphSharing": "This initiative shares",
+    "knowledgeGraphSimilarity": "similarity in \"Change Resistance\" patterns with",
+    "viewRelated": "View Related Initiative",
+    "analysis": "Analiza",
+    "insights": "Wnioski",
+    "predictions": "Prognozy",
+    "recommendations": "Rekomendacje",
+    "risks": "Ryzyka",
+    "opportunities": "Możliwości",
+    "trends": "Trendy",
+    "benchmarks": "Porównania",
+    "scores": "Wyniki",
+    "metrics": "Metryki"
+  },
+  "dashboard": {
+    "title": "Pulpit",
+    "program": "Transformation Program",
+    "lastUpdated": "Last updated:",
+    "justNow": "Just now",
+    "setup": {
+      "title": "Quick Start",
+      "subtitle": "Get the most out of Consultinity",
+      "done": "Done",
+      "next": "Next",
+      "actions": {
+        "chat": {
+          "title": "Try AI Assistant",
+          "description": "Ask your first question to the AI"
+        },
+        "assessment": {
+          "title": "Start Assessment",
+          "description": "Begin your digital readiness diagnosis"
+        },
+        "roadmap": {
+          "title": "View Roadmap",
+          "description": "Explore your transformation timeline"
+        }
+      }
+    },
+    "tabs": {
+      "overview": "Overview",
+      "progress": "Progress",
+      "ai": "AI Command",
+      "report": "Report"
+    },
+    "stats": {
+      "healthScore": "Health Score",
+      "healthy": "Transformation Healthy",
+      "activeInitiatives": "Active Initiatives",
+      "inProgress": "In Progress",
+      "valueRealized": "Value Realized",
+      "ofTarget": "of Target",
+      "criticalRisks": "Critical Risks",
+      "needAttention": "Need Attention",
+      "title": "Statystyki"
+    },
+    "valueTrajectory": "Value Realization Trajectory",
+    "milestone": "Milestone",
+    "current": "Current",
+    "liveActivity": "Live Activity",
+    "time": {
+      "ago": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "generateReport": "Generate Report",
+    "downloadPdf": "Download PDF",
+    "initiativeTracking": "Initiative Tracking",
+    "onTrack": "On Track",
+    "atRisk": "At Risk",
+    "table": {
+      "initiative": "Initiative",
+      "owner": "Owner",
+      "status": "Status",
+      "progress": "Progress",
+      "dueDate": "Due Date"
+    },
+    "unassigned": "Unassigned",
+    "aiCommand": {
+      "title": "AI Command Center",
+      "proactiveInsights": "Proactive Insights",
+      "description": "Ask complex questions about your transformation data. The AI has access to your KPIs, Risks, and Roadmap.",
+      "placeholder": "Ask a question..."
+    },
+    "finalReport": {
+      "title": "Use The Final Report",
+      "description": "Generate a comprehensive, board-ready PDF report encapsulating your entire Digital Transformation Strategy.",
+      "sections": "Sections",
+      "options": "Options",
+      "ready": "READY",
+      "soon": "SOON",
+      "generate": "Generate Final Report",
+      "pdfDoc": "PDF Document",
+      "powerPoint": "PowerPoint"
+    },
+    "reportSections": {
+      "summary": "Executive Summary",
+      "maturity": "Maturity Assessment Results",
+      "roadmap": "Strategic Initiatives Roadmap",
+      "financial": "Financial Case (ROI, NPV)",
+      "risk": "Risk & Change Management"
+    },
+    "widgetsComingSoon": "Coming Soon",
+    "overview": "Przegląd",
+    "welcome": "Witaj",
+    "welcomeBack": "Witaj ponownie",
+    "summary": "Podsumowanie",
+    "metrics": "Metryki",
+    "kpis": "KPI",
+    "performance": "Wydajność",
+    "activity": "Aktywność",
+    "recentActivity": "Ostatnia aktywność",
+    "quickActions": "Szybkie akcje",
+    "notifications": "Powiadomienia",
+    "tasks": "Zadania",
+    "myTasks": "Moje zadania",
+    "upcomingTasks": "Nadchodzące zadania",
+    "overdueTasks": "Zaległe zadania",
+    "completedTasks": "Zakończone zadania",
+    "projects": "Projekty",
+    "activeProjects": "Aktywne projekty",
+    "teamPerformance": "Wydajność zespołu",
+    "progress": "Postęp",
+    "trends": "Trendy",
+    "insights": "Wnioski",
+    "reports": "Raporty",
+    "customize": "Dostosuj pulpit",
+    "addWidget": "Dodaj widget",
+    "removeWidget": "Usuń widget",
+    "resetLayout": "Resetuj układ"
+  },
+  "status": {
+    "DRAFT": "Draft",
+    "PLANNING": "Planning",
+    "REVIEW": "In Review",
+    "APPROVED": "Approved",
+    "EXECUTING": "Executing",
+    "DONE": "Done",
+    "CANCELLED": "Cancelled",
+    "ARCHIVED": "Archived",
+    "BLOCKED": "Blocked",
+    "pending": "Oczekujący",
+    "inProgress": "W trakcie",
+    "completed": "Zakończony",
+    "cancelled": "Anulowany",
+    "failed": "Niepowodzenie",
+    "success": "Sukces",
+    "error": "Błąd",
+    "warning": "Ostrzeżenie",
+    "info": "Informacja"
+  },
+  "role": {
+    "CONTRIBUTOR": "Contributor",
+    "REVIEWER": "Reviewer",
+    "SME": "SME",
+    "STAKEHOLDER": "Stakeholder",
+    "OBSERVER": "Observer",
+    "admin": "Administrator",
+    "user": "Użytkownik",
+    "viewer": "Przeglądający",
+    "editor": "Edytor",
+    "owner": "Właściciel"
+  },
+  "relation": {
+    "DEPENDS_ON": "Depends on",
+    "BLOCKS": "Blocks",
+    "RELATED_TO": "Related to",
+    "PARENT_OF": "Parent of",
+    "CHILD_OF": "Child of"
+  },
+  "ai": {
+    "applyProposedSchedule": "Apply Proposed Schedule",
+    "autoGenerateInsights": "Auto-Generate Insights",
+    "observations": "Key Observations & Risks",
+    "recommendations": "Recommended Actions",
+    "optimization": "Optimization Strategy",
+    "assistant": "Asystent AI",
+    "generating": "Generowanie...",
+    "analyzing": "Analizowanie...",
+    "processing": "Przetwarzanie...",
+    "complete": "Zakończono"
+  },
+  "widgets": {
+    "help": {
+      "title": "Help Center",
+      "tooltip": "Help Center"
+    },
+    "documents": {
+      "title": "Document Library",
+      "tooltip": "Documents"
+    },
+    "feedback": {
+      "title": "Feedback / Bug Report",
+      "tooltip": "Feedback"
+    },
+    "title": "Widgety",
+    "add": "Dodaj widget",
+    "remove": "Usuń widget",
+    "configure": "Konfiguruj",
+    "chart": "Wykres",
+    "table": "Tabela",
+    "metric": "Metryka"
+  },
+  "onboarding": {
+    "checklist": {
+      "title": "Getting Started",
+      "completed": "completed",
+      "more": "more steps",
+      "dismiss": "I'll explore on my own",
+      "profile": {
+        "title": "Complete your profile",
+        "description": "Add your name and company info"
+      },
+      "firstChat": {
+        "title": "Try AI Assistant",
+        "description": "Ask your first question"
+      },
+      "firstAssessment": {
+        "title": "Start an assessment",
+        "description": "Begin your digital readiness diagnosis"
+      },
+      "firstInitiative": {
+        "title": "Create an initiative",
+        "description": "Plan your first transformation project"
+      },
+      "roadmap": {
+        "title": "Explore Roadmap",
+        "description": "View your transformation timeline"
+      },
+      "inviteTeam": {
+        "title": "Invite your team",
+        "description": "Collaborate with colleagues"
+      },
+      "billing": {
+        "title": "Set up billing",
+        "description": "Configure payment method"
+      }
+    },
+    "title": "Wprowadzenie",
+    "welcome": "Witamy w Consultinity",
+    "getStarted": "Rozpocznij",
+    "step": "Krok",
+    "steps": "Kroki",
+    "next": "Dalej",
+    "previous": "Wstecz",
+    "skip": "Pomiń",
+    "finish": "Zakończ",
+    "progress": "Postęp wprowadzenia",
+    "complete": "Wprowadzenie zakończone",
+    "completeDesc": "Gratulacje! Jesteś gotowy do pracy."
+  },
+  "feedback": {
+    "title": "Opinie",
+    "tabs": {
+      "report": "Report",
+      "pulse": "Quick",
+      "feature": "Feature"
+    },
+    "type": {
+      "bug": "Bug",
+      "idea": "Idea",
+      "title": "Typ opinii"
+    },
+    "severity": {
+      "label": "Severity"
+    },
+    "label": {
+      "bug": "Bug Description",
+      "idea": "Idea Description"
+    },
+    "placeholder": {
+      "bug": "Describe what happened and steps to reproduce...",
+      "idea": "Share your idea for improvement..."
+    },
+    "report": {
+      "intro": "Help us improve by reporting issues or sharing ideas."
+    },
+    "submit": "Wyślij opinię",
+    "submitting": "Submitting...",
+    "success": {
+      "title": "Thank You!",
+      "message": "Thank you for your feedback. We will analyze it as soon as possible.",
+      "bugReported": "Bug reported! We'll investigate ASAP.",
+      "ideaSubmitted": "Great idea! Added to our backlog.",
+      "pulse": "Thanks for your feedback! 🎉",
+      "feature": "Feature request submitted!",
+      "featureWithAI": "Feature request submitted! AI found similar requests."
+    },
+    "error": {
+      "submit": "Failed to submit feedback"
+    },
+    "intro": "Your feedback helps us improve the platform. Report a bug or share an idea.",
+    "footer": "Feedback sent as",
+    "pulse": {
+      "title": "How's your experience?",
+      "subtitle": "Quick feedback helps us improve",
+      "context": "Feedback for:",
+      "sorry": "Sorry to hear that!",
+      "tellUs": "Tell us what went wrong",
+      "commentPlaceholder": "What can we improve?"
+    },
+    "feature": {
+      "category": "Category",
+      "name": "Feature Name",
+      "namePlaceholder": "e.g., Dark mode, Export to PDF",
+      "description": "Description",
+      "descPlaceholder": "Describe the feature and how it would help you...",
+      "impact": "Business Impact",
+      "submit": "Submit Feature Request"
+    },
+    "ai": {
+      "insights": "AI Insights",
+      "loading": "Loading AI insights..."
+    },
+    "thanks": "Dziękujemy za opinię!",
+    "bug": "Błąd",
+    "improvement": "Propozycja ulepszenia",
+    "other": "Inne",
+    "description": "Opis",
+    "screenshot": "Zrzut ekranu",
+    "attachScreenshot": "Dołącz zrzut ekranu",
+    "priority": "Priorytet",
+    "low": "Niski",
+    "medium": "Średni",
+    "high": "Wysoki",
+    "critical": "Krytyczny"
+  },
+  "documents": {
+    "library": "Document Library",
+    "projectDocs": "Project",
+    "myDocs": "My Docs",
+    "upload": "Prześlij dokument",
+    "uploading": "Uploading...",
+    "noProjectDocs": "No project documents",
+    "noUserDocs": "No user documents",
+    "download": "Pobierz",
+    "moveToProject": "Move to project",
+    "delete": "Usuń",
+    "projectHint": "Documents available to everyone in the project",
+    "userHint": "Your private documents",
+    "confirmDelete": "Are you sure you want to delete this document?",
+    "title": "Dokumenty",
+    "rename": "Zmień nazwę",
+    "move": "Przenieś",
+    "copy": "Kopiuj",
+    "share": "Udostępnij",
+    "preview": "Podgląd",
+    "folder": "Folder",
+    "file": "Plik",
+    "size": "Rozmiar",
+    "modified": "Zmodyfikowany",
+    "created": "Utworzony"
   }
 }

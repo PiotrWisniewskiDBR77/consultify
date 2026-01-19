@@ -58,8 +58,10 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     name: 'Robotics Deployment Feasibility Analyzer',
     namePl: 'Analizator Wykonalności Wdrożenia Robotów',
     classicFramework: 'Robotics Assessment',
-    description: 'Evaluate processes for robotization potential - industrial, cobots, AMR with ROI estimates',
-    descriptionPl: 'Ocena procesów pod kątem potencjału robotyzacji - przemysłowe, coboty, AMR z estymacjami ROI',
+    description:
+      'Evaluate processes for robotization potential - industrial, cobots, AMR with ROI estimates',
+    descriptionPl:
+      'Ocena procesów pod kątem potencjału robotyzacji - przemysłowe, coboty, AMR z estymacjami ROI',
     icon: Bot,
     outputs: ['Robotics Candidate Map', 'ROI Ranges', 'Prerequisites List'],
     outputsPl: ['Mapa kandydatów do robotyzacji', 'Zakresy ROI', 'Lista wymagań wstępnych'],
@@ -70,8 +72,10 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     name: 'Logistics & Warehouse Automation Analyzer',
     namePl: 'Analizator Automatyzacji Logistyki i Magazynu',
     classicFramework: 'Intralogistics Assessment',
-    description: 'Identify physical and algorithmic automation potential in logistics - AMR, AS/RS, slotting',
-    descriptionPl: 'Identyfikacja potencjału automatyzacji fizycznej i algorytmicznej w logistyce - AMR, AS/RS, slotting',
+    description:
+      'Identify physical and algorithmic automation potential in logistics - AMR, AS/RS, slotting',
+    descriptionPl:
+      'Identyfikacja potencjału automatyzacji fizycznej i algorytmicznej w logistyce - AMR, AS/RS, slotting',
     icon: Truck,
     outputs: ['Logistics Automation Map', 'Feasibility Scores', 'Implementation Roadmap'],
     outputsPl: ['Mapa automatyzacji logistyki', 'Wyniki wykonalności', 'Mapa drogowa wdrożenia'],
@@ -82,11 +86,17 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     name: 'RPA & Workflow Automation Scanner',
     namePl: 'Skaner Automatyzacji RPA i Workflow',
     classicFramework: 'RPA Suitability',
-    description: 'Identify office and transactional processes suitable for RPA, workflow, or API automation',
-    descriptionPl: 'Identyfikacja procesów biurowych i transakcyjnych odpowiednich dla RPA, workflow lub automatyzacji API',
+    description:
+      'Identify office and transactional processes suitable for RPA, workflow, or API automation',
+    descriptionPl:
+      'Identyfikacja procesów biurowych i transakcyjnych odpowiednich dla RPA, workflow lub automatyzacji API',
     icon: Zap,
     outputs: ['Automation Heatmap', 'Use Case List', 'Technology Recommendations'],
-    outputsPl: ['Mapa cieplna automatyzacji', 'Lista przypadków użycia', 'Rekomendacje technologii'],
+    outputsPl: [
+      'Mapa cieplna automatyzacji',
+      'Lista przypadków użycia',
+      'Rekomendacje technologii',
+    ],
   },
   {
     id: 'ai-usecase-discovery',
@@ -94,11 +104,17 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     name: 'AI Use-Case Discovery & Readiness',
     namePl: 'Odkrywanie i Gotowość Przypadków Użycia AI',
     classicFramework: 'AI Readiness',
-    description: 'Find real AI opportunities - classify use cases, assess data readiness, identify blockers',
-    descriptionPl: 'Znajdowanie realnych możliwości AI - klasyfikacja przypadków użycia, ocena gotowości danych, identyfikacja blokerów',
+    description:
+      'Find real AI opportunities - classify use cases, assess data readiness, identify blockers',
+    descriptionPl:
+      'Znajdowanie realnych możliwości AI - klasyfikacja przypadków użycia, ocena gotowości danych, identyfikacja blokerów',
     icon: Brain,
     outputs: ['AI Use-Case Portfolio', 'Readiness Scores', 'Data Foundation Initiatives'],
-    outputsPl: ['Portfolio przypadków użycia AI', 'Wyniki gotowości', 'Inicjatywy fundamentu danych'],
+    outputsPl: [
+      'Portfolio przypadków użycia AI',
+      'Wyniki gotowości',
+      'Inicjatywy fundamentu danych',
+    ],
   },
   {
     id: 'integration-diagnostic',
@@ -106,8 +122,10 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     name: 'IT System Integration Diagnostic',
     namePl: 'Diagnostyka Integracji Systemów IT',
     classicFramework: 'Application Landscape',
-    description: 'Map system interactions, find integration debt, recommend architecture improvements',
-    descriptionPl: 'Mapowanie interakcji systemów, wykrywanie długu integracyjnego, rekomendowanie usprawnień architektury',
+    description:
+      'Map system interactions, find integration debt, recommend architecture improvements',
+    descriptionPl:
+      'Mapowanie interakcji systemów, wykrywanie długu integracyjnego, rekomendowanie usprawnień architektury',
     icon: Plug,
     outputs: ['Integration Reality Map', 'Critical Points', 'Architecture Recommendations'],
     outputsPl: ['Mapa rzeczywistości integracji', 'Punkty krytyczne', 'Rekomendacje architektury'],
@@ -119,7 +137,8 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     namePl: 'Identyfikator Pul Wartości Cyfrowej',
     classicFramework: 'Digital Economics',
     description: 'Find where digitalization changes economics - capital, decisions, quality, scale',
-    descriptionPl: 'Znajdowanie gdzie cyfryzacja zmienia ekonomię - kapitał, decyzje, jakość, skala',
+    descriptionPl:
+      'Znajdowanie gdzie cyfryzacja zmienia ekonomię - kapitał, decyzje, jakość, skala',
     icon: Database,
     outputs: ['Value Pool Map', 'Economic Initiatives', 'EBITDA Impact'],
     outputsPl: ['Mapa pul wartości', 'Inicjatywy ekonomiczne', 'Wpływ na EBITDA'],
@@ -131,7 +150,8 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     namePl: 'Analizator Oporu Technologii Legacy',
     classicFramework: 'Technical Debt',
     description: 'Quantify legacy drag in decision latency, change cost, and operational risk',
-    descriptionPl: 'Kwantyfikacja oporu legacy w opóźnieniu decyzji, koszcie zmian i ryzyku operacyjnym',
+    descriptionPl:
+      'Kwantyfikacja oporu legacy w opóźnieniu decyzji, koszcie zmian i ryzyku operacyjnym',
     icon: HardDrive,
     outputs: ['Drag Scorecard', 'Targeted Solutions', 'Migration Alternatives'],
     outputsPl: ['Karta wyników oporu', 'Ukierunkowane rozwiązania', 'Alternatywy migracji'],
@@ -143,7 +163,8 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     namePl: 'Inwentaryzacja Zasobów Danych i Luk',
     classicFramework: 'Data Governance',
     description: 'Map decisions to required data, identify gaps, find unused data waste',
-    descriptionPl: 'Mapowanie decyzji do wymaganych danych, identyfikacja luk, znajdowanie marnotrawstwa nieużywanych danych',
+    descriptionPl:
+      'Mapowanie decyzji do wymaganych danych, identyfikacja luk, znajdowanie marnotrawstwa nieużywanych danych',
     icon: Layers,
     outputs: ['Decision-to-Data Map', 'Data Gap List', 'Foundation Initiatives'],
     outputsPl: ['Mapa decyzja-dane', 'Lista luk danych', 'Inicjatywy fundamentu'],
@@ -154,8 +175,10 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     name: 'Pain-to-Solution Matcher',
     namePl: 'Matcher Problem-Rozwiązanie',
     classicFramework: 'Solution Mapping',
-    description: 'Bridge discovery insights to solution classes and vendor archetypes - connects to DBR77 Marketplace',
-    descriptionPl: 'Most między wnioskami discovery a klasami rozwiązań i archetypami dostawców - połączenie z DBR77 Marketplace',
+    description:
+      'Bridge discovery insights to solution classes and vendor archetypes - connects to DBR77 Marketplace',
+    descriptionPl:
+      'Most między wnioskami discovery a klasami rozwiązań i archetypami dostawców - połączenie z DBR77 Marketplace',
     icon: Link,
     outputs: ['Solution Recommendations', 'Vendor Archetypes', 'Integration Requirements'],
     outputsPl: ['Rekomendacje rozwiązań', 'Archetypy dostawców', 'Wymagania integracji'],
@@ -166,8 +189,10 @@ const DIGITAL_TOOLS: DigitalTool[] = [
     name: 'Structured Pain Explorer',
     namePl: 'Eksplorator Strukturyzacji Problemów',
     classicFramework: 'Problem Framing',
-    description: 'Convert chaotic user descriptions into structured problems, hypotheses, and initiative drafts',
-    descriptionPl: 'Konwersja chaotycznych opisów użytkowników w strukturyzowane problemy, hipotezy i szkice inicjatyw',
+    description:
+      'Convert chaotic user descriptions into structured problems, hypotheses, and initiative drafts',
+    descriptionPl:
+      'Konwersja chaotycznych opisów użytkowników w strukturyzowane problemy, hipotezy i szkice inicjatyw',
     icon: MessageSquare,
     outputs: ['Problem Statement', 'Hypothesis List', 'Initiative Draft'],
     outputsPl: ['Opis problemu', 'Lista hipotez', 'Szkic inicjatywy'],
@@ -211,7 +236,10 @@ export const DigitalToolsView: React.FC = () => {
                 {t('discoveryTools.digital.title', 'Digital Transformation Tools')}
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
-                {t('discoveryTools.digital.subtitle', '10 technology readiness and automation assessment tools')}
+                {t(
+                  'discoveryTools.digital.subtitle',
+                  '10 technology readiness and automation assessment tools'
+                )}
               </p>
             </div>
           </div>
@@ -230,9 +258,10 @@ export const DigitalToolsView: React.FC = () => {
                 key={tool.id}
                 className={`
                   p-5 rounded-xl border-2 transition-all cursor-pointer
-                  ${isSelected
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                    : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-purple-300'
+                  ${
+                    isSelected
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-purple-300'
                   }
                 `}
                 onClick={() => handleStartTool(tool.id)}

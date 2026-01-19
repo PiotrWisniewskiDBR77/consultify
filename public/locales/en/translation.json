@@ -1,4 +1,7 @@
 {
+  "partner": {
+    "becomePartner": "Become a Partner"
+  },
   "sidebar": {
     "aiChat": "AI Chat",
     "dashboard": "Dashboard",
@@ -87,10 +90,50 @@
     "assessmentOther": "Other",
     "affiliateDashboard": "Ecosystem Impact",
     "discoveryConsultant": "Discovery",
+    "interview": "Interview",
+    "discoveryTools": "Discovery Tools",
+    "strategicAnalysis": "Strategic Analysis",
+    "operationalTools": "Operational Tools",
+    "digitalTransformation": "Digital Transformation",
+    "processAutomation": "Process Automation by AI",
+    "initiatives": "Initiatives",
+    "execution": "Execution",
+    "benefits": "Benefits",
+    "economics": "Economics",
+    "reports": "Reports",
     "collapse": "Collapse",
     "expand": "Expand",
     "metrics": "Metrics & Conversion",
     "portfolioRoadmap": "Initiatives"
+  },
+  "discoveryTools": {
+    "title": "Discovery Tools",
+    "subtitle": "31 AI-powered tools for strategic, operational, and digital transformation",
+    "stats": {
+      "aiPowered": "AI-powered analysis",
+      "initiatives": "Generates initiatives",
+      "visualizations": "Interactive visualizations"
+    },
+    "explore": "Explore tools",
+    "howItWorks": {
+      "title": "How Discovery Tools Work"
+    },
+    "strategic": {
+      "title": "Strategic Analysis Tools",
+      "subtitle": "10 classic strategic frameworks powered by AI"
+    },
+    "operational": {
+      "title": "Operational Excellence Tools",
+      "subtitle": "10 Lean and process excellence tools powered by AI"
+    },
+    "digital": {
+      "title": "Digital Transformation Tools",
+      "subtitle": "10 technology readiness and automation assessment tools"
+    },
+    "processAutomation": {
+      "title": "Process Automation by AI",
+      "subtitle": "Interactive workshop for process optimization and automation"
+    }
   },
   "portfolio": {
     "title": "Initiatives",
@@ -298,6 +341,18 @@
       "mode": "Demo Mode",
       "description": "Exploring with sample data",
       "exploring": "Exploring with sample data",
+      "projects": "projects",
+      "initiatives": "initiatives",
+      "hints": "Hints",
+      "exit": "Exit Demo",
+      "readOnlyTitle": "Read-only mode",
+      "readOnlyDesc": "Changes are not saved",
+      "exploreTitle": "Explore features",
+      "exploreDesc": "Browse all modules",
+      "hintTitle": "Hint",
+      "defaultHint": "Click on initiatives to see details",
+      "help": "Help",
+      "partnerProgram": "Partner Program",
       "limitations": {
         "readOnly": "Read-only mode — changes won't persist",
         "sampleData": "Sample data — explore with realistic examples",
@@ -4616,9 +4671,12 @@
       }
     },
     "topBar": {
+      "demo": "Demo",
+      "trial": "Trial",
       "exploreDemo": "Explore Demo",
       "talkToExpert": "Talk to Expert",
       "login": "Log in",
+      "signUp": "Sign up",
       "startTrial": "Start Trial",
       "goToWorkspace": "Go to Workspace"
     },

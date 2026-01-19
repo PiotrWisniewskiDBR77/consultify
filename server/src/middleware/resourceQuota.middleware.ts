@@ -6,9 +6,10 @@
  */
 
 import { NextFunction, Response } from 'express';
-import type { AuthRequest } from './auth.middleware.js';
+
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // TYPES

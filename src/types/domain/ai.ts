@@ -222,8 +222,8 @@ export interface ResponseFeedback {
   timestamp: string | Date;
   metadata?: Record<string, unknown>;
   wantedMode?: string;
-  lengthFeedback?: 'too_short' | 'too_long' | 'just_right';
-  detailFeedback?: 'too_basic' | 'too_detailed' | 'just_right';
+  lengthFeedback?: 'too-short' | 'just-right' | 'too-long';
+  detailFeedback?: 'too-little' | 'just-right' | 'too-much';
   customFeedback?: string;
 }
 

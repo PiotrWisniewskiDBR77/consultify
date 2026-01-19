@@ -2,11 +2,11 @@ import { Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
 const requireAuth = verifyToken; // Alias for compatibility
+import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { getMetricsService } from '../services/metricsService.js';
 import { getOrganizationMetricsService } from '../services/organizationMetricsService.js';
 import logger from '../utils/Logger.js';
-import type { AuthRequest } from '../middleware/auth.middleware.js';
 // Import legacy router
 // @ts-ignore
 // // import legacyMetricsRouter from "./metrics.js";

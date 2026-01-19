@@ -1,0 +1,169 @@
+{
+  "discovery": {
+    "title": "[AR] Discovery Consultant",
+    "subtitle": "[AR] AI-powered consultant conversation",
+    "chatTitle": "[AR] AI Consultant",
+    "chatSubtitle": "[AR] Your virtual transformation partner",
+    "phases": {
+      "welcome": "[AR] Welcome",
+      "ice_breaking": "[AR] Context Gathering",
+      "pain_discovery": "[AR] Pain Discovery",
+      "impact_assessment": "[AR] Impact Assessment",
+      "recommendations": "[AR] Recommendations",
+      "decision": "[AR] Decision",
+      "completed": "[AR] Completed"
+    },
+    "phaseDescriptions": {
+      "welcome": "[AR] Introduction to discovery session",
+      "ice_breaking": "[AR] Understanding company and role",
+      "pain_discovery": "[AR] Identifying key challenges",
+      "impact_assessment": "[AR] Quantifying business impact",
+      "recommendations": "[AR] Presenting transformation path",
+      "decision": "[AR] Next steps and conversion",
+      "completed": "[AR] Session completed"
+    },
+    "canvas": {
+      "title": "[AR] Discovery Canvas",
+      "categories": {
+        "pains": "[AR] Pain Points",
+        "insights": "[AR] Insights",
+        "opportunities": "[AR] Opportunities",
+        "recommendations": "[AR] Recommendations"
+      },
+      "emptyState": "[AR] Start the conversation and AI will automatically add findings to the board",
+      "autoLayout": "[AR] Auto-arrange",
+      "export": "[AR] Export image",
+      "zoomIn": "[AR] Zoom in",
+      "zoomOut": "[AR] Zoom out",
+      "fitView": "[AR] Fit view"
+    },
+    "nodes": {
+      "painPoint": {
+        "title": "[AR] Pain Point",
+        "severity": "[AR] Severity",
+        "impact": "[AR] Impact",
+        "area": "[AR] Area"
+      },
+      "insight": {
+        "title": "[AR] Insight",
+        "linkedTo": "[AR] Linked to"
+      },
+      "opportunity": {
+        "title": "[AR] Opportunity",
+        "potentialValue": "[AR] Potential value"
+      },
+      "quote": {
+        "title": "[AR] Quote",
+        "sentiment": "[AR] Sentiment"
+      },
+      "recommendation": {
+        "title": "[AR] Recommendation",
+        "confidence": "[AR] Confidence",
+        "type": "[AR] Transformation type"
+      },
+      "tool": {
+        "title": "[AR] Tool",
+        "category": "[AR] Category",
+        "effort": "[AR] Effort",
+        "impact": "[AR] Impact"
+      },
+      "assessment": {
+        "title": "[AR] Assessment",
+        "framework": "[AR] Framework"
+      },
+      "initiative": {
+        "title": "[AR] Initiative",
+        "quickWin": "[AR] Quick Win"
+      }
+    },
+    "severity": {
+      "1": "[AR] Minor",
+      "2": "[AR] Noticeable",
+      "3": "[AR] Significant",
+      "4": "[AR] Critical",
+      "5": "[AR] Blocking"
+    },
+    "areas": {
+      "process": "[AR] Process",
+      "technology": "[AR] Technology",
+      "people": "[AR] People",
+      "data": "[AR] Data"
+    },
+    "transformationType": {
+      "strategic": "[AR] Strategic transformation",
+      "operational": "[AR] Operational transformation",
+      "digital": "[AR] Digital transformation"
+    },
+    "recommendations": {
+      "title": "[AR] Recommendations",
+      "matchScore": "[AR] Match score",
+      "suggestedAssessments": "[AR] Suggested assessments",
+      "suggestedTools": "[AR] Recommended tools",
+      "initiativeIdeas": "[AR] Initiative ideas",
+      "noRecommendations": "[AR] Continue the conversation to receive recommendations"
+    },
+    "actions": {
+      "startProject": "[AR] Start Project",
+      "startProjectDesc": "[AR] Create transformation project with this data",
+      "attachToProject": "[AR] Attach to Project",
+      "attachToProjectDesc": "[AR] Add this conversation to an active project",
+      "save": "[AR] Save Conversation",
+      "saveDesc": "[AR] Keep for later use",
+      "continueChat": "[AR] Continue Conversation",
+      "continueChatDesc": "[AR] I want to learn more",
+      "exportPdf": "[AR] Export PDF"
+    },
+    "conversion": {
+      "title": "[AR] Create Project from Discovery",
+      "projectName": "[AR] Project name",
+      "defaultName": "[AR] Discovery: {{company}}",
+      "whatWillBeTransferred": "[AR] What will be transferred",
+      "painPointsCount": "[AR] {{count}} pain points",
+      "insightsCount": "[AR] {{count}} insights",
+      "recommendedTransformation": "[AR] Recommended transformation",
+      "suggestedAssessments": "[AR] {{count}} suggested assessments",
+      "conversationHistory": "[AR] Full conversation history",
+      "createInitiatives": "[AR] Create initiatives from ideas",
+      "converting": "[AR] Creating project...",
+      "success": "[AR] Project created!",
+      "error": "[AR] Failed to create project"
+    },
+    "version": {
+      "title": "[AR] Versions",
+      "current": "[AR] Current",
+      "save": "[AR] Save version",
+      "load": "[AR] Load version",
+      "saved": "[AR] Version saved",
+      "noVersions": "[AR] No saved versions"
+    },
+    "header": {
+      "newSession": "[AR] New session",
+      "client": "[AR] Client",
+      "industry": "[AR] Industry",
+      "size": "[AR] Size",
+      "phase": "[AR] Phase"
+    },
+    "prompts": {
+      "welcome": "[AR] Hello! I'm your virtual transformation consultant. I'll help you understand where the biggest opportunities for improvement lie in your organization.\n\nBefore we begin - tell me about yourself and your company. What's your role?",
+      "askIndustry": "[AR] What industry is your company in and what size is it?",
+      "askGoals": "[AR] What prompted you to talk about transformation? What's the most important business goal for the next 12 months?",
+      "askPain": "[AR] Now the key question: What's slowing down the achievement of this goal the most today? What 'hurts' operationally?",
+      "askMorePains": "[AR] Is there anything else that's making it difficult to achieve the goal?",
+      "askImpact": "[AR] How much does this cost the company monthly/yearly? (even a rough estimate helps)",
+      "recommendationIntro": "[AR] Based on our conversation, I see that your situation indicates a need for"
+    },
+    "errors": {
+      "loadFailed": "[AR] Failed to load session",
+      "saveFailed": "[AR] Failed to save session",
+      "conversionFailed": "[AR] Failed to create project",
+      "extractionFailed": "[AR] Failed to process response"
+    },
+    "tooltips": {
+      "addNode": "[AR] Add element",
+      "deleteNode": "[AR] Delete element",
+      "editNode": "[AR] Edit element",
+      "connectNodes": "[AR] Connect elements",
+      "severity": "[AR] How much this problem affects the business"
+    }
+  }
+}

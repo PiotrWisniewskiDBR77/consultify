@@ -5,10 +5,10 @@
  * Comprehensive verification and auto-fix script
  */
 
+import bcrypt from 'bcryptjs';
 import { createRequire } from 'module';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import bcrypt from 'bcryptjs';
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -208,7 +208,7 @@ async function testDefaultUser(db: any): Promise<boolean> {
       warning(`Default user ${testEmail} not found. Creating...`);
 
       // Check if organization exists
-      let org = await runQuery(db, `SELECT * FROM organizations WHERE id = 'default-org'`, []);
+      const org = await runQuery(db, `SELECT * FROM organizations WHERE id = 'default-org'`, []);
 
       if (org.length === 0) {
         // Create default organization

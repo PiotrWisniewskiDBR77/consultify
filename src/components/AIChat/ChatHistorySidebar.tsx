@@ -22,7 +22,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useChatProjectStore, ChatProject } from '../../store/useChatProjectStore';
+import { ChatProject, useChatProjectStore } from '../../store/useChatProjectStore';
 import {
   Conversation,
   groupConversations,

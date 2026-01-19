@@ -68,7 +68,7 @@ export async function initialize(): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await getDatabaseAsync();
     }
-    
+
     await CircuitBreakerService.restoreStates();
     aiLogger.info('CircuitBreaker', 'LLM circuit breakers initialized');
   } catch (error: unknown) {

@@ -30,7 +30,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { api } from '../../services/api';
-import { ProjectRole, ProjectMember } from '../../types';
+import { ProjectMember, ProjectRole } from '../../types';
 
 interface ProjectTeamPanelProps {
   projectId: string;

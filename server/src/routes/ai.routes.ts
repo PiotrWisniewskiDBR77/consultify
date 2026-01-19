@@ -590,6 +590,60 @@ router.delete(
   })
 );
 
+// Organization Memory
+router.get(
+  '/memory/org',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const AIMemoryManager = await getAIMemoryManager();
+      const memory = await AIMemoryManager.getOrganizationMemory(req.organizationId!);
+      return res.json({
+        organizationId: req.organizationId,
+        ...memory,
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+router.patch(
+  '/memory/org',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!req.can || !req.can('edit_organization_settings')) {
+      return res.status(403).json({ error: 'Admin permission required' });
+    }
+
+    try {
+      const AIMemoryManager = await getAIMemoryManager();
+      const result = await AIMemoryManager.updateOrganizationMemory(req.organizationId!, req.body);
+      return res.json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
+router.delete(
+  '/memory/org',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!req.can || !req.can('edit_organization_settings')) {
+      return res.status(403).json({ error: 'Admin permission required' });
+    }
+
+    try {
+      const AIMemoryManager = await getAIMemoryManager();
+      const result = await AIMemoryManager.clearOrganizationMemory(req.organizationId!);
+      return res.json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: (err as Error).message });
+    }
+  })
+);
+
 // ==================== ACTIONS ====================
 
 router.post(

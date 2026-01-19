@@ -24,7 +24,6 @@ import { toast } from 'react-hot-toast';
 import { Edge, Node, ReactFlowProvider } from 'reactflow';
 
 import { SplitLayout } from '../components/layout/SplitLayout';
-import { AppView } from '../types';
 import { useStudioAI } from '../components/Studio/hooks/useStudioAI';
 import { useStudioDocument } from '../components/Studio/hooks/useStudioDocument';
 import { StudioCanvas } from '../components/Studio/StudioCanvas';
@@ -33,6 +32,7 @@ import { StudioExportModal } from '../components/Studio/StudioExportModal';
 import { StudioLinkModal } from '../components/Studio/StudioLinkModal';
 import { StudioSidebar } from '../components/Studio/StudioSidebar';
 import { StudioToolbar } from '../components/Studio/StudioToolbar';
+import { AppView } from '../types';
 
 interface StudioViewProps {
   documentId?: string | null;

@@ -161,17 +161,21 @@ export function all<T = unknown>(
 
         if (err) {
           // Don't log errors when fallback is true and it's a "table doesn't exist" type error
-          const isTableNotFoundError = 
+          const isTableNotFoundError =
             err.message.includes('no such table') ||
             err.message.includes('does not exist') ||
             err.message.includes('relation') ||
             err.message.includes('Database not initialized');
-          
+
           if (!fallback || !isTableNotFoundError) {
-            dbLogger.warn('Query error', { error: err.message, sql: sql.substring(0, 100), params });
+            dbLogger.warn('Query error', {
+              error: err.message,
+              sql: sql.substring(0, 100),
+              params,
+            });
             console.error(`[DB:Promise] Error: ${err.message}`, { sql, params });
           }
-          
+
           if (fallback) {
             resolve([]);
           } else {
@@ -184,14 +188,14 @@ export function all<T = unknown>(
     } catch (error: unknown) {
       clearTimeout(timeoutId);
       const err = error as Error;
-      
+
       // Don't log errors when fallback is true and it's a "table doesn't exist" type error
-      const isTableNotFoundError = 
+      const isTableNotFoundError =
         err.message.includes('no such table') ||
         err.message.includes('does not exist') ||
         err.message.includes('relation') ||
         err.message.includes('Database not initialized');
-      
+
       if (!fallback || !isTableNotFoundError) {
         dbLogger.error('Query exception', {
           error: err.message,
@@ -199,7 +203,7 @@ export function all<T = unknown>(
           sql: sql.substring(0, 100),
         });
       }
-      
+
       if (fallback) {
         resolve([]);
       } else {

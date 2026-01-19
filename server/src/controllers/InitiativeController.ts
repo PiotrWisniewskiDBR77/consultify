@@ -381,7 +381,19 @@ export class InitiativeController {
         if (s.includes('STEP4') || s.includes('STEP_4') || s.includes('PILOT')) return 'APPROVED';
         if (s.includes('STEP5') || s.includes('STEP_5') || s.includes('FULL')) return 'EXECUTING';
         if (s === 'COMPLETED' || s === 'DONE') return 'DONE';
-        if (['DRAFT', 'PLANNING', 'REVIEW', 'APPROVED', 'EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED'].includes(s)) {
+        if (
+          [
+            'DRAFT',
+            'PLANNING',
+            'REVIEW',
+            'APPROVED',
+            'EXECUTING',
+            'BLOCKED',
+            'DONE',
+            'CANCELLED',
+            'ARCHIVED',
+          ].includes(s)
+        ) {
           return s;
         }
         return 'DRAFT';
@@ -402,7 +414,10 @@ export class InitiativeController {
       };
 
       const initiatives = rows.map((i: Record<string, unknown>) => {
-        const budget = ((i.cost_capex as number) || 0) + ((i.cost_opex as number) || 0) || (i.business_value as number) || 0;
+        const budget =
+          ((i.cost_capex as number) || 0) + ((i.cost_opex as number) || 0) ||
+          (i.business_value as number) ||
+          0;
         return {
           id: i.id,
           organizationId: i.organization_id,
@@ -428,8 +443,8 @@ export class InitiativeController {
           plannedEndDate: i.planned_end_date,
           actualStartDate: i.actual_start_date,
           actualEndDate: i.actual_end_date,
-          priority: (String(i.priority || 'MEDIUM')).toUpperCase(),
-          targetQuarter: i.planned_start_date 
+          priority: String(i.priority || 'MEDIUM').toUpperCase(),
+          targetQuarter: i.planned_start_date
             ? `Q${Math.ceil((new Date(i.planned_start_date as string).getMonth() + 1) / 3)} ${new Date(i.planned_start_date as string).getFullYear()}`
             : undefined,
           ownerBusiness: i.owner_business_id
@@ -465,11 +480,8 @@ export class InitiativeController {
       const review = byStatus['REVIEW'] || 0;
       const blockedCount = byStatus['BLOCKED'] || 0;
       const done = byStatus['DONE'] || 0;
-      
-      const totalBudget = initiatives.reduce(
-        (sum: number, i: any) => sum + (i.budget || 0),
-        0
-      );
+
+      const totalBudget = initiatives.reduce((sum: number, i: any) => sum + (i.budget || 0), 0);
       const totalValue = initiatives.reduce(
         (sum: number, i: any) => sum + (i.businessValue || 0),
         0

@@ -28,8 +28,8 @@ const router = Router();
 
 // Apply rate limiting
 router.use(authRateLimiter);
-import Stripe from 'stripe';
 import type { Stripe as StripeTypes } from 'stripe';
+import Stripe from 'stripe';
 
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import type { DunningService as DunningServiceType } from '../../services/dunningService.js';

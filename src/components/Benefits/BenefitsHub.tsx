@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
 import { InitiativeKPI, InitiativeStatus } from '../../types';
 import {
   FilterableTable,
@@ -56,30 +57,33 @@ interface BenefitsInitiative {
 }
 
 // Status metadata
-const STATUS_META: Record<string, { color: string; label: string; dotColor: string; icon: React.ReactNode }> = {
-  [InitiativeStatus.DONE]: { 
-    color: 'green', 
-    label: 'Done', 
+const STATUS_META: Record<
+  string,
+  { color: string; label: string; dotColor: string; icon: React.ReactNode }
+> = {
+  [InitiativeStatus.DONE]: {
+    color: 'green',
+    label: 'Done',
     dotColor: 'bg-green-400',
-    icon: <CheckCircle2 size={14} />
+    icon: <CheckCircle2 size={14} />,
   },
-  [InitiativeStatus.BLOCKED]: { 
-    color: 'red', 
-    label: 'Blocked', 
+  [InitiativeStatus.BLOCKED]: {
+    color: 'red',
+    label: 'Blocked',
     dotColor: 'bg-red-400',
-    icon: <AlertCircle size={14} />
+    icon: <AlertCircle size={14} />,
   },
-  [InitiativeStatus.CANCELLED]: { 
-    color: 'gray', 
-    label: 'Cancelled', 
+  [InitiativeStatus.CANCELLED]: {
+    color: 'gray',
+    label: 'Cancelled',
     dotColor: 'bg-gray-400',
-    icon: <Ban size={14} />
+    icon: <Ban size={14} />,
   },
-  [InitiativeStatus.ARCHIVED]: { 
-    color: 'slate', 
-    label: 'Archived', 
+  [InitiativeStatus.ARCHIVED]: {
+    color: 'slate',
+    label: 'Archived',
     dotColor: 'bg-slate-500',
-    icon: <Archive size={14} />
+    icon: <Archive size={14} />,
   },
 };
 
@@ -101,9 +105,7 @@ interface BenefitsHubProps {
   initialTab?: ModuleTab;
 }
 
-export const BenefitsHub: React.FC<BenefitsHubProps> = ({
-  initialTab = 'list',
-}) => {
+export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' }) => {
   const { t } = useTranslation();
 
   // State
@@ -113,7 +115,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
-  
+
   // Data state
   const [initiatives, setInitiatives] = useState<BenefitsInitiative[]>([]);
   const [kpis, setKpis] = useState<{ initiative: BenefitsInitiative; kpis: InitiativeKPI[] }[]>([]);
@@ -153,17 +155,20 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
   }, []);
 
   // Calculate stats
-  const stats = useMemo(() => ({
-    done: initiatives.filter((i) => i.status === InitiativeStatus.DONE).length,
-    blocked: initiatives.filter((i) => i.status === InitiativeStatus.BLOCKED).length,
-    cancelled: initiatives.filter((i) => i.status === InitiativeStatus.CANCELLED).length,
-    archived: initiatives.filter((i) => i.status === InitiativeStatus.ARCHIVED).length,
-  }), [initiatives]);
+  const stats = useMemo(
+    () => ({
+      done: initiatives.filter((i) => i.status === InitiativeStatus.DONE).length,
+      blocked: initiatives.filter((i) => i.status === InitiativeStatus.BLOCKED).length,
+      cancelled: initiatives.filter((i) => i.status === InitiativeStatus.CANCELLED).length,
+      archived: initiatives.filter((i) => i.status === InitiativeStatus.ARCHIVED).length,
+    }),
+    [initiatives]
+  );
 
   const kpiStats = useMemo(() => {
     const result = { onTarget: 0, belowTarget: 0, total: 0 };
-    kpis.forEach(item => {
-      item.kpis.forEach(kpi => {
+    kpis.forEach((item) => {
+      item.kpis.forEach((kpi) => {
         result.total++;
         if (kpi.isOnTarget) result.onTarget++;
         else result.belowTarget++;
@@ -175,136 +180,143 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
   // Filter initiatives
   const filteredInitiatives = useMemo(() => {
     let result = initiatives;
-    
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(i => 
-        i.name.toLowerCase().includes(query) ||
-        (i.summary || '').toLowerCase().includes(query)
+      result = result.filter(
+        (i) =>
+          i.name.toLowerCase().includes(query) || (i.summary || '').toLowerCase().includes(query)
       );
     }
-    
+
     activeFilters.forEach((filter: FilterChip) => {
       if (filter.column === 'status') {
-        result = result.filter(i => i.status === filter.value);
+        result = result.filter((i) => i.status === filter.value);
       }
     });
-    
+
     return result;
   }, [initiatives, searchQuery, activeFilters]);
 
   // Tab configuration
-  const tabs = useMemo(() => [
-    {
-      id: 'list' as ModuleTab,
-      label: t('benefits.tabs.completed', 'Completed'),
-      icon: <CheckCircle2 size={16} />,
-      count: filteredInitiatives.length,
-    },
-    {
-      id: 'reports' as ModuleTab,
-      label: t('benefits.tabs.kpis', 'KPIs'),
-      icon: <BarChart3 size={16} />,
-      count: kpiStats.belowTarget > 0 ? kpiStats.belowTarget : undefined,
-    },
-    {
-      id: 'initiatives' as ModuleTab,
-      label: t('benefits.tabs.roi', 'ROI Analysis'),
-      icon: <TrendingUp size={16} />,
-      count: undefined,
-    },
-  ], [t, filteredInitiatives.length, kpiStats.belowTarget]);
+  const tabs = useMemo(
+    () => [
+      {
+        id: 'list' as ModuleTab,
+        label: t('benefits.tabs.completed', 'Completed'),
+        icon: <CheckCircle2 size={16} />,
+        count: filteredInitiatives.length,
+      },
+      {
+        id: 'reports' as ModuleTab,
+        label: t('benefits.tabs.kpis', 'KPIs'),
+        icon: <BarChart3 size={16} />,
+        count: kpiStats.belowTarget > 0 ? kpiStats.belowTarget : undefined,
+      },
+      {
+        id: 'initiatives' as ModuleTab,
+        label: t('benefits.tabs.roi', 'ROI Analysis'),
+        icon: <TrendingUp size={16} />,
+        count: undefined,
+      },
+    ],
+    [t, filteredInitiatives.length, kpiStats.belowTarget]
+  );
 
   // Table columns
-  const columns: TableColumn[] = useMemo(() => [
-    {
-      id: 'type',
-      label: 'Type',
-      width: '80px',
-      render: (row) => {
-        const code = getTypeCode(row.axis);
-        return (
-          <div className="flex items-center gap-2">
-            <Target size={14} className="text-green-400" />
-            <span className="font-mono text-xs font-bold text-slate-300">{code}</span>
+  const columns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'type',
+        label: 'Type',
+        width: '80px',
+        render: (row) => {
+          const code = getTypeCode(row.axis);
+          return (
+            <div className="flex items-center gap-2">
+              <Target size={14} className="text-green-400" />
+              <span className="font-mono text-xs font-bold text-slate-300">{code}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'name',
+        label: 'Name',
+        render: (row) => (
+          <div>
+            <span className="text-sm text-white font-medium">{row.name}</span>
+            {(row.blockedReason || row.cancelledReason) && (
+              <p className="text-xs text-red-400 mt-0.5">
+                {row.blockedReason || row.cancelledReason}
+              </p>
+            )}
           </div>
-        );
+        ),
       },
-    },
-    {
-      id: 'name',
-      label: 'Name',
-      render: (row) => (
-        <div>
-          <span className="text-sm text-white font-medium">{row.name}</span>
-          {(row.blockedReason || row.cancelledReason) && (
-            <p className="text-xs text-red-400 mt-0.5">
-              {row.blockedReason || row.cancelledReason}
-            </p>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      width: '130px',
-      filterable: true,
-      filterOptions: Object.entries(STATUS_META).map(([value, meta]) => ({
-        value,
-        label: meta.label,
-        color: meta.dotColor,
-      })),
-    },
-    {
-      id: 'roi',
-      label: 'ROI',
-      width: '100px',
-      render: (row) => {
-        if (!row.expectedRoi || row.expectedRoi <= 0) {
-          return <span className="text-slate-500 text-sm">-</span>;
-        }
-        return (
-          <span className="text-green-400 text-sm font-medium">
-            {row.expectedRoi}x
-          </span>
-        );
+      {
+        id: 'status',
+        label: 'Status',
+        width: '130px',
+        filterable: true,
+        filterOptions: Object.entries(STATUS_META).map(([value, meta]) => ({
+          value,
+          label: meta.label,
+          color: meta.dotColor,
+        })),
       },
-    },
-    {
-      id: 'budget',
-      label: 'Budget',
-      width: '120px',
-      render: (row) => {
-        if (!row.costCapex) return <span className="text-slate-500 text-sm">-</span>;
-        const formatted = row.costCapex >= 1000000 
-          ? `${(row.costCapex / 1000000).toFixed(1)}M`
-          : row.costCapex >= 1000 
-            ? `${(row.costCapex / 1000).toFixed(0)}k`
-            : row.costCapex;
-        return <span className="text-slate-300 text-sm">{formatted} PLN</span>;
+      {
+        id: 'roi',
+        label: 'ROI',
+        width: '100px',
+        render: (row) => {
+          if (!row.expectedRoi || row.expectedRoi <= 0) {
+            return <span className="text-slate-500 text-sm">-</span>;
+          }
+          return <span className="text-green-400 text-sm font-medium">{row.expectedRoi}x</span>;
+        },
       },
-    },
-    {
-      id: 'updatedAt',
-      label: 'Completed',
-      width: '100px',
-      sortable: true,
-    },
-  ], []);
+      {
+        id: 'budget',
+        label: 'Budget',
+        width: '120px',
+        render: (row) => {
+          if (!row.costCapex) return <span className="text-slate-500 text-sm">-</span>;
+          const formatted =
+            row.costCapex >= 1000000
+              ? `${(row.costCapex / 1000000).toFixed(1)}M`
+              : row.costCapex >= 1000
+                ? `${(row.costCapex / 1000).toFixed(0)}k`
+                : row.costCapex;
+          return <span className="text-slate-300 text-sm">{formatted} PLN</span>;
+        },
+      },
+      {
+        id: 'updatedAt',
+        label: 'Completed',
+        width: '100px',
+        sortable: true,
+      },
+    ],
+    []
+  );
 
   // Handlers
   const handleOpenDocument = useCallback((row: BenefitsInitiative) => {
     const code = getTypeCode(row.axis);
     const statusMeta = STATUS_META[row.status] || STATUS_META[InitiativeStatus.DONE];
-    
+
     const doc: OpenDocument = {
       id: row.id,
       type: 'initiative',
       subType: code,
       name: row.name,
-      status: row.status === InitiativeStatus.DONE ? 'completed' :
-              row.status === InitiativeStatus.BLOCKED ? 'in_review' : 'draft',
+      status:
+        row.status === InitiativeStatus.DONE
+          ? 'completed'
+          : row.status === InitiativeStatus.BLOCKED
+            ? 'in_review'
+            : 'draft',
     };
 
     setOpenDocuments((prev) => {
@@ -314,12 +326,15 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
     setActiveDocumentId(row.id);
   }, []);
 
-  const handleCloseDocument = useCallback((id: string) => {
-    setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
-    if (activeDocumentId === id) {
-      setActiveDocumentId(null);
-    }
-  }, [activeDocumentId]);
+  const handleCloseDocument = useCallback(
+    (id: string) => {
+      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (activeDocumentId === id) {
+        setActiveDocumentId(null);
+      }
+    },
+    [activeDocumentId]
+  );
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
@@ -333,14 +348,17 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
     setActiveFilters([]);
   }, []);
 
-  const handleRowAction = useCallback((action: string, row: BenefitsInitiative) => {
-    if (action === 'view' || action === 'edit') {
-      handleOpenDocument(row);
-    } else if (action === 'add-kpi') {
-      setSelectedInitiative(row);
-      setShowKpiModal(true);
-    }
-  }, [handleOpenDocument]);
+  const handleRowAction = useCallback(
+    (action: string, row: BenefitsInitiative) => {
+      if (action === 'view' || action === 'edit') {
+        handleOpenDocument(row);
+      } else if (action === 'add-kpi') {
+        setSelectedInitiative(row);
+        setShowKpiModal(true);
+      }
+    },
+    [handleOpenDocument]
+  );
 
   const handleAddKpi = useCallback(() => {
     setShowKpiModal(true);
@@ -354,8 +372,11 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
       typeColor: 'green',
       progress: item.progress || 100,
       updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
-      status: (item.status === InitiativeStatus.DONE ? 'completed' :
-               item.status === InitiativeStatus.BLOCKED ? 'in_review' : 'draft') as ItemStatus,
+      status: (item.status === InitiativeStatus.DONE
+        ? 'completed'
+        : item.status === InitiativeStatus.BLOCKED
+          ? 'in_review'
+          : 'draft') as ItemStatus,
     }));
   }, [filteredInitiatives]);
 
@@ -443,7 +464,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
                       <div key={kpi.id} className="p-4 hover:bg-navy-700/50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${kpi.isOnTarget ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                            <div
+                              className={`p-2 rounded-lg ${kpi.isOnTarget ? 'bg-green-500/20' : 'bg-red-500/20'}`}
+                            >
                               {kpi.isOnTarget ? (
                                 <TrendingUp className="w-4 h-4 text-green-400" />
                               ) : (
@@ -460,7 +483,9 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
                           <div className="flex items-center gap-6 text-right">
                             <div>
                               <p className="text-xs text-slate-500">Current</p>
-                              <p className={`text-lg font-bold ${kpi.isOnTarget ? 'text-green-400' : 'text-red-400'}`}>
+                              <p
+                                className={`text-lg font-bold ${kpi.isOnTarget ? 'text-green-400' : 'text-red-400'}`}
+                              >
                                 {kpi.latestValue ?? '-'} {kpi.unit}
                               </p>
                             </div>
@@ -517,21 +542,27 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({
         return (
           <GridView
             items={gridItems}
-            onItemClick={(item: GridItem) => handleOpenDocument(item as unknown as BenefitsInitiative)}
-            onItemAction={(action: string, item: GridItem) => handleRowAction(action, item as unknown as BenefitsInitiative)}
+            onItemClick={(item: GridItem) =>
+              handleOpenDocument(item as unknown as BenefitsInitiative)
+            }
+            onItemAction={(action: string, item: GridItem) =>
+              handleRowAction(action, item as unknown as BenefitsInitiative)
+            }
             emptyMessage="No completed initiatives yet."
           />
         );
       }
       return (
-          <FilterableTable
-            columns={columns}
-            data={filteredInitiatives}
-            onRowClick={(row: any) => handleOpenDocument(row as BenefitsInitiative)}
-            onRowAction={(action: string, row: any) => handleRowAction(action, row as BenefitsInitiative)}
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            emptyMessage="No completed initiatives yet."
+        <FilterableTable
+          columns={columns}
+          data={filteredInitiatives}
+          onRowClick={(row: any) => handleOpenDocument(row as BenefitsInitiative)}
+          onRowAction={(action: string, row: any) =>
+            handleRowAction(action, row as BenefitsInitiative)
+          }
+          activeFilters={activeFilters}
+          onFilterChange={setActiveFilters}
+          emptyMessage="No completed initiatives yet."
         />
       );
     }

@@ -7,9 +7,9 @@
 import { v4 as uuid } from 'uuid';
 
 import ActivityService from '../services/ActivityService.js';
-import NotificationService from './notificationService.js';
 import DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import NotificationService from './notificationService.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
 import ProjectMemberService from './projectMemberService.js';

@@ -16,36 +16,36 @@ const router = Router();
 
 // Service interfaces
 interface AILoggerInterface {
-    info?: (category: string, message: string) => void;
-    error?: (category: string, message: string) => void;
+  info?: (category: string, message: string) => void;
+  error?: (category: string, message: string) => void;
 }
 
 interface AdaptiveResponseServiceInterface {
-    processFeedback?: (
-        userId: string,
-        messageId: string,
-        conversationId: string | undefined,
-        feedback: {
-            rating: string;
-            lengthFeedback?: string;
-            detailFeedback?: string;
-            formatFeedback?: string;
-            wantedMode?: string;
-            customFeedback?: string;
-        },
-        context: {
-            responseMode?: string;
-            responseLength?: string;
-            capability?: string;
-        },
-    ) => Promise<{ feedbackId: string }>;
-    getUserFeedbackStats?: (userId: string) => Promise<{
-        total_feedback?: number;
-        positive_count?: number;
-        negative_count?: number;
-        satisfaction_rate?: number | null;
-    }>;
-    getRecommendedMode?: (userId: string) => Promise<string>;
+  processFeedback?: (
+    userId: string,
+    messageId: string,
+    conversationId: string | undefined,
+    feedback: {
+      rating: string;
+      lengthFeedback?: string;
+      detailFeedback?: string;
+      formatFeedback?: string;
+      wantedMode?: string;
+      customFeedback?: string;
+    },
+    context: {
+      responseMode?: string;
+      responseLength?: string;
+      capability?: string;
+    }
+  ) => Promise<{ feedbackId: string }>;
+  getUserFeedbackStats?: (userId: string) => Promise<{
+    total_feedback?: number;
+    positive_count?: number;
+    negative_count?: number;
+    satisfaction_rate?: number | null;
+  }>;
+  getRecommendedMode?: (userId: string) => Promise<string>;
 }
 
 // Dynamic imports for services (may not be migrated yet)
@@ -53,18 +53,19 @@ let aiLogger: AILoggerInterface | null = null;
 let adaptiveResponseService: AdaptiveResponseServiceInterface | null = null;
 
 try {
-    const loggerModule = await import('../../services/ai/logger.js');
-    aiLogger = (loggerModule as any).aiLogger || (loggerModule as any).default || loggerModule;
+  const loggerModule = await import('../../services/ai/logger.js');
+  aiLogger = (loggerModule as any).aiLogger || (loggerModule as any).default || loggerModule;
 } catch {
-    console.warn('[AI Feedback Routes] aiLogger not available');
+  console.warn('[AI Feedback Routes] aiLogger not available');
 }
 
 try {
-    const adaptiveModule = await import('../../services/ai/adaptiveResponseService.js');
-    const module = adaptiveModule.default || adaptiveModule;
-    adaptiveResponseService = (module.adaptiveResponseService || module) as AdaptiveResponseServiceInterface;
+  const adaptiveModule = await import('../../services/ai/adaptiveResponseService.js');
+  const module = adaptiveModule.default || adaptiveModule;
+  adaptiveResponseService = (module.adaptiveResponseService ||
+    module) as AdaptiveResponseServiceInterface;
 } catch {
-    console.warn('[AI Feedback Routes] adaptiveResponseService not available');
+  console.warn('[AI Feedback Routes] adaptiveResponseService not available');
 }
 
 // All routes require authentication
@@ -75,74 +76,86 @@ router.use(verifyToken);
  * Submit feedback on an AI response
  */
 router.post(
-    '/',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const { interactionId, draftId, feedbackType, rating, comment, capability, modelUsed } = req.body;
+  '/',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { interactionId, draftId, feedbackType, rating, comment, capability, modelUsed } =
+        req.body;
 
-            const organizationId = req.user?.organizationId;
-            const userId = req.user?.id;
+      const organizationId = req.user?.organizationId;
+      const userId = req.user?.id;
 
-            if (!organizationId || !userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!organizationId || !userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            if (!feedbackType) {
-                return res.status(400).json({ error: 'feedbackType is required' });
-            }
+      if (!feedbackType) {
+        return res.status(400).json({ error: 'feedbackType is required' });
+      }
 
-            const validTypes = ['HELPFUL', 'NOT_HELPFUL', 'ACCURATE', 'INACCURATE', 'RELEVANT', 'IRRELEVANT', 'RATING'];
-            if (!validTypes.includes(feedbackType)) {
-                return res.status(400).json({
-                    error: `Invalid feedbackType. Valid types: ${validTypes.join(', ')}`,
-                });
-            }
+      const validTypes = [
+        'HELPFUL',
+        'NOT_HELPFUL',
+        'ACCURATE',
+        'INACCURATE',
+        'RELEVANT',
+        'IRRELEVANT',
+        'RATING',
+      ];
+      if (!validTypes.includes(feedbackType)) {
+        return res.status(400).json({
+          error: `Invalid feedbackType. Valid types: ${validTypes.join(', ')}`,
+        });
+      }
 
-            const id = uuidv4();
+      const id = uuidv4();
 
-            const runResult = await dbRun(
-                `
+      const runResult = await dbRun(
+        `
             INSERT INTO ai_feedback 
             (id, organization_id, user_id, interaction_id, draft_id, feedback_type, 
              rating, comment, capability, model_used, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
         `,
-                [
-                    id,
-                    organizationId,
-                    userId,
-                    interactionId,
-                    draftId,
-                    feedbackType,
-                    rating,
-                    comment,
-                    capability,
-                    modelUsed,
-                ],
-            );
+        [
+          id,
+          organizationId,
+          userId,
+          interactionId,
+          draftId,
+          feedbackType,
+          rating,
+          comment,
+          capability,
+          modelUsed,
+        ]
+      );
 
-            if (!runResult.success) {
-                throw new Error(runResult.error || 'Failed to insert feedback');
-            }
+      if (!runResult.success) {
+        throw new Error(runResult.error || 'Failed to insert feedback');
+      }
 
-            if (aiLogger?.info) {
-                aiLogger.info('AIFeedback', `Feedback submitted: ${feedbackType} for ${capability || 'unknown'}`);
-            }
+      if (aiLogger?.info) {
+        aiLogger.info(
+          'AIFeedback',
+          `Feedback submitted: ${feedbackType} for ${capability || 'unknown'}`
+        );
+      }
 
-            res.status(201).json({
-                success: true,
-                feedbackId: id,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'AIFeedback',
-                    `Submit error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to submit feedback' });
-        }
-    }),
+      res.status(201).json({
+        success: true,
+        feedbackId: id,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'AIFeedback',
+          `Submit error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to submit feedback' });
+    }
+  })
 );
 
 /**
@@ -150,27 +163,27 @@ router.post(
  * Get feedback statistics (admin only)
  */
 router.get(
-    '/stats',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const userRole = req.user?.role;
-            if (userRole !== 'administrator' && userRole !== 'owner') {
-                return res.status(403).json({ error: 'Admin access required' });
-            }
+  '/stats',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userRole = req.user?.role;
+      if (userRole !== 'administrator' && userRole !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
 
-            const { period = '30d', capability } = req.query;
-            const organizationId = req.user?.organizationId;
+      const { period = '30d', capability } = req.query;
+      const organizationId = req.user?.organizationId;
 
-            if (!organizationId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            let daysBack = 30;
-            if (period === '7d') daysBack = 7;
-            else if (period === '90d') daysBack = 90;
+      let daysBack = 30;
+      if (period === '7d') daysBack = 7;
+      else if (period === '90d') daysBack = 90;
 
-            // Get overall stats
-            let statsQuery = `
+      // Get overall stats
+      let statsQuery = `
             SELECT 
                 feedback_type,
                 COUNT(*) as count,
@@ -179,24 +192,24 @@ router.get(
             WHERE organization_id = ?
             AND created_at > datetime('now', '-${daysBack} days')
         `;
-            const params: unknown[] = [organizationId];
+      const params: unknown[] = [organizationId];
 
-            if (capability) {
-                statsQuery += ` AND capability = ?`;
-                params.push(capability);
-            }
+      if (capability) {
+        statsQuery += ` AND capability = ?`;
+        params.push(capability);
+      }
 
-            statsQuery += ` GROUP BY feedback_type`;
+      statsQuery += ` GROUP BY feedback_type`;
 
-            const typeStats = (await dbAll(statsQuery, params)) as Array<{
-                feedback_type?: string;
-                count?: number;
-                avg_rating?: number;
-            }>;
+      const typeStats = (await dbAll(statsQuery, params)) as Array<{
+        feedback_type?: string;
+        count?: number;
+        avg_rating?: number;
+      }>;
 
-            // Get capability breakdown
-            const capabilityStats = (await dbAll(
-                `
+      // Get capability breakdown
+      const capabilityStats = (await dbAll(
+        `
             SELECT 
                 capability,
                 SUM(CASE WHEN feedback_type = 'HELPFUL' THEN 1 ELSE 0 END) as helpful,
@@ -208,45 +221,46 @@ router.get(
             AND created_at > datetime('now', '-${daysBack} days')
             GROUP BY capability
         `,
-                [organizationId],
-            )) as Array<{
-                capability?: string;
-                helpful?: number;
-                not_helpful?: number;
-                total?: number;
-                avg_rating?: number;
-            }>;
+        [organizationId]
+      )) as Array<{
+        capability?: string;
+        helpful?: number;
+        not_helpful?: number;
+        total?: number;
+        avg_rating?: number;
+      }>;
 
-            // Calculate satisfaction score
-            const helpfulCount = typeStats.find((t) => t.feedback_type === 'HELPFUL')?.count || 0;
-            const notHelpfulCount = typeStats.find((t) => t.feedback_type === 'NOT_HELPFUL')?.count || 0;
-            const totalFeedback = helpfulCount + notHelpfulCount;
-            const satisfactionScore = totalFeedback > 0 ? ((helpfulCount / totalFeedback) * 100).toFixed(1) : null;
+      // Calculate satisfaction score
+      const helpfulCount = typeStats.find((t) => t.feedback_type === 'HELPFUL')?.count || 0;
+      const notHelpfulCount = typeStats.find((t) => t.feedback_type === 'NOT_HELPFUL')?.count || 0;
+      const totalFeedback = helpfulCount + notHelpfulCount;
+      const satisfactionScore =
+        totalFeedback > 0 ? ((helpfulCount / totalFeedback) * 100).toFixed(1) : null;
 
-            res.json({
-                success: true,
-                period,
-                stats: {
-                    satisfactionScore,
-                    totalFeedback,
-                    byType: typeStats,
-                    byCapability: capabilityStats.map((c) => ({
-                        ...c,
-                        satisfactionRate:
-                            c.total && c.total > 0 ? (((c.helpful || 0) / c.total) * 100).toFixed(1) : null,
-                    })),
-                },
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'AIFeedback',
-                    `Stats error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to fetch feedback stats' });
-        }
-    }),
+      res.json({
+        success: true,
+        period,
+        stats: {
+          satisfactionScore,
+          totalFeedback,
+          byType: typeStats,
+          byCapability: capabilityStats.map((c) => ({
+            ...c,
+            satisfactionRate:
+              c.total && c.total > 0 ? (((c.helpful || 0) / c.total) * 100).toFixed(1) : null,
+          })),
+        },
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'AIFeedback',
+          `Stats error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to fetch feedback stats' });
+    }
+  })
 );
 
 /**
@@ -254,22 +268,22 @@ router.get(
  * Get recent feedback with comments (admin only)
  */
 router.get(
-    '/recent',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const userRole = req.user?.role;
-            if (userRole !== 'administrator' && userRole !== 'owner') {
-                return res.status(403).json({ error: 'Admin access required' });
-            }
+  '/recent',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userRole = req.user?.role;
+      if (userRole !== 'administrator' && userRole !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
 
-            const { limit = 20, type } = req.query;
-            const organizationId = req.user?.organizationId;
+      const { limit = 20, type } = req.query;
+      const organizationId = req.user?.organizationId;
 
-            if (!organizationId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            let query = `
+      let query = `
             SELECT 
                 f.*,
                 u.full_name as user_name,
@@ -278,32 +292,32 @@ router.get(
             LEFT JOIN users u ON f.user_id = u.id
             WHERE f.organization_id = ?
         `;
-            const params: unknown[] = [organizationId];
+      const params: unknown[] = [organizationId];
 
-            if (type) {
-                query += ` AND f.feedback_type = ?`;
-                params.push(type);
-            }
+      if (type) {
+        query += ` AND f.feedback_type = ?`;
+        params.push(type);
+      }
 
-            query += ` ORDER BY f.created_at DESC LIMIT ?`;
-            params.push(parseInt(limit as string));
+      query += ` ORDER BY f.created_at DESC LIMIT ?`;
+      params.push(parseInt(limit as string));
 
-            const feedback = await dbAll(query, params);
+      const feedback = await dbAll(query, params);
 
-            res.json({
-                success: true,
-                feedback,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'AIFeedback',
-                    `Recent error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to fetch recent feedback' });
-        }
-    }),
+      res.json({
+        success: true,
+        feedback,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'AIFeedback',
+          `Recent error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to fetch recent feedback' });
+    }
+  })
 );
 
 /**
@@ -311,23 +325,23 @@ router.get(
  * Get AI-generated suggestions based on feedback patterns (admin only)
  */
 router.get(
-    '/improvement-suggestions',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const userRole = req.user?.role;
-            if (userRole !== 'administrator' && userRole !== 'owner') {
-                return res.status(403).json({ error: 'Admin access required' });
-            }
+  '/improvement-suggestions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userRole = req.user?.role;
+      if (userRole !== 'administrator' && userRole !== 'owner') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
 
-            const organizationId = req.user?.organizationId;
+      const organizationId = req.user?.organizationId;
 
-            if (!organizationId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!organizationId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            // Find capabilities with low satisfaction
-            const problemAreas = (await dbAll(
-                `
+      // Find capabilities with low satisfaction
+      const problemAreas = (await dbAll(
+        `
             SELECT 
                 capability,
                 model_used,
@@ -343,65 +357,67 @@ router.get(
             ORDER BY negative DESC
             LIMIT 5
         `,
-                [organizationId],
-            )) as Array<{
-                capability?: string;
-                model_used?: string;
-                total_feedback?: number;
-                negative?: number;
-                comments?: string;
-            }>;
+        [organizationId]
+      )) as Array<{
+        capability?: string;
+        model_used?: string;
+        total_feedback?: number;
+        negative?: number;
+        comments?: string;
+      }>;
 
-            // Helper function to generate suggestions based on feedback patterns
-            const generateSuggestion = (area: {
-                negative?: number;
-                comments?: string;
-                capability?: string;
-            }): string[] => {
-                const suggestions: string[] = [];
+      // Helper function to generate suggestions based on feedback patterns
+      const generateSuggestion = (area: {
+        negative?: number;
+        comments?: string;
+        capability?: string;
+      }): string[] => {
+        const suggestions: string[] = [];
 
-                if ((area.negative || 0) > 5) {
-                    suggestions.push(`Consider reviewing the prompt for "${area.capability}" capability`);
-                }
-
-                if (area.comments && (area.comments.includes('długo') || area.comments.includes('wolno'))) {
-                    suggestions.push('Users report slow responses - consider using a faster model');
-                }
-
-                if (area.comments && (area.comments.includes('błąd') || area.comments.includes('error'))) {
-                    suggestions.push('Users report errors - check model configuration and fallbacks');
-                }
-
-                if (suggestions.length === 0) {
-                    suggestions.push(`Review ${area.negative || 0} negative feedbacks for "${area.capability}"`);
-                }
-
-                return suggestions;
-            };
-
-            const suggestions = problemAreas.map((area) => ({
-                capability: area.capability,
-                model: area.model_used,
-                negativeCount: area.negative,
-                totalFeedback: area.total_feedback,
-                sampleComments: area.comments ? area.comments.split(' | ').slice(0, 3) : [],
-                suggestion: generateSuggestion(area),
-            }));
-
-            res.json({
-                success: true,
-                suggestions,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'AIFeedback',
-                    `Suggestions error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to generate suggestions' });
+        if ((area.negative || 0) > 5) {
+          suggestions.push(`Consider reviewing the prompt for "${area.capability}" capability`);
         }
-    }),
+
+        if (area.comments && (area.comments.includes('długo') || area.comments.includes('wolno'))) {
+          suggestions.push('Users report slow responses - consider using a faster model');
+        }
+
+        if (area.comments && (area.comments.includes('błąd') || area.comments.includes('error'))) {
+          suggestions.push('Users report errors - check model configuration and fallbacks');
+        }
+
+        if (suggestions.length === 0) {
+          suggestions.push(
+            `Review ${area.negative || 0} negative feedbacks for "${area.capability}"`
+          );
+        }
+
+        return suggestions;
+      };
+
+      const suggestions = problemAreas.map((area) => ({
+        capability: area.capability,
+        model: area.model_used,
+        negativeCount: area.negative,
+        totalFeedback: area.total_feedback,
+        sampleComments: area.comments ? area.comments.split(' | ').slice(0, 3) : [],
+        suggestion: generateSuggestion(area),
+      }));
+
+      res.json({
+        success: true,
+        suggestions,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'AIFeedback',
+          `Suggestions error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to generate suggestions' });
+    }
+  })
 );
 
 // =====================================================
@@ -413,86 +429,88 @@ router.get(
  * Submit detailed feedback on AI response length/style
  */
 router.post(
-    '/response',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!adaptiveResponseService?.processFeedback) {
-            return res.status(503).json({ error: 'Adaptive response service not available' });
-        }
+  '/response',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!adaptiveResponseService?.processFeedback) {
+      return res.status(503).json({ error: 'Adaptive response service not available' });
+    }
 
-        try {
-            const {
-                messageId,
-                conversationId,
-                rating,
-                lengthFeedback,
-                detailFeedback,
-                formatFeedback,
-                wantedMode,
-                customFeedback,
-                responseMode,
-                responseLength,
-                capability,
-            } = req.body;
+    try {
+      const {
+        messageId,
+        conversationId,
+        rating,
+        lengthFeedback,
+        detailFeedback,
+        formatFeedback,
+        wantedMode,
+        customFeedback,
+        responseMode,
+        responseLength,
+        capability,
+      } = req.body;
 
-            const userId = req.user?.id;
+      const userId = req.user?.id;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            if (!messageId) {
-                return res.status(400).json({ error: 'messageId is required' });
-            }
+      if (!messageId) {
+        return res.status(400).json({ error: 'messageId is required' });
+      }
 
-            if (!rating || !['positive', 'negative', 'neutral'].includes(rating)) {
-                return res.status(400).json({ error: 'Valid rating is required (positive, negative, neutral)' });
-            }
+      if (!rating || !['positive', 'negative', 'neutral'].includes(rating)) {
+        return res
+          .status(400)
+          .json({ error: 'Valid rating is required (positive, negative, neutral)' });
+      }
 
-            const feedback = {
-                rating,
-                lengthFeedback,
-                detailFeedback,
-                formatFeedback,
-                wantedMode,
-                customFeedback,
-            };
+      const feedback = {
+        rating,
+        lengthFeedback,
+        detailFeedback,
+        formatFeedback,
+        wantedMode,
+        customFeedback,
+      };
 
-            const context = {
-                responseMode,
-                responseLength,
-                capability,
-            };
+      const context = {
+        responseMode,
+        responseLength,
+        capability,
+      };
 
-            const result = await adaptiveResponseService.processFeedback(
-                userId,
-                messageId,
-                conversationId,
-                feedback,
-                context,
-            );
+      const result = await adaptiveResponseService.processFeedback(
+        userId,
+        messageId,
+        conversationId,
+        feedback,
+        context
+      );
 
-            if (aiLogger?.info) {
-                aiLogger.info(
-                    'AIFeedback',
-                    `Response feedback: ${rating} from user ${userId}, wanted: ${wantedMode || 'N/A'}`,
-                );
-            }
+      if (aiLogger?.info) {
+        aiLogger.info(
+          'AIFeedback',
+          `Response feedback: ${rating} from user ${userId}, wanted: ${wantedMode || 'N/A'}`
+        );
+      }
 
-            res.status(201).json({
-                success: true,
-                feedbackId: result.feedbackId,
-                message: 'Feedback recorded successfully',
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'AIFeedback',
-                    `Response feedback error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to submit response feedback' });
-        }
-    }),
+      res.status(201).json({
+        success: true,
+        feedbackId: result.feedbackId,
+        message: 'Feedback recorded successfully',
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'AIFeedback',
+          `Response feedback error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to submit response feedback' });
+    }
+  })
 );
 
 /**
@@ -500,41 +518,44 @@ router.post(
  * Get user's response feedback statistics
  */
 router.get(
-    '/response/stats',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!adaptiveResponseService?.getUserFeedbackStats || !adaptiveResponseService?.getRecommendedMode) {
-            return res.status(503).json({ error: 'Adaptive response service not available' });
-        }
+  '/response/stats',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (
+      !adaptiveResponseService?.getUserFeedbackStats ||
+      !adaptiveResponseService?.getRecommendedMode
+    ) {
+      return res.status(503).json({ error: 'Adaptive response service not available' });
+    }
 
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const stats = await adaptiveResponseService.getUserFeedbackStats(userId);
-            const recommendedMode = await adaptiveResponseService.getRecommendedMode(userId);
+      const stats = await adaptiveResponseService.getUserFeedbackStats(userId);
+      const recommendedMode = await adaptiveResponseService.getRecommendedMode(userId);
 
-            res.json({
-                success: true,
-                stats: stats || {
-                    total_feedback: 0,
-                    positive_count: 0,
-                    negative_count: 0,
-                    satisfaction_rate: null,
-                },
-                recommendedMode,
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'AIFeedback',
-                    `Response stats error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to get response stats' });
-        }
-    }),
+      res.json({
+        success: true,
+        stats: stats || {
+          total_feedback: 0,
+          positive_count: 0,
+          negative_count: 0,
+          satisfaction_rate: null,
+        },
+        recommendedMode,
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'AIFeedback',
+          `Response stats error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to get response stats' });
+    }
+  })
 );
 
 /**
@@ -542,16 +563,16 @@ router.get(
  * Get user's learned response preferences
  */
 router.get(
-    '/response/preferences',
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+  '/response/preferences',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const prefs = (await dbGet(
-                `
+      const prefs = (await dbGet(
+        `
             SELECT 
                 response_mode_preference,
                 quick_length_preference,
@@ -566,40 +587,40 @@ router.get(
             FROM user_ai_profiles
             WHERE user_id = ?
         `,
-                [userId],
-            )) as {
-                response_mode_preference?: string;
-                quick_length_preference?: string;
-                standard_length_preference?: string;
-                deep_study_length_preference?: string;
-                auto_detect_intent?: number;
-                prefer_bullet_points?: number;
-                prefer_tables?: number;
-                prefer_action_items?: number;
-                include_examples?: number;
-                satisfaction_score?: number;
-            } | null;
+        [userId]
+      )) as {
+        response_mode_preference?: string;
+        quick_length_preference?: string;
+        standard_length_preference?: string;
+        deep_study_length_preference?: string;
+        auto_detect_intent?: number;
+        prefer_bullet_points?: number;
+        prefer_tables?: number;
+        prefer_action_items?: number;
+        include_examples?: number;
+        satisfaction_score?: number;
+      } | null;
 
-            res.json({
-                success: true,
-                preferences: prefs || {
-                    response_mode_preference: 'standard',
-                    quick_length_preference: 'short',
-                    standard_length_preference: 'medium',
-                    deep_study_length_preference: 'long',
-                    auto_detect_intent: true,
-                },
-            });
-        } catch (error: unknown) {
-            if (aiLogger?.error) {
-                aiLogger.error(
-                    'AIFeedback',
-                    `Preferences error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                );
-            }
-            res.status(500).json({ error: 'Failed to get preferences' });
-        }
-    }),
+      res.json({
+        success: true,
+        preferences: prefs || {
+          response_mode_preference: 'standard',
+          quick_length_preference: 'short',
+          standard_length_preference: 'medium',
+          deep_study_length_preference: 'long',
+          auto_detect_intent: true,
+        },
+      });
+    } catch (error: unknown) {
+      if (aiLogger?.error) {
+        aiLogger.error(
+          'AIFeedback',
+          `Preferences error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
+      res.status(500).json({ error: 'Failed to get preferences' });
+    }
+  })
 );
 
 export default router;

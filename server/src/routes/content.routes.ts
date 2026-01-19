@@ -11,7 +11,6 @@ import { defaultRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-
 import emailTemplatesRoutes from './content/email-templates.routes.js';
 
 const router = Router();

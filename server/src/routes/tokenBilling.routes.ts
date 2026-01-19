@@ -21,28 +21,28 @@ let UsageService: any = null;
 let stripe: any = null;
 
 try {
-    const tokenBillingModule = await import('../../services/tokenBillingService.js');
-    TokenBillingService = tokenBillingModule.default || tokenBillingModule;
+  const tokenBillingModule = await import('../../services/tokenBillingService.js');
+  TokenBillingService = tokenBillingModule.default || tokenBillingModule;
 } catch {
-    console.warn('[TokenBilling] TokenBillingService not available');
+  console.warn('[TokenBilling] TokenBillingService not available');
 }
 
 try {
-    const usageModule = await import('../../services/usageService.js');
-    UsageService = usageModule.default || usageModule;
+  const usageModule = await import('../../services/usageService.js');
+  UsageService = usageModule.default || usageModule;
 } catch {
-    console.warn('[TokenBilling] UsageService not available');
+  console.warn('[TokenBilling] UsageService not available');
 }
 
 // Initialize Stripe if configured
 if (process.env.STRIPE_SECRET_KEY) {
-    try {
-        const stripeModule = await import('stripe');
-        const StripeClass = stripeModule.default;
-        stripe = new StripeClass(process.env.STRIPE_SECRET_KEY);
-    } catch {
-        console.warn('[TokenBilling] Stripe not available');
-    }
+  try {
+    const stripeModule = await import('stripe');
+    const StripeClass = stripeModule.default;
+    stripe = new StripeClass(process.env.STRIPE_SECRET_KEY);
+  } catch {
+    console.warn('[TokenBilling] Stripe not available');
+  }
 }
 
 /**
@@ -50,26 +50,26 @@ if (process.env.STRIPE_SECRET_KEY) {
  * Get current user's token balance
  */
 router.get(
-    '/balance',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.getBalance) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/balance',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.getBalance) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        try {
-            const balance = await TokenBillingService.getBalance(userId);
-            res.json({ success: true, balance });
-        } catch (error: any) {
-            console.error('Get balance error:', error);
-            return res.status(500).json({ success: false, error: 'Failed to get balance' });
-        }
-    }),
+    try {
+      const balance = await TokenBillingService.getBalance(userId);
+      res.json({ success: true, balance });
+    } catch (error: any) {
+      console.error('Get balance error:', error);
+      return res.status(500).json({ success: false, error: 'Failed to get balance' });
+    }
+  })
 );
 
 /**
@@ -77,20 +77,20 @@ router.get(
  * Get available token packages
  */
 router.get(
-    '/packages',
-    verifyToken,
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.getPackages) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/packages',
+  verifyToken,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.getPackages) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        try {
-            const packages = await TokenBillingService.getPackages();
-            res.json({ success: true, packages });
-        } catch (error: any) {
-            return res.status(500).json({ success: false, error: 'Failed to get packages' });
-        }
-    }),
+    try {
+      const packages = await TokenBillingService.getPackages();
+      res.json({ success: true, packages });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Failed to get packages' });
+    }
+  })
 );
 
 /**
@@ -98,29 +98,29 @@ router.get(
  * Get user's transaction history
  */
 router.get(
-    '/transactions',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.getTransactions) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/transactions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.getTransactions) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        try {
-            const { limit = 50, offset = 0 } = req.query;
-            const transactions = await TokenBillingService.getTransactions(userId, {
-                limit: parseInt(limit as string),
-                offset: parseInt(offset as string),
-            });
-            res.json({ success: true, transactions });
-        } catch (error: any) {
-            return res.status(500).json({ success: false, error: 'Failed to get transactions' });
-        }
-    }),
+    try {
+      const { limit = 50, offset = 0 } = req.query;
+      const transactions = await TokenBillingService.getTransactions(userId, {
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+      });
+      res.json({ success: true, transactions });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Failed to get transactions' });
+    }
+  })
 );
 
 /**
@@ -128,25 +128,25 @@ router.get(
  * Get user's API keys (masked)
  */
 router.get(
-    '/api-keys',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.getUserApiKeys) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/api-keys',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.getUserApiKeys) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        try {
-            const keys = await TokenBillingService.getUserApiKeys(userId);
-            res.json({ success: true, keys });
-        } catch (error: any) {
-            return res.status(500).json({ success: false, error: 'Failed to get API keys' });
-        }
-    }),
+    try {
+      const keys = await TokenBillingService.getUserApiKeys(userId);
+      res.json({ success: true, keys });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Failed to get API keys' });
+    }
+  })
 );
 
 /**
@@ -154,36 +154,36 @@ router.get(
  * Add new API key
  */
 router.post(
-    '/api-keys',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.addUserApiKey) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/api-keys',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.addUserApiKey) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        try {
-            const { provider, apiKey, displayName, modelPreference } = req.body;
-            if (!provider || !apiKey) {
-                return res.status(400).json({ success: false, error: 'Provider and API key required' });
-            }
-            const result = await TokenBillingService.addUserApiKey(userId, {
-                provider,
-                apiKey,
-                displayName,
-                modelPreference,
-                organizationId: req.user?.organizationId,
-            });
-            res.json({ success: true, key: result });
-        } catch (error: any) {
-            console.error('Add API key error:', error);
-            return res.status(500).json({ success: false, error: 'Failed to add API key' });
-        }
-    }),
+    try {
+      const { provider, apiKey, displayName, modelPreference } = req.body;
+      if (!provider || !apiKey) {
+        return res.status(400).json({ success: false, error: 'Provider and API key required' });
+      }
+      const result = await TokenBillingService.addUserApiKey(userId, {
+        provider,
+        apiKey,
+        displayName,
+        modelPreference,
+        organizationId: req.user?.organizationId,
+      });
+      res.json({ success: true, key: result });
+    } catch (error: any) {
+      console.error('Add API key error:', error);
+      return res.status(500).json({ success: false, error: 'Failed to add API key' });
+    }
+  })
 );
 
 /**
@@ -191,25 +191,25 @@ router.post(
  * Delete API key
  */
 router.delete(
-    '/api-keys/:keyId',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.deleteUserApiKey) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/api-keys/:keyId',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.deleteUserApiKey) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        try {
-            const result = await TokenBillingService.deleteUserApiKey(req.params.keyId, userId);
-            res.json({ success: true, ...result });
-        } catch (error: any) {
-            return res.status(500).json({ success: false, error: 'Failed to delete API key' });
-        }
-    }),
+    try {
+      const result = await TokenBillingService.deleteUserApiKey(req.params.keyId, userId);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Failed to delete API key' });
+    }
+  })
 );
 
 /**
@@ -217,65 +217,71 @@ router.delete(
  * Create checkout session for token purchase
  */
 router.post(
-    '/purchase',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.getPackage) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
+  '/purchase',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.getPackage) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
+
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
+    try {
+      const { packageId } = req.body;
+      const pkg = await TokenBillingService.getPackage(packageId);
+
+      if (!pkg) {
+        return res.status(404).json({ success: false, error: 'Package not found' });
+      }
+
+      // If Stripe is configured, create checkout session
+      if (stripe && pkg.stripe_price_id) {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price: pkg.stripe_price_id,
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?canceled=true`,
+          metadata: {
+            userId: userId,
+            packageId: packageId,
+            tokens: pkg.tokens.toString(),
+            bonusPercent: (pkg.bonus_percent || 0).toString(),
+          },
+        });
+        res.json({ success: true, checkoutUrl: session.url, sessionId: session.id });
+      } else {
+        // Demo mode: directly credit tokens
+        if (!TokenBillingService?.creditTokens) {
+          return res
+            .status(503)
+            .json({ success: false, error: 'Token credit service not available' });
         }
 
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
-
-        try {
-            const { packageId } = req.body;
-            const pkg = await TokenBillingService.getPackage(packageId);
-
-            if (!pkg) {
-                return res.status(404).json({ success: false, error: 'Package not found' });
-            }
-
-            // If Stripe is configured, create checkout session
-            if (stripe && pkg.stripe_price_id) {
-                const session = await stripe.checkout.sessions.create({
-                    payment_method_types: ['card'],
-                    line_items: [
-                        {
-                            price: pkg.stripe_price_id,
-                            quantity: 1,
-                        },
-                    ],
-                    mode: 'payment',
-                    success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-                    cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/billing?canceled=true`,
-                    metadata: {
-                        userId: userId,
-                        packageId: packageId,
-                        tokens: pkg.tokens.toString(),
-                        bonusPercent: (pkg.bonus_percent || 0).toString(),
-                    },
-                });
-                res.json({ success: true, checkoutUrl: session.url, sessionId: session.id });
-            } else {
-                // Demo mode: directly credit tokens
-                if (!TokenBillingService?.creditTokens) {
-                    return res.status(503).json({ success: false, error: 'Token credit service not available' });
-                }
-
-                const bonusTokens = Math.floor(pkg.tokens * (pkg.bonus_percent / 100));
-                await TokenBillingService.creditTokens(userId, pkg.tokens, bonusTokens, {
-                    packageId,
-                    organizationId: req.user?.organizationId,
-                });
-                res.json({ success: true, message: 'Tokens credited (demo mode)', tokens: pkg.tokens + bonusTokens });
-            }
-        } catch (error: any) {
-            console.error('Purchase error:', error);
-            return res.status(500).json({ success: false, error: 'Purchase failed' });
-        }
-    }),
+        const bonusTokens = Math.floor(pkg.tokens * (pkg.bonus_percent / 100));
+        await TokenBillingService.creditTokens(userId, pkg.tokens, bonusTokens, {
+          packageId,
+          organizationId: req.user?.organizationId,
+        });
+        res.json({
+          success: true,
+          message: 'Tokens credited (demo mode)',
+          tokens: pkg.tokens + bonusTokens,
+        });
+      }
+    } catch (error: any) {
+      console.error('Purchase error:', error);
+      return res.status(500).json({ success: false, error: 'Purchase failed' });
+    }
+  })
 );
 
 /**
@@ -283,45 +289,49 @@ router.post(
  * Stripe webhook for payment confirmation
  */
 router.post(
-    '/webhook',
-    express.raw({ type: 'application/json' }),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-            return res.status(400).json({ error: 'Stripe not configured' });
-        }
+  '/webhook',
+  express.raw({ type: 'application/json' }),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+      return res.status(400).json({ error: 'Stripe not configured' });
+    }
 
-        if (!stripe) {
-            return res.status(503).json({ error: 'Stripe not available' });
-        }
+    if (!stripe) {
+      return res.status(503).json({ error: 'Stripe not available' });
+    }
 
-        if (!TokenBillingService?.creditTokens) {
-            return res.status(503).json({ error: 'Token billing service not available' });
-        }
+    if (!TokenBillingService?.creditTokens) {
+      return res.status(503).json({ error: 'Token billing service not available' });
+    }
 
-        const sig = req.headers['stripe-signature'] as string;
+    const sig = req.headers['stripe-signature'] as string;
 
-        try {
-            const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    try {
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
 
-            if (event.type === 'checkout.session.completed') {
-                const session = event.data.object;
-                const { userId, packageId, tokens, bonusPercent } = session.metadata;
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const { userId, packageId, tokens, bonusPercent } = session.metadata;
 
-                const tokenCount = parseInt(tokens);
-                const bonusTokens = Math.floor(tokenCount * (parseInt(bonusPercent) / 100));
+        const tokenCount = parseInt(tokens);
+        const bonusTokens = Math.floor(tokenCount * (parseInt(bonusPercent) / 100));
 
-                await TokenBillingService.creditTokens(userId, tokenCount, bonusTokens, {
-                    packageId,
-                    stripePaymentId: session.payment_intent,
-                });
-            }
+        await TokenBillingService.creditTokens(userId, tokenCount, bonusTokens, {
+          packageId,
+          stripePaymentId: session.payment_intent,
+        });
+      }
 
-            res.json({ received: true });
-        } catch (err: any) {
-            console.error('Webhook error:', err.message);
-            res.status(400).send(`Webhook Error: ${err.message}`);
-        }
-    }),
+      res.json({ received: true });
+    } catch (err: any) {
+      console.error('Webhook error:', err.message);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  })
 );
 
 /**
@@ -329,21 +339,21 @@ router.post(
  * Get billing margins (admin)
  */
 router.get(
-    '/margins',
-    verifyToken,
-    verifyAdmin,
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.getMargins) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/margins',
+  verifyToken,
+  verifyAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.getMargins) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        try {
-            const margins = await TokenBillingService.getMargins();
-            res.json({ success: true, margins });
-        } catch (error: any) {
-            return res.status(500).json({ success: false, error: 'Failed to get margins' });
-        }
-    }),
+    try {
+      const margins = await TokenBillingService.getMargins();
+      res.json({ success: true, margins });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Failed to get margins' });
+    }
+  })
 );
 
 /**
@@ -351,27 +361,27 @@ router.get(
  * Update billing margin (superadmin)
  */
 router.put(
-    '/margins/:sourceType',
-    verifyToken,
-    requireSuperAdmin,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.updateMargin) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/margins/:sourceType',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.updateMargin) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        try {
-            const { baseCostPer1k, marginPercent, minCharge, isActive } = req.body;
-            const result = await TokenBillingService.updateMargin(req.params.sourceType, {
-                baseCostPer1k,
-                marginPercent,
-                minCharge,
-                isActive,
-            });
-            res.json({ success: true, ...result });
-        } catch (error: any) {
-            return res.status(500).json({ success: false, error: 'Failed to update margin' });
-        }
-    }),
+    try {
+      const { baseCostPer1k, marginPercent, minCharge, isActive } = req.body;
+      const result = await TokenBillingService.updateMargin(req.params.sourceType, {
+        baseCostPer1k,
+        marginPercent,
+        minCharge,
+        isActive,
+      });
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Failed to update margin' });
+    }
+  })
 );
 
 /**
@@ -379,22 +389,22 @@ router.put(
  * Get revenue analytics (superadmin)
  */
 router.get(
-    '/analytics',
-    verifyToken,
-    requireSuperAdmin,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.getRevenueAnalytics) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/analytics',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.getRevenueAnalytics) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        try {
-            const { startDate, endDate } = req.query;
-            const analytics = await TokenBillingService.getRevenueAnalytics({ startDate, endDate });
-            res.json({ success: true, analytics });
-        } catch (error: any) {
-            return res.status(500).json({ success: false, error: 'Failed to get analytics' });
-        }
-    }),
+    try {
+      const { startDate, endDate } = req.query;
+      const analytics = await TokenBillingService.getRevenueAnalytics({ startDate, endDate });
+      res.json({ success: true, analytics });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Failed to get analytics' });
+    }
+  })
 );
 
 /**
@@ -402,26 +412,26 @@ router.get(
  * Get operational costs (superadmin)
  */
 router.get(
-    '/costs',
-    verifyToken,
-    requireSuperAdmin,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!UsageService?.getOperationalCosts) {
-            return res.status(503).json({ success: false, error: 'Usage service not available' });
-        }
+  '/costs',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!UsageService?.getOperationalCosts) {
+      return res.status(503).json({ success: false, error: 'Usage service not available' });
+    }
 
-        try {
-            const { startDate, endDate } = req.query;
-            const costs = await UsageService.getOperationalCosts(
-                startDate as string | undefined,
-                endDate as string | undefined,
-            );
-            res.json({ success: true, costs });
-        } catch (error: any) {
-            console.error('Get costs error:', error);
-            return res.status(500).json({ success: false, error: 'Failed to get operational costs' });
-        }
-    }),
+    try {
+      const { startDate, endDate } = req.query;
+      const costs = await UsageService.getOperationalCosts(
+        startDate as string | undefined,
+        endDate as string | undefined
+      );
+      res.json({ success: true, costs });
+    } catch (error: any) {
+      console.error('Get costs error:', error);
+      return res.status(500).json({ success: false, error: 'Failed to get operational costs' });
+    }
+  })
 );
 
 /**
@@ -429,21 +439,21 @@ router.get(
  * Manage packages (superadmin)
  */
 router.post(
-    '/packages',
-    verifyToken,
-    requireSuperAdmin,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!TokenBillingService?.upsertPackage) {
-            return res.status(503).json({ success: false, error: 'Token billing service not available' });
-        }
+  '/packages',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!TokenBillingService?.upsertPackage) {
+      return res.status(503).json({ success: false, error: 'Token billing service not available' });
+    }
 
-        try {
-            const result = await TokenBillingService.upsertPackage(req.body);
-            res.json({ success: true, package: result });
-        } catch (error: any) {
-            return res.status(500).json({ success: false, error: 'Failed to save package' });
-        }
-    }),
+    try {
+      const result = await TokenBillingService.upsertPackage(req.body);
+      res.json({ success: true, package: result });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: 'Failed to save package' });
+    }
+  })
 );
 
 export default router;

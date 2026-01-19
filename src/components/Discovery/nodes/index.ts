@@ -6,15 +6,6 @@
  */
 
 // Discovery-specific nodes
-import { AssessmentNode } from './AssessmentNode';
-import { InitiativeNode } from './InitiativeNode';
-import { InsightNode } from './InsightNode';
-import { OpportunityNode } from './OpportunityNode';
-import { PainPointNode } from './PainPointNode';
-import { QuoteNode } from './QuoteNode';
-import { RecommendationNode } from './RecommendationNode';
-import { ToolNode } from './ToolNode';
-
 // Shared diagram nodes (from Studio integration)
 import {
   DecisionNode,
@@ -24,22 +15,31 @@ import {
   TextNode,
 } from '@/components/shared/DiagramNodes';
 
+import { AssessmentNode } from './AssessmentNode';
+import { InitiativeNode } from './InitiativeNode';
+import { InsightNode } from './InsightNode';
+import { OpportunityNode } from './OpportunityNode';
+import { PainPointNode } from './PainPointNode';
+import { QuoteNode } from './QuoteNode';
+import { RecommendationNode } from './RecommendationNode';
+import { ToolNode } from './ToolNode';
+
 // Re-export Discovery nodes
-export { PainPointNode } from './PainPointNode';
+export { AssessmentNode } from './AssessmentNode';
+export { InitiativeNode } from './InitiativeNode';
 export { InsightNode } from './InsightNode';
 export { OpportunityNode } from './OpportunityNode';
+export { PainPointNode } from './PainPointNode';
 export { QuoteNode } from './QuoteNode';
 export { RecommendationNode } from './RecommendationNode';
 export { ToolNode } from './ToolNode';
-export { AssessmentNode } from './AssessmentNode';
-export { InitiativeNode } from './InitiativeNode';
 
 // Re-export shared diagram nodes
 export {
-  ProcessStepNode,
   DecisionNode,
-  StartEndNode,
   MindmapNode,
+  ProcessStepNode,
+  StartEndNode,
   TextNode,
 } from '@/components/shared/DiagramNodes';
 

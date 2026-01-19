@@ -17,7 +17,7 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getFrameworkConfig, FrameworkId } from '@/services/frameworkRegistry';
+import { FrameworkId, getFrameworkConfig } from '@/services/frameworkRegistry';
 import { useDiscoveryStore } from '@/store/useDiscoveryStore';
 import { DiscoveryRecommendations, InitiativeIdea, TransformationType } from '@/types/discovery';
 

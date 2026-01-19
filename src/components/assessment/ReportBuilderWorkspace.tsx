@@ -32,11 +32,11 @@ import { useTranslation } from 'react-i18next';
 import { type AIAction, useReportSections } from '../../hooks/useReportSections';
 import { useAppStore } from '../../store/useAppStore';
 import { ChatPanel } from '../layout/ChatPanel';
+import { SplitLayout } from '../layout/SplitLayout';
 import { ReportBuilder } from '../Reports/ReportBuilder';
 import { ReportHeader } from '../Reports/ReportHeader';
 import { StickyNavigation } from '../Reports/StickyNavigation';
 import { TableOfContents } from '../Reports/TableOfContents';
-import { SplitLayout } from '../layout/SplitLayout';
 
 interface ReportBuilderWorkspaceProps {
   reportId: string;

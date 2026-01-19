@@ -24,8 +24,8 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import helmet from 'helmet';
 import fs from 'fs';
+import helmet from 'helmet';
 import http from 'http';
 
 // TypeScript imports (ES Modules)
@@ -92,20 +92,22 @@ app.get('/test-frontend-path', (req: Request, res: Response) => {
     path.join(__dirname, '../../../dist'),
     path.join(__dirname, '../../dist'),
   ];
-  
-  const results = testPaths.map(p => ({
+
+  const results = testPaths.map((p) => ({
     path: p,
     exists: fs.existsSync(p),
     hasIndex: fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html')),
   }));
-  
+
   // Try to detect frontend path if not set
   let detectedPath = (global as any).frontendDistPath;
   if (!detectedPath || detectedPath === 'not set') {
-    const found = testPaths.find(p => fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html')));
+    const found = testPaths.find(
+      (p) => fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'))
+    );
     detectedPath = found || 'not found';
   }
-  
+
   res.json({
     __dirname,
     NODE_ENV: process.env.NODE_ENV,
@@ -442,16 +444,17 @@ const apiLimiter = rateLimit({
       // Intelligent Rate Limiting: Key by User ID if auth, else IP
       // This solves the "Office IP" problem where all users share one IP
       // Using ipKeyGenerator for IPv6 compatibility (masks IPv6 to /56 subnet)
-      const ip = req.ip || 
-                 req.socket?.remoteAddress || 
-                 req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
-                 req.headers['x-real-ip']?.toString() ||
-                 'unknown';
-      
+      const ip =
+        req.ip ||
+        req.socket?.remoteAddress ||
+        req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
+        req.headers['x-real-ip']?.toString() ||
+        'unknown';
+
       // Use ipKeyGenerator helper to properly handle IPv6 addresses
       // This prevents IPv6 users from bypassing limits by rotating addresses
       const safeIpKey = ip !== 'unknown' ? ipKeyGenerator(ip, 56) : 'unknown';
-      
+
       // Ensure we return a valid string (express-rate-limit requires this)
       const key = `api:ip:${safeIpKey}`;
       if (!key || key === 'api:ip:') {
@@ -489,15 +492,16 @@ const authLimiter = rateLimit({
 
       // Using ipKeyGenerator for IPv6 compatibility (masks IPv6 to /56 subnet)
       // This prevents IPv6 users from bypassing limits by rotating addresses
-      const ip = req.ip || 
-                 req.socket?.remoteAddress || 
-                 req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
-                 req.headers['x-real-ip']?.toString() ||
-                 'unknown';
-      
+      const ip =
+        req.ip ||
+        req.socket?.remoteAddress ||
+        req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
+        req.headers['x-real-ip']?.toString() ||
+        'unknown';
+
       // Use ipKeyGenerator helper to properly handle IPv6 addresses
       const safeIpKey = ip !== 'unknown' ? ipKeyGenerator(ip, 56) : 'unknown';
-      
+
       // Ensure we return a valid string (express-rate-limit requires this)
       const key = `auth:ip:${safeIpKey}`;
       if (!key || key === 'auth:ip:') {
@@ -631,10 +635,10 @@ let frontendDistPath: string;
 if (process.env.NODE_ENV === 'production') {
   // Production (Docker): frontend is at /app/dist
   frontendDistPath = '/app/dist';
-  
+
   console.log(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
   logger.info(`[Server] Production mode - using frontend path: ${frontendDistPath}`);
-  
+
   // Verify it exists
   if (fs.existsSync(frontendDistPath)) {
     const indexPath = path.join(frontendDistPath, 'index.html');
@@ -649,20 +653,20 @@ if (process.env.NODE_ENV === 'production') {
     console.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
     logger.error(`[Server] ✗ Frontend dist directory NOT found at: ${frontendDistPath}`);
   }
+} else {
+  // Development: frontend is at project root /dist
+  frontendDistPath = path.join(__dirname, '../../dist');
+  console.log(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
+  logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
+  const indexPath = path.join(frontendDistPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    console.log(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
+    logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
   } else {
-    // Development: frontend is at project root /dist
-    frontendDistPath = path.join(__dirname, '../../dist');
-    console.log(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
-    logger.info(`[Server] Frontend dist path (dev): ${frontendDistPath}`);
-    const indexPath = path.join(frontendDistPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      console.log(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
-      logger.info(`[Server] ✓ Frontend index.html found at: ${indexPath}`);
-    } else {
-      console.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
-      logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
-    }
+    console.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
+    logger.warn(`[Server] Frontend index.html NOT found at: ${indexPath}`);
   }
+}
 
 // Store globally for test route and ensure it's set
 try {
@@ -681,13 +685,13 @@ logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 const serveIndexHtml = (req: Request, res: Response): void => {
   // Use absolute path for res.sendFile (required for Railway/Docker)
   const indexPath = path.resolve(frontendDistPath, 'index.html');
-  
+
   console.log(`[Server] Serving index.html for ${req.path}`);
   console.log(`[Server] Frontend dist path: ${frontendDistPath}`);
   console.log(`[Server] Index file path: ${indexPath}`);
   console.log(`[Server] Index file exists: ${fs.existsSync(indexPath)}`);
   logger.info(`[Server] Serving index.html for ${req.path} from ${indexPath}`);
-  
+
   if (!fs.existsSync(indexPath)) {
     console.error(`[Server] Frontend index.html not found at: ${indexPath}`);
     logger.error(`[Server] Frontend index.html not found at: ${indexPath}`);
@@ -703,7 +707,7 @@ const serveIndexHtml = (req: Request, res: Response): void => {
     });
     return;
   }
-  
+
   // Use absolute path - res.sendFile works with absolute paths
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
@@ -755,17 +759,17 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith('/api/')) {
     return next(); // Let 404 handler catch it
   }
-  
+
   // Skip static assets (they should be handled by express.static)
   if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
     return next(); // Let 404 handler catch missing static files
   }
-  
+
   // Skip root path (already handled above)
   if (req.path === '/') {
     return next();
   }
-  
+
   // Serve index.html for all other routes (SPA routing)
   serveIndexHtml(req, res);
 });
@@ -798,7 +802,7 @@ app.use((req: Request, res: Response) => {
       return res.sendFile(indexPath);
     }
   }
-  
+
   res.status(404).json({
     error: {
       code: 'NOT_FOUND',

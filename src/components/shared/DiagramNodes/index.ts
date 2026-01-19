@@ -13,10 +13,10 @@ import { StartEndNode } from './StartEndNode';
 // Text & Annotations
 import { TextNode } from './TextNode';
 
-export { ProcessStepNode } from './ProcessStepNode';
 export { DecisionNode } from './DecisionNode';
-export { StartEndNode } from './StartEndNode';
 export { MindmapNode } from './MindmapNode';
+export { ProcessStepNode } from './ProcessStepNode';
+export { StartEndNode } from './StartEndNode';
 export { TextNode } from './TextNode';
 
 // Node types map for React Flow
@@ -29,8 +29,8 @@ export const diagramNodeTypes = {
 };
 
 // Re-export types
-export type { ProcessStepData } from './ProcessStepNode';
 export type { DecisionData } from './DecisionNode';
-export type { StartEndData } from './StartEndNode';
 export type { MindmapNodeData } from './MindmapNode';
+export type { ProcessStepData } from './ProcessStepNode';
+export type { StartEndData } from './StartEndNode';
 export type { TextNodeData } from './TextNode';

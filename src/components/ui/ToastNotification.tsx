@@ -3,8 +3,9 @@
  * Simple, lightweight toast notifications
  */
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
 import './ToastNotification.css';
+
+import React, { createContext, useCallback, useContext, useState } from 'react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 

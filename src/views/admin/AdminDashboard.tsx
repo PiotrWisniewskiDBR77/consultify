@@ -26,8 +26,9 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-
 import { useNavigate } from 'react-router-dom';
+
+import { AppView } from '@/types';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useAppStore } from '../../store/useAppStore';
@@ -196,7 +197,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
       icon: UserPlus,
       label: t('admin.dashboard.inviteUser', 'Invite User'),
       action: () => {
-        setCurrentView('ADMIN_TEAM_MEMBERS');
+        setCurrentView(AppView.ADMIN_TEAM);
         navigate('/admin/team');
       },
     },
@@ -204,7 +205,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
       icon: Plus,
       label: t('admin.dashboard.createProject', 'New Project'),
       action: () => {
-        setCurrentView('PROJECTS');
+        setCurrentView(AppView.PORTFOLIO_ROADMAP);
         navigate('/projects');
       },
     },
@@ -212,7 +213,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ users, projects 
       icon: FileText,
       label: t('admin.dashboard.viewReports', 'View Reports'),
       action: () => {
-        setCurrentView('REPORTS');
+        setCurrentView(AppView.FULL_STEP6_REPORTS);
         navigate('/reports');
       },
     },

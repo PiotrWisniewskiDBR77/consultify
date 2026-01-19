@@ -563,12 +563,12 @@ export const aiPipeline = AIPipeline.getInstance();
 export default aiPipeline;
 
 export {
+  type AIArtifact,
   type AIPipelineRequest,
   type AIPipelineResponse,
   CAPABILITY_REGISTRY,
   type StreamCallback,
   type ThinkingStep,
-  type AIArtifact,
 };
 
 /**

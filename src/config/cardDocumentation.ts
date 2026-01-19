@@ -1,10 +1,13 @@
 export interface CardDocumentation {
   title: string;
+  titleKey?: string;
   description: string;
+  descriptionKey?: string;
   moduleId?: string;
-  features: string[];
-  howToUse: string[];
-  tips: string[];
+  features?: string[];
+  howToUse?: string[];
+  tips?: string[];
+  steps?: string[];
   relatedDocs?: string[];
 }
 

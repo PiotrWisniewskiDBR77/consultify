@@ -23,14 +23,14 @@ export const DocumentToggleButton: React.FC = () => {
       onClick={() => toggleSidePanel('DOCUMENTS')}
       className="
                 group relative
-                w-11 h-11 
+                w-9 h-9 
                 flex items-center justify-center 
-                rounded-l-xl rounded-r-none
-                bg-gradient-to-br from-cyan-500 to-teal-600
-                hover:from-cyan-400 hover:to-teal-500
+                rounded-l-lg rounded-r-none
+                bg-gradient-to-br from-slate-700 to-slate-800
+                hover:from-slate-600 hover:to-slate-700
                 text-white
-                shadow-lg shadow-cyan-500/30
-                hover:shadow-xl hover:shadow-cyan-500/40
+                shadow-md shadow-slate-700/25
+                hover:shadow-lg hover:shadow-slate-700/35
                 hover:scale-105
                 active:scale-95
                 transition-all duration-200
@@ -41,10 +41,10 @@ export const DocumentToggleButton: React.FC = () => {
       aria-label={t('widgets.documents.title', 'Documents')}
     >
       {/* Glow effect */}
-      <div className="absolute inset-0 rounded-l-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+      <div className="absolute inset-0 rounded-l-lg bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
       <FileText
-        size={20}
+        size={18}
         className="relative z-10 transition-transform duration-200 group-hover:scale-110"
       />
 

@@ -2,14 +2,15 @@ import { Check } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useAIContext } from '@/contexts/AIContext';
+import { AIMessageHistory, SYSTEM_PROMPTS } from '@/services/ai/gemini';
+
 import { ChatPanel } from '../components/layout/ChatPanel';
 import { Step1Workspace } from '../components/workspaces/Step1Workspace';
 import { Step2Workspace } from '../components/workspaces/Step2Workspace';
 import { Step3Workspace } from '../components/workspaces/Step3Workspace';
-import { useAIContext } from '@/contexts/AIContext';
 import { useAIStream } from '../hooks/useAIStream';
 import { useScreenContext } from '../hooks/useScreenContext';
-import { AIMessageHistory, SYSTEM_PROMPTS } from '@/services/ai/gemini';
 import { useAppStore } from '../store/useAppStore';
 import {
   AppView,

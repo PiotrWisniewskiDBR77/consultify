@@ -56,8 +56,10 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     name: 'Dynamic SWOT',
     namePl: 'Dynamiczny SWOT',
     classicFramework: 'SWOT Analysis',
-    description: 'AI-driven SWOT that connects strengths with opportunities and weaknesses with threats to generate strategic initiatives',
-    descriptionPl: 'SWOT wsparty AI łączący mocne strony z szansami oraz słabe strony z zagrożeniami do generowania inicjatyw strategicznych',
+    description:
+      'AI-driven SWOT that connects strengths with opportunities and weaknesses with threats to generate strategic initiatives',
+    descriptionPl:
+      'SWOT wsparty AI łączący mocne strony z szansami oraz słabe strony z zagrożeniami do generowania inicjatyw strategicznych',
     icon: Grid3x3,
     outputs: ['SWOT Matrix', 'S+O/W+T Combinations', 'Strategic Initiatives'],
     outputsPl: ['Macierz SWOT', 'Kombinacje S+O/W+T', 'Inicjatywy strategiczne'],
@@ -68,8 +70,10 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     name: 'Market Forces Analysis',
     namePl: 'Analiza Sił Rynkowych',
     classicFramework: "Porter's 5 Forces",
-    description: 'Analyze competitive forces with data-driven scoring and margin protection initiatives',
-    descriptionPl: 'Analiza sił konkurencyjnych z oceną opartą na danych i inicjatywami ochrony marży',
+    description:
+      'Analyze competitive forces with data-driven scoring and margin protection initiatives',
+    descriptionPl:
+      'Analiza sił konkurencyjnych z oceną opartą na danych i inicjatywami ochrony marży',
     icon: Target,
     outputs: ['5 Forces Diagram', 'Margin Risk Assessment', 'Competitive Initiatives'],
     outputsPl: ['Diagram 5 Sił', 'Ocena ryzyka marży', 'Inicjatywy konkurencyjne'],
@@ -80,8 +84,10 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     name: 'Growth Paths Analysis',
     namePl: 'Analiza Ścieżek Wzrostu',
     classicFramework: 'Ansoff Matrix',
-    description: 'Map growth opportunities with ROI estimates, risk profiles, and capability requirements',
-    descriptionPl: 'Mapowanie możliwości wzrostu z estymacjami ROI, profilami ryzyka i wymaganiami kompetencyjnymi',
+    description:
+      'Map growth opportunities with ROI estimates, risk profiles, and capability requirements',
+    descriptionPl:
+      'Mapowanie możliwości wzrostu z estymacjami ROI, profilami ryzyka i wymaganiami kompetencyjnymi',
     icon: GitBranch,
     outputs: ['Ansoff Matrix', 'Growth ROI Estimates', 'Capability Gap Analysis'],
     outputsPl: ['Macierz Ansoffa', 'Estymacje ROI wzrostu', 'Analiza luk kompetencyjnych'],
@@ -92,8 +98,10 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     name: 'Value Chain Analysis',
     namePl: 'Analiza Łańcucha Wartości',
     classicFramework: 'Porter Value Chain',
-    description: 'Identify where value is created and leaked across activities, with optimization initiatives',
-    descriptionPl: 'Identyfikacja gdzie wartość jest tworzona i tracona w działaniach, z inicjatywami optymalizacji',
+    description:
+      'Identify where value is created and leaked across activities, with optimization initiatives',
+    descriptionPl:
+      'Identyfikacja gdzie wartość jest tworzona i tracona w działaniach, z inicjatywami optymalizacji',
     icon: Layers,
     outputs: ['Value Chain Map', 'Leakage Points', 'Optimization Initiatives'],
     outputsPl: ['Mapa łańcucha wartości', 'Punkty utraty wartości', 'Inicjatywy optymalizacji'],
@@ -105,7 +113,8 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     namePl: 'Priorytetyzacja Portfolio Strategicznego',
     classicFramework: 'BCG Matrix',
     description: 'Classify and prioritize initiatives based on impact and resource constraints',
-    descriptionPl: 'Klasyfikacja i priorytetyzacja inicjatyw na podstawie wpływu i ograniczeń zasobowych',
+    descriptionPl:
+      'Klasyfikacja i priorytetyzacja inicjatyw na podstawie wpływu i ograniczeń zasobowych',
     icon: PieChart,
     outputs: ['BCG-style Grid', 'Priority Ranking', 'Stop/Scale/Merge Decisions'],
     outputsPl: ['Siatka typu BCG', 'Ranking priorytetów', 'Decyzje Stop/Skaluj/Połącz'],
@@ -116,7 +125,8 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     name: 'Strategic Ambition Decomposer',
     namePl: 'Dekompozycja Ambicji Strategicznej',
     classicFramework: 'Vision-to-Strategy',
-    description: 'Break down vision and ambition into measurable strategic dimensions and trade-offs',
+    description:
+      'Break down vision and ambition into measurable strategic dimensions and trade-offs',
     descriptionPl: 'Rozbicie wizji i ambicji na mierzalne wymiary strategiczne i kompromisy',
     icon: TrendingUp,
     outputs: ['Ambition Dimensions', 'Trade-off Matrix', 'Direction Initiatives'],
@@ -128,8 +138,10 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     name: 'Strategic Focus & Trade-off Engine',
     namePl: 'Silnik Fokusu i Kompromisów',
     classicFramework: 'Strategic Choice',
-    description: 'Identify what NOT to do - surface strategic conflicts and generate exit/consolidation initiatives',
-    descriptionPl: 'Identyfikacja czego NIE robić - wykrycie konfliktów strategicznych i generowanie inicjatyw wyjścia/konsolidacji',
+    description:
+      'Identify what NOT to do - surface strategic conflicts and generate exit/consolidation initiatives',
+    descriptionPl:
+      'Identyfikacja czego NIE robić - wykrycie konfliktów strategicznych i generowanie inicjatyw wyjścia/konsolidacji',
     icon: Focus,
     outputs: ['Conflict Map', 'Cost of Indecision', 'Exit/Stop Initiatives'],
     outputsPl: ['Mapa konfliktów', 'Koszt niezdecydowania', 'Inicjatywy wyjścia/zatrzymania'],
@@ -140,8 +152,10 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     name: 'Strategic Risk & Uncertainty Mapper',
     namePl: 'Mapa Ryzyka i Niepewności Strategicznej',
     classicFramework: 'Scenario Planning',
-    description: 'Map strategic assumptions and risks, simulate scenarios, generate resilience initiatives',
-    descriptionPl: 'Mapowanie założeń i ryzyk strategicznych, symulacja scenariuszy, generowanie inicjatyw odporności',
+    description:
+      'Map strategic assumptions and risks, simulate scenarios, generate resilience initiatives',
+    descriptionPl:
+      'Mapowanie założeń i ryzyk strategicznych, symulacja scenariuszy, generowanie inicjatyw odporności',
     icon: Shield,
     outputs: ['Risk Heatmap', 'Scenario Analysis', 'Resilience Initiatives'],
     outputsPl: ['Mapa cieplna ryzyka', 'Analiza scenariuszy', 'Inicjatywy odporności'],
@@ -152,8 +166,10 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     name: 'Strategic Capability-to-Outcome Mapper',
     namePl: 'Mapa Kompetencji do Wyników',
     classicFramework: 'Capability Assessment',
-    description: 'Map strategic goals to required capabilities, identify gaps, generate building initiatives',
-    descriptionPl: 'Mapowanie celów strategicznych do wymaganych kompetencji, identyfikacja luk, generowanie inicjatyw budowania',
+    description:
+      'Map strategic goals to required capabilities, identify gaps, generate building initiatives',
+    descriptionPl:
+      'Mapowanie celów strategicznych do wymaganych kompetencji, identyfikacja luk, generowanie inicjatyw budowania',
     icon: Brain,
     outputs: ['Capability Gap Matrix', 'Critical Gaps', 'Building Initiatives'],
     outputsPl: ['Macierz luk kompetencyjnych', 'Krytyczne luki', 'Inicjatywy budowania'],
@@ -164,8 +180,10 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
     name: 'Strategic Narrative & Alignment Engine',
     namePl: 'Silnik Narracji i Wyrównania Strategicznego',
     classicFramework: 'Strategy Communication',
-    description: 'Create coherent strategic narrative, test alignment, generate communication initiatives',
-    descriptionPl: 'Tworzenie spójnej narracji strategicznej, testowanie wyrównania, generowanie inicjatyw komunikacyjnych',
+    description:
+      'Create coherent strategic narrative, test alignment, generate communication initiatives',
+    descriptionPl:
+      'Tworzenie spójnej narracji strategicznej, testowanie wyrównania, generowanie inicjatyw komunikacyjnych',
     icon: MessageSquare,
     outputs: ['Strategy Narrative', 'Alignment Score', 'Communication Initiatives'],
     outputsPl: ['Narracja strategii', 'Wynik wyrównania', 'Inicjatywy komunikacyjne'],
@@ -210,7 +228,10 @@ export const StrategicToolsView: React.FC = () => {
                 {t('discoveryTools.strategic.title', 'Strategic Analysis Tools')}
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
-                {t('discoveryTools.strategic.subtitle', '10 classic strategic frameworks powered by AI')}
+                {t(
+                  'discoveryTools.strategic.subtitle',
+                  '10 classic strategic frameworks powered by AI'
+                )}
               </p>
             </div>
           </div>
@@ -229,9 +250,10 @@ export const StrategicToolsView: React.FC = () => {
                 key={tool.id}
                 className={`
                   p-5 rounded-xl border-2 transition-all cursor-pointer
-                  ${isSelected
-                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                    : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-emerald-300'
+                  ${
+                    isSelected
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                      : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-emerald-300'
                   }
                 `}
                 onClick={() => handleStartTool(tool.id)}

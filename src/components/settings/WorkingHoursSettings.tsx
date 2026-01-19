@@ -101,13 +101,15 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
         setSchedule(response.schedule as Record<DayKey, DaySchedule>);
         setTimezone(response.timezone || timezone);
         // Check if all weekday times are the same
-        const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as DayKey[];
-        const firstEnabled = response.schedule.monday;
-        const allSame = weekdays.every((day) => {
-          const s = response.schedule[day];
-          return s.startTime === firstEnabled.startTime && s.endTime === firstEnabled.endTime;
-        });
-        setSameEveryDay(allSame);
+        if (response.schedule) {
+          const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as DayKey[];
+          const firstEnabled = response.schedule.monday;
+          const allSame = weekdays.every((day) => {
+            const s = response.schedule![day];
+            return s.startTime === firstEnabled.startTime && s.endTime === firstEnabled.endTime;
+          });
+          setSameEveryDay(allSame);
+        }
       }
     } catch (error) {
       console.error('Failed to load working hours:', error);

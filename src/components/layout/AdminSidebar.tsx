@@ -87,7 +87,7 @@ export type AdminSection =
   | 'compliance-overview';
 
 // Mapping between sections and AppView
-export const adminSectionToAppView: Record<AdminSection, AppView> = {
+export const adminSectionToAppView: Partial<Record<AdminSection, AppView>> = {
   overview: AppView.ADMIN_OVERVIEW,
   organization: AppView.ADMIN_ORGANIZATION,
   team: AppView.ADMIN_TEAM,
@@ -128,12 +128,15 @@ export const appViewToAdminSection: Record<string, AdminSection> = {
   [AppView.ADMIN_BILLING_MANAGEMENT]: 'billing',
 };
 
-interface AdminSidebarProps {
+export interface AdminSidebarProps {
   activeSection: AdminSection;
   onSectionChange: (section: AdminSection) => void;
-  onBackToApp: () => void;
-  currentUserEmail: string;
+  onBack?: () => void;
+  onBackToApp?: () => void;
+  currentUserEmail?: string;
   companyName?: string;
+  pendingInvites?: number;
+  pendingDataRequests?: number;
 }
 
 interface MenuItem {

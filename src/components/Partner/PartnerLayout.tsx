@@ -16,8 +16,8 @@
 
 import { ChevronRight, Menu, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { cn } from '../../utils/cn';
 import { PartnerSection, PartnerSidebar } from './PartnerSidebar';

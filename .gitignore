@@ -125,12 +125,8 @@ server_stdout.log
 test_results*.log
 tests_*.log
 integration-results.json
-e2e-results.xml
-
-# Debug screenshots
-debug-*.png
-
-# Test result files
+e2e-results.xml# Debug screenshots
+debug-*.png# Test result files
 test-results-*.txt# Coverage directories
 coverage-*/# Additional ignores
 *.bak

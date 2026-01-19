@@ -1,9 +1,10 @@
 // @ts-nocheck
 import { Queue } from 'bullmq';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 import redisConfig from '../config/QueueConfig.js';
 import { aiLogger } from '../services/ai/logger.js';
-import { fileURLToPath } from 'url';
-import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -1,4 +1,7 @@
 {
+  "partner": {
+    "becomePartner": "パートナーになる"
+  },
   "sidebar": {
     "dashboard": "ダッシュボード",
     "quickAssessment": "クイック診断",
@@ -2409,9 +2412,12 @@
       "subtext": "無料30分通話 • Consultinityを実際に見る"
     },
     "topBar": {
+      "demo": "デモ",
+      "trial": "トライアル",
       "exploreDemo": "デモを探索",
       "talkToExpert": "専門家に相談",
       "login": "ログイン",
+      "signUp": "登録",
       "startTrial": "トライアルを開始",
       "goToWorkspace": "ワークスペースへ"
     },
@@ -2552,10 +2558,22 @@
       "loading": "Starting..."
     },
     "banner": {
-      "mode": "Demo Mode",
-      "description": "Exploring with sample data",
-      "limitations": "Limitations",
-      "contactSales": "Get Full Access"
+      "mode": "デモモード",
+      "description": "サンプルデータで探索中",
+      "projects": "プロジェクト",
+      "initiatives": "イニシアチブ",
+      "hints": "ヒント",
+      "exit": "デモを終了",
+      "readOnlyTitle": "読み取り専用モード",
+      "readOnlyDesc": "変更は保存されません",
+      "exploreTitle": "機能を探索",
+      "exploreDesc": "すべてのモジュールを閲覧",
+      "hintTitle": "ヒント",
+      "defaultHint": "イニシアチブをクリックして詳細を見る",
+      "help": "ヘルプ",
+      "partnerProgram": "パートナープログラム",
+      "limitations": "制限事項",
+      "contactSales": "フルアクセスを取得"
     },
     "limitations": {
       "readOnly": "Shared demo environment — changes may not persist",

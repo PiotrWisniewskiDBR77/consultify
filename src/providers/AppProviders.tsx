@@ -4,11 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TourProvider } from '../components/Onboarding/TourProvider';
+import { AutoSaveProvider } from '../context/AutoSaveContext';
 import { AccessPolicyProvider } from '../contexts/AccessPolicyContext';
 import { AIProvider } from '../contexts/AIContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { TrialProvider } from '../contexts/TrialContext';
-import { AutoSaveProvider } from '../context/AutoSaveContext';
 
 interface AppProvidersProps {
   children: React.ReactNode;

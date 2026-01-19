@@ -563,9 +563,7 @@ export class TokenBillingServiceClass {
     );
   }
 
-  async getLedgerSummary(
-    orgId: string
-  ): Promise<{
+  async getLedgerSummary(orgId: string): Promise<{
     totalCredits: number;
     totalDebits: number;
     computedBalance: number;

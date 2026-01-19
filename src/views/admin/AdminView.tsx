@@ -699,16 +699,29 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentUser, onNavigate })
             case 'regional':
               return <RegionalSettingsView currentUser={currentUser} onUpdateUser={() => {}} />;
             case 'fiscal-year':
-              return <FiscalYearSettings config={{}} onChange={() => {}} onSave={() => {}} />;
+              return (
+                <FiscalYearSettings
+                  config={{ startMonth: 1, endMonth: 12 }}
+                  onChange={() => {}}
+                  onSave={async () => {}}
+                />
+              );
             case 'data-hosting':
-              return <DataHostingSettings config={{}} onChange={() => {}} onSave={() => {}} />;
+              return (
+                <DataHostingSettings
+                  config={{ region: 'eu', compliance: [] }}
+                  onChange={() => {}}
+                  onSave={async () => {}}
+                />
+              );
             case 'approved-domains':
               return (
                 <ApprovedDomainsSettings
                   domains={[]}
-                  onAdd={() => {}}
-                  onRemove={() => {}}
-                  onVerify={() => {}}
+                  onAdd={async (_domain: string, _autoJoin: boolean) => {}}
+                  onUpdate={async (_id: string, _updates: any) => {}}
+                  onDelete={async (_id: string) => {}}
+                  onVerify={async (_id: string) => true}
                 />
               );
 

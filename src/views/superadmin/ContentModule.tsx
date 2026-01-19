@@ -7,9 +7,9 @@
 import { Layers, Mail } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { InfoButton } from '../../components/shared/InfoButton';
 import { EmailTemplatesPanel } from '../../components/SuperAdmin/EmailTemplatesPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
-import { InfoButton } from '../../components/shared/InfoButton';
 import { PlaybookTemplatesListView } from './PlaybookTemplatesListView';
 
 interface ContentModuleProps {

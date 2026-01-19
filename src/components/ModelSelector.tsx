@@ -2,6 +2,7 @@ import { Check, ChevronDown, Settings } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Api } from '@/services/api';
+
 import { useAppStore } from '../store/useAppStore';
 import { AIProviderType } from '../types';
 

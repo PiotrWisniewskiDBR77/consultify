@@ -15,9 +15,11 @@ export { ConversationSearch } from './ConversationSearch';
 
 // Input components
 export { AddFilesMenu } from './AddFilesMenu';
+export { CloudFilePicker } from './CloudFilePicker';
 export { EnhancedChatInput } from './EnhancedChatInput';
 export { FocusModeBadge, FocusModeSelector } from './Input/FocusModeSelector';
 export { ToolsMenu } from './ToolsMenu';
+export { TTSIndicator } from './TTSIndicator';
 
 // Response components
 export { CitationList, CitationMarker } from './CitationList';

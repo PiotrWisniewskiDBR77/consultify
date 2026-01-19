@@ -50,8 +50,10 @@ import {
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { useDeviceType } from '../../hooks/useDeviceType';
+import { APP_VIEW_TO_ROUTE } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { AppView, UserRole } from '../../types';
@@ -186,6 +188,8 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({
 // ---------------------------------------------------------------------------
 
 export const Sidebar: React.FC = () => {
+  const navigate = useNavigate();
+
   const {
     currentView,
     setCurrentView,
@@ -287,154 +291,85 @@ export const Sidebar: React.FC = () => {
     return completed;
   }, [freeSessionData, fullSessionData]);
 
-  // Menu Definition
+  // Menu Definition - Simplified Navigation
   const menuStructure: MenuItem[] = [
+    // 1. AI Chat - podstawowa rozmowa
     {
       id: 'AI_CHAT',
       label: t('sidebar.aiChat', 'AI Chat'),
       icon: <MessageSquare size={20} />,
       viewId: AppView.AI_CHAT,
-      // onClick is handled specially in renderMenuItem for chat panel toggle
     },
+    // 2. Interview - ustrukturyzowana rozmowa z AI konsultantem
     {
-      id: 'DISCOVERY_CONSULTANT',
-      label: t('sidebar.discoveryConsultant', 'Discovery'),
-      icon: <Sparkles size={20} />,
+      id: 'INTERVIEW',
+      label: t('sidebar.interview', 'Interview'),
+      icon: <Brain size={20} />,
       viewId: AppView.DISCOVERY_CONSULTANT,
+    },
+    // 3. Discovery Tools - 31 narzędzi (wybór kategorii wewnątrz modułu)
+    {
+      id: 'DISCOVERY_TOOLS',
+      label: t('sidebar.discoveryTools', 'Discovery Tools'),
+      icon: <Wrench size={20} />,
+      viewId: AppView.DISCOVERY_TOOLS,
       badge: 'new',
     },
+    // 4. Assessment - sformalizowane procesy oceny (wybór frameworka wewnątrz modułu)
     {
-      id: 'MY_WORK',
-      label: t('myWork.title', 'My Work'),
-      icon: <Briefcase size={20} />,
-      viewId: AppView.MY_WORK,
+      id: 'MODULE_ASSESSMENT',
+      label: t('sidebar.assessment', 'Assessment'),
+      icon: <CheckCircle2 size={20} />,
+      viewId: AppView.ASSESSMENT_OVERVIEW,
     },
+    // 5. Initiatives - zarządzanie inicjatywami (DRAFT→APPROVED)
     {
-      id: 'PROJECT_INTELLIGENCE',
-      label: t('sidebar.projectIntelligence', 'Project Intelligence'),
-      icon: <Brain size={20} />,
-      viewId: AppView.PROJECT_INTELLIGENCE,
-      badge: 'beta',
+      id: 'MODULE_INITIATIVES',
+      label: t('sidebar.initiatives', 'Initiatives'),
+      icon: <Lightbulb size={20} />,
+      viewId: AppView.FULL_STEP2_INITIATIVES,
     },
-    // Phase G: Ecosystem Affiliate Dashboard
+    // 6. Execution - realizacja zatwierdzonych inicjatyw (EXECUTING→DONE)
+    {
+      id: 'MODULE_EXECUTION',
+      label: t('sidebar.execution', 'Execution'),
+      icon: <Rocket size={20} />,
+      viewId: AppView.FULL_STEP5_EXECUTION,
+    },
+    // 7. Benefits - śledzenie efektów zrealizowanych inicjatyw
+    {
+      id: 'MODULE_BENEFITS',
+      label: t('sidebar.benefits', 'Benefits'),
+      icon: <TrendingUp size={20} />,
+      viewId: AppView.BENEFITS_REALIZATION,
+    },
+    // 8. Economics - analiza ekonomiczna (wkrótce)
+    {
+      id: 'MODULE_ECONOMICS',
+      label: t('sidebar.economics', 'Economics'),
+      icon: <Calculator size={20} />,
+      viewId: AppView.ECONOMICS,
+      badge: 'soon',
+    },
+    // 9. Reports - raporty (wkrótce)
+    {
+      id: 'MODULE_REPORTS',
+      label: t('sidebar.reports', 'Reports'),
+      icon: <BookOpen size={20} />,
+      viewId: AppView.FULL_STEP6_REPORTS,
+      badge: 'soon',
+    },
+    // Phase G: Ecosystem Affiliate Dashboard (conditional)
     ...(currentUser?.journeyState === 'ECOSYSTEM_NODE'
       ? [
           {
             id: 'AFFILIATE_DASHBOARD',
             label: t('sidebar.affiliateDashboard', 'Ecosystem Impact'),
-            icon: <TrendingUp size={20} />,
+            icon: <Map size={20} />,
             viewId: AppView.AFFILIATE_DASHBOARD,
           },
         ]
       : []),
-    {
-      id: 'MODULE_2',
-      label: t('sidebar.assessment'),
-      icon: <CheckCircle2 size={20} />,
-      subItems: [
-        // Assessment Frameworks - each opens AssessmentModuleHub with 4 tabs
-        {
-          id: 'M2_DRD',
-          label: t('sidebar.assessmentDRD'),
-          viewId: AppView.ASSESSMENT_DRD,
-          icon: <Activity size={16} />,
-        },
-        {
-          id: 'M2_SIRI',
-          label: t('sidebar.assessmentSIRI'),
-          viewId: AppView.ASSESSMENT_SIRI,
-          icon: <Cpu size={16} />,
-        },
-        {
-          id: 'M2_ADMA',
-          label: t('sidebar.assessmentADMA'),
-          viewId: AppView.ASSESSMENT_ADMA,
-          icon: <Database size={16} />,
-        },
-        {
-          id: 'M2_CMMI',
-          label: t('sidebar.assessmentCMMI'),
-          viewId: AppView.ASSESSMENT_CMMI,
-          icon: <Layers size={16} />,
-        },
-        {
-          id: 'M2_LEAN',
-          label: t('sidebar.assessmentLean'),
-          viewId: AppView.ASSESSMENT_LEAN,
-          icon: <Workflow size={16} />,
-        },
-      ],
-    },
-    // Inicjatywy - Unified Initiative Management + Roadmap
-    {
-      id: 'MODULE_PORTFOLIO',
-      label: t('sidebar.portfolioRoadmap', 'Initiatives'),
-      icon: <Lightbulb size={20} />,
-      viewId: AppView.PORTFOLIO_ROADMAP,
-      requiresView: AppView.FULL_STEP1_ASSESSMENT,
-    },
-    // Wdrożenie (Implementation)
-    {
-      id: 'MODULE_4',
-      label: t('sidebar.implementation'),
-      icon: <Rocket size={20} />,
-      viewId: AppView.IMPLEMENTATION,
-      requiresView: AppView.PORTFOLIO_ROADMAP,
-    },
-    // Realizacja / Benefits Tracking
-    {
-      id: 'MODULE_BENEFITS',
-      label: t('sidebar.benefitsRealization'),
-      icon: <Map size={20} />,
-      viewId: AppView.BENEFITS_REALIZATION,
-      requiresView: AppView.IMPLEMENTATION,
-    },
-    {
-      id: 'MODULE_ECONOMICS',
-      label: t('sidebar.economics'),
-      icon: <Calculator size={20} />,
-      viewId: AppView.ECONOMICS,
-      requiresView: AppView.FULL_STEP5_EXECUTION,
-    },
-    // Raporty - simplified to single item
-    {
-      id: 'MODULE_7',
-      label: t('sidebar.module7'),
-      icon: <BookOpen size={20} />,
-      viewId: AppView.FULL_STEP6_REPORTS,
-      requiresView: AppView.FULL_STEP5_EXECUTION,
-      badge: 'beta',
-    },
-    // Tools Section with AI Advisor, Automation Scheme and Studio
-    {
-      id: 'MODULE_TOOLS',
-      label: t('sidebar.tools'),
-      icon: <Wrench size={20} />,
-      badge: 'beta',
-      subItems: [
-        {
-          id: 'TOOLS_AI_ADVISOR',
-          label: t('sidebar.aiAdvisor', 'AI Advisor'),
-          viewId: AppView.AI_ACTION_PROPOSALS,
-          requiresView: AppView.MY_WORK,
-          icon: <Sparkles size={16} />,
-        },
-        {
-          id: 'TOOLS_AUTOMATION',
-          label: t('sidebar.automationScheme', 'Schemat automatyzacji'),
-          viewId: AppView.KPI_OKR_DASHBOARD,
-          requiresView: AppView.MY_WORK,
-          icon: <Workflow size={16} />,
-        },
-        {
-          id: 'TOOLS_STUDIO',
-          label: t('sidebar.studio', 'Studio'),
-          viewId: AppView.STUDIO,
-          requiresView: AppView.MY_WORK,
-          icon: <Palette size={16} />,
-        },
-      ],
-    },
   ];
 
   const adminMenuItem: MenuItem = {
@@ -693,10 +628,15 @@ export const Sidebar: React.FC = () => {
             }
 
             if (item.viewId) {
-              console.log('[Sidebar-old] Navigating to view:', item.viewId);
-              // Check if we have an active conversation
-              // If yes, navigate with chat context preserved (split mode)
-              // If no, navigate normally
+              // Navigate to URL FIRST - this triggers React Router
+              const route = APP_VIEW_TO_ROUTE[item.viewId];
+              console.log('[Sidebar] Navigating:', item.viewId, '→', route);
+
+              if (route) {
+                navigate(route);
+              }
+
+              // Then update state
               if (activeConversationId) {
                 navigateToViewWithChat(item.viewId);
               } else {
@@ -907,7 +847,13 @@ export const Sidebar: React.FC = () => {
           parentId={activeFloating.id}
           onClose={() => setActiveFloating(null)}
           onNavigate={(viewId) => {
-            // Use smart navigation with chat context preservation
+            // Navigate to URL FIRST
+            const route = APP_VIEW_TO_ROUTE[viewId];
+            console.log('[Sidebar FloatingMenu] Navigating:', viewId, '→', route);
+            if (route) {
+              navigate(route);
+            }
+            // Then update state
             if (activeConversationId) {
               navigateToViewWithChat(viewId);
             } else {
