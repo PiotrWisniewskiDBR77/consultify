@@ -19,7 +19,7 @@
   "dependencies": {
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.0",
-    "lucide-react": "^0.556.0",
+    "lucide-react": "^0.562.0",
     "framer-motion": "^10.16.4"
   }
 }
