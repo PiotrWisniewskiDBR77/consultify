@@ -263,9 +263,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
             )}
           </div>
 
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-            {getPayloadSummary()}
-          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{getPayloadSummary()}</p>
 
           {/* Type label */}
           <span className={`text-[10px] ${colorClasses.text} mt-1 inline-block`}>
@@ -309,12 +307,14 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               <div className="space-y-1">
                 {action.payload.initiative.category && (
                   <div>
-                    <span className="font-medium">Kategoria:</span> {action.payload.initiative.category}
+                    <span className="font-medium">Kategoria:</span>{' '}
+                    {action.payload.initiative.category}
                   </div>
                 )}
                 {action.payload.initiative.estimatedEffort && (
                   <div>
-                    <span className="font-medium">Estymacja:</span> {action.payload.initiative.estimatedEffort}h
+                    <span className="font-medium">Estymacja:</span>{' '}
+                    {action.payload.initiative.estimatedEffort}h
                   </div>
                 )}
               </div>

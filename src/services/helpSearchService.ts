@@ -245,9 +245,9 @@ export function buildSearchIndex(): SearchIndex {
     const searchableText = [
       card.title,
       card.description,
-      ...card.features,
-      ...card.howToUse,
-      ...card.tips,
+      ...(card.features || []),
+      ...(card.howToUse || []),
+      ...(card.tips || []),
     ].join(' ');
 
     index.cards.push({
@@ -258,7 +258,7 @@ export function buildSearchIndex(): SearchIndex {
       searchableTextPl: searchableText, // Cards are currently EN only
       title: card.title,
       excerpt: card.description.slice(0, 150) + '...',
-      tags: card.features.slice(0, 5),
+      tags: (card.features || []).slice(0, 5),
       weight: 7,
     });
   });

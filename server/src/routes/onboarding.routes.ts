@@ -3,12 +3,14 @@
  * Enterprise onboarding flow: Terms → Pricing → Payment
  */
 
-import { Router, Response } from 'express';
-import { getDatabase } from '../database/Database.js';
+import { Response, Router } from 'express';
+
+import { getDatabase } from '../database/index.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+const db = getDatabase();
 
 // Apply auth middleware to all routes
 router.use(verifyToken);
@@ -25,7 +27,6 @@ router.get('/status', async (req: AuthRequest, res: Response) => {
     }
 
     // Get onboarding status
-    const db = getDatabase();
     const result = await db.query(`SELECT *FROM user_onboarding_status WHERE user_id = $1`, [
       userId,
     ]);
@@ -60,7 +61,6 @@ router.post('/accept-terms', async (req: AuthRequest, res: Response) => {
     const { termsVersion = 'v1.0', privacyVersion = 'v1.0' } = req.body;
 
     // Upsert onboarding status
-    const db = getDatabase();
     await db.query(
       `INSERT INTO user_onboarding_status (
                 user_id, terms_accepted, terms_accepted_at, terms_version,
@@ -103,7 +103,6 @@ router.post('/select-tier', async (req: AuthRequest, res: Response) => {
     }
 
     // Update pricing tier
-    const db = getDatabase();
     await db.query(
       `INSERT INTO user_onboarding_status (user_id, pricing_tier, pricing_tier_selected_at, updated_at)
             VALUES ($1, $2, NOW(), NOW())
@@ -135,7 +134,6 @@ router.post('/setup-payment', async (req: AuthRequest, res: Response) => {
     const { setupIntentId } = req.body;
 
     // Update payment setup status
-    const db = getDatabase();
     await db.query(
       `INSERT INTO user_onboarding_status (
                 user_id, payment_setup, payment_setup_at, 
@@ -168,17 +166,11 @@ router.post('/complete', async (req: AuthRequest, res: Response) => {
     }
 
     // Verify all steps are completed
-    const db = getDatabase();
     const statusResult = await db.query(`SELECT * FROM user_onboarding_status WHERE user_id = $1`, [
       userId,
     ]);
 
-    const status = statusResult.rows[0] as {
-      terms_accepted?: boolean;
-      privacy_accepted?: boolean;
-      pricing_tier?: string;
-      payment_setup?: boolean;
-    } | undefined;
+    const status = statusResult.rows[0];
     if (!status) {
       return res.status(400).json({ error: 'No onboarding status found' });
     }

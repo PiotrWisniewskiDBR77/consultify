@@ -12,9 +12,9 @@
 import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { getAppViewFromRoute, getRouteFromAppView } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView } from '@/types';
-import { getRouteFromAppView, getAppViewFromRoute } from '@/routes/routeConfig';
 
 interface RouterSyncProviderProps {
   children: React.ReactNode;

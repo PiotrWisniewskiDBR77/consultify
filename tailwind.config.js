@@ -8,6 +8,38 @@ export default {
     './App.tsx',
   ],
   darkMode: 'class',
+  // ========================================
+  // SAFELIST - Dynamic classes for Strategic Tools
+  // These classes are generated dynamically and must be safelisted
+  // ========================================
+  safelist: [
+    // Background colors (50, 100, 500, 600)
+    {
+      pattern: /^bg-(emerald|red|blue|amber|purple|pink|cyan|orange|indigo|teal|slate)-(50|100|500|600)$/,
+    },
+    // Background colors with opacity (dark mode)
+    {
+      pattern: /^bg-(emerald|red|blue|amber|purple|pink|cyan|orange|indigo|teal|slate)-900\/(20|30)$/,
+    },
+    // Text colors
+    {
+      pattern: /^text-(emerald|red|blue|amber|purple|pink|cyan|orange|indigo|teal|slate)-(300|400|600|700)$/,
+    },
+    // Border colors
+    {
+      pattern: /^border-(emerald|red|blue|amber|purple|pink|cyan|orange|indigo|teal|slate)-(200|300|500|800)$/,
+    },
+    // Dark mode variants
+    {
+      pattern: /^dark:bg-(emerald|red|blue|amber|purple|pink|cyan|orange|indigo|teal|slate)-(900)\/(20|30)$/,
+    },
+    {
+      pattern: /^dark:text-(emerald|red|blue|amber|purple|pink|cyan|orange|indigo|teal|slate)-(300|400)$/,
+    },
+    {
+      pattern: /^dark:border-(emerald|red|blue|amber|purple|pink|cyan|orange|indigo|teal|slate)-(700|800)$/,
+    },
+  ],
   theme: {
     screens: {
       xs: '375px', // Small mobile (iPhone SE)
@@ -150,6 +182,7 @@ export default {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         display: ['Inter', 'sans-serif'], // Can swap for a more display-oriented font later
+        japanese: ['Noto Sans JP', 'Inter', 'sans-serif'], // Japanese font with full character support
       },
       boxShadow: {
         // Legacy shadows

@@ -27,28 +27,28 @@ export interface ModuleHubProps {
   moduleType: 'assessment' | 'discovery';
   title: string;
   subtitle: string;
-  
+
   // Tab configuration
   tabs: TabConfig[];
   activeTab: ModuleTab;
   onTabChange: (tab: ModuleTab) => void;
-  
+
   // View mode
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
-  
+
   // Dynamic documents
   openDocuments: OpenDocument[];
   activeDocumentId: string | null;
   onOpenDocument: (doc: OpenDocument) => void;
   onCloseDocument: (id: string) => void;
   onSelectDocument: (id: string) => void;
-  
+
   // Actions
   onNewItem?: () => void;
   newItemLabel?: string;
   categoryButtons?: CategoryButton[];
-  
+
   // Content
   children: React.ReactNode;
 }
@@ -84,13 +84,40 @@ export interface AssessmentItem {
 // Discovery Tools specific types
 export type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation';
 
-export type ToolType = 
+export type ToolType =
   // Strategic (1-10)
-  | 'SWT' | 'PTR' | 'ANS' | 'VCH' | 'BCG' | 'AMB' | 'FOC' | 'RSK' | 'CAP' | 'NAR'
+  | 'SWT'
+  | 'PTR'
+  | 'ANS'
+  | 'VCH'
+  | 'BCG'
+  | 'AMB'
+  | 'FOC'
+  | 'RSK'
+  | 'CAP'
+  | 'NAR'
   // Operational (11-20)
-  | 'VSM' | 'SOP' | 'A3P' | 'SMD' | 'DMS' | 'AUT' | 'CON' | 'DEC' | 'CTW' | 'INV'
+  | 'VSM'
+  | 'SOP'
+  | 'A3P'
+  | 'SMD'
+  | 'DMS'
+  | 'AUT'
+  | 'CON'
+  | 'DEC'
+  | 'CTW'
+  | 'INV'
   // Digital (21-30)
-  | 'ROB' | 'LOG' | 'RPA' | 'AID' | 'INT' | 'DVP' | 'LEG' | 'DAT' | 'P2S' | 'SPE'
+  | 'ROB'
+  | 'LOG'
+  | 'RPA'
+  | 'AID'
+  | 'INT'
+  | 'DVP'
+  | 'LEG'
+  | 'DAT'
+  | 'P2S'
+  | 'SPE'
   // Automation (31)
   | 'PAI';
 

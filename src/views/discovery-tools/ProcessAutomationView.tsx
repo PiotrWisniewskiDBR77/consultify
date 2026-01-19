@@ -124,7 +124,12 @@ export const ProcessAutomationView: React.FC = () => {
     { id: 'mapping', label: 'Process Mapping', labelPl: 'Mapowanie Procesu', icon: Play },
     { id: 'lean', label: 'Lean Optimization', labelPl: 'Optymalizacja Lean', icon: Sparkles },
     { id: 'automation', label: 'Automation Ideas', labelPl: 'Pomysły Automatyzacji', icon: Zap },
-    { id: 'economics', label: 'Economic Analysis', labelPl: 'Analiza Ekonomiczna', icon: Calculator },
+    {
+      id: 'economics',
+      label: 'Economic Analysis',
+      labelPl: 'Analiza Ekonomiczna',
+      icon: Calculator,
+    },
   ];
 
   return (
@@ -150,7 +155,10 @@ export const ProcessAutomationView: React.FC = () => {
                   {t('discoveryTools.processAutomation.title', 'Process Automation by AI')}
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400">
-                  {t('discoveryTools.processAutomation.subtitle', 'Interactive workshop for process optimization and automation')}
+                  {t(
+                    'discoveryTools.processAutomation.subtitle',
+                    'Interactive workshop for process optimization and automation'
+                  )}
                 </p>
               </div>
             </div>
@@ -173,7 +181,11 @@ export const ProcessAutomationView: React.FC = () => {
               type="text"
               value={processName}
               onChange={(e) => setProcessName(e.target.value)}
-              placeholder={isPolish ? 'Nazwa procesu (np. Order-to-Cash)' : 'Process name (e.g., Order-to-Cash)'}
+              placeholder={
+                isPolish
+                  ? 'Nazwa procesu (np. Order-to-Cash)'
+                  : 'Process name (e.g., Order-to-Cash)'
+              }
               className="w-full max-w-md px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder-slate-400"
             />
           </div>
@@ -189,9 +201,10 @@ export const ProcessAutomationView: React.FC = () => {
                   onClick={() => setCurrentPhase(phase.id)}
                   className={`
                     px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors
-                    ${isActive
-                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                    ${
+                      isActive
+                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                     }
                   `}
                 >
@@ -224,7 +237,9 @@ export const ProcessAutomationView: React.FC = () => {
             <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
               {totalTimeAfterLean} <span className="text-sm font-normal">min</span>
             </div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-400">-{fteSavedLean.toFixed(1)} FTE</div>
+            <div className="text-xs text-emerald-600 dark:text-emerald-400">
+              -{fteSavedLean.toFixed(1)} FTE
+            </div>
           </div>
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
             <div className="text-sm text-blue-600 dark:text-blue-400 mb-1">
@@ -233,7 +248,9 @@ export const ProcessAutomationView: React.FC = () => {
             <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
               {totalTimeAfterAutomation} <span className="text-sm font-normal">min</span>
             </div>
-            <div className="text-xs text-blue-600 dark:text-blue-400">-{fteSavedTotal.toFixed(1)} FTE total</div>
+            <div className="text-xs text-blue-600 dark:text-blue-400">
+              -{fteSavedTotal.toFixed(1)} FTE total
+            </div>
           </div>
           <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
             <div className="text-sm text-amber-600 dark:text-amber-400 mb-1">
@@ -242,7 +259,9 @@ export const ProcessAutomationView: React.FC = () => {
             <div className="text-2xl font-bold text-amber-700 dark:text-amber-300">
               {(annualSavings / 1000).toFixed(0)}k <span className="text-sm font-normal">PLN</span>
             </div>
-            <div className="text-xs text-amber-600 dark:text-amber-400">{volumePerDay}/day × {fteCost} PLN/FTE</div>
+            <div className="text-xs text-amber-600 dark:text-amber-400">
+              {volumePerDay}/day × {fteCost} PLN/FTE
+            </div>
           </div>
         </div>
 
@@ -252,7 +271,9 @@ export const ProcessAutomationView: React.FC = () => {
             <table className="w-full">
               <thead className="bg-slate-50 dark:bg-navy-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">LP</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                    LP
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
                     {isPolish ? 'Krok procesu' : 'Process Step'}
                   </th>
@@ -262,7 +283,9 @@ export const ProcessAutomationView: React.FC = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
                     {isPolish ? 'Czas (min)' : 'Time (min)'}
                   </th>
-                  {(currentPhase === 'lean' || currentPhase === 'automation' || currentPhase === 'economics') && (
+                  {(currentPhase === 'lean' ||
+                    currentPhase === 'automation' ||
+                    currentPhase === 'economics') && (
                     <>
                       <th className="px-4 py-3 text-left text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase">
                         {isPolish ? 'Optymalizacja Lean' : 'Lean Optimization'}
@@ -288,7 +311,9 @@ export const ProcessAutomationView: React.FC = () => {
               <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
                 {steps.map((step) => (
                   <tr key={step.id} className="hover:bg-slate-50 dark:hover:bg-navy-800">
-                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{step.lp}</td>
+                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                      {step.lp}
+                    </td>
                     <td className="px-4 py-3">
                       <input
                         type="text"
@@ -301,7 +326,9 @@ export const ProcessAutomationView: React.FC = () => {
                     <td className="px-4 py-3">
                       <select
                         value={step.type}
-                        onChange={(e) => updateStep(step.id, { type: e.target.value as 'task' | 'decision' })}
+                        onChange={(e) =>
+                          updateStep(step.id, { type: e.target.value as 'task' | 'decision' })
+                        }
                         className="px-2 py-1 text-sm border border-slate-200 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
                       >
                         <option value="task">{isPolish ? 'Zadanie' : 'Task'}</option>
@@ -312,18 +339,26 @@ export const ProcessAutomationView: React.FC = () => {
                       <input
                         type="number"
                         value={step.timeMinutes || ''}
-                        onChange={(e) => updateStep(step.id, { timeMinutes: Number(e.target.value) })}
+                        onChange={(e) =>
+                          updateStep(step.id, { timeMinutes: Number(e.target.value) })
+                        }
                         className="w-20 px-2 py-1 text-sm border border-slate-200 dark:border-navy-600 rounded bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
                       />
                     </td>
-                    {(currentPhase === 'lean' || currentPhase === 'automation' || currentPhase === 'economics') && (
+                    {(currentPhase === 'lean' ||
+                      currentPhase === 'automation' ||
+                      currentPhase === 'economics') && (
                       <>
                         <td className="px-4 py-3">
                           <input
                             type="text"
                             value={step.leanOptimization}
-                            onChange={(e) => updateStep(step.id, { leanOptimization: e.target.value })}
-                            placeholder={isPolish ? 'Pomysł optymalizacji...' : 'Optimization idea...'}
+                            onChange={(e) =>
+                              updateStep(step.id, { leanOptimization: e.target.value })
+                            }
+                            placeholder={
+                              isPolish ? 'Pomysł optymalizacji...' : 'Optimization idea...'
+                            }
                             className="w-full px-2 py-1 text-sm border border-emerald-200 dark:border-emerald-800 rounded bg-emerald-50 dark:bg-emerald-900/20 text-slate-900 dark:text-white"
                           />
                         </td>
@@ -331,7 +366,9 @@ export const ProcessAutomationView: React.FC = () => {
                           <input
                             type="number"
                             value={step.leanSavingsMinutes || ''}
-                            onChange={(e) => updateStep(step.id, { leanSavingsMinutes: Number(e.target.value) })}
+                            onChange={(e) =>
+                              updateStep(step.id, { leanSavingsMinutes: Number(e.target.value) })
+                            }
                             className="w-16 px-2 py-1 text-sm border border-emerald-200 dark:border-emerald-800 rounded bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300"
                           />
                         </td>
@@ -343,7 +380,11 @@ export const ProcessAutomationView: React.FC = () => {
                           <div className="flex gap-2">
                             <select
                               value={step.automationType}
-                              onChange={(e) => updateStep(step.id, { automationType: e.target.value as ProcessStep['automationType'] })}
+                              onChange={(e) =>
+                                updateStep(step.id, {
+                                  automationType: e.target.value as ProcessStep['automationType'],
+                                })
+                              }
                               className="px-2 py-1 text-sm border border-blue-200 dark:border-blue-800 rounded bg-blue-50 dark:bg-blue-900/20 text-slate-900 dark:text-white"
                             >
                               <option value="none">-</option>
@@ -358,7 +399,9 @@ export const ProcessAutomationView: React.FC = () => {
                           <input
                             type="number"
                             value={step.timeAfterAutomation || ''}
-                            onChange={(e) => updateStep(step.id, { timeAfterAutomation: Number(e.target.value) })}
+                            onChange={(e) =>
+                              updateStep(step.id, { timeAfterAutomation: Number(e.target.value) })
+                            }
                             className="w-16 px-2 py-1 text-sm border border-blue-200 dark:border-blue-800 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                           />
                         </td>

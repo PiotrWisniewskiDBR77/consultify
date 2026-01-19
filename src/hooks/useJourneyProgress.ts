@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { ACTIVATION_MILESTONES, isPhaseActivated } from '../config/activationMilestones';
 import { Api } from '@/services/api';
+
+import { ACTIVATION_MILESTONES, isPhaseActivated } from '../config/activationMilestones';
 
 /**
  * useJourneyProgress — Track user's journey progress

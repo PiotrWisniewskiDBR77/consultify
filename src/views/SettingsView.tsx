@@ -16,8 +16,6 @@ import { ArrowLeft, Menu, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '../lib/utils';
-
 // Profile components
 import { MFASetup } from '../components/Profile/MFASetup';
 // Settings components
@@ -71,6 +69,7 @@ import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesS
 // UI components
 import { Button } from '../components/ui/primitives/Button';
 import { ScrollArea } from '../components/ui/scroll-area';
+import { cn } from '../lib/utils';
 // Store and types
 import { useAppStore } from '../store/useAppStore';
 import { AppView, User } from '../types';

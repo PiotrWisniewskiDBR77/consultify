@@ -1,25 +1,41 @@
 /**
  * LanguageSettings - Language/locale settings
+ *
+ * Uses centralized i18n configuration for consistent language support across the app.
  */
 
 import { Check, Globe } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  changeLanguage,
+  LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
+  type SupportedLanguage,
+} from '../../i18n';
 import { useAppStore } from '../../store/useAppStore';
 
 interface LanguageSettingsProps {
   className?: string;
 }
 
-const ALL_LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
-  { code: 'ja', name: '日本語', flag: '🇯🇵' },
-];
+// Language flags mapping
+const LANGUAGE_FLAGS: Record<SupportedLanguage, string> = {
+  en: '🇬🇧',
+  pl: '🇵🇱',
+  de: '🇩🇪',
+  es: '🇪🇸',
+  ar: '🇸🇦',
+  ja: '🇯🇵',
+};
+
+// Build language list from centralized configuration
+const ALL_LANGUAGES = SUPPORTED_LANGUAGES.map((code) => ({
+  code,
+  name: LANGUAGE_NAMES[code],
+  flag: LANGUAGE_FLAGS[code],
+}));
 
 export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = '' }) => {
   const { t, i18n } = useTranslation();
@@ -27,16 +43,17 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
   const [currentLang, setCurrentLang] = useState(i18n.language || 'en');
 
   // SuperAdmin: only Polish and English
-  // Regular users: all 6 languages
+  // Regular users: all supported languages
   const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPERADMIN';
   const LANGUAGES = isSuperAdmin
     ? ALL_LANGUAGES.filter((lang) => ['en', 'pl'].includes(lang.code))
     : ALL_LANGUAGES;
 
-  const handleLanguageChange = (langCode: string) => {
-    setCurrentLang(langCode);
-    i18n.changeLanguage(langCode);
-    localStorage.setItem('i18nextLng', langCode);
+  const handleLanguageChange = async (langCode: string) => {
+    const success = await changeLanguage(langCode);
+    if (success) {
+      setCurrentLang(langCode);
+    }
   };
 
   return (

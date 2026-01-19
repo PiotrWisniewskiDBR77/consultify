@@ -10,8 +10,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { Api } from '@/services/api';
 import {
-  CanvasCategory,
   CANVAS_CATEGORIES,
+  CanvasCategory,
   ClientContext,
   DiscoveryEdge,
   DiscoveryNode,
@@ -399,13 +399,14 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       },
 
       updateNode: (id, data) => {
-        set((state) => ({
-          nodes: state.nodes.map((node) =>
+        set((state) => {
+          const updatedNodes = state.nodes.map((node) =>
             node.id === id
               ? { ...node, data: { ...node.data, ...data }, updatedAt: new Date() }
               : node
-          ),
-        }));
+          );
+          return { nodes: updatedNodes } as Partial<DiscoveryState>;
+        });
       },
 
       removeNode: (id) => {
@@ -551,22 +552,22 @@ export const useDiscoveryStore = create<DiscoveryState>()(
         });
 
         // Update client context
-        if (Object.keys(entities.clientContext).length > 0) {
+        if (entities.clientContext && Object.keys(entities.clientContext).length > 0) {
           updateClientContext(entities.clientContext);
         }
 
         // Update phase progress
-        if (entities.phaseProgress.contextComplete) {
+        if (entities.phaseProgress?.contextComplete) {
           setContextComplete(true);
         }
-        if (entities.phaseProgress.impactQuantified) {
+        if (entities.phaseProgress?.impactQuantified) {
           setImpactQuantified(true);
         }
 
         console.log('[DiscoveryStore] Processed extraction:', {
-          pains: entities.painPoints.length,
-          insights: entities.insights.length,
-          quotes: entities.quotes.length,
+          pains: (entities.painPoints || []).length,
+          insights: (entities.insights || []).length,
+          quotes: (entities.quotes || []).length,
         });
       },
 

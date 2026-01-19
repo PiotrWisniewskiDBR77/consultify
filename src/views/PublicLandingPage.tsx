@@ -58,42 +58,111 @@ export const PublicLandingPage: React.FC = () => {
             zbyt ważne na przypadek.
           </h1>
 
-          {/* Problem Narrative — Bento Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 text-left">
-            <div className="glass-card p-8 rounded-xl group hover:bg-brand-600/5 transition-all duration-500 border-white/5">
-              <Layers
-                className="text-brand-400 mb-6 group-hover:scale-110 transition-transform duration-500"
-                size={32}
-              />
-              <h3 className="text-xl font-semibold mb-3">Wiedza Rozproszona</h3>
-              <p className="text-white/50 leading-relaxed font-light">
-                Kluczowe informacje giną między spotkaniami, a kontekst decyzji rozpływa się w
-                szumie codzienności.
-              </p>
+          {/* 6-Card Grid — Experience Navigator */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-16">
+            {/* Card 1: Explore Demo */}
+            <div
+              onClick={handleDemoClick}
+              className="glass-card p-8 rounded-xl group hover:bg-brand-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
+            >
+              <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
+                Instant Access
+              </div>
+              <div className="mt-8">
+                <h3 className="text-2xl font-bold mb-3">Explore Demo</h3>
+                <p className="text-white/50 leading-relaxed text-sm">
+                  Experience a live environment with fictional, realistic data.
+                </p>
+              </div>
             </div>
 
-            <div className="glass-card p-8 rounded-xl group hover:bg-blue-600/5 transition-all duration-500 border-white/5">
-              <Target
-                className="text-blue-400 mb-6 group-hover:scale-110 transition-transform duration-500"
-                size={32}
-              />
-              <h3 className="text-xl font-semibold mb-3">Znikający Kontekst</h3>
-              <p className="text-white/50 leading-relaxed font-light">
-                Uzasadnienia ważnych wyborów znikają wraz z ludźmi, zostawiając organizację bez
-                pamięci instytucjonalnej.
-              </p>
+            {/* Card 2: Start Free Trial - PRIMARY PATH (Highlighted) */}
+            <div
+              onClick={() => navigate('/trial')}
+              className="glass-card p-8 rounded-xl group hover:bg-brand-600/10 transition-all duration-500 border-2 border-brand-500/30 cursor-pointer relative overflow-hidden row-span-2"
+            >
+              <div className="absolute top-4 left-4 text-[10px] font-bold text-brand-400 uppercase tracking-[0.2em]">
+                Primary Path
+              </div>
+              <div className="mt-8 flex flex-col h-full justify-center">
+                <h3 className="text-3xl md:text-4xl font-bold mb-4">Start Free Trial</h3>
+                <p className="text-white/60 leading-relaxed mb-6">
+                  Use Consultinify on your real organization data and build your transformation
+                  roadmap.
+                </p>
+                <ArrowRight
+                  className="text-brand-400 group-hover:translate-x-2 transition-transform duration-500"
+                  size={32}
+                />
+              </div>
             </div>
 
-            <div className="glass-card p-8 rounded-xl group hover:bg-purple-600/5 transition-all duration-500 border-white/5">
-              <Zap
-                className="text-purple-400 mb-6 group-hover:scale-110 transition-transform duration-500"
-                size={32}
-              />
-              <h3 className="text-xl font-semibold mb-3">Błąd Metody</h3>
-              <p className="text-white/50 leading-relaxed font-light">
-                To nie jest problem narzędzi — to problem braku struktury w procesie myślenia
-                strategicznego.
-              </p>
+            {/* Card 3: How It Works - Video Tour */}
+            <div
+              onClick={() => navigate('/demo')}
+              className="glass-card p-6 rounded-xl group hover:bg-blue-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
+            >
+              <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
+                Product Tour
+              </div>
+              <div className="mt-8 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-brand-600/20 transition-colors">
+                  <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-1">How It Works</h3>
+                  <p className="text-white/40 text-sm">Guided by Dr. Piotr Wiśniewski</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Talk to Expert */}
+            <div
+              onClick={() => navigate('/contact')}
+              className="glass-card p-8 rounded-xl group hover:bg-emerald-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
+            >
+              <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
+                1-on-1 Consulting
+              </div>
+              <div className="mt-8">
+                <h3 className="text-2xl font-bold mb-3">Talk to Expert</h3>
+                <p className="text-white/50 leading-relaxed text-sm">
+                  Custom Enterprise transformation approach.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 5: Become Partner - Replacing Log In */}
+            <div
+              onClick={handlePartnerClick}
+              className="glass-card p-8 rounded-xl group hover:bg-purple-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
+            >
+              <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
+                Returning Users
+              </div>
+              <div className="mt-8 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl bg-brand-600/20 flex items-center justify-center border border-brand-500/30 group-hover:bg-brand-600/30 transition-colors">
+                  <Handshake size={32} className="text-brand-400" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-1">Become Partner</h3>
+                  <p className="text-white/40 text-sm">Join our ecosystem.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 6: AI Consulting Pitch */}
+            <div className="glass-card p-8 rounded-xl group hover:bg-gradient-to-br hover:from-brand-600/10 hover:to-purple-600/10 transition-all duration-500 border-white/5 relative overflow-hidden">
+              <div className="flex flex-col h-full justify-center items-center text-center">
+                <h3 className="text-3xl font-bold mb-2">AI consulting.</h3>
+                <h3 className="text-3xl font-bold mb-2">
+                  <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">
+                    No slides.
+                  </span>
+                </h3>
+                <h3 className="text-3xl font-bold">Just decisions.</h3>
+                <div className="w-12 h-1 bg-brand-500 mt-4 rounded-full" />
+              </div>
             </div>
           </div>
         </section>
@@ -139,47 +208,6 @@ export const PublicLandingPage: React.FC = () => {
 
           <div className="mt-8 text-white/30 text-xs font-medium uppercase tracking-[0.3em]">
             Bez Formularzy • Bez Zobowiązań
-          </div>
-        </section>
-
-        {/* PARTNER CTA SECTION */}
-        <section
-          className="max-w-4xl mx-auto py-16 animate-fade-up"
-          style={{ animationDelay: '0.4s' }}
-        >
-          <div className="glass-panel p-10 rounded-xl border border-brand-500/20 bg-gradient-to-br from-brand-600/5 to-purple-600/5 relative overflow-hidden">
-            {/* Decorative Elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl" />
-
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-              <div className="flex-shrink-0">
-                <div className="w-20 h-20 rounded-xl bg-brand-600/20 flex items-center justify-center border border-brand-500/30">
-                  <Handshake size={40} className="text-brand-400" />
-                </div>
-              </div>
-
-              <div className="flex-1 text-center md:text-left">
-                <h3 className="text-2xl md:text-3xl font-bold mb-3">Zostań Naszym Partnerem</h3>
-                <p className="text-white/60 text-lg leading-relaxed max-w-xl">
-                  Jesteś konsultantem lub prowadzisz firmę doradczą? Dołącz do sieci partnerów
-                  TechnoLex i wspólnie transformujmy przyszłość strategicznego doradztwa.
-                </p>
-              </div>
-
-              <div className="flex-shrink-0">
-                <button
-                  onClick={handlePartnerClick}
-                  className="group inline-flex items-center gap-3 bg-white/10 dark:bg-navy-900/30 hover:bg-brand-600 border border-white/20 hover:border-brand-500 text-white font-semibold text-lg px-8 py-4 rounded-xl transition-all duration-500 hover:shadow-[0_0_40px_-10px_rgba(124,58,237,0.5)]"
-                >
-                  <span>Dowiedz się więcej</span>
-                  <ArrowRight
-                    className="group-hover:translate-x-1 transition-transform duration-300"
-                    size={20}
-                  />
-                </button>
-              </div>
-            </div>
           </div>
         </section>
       </main>

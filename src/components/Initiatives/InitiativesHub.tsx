@@ -5,36 +5,23 @@
  * Connected to real API endpoints
  */
 
-import {
-  Lightbulb,
-  Plus,
-  RefreshCw,
-} from 'lucide-react';
+import { Lightbulb, Plus, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { useAppStore } from '../../store/useAppStore';
-import { 
-  InitiativeStatus, 
-  PortfolioFilters, 
-  PortfolioInitiative, 
-} from '../../types';
 
+import { useAppStore } from '../../store/useAppStore';
+import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
+// Initiative Card component
+import { InitiativeCard } from '../InitiativeCard';
 // Portfolio view components
 import { InitiativeSidePanel } from '../Portfolio/InitiativeSidePanel';
 import { PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 import { PortfolioListView } from '../Portfolio/PortfolioListView';
 import { PortfolioMatrixView } from '../Portfolio/PortfolioMatrixView';
 import { PortfolioTimelineView } from '../Portfolio/PortfolioTimelineView';
-
-// Initiative Card component
-import { InitiativeCard } from '../InitiativeCard';
-
-// Dynamic card for full initiative view
-import { InitiativeDetailCard } from './InitiativeDetailCard';
-
 // ModuleHub components
 import {
   CategoryButton,
@@ -45,13 +32,18 @@ import {
   StatusFilter,
   ViewMode,
 } from '../shared/ModuleHub';
+// Dynamic card for full initiative view
+import { InitiativeDetailCard } from './InitiativeDetailCard';
 
 // Status metadata for filters
-const STATUS_META: Record<InitiativeStatus, { 
-  color: string; 
-  label: string; 
-  dotColor: string;
-}> = {
+const STATUS_META: Record<
+  InitiativeStatus,
+  {
+    color: string;
+    label: string;
+    dotColor: string;
+  }
+> = {
   [InitiativeStatus.DRAFT]: { color: 'slate', label: 'Draft', dotColor: 'bg-slate-400' },
   [InitiativeStatus.PLANNING]: { color: 'blue', label: 'Planning', dotColor: 'bg-blue-400' },
   [InitiativeStatus.REVIEW]: { color: 'amber', label: 'In Review', dotColor: 'bg-amber-400' },
@@ -67,9 +59,7 @@ interface InitiativesHubProps {
   initialTab?: ModuleTab;
 }
 
-export const InitiativesHub: React.FC<InitiativesHubProps> = ({
-  initialTab = 'list',
-}) => {
+export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t } = useTranslation();
   const { currentProjectId } = useAppStore();
 
@@ -81,7 +71,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string | null>(null);
-  
+
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,39 +89,44 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
   // DATA FETCHING - Real API
   // ============================================
 
-  const fetchData = useCallback(async (showRefreshIndicator = false) => {
-    if (showRefreshIndicator) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-
-    try {
-      const params = new URLSearchParams();
-      if (currentProjectId) params.append('projectId', currentProjectId);
-      if (activeStatusFilter) params.append('status', activeStatusFilter);
-      if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
-      if (searchQuery) params.append('search', searchQuery);
-
-      // Try portfolio endpoint first, fallback to regular initiatives
-      let response;
-      try {
-        response = await Api.get(`/initiatives/portfolio?${params.toString()}`);
-      } catch {
-        // Fallback to regular initiatives endpoint
-        response = await Api.getInitiatives(currentProjectId || undefined);
-        response = { initiatives: Array.isArray(response) ? response : response.initiatives || [] };
+  const fetchData = useCallback(
+    async (showRefreshIndicator = false) => {
+      if (showRefreshIndicator) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
       }
 
-      setInitiatives(response.initiatives || []);
-    } catch (error: any) {
-      console.error('[InitiativesHub] Fetch error:', error);
-      toast.error('Failed to load initiatives');
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [currentProjectId, activeStatusFilter, filters.priority, searchQuery]);
+      try {
+        const params = new URLSearchParams();
+        if (currentProjectId) params.append('projectId', currentProjectId);
+        if (activeStatusFilter) params.append('status', activeStatusFilter);
+        if (filters.priority?.length) filters.priority.forEach((p) => params.append('priority', p));
+        if (searchQuery) params.append('search', searchQuery);
+
+        // Try portfolio endpoint first, fallback to regular initiatives
+        let response;
+        try {
+          response = await Api.get(`/initiatives/portfolio?${params.toString()}`);
+        } catch {
+          // Fallback to regular initiatives endpoint
+          response = await Api.getInitiatives(currentProjectId || undefined);
+          response = {
+            initiatives: Array.isArray(response) ? response : response.initiatives || [],
+          };
+        }
+
+        setInitiatives(response.initiatives || []);
+      } catch (error: any) {
+        console.error('[InitiativesHub] Fetch error:', error);
+        toast.error('Failed to load initiatives');
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [currentProjectId, activeStatusFilter, filters.priority, searchQuery]
+  );
 
   useEffect(() => {
     fetchData();
@@ -143,21 +138,66 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
 
   const statusFilters: StatusFilter[] = useMemo(() => {
     const counts: Record<string, number> = {};
-    initiatives.forEach(i => {
+    initiatives.forEach((i) => {
       counts[i.status] = (counts[i.status] || 0) + 1;
     });
-    
+
     return [
       { id: 'all', label: 'All', color: 'bg-slate-400', count: initiatives.length },
-      { id: InitiativeStatus.DRAFT, label: 'Draft', color: 'bg-slate-400', count: counts[InitiativeStatus.DRAFT] || 0 },
-      { id: InitiativeStatus.PLANNING, label: 'Planning', color: 'bg-blue-400', count: counts[InitiativeStatus.PLANNING] || 0 },
-      { id: InitiativeStatus.REVIEW, label: 'Review', color: 'bg-amber-400', count: counts[InitiativeStatus.REVIEW] || 0 },
-      { id: InitiativeStatus.APPROVED, label: 'Approved', color: 'bg-emerald-400', count: counts[InitiativeStatus.APPROVED] || 0 },
-      { id: InitiativeStatus.EXECUTING, label: 'Executing', color: 'bg-cyan-400', count: counts[InitiativeStatus.EXECUTING] || 0 },
-      { id: InitiativeStatus.BLOCKED, label: 'Blocked', color: 'bg-red-400', count: counts[InitiativeStatus.BLOCKED] || 0 },
-      { id: InitiativeStatus.DONE, label: 'Done', color: 'bg-green-400', count: counts[InitiativeStatus.DONE] || 0 },
-      { id: InitiativeStatus.CANCELLED, label: 'Cancelled', color: 'bg-gray-400', count: counts[InitiativeStatus.CANCELLED] || 0 },
-      { id: InitiativeStatus.ARCHIVED, label: 'Archived', color: 'bg-slate-500', count: counts[InitiativeStatus.ARCHIVED] || 0 },
+      {
+        id: InitiativeStatus.DRAFT,
+        label: 'Draft',
+        color: 'bg-slate-400',
+        count: counts[InitiativeStatus.DRAFT] || 0,
+      },
+      {
+        id: InitiativeStatus.PLANNING,
+        label: 'Planning',
+        color: 'bg-blue-400',
+        count: counts[InitiativeStatus.PLANNING] || 0,
+      },
+      {
+        id: InitiativeStatus.REVIEW,
+        label: 'Review',
+        color: 'bg-amber-400',
+        count: counts[InitiativeStatus.REVIEW] || 0,
+      },
+      {
+        id: InitiativeStatus.APPROVED,
+        label: 'Approved',
+        color: 'bg-emerald-400',
+        count: counts[InitiativeStatus.APPROVED] || 0,
+      },
+      {
+        id: InitiativeStatus.EXECUTING,
+        label: 'Executing',
+        color: 'bg-cyan-400',
+        count: counts[InitiativeStatus.EXECUTING] || 0,
+      },
+      {
+        id: InitiativeStatus.BLOCKED,
+        label: 'Blocked',
+        color: 'bg-red-400',
+        count: counts[InitiativeStatus.BLOCKED] || 0,
+      },
+      {
+        id: InitiativeStatus.DONE,
+        label: 'Done',
+        color: 'bg-green-400',
+        count: counts[InitiativeStatus.DONE] || 0,
+      },
+      {
+        id: InitiativeStatus.CANCELLED,
+        label: 'Cancelled',
+        color: 'bg-gray-400',
+        count: counts[InitiativeStatus.CANCELLED] || 0,
+      },
+      {
+        id: InitiativeStatus.ARCHIVED,
+        label: 'Archived',
+        color: 'bg-slate-500',
+        count: counts[InitiativeStatus.ARCHIVED] || 0,
+      },
     ];
   }, [initiatives]);
 
@@ -168,14 +208,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
   const tabs: any[] = [];
 
   // Category buttons - only New Initiative
-  const categoryButtons: CategoryButton[] = useMemo(() => [
-    {
-      id: 'new',
-      label: 'New Initiative',
-      icon: <Plus size={16} />,
-      onClick: () => setShowNewModal(true),
-    },
-  ], []);
+  const categoryButtons: CategoryButton[] = useMemo(
+    () => [
+      {
+        id: 'new',
+        label: 'New Initiative',
+        icon: <Plus size={16} />,
+        onClick: () => setShowNewModal(true),
+      },
+    ],
+    []
+  );
 
   // ============================================
   // HANDLERS
@@ -187,50 +230,63 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
     setIsSidePanelOpen(true);
   }, []);
 
-// Open initiative as dynamic card - called from side panel button
-  const handleOpenFullScreen = useCallback((initiative: PortfolioInitiative) => {
-    // Close side panel first
-    setIsSidePanelOpen(false);
+  // Open initiative as dynamic card - called from side panel button
+  const handleOpenFullScreen = useCallback(
+    (initiative: PortfolioInitiative) => {
+      // Close side panel first
+      setIsSidePanelOpen(false);
 
-    // Add to open documents for tab display (if not already open)
-    const existingDoc = openDocuments.find(d => d.id === initiative.id);
-    if (!existingDoc) {
-      const newDoc: OpenDocument = {
-        id: initiative.id,
-        name: initiative.name,
-        type: 'initiative',
-        subType: initiative.axis || 'operational',
-        status: initiative.status as any,
-      };
-      setOpenDocuments(prev => [...prev, newDoc]);
-    }
-    // Set as active document - this will trigger rendering InitiativeDetailCard
-    setActiveDocumentId(initiative.id);
-  }, [openDocuments]);
+      // Add to open documents for tab display (if not already open)
+      const existingDoc = openDocuments.find((d) => d.id === initiative.id);
+      if (!existingDoc) {
+        const newDoc: OpenDocument = {
+          id: initiative.id,
+          name: initiative.name,
+          type: 'initiative',
+          subType: initiative.axis || 'operational',
+          status: initiative.status as any,
+        };
+        setOpenDocuments((prev) => [...prev, newDoc]);
+      }
+      // Set as active document - this will trigger rendering InitiativeDetailCard
+      setActiveDocumentId(initiative.id);
+    },
+    [openDocuments]
+  );
 
   const handleCloseSidePanel = useCallback(() => {
     setIsSidePanelOpen(false);
     setTimeout(() => setSelectedInitiative(null), 300);
   }, []);
 
-  const handleStatusChange = useCallback(async (initiativeId: string, newStatus: InitiativeStatus) => {
-    try {
-      await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
-      setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i)));
-      toast.success('Status updated');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || 'Failed to update status');
-    }
-  }, []);
+  const handleStatusChange = useCallback(
+    async (initiativeId: string, newStatus: InitiativeStatus) => {
+      try {
+        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
+        setInitiatives((prev) =>
+          prev.map((i) => (i.id === initiativeId ? { ...i, status: newStatus } : i))
+        );
+        toast.success('Status updated');
+      } catch (error: any) {
+        toast.error(error?.response?.data?.error || 'Failed to update status');
+      }
+    },
+    []
+  );
 
-  const handleQuickUpdate = useCallback(async (initiativeId: string, updates: Partial<PortfolioInitiative>) => {
-    try {
-      await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
-      setInitiatives((prev) => prev.map((i) => (i.id === initiativeId ? { ...i, ...updates } : i)));
-    } catch (error: any) {
-      toast.error('Failed to update');
-    }
-  }, []);
+  const handleQuickUpdate = useCallback(
+    async (initiativeId: string, updates: Partial<PortfolioInitiative>) => {
+      try {
+        await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
+        setInitiatives((prev) =>
+          prev.map((i) => (i.id === initiativeId ? { ...i, ...updates } : i))
+        );
+      } catch (error: any) {
+        toast.error('Failed to update');
+      }
+    },
+    []
+  );
 
   const handleRemoveFilter = useCallback((id: string) => {
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));
@@ -244,12 +300,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
     setActiveDocumentId(null);
   }, []);
 
-  const handleCloseDocument = useCallback((id: string) => {
-    setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
-    if (activeDocumentId === id) {
-      setActiveDocumentId(null);
-    }
-  }, [activeDocumentId]);
+  const handleCloseDocument = useCallback(
+    (id: string) => {
+      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (activeDocumentId === id) {
+        setActiveDocumentId(null);
+      }
+    },
+    [activeDocumentId]
+  );
 
   // Handle save from dynamic card
   const handleSaveFromCard = useCallback(() => {
@@ -265,12 +324,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
   const renderContent = () => {
     // If there's an active document, show the dynamic card
     if (activeDocumentId) {
-      return (
-        <InitiativeDetailCard
-          initiativeId={activeDocumentId}
-          onSave={handleSaveFromCard}
-        />
-      );
+      return <InitiativeDetailCard initiativeId={activeDocumentId} onSave={handleSaveFromCard} />;
     }
 
     if (isLoading) {
@@ -304,14 +358,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
 
     // Filter by status if active
     const filteredInitiatives = activeStatusFilter
-      ? initiatives.filter(i => i.status === activeStatusFilter)
+      ? initiatives.filter((i) => i.status === activeStatusFilter)
       : initiatives;
 
     // Filter by search
     const searchedInitiatives = searchQuery
-      ? filteredInitiatives.filter(i =>
-          i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (i.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+      ? filteredInitiatives.filter(
+          (i) =>
+            i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (i.description || '').toLowerCase().includes(searchQuery.toLowerCase())
         )
       : filteredInitiatives;
 
@@ -332,13 +387,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
               {searchedInitiatives.map((initiative) => (
                 <InitiativeCard
                   key={initiative.id}
-                  initiative={{
-                    ...initiative,
-                    title: initiative.name,
-                    name: initiative.name,
-                    status: initiative.status as any,
-                    priority: initiative.priority as any,
-                  } as any}
+                  initiative={
+                    {
+                      ...initiative,
+                      title: initiative.name,
+                      name: initiative.name,
+                      status: initiative.status as any,
+                      priority: initiative.priority as any,
+                    } as any
+                  }
                   onClick={() => handleInitiativeClick(initiative)}
                 />
               ))}
@@ -405,9 +462,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
         onStatusFilterChange={setActiveStatusFilter}
         availableViewModes={availableViewModes}
       >
-        <div className="flex-1 overflow-hidden">
-          {renderContent()}
-        </div>
+        <div className="flex-1 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
 
       {/* Side Panel for Initiative Details */}
@@ -425,9 +480,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold text-white mb-4">
-              Create New Initiative
-            </h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Create New Initiative</h2>
             <p className="text-slate-400 text-sm mb-6">
               This feature is coming soon. Use the AI Chat to generate initiatives from assessments.
             </p>

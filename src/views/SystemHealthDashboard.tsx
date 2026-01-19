@@ -3,8 +3,8 @@
  * Hidden diagnostic panel accessible from landing page
  */
 
-import React, { useState, useEffect } from 'react';
-import { Activity, CheckCircle, XCircle, AlertTriangle, RefreshCw, Zap } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, RefreshCw, XCircle, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 interface HealthCheck {
   name: string;

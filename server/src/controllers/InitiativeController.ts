@@ -381,7 +381,19 @@ export class InitiativeController {
         if (s.includes('STEP4') || s.includes('STEP_4') || s.includes('PILOT')) return 'APPROVED';
         if (s.includes('STEP5') || s.includes('STEP_5') || s.includes('FULL')) return 'EXECUTING';
         if (s === 'COMPLETED' || s === 'DONE') return 'DONE';
-        if (['DRAFT', 'PLANNING', 'REVIEW', 'APPROVED', 'EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED'].includes(s)) {
+        if (
+          [
+            'DRAFT',
+            'PLANNING',
+            'REVIEW',
+            'APPROVED',
+            'EXECUTING',
+            'BLOCKED',
+            'DONE',
+            'CANCELLED',
+            'ARCHIVED',
+          ].includes(s)
+        ) {
           return s;
         }
         return 'DRAFT';
@@ -402,7 +414,10 @@ export class InitiativeController {
       };
 
       const initiatives = rows.map((i: Record<string, unknown>) => {
-        const budget = ((i.cost_capex as number) || 0) + ((i.cost_opex as number) || 0) || (i.business_value as number) || 0;
+        const budget =
+          ((i.cost_capex as number) || 0) + ((i.cost_opex as number) || 0) ||
+          (i.business_value as number) ||
+          0;
         return {
           id: i.id,
           organizationId: i.organization_id,
@@ -428,8 +443,8 @@ export class InitiativeController {
           plannedEndDate: i.planned_end_date,
           actualStartDate: i.actual_start_date,
           actualEndDate: i.actual_end_date,
-          priority: (String(i.priority || 'MEDIUM')).toUpperCase(),
-          targetQuarter: i.planned_start_date 
+          priority: String(i.priority || 'MEDIUM').toUpperCase(),
+          targetQuarter: i.planned_start_date
             ? `Q${Math.ceil((new Date(i.planned_start_date as string).getMonth() + 1) / 3)} ${new Date(i.planned_start_date as string).getFullYear()}`
             : undefined,
           ownerBusiness: i.owner_business_id
@@ -465,11 +480,8 @@ export class InitiativeController {
       const review = byStatus['REVIEW'] || 0;
       const blockedCount = byStatus['BLOCKED'] || 0;
       const done = byStatus['DONE'] || 0;
-      
-      const totalBudget = initiatives.reduce(
-        (sum: number, i: any) => sum + (i.budget || 0),
-        0
-      );
+
+      const totalBudget = initiatives.reduce((sum: number, i: any) => sum + (i.budget || 0), 0);
       const totalValue = initiatives.reduce(
         (sum: number, i: any) => sum + (i.businessValue || 0),
         0
@@ -1028,6 +1040,201 @@ export class InitiativeController {
         message: 'Initiative archived',
         initiativeId,
         newStatus: 'archived',
+      });
+    }
+  );
+
+  // ==========================================
+  // BENEFITS MODULE: KPI ENDPOINTS
+  // ==========================================
+
+  /**
+   * Get initiatives filtered by status (for Benefits module)
+   */
+  static getInitiativesByStatus = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { statuses } = req.params;
+      if (!statuses) {
+        res.status(400).json({ error: 'Statuses parameter is required' });
+        return;
+      }
+
+      // Parse comma-separated statuses and map DONE to COMPLETED
+      const statusList = statuses.split(',').map((s: string) => {
+        const trimmed = s.trim().toUpperCase();
+        if (trimmed === 'DONE') return 'COMPLETED';
+        return trimmed;
+      });
+
+      const placeholders = statusList.map(() => '?').join(',');
+      const sql = `
+        SELECT i.*, p.name as project_name
+        FROM initiatives i
+        LEFT JOIN projects p ON i.project_id = p.id
+        WHERE i.organization_id = ? AND UPPER(i.status) IN (${placeholders})
+        ORDER BY i.updated_at DESC
+      `;
+
+      const rows = await queryHelpers.queryAll(sql, [orgId, ...statusList]);
+
+      const initiatives = rows.map((i: Record<string, unknown>) => ({
+        id: i.id,
+        name: i.name,
+        description: i.description,
+        axis: i.axis,
+        priority: i.priority,
+        status: (i.status as string)?.toUpperCase() === 'COMPLETED' ? 'DONE' : i.status,
+        progress: i.progress || 0,
+        projectId: i.project_id,
+        projectName: i.project_name,
+        organizationId: i.organization_id,
+        createdAt: i.created_at,
+        updatedAt: i.updated_at,
+      }));
+
+      res.json({ initiatives });
+    }
+  );
+
+  /**
+   * Get KPIs for an initiative
+   */
+  static getInitiativeKpis = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Verify initiative belongs to org
+      const initiative = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const kpis = await queryHelpers.queryAll(
+        `SELECT 
+          id,
+          initiative_id as initiativeId,
+          name,
+          description,
+          category,
+          unit,
+          baseline_value as baselineValue,
+          target_value as targetValue,
+          current_value as currentValue,
+          progress_percentage as progressPercentage,
+          status,
+          measurement_frequency as measurementFrequency,
+          trend_data as trendData,
+          created_at as createdAt,
+          updated_at as updatedAt,
+          CASE WHEN current_value >= target_value THEN 1 ELSE 0 END as isOnTarget,
+          current_value as latestValue
+        FROM initiative_kpis 
+        WHERE initiative_id = ?
+        ORDER BY created_at DESC`,
+        [initiativeId]
+      );
+
+      // Parse trend_data JSON
+      const parsedKpis = kpis.map((kpi: any) => ({
+        ...kpi,
+        trendData: safeJsonParse(kpi.trendData, []),
+        isOnTarget: Boolean(kpi.isOnTarget),
+      }));
+
+      res.json({ kpis: parsedKpis });
+    }
+  );
+
+  /**
+   * Create a new KPI for an initiative
+   */
+  static createInitiativeKpi = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const { id: initiativeId } = req.params;
+      const { name, description, category, unit, baselineValue, targetValue, measurementFrequency } = req.body;
+
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      if (!name || !category || !unit) {
+        res.status(400).json({ error: 'Name, category, and unit are required' });
+        return;
+      }
+
+      // Verify initiative belongs to org
+      const initiative = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      const kpiId = uuidv4();
+      const now = new Date().toISOString();
+
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_kpis (
+          id, initiative_id, organization_id, name, description, category, unit, 
+          baseline_value, target_value, current_value, progress_percentage, status,
+          measurement_frequency, trend_data, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'on_track', ?, '[]', ?, ?)`,
+        [
+          kpiId,
+          initiativeId,
+          orgId,
+          name,
+          description || null,
+          category,
+          unit,
+          baselineValue || 0,
+          targetValue || 0,
+          baselineValue || 0,
+          measurementFrequency || 'monthly',
+          now,
+          now,
+        ]
+      );
+
+      res.status(201).json({
+        success: true,
+        kpi: {
+          id: kpiId,
+          initiativeId,
+          name,
+          description,
+          category,
+          unit,
+          baselineValue: baselineValue || 0,
+          targetValue: targetValue || 0,
+          currentValue: baselineValue || 0,
+          progressPercentage: 0,
+          status: 'on_track',
+          measurementFrequency: measurementFrequency || 'monthly',
+          createdAt: now,
+        },
       });
     }
   );

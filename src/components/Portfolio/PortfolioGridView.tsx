@@ -7,11 +7,7 @@
 import { Calendar, DollarSign, TrendingUp } from 'lucide-react';
 import React from 'react';
 
-import {
-  getAxisColor,
-  getPriorityColors,
-  getStatusColors,
-} from '../../config/portfolioColors';
+import { getAxisColor, getPriorityColors, getStatusColors } from '../../config/portfolioColors';
 import { PortfolioInitiative } from '../../types';
 
 interface PortfolioGridViewProps {
@@ -52,8 +48,10 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
       {/* Header: Name + Status */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-navy-900 dark:text-white text-base line-clamp-2 
-                        group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+          <h4
+            className="font-semibold text-navy-900 dark:text-white text-base line-clamp-2 
+                        group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors"
+          >
             {initiative.name}
           </h4>
           {initiative.projectName && (
@@ -62,15 +60,22 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
             </p>
           )}
         </div>
-        <span className={`shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg ${statusColors.bg} ${statusColors.text}`}>
+        <span
+          className={`shrink-0 px-2.5 py-1 text-xs font-medium rounded-lg ${statusColors.bg} ${statusColors.text}`}
+        >
           {initiative.status}
         </span>
       </div>
 
       {/* Axis indicator + Priority */}
       <div className="flex items-center gap-3 mb-4">
-        <div className={`w-1.5 h-8 rounded-full ${axisColor.bg}`} title={`Axis: ${initiative.axis || 'N/A'}`} />
-        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${priorityColors.bg} ${priorityColors.text}`}>
+        <div
+          className={`w-1.5 h-8 rounded-full ${axisColor.bg}`}
+          title={`Axis: ${initiative.axis || 'N/A'}`}
+        />
+        <span
+          className={`px-2.5 py-1 text-xs font-medium rounded-full ${priorityColors.bg} ${priorityColors.text}`}
+        >
           {initiative.priority}
         </span>
         {initiative.isCriticalPath && (
@@ -83,10 +88,16 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
       {/* Owner */}
       {initiative.ownerBusiness && (
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center 
-                          text-xs font-medium text-purple-700 dark:text-purple-300 overflow-hidden">
+          <div
+            className="w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center 
+                          text-xs font-medium text-purple-700 dark:text-purple-300 overflow-hidden"
+          >
             {initiative.ownerBusiness.avatarUrl ? (
-              <img src={initiative.ownerBusiness.avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img
+                src={initiative.ownerBusiness.avatarUrl}
+                alt=""
+                className="w-full h-full object-cover"
+              />
             ) : (
               `${initiative.ownerBusiness.firstName?.[0] || ''}${initiative.ownerBusiness.lastName?.[0] || ''}`
             )}

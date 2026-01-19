@@ -50,7 +50,7 @@ interface KnowledgeServiceInterface {
 
 // Dynamic imports for services (may not be migrated yet)
 let abTestingService: ABTestingServiceInterface | null = null;
-let KnowledgeService: KnowledgeServiceInterface | null = null;
+const KnowledgeService: KnowledgeServiceInterface | null = null;
 
 try {
   const abTestingModule = (await import('../../services/ai/abTesting.js')) as any;

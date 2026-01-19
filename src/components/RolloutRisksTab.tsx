@@ -14,8 +14,8 @@ import {
   FullInitiative,
   FullSession,
   RAIDItem,
-  RAIDType,
   RAIDStatus,
+  RAIDType,
   RiskSeverity,
 } from '../types';
 

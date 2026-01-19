@@ -1,7 +1,7 @@
 /**
  * ModuleNavBar
  * Top navigation bar with tabs, search, view toggle, and action buttons
- * 
+ *
  * Design: All buttons have consistent bordered style
  * - Active tab: purple border + purple background tint
  * - Inactive tab: gray border
@@ -76,7 +76,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // View mode icons and labels
   const viewModeConfig: Record<ViewMode, { icon: React.ReactNode; label: string }> = {
     table: { icon: <List size={16} />, label: 'Table' },
@@ -129,13 +129,16 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                   {tab.icon}
                   <span>{tab.label}</span>
                   {tab.count !== undefined && (
-                    <span className={`
+                    <span
+                      className={`
                       px-1.5 py-0.5 text-xs rounded-full
-                      ${isActive 
-                        ? 'bg-primary-500/30 text-primary-300' 
-                        : 'bg-navy-700 text-slate-400'
+                      ${
+                        isActive
+                          ? 'bg-primary-500/30 text-primary-300'
+                          : 'bg-navy-700 text-slate-400'
                       }
-                    `}>
+                    `}
+                    >
                       {tab.count}
                     </span>
                   )}
@@ -143,14 +146,16 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               );
             })}
           </div>
-          
+
           {/* Status Filters (for Initiatives module) */}
           {statusFilters && statusFilters.length > 0 && (
             <>
               <div className="w-px h-6 bg-navy-600" />
               <div className="flex items-center gap-1.5">
                 {statusFilters.map((filter) => {
-                  const isActive = activeStatusFilter === filter.id || (filter.id === 'all' && !activeStatusFilter);
+                  const isActive =
+                    activeStatusFilter === filter.id ||
+                    (filter.id === 'all' && !activeStatusFilter);
                   return (
                     <button
                       key={filter.id}
@@ -158,9 +163,10 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                       className={`
                         flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
                         border transition-all duration-200
-                        ${isActive
-                          ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                          : 'bg-navy-800/50 border-navy-600 text-slate-400 hover:text-white hover:border-slate-500'
+                        ${
+                          isActive
+                            ? 'bg-primary-500/15 border-primary-500 text-primary-400'
+                            : 'bg-navy-800/50 border-navy-600 text-slate-400 hover:text-white hover:border-slate-500'
                         }
                       `}
                     >
@@ -206,11 +212,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             // Discovery Tools: 4 category buttons - same style as tabs
             <div className="flex items-center gap-2">
               {categoryButtons.map((btn) => (
-                <button
-                  key={btn.id}
-                  onClick={btn.onClick}
-                  className={BUTTON_INACTIVE}
-                >
+                <button key={btn.id} onClick={btn.onClick} className={BUTTON_INACTIVE}>
                   {btn.icon}
                   <span>{btn.label}</span>
                   <span className="px-1.5 py-0.5 text-xs rounded-full bg-navy-700 text-slate-400">

@@ -5,10 +5,12 @@
  * CRUD routes for managing chat projects (folders/categories).
  * Allows organizing conversations into projects like Claude AI or OpenAI's project feature.
  */
-import { Router, Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+
 import { getDatabase } from '../database/index.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -24,6 +26,9 @@ const CreateProjectSchema = z.object({
     .optional()
     .default('#6366f1'),
   icon: z.string().max(50).optional().default('folder'),
+  ownership: z.enum(['personal', 'team']).optional().default('personal'),
+  teamId: z.string().optional(),
+  instructions: z.string().max(4000).optional(),
 });
 
 const UpdateProjectSchema = z.object({
@@ -34,14 +39,20 @@ const UpdateProjectSchema = z.object({
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .optional(),
   icon: z.string().max(50).optional(),
+  instructions: z.string().max(4000).optional().nullable(),
+});
+
+const UpdateInstructionsSchema = z.object({
+  instructions: z.string().max(4000).nullable(),
 });
 
 // ==================== GET ALL PROJECTS ====================
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const orgId = (req as any).user?.organizationId;
+    const ownershipFilter = req.query.ownership as string | undefined;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -49,21 +60,52 @@ router.get('/', async (req: Request, res: Response) => {
 
     const db = getDatabase();
 
-    const projects = await db.query(
+    // Build query with optional ownership filter
+    let query = `
+      SELECT 
+        cp.*,
+        (SELECT COUNT(*) FROM conversations WHERE chat_project_id = cp.id) as conversation_count
+      FROM chat_projects cp
+      WHERE (cp.user_id = ? OR cp.organization_id = ?)
+    `;
+    const params: any[] = [userId, orgId];
+
+    // Filter by ownership if specified
+    if (ownershipFilter && ['personal', 'team'].includes(ownershipFilter)) {
+      query += ` AND cp.ownership = ?`;
+      params.push(ownershipFilter);
+    }
+
+    query += ` ORDER BY cp.updated_at DESC`;
+
+    const projects = await db.query(query, params);
+
+    // Get counts by ownership type
+    const countResult = await db.query(
       `
-            SELECT 
-                cp.*,
-                (SELECT COUNT(*) FROM conversations WHERE chat_project_id = cp.id) as conversation_count
-            FROM chat_projects cp
-            WHERE cp.user_id = ? OR cp.organization_id = ?
-            ORDER BY cp.updated_at DESC
-        `,
+      SELECT 
+        ownership,
+        COUNT(*) as count
+      FROM chat_projects
+      WHERE user_id = ? OR organization_id = ?
+      GROUP BY ownership
+      `,
       [userId, orgId]
     );
+
+    const counts = {
+      personal: 0,
+      team: 0,
+    };
+    (countResult || []).forEach((row: any) => {
+      if (row.ownership === 'personal') counts.personal = row.count;
+      if (row.ownership === 'team') counts.team = row.count;
+    });
 
     res.json({
       projects: projects || [],
       total: projects?.length || 0,
+      counts,
     });
   } catch (error: any) {
     logger.error('[ChatProjects] Get all error:', error);
@@ -73,7 +115,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 // ==================== GET SINGLE PROJECT ====================
 
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id } = req.params;
@@ -121,7 +163,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // ==================== CREATE PROJECT ====================
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const orgId = (req as any).user?.organizationId;
@@ -138,7 +180,7 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
-    const { name, description, color, icon } = validation.data;
+    const { name, description, color, icon, ownership, teamId, instructions } = validation.data;
     const id = uuidv4();
     const now = new Date().toISOString();
 
@@ -146,10 +188,10 @@ router.post('/', async (req: Request, res: Response) => {
 
     await db.run(
       `
-            INSERT INTO chat_projects (id, user_id, organization_id, name, description, color, icon, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-      [id, userId, orgId, name, description || null, color, icon, now, now]
+        INSERT INTO chat_projects (id, user_id, organization_id, name, description, color, icon, ownership, team_id, instructions, created_by, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [id, userId, orgId, name, description || null, color, icon, ownership, teamId || null, instructions || null, userId, now, now]
     );
 
     const project = {
@@ -160,12 +202,16 @@ router.post('/', async (req: Request, res: Response) => {
       description,
       color,
       icon,
+      ownership,
+      team_id: teamId || null,
+      instructions: instructions || null,
+      created_by: userId,
       conversation_count: 0,
       created_at: now,
       updated_at: now,
     };
 
-    logger.info(`[ChatProjects] Created project: ${id} by user ${userId}`);
+    logger.info(`[ChatProjects] Created project: ${id} (${ownership}) by user ${userId}`);
     res.status(201).json(project);
   } catch (error: any) {
     logger.error('[ChatProjects] Create error:', error);
@@ -175,7 +221,7 @@ router.post('/', async (req: Request, res: Response) => {
 
 // ==================== UPDATE PROJECT ====================
 
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id } = req.params;
@@ -227,6 +273,10 @@ router.patch('/:id', async (req: Request, res: Response) => {
       fields.push('icon = ?');
       values.push(updates.icon);
     }
+    if (updates.instructions !== undefined) {
+      fields.push('instructions = ?');
+      values.push(updates.instructions);
+    }
 
     fields.push('updated_at = ?');
     values.push(new Date().toISOString());
@@ -234,8 +284,8 @@ router.patch('/:id', async (req: Request, res: Response) => {
 
     await db.run(
       `
-            UPDATE chat_projects SET ${fields.join(', ')} WHERE id = ?
-        `,
+        UPDATE chat_projects SET ${fields.join(', ')} WHERE id = ?
+      `,
       values
     );
 
@@ -249,7 +299,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
 
 // ==================== DELETE PROJECT ====================
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id } = req.params;
@@ -291,9 +341,58 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// ==================== UPDATE PROJECT INSTRUCTIONS ====================
+
+router.patch('/:id/instructions', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const validation = UpdateInstructionsSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: validation.error.errors,
+      });
+    }
+
+    const { instructions } = validation.data;
+    const db = getDatabase();
+
+    // Check ownership
+    const existing = await db.queryOne(
+      `
+        SELECT id FROM chat_projects WHERE id = ? AND (user_id = ? OR organization_id = ?)
+      `,
+      [id, userId, (req as any).user?.organizationId]
+    );
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    await db.run(
+      `
+        UPDATE chat_projects SET instructions = ?, updated_at = ? WHERE id = ?
+      `,
+      [instructions, new Date().toISOString(), id]
+    );
+
+    logger.info(`[ChatProjects] Updated instructions for project: ${id}`);
+    res.json({ success: true, instructions });
+  } catch (error: any) {
+    logger.error('[ChatProjects] Update instructions error:', error);
+    res.status(500).json({ error: 'Failed to update instructions' });
+  }
+});
+
 // ==================== MOVE CONVERSATION TO PROJECT ====================
 
-router.post('/:id/conversations/:conversationId', async (req: Request, res: Response) => {
+router.post('/:id/conversations/:conversationId', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id, conversationId } = req.params;
@@ -346,7 +445,7 @@ router.post('/:id/conversations/:conversationId', async (req: Request, res: Resp
 
 // ==================== REMOVE CONVERSATION FROM PROJECT ====================
 
-router.delete('/:id/conversations/:conversationId', async (req: Request, res: Response) => {
+router.delete('/:id/conversations/:conversationId', verifyToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { id, conversationId } = req.params;

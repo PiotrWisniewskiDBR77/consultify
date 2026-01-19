@@ -7,9 +7,9 @@
  */
 import { NextFunction, Response } from 'express';
 
-import { type AuthRequest } from './auth.middleware.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { type AuthRequest } from './auth.middleware.js';
 
 // ==========================================
 // CONSTANTS

@@ -2,11 +2,12 @@ import { Brain, History, ShieldCheck, Zap } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Api } from '@/services/api';
+
 import { ActionAuditTrail, AuditRecord } from '../components/ai/ActionAuditTrail';
 import { ActionDecisionDialog } from '../components/ai/ActionDecisionDialog';
 import { ActionProposalDetail } from '../components/ai/ActionProposalDetail';
 import { ActionProposal, ActionProposalList } from '../components/ai/ActionProposalList';
-import { Api } from '@/services/api';
 import { useAppStore } from '../store/useAppStore';
 
 export const ActionProposalView: React.FC = () => {

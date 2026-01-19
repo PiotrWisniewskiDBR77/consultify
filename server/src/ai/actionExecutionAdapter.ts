@@ -1,13 +1,14 @@
 // @ts-nocheck
 import { v4 as uuidv4 } from 'uuid';
-import ActionDecisionService from './actionDecisionService.js';
+
 import * as auditLogger from '../utils/auditLogger.js';
+import ActionDecisionService from './actionDecisionService.js';
 import actionErrors from './actionErrors.js';
 const { ACTION_ERROR_CODES, classifyError } = actionErrors;
-import TaskExecutor from './actionExecutors/taskExecutor.js';
-import PlaybookExecutor from './actionExecutors/playbookExecutor.js';
-import MeetingExecutor from './actionExecutors/meetingExecutor.js';
 import { getDatabase } from '../database/index.js';
+import MeetingExecutor from './actionExecutors/meetingExecutor.js';
+import PlaybookExecutor from './actionExecutors/playbookExecutor.js';
+import TaskExecutor from './actionExecutors/taskExecutor.js';
 const db = getDatabase(); // Assuming this is the new way to get the db instance
 // New imports from the instruction
 import ActionProposalEngine from './actionProposalEngine.js';
@@ -138,7 +139,7 @@ const ActionExecutionAdapter = {
     }
 
     // Base payload from snapshot
-    let payload = { ...snapshot };
+    const payload = { ...snapshot };
 
     // If MODIFIED, merge modified_payload (allowlist approach)
     if (decision.decision === 'MODIFIED' && decision.modified_payload) {

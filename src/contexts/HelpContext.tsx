@@ -60,8 +60,8 @@ export interface HelpHint {
   suggestedAction: 'upgrade' | 'learn' | null;
 }
 
-// New types for contextual help system
-export type HelpTab = 'overview' | 'howto' | 'faq' | 'video' | 'ai';
+// New types for contextual help system - 3 tabs: Overview, FAQ, Knowledge Base
+export type HelpTab = 'overview' | 'faq' | 'knowledge';
 
 export interface ContextualHelpState {
   moduleId: HelpModuleId;

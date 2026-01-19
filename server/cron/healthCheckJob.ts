@@ -4,6 +4,7 @@
  */
 
 import cron from 'node-cron';
+
 import { getDatabase } from '../src/database/Database.js';
 import EmailService from '../src/services/emailService.js';
 
@@ -14,51 +15,53 @@ let consecutiveFailures = 0;
 const ALERT_EMAIL = 'piotr.wisniewski@dbr77.com';
 
 const startHealthCheck = () => {
-    // Run every minute: * * * * *
-    cron.schedule('* * * * *', () => {
-        db.get('SELECT 1', [], async (err) => {
-            if (err) {
-                // FAILURE
-                consecutiveFailures++;
-                console.error(`[HEALTH CHECK] FAILED (Consecutive: ${consecutiveFailures}) - ${err.message}`);
+  // Run every minute: * * * * *
+  cron.schedule('* * * * *', () => {
+    db.get('SELECT 1', [], async (err) => {
+      if (err) {
+        // FAILURE
+        consecutiveFailures++;
+        console.error(
+          `[HEALTH CHECK] FAILED (Consecutive: ${consecutiveFailures}) - ${err.message}`
+        );
 
-                if (isSystemHealthy) {
-                    isSystemHealthy = false;
-                    // System just went DOWN
-                    await EmailService.sendEmail(
-                        ALERT_EMAIL,
-                        'CRITICAL ALERT: System Database Down',
-                        `
+        if (isSystemHealthy) {
+          isSystemHealthy = false;
+          // System just went DOWN
+          await EmailService.sendEmail(
+            ALERT_EMAIL,
+            'CRITICAL ALERT: System Database Down',
+            `
                         <h1>System Alert</h1>
                         <p>The Consultify database is unreachable.</p>
                         <p><strong>Error:</strong> ${err.message}</p>
                         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
                         <p>Please investigate immediately.</p>
-                        `,
-                    );
-                }
-            } else {
-                // SUCCESS
-                if (!isSystemHealthy) {
-                    // System just came UP
-                    console.log('[HEALTH CHECK] RECOVERED');
-                    await EmailService.sendEmail(
-                        ALERT_EMAIL,
-                        'RESOLVED: System Database Recovered',
                         `
+          );
+        }
+      } else {
+        // SUCCESS
+        if (!isSystemHealthy) {
+          // System just came UP
+          console.log('[HEALTH CHECK] RECOVERED');
+          await EmailService.sendEmail(
+            ALERT_EMAIL,
+            'RESOLVED: System Database Recovered',
+            `
                         <h1>System Recovered</h1>
                         <p>The Consultify database is back online.</p>
                         <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-                        `,
-                    );
-                    isSystemHealthy = true;
-                    consecutiveFailures = 0;
-                }
-            }
-        });
+                        `
+          );
+          isSystemHealthy = true;
+          consecutiveFailures = 0;
+        }
+      }
     });
+  });
 
-    console.log('[Scheduler] Health Check Job started (every minute)');
+  console.log('[Scheduler] Health Check Job started (every minute)');
 };
 
 export default { startHealthCheck };

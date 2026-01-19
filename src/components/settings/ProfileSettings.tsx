@@ -18,6 +18,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { changeLanguage, SUPPORTED_LANGUAGES } from '../../i18n';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
@@ -819,16 +820,15 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg flex-wrap gap-1">
                     {(() => {
                       // SuperAdmin: only Polish and English
-                      // Regular users: all 6 languages
+                      // Regular users: all supported languages
                       const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPERADMIN';
-                      const allLanguages = ['en', 'pl', 'de', 'ar', 'ja', 'es'];
                       return isSuperAdmin
-                        ? allLanguages.filter((lang) => ['en', 'pl'].includes(lang))
-                        : allLanguages;
+                        ? SUPPORTED_LANGUAGES.filter((lang) => ['en', 'pl'].includes(lang))
+                        : SUPPORTED_LANGUAGES;
                     })().map((lang) => (
                       <button
                         key={lang}
-                        onClick={() => i18n.changeLanguage(lang)}
+                        onClick={() => changeLanguage(lang)}
                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                           i18n.language === lang
                             ? 'bg-white shadow text-navy-900'

@@ -19,6 +19,7 @@ interface CardProps {
   padding?: 'none' | 'sm' | 'md' | 'lg';
   className?: string;
   children: React.ReactNode;
+  onClick?: () => void;
 }
 
 const variantClasses: Record<CardVariant, string> = {

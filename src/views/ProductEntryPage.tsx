@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
+
 import { DemoLoadingOverlay } from '../components/demo/DemoLoadingOverlay';
 import { DemoModeModal } from '../components/Landing/DemoModeModal';
 import { EntryFooter } from '../components/Landing/EntryFooter';
@@ -8,7 +10,6 @@ import { EntryTopBar } from '../components/Landing/EntryTopBar';
 import { HeroSection } from '../components/Landing/HeroSection';
 import { InfoSections } from '../components/Landing/InfoSections';
 import { TrustStrip } from '../components/Landing/TrustStrip';
-import { Api } from '@/services/api';
 import { useAppStore } from '../store/useAppStore';
 import { AppView, AuthStep, SessionMode } from '../types';
 

@@ -23,8 +23,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { InfoButton } from '../shared/InfoButton';
 import { Api } from '../../services/api';
+import { InfoButton } from '../shared/InfoButton';
 
 interface LegalDocument {
   id: string;
@@ -190,7 +190,7 @@ export const LegalPanel: React.FC = () => {
 
   const handleProcessGdprRequest = async (request: GdprRequest, action: 'approve' | 'reject') => {
     try {
-      await Api.post(`/superadmin/gdpr/requests/${request.id}/${action}`);
+      await Api.post(`/superadmin/gdpr/requests/${request.id}/${action}`, {});
       toast.success(`Request ${action === 'approve' ? 'approved' : 'rejected'}`);
       fetchData();
     } catch (err: any) {

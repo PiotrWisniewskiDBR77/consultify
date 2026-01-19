@@ -4,10 +4,10 @@
  * Displays identified opportunities from discovery.
  */
 
-import { TrendingUp, Trash2 } from 'lucide-react';
+import { Trash2, TrendingUp } from 'lucide-react';
 import React, { memo } from 'react';
-import { Handle, NodeProps, Position } from 'reactflow';
 import { useTranslation } from 'react-i18next';
+import { Handle, NodeProps, Position } from 'reactflow';
 
 import { OpportunityNodeData } from '@/types/discovery';
 

@@ -4,8 +4,8 @@
  * Fully migrated from server/services/dunningService.js to TypeScript.
  */
 
-import Stripe from 'stripe';
 import type { Stripe as StripeTypes } from 'stripe';
+import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';

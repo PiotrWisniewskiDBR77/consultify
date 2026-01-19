@@ -18,30 +18,30 @@ const router = Router();
 
 // Service interfaces
 interface ABTestingServiceInterface {
-    listExperiments?: (filters: { status?: string; promptId?: string }) => Promise<
-        Array<{
-            variants?: string;
-            traffic_split?: string;
-            [key: string]: unknown;
-        }>
-    >;
-    createExperiment?: (data: { createdBy: string; [key: string]: unknown }) => Promise<unknown>;
-    getExperimentStats?: (id: string) => Promise<unknown>;
-    startExperiment?: (id: string, userId: string) => Promise<unknown>;
-    stopExperiment?: (id: string, reason: string) => Promise<unknown>;
+  listExperiments?: (filters: { status?: string; promptId?: string }) => Promise<
+    Array<{
+      variants?: string;
+      traffic_split?: string;
+      [key: string]: unknown;
+    }>
+  >;
+  createExperiment?: (data: { createdBy: string; [key: string]: unknown }) => Promise<unknown>;
+  getExperimentStats?: (id: string) => Promise<unknown>;
+  startExperiment?: (id: string, userId: string) => Promise<unknown>;
+  stopExperiment?: (id: string, reason: string) => Promise<unknown>;
 }
 
 interface KnowledgeServiceInterface {
-    getCandidates?: (status: string) => Promise<unknown[]>;
-    addCandidate?: (
-        content: string,
-        reasoning?: string,
-        source?: string,
-        relatedAxis?: string,
-        originContext?: string,
-    ) => Promise<string>;
-    updateCandidateStatus?: (id: string, status: string, adminComment?: string) => Promise<void>;
-    getApprovedIdeas?: (filters: { category?: string }) => Promise<unknown[]>;
+  getCandidates?: (status: string) => Promise<unknown[]>;
+  addCandidate?: (
+    content: string,
+    reasoning?: string,
+    source?: string,
+    relatedAxis?: string,
+    originContext?: string
+  ) => Promise<string>;
+  updateCandidateStatus?: (id: string, status: string, adminComment?: string) => Promise<void>;
+  getApprovedIdeas?: (filters: { category?: string }) => Promise<unknown[]>;
 }
 
 // Dynamic imports for services (may not be migrated yet)
@@ -49,18 +49,18 @@ let abTestingService: ABTestingServiceInterface | null = null;
 let KnowledgeService: KnowledgeServiceInterface | null = null;
 
 try {
-    const abTestingModule = await import('../../services/ai/abTesting.js');
-    const module = abTestingModule.default || abTestingModule;
-    abTestingService = (module.abTestingService || module) as ABTestingServiceInterface;
+  const abTestingModule = await import('../../services/ai/abTesting.js');
+  const module = abTestingModule.default || abTestingModule;
+  abTestingService = (module.abTestingService || module) as ABTestingServiceInterface;
 } catch {
-    console.warn('[AI Development Routes] abTestingService not available');
+  console.warn('[AI Development Routes] abTestingService not available');
 }
 
 try {
-    const knowledgeModule = await import('../../services/knowledgeService.js');
-    KnowledgeService = (knowledgeModule.default || knowledgeModule) as KnowledgeServiceInterface;
+  const knowledgeModule = await import('../../services/knowledgeService.js');
+  KnowledgeService = (knowledgeModule.default || knowledgeModule) as KnowledgeServiceInterface;
 } catch {
-    console.warn('[AI Development Routes] KnowledgeService not available');
+  console.warn('[AI Development Routes] KnowledgeService not available');
 }
 
 // ==========================================
@@ -72,61 +72,61 @@ try {
  * List all system prompts
  */
 router.get(
-    '/prompts',
-    verifyToken,
-    requireRole(['super_admin', 'admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const { category, search, is_active } = req.query;
+  '/prompts',
+  verifyToken,
+  requireRole(['super_admin', 'admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { category, search, is_active } = req.query;
 
-            let query = `
+      let query = `
             SELECT id, name, category, description, template, 
                    variables, is_active, version, created_at, updated_at
             FROM ai_system_prompts
             WHERE 1=1
         `;
-            const params: unknown[] = [];
+      const params: unknown[] = [];
 
-            if (category) {
-                query += ` AND category = ?`;
-                params.push(category);
-            }
+      if (category) {
+        query += ` AND category = ?`;
+        params.push(category);
+      }
 
-            if (is_active !== undefined) {
-                query += ` AND is_active = ?`;
-                params.push(is_active === 'true' ? 1 : 0);
-            }
+      if (is_active !== undefined) {
+        query += ` AND is_active = ?`;
+        params.push(is_active === 'true' ? 1 : 0);
+      }
 
-            if (search) {
-                query += ` AND (name LIKE ? OR description LIKE ?)`;
-                params.push(`%${search}%`, `%${search}%`);
-            }
+      if (search) {
+        query += ` AND (name LIKE ? OR description LIKE ?)`;
+        params.push(`%${search}%`, `%${search}%`);
+      }
 
-            query += ` ORDER BY category, name`;
+      query += ` ORDER BY category, name`;
 
-            const prompts = (await dbAll(query, params)) as Array<{
-                variables?: string;
-                is_active?: number;
-                [key: string]: unknown;
-            }>;
+      const prompts = (await dbAll(query, params)) as Array<{
+        variables?: string;
+        is_active?: number;
+        [key: string]: unknown;
+      }>;
 
-            res.json({
-                success: true,
-                data: prompts.map((p) => ({
-                    ...p,
-                    variables: p.variables ? JSON.parse(p.variables) : [],
-                    is_active: Boolean(p.is_active),
-                })),
-                count: prompts.length,
-            });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error listing prompts:', error);
-            return res.status(500).json({
-                error: 'Failed to list prompts',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.json({
+        success: true,
+        data: prompts.map((p) => ({
+          ...p,
+          variables: p.variables ? JSON.parse(p.variables) : [],
+          is_active: Boolean(p.is_active),
+        })),
+        count: prompts.length,
+      });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error listing prompts:', error);
+      return res.status(500).json({
+        error: 'Failed to list prompts',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -134,27 +134,27 @@ router.get(
  * Get prompt categories
  */
 router.get(
-    '/prompts/categories',
-    verifyToken,
-    requireRole(['super_admin', 'admin']),
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        try {
-            const categories = await dbAll(`
+  '/prompts/categories',
+  verifyToken,
+  requireRole(['super_admin', 'admin']),
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const categories = await dbAll(`
             SELECT DISTINCT category, COUNT(*) as count
             FROM ai_system_prompts
             GROUP BY category
             ORDER BY category
         `);
 
-            res.json({ success: true, data: categories });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error listing categories:', error);
-            return res.status(500).json({
-                error: 'Failed to list categories',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.json({ success: true, data: categories });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error listing categories:', error);
+      return res.status(500).json({
+        error: 'Failed to list categories',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -162,51 +162,51 @@ router.get(
  * Get single prompt with version history
  */
 router.get(
-    '/prompts/:id',
-    verifyToken,
-    requireRole(['super_admin', 'admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const { id } = req.params;
+  '/prompts/:id',
+  verifyToken,
+  requireRole(['super_admin', 'admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
 
-            const prompt = (await dbGet(`SELECT * FROM ai_system_prompts WHERE id = ?`, [id])) as {
-                variables?: string;
-                is_active?: number;
-                [key: string]: unknown;
-            } | null;
+      const prompt = (await dbGet(`SELECT * FROM ai_system_prompts WHERE id = ?`, [id])) as {
+        variables?: string;
+        is_active?: number;
+        [key: string]: unknown;
+      } | null;
 
-            if (!prompt) {
-                return res.status(404).json({ error: 'Prompt not found' });
-            }
+      if (!prompt) {
+        return res.status(404).json({ error: 'Prompt not found' });
+      }
 
-            const versions = await dbAll(
-                `
+      const versions = await dbAll(
+        `
             SELECT id, version, template, created_at, created_by
             FROM ai_prompt_versions
             WHERE prompt_id = ?
             ORDER BY version DESC
             LIMIT 10
         `,
-                [id],
-            );
+        [id]
+      );
 
-            res.json({
-                success: true,
-                data: {
-                    ...prompt,
-                    variables: prompt.variables ? JSON.parse(prompt.variables) : [],
-                    is_active: Boolean(prompt.is_active),
-                    versions,
-                },
-            });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error getting prompt:', error);
-            return res.status(500).json({
-                error: 'Failed to get prompt',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.json({
+        success: true,
+        data: {
+          ...prompt,
+          variables: prompt.variables ? JSON.parse(prompt.variables) : [],
+          is_active: Boolean(prompt.is_active),
+          versions,
+        },
+      });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error getting prompt:', error);
+      return res.status(500).json({
+        error: 'Failed to get prompt',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -214,69 +214,69 @@ router.get(
  * Create new prompt
  */
 router.post(
-    '/prompts',
-    verifyToken,
-    requireRole(['super_admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const { name, category, description, template, variables, is_active } = req.body;
-            const userId = req.user?.id;
+  '/prompts',
+  verifyToken,
+  requireRole(['super_admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { name, category, description, template, variables, is_active } = req.body;
+      const userId = req.user?.id;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            if (!name || !category || !template) {
-                return res.status(400).json({ error: 'Name, category, and template are required' });
-            }
+      if (!name || !category || !template) {
+        return res.status(400).json({ error: 'Name, category, and template are required' });
+      }
 
-            const id = randomUUID();
+      const id = randomUUID();
 
-            const runResult1 = await dbRun(
-                `
+      const runResult1 = await dbRun(
+        `
             INSERT INTO ai_system_prompts 
             (id, name, category, description, template, variables, is_active, version, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
         `,
-                [
-                    id,
-                    name,
-                    category,
-                    description,
-                    template,
-                    JSON.stringify(variables || []),
-                    is_active !== false ? 1 : 0,
-                ],
-            );
+        [
+          id,
+          name,
+          category,
+          description,
+          template,
+          JSON.stringify(variables || []),
+          is_active !== false ? 1 : 0,
+        ]
+      );
 
-            if (!runResult1.success) {
-                throw new Error(runResult1.error || 'Failed to create prompt');
-            }
+      if (!runResult1.success) {
+        throw new Error(runResult1.error || 'Failed to create prompt');
+      }
 
-            const runResult2 = await dbRun(
-                `
+      const runResult2 = await dbRun(
+        `
             INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
             VALUES (?, ?, 1, ?, datetime('now'), ?)
         `,
-                [randomUUID(), id, template, userId],
-            );
+        [randomUUID(), id, template, userId]
+      );
 
-            if (!runResult2.success) {
-                throw new Error(runResult2.error || 'Failed to create prompt version');
-            }
+      if (!runResult2.success) {
+        throw new Error(runResult2.error || 'Failed to create prompt version');
+      }
 
-            res.status(201).json({
-                success: true,
-                data: { id, name, category, version: 1 },
-            });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error creating prompt:', error);
-            return res.status(500).json({
-                error: 'Failed to create prompt',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.status(201).json({
+        success: true,
+        data: { id, name, category, version: 1 },
+      });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error creating prompt:', error);
+      return res.status(500).json({
+        error: 'Failed to create prompt',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -284,81 +284,81 @@ router.post(
  * Update prompt
  */
 router.put(
-    '/prompts/:id',
-    verifyToken,
-    requireRole(['super_admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const { id } = req.params;
-            const { name, category, description, template, variables, is_active } = req.body;
-            const userId = req.user?.id;
+  '/prompts/:id',
+  verifyToken,
+  requireRole(['super_admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { name, category, description, template, variables, is_active } = req.body;
+      const userId = req.user?.id;
 
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const existing = (await dbGet(`SELECT * FROM ai_system_prompts WHERE id = ?`, [id])) as {
-                name?: string;
-                category?: string;
-                description?: string;
-                template?: string;
-                variables?: string;
-                is_active?: number;
-                version?: number;
-            } | null;
+      const existing = (await dbGet(`SELECT * FROM ai_system_prompts WHERE id = ?`, [id])) as {
+        name?: string;
+        category?: string;
+        description?: string;
+        template?: string;
+        variables?: string;
+        is_active?: number;
+        version?: number;
+      } | null;
 
-            if (!existing) {
-                return res.status(404).json({ error: 'Prompt not found' });
-            }
+      if (!existing) {
+        return res.status(404).json({ error: 'Prompt not found' });
+      }
 
-            const newVersion = (existing.version || 0) + 1;
+      const newVersion = (existing.version || 0) + 1;
 
-            const runResult1 = await dbRun(
-                `
+      const runResult1 = await dbRun(
+        `
             UPDATE ai_system_prompts 
             SET name = ?, category = ?, description = ?, template = ?, 
                 variables = ?, is_active = ?, version = ?, updated_at = datetime('now')
             WHERE id = ?
         `,
-                [
-                    name || existing.name,
-                    category || existing.category,
-                    description || existing.description,
-                    template || existing.template,
-                    JSON.stringify(variables || JSON.parse(existing.variables || '[]')),
-                    is_active !== undefined ? (is_active ? 1 : 0) : existing.is_active,
-                    newVersion,
-                    id,
-                ],
-            );
+        [
+          name || existing.name,
+          category || existing.category,
+          description || existing.description,
+          template || existing.template,
+          JSON.stringify(variables || JSON.parse(existing.variables || '[]')),
+          is_active !== undefined ? (is_active ? 1 : 0) : existing.is_active,
+          newVersion,
+          id,
+        ]
+      );
 
-            if (!runResult1.success) {
-                throw new Error(runResult1.error || 'Failed to update prompt');
-            }
+      if (!runResult1.success) {
+        throw new Error(runResult1.error || 'Failed to update prompt');
+      }
 
-            if (template && template !== existing.template) {
-                const runResult2 = await dbRun(
-                    `
+      if (template && template !== existing.template) {
+        const runResult2 = await dbRun(
+          `
                 INSERT INTO ai_prompt_versions (id, prompt_id, version, template, created_at, created_by)
                 VALUES (?, ?, ?, ?, datetime('now'), ?)
             `,
-                    [randomUUID(), id, newVersion, template, userId],
-                );
+          [randomUUID(), id, newVersion, template, userId]
+        );
 
-                if (!runResult2.success) {
-                    throw new Error(runResult2.error || 'Failed to create prompt version');
-                }
-            }
-
-            res.json({ success: true, data: { id, version: newVersion } });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error updating prompt:', error);
-            return res.status(500).json({
-                error: 'Failed to update prompt',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
+        if (!runResult2.success) {
+          throw new Error(runResult2.error || 'Failed to create prompt version');
         }
-    }),
+      }
+
+      res.json({ success: true, data: { id, version: newVersion } });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error updating prompt:', error);
+      return res.status(500).json({
+        error: 'Failed to update prompt',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -366,46 +366,49 @@ router.put(
  * Test prompt with variables
  */
 router.post(
-    '/prompts/:id/test',
-    verifyToken,
-    requireRole(['super_admin', 'admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const { id } = req.params;
-            const { variables = {} } = req.body;
+  '/prompts/:id/test',
+  verifyToken,
+  requireRole(['super_admin', 'admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { variables = {} } = req.body;
 
-            const prompt = (await dbGet(`SELECT * FROM ai_system_prompts WHERE id = ?`, [id])) as {
-                template?: string;
-            } | null;
+      const prompt = (await dbGet(`SELECT * FROM ai_system_prompts WHERE id = ?`, [id])) as {
+        template?: string;
+      } | null;
 
-            if (!prompt || !prompt.template) {
-                return res.status(404).json({ error: 'Prompt not found' });
-            }
+      if (!prompt || !prompt.template) {
+        return res.status(404).json({ error: 'Prompt not found' });
+      }
 
-            let renderedTemplate = prompt.template;
-            for (const [key, value] of Object.entries(variables as Record<string, string>)) {
-                renderedTemplate = renderedTemplate.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g'), value);
-            }
+      let renderedTemplate = prompt.template;
+      for (const [key, value] of Object.entries(variables as Record<string, string>)) {
+        renderedTemplate = renderedTemplate.replace(
+          new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g'),
+          value
+        );
+      }
 
-            const unreplacedVars = renderedTemplate.match(/\{\{\s*\w+\s*\}\}/g) || [];
+      const unreplacedVars = renderedTemplate.match(/\{\{\s*\w+\s*\}\}/g) || [];
 
-            res.json({
-                success: true,
-                data: {
-                    original: prompt.template,
-                    rendered: renderedTemplate,
-                    unreplacedVariables: unreplacedVars,
-                    characterCount: renderedTemplate.length,
-                },
-            });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error testing prompt:', error);
-            return res.status(500).json({
-                error: 'Failed to test prompt',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.json({
+        success: true,
+        data: {
+          original: prompt.template,
+          rendered: renderedTemplate,
+          unreplacedVariables: unreplacedVars,
+          characterCount: renderedTemplate.length,
+        },
+      });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error testing prompt:', error);
+      return res.status(500).json({
+        error: 'Failed to test prompt',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 // ==========================================
@@ -417,37 +420,37 @@ router.post(
  * List A/B testing experiments
  */
 router.get(
-    '/experiments',
-    verifyToken,
-    requireRole(['super_admin', 'admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!abTestingService?.listExperiments) {
-            return res.status(503).json({ error: 'A/B Testing service not available' });
-        }
+  '/experiments',
+  verifyToken,
+  requireRole(['super_admin', 'admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!abTestingService?.listExperiments) {
+      return res.status(503).json({ error: 'A/B Testing service not available' });
+    }
 
-        try {
-            const { status, promptId } = req.query;
-            const experiments = await abTestingService.listExperiments({
-                status: status as string | undefined,
-                promptId: promptId as string | undefined,
-            });
+    try {
+      const { status, promptId } = req.query;
+      const experiments = await abTestingService.listExperiments({
+        status: status as string | undefined,
+        promptId: promptId as string | undefined,
+      });
 
-            res.json({
-                success: true,
-                data: experiments.map((e) => ({
-                    ...e,
-                    variants: JSON.parse((e.variants as string) || '[]'),
-                    traffic_split: JSON.parse((e.traffic_split as string) || '[]'),
-                })),
-            });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error listing experiments:', error);
-            return res.status(500).json({
-                error: 'Failed to list experiments',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.json({
+        success: true,
+        data: experiments.map((e) => ({
+          ...e,
+          variants: JSON.parse((e.variants as string) || '[]'),
+          traffic_split: JSON.parse((e.traffic_split as string) || '[]'),
+        })),
+      });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error listing experiments:', error);
+      return res.status(500).json({
+        error: 'Failed to list experiments',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -455,34 +458,34 @@ router.get(
  * Create new experiment
  */
 router.post(
-    '/experiments',
-    verifyToken,
-    requireRole(['super_admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!abTestingService?.createExperiment) {
-            return res.status(503).json({ error: 'A/B Testing service not available' });
-        }
+  '/experiments',
+  verifyToken,
+  requireRole(['super_admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!abTestingService?.createExperiment) {
+      return res.status(503).json({ error: 'A/B Testing service not available' });
+    }
 
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const result = await abTestingService.createExperiment({
-                ...req.body,
-                createdBy: userId,
-            });
+      const result = await abTestingService.createExperiment({
+        ...req.body,
+        createdBy: userId,
+      });
 
-            res.status(201).json({ success: true, data: result });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error creating experiment:', error);
-            return res.status(500).json({
-                error: 'Failed to create experiment',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.status(201).json({ success: true, data: result });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error creating experiment:', error);
+      return res.status(500).json({
+        error: 'Failed to create experiment',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -490,26 +493,26 @@ router.post(
  * Get experiment with statistics
  */
 router.get(
-    '/experiments/:id',
-    verifyToken,
-    requireRole(['super_admin', 'admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!abTestingService?.getExperimentStats) {
-            return res.status(503).json({ error: 'A/B Testing service not available' });
-        }
+  '/experiments/:id',
+  verifyToken,
+  requireRole(['super_admin', 'admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!abTestingService?.getExperimentStats) {
+      return res.status(503).json({ error: 'A/B Testing service not available' });
+    }
 
-        try {
-            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const stats = await abTestingService.getExperimentStats(id);
-            res.json({ success: true, data: stats });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error getting experiment:', error);
-            return res.status(500).json({
-                error: 'Failed to get experiment',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const stats = await abTestingService.getExperimentStats(id);
+      res.json({ success: true, data: stats });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error getting experiment:', error);
+      return res.status(500).json({
+        error: 'Failed to get experiment',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -517,31 +520,31 @@ router.get(
  * Start experiment
  */
 router.post(
-    '/experiments/:id/start',
-    verifyToken,
-    requireRole(['super_admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!abTestingService?.startExperiment) {
-            return res.status(503).json({ error: 'A/B Testing service not available' });
-        }
+  '/experiments/:id/start',
+  verifyToken,
+  requireRole(['super_admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!abTestingService?.startExperiment) {
+      return res.status(503).json({ error: 'A/B Testing service not available' });
+    }
 
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                return res.status(401).json({ error: 'Unauthorized' });
-            }
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const result = await abTestingService.startExperiment(id, userId);
-            res.json({ success: true, data: result });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error starting experiment:', error);
-            return res.status(500).json({
-                error: 'Failed to start experiment',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const result = await abTestingService.startExperiment(id, userId);
+      res.json({ success: true, data: result });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error starting experiment:', error);
+      return res.status(500).json({
+        error: 'Failed to start experiment',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -549,27 +552,27 @@ router.post(
  * Stop experiment
  */
 router.post(
-    '/experiments/:id/stop',
-    verifyToken,
-    requireRole(['super_admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!abTestingService?.stopExperiment) {
-            return res.status(503).json({ error: 'A/B Testing service not available' });
-        }
+  '/experiments/:id/stop',
+  verifyToken,
+  requireRole(['super_admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!abTestingService?.stopExperiment) {
+      return res.status(503).json({ error: 'A/B Testing service not available' });
+    }
 
-        try {
-            const { reason = 'manual' } = req.body;
-            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const result = await abTestingService.stopExperiment(id, reason);
-            res.json({ success: true, data: result });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error stopping experiment:', error);
-            return res.status(500).json({
-                error: 'Failed to stop experiment',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+    try {
+      const { reason = 'manual' } = req.body;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const result = await abTestingService.stopExperiment(id, reason);
+      res.json({ success: true, data: result });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error stopping experiment:', error);
+      return res.status(500).json({
+        error: 'Failed to stop experiment',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 // ==========================================
@@ -581,26 +584,26 @@ router.post(
  * Get knowledge candidates
  */
 router.get(
-    '/knowledge/candidates',
-    verifyToken,
-    requireRole(['super_admin', 'admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!KnowledgeService?.getCandidates) {
-            return res.status(503).json({ error: 'Knowledge service not available' });
-        }
+  '/knowledge/candidates',
+  verifyToken,
+  requireRole(['super_admin', 'admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.getCandidates) {
+      return res.status(503).json({ error: 'Knowledge service not available' });
+    }
 
-        try {
-            const status = (req.query.status as string) || 'pending';
-            const items = await KnowledgeService.getCandidates(status);
-            res.json({ success: true, data: items });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error listing knowledge candidates:', error);
-            return res.status(500).json({
-                error: 'Failed to list candidates',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+    try {
+      const status = (req.query.status as string) || 'pending';
+      const items = await KnowledgeService.getCandidates(status);
+      res.json({ success: true, data: items });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error listing knowledge candidates:', error);
+      return res.status(500).json({
+        error: 'Failed to list candidates',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -608,25 +611,31 @@ router.get(
  * Submit knowledge candidate
  */
 router.post(
-    '/knowledge/candidates',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!KnowledgeService?.addCandidate) {
-            return res.status(503).json({ error: 'Knowledge service not available' });
-        }
+  '/knowledge/candidates',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.addCandidate) {
+      return res.status(503).json({ error: 'Knowledge service not available' });
+    }
 
-        try {
-            const { content, reasoning, source, relatedAxis, originContext } = req.body;
-            const id = await KnowledgeService.addCandidate(content, reasoning, source, relatedAxis, originContext);
-            res.json({ success: true, data: { id }, message: 'Candidate submitted' });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error submitting candidate:', error);
-            return res.status(500).json({
-                error: 'Failed to submit candidate',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+    try {
+      const { content, reasoning, source, relatedAxis, originContext } = req.body;
+      const id = await KnowledgeService.addCandidate(
+        content,
+        reasoning,
+        source,
+        relatedAxis,
+        originContext
+      );
+      res.json({ success: true, data: { id }, message: 'Candidate submitted' });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error submitting candidate:', error);
+      return res.status(500).json({
+        error: 'Failed to submit candidate',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -634,27 +643,27 @@ router.post(
  * Update candidate status (approve/reject)
  */
 router.put(
-    '/knowledge/candidates/:id/status',
-    verifyToken,
-    requireRole(['super_admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!KnowledgeService?.updateCandidateStatus) {
-            return res.status(503).json({ error: 'Knowledge service not available' });
-        }
+  '/knowledge/candidates/:id/status',
+  verifyToken,
+  requireRole(['super_admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.updateCandidateStatus) {
+      return res.status(503).json({ error: 'Knowledge service not available' });
+    }
 
-        try {
-            const { status, adminComment } = req.body;
-            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            await KnowledgeService.updateCandidateStatus(id, status, adminComment);
-            res.json({ success: true, message: 'Status updated' });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error updating candidate status:', error);
-            return res.status(500).json({
-                error: 'Failed to update status',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+    try {
+      const { status, adminComment } = req.body;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      await KnowledgeService.updateCandidateStatus(id, status, adminComment);
+      res.json({ success: true, message: 'Status updated' });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error updating candidate status:', error);
+      return res.status(500).json({
+        error: 'Failed to update status',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -662,29 +671,29 @@ router.put(
  * Get approved knowledge items
  */
 router.get(
-    '/knowledge/approved',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!KnowledgeService?.getApprovedIdeas) {
-            return res.status(503).json({ error: 'Knowledge service not available' });
-        }
+  '/knowledge/approved',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.getApprovedIdeas) {
+      return res.status(503).json({ error: 'Knowledge service not available' });
+    }
 
-        try {
-            const filters: { category?: string } = {};
-            if (req.query.category) {
-                filters.category = req.query.category as string;
-            }
+    try {
+      const filters: { category?: string } = {};
+      if (req.query.category) {
+        filters.category = req.query.category as string;
+      }
 
-            const ideas = await KnowledgeService.getApprovedIdeas(filters);
-            res.json({ success: true, data: ideas });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error getting approved ideas:', error);
-            return res.status(500).json({
-                error: 'Failed to get approved ideas',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      const ideas = await KnowledgeService.getApprovedIdeas(filters);
+      res.json({ success: true, data: ideas });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error getting approved ideas:', error);
+      return res.status(500).json({
+        error: 'Failed to get approved ideas',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 // ==========================================
@@ -696,33 +705,33 @@ router.get(
  * Get AI intelligence configuration
  */
 router.get(
-    '/intelligence/config',
-    verifyToken,
-    requireRole(['super_admin', 'admin']),
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        try {
-            const config = (await dbGet(`
+  '/intelligence/config',
+  verifyToken,
+  requireRole(['super_admin', 'admin']),
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const config = (await dbGet(`
             SELECT * FROM ai_settings WHERE key = 'intelligence_config'
         `)) as { value?: string } | null;
 
-            res.json({
-                success: true,
-                data: config?.value
-                    ? JSON.parse(config.value)
-                    : {
-                          enabledFeatures: ['contextual_suggestions', 'auto_completion', 'smart_routing'],
-                          aggressiveness: 'balanced',
-                          learningEnabled: true,
-                      },
-            });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error getting intelligence config:', error);
-            return res.status(500).json({
-                error: 'Failed to get config',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.json({
+        success: true,
+        data: config?.value
+          ? JSON.parse(config.value)
+          : {
+              enabledFeatures: ['contextual_suggestions', 'auto_completion', 'smart_routing'],
+              aggressiveness: 'balanced',
+              learningEnabled: true,
+            },
+      });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error getting intelligence config:', error);
+      return res.status(500).json({
+        error: 'Failed to get config',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 /**
@@ -730,34 +739,34 @@ router.get(
  * Update AI intelligence configuration
  */
 router.put(
-    '/intelligence/config',
-    verifyToken,
-    requireRole(['super_admin']),
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        try {
-            const config = req.body;
+  '/intelligence/config',
+  verifyToken,
+  requireRole(['super_admin']),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const config = req.body;
 
-            const runResult = await dbRun(
-                `
+      const runResult = await dbRun(
+        `
             INSERT OR REPLACE INTO ai_settings (key, value, updated_at)
             VALUES ('intelligence_config', ?, datetime('now'))
         `,
-                [JSON.stringify(config)],
-            );
+        [JSON.stringify(config)]
+      );
 
-            if (!runResult.success) {
-                throw new Error(runResult.error || 'Failed to update config');
-            }
+      if (!runResult.success) {
+        throw new Error(runResult.error || 'Failed to update config');
+      }
 
-            res.json({ success: true, message: 'Configuration updated' });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error updating intelligence config:', error);
-            return res.status(500).json({
-                error: 'Failed to update config',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.json({ success: true, message: 'Configuration updated' });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error updating intelligence config:', error);
+      return res.status(500).json({
+        error: 'Failed to update config',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 // ==========================================
@@ -769,59 +778,59 @@ router.put(
  * Get development module summary statistics
  */
 router.get(
-    '/summary',
-    verifyToken,
-    requireRole(['super_admin', 'admin']),
-    asyncHandler(async (_req: AuthRequest, res: Response) => {
-        try {
-            const [promptStats, experimentStats, knowledgeStats] = await Promise.all([
-                dbGet(`
+  '/summary',
+  verifyToken,
+  requireRole(['super_admin', 'admin']),
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      const [promptStats, experimentStats, knowledgeStats] = await Promise.all([
+        dbGet(`
                 SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active,
                     COUNT(DISTINCT category) as categories
                 FROM ai_system_prompts
             `) as Promise<{ total?: number; active?: number; categories?: number }>,
-                dbGet(`
+        dbGet(`
                 SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) as running,
                     SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
                 FROM ai_ab_experiments
             `).catch(() => ({ total: 0, running: 0, completed: 0 })) as Promise<{
-                    total?: number;
-                    running?: number;
-                    completed?: number;
-                }>,
-                dbGet(`
+          total?: number;
+          running?: number;
+          completed?: number;
+        }>,
+        dbGet(`
                 SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
                     SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending
                 FROM knowledge_candidates
             `).catch(() => ({ total: 0, approved: 0, pending: 0 })) as Promise<{
-                    total?: number;
-                    approved?: number;
-                    pending?: number;
-                }>,
-            ]);
+          total?: number;
+          approved?: number;
+          pending?: number;
+        }>,
+      ]);
 
-            res.json({
-                success: true,
-                data: {
-                    prompts: promptStats || { total: 0, active: 0, categories: 0 },
-                    experiments: experimentStats || { total: 0, running: 0, completed: 0 },
-                    knowledge: knowledgeStats || { total: 0, approved: 0, pending: 0 },
-                },
-            });
-        } catch (error: unknown) {
-            console.error('[AI Development] Error getting summary:', error);
-            return res.status(500).json({
-                error: 'Failed to get summary',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            });
-        }
-    }),
+      res.json({
+        success: true,
+        data: {
+          prompts: promptStats || { total: 0, active: 0, categories: 0 },
+          experiments: experimentStats || { total: 0, running: 0, completed: 0 },
+          knowledge: knowledgeStats || { total: 0, approved: 0, pending: 0 },
+        },
+      });
+    } catch (error: unknown) {
+      console.error('[AI Development] Error getting summary:', error);
+      return res.status(500).json({
+        error: 'Failed to get summary',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
 );
 
 export default router;

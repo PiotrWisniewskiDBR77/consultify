@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
 import { AuthStep, SessionMode, UserRole } from '../types';
 
 // Helper to check if email is allowed for full access

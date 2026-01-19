@@ -20,6 +20,8 @@ export type WorkspaceType =
   | 'decision'
   | 'report'
   | 'dashboard'
+  | 'project'
+  | 'general'
   | 'empty';
 
 /**
@@ -121,5 +123,3 @@ export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
 
   return viewTypeMap[view] || 'empty';
 }
-
-export default WorkspaceContext;

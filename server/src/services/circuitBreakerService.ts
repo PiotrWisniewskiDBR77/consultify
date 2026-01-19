@@ -628,7 +628,7 @@ export const CircuitBreakerService = {
       // Detect database type to use correct syntax
       const { default: databaseConfig } = await import('../config/DatabaseConfig.js');
       const isPostgres = databaseConfig.type === 'postgres';
-      
+
       let tableExists = false;
       if (isPostgres) {
         // PostgreSQL: Check information_schema
@@ -645,7 +645,9 @@ export const CircuitBreakerService = {
       } else {
         // SQLite: use PRAGMA table_info
         try {
-          const tableInfo = await DbPromise.all('PRAGMA table_info(circuit_breaker_state)', [], { fallback: true });
+          const tableInfo = await DbPromise.all('PRAGMA table_info(circuit_breaker_state)', [], {
+            fallback: true,
+          });
           tableExists = Array.isArray(tableInfo) && tableInfo.length > 0;
         } catch {
           tableExists = false;
@@ -653,7 +655,10 @@ export const CircuitBreakerService = {
       }
 
       if (!tableExists) {
-        aiLogger.debug('CircuitBreaker', 'Table circuit_breaker_state not ready yet, skipping state restoration');
+        aiLogger.debug(
+          'CircuitBreaker',
+          'Table circuit_breaker_state not ready yet, skipping state restoration'
+        );
         stateRestored = true; // Mark as restored to avoid repeated attempts
         return;
       }
@@ -689,10 +694,18 @@ export const CircuitBreakerService = {
     } catch (error: unknown) {
       const err = error as Error;
       // Only log as warning if it's not a "table doesn't exist" error
-      if (!err.message.includes('no such table') && !err.message.includes('does not exist') && !err.message.includes('relation') && !err.message.includes('Database not initialized')) {
+      if (
+        !err.message.includes('no such table') &&
+        !err.message.includes('does not exist') &&
+        !err.message.includes('relation') &&
+        !err.message.includes('Database not initialized')
+      ) {
         aiLogger.warn('CircuitBreaker', `Failed to restore states: ${err.message}`);
       } else {
-        aiLogger.debug('CircuitBreaker', 'Table circuit_breaker_state not ready yet, skipping state restoration');
+        aiLogger.debug(
+          'CircuitBreaker',
+          'Table circuit_breaker_state not ready yet, skipping state restoration'
+        );
       }
       stateRestored = true; // Mark as restored to avoid repeated attempts
     }

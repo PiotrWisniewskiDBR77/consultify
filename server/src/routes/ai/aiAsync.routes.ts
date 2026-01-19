@@ -2,6 +2,7 @@
  * AI Async Routes
  */
 import { Router } from 'express';
+
 import AIAsyncController from '../../controllers/ai/AIAsyncController.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 

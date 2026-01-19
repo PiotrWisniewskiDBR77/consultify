@@ -25,19 +25,19 @@ router.use(verifyToken);
  * Returns canonical PMOHealthSnapshot for a project
  */
 router.get(
-    '/health/:projectId',
-    asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-        const { projectId } = req.params;
+  '/health/:projectId',
+  asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const { projectId } = req.params;
 
-        const pmoModule = await import('../../src/services/pmoHealthService.js');
-        const getHealthSnapshot = (pmoModule as any).getHealthSnapshot;
-        if (!getHealthSnapshot || typeof getHealthSnapshot !== 'function') {
-            throw new Error('getHealthSnapshot function not found');
-        }
-        const snapshot = await getHealthSnapshot(projectId);
+    const pmoModule = await import('../../src/services/pmoHealthService.js');
+    const getHealthSnapshot = (pmoModule as any).getHealthSnapshot;
+    if (!getHealthSnapshot || typeof getHealthSnapshot !== 'function') {
+      throw new Error('getHealthSnapshot function not found');
+    }
+    const snapshot = await getHealthSnapshot(projectId);
 
-        res.json(snapshot);
-    }),
+    res.json(snapshot);
+  })
 );
 
 export default router;

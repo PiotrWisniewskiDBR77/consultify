@@ -3,8 +3,9 @@
  * Reusable slider/input for resource limits
  */
 
-import React from 'react';
 import './ResourceLimitInput.css';
+
+import React from 'react';
 
 interface ResourceLimitInputProps {
   label: string;

@@ -44,8 +44,10 @@ const TOOL_CATEGORIES: ToolCategory[] = [
     id: 'strategic',
     title: 'Strategic Analysis',
     titlePl: 'Analiza Strategiczna',
-    description: 'Classic strategic frameworks powered by AI for data-driven insights and initiative generation',
-    descriptionPl: 'Klasyczne frameworki strategiczne wspierane przez AI dla wglądów opartych na danych i generowania inicjatyw',
+    description:
+      'Classic strategic frameworks powered by AI for data-driven insights and initiative generation',
+    descriptionPl:
+      'Klasyczne frameworki strategiczne wspierane przez AI dla wglądów opartych na danych i generowania inicjatyw',
     icon: Target,
     color: 'emerald',
     toolCount: 10,
@@ -67,8 +69,10 @@ const TOOL_CATEGORIES: ToolCategory[] = [
     id: 'operational',
     title: 'Operational Tools',
     titlePl: 'Narzędzia Operacyjne',
-    description: 'Lean and process excellence tools adapted for AI-driven optimization and standardization',
-    descriptionPl: 'Narzędzia Lean i doskonałości procesowej dostosowane do optymalizacji i standaryzacji wspieranej przez AI',
+    description:
+      'Lean and process excellence tools adapted for AI-driven optimization and standardization',
+    descriptionPl:
+      'Narzędzia Lean i doskonałości procesowej dostosowane do optymalizacji i standaryzacji wspieranej przez AI',
     icon: Workflow,
     color: 'blue',
     toolCount: 10,
@@ -91,7 +95,8 @@ const TOOL_CATEGORIES: ToolCategory[] = [
     title: 'Digital Transformation',
     titlePl: 'Transformacja Cyfrowa',
     description: 'Technology readiness and automation assessment tools for digital initiatives',
-    descriptionPl: 'Narzędzia oceny gotowości technologicznej i automatyzacji dla inicjatyw cyfrowych',
+    descriptionPl:
+      'Narzędzia oceny gotowości technologicznej i automatyzacji dla inicjatyw cyfrowych',
     icon: Cpu,
     color: 'purple',
     toolCount: 10,
@@ -113,8 +118,10 @@ const TOOL_CATEGORIES: ToolCategory[] = [
     id: 'process-automation',
     title: 'Process Automation by AI',
     titlePl: 'Automatyzacja Procesów AI',
-    description: 'Interactive workshop for process analysis, lean optimization, and automation planning',
-    descriptionPl: 'Interaktywny warsztat do analizy procesów, optymalizacji lean i planowania automatyzacji',
+    description:
+      'Interactive workshop for process analysis, lean optimization, and automation planning',
+    descriptionPl:
+      'Interaktywny warsztat do analizy procesów, optymalizacji lean i planowania automatyzacji',
     icon: Zap,
     color: 'amber',
     toolCount: 1,
@@ -146,7 +153,10 @@ export const DiscoveryToolsView: React.FC = () => {
                 {t('discoveryTools.title', 'Discovery Tools')}
               </h1>
               <p className="text-slate-600 dark:text-slate-400">
-                {t('discoveryTools.subtitle', '31 AI-powered tools for strategic, operational, and digital transformation')}
+                {t(
+                  'discoveryTools.subtitle',
+                  '31 AI-powered tools for strategic, operational, and digital transformation'
+                )}
               </p>
             </div>
           </div>
@@ -181,10 +191,13 @@ export const DiscoveryToolsView: React.FC = () => {
           {TOOL_CATEGORIES.map((category) => {
             const Icon = category.icon;
             const colorClasses = {
-              emerald: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400',
+              emerald:
+                'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400',
               blue: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:border-blue-400',
-              purple: 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 hover:border-purple-400',
-              amber: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 hover:border-amber-400',
+              purple:
+                'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 hover:border-purple-400',
+              amber:
+                'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 hover:border-amber-400',
             };
             const iconColorClasses = {
               emerald: 'text-emerald-600 dark:text-emerald-400',
@@ -205,7 +218,9 @@ export const DiscoveryToolsView: React.FC = () => {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className={`p-3 rounded-lg bg-white dark:bg-navy-800 shadow-sm`}>
-                    <Icon className={`w-6 h-6 ${iconColorClasses[category.color as keyof typeof iconColorClasses]}`} />
+                    <Icon
+                      className={`w-6 h-6 ${iconColorClasses[category.color as keyof typeof iconColorClasses]}`}
+                    />
                   </div>
                   <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
                     {category.toolCount} {category.toolCount === 1 ? 'tool' : 'tools'}
@@ -253,14 +268,40 @@ export const DiscoveryToolsView: React.FC = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
-              { step: 1, title: 'Select Tool', titlePl: 'Wybierz narzędzie', desc: 'Choose from 31 specialized tools', descPl: 'Wybierz spośród 31 specjalistycznych narzędzi' },
-              { step: 2, title: 'AI Interview', titlePl: 'Rozmowa z AI', desc: 'Chat guides you through analysis', descPl: 'Czat prowadzi Cię przez analizę' },
-              { step: 3, title: 'Visualization', titlePl: 'Wizualizacja', desc: 'See results in real-time', descPl: 'Zobacz wyniki w czasie rzeczywistym' },
-              { step: 4, title: 'Generate Initiatives', titlePl: 'Generuj inicjatywy', desc: 'Create actionable initiatives', descPl: 'Twórz wykonalne inicjatywy' },
+              {
+                step: 1,
+                title: 'Select Tool',
+                titlePl: 'Wybierz narzędzie',
+                desc: 'Choose from 31 specialized tools',
+                descPl: 'Wybierz spośród 31 specjalistycznych narzędzi',
+              },
+              {
+                step: 2,
+                title: 'AI Interview',
+                titlePl: 'Rozmowa z AI',
+                desc: 'Chat guides you through analysis',
+                descPl: 'Czat prowadzi Cię przez analizę',
+              },
+              {
+                step: 3,
+                title: 'Visualization',
+                titlePl: 'Wizualizacja',
+                desc: 'See results in real-time',
+                descPl: 'Zobacz wyniki w czasie rzeczywistym',
+              },
+              {
+                step: 4,
+                title: 'Generate Initiatives',
+                titlePl: 'Generuj inicjatywy',
+                desc: 'Create actionable initiatives',
+                descPl: 'Twórz wykonalne inicjatywy',
+              },
             ].map((item) => (
               <div key={item.step} className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                  <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{item.step}</span>
+                  <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
+                    {item.step}
+                  </span>
                 </div>
                 <div>
                   <h3 className="font-medium text-slate-900 dark:text-white">

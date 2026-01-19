@@ -7,14 +7,14 @@
  */
 
 import { Response, Router } from 'express';
+import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { authRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireRole } from '../../middleware/rbac.middleware.js';
+import { validateBody } from '../../middleware/validation.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
-import { validateBody } from '../../middleware/validation.middleware.js';
-import { z } from 'zod';
 
 const CreateBudgetSchema = z.object({
   userId: z.string().optional(),
@@ -112,7 +112,7 @@ interface AIBudgetServiceInterface {
 // const aiBudgetService = (await import('../../services/aiBudgetService.js')).default as any;
 
 // Declare aiBudgetService with proper typing (will be null until service is implemented)
-let aiBudgetService: AIBudgetServiceInterface | null = null;
+const aiBudgetService: AIBudgetServiceInterface | null = null;
 
 // ====== BUDGET MANAGEMENT ======
 

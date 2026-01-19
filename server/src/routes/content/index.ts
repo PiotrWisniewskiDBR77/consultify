@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express';
+
 import emailTemplatesRoutes from './email-templates.routes.js';
 
 const router = Router();

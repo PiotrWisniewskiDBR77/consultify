@@ -5,8 +5,8 @@
  *
  * Unified with AIPipeline for generative capabilities.
  */
-import { aiPipeline } from '../services/ai/aiPipeline.js';
 import { getDatabase } from '../database/index.js';
+import { aiPipeline } from '../services/ai/aiPipeline.js';
 const db = getDatabase();
 
 // In-memory cache for request coalescing
@@ -243,7 +243,7 @@ const RecommendationEngine = {
     if (RecommendationEngine.deps.db && RecommendationEngine.deps.db.run) {
       // Mock DB insertion with Callback handling for testing compatibility
       await new Promise((resolve, reject) => {
-        let completed = 0;
+        const completed = 0;
         if (recommendations.length === 0) return resolve(true);
 
         const runNext = (index: any) => {

@@ -6,9 +6,10 @@
  */
 
 import type { Response } from 'express';
+
+import PMOHealthService from '../services/pmoHealthService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import PMOHealthService from '../services/pmoHealthService.js';
 import logger from '../utils/Logger.js';
 
 export class PMOAnalysisController {

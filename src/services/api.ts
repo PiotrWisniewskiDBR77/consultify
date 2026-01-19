@@ -4309,8 +4309,11 @@ export const Api = {
   checkIPReputation: async (ip: string) => ({ reputation: 'good', score: 100 }),
   checkDomainReputation: async (domain: string) => ({ reputation: 'good', score: 100 }),
   // Chat projects - Real API implementations
-  getChatProjects: async () => {
-    const response = await fetch(`${API_URL}/chat-projects`, { headers: getHeaders() });
+  getChatProjects: async (ownership?: 'personal' | 'team') => {
+    const url = ownership
+      ? `${API_URL}/chat-projects?ownership=${ownership}`
+      : `${API_URL}/chat-projects`;
+    const response = await fetch(url, { headers: getHeaders() });
     if (!response.ok) throw new Error('Failed to fetch chat projects');
     return response.json();
   },
@@ -4324,6 +4327,9 @@ export const Api = {
     description?: string;
     color?: string;
     icon?: string;
+    ownership?: 'personal' | 'team';
+    teamId?: string;
+    instructions?: string;
   }) => {
     const response = await fetch(`${API_URL}/chat-projects`, {
       method: 'POST',
@@ -4362,6 +4368,15 @@ export const Api = {
       }
     );
     if (!response.ok) throw new Error('Failed to move conversation to project');
+    return response.json();
+  },
+  updateProjectInstructions: async (projectId: string, instructions: string | null) => {
+    const response = await fetch(`${API_URL}/chat-projects/${projectId}/instructions`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ instructions }),
+    });
+    if (!response.ok) throw new Error('Failed to update project instructions');
     return response.json();
   },
   // Analytics Reports
@@ -6222,9 +6237,30 @@ export const Api = {
       files: [
         { id: '1', name: 'Dokumenty projektowe', mimeType: 'folder', size: 0, isFolder: true },
         { id: '2', name: 'Prezentacje', mimeType: 'folder', size: 0, isFolder: true },
-        { id: '3', name: 'Raport Q4 2025.pdf', mimeType: 'application/pdf', size: 2453000, isFolder: false, modifiedAt: '2025-12-15' },
-        { id: '4', name: 'Budżet projektu.xlsx', mimeType: 'application/vnd.ms-excel', size: 156000, isFolder: false, modifiedAt: '2025-12-10' },
-        { id: '5', name: 'Notatki ze spotkania.docx', mimeType: 'application/msword', size: 45000, isFolder: false, modifiedAt: '2025-12-08' },
+        {
+          id: '3',
+          name: 'Raport Q4 2025.pdf',
+          mimeType: 'application/pdf',
+          size: 2453000,
+          isFolder: false,
+          modifiedAt: '2025-12-15',
+        },
+        {
+          id: '4',
+          name: 'Budżet projektu.xlsx',
+          mimeType: 'application/vnd.ms-excel',
+          size: 156000,
+          isFolder: false,
+          modifiedAt: '2025-12-10',
+        },
+        {
+          id: '5',
+          name: 'Notatki ze spotkania.docx',
+          mimeType: 'application/msword',
+          size: 45000,
+          isFolder: false,
+          modifiedAt: '2025-12-08',
+        },
       ],
       nextPageToken: null,
     };

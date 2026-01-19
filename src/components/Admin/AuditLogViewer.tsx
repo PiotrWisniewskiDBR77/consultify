@@ -128,7 +128,10 @@ export function AuditLogViewer() {
         pageSize,
       };
 
-      const response = (await Api.getAuditLogs(undefined, apiFilters)) as unknown as AuditLogResponse;
+      const response = (await Api.getAuditLogs(
+        undefined,
+        apiFilters
+      )) as unknown as AuditLogResponse;
 
       setLogs(response.logs ?? []);
       setTotalPages(response.pagination?.totalPages ?? 1);

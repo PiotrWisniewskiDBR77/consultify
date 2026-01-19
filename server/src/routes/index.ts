@@ -24,8 +24,8 @@ export { default as pmoDomainRoutes } from './pmo/index.js';
 export { default as userDomainRoutes } from './user/index.js';
 
 // Core routes (not yet moved to domains)
-export { default as authRoutes } from './auth.routes.js';
 export { default as aiRoutes } from './ai.routes.js';
+export { default as authRoutes } from './auth.routes.js';
 
 // Legacy/misc routes - to be organized in future iterations
 export { default as accessControlRoutes } from './access-control.routes.js';
@@ -93,8 +93,8 @@ export { default as oauthRoutes } from './oauthRoutes.routes.js';
 export { default as onboardingRoutes } from './onboarding.routes.js';
 export { default as partnersRoutes } from './partners.routes.js';
 export { default as pdfImportRoutes } from './pdf-import.routes.js';
-export { default as performanceMetricsRoutes } from './performance-metrics.routes.js';
 export { default as performanceRoutes } from './performance.routes.js';
+export { default as performanceMetricsRoutes } from './performance-metrics.routes.js';
 export { default as permissionRequestsRoutes } from './permissionRequests.routes.js';
 export { default as pinnedPromptsRoutes } from './pinned-prompts.routes.js';
 export { default as premiumReportsRoutes } from './premiumReports.routes.js';
@@ -110,8 +110,8 @@ export { default as securityPoliciesRoutes } from './securityPolicies.routes.js'
 export { default as settingsRoutes } from './settings.routes.js';
 export { default as stabilizationRoutes } from './stabilization.routes.js';
 export { default as stageGatesRoutes } from './stageGates.routes.js';
-export { default as statusReportsRoutes } from './status-reports.routes.js';
 export { default as statusRoutes } from './status.routes.js';
+export { default as statusReportsRoutes } from './status-reports.routes.js';
 export { default as studioRoutes } from './studio.routes.js';
 export { default as superAdminRoutes } from './superadmin.routes.js';
 export { default as systemConfigRoutes } from './systemConfig.routes.js';

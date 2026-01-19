@@ -9,12 +9,13 @@
  * - Multi-language test bench
  * - AI-powered prompt assistant chat
  */
-import { Router, Response } from 'express';
+import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+
 import { AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { get as dbGet, all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 
 const router = Router();
 

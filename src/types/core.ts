@@ -9,7 +9,16 @@ export interface Invoice {
 
 export enum AppView {
   AI_CHAT = 'AI_CHAT', // Main welcome screen with AI Chat
-  DISCOVERY_CONSULTANT = 'DISCOVERY_CONSULTANT', // AI Discovery with Canvas
+  INTERVIEW = 'INTERVIEW', // AI Interview - structured knowledge gathering (was Project Intelligence)
+  DISCOVERY_CONSULTANT = 'DISCOVERY_CONSULTANT', // AI Discovery with Canvas (legacy alias for INTERVIEW)
+
+  // Discovery Tools Module - 31 AI-powered strategic/operational/digital tools
+  DISCOVERY_TOOLS = 'DISCOVERY_TOOLS', // Discovery Tools landing page
+  DISCOVERY_TOOLS_STRATEGIC = 'DISCOVERY_TOOLS_STRATEGIC', // Strategic Analysis tools (1-10)
+  DISCOVERY_TOOLS_OPERATIONAL = 'DISCOVERY_TOOLS_OPERATIONAL', // Operational Excellence tools (11-20)
+  DISCOVERY_TOOLS_DIGITAL = 'DISCOVERY_TOOLS_DIGITAL', // Digital Transformation tools (21-30)
+  DISCOVERY_TOOLS_PROCESS_AUTOMATION = 'DISCOVERY_TOOLS_PROCESS_AUTOMATION', // Process Automation by AI (31)
+
   WELCOME = 'WELCOME',
   AUTH = 'AUTH',
   DASHBOARD = 'DASHBOARD',
@@ -210,7 +219,7 @@ export enum AppView {
   ADMIN_SETTINGS = 'ADMIN_SETTINGS', // Legacy - redirects to ADMIN_SECURITY
 
   // Admin Enterprise Views (legacy - used as tab identifiers)
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
+
   ADMIN_API_KEYS = 'ADMIN_API_KEYS',
   ADMIN_BILLING_MANAGEMENT = 'ADMIN_BILLING_MANAGEMENT',
   ADMIN_BULK_OPERATIONS = 'ADMIN_BULK_OPERATIONS',
@@ -4784,11 +4793,12 @@ export interface FeedbackSettings {
 // Response feedback from user
 export interface ResponseFeedback {
   rating: 'positive' | 'negative' | 'neutral';
-  lengthFeedback?: 'too_short' | 'just_right' | 'too_long';
-  detailFeedback?: 'needs_more_detail' | 'good_detail' | 'too_detailed';
+  lengthFeedback?: 'too-short' | 'just-right' | 'too-long';
+  detailFeedback?: 'too-little' | 'just-right' | 'too-much';
   formatFeedback?: 'needs_structure' | 'good_format' | 'too_complex';
   customFeedback?: string;
   wantedMode?: 'quick' | 'standard' | 'deepStudy';
+  timestamp?: Date;
 }
 
 export interface UserAIProvider {

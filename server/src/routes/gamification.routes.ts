@@ -23,7 +23,7 @@ interface GamificationServiceInterface {
 }
 
 // Dynamic import for GamificationService (may not be migrated yet)
-let GamificationService: GamificationServiceInterface | null = null;
+const GamificationService: GamificationServiceInterface | null = null;
 
 // Service is currently not available - import commented out
 // Uncomment when service is ready:

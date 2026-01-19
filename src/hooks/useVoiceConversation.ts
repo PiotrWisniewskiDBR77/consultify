@@ -432,8 +432,8 @@ export function useVoiceConversation({
     }));
   }, [isSupported]);
 
-  // Start continuous conversation mode
-  const startContinuousMode = useCallback(() => {
+  // Start continuous conversation mode with AI greeting
+  const startContinuousMode = useCallback(async () => {
     continuousModeRef.current = true;
 
     setState((prev) => ({
@@ -441,8 +441,33 @@ export function useVoiceConversation({
       continuousMode: true,
     }));
 
+    // AI greeting - say hello before starting to listen
+    const isPolish = settings.language.startsWith('pl');
+    const greetings = isPolish
+      ? [
+          'Cześć! W czym mogę Ci dzisiaj pomóc?',
+          'Hej! Słucham, co tam?',
+          'Witaj! O czym chcesz porozmawiać?',
+          'Cześć! Jestem gotowa. Co dla Ciebie zrobić?',
+        ]
+      : [
+          'Hi! How can I help you today?',
+          "Hey! I'm listening, what's up?",
+          'Hello! What would you like to talk about?',
+          "Hi there! I'm ready. What can I do for you?",
+        ];
+    const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+
+    // Speak greeting first, then start listening
+    try {
+      await speak(randomGreeting);
+    } catch (error) {
+      console.warn('[VoiceConversation] Could not speak greeting:', error);
+    }
+
+    // Start listening after greeting
     startListening();
-  }, [startListening]);
+  }, [startListening, speak, settings.language]);
 
   // Stop continuous mode
   const stopContinuousMode = useCallback(() => {

@@ -2,7 +2,7 @@
 /**
  * Mock RBAC Middleware
  */
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 export const ORG_ROLE_HIERARCHY = {
   OWNER: 4,

@@ -1,6 +1,8 @@
 // Management Reports Module Components
 // PMO Standards: ISO 21500, PMBOK 7, PRINCE2
 
+export { BenefitsRealizationReport } from './BenefitsRealizationReport';
+export { ExecutiveDashboardReport } from './ExecutiveDashboardReport';
 export { ExportControls } from './ExportControls';
 export { ManagementReportsView } from './ManagementReportsView';
 export { ReportHistoryTable } from './ReportHistoryTable';

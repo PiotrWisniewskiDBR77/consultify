@@ -1,23 +1,24 @@
-import React, { useMemo } from 'react';
 import {
-  LayoutDashboard,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  TrendingUp,
-  TrendingDown,
-  ArrowRight,
-  FileText,
-  Calendar,
-  AlertOctagon,
-  BrainCircuit,
   Activity,
+  AlertOctagon,
+  AlertTriangle,
+  ArrowRight,
+  BrainCircuit,
+  Calendar,
+  CheckCircle2,
   Circle,
+  FileText,
+  LayoutDashboard,
   Map,
-  Rocket,
   Plus,
+  Rocket,
+  TrendingDown,
+  TrendingUp,
+  XCircle,
 } from 'lucide-react';
-import { FullSession, AppView, InitiativeStatus } from '../../types';
+import React, { useMemo } from 'react';
+
+import { AppView, FullSession, InitiativeStatus } from '../../types';
 
 interface DashboardOverviewProps {
   onStartModule1: () => void;
@@ -78,7 +79,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       )
     ).length;
     const atRisk = inits.filter(
-      (i) => i.priority === 'High' && [InitiativeStatus.BLOCKED].includes(i.status as InitiativeStatus)
+      (i) =>
+        i.priority === 'High' && [InitiativeStatus.BLOCKED].includes(i.status as InitiativeStatus)
     ).length;
     const delayed = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length;
     const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length;
@@ -142,7 +144,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     [progressStats, initiativeStats, safeSession.step3Completed]
   );
 
-  const hasStarted = safeSession.step1Completed || safeSession.step2Completed || safeSession.step3Completed;
+  const hasStarted =
+    safeSession.step1Completed || safeSession.step2Completed || safeSession.step3Completed;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
@@ -151,7 +154,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-8 text-white shadow-lg">
           <h2 className="text-2xl font-bold mb-2">Welcome to Your Transformation Dashboard</h2>
           <p className="text-purple-100 mb-6">
-            Start your digital transformation journey by completing the initial assessment and planning.
+            Start your digital transformation journey by completing the initial assessment and
+            planning.
           </p>
           <button
             onClick={onStartModule1}
@@ -170,7 +174,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div className="absolute top-0 right-0 p-4 opacity-5">
             <Activity size={100} />
           </div>
-          <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">Overall Progress</h3>
+          <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">
+            Overall Progress
+          </h3>
           <div className="flex items-end gap-2 mb-4">
             <span className="text-4xl font-bold text-navy-900 dark:text-white">
               {progressStats.toFixed(0)}%
@@ -187,8 +193,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
         {/* Current Phase */}
         <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-center">
-          <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">Current Phase</h3>
-          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">{currentPhase}</div>
+          <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">
+            Current Phase
+          </h3>
+          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+            {currentPhase}
+          </div>
           <p className="text-xs text-slate-400">
             {currentPhase === 'Assessment' && 'Defining baseline maturity and gaps.'}
             {currentPhase === 'Strategy & Roadmap' && 'Planning initiatives and ROI.'}
@@ -260,7 +270,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   : 'border-slate-100 bg-slate-50 dark:bg-slate-800 text-slate-500'
               }`}
             >
-              {mod.completed ? <CheckCircle2 size={18} /> : <Circle size={18} className="text-slate-300" />}
+              {mod.completed ? (
+                <CheckCircle2 size={18} />
+              ) : (
+                <Circle size={18} className="text-slate-300" />
+              )}
               <span className="font-medium text-sm">{mod.label}</span>
             </button>
           ))}
@@ -309,7 +323,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
           {/* KPI Snapshot */}
           <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
-            <h3 className="font-bold text-navy-900 dark:text-white mb-4">Key Performance Indicators</h3>
+            <h3 className="font-bold text-navy-900 dark:text-white mb-4">
+              Key Performance Indicators
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               {kpis.map((kpi, idx) => (
                 <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">

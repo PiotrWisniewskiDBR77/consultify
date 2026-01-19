@@ -44,7 +44,7 @@ export const SplitLayout: React.FC<SplitLayoutProps> = ({
   subtitle,
   isFullScreen = false,
   onSendMessage,
-  hideSidebar = false,
+  hideSidebar = true, // Default to true since MainLayout already provides chat panel
   useUnifiedChat = true, // Default to unified chat panel
   currentView,
   contextEntityId,

@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
 import type { InboxItem, InboxSummary, TriageAction, TriageParams } from '../types/myWork';
 
 interface UseInboxOptions {

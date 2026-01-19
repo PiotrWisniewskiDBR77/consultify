@@ -4,15 +4,7 @@
  * Uses shared ModuleHub components
  */
 
-import {
-  Activity,
-  Cpu,
-  Database,
-  FileText,
-  Layers,
-  Lightbulb,
-  Workflow,
-} from 'lucide-react';
+import { Activity, Cpu, Database, FileText, Layers, Lightbulb, Workflow } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -32,13 +24,16 @@ type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 type ItemStatus = 'draft' | 'in_review' | 'approved' | 'completed';
 
 // Framework metadata
-const FRAMEWORK_META: Record<AssessmentFramework, {
-  name: string;
-  shortName: string;
-  icon: React.ReactNode;
-  color: string;
-  filterColor: string;
-}> = {
+const FRAMEWORK_META: Record<
+  AssessmentFramework,
+  {
+    name: string;
+    shortName: string;
+    icon: React.ReactNode;
+    color: string;
+    filterColor: string;
+  }
+> = {
   DRD: {
     name: 'Digital Readiness Diagnosis',
     shortName: 'DRD',
@@ -178,9 +173,7 @@ interface AssessmentHubProps {
   initialTab?: ModuleTab;
 }
 
-export const AssessmentHub: React.FC<AssessmentHubProps> = ({
-  initialTab = 'list',
-}) => {
+export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list' }) => {
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -191,82 +184,84 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({
   const [showNewAssessmentModal, setShowNewAssessmentModal] = useState(false);
 
   // Tab configuration
-  const tabs = useMemo(() => [
-    {
-      id: 'list' as ModuleTab,
-      label: 'Assessment',
-      icon: <FileText size={16} />,
-      count: MOCK_ASSESSMENTS.length,
-    },
-    {
-      id: 'reports' as ModuleTab,
-      label: 'Reports',
-      icon: <FileText size={16} />,
-      count: MOCK_REPORTS.length,
-    },
-    {
-      id: 'initiatives' as ModuleTab,
-      label: 'Initiatives',
-      icon: <Lightbulb size={16} />,
-      count: MOCK_INITIATIVES.length,
-    },
-  ], []);
+  const tabs = useMemo(
+    () => [
+      {
+        id: 'list' as ModuleTab,
+        label: 'Assessment',
+        icon: <FileText size={16} />,
+        count: MOCK_ASSESSMENTS.length,
+      },
+      {
+        id: 'reports' as ModuleTab,
+        label: 'Reports',
+        icon: <FileText size={16} />,
+        count: MOCK_REPORTS.length,
+      },
+      {
+        id: 'initiatives' as ModuleTab,
+        label: 'Initiatives',
+        icon: <Lightbulb size={16} />,
+        count: MOCK_INITIATIVES.length,
+      },
+    ],
+    []
+  );
 
   // Table columns for assessments
-  const assessmentColumns: TableColumn[] = useMemo(() => [
-    {
-      id: 'framework',
-      label: 'Type',
-      width: '120px',
-      filterable: true,
-      filterOptions: Object.entries(FRAMEWORK_META).map(([key, meta]) => ({
-        value: key,
-        label: meta.shortName,
-        color: `bg-${meta.color}-500`,
-      })),
-      render: (row) => {
-        const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
-        return (
-          <div className="flex items-center gap-2">
-            <span className={`text-${meta.color}-400`}>{meta.icon}</span>
-            <span className="font-mono text-xs font-bold text-slate-300">
-              {meta.shortName}
-            </span>
-          </div>
-        );
+  const assessmentColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'framework',
+        label: 'Type',
+        width: '120px',
+        filterable: true,
+        filterOptions: Object.entries(FRAMEWORK_META).map(([key, meta]) => ({
+          value: key,
+          label: meta.shortName,
+          color: `bg-${meta.color}-500`,
+        })),
+        render: (row) => {
+          const meta = FRAMEWORK_META[row.framework as AssessmentFramework];
+          return (
+            <div className="flex items-center gap-2">
+              <span className={`text-${meta.color}-400`}>{meta.icon}</span>
+              <span className="font-mono text-xs font-bold text-slate-300">{meta.shortName}</span>
+            </div>
+          );
+        },
       },
-    },
-    {
-      id: 'name',
-      label: 'Name',
-      render: (row) => (
-        <span className="text-sm text-white font-medium">{row.name}</span>
-      ),
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      width: '140px',
-      filterable: true,
-      filterOptions: [
-        { value: 'draft', label: 'Draft', color: 'bg-slate-400' },
-        { value: 'in_review', label: 'In Review', color: 'bg-amber-400' },
-        { value: 'approved', label: 'Approved', color: 'bg-emerald-400' },
-        { value: 'completed', label: 'Completed', color: 'bg-emerald-400' },
-      ],
-    },
-    {
-      id: 'progress',
-      label: 'Progress',
-      width: '150px',
-    },
-    {
-      id: 'updatedAt',
-      label: 'Updated',
-      width: '120px',
-      sortable: true,
-    },
-  ], []);
+      {
+        id: 'name',
+        label: 'Name',
+        render: (row) => <span className="text-sm text-white font-medium">{row.name}</span>,
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        width: '140px',
+        filterable: true,
+        filterOptions: [
+          { value: 'draft', label: 'Draft', color: 'bg-slate-400' },
+          { value: 'in_review', label: 'In Review', color: 'bg-amber-400' },
+          { value: 'approved', label: 'Approved', color: 'bg-emerald-400' },
+          { value: 'completed', label: 'Completed', color: 'bg-emerald-400' },
+        ],
+      },
+      {
+        id: 'progress',
+        label: 'Progress',
+        width: '150px',
+      },
+      {
+        id: 'updatedAt',
+        label: 'Updated',
+        width: '120px',
+        sortable: true,
+      },
+    ],
+    []
+  );
 
   // Handlers
   const handleOpenDocument = useCallback((row: any) => {
@@ -286,12 +281,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({
     setActiveDocumentId(row.id);
   }, []);
 
-  const handleCloseDocument = useCallback((id: string) => {
-    setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
-    if (activeDocumentId === id) {
-      setActiveDocumentId(null);
-    }
-  }, [activeDocumentId]);
+  const handleCloseDocument = useCallback(
+    (id: string) => {
+      setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
+      if (activeDocumentId === id) {
+        setActiveDocumentId(null);
+      }
+    },
+    [activeDocumentId]
+  );
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
@@ -309,12 +307,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({
     setShowNewAssessmentModal(true);
   }, []);
 
-  const handleRowAction = useCallback((action: string, row: any) => {
-    console.log('Row action:', action, row);
-    if (action === 'view' || action === 'edit') {
-      handleOpenDocument(row);
-    }
-  }, [handleOpenDocument]);
+  const handleRowAction = useCallback(
+    (action: string, row: any) => {
+      console.log('Row action:', action, row);
+      if (action === 'view' || action === 'edit') {
+        handleOpenDocument(row);
+      }
+    },
+    [handleOpenDocument]
+  );
 
   // Get current data based on tab
   const currentData = useMemo(() => {
@@ -348,7 +349,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({
         <div className="flex items-center justify-center h-full text-slate-500">
           <div className="text-center">
             <p className="text-lg">Editing: {doc?.name}</p>
-            <p className="text-sm">({doc?.subType} - {doc?.status})</p>
+            <p className="text-sm">
+              ({doc?.subType} - {doc?.status})
+            </p>
             <p className="mt-4 text-xs">Editor placeholder - będzie tu edytor assessmentu</p>
           </div>
         </div>
@@ -408,9 +411,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({
       {showNewAssessmentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-navy-900 border border-navy-700 rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold text-white mb-4">
-              Select Framework
-            </h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Select Framework</h2>
             <div className="space-y-2">
               {Object.entries(FRAMEWORK_META).map(([key, meta]) => (
                 <button

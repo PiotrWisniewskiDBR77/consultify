@@ -225,12 +225,10 @@ export class UserController {
 
       // Cannot delete owner
       if ((user as any).role === 'OWNER') {
-        res
-          .status(403)
-          .json({
-            error: 'Cannot delete Account Owner. Transfer ownership first.',
-            code: 'OWNER_PROTECTED',
-          });
+        res.status(403).json({
+          error: 'Cannot delete Account Owner. Transfer ownership first.',
+          code: 'OWNER_PROTECTED',
+        });
         return;
       }
 

@@ -5,11 +5,12 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 
-import { RouterSync } from './components/RouterSync';
+import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
-import { usePageMeta } from '@/hooks/usePageMeta';
 import { Api } from '@/services/api';
+
+import { RouterSync } from './components/RouterSync';
 import { AppProviders } from './providers/AppProviders';
 import { AppRoutes } from './routes/AppRoutes';
 import { useAppStore } from './store/useAppStore';

@@ -42,6 +42,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { Api } from '@/services/api';
+
 import {
   CATEGORY_CONFIG,
   CategoryIcon,
@@ -51,7 +53,6 @@ import {
 import { InsightDetectionCard } from '../components/Intelligence/InsightDetectionCard';
 import { InterviewProgress } from '../components/Intelligence/InterviewProgress';
 import { SplitLayout } from '../components/layout/SplitLayout';
-import { Api } from '@/services/api';
 import { useAppStore } from '../store/useAppStore';
 import { Project } from '../types';
 

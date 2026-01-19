@@ -12,6 +12,7 @@
  */
 
 import { EventEmitter } from 'events';
+
 import logger from '../utils/Logger.js';
 import type { ConnectionPool } from './ConnectionPool.js';
 

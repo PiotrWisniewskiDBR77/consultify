@@ -1,4 +1,7 @@
 {
+  "partner": {
+    "becomePartner": "Partner werden"
+  },
   "sidebar": {
     "dashboard": "Armaturenbrett",
     "quickAssessment": "Schnellbewertung",
@@ -80,7 +83,27 @@
     "affiliateDashboard": "Ecosystem Impact",
     "collapse": "Collapse",
     "expand": "Expand",
-    "metrics": "Metrics & Conversion"
+    "metrics": "Metrics & Conversion",
+    "aiChat": "AI Chat",
+    "projectIntelligence": "Project Intelligence",
+    "partnerPortal": "Partner Portal",
+    "studio": "Studio",
+    "superAdmin": "SuperAdmin",
+    "initiativeManagement": "Initiative Management",
+    "benefitsRealization": "Benefits Realization",
+    "economics": "Economics",
+    "discoveryConsultant": "Discovery",
+    "interview": "Interview",
+    "discoveryTools": "Discovery Tools",
+    "strategicAnalysis": "Strategic Analysis",
+    "operationalTools": "Operational Tools",
+    "digitalTransformation": "Digital Transformation",
+    "processAutomation": "Process Automation by AI",
+    "initiatives": "Initiatives",
+    "execution": "Execution",
+    "benefits": "Benefits",
+    "reports": "Reports",
+    "portfolioRoadmap": "Initiatives"
   },
   "auth": {
     "startQuick": "Starten Sie Ihre Schnellbewertung",
@@ -493,7 +516,13 @@
       "workPreferences": "Work Preferences",
       "dashboardPreferences": "Dashboard",
       "accessibility": "Accessibility",
-      "privacy": "Privacy"
+      "privacy": "Privacy",
+      "preferences": "Preferences",
+      "theme": "Theme",
+      "language": "Language",
+      "demoMode": "Demo Mode",
+      "demoModeOn": "Demo Mode is ON - viewing sample data",
+      "demoModeOff": "Demo Mode is OFF"
     },
     "profile": {
       "header": "Persönliche Informationen",
@@ -503,7 +532,27 @@
       "firstName": "Vorname",
       "lastName": "Nachname",
       "role": "Rolle / Berufsbezeichnung",
-      "email": "E-Mail-Adresse (Vom Admin verwaltet)",
+      "email": {
+        "title": "Email & Communication",
+        "description": "Manage your email signature, aliases, and notification preferences",
+        "signature": "Email Signature",
+        "signatureText": "Signature Text",
+        "signaturePlaceholder": "Best regards,\nYour Name\nTitle | Company",
+        "signatureHint": "This signature will be added to your outgoing emails",
+        "aliases": "Email Aliases",
+        "addAlias": "Add email alias...",
+        "digest": "Email Digest Frequency",
+        "outOfOffice": "Out of Office",
+        "enableOOO": "Enable Out of Office",
+        "enableOOODesc": "Automatically respond when you are away",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "oooMessage": "Auto-reply Message",
+        "oooPlaceholder": "I'm currently out of office and will respond when I return...",
+        "autoReply": "Send auto-reply",
+        "autoReplyDesc": "Automatically send the message above to people who email you",
+        "oooNote": "Your status will be shown as \"Out of Office\" to other team members during this period."
+      },
       "preferences": "Einstellungen",
       "theme": "Oberflächendesign",
       "light": "Hell",
@@ -514,7 +563,328 @@
       "manage": "Manage your personal information and preferences",
       "changePhoto": "Change Photo",
       "company": "Company",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "emailAddress": "Email Address (Managed by Admin)",
+      "bioAbout": {
+        "title": "Bio & About",
+        "description": "Tell others about yourself and your expertise",
+        "shortBio": "Short Bio",
+        "shortBioPlaceholder": "A brief one-liner about yourself...",
+        "shortBioHint": "Displayed on your profile card",
+        "longBio": "About Me",
+        "longBioPlaceholder": "Tell your story, share your background, interests, and what drives you...",
+        "longBioHint": "Markdown formatting supported",
+        "skills": "Skills & Expertise",
+        "noSkills": "No skills added yet",
+        "addSkill": "Add a skill...",
+        "experience": "Experience",
+        "yearsExperience": "Years of Experience",
+        "tip": "Profile Tip",
+        "tipText": "A complete profile helps your team members understand your background and expertise. It also helps AI provide more personalized assistance."
+      },
+      "social": {
+        "title": "Social & Links",
+        "description": "Connect your social profiles and share your online presence",
+        "socialProfiles": "Social Profiles",
+        "customLinks": "Custom Links",
+        "addCustomLink": "Add a custom link to your portfolio, blog, or any other website",
+        "linkName": "Link name (e.g. My Blog)",
+        "addLink": "Add Link"
+      },
+      "visibility": {
+        "title": "Privacy & Visibility",
+        "description": "Control who can see your profile and contact you",
+        "profileVisibility": "Profile Visibility",
+        "contactVisibility": "Contact Information",
+        "showEmail": "Show email address",
+        "showEmailDesc": "Allow others to see your email on your profile",
+        "showPhone": "Show phone number",
+        "showPhoneDesc": "Allow others to see your phone number",
+        "showInDirectory": "Show in team directory",
+        "showInDirectoryDesc": "Appear in the organization team directory",
+        "activityStatus": "Activity Status",
+        "showActivity": "Show online status",
+        "showActivityDesc": "Let others see when you are online or away",
+        "showLastSeen": "Show last seen",
+        "showLastSeenDesc": "Display when you were last active",
+        "communication": "Communication Settings",
+        "allowMentions": "Allow @mentions from",
+        "allowDMs": "Allow direct messages from",
+        "note": "Privacy Note",
+        "noteText": "Administrators can always view your basic profile information regardless of these settings. Your name and role will always be visible to team members."
+      }
+    },
+    "title": "SETTINGS",
+    "subtitle": "Preferences",
+    "backToApp": "Back to App",
+    "user": "User",
+    "modules": {
+      "profile": "Profile",
+      "profileDesc": "Manage your personal information, avatar, and account settings",
+      "aiPreferences": "AI Preferences",
+      "aiPreferencesDesc": "Customize AI behavior, memory, and response style",
+      "notifications": "Notifications",
+      "notificationsDesc": "Manage how and when you receive notifications",
+      "security": "Security & Privacy",
+      "securityDesc": "Manage your security settings, sessions, and privacy controls",
+      "integrations": "Integrations",
+      "integrationsDesc": "Connect apps, manage API keys, and configure webhooks",
+      "appearance": "Appearance & Regional",
+      "appearanceDesc": "Customize theme, language, accessibility, and work preferences"
+    },
+    "tabs": {
+      "personal": "Personal Info",
+      "avatar": "Avatar",
+      "password": "Password",
+      "billing": "Billing",
+      "account": "Account",
+      "instructions": "Instructions",
+      "memory": "Memory",
+      "style": "Response Style",
+      "history": "Chat History",
+      "voice": "Voice",
+      "allNotifications": "All",
+      "email": "Email",
+      "push": "Push",
+      "rules": "Rules",
+      "schedule": "Schedule",
+      "mfa": "MFA",
+      "recovery": "Recovery",
+      "sessions": "Sessions",
+      "loginHistory": "Login History",
+      "dataControls": "Data Controls",
+      "privacy": "Privacy",
+      "apps": "Apps",
+      "apiKeys": "API Keys",
+      "webhooks": "Webhooks",
+      "calendar": "Calendar",
+      "theme": "Theme",
+      "language": "Language",
+      "regional": "Regional",
+      "accessibility": "Accessibility",
+      "work": "Work",
+      "dashboard": "Dashboard",
+      "status": "Status",
+      "bio": "Bio & About",
+      "social": "Social Links",
+      "workHours": "Work Hours",
+      "professional": "Professional",
+      "contact": "Contact",
+      "availability": "Availability",
+      "signature": "Email Signature",
+      "security": "Security",
+      "shortcuts": "Shortcuts",
+      "quietHours": "Quiet Hours",
+      "dataPrivacy": "Data & Privacy",
+      "visibility": "Visibility"
+    },
+    "recovery": {
+      "title": "Account Recovery",
+      "description": "Set up backup options to recover your account if you lose access",
+      "backupEmail": "Backup Email",
+      "backupEmailDesc": "Use to recover your account if you lose access",
+      "enterBackupEmail": "Enter backup email address",
+      "differentEmail": "Please use a different email address",
+      "emailSaved": "Verification email sent",
+      "emailError": "Failed to save backup email",
+      "phone": "Phone Number",
+      "phoneDesc": "Receive SMS codes for account recovery",
+      "enterPhone": "+1 (555) 123-4567",
+      "validPhone": "Please enter a valid phone number",
+      "phoneSaved": "Verification code sent",
+      "phoneError": "Failed to save phone number",
+      "recoveryCodes": "Recovery Codes",
+      "recoveryCodesDesc": "One-time use codes for emergency access",
+      "generateCodes": "Generate New Codes",
+      "saveThese": "Save these codes in a secure place",
+      "codesGenerated": "Recovery codes generated",
+      "codesError": "Failed to generate codes",
+      "codesCopied": "Recovery codes copied to clipboard",
+      "codesWarning": "Each code can only be used once. Store them securely and do not share them.",
+      "trustedDevices": "Trusted Devices",
+      "trustedDevicesDesc": "Devices that can access your account without additional verification",
+      "current": "This device",
+      "deviceRemoved": "Device removed",
+      "deviceRemoveError": "Failed to remove device"
+    },
+    "notifications": {
+      "rules": {
+        "title": "Notification Rules",
+        "description": "Customize notifications for different projects and scenarios",
+        "projectRules": "Project Rules",
+        "addRule": "Add Project Rule",
+        "selectProject": "Select a project...",
+        "ruleType": "Notification Mode",
+        "all": "All",
+        "mentions_only": "Mentions only",
+        "custom": "Custom",
+        "muted": "Muted",
+        "priorityFilter": "Priority Filter",
+        "allPriorities": "All priorities",
+        "highMedium": "High & Medium only",
+        "highOnly": "High priority only",
+        "rulesSaved": "Notification rules saved",
+        "saveError": "Failed to save rules"
+      },
+      "digest": {
+        "title": "Email Digest",
+        "description": "Bundle notifications into periodic summaries",
+        "frequency": "Frequency",
+        "time": "Preferred Time"
+      },
+      "keywords": {
+        "title": "Priority Keywords",
+        "description": "Always notify when these keywords appear"
+      },
+      "vip": {
+        "title": "VIP Contacts",
+        "description": "Always receive notifications from these people",
+        "empty": "No VIP contacts configured. Messages from VIP contacts will always notify you."
+      }
+    },
+    "shortcuts": {
+      "title": "Keyboard Shortcuts",
+      "description": "Customize keyboard shortcuts to boost your productivity",
+      "reset": "Reset",
+      "enable": "Enable Keyboard Shortcuts",
+      "enableDesc": "Use keyboard shortcuts throughout the app",
+      "showHints": "Show Shortcut Hints",
+      "showHintsDesc": "Display keyboard hints next to actions",
+      "preset": "Shortcut Preset",
+      "search": "Search shortcuts...",
+      "tip": "Tip",
+      "tipText": "Press \"?\" anywhere in the app to see available shortcuts. Sequences like \"g h\" mean press g, release, then press h."
+    },
+    "quietHours": {
+      "title": "Quiet Hours / Do Not Disturb",
+      "description": "Schedule times when you want to minimize notifications",
+      "currentlyActive": "Quiet Hours are currently active",
+      "activeUntil": "Active until",
+      "enable": "Enable Quiet Hours",
+      "enableDesc": "Pause notifications during scheduled times",
+      "schedule": "Schedule",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "activeDays": "Active on these days",
+      "exceptions": "Exceptions",
+      "exceptionsDesc": "Allow certain types of notifications even during quiet hours",
+      "allowUrgent": "Allow urgent notifications",
+      "allowUrgentDesc": "High-priority alerts will still come through",
+      "allowMentions": "Allow @mentions",
+      "allowMentionsDesc": "Get notified when someone mentions you",
+      "allowDMs": "Allow direct messages",
+      "allowDMsDesc": "Private messages will still notify you",
+      "autoReply": "Auto Reply",
+      "enableAutoReply": "Enable auto-reply",
+      "enableAutoReplyDesc": "Automatically respond to messages during quiet hours",
+      "autoReplyMessage": "Auto-reply message",
+      "autoReplyPlaceholder": "I'm currently unavailable. I'll respond when I return.",
+      "quickPresets": "Quick Presets",
+      "presetNights": "Nights (10pm-8am, every day)",
+      "presetWeekends": "Weekends only",
+      "presetAfterWork": "After work hours (6pm-9am, weekdays)"
+    },
+    "dataPrivacy": {
+      "title": "Data & Privacy",
+      "description": "Control how your data is used and manage your privacy settings",
+      "dataSharing": "Data Sharing",
+      "shareAnalytics": "Share analytics data",
+      "shareAnalyticsDesc": "Help us improve by sharing anonymous usage analytics",
+      "shareUsageData": "Share detailed usage data",
+      "shareUsageDataDesc": "Include more detailed interaction data for product improvement",
+      "improveAI": "Help improve AI",
+      "improveAIDesc": "Allow your interactions to help train better AI models",
+      "communications": "Communication Preferences",
+      "productUpdates": "Product updates",
+      "productUpdatesDesc": "Receive emails about new features and improvements",
+      "marketingEmails": "Marketing emails",
+      "marketingEmailsDesc": "Receive promotional offers and marketing communications",
+      "newsletter": "Newsletter subscription",
+      "newsletterDesc": "Weekly newsletter with tips and best practices",
+      "dataRetention": "Data Retention",
+      "dataRetentionDesc": "Choose how long we keep your data",
+      "security": "Security",
+      "piiRedaction": "Enable PII redaction",
+      "piiRedactionDesc": "Automatically redact personally identifiable information in AI interactions",
+      "thirdParty": "Allow third-party integrations",
+      "thirdPartyDesc": "Enable connections to external services and apps",
+      "exportData": "Export Your Data",
+      "exportDataDesc": "Download a copy of all your data. This may take some time to prepare.",
+      "exportRequested": "Data export requested. You will receive an email when ready.",
+      "exportFailed": "Failed to request data export. Please try again.",
+      "preparing": "Preparing...",
+      "requestExport": "Request Data Export",
+      "exportNote": "You will receive an email with a download link within 24 hours. The link expires after 7 days.",
+      "dangerZone": "Danger Zone",
+      "deleteDesc": "Permanently delete your account and all associated data. This action cannot be undone.",
+      "deleteRequested": "Account deletion requested. You will receive a confirmation email.",
+      "deleteFailed": "Failed to request account deletion.",
+      "requestDeletion": "Request Account Deletion",
+      "confirmDelete": "Are you sure?",
+      "confirmDeleteDesc": "Type your email address to confirm account deletion.",
+      "confirmDeleteButton": "Delete My Account"
+    },
+    "accessibility": {
+      "title": "Accessibility",
+      "description": "Customize the application to match your accessibility needs",
+      "saved": "Accessibility preferences saved",
+      "error": "Failed to save preferences",
+      "fontSizeTitle": "Font Size",
+      "fontSizeDescription": "Adjust the base font size for all text in the application",
+      "fontSize": {
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "extraLarge": "Extra Large"
+      },
+      "visualTitle": "Visual Settings",
+      "highContrast": "High Contrast Mode",
+      "highContrastDescription": "Increase contrast for better visibility",
+      "reduceMotion": "Reduce Motion",
+      "reduceMotionDescription": "Disable animations and transitions",
+      "underlineLinks": "Underline Links",
+      "underlineLinksDescription": "Always show underlines on clickable links",
+      "textSpacing": "Text Spacing",
+      "textSpacingDescription": "Adjust spacing between lines and letters",
+      "spacing": {
+        "default": "Default",
+        "relaxed": "Relaxed",
+        "spacious": "Spacious"
+      },
+      "navigationTitle": "Navigation & Input",
+      "keyboardShortcuts": "Show Keyboard Shortcuts",
+      "keyboardShortcutsDescription": "Display keyboard shortcut hints in tooltips",
+      "focusHighlight": "Enhanced Focus Indicator",
+      "focusHighlightDescription": "Show clear visual focus rings when navigating with keyboard",
+      "cursorSize": "Cursor Size",
+      "cursorSizeDescription": "Increase cursor visibility",
+      "cursor": {
+        "default": "Default",
+        "large": "Large"
+      },
+      "screenReaderTitle": "Screen Reader",
+      "screenReaderOptimized": "Screen Reader Optimizations",
+      "screenReaderOptimizedDescription": "Improve compatibility with screen readers like NVDA and VoiceOver",
+      "colorVisionTitle": "Color Vision",
+      "colorVisionDescription": "Adjust colors for different types of color blindness",
+      "fontFamilyTitle": "Font Family",
+      "fontFamilyDescription": "Choose a font that works best for you",
+      "readabilityTitle": "Readability",
+      "lineHeight": "Line Height",
+      "lineHeightDescription": "Space between lines of text",
+      "letterSpacing": "Letter Spacing",
+      "letterSpacingDescription": "Space between characters",
+      "caretWidth": "Text Cursor Width",
+      "caretWidthDescription": "Make the blinking text cursor more visible",
+      "voiceSpeechTitle": "Voice & Speech",
+      "textToSpeech": "Text to Speech",
+      "textToSpeechDescription": "Read selected text aloud",
+      "speechToText": "Speech to Text",
+      "speechToTextDescription": "Use voice dictation for text input",
+      "voiceCommands": "Voice Commands",
+      "voiceCommandsDescription": "Control the app using voice commands",
+      "focusStyleTitle": "Focus Indicator Style",
+      "focusStyleDescription": "Choose how focused elements are highlighted when using keyboard navigation"
     }
   },
   "common": {
@@ -563,7 +933,21 @@
       "ar": "العربية",
       "ja": "日本語",
       "es": "Español"
-    }
+    },
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "processing": "Processing...",
+    "verify": "Verify",
+    "copy": "Copy",
+    "loadingOnboarding": "Loading Onboarding...",
+    "loadingConsultantPanel": "Loading Consultant Panel...",
+    "loadingInviteTool": "Loading Invite Tool...",
+    "loadingOrgSetup": "Loading Organization Setup...",
+    "back": "Back",
+    "next": "Next",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View"
   },
   "assessment": {
     "workspace": {
@@ -2243,6 +2627,38 @@
       "accuracyHint": "Accurate notes help generate better recommendations.",
       "save": "Save",
       "ai": "AI"
+    },
+    "emptyState": {
+      "title": "No assessments yet",
+      "noMatch": "No assessments match your search",
+      "createFirst": "Create First Assessment"
+    },
+    "table": {
+      "assessment": "Assessment",
+      "status": "Status",
+      "progress": "Progress",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
+    "attachments": {
+      "title": "Attachments",
+      "add": "Add",
+      "noAttachments": "No attachments for this level",
+      "addAttachment": "Add attachment",
+      "type": "Attachment type",
+      "description": "Description (optional)",
+      "descriptionPlaceholder": "Brief description of the attachment...",
+      "selectFile": "Select file",
+      "uploading": "Uploading...",
+      "allowedTypes": "Allowed: PDF, Word, Excel, PowerPoint, images, CSV, TXT, JSON (max 25MB)",
+      "deleteConfirm": "Are you sure you want to delete this attachment?",
+      "types": {
+        "EVIDENCE": "Evidence",
+        "SCREENSHOT": "Screenshot",
+        "DOCUMENT": "Document",
+        "REPORT": "Report",
+        "OTHER": "Other"
+      }
     }
   },
   "landing": {
@@ -2409,9 +2825,12 @@
       "subtext": "Kostenloser 30-Min-Anruf • Consultinity in Aktion sehen"
     },
     "topBar": {
+      "demo": "Demo",
+      "trial": "Testversion",
       "exploreDemo": "Demo Erkunden",
       "talkToExpert": "Mit Experten Sprechen",
       "login": "Anmelden",
+      "signUp": "Registrieren",
       "startTrial": "Testversion Starten",
       "goToWorkspace": "Zum Workspace"
     },
@@ -2552,10 +2971,36 @@
       "loading": "Starting..."
     },
     "banner": {
-      "mode": "Demo Mode",
-      "description": "Exploring with sample data",
-      "limitations": "Limitations",
-      "contactSales": "Get Full Access"
+      "mode": "Demo-Modus",
+      "description": "Erkunden mit Beispieldaten",
+      "projects": "Projekte",
+      "initiatives": "Initiativen",
+      "hints": "Tipps",
+      "exit": "Demo beenden",
+      "readOnlyTitle": "Nur-Lese-Modus",
+      "readOnlyDesc": "Änderungen werden nicht gespeichert",
+      "exploreTitle": "Funktionen erkunden",
+      "exploreDesc": "Alle Module durchsuchen",
+      "hintTitle": "Tipp",
+      "defaultHint": "Klicken Sie auf Initiativen, um Details zu sehen",
+      "help": "Hilfe",
+      "partnerProgram": "Partnerprogramm",
+      "limitations": {
+        "readOnly": "Read-only mode — changes won't persist",
+        "sampleData": "Sample data — explore with realistic examples",
+        "session": "Session expires in 24h"
+      },
+      "contactSales": "Vollzugang erhalten",
+      "title": "Demo Mode",
+      "exploring": "Exploring with sample data",
+      "showLimitations": "Limitations",
+      "hideLimitations": "Hide",
+      "getFullAccess": "Get Full Access",
+      "upgrade": "Upgrade",
+      "minimize": "Minimize",
+      "minimizedLabel": "Demo Mode",
+      "readyForMore": "Ready for your own data?",
+      "scheduleDemo": "Schedule a demo"
     },
     "limitations": {
       "readOnly": "Shared demo environment — changes may not persist",
@@ -2566,7 +3011,40 @@
       "mode": "Demo Mode",
       "getFullAccess": "Get Full Commercial Access"
     },
-    "indicator": "DEMO"
+    "indicator": "DEMO",
+    "loading": {
+      "title": "Preparing Your Experience",
+      "subtitle": "Setting up your personalized demo environment",
+      "steps": {
+        "environment": "Initializing demo environment",
+        "data": "Loading sample company data",
+        "ai": "Activating AI assistants",
+        "dashboard": "Preparing your dashboard"
+      }
+    },
+    "upgrade": {
+      "title": "Unlock Full Potential",
+      "description": "Get dedicated environment with your company data and full AI capabilities.",
+      "cta": "Schedule a Demo",
+      "featureHint": "This feature works best with your own data",
+      "learnMore": "Learn more",
+      "modalTitle": "Ready for the Full Experience?",
+      "modalDescription": "You've explored {{feature}}. Get a dedicated environment with your real company data and unlimited AI capabilities.",
+      "contactSales": "Talk to Sales",
+      "continueBrowsing": "Continue Exploring"
+    },
+    "exit": {
+      "title": "Before You Go...",
+      "subtitle": "You've seen what AI-powered consulting can do. Ready to transform your organization?",
+      "whatYouGet": "What You Get",
+      "benefit1": "Your own dedicated environment",
+      "benefit2": "Unlimited AI consultations",
+      "benefit3": "Real-time team collaboration",
+      "benefit4": "Enterprise-grade security",
+      "scheduleDemo": "Schedule a Personal Demo",
+      "contactUs": "Have Questions? Contact Us",
+      "noCommitment": "No commitment required. Just a conversation."
+    }
   },
   "help": {
     "panel": {
@@ -2647,12 +3125,53 @@
       }
     },
     "sidePanel": {
+      "title": "Hilfezentrum",
+      "fullDocs": "Vollständige Dokumentation",
       "tabs": {
-        "ai": "KI-Assistent",
         "overview": "Übersicht",
-        "howto": "Anleitung",
         "faq": "FAQ",
-        "video": "Videos"
+        "knowledge": "Wissensdatenbank"
+      },
+      "overview": {
+        "title": "Willkommen bei Consultinity",
+        "intro": "Ihre komplette PMO-Plattform für die digitale Transformation. Bewerten, planen und verfolgen Sie die Reise Ihrer Organisation zur digitalen Exzellenz mit KI-gestützten Einblicken und bewährten Methoden.",
+        "watchVideo": "Einführungsvideo ansehen",
+        "videoDuration": "3 Min. Überblick",
+        "guides": "Schnellanleitungen",
+        "guidesList": {
+          "gettingStarted": "Erste Schritte",
+          "assessment": "Eine Bewertung durchführen",
+          "initiatives": "Initiativen verwalten",
+          "reports": "Berichte erstellen",
+          "aiFeatures": "KI-Funktionen Leitfaden"
+        },
+        "whatToKnow": "Wissenswert",
+        "tip1": "Beginnen Sie mit einer Bewertung, um Ihre digitale Reife zu verstehen",
+        "tip2": "Nutzen Sie KI-Einblicke zur Priorisierung von Initiativen",
+        "tip3": "Verfolgen Sie den Fortschritt mit Echtzeit-Dashboards und Berichten"
+      },
+      "faq": {
+        "searchPlaceholder": "Fragen suchen...",
+        "noResults": "Keine passenden Fragen gefunden.",
+        "noFAQ": "Keine FAQ verfügbar."
+      },
+      "knowledge": {
+        "title": "Wissensdatenbank",
+        "description": "Umfassende Ressourcen zu Tools für die digitale Transformation, Methoden und Best Practices.",
+        "comingSoon": "Demnächst",
+        "categories": {
+          "tools": "Tools für digitale Transformation",
+          "methodologies": "Methoden (DRD, SIRI, Lean)",
+          "caseStudies": "Fallstudien",
+          "bestPractices": "Best Practices"
+        },
+        "notify": {
+          "title": "Benachrichtigung erhalten",
+          "placeholder": "Ihre E-Mail",
+          "button": "Benachrichtigen",
+          "success": "Sie werden benachrichtigt, wenn die Wissensdatenbank verfügbar ist!",
+          "description": "Erhalten Sie eine E-Mail, wenn unsere umfassende Wissensdatenbank mit Tools, Methoden und Fallstudien bereit ist."
+        }
       },
       "modules": {
         "dashboard": {
@@ -3115,13 +3634,36 @@
             "Affiliate-Leistung verfolgen"
           ],
           "tips": ["Nach zertifizierten Partnern suchen", "Ihren Affiliate-Impact überwachen"]
+        },
+        "emailTemplates": {
+          "name": "Email Templates",
+          "description": "Manage system email templates for notifications, alerts, reports, and automated communications. Create beautiful, responsive emails with variable support.",
+          "purpose": "Centralize email template management for consistent, professional communications across the platform.",
+          "keyFeatures": [
+            "Rich HTML editor with preview",
+            "Variable/placeholder support ({{variable}})",
+            "Version history and audit trail",
+            "Test email sending",
+            "Category-based organization",
+            "Clone and duplicate templates",
+            "Multi-language support"
+          ],
+          "workflow": [
+            "Browse existing templates by status or category",
+            "Create new template with name and unique key",
+            "Design content using the HTML editor",
+            "Add variables for dynamic content",
+            "Preview and send test emails",
+            "Publish to make available for system use"
+          ],
+          "tips": [
+            "Always send test emails before publishing",
+            "Use descriptive template keys for API access",
+            "Keep email content mobile-friendly",
+            "Document available variables for each template",
+            "Use categories to organize templates logically"
+          ]
         }
-      },
-      "tabs": {
-        "overview": "Overview",
-        "howto": "How to Use",
-        "faq": "FAQ",
-        "video": "Video"
       },
       "audience": {
         "user": "User",
@@ -3617,6 +4159,189 @@
               "Affiliate-Leistung verfolgen"
             ],
             "tips": ["Nach zertifizierten Partnern suchen", "Ihren Affiliate-Impact überwachen"]
+          },
+          "superadmin-overview": {
+            "name": "SuperAdmin Overview",
+            "description": "Central command center for platform administrators. Monitor system health, track key metrics, and respond to real-time signals across all organizations in the Consultinity platform.",
+            "purpose": "Provide platform operators with a comprehensive view of system health, user activity, business metrics, and alerts requiring immediate attention.",
+            "keyFeatures": [
+              "Real-time dashboard with key platform KPIs",
+              "Organization and user counts at a glance",
+              "AI usage monitoring (calls, tokens, costs)",
+              "Live user sessions tracking",
+              "Revenue metrics (MRR, ARR estimates)",
+              "Recent activity feed across all organizations",
+              "Conversion intelligence and funnel analytics",
+              "Early warning system for churn risk",
+              "Attribution channel performance tracking",
+              "System signals: alerts, tickets, and user feedback"
+            ],
+            "workflow": [
+              "Start on Dashboard tab to review platform-wide KPIs",
+              "Click metric cards to drill down into specific areas",
+              "Switch to Metrics tab for conversion funnels and attribution data",
+              "Review Early Warnings for organizations at risk of churning",
+              "Check Partners Leaderboard for affiliate performance",
+              "Use Signals tab to monitor system alerts and client tickets",
+              "Navigate to Customers module for organization management",
+              "Navigate to Revenue module for billing details"
+            ],
+            "tips": [
+              "Check Signals regularly for critical system alerts requiring immediate action",
+              "Monitor conversion funnels weekly to track growth and identify bottlenecks",
+              "Use Early Warnings proactively to prevent customer churn before it happens",
+              "Review Attribution data to optimize marketing spend across channels",
+              "Track Help Effectiveness to identify playbooks that need improvement",
+              "Use the header status indicators for quick health assessment"
+            ],
+            "tabs": {
+              "dashboard": {
+                "title": "Dashboard",
+                "description": "Real-time platform KPIs including organizations, users, AI usage, and revenue metrics. Quick actions for common administrative tasks."
+              },
+              "metrics": {
+                "title": "Conversion Intelligence",
+                "description": "Enterprise analytics including conversion funnels, early warning signals, attribution channels, partner leaderboard, and help system effectiveness."
+              },
+              "signals": {
+                "title": "Signals",
+                "description": "System alerts, client support tickets, and user feedback requiring administrator attention. Signals are grouped by type and sorted by priority."
+              }
+            }
+          }
+        },
+        "dashboard": {
+          "0": {
+            "title": "How to use the dashboard?",
+            "content": "The dashboard shows an overview of your organization and current activities. Click on cards to see details."
+          },
+          "1": {
+            "title": "Dashboard Video Tutorial",
+            "content": "Watch this 2-minute video to learn how to customize your dashboard views."
+          }
+        },
+        "assessment": {
+          "0": {
+            "title": "How to assess maturity?",
+            "content": "Maturity assessment involves defining the current state (Actual) and target state (Target) for each area."
+          },
+          "1": {
+            "title": "Assessment FAQ",
+            "content": "Find answers to common questions about maturity levels and scoring."
+          },
+          "2": {
+            "title": "Helper Questions",
+            "content": "Use helper questions to better understand each maturity level requirements."
+          }
+        },
+        "initiatives": {
+          "0": {
+            "title": "What is an initiative?",
+            "content": "An initiative is a specific transformation action with a defined goal, scope, and schedule."
+          },
+          "1": {
+            "title": "Prioritizing Initiatives",
+            "content": "Use the Impact/Effort matrix to prioritize your transformation actions."
+          }
+        },
+        "roadmap": {
+          "0": {
+            "title": "How to read the roadmap?",
+            "content": "The roadmap shows a timeline with project phases and dependencies."
+          },
+          "1": {
+            "title": "Roadmap Video Guide",
+            "content": "Learn how to edit schedules and manage dependencies in the roadmap."
+          }
+        },
+        "team": {
+          "0": {
+            "title": "Inviting Members",
+            "content": "Click 'Invite', enter email and choose a role for your team members."
+          },
+          "1": {
+            "title": "Roles & Permissions",
+            "content": "Information about different user roles (Admin, Member, Viewer) in the system."
+          }
+        },
+        "drd_workspace": {
+          "0": {
+            "title": "What is a decision axis?",
+            "content": "A decision axis (DRD Axis) is a space to structure one strategic topic."
+          },
+          "1": {
+            "title": "Adding Perspectives",
+            "content": "Learn how to collect different points of view to reach consensus."
+          },
+          "2": {
+            "title": "Using Snapshots",
+            "content": "Snapshots save the current state of discussion for future reference."
+          }
+        },
+        "sso": {
+          "0": {
+            "title": "What is SSO?",
+            "content": "Single Sign-On (SSO) allows users to log in using corporate accounts."
+          },
+          "1": {
+            "title": "Google SSO Setup",
+            "content": "Detailed guide on configuring Google Workspace as an Identity Provider."
+          },
+          "2": {
+            "title": "SSO FAQ",
+            "content": "Common questions about modern authentication and SSO integration."
+          }
+        },
+        "security": {
+          "0": {
+            "title": "Security Policies",
+            "content": "Define requirements for passwords, sessions, MFA, and IP access."
+          },
+          "1": {
+            "title": "Compliance Presets",
+            "content": "Configure policies according to industry standards like SOC2 or HIPAA."
+          },
+          "2": {
+            "title": "Account Lockout",
+            "content": "Settings for handling failed login attempts and account recovery."
+          }
+        },
+        "whitelabel": {
+          "0": {
+            "title": "What is white-label?",
+            "content": "Customize the platform's appearance to match your organization's brand."
+          },
+          "1": {
+            "title": "Changing Colors & Logos",
+            "content": "How to update theme colors and upload your company logo."
+          },
+          "2": {
+            "title": "Custom Domains",
+            "content": "Configuring your own domain (e.g. pmo.yourcompany.com) for the platform."
+          }
+        },
+        "integrations": {
+          "0": {
+            "title": "What are integrations?",
+            "content": "Connect Consultinity with external tools like Slack, Teams, or Jira."
+          },
+          "1": {
+            "title": "Webhook Configuration",
+            "content": "Learn how to set up real-time event notifications via webhooks."
+          },
+          "2": {
+            "title": "API Keys",
+            "content": "Managing secure access tokens for direct API integrations."
+          }
+        },
+        "default": {
+          "0": {
+            "title": "First Steps",
+            "content": "Start with the dashboard or explore the available modules."
+          },
+          "1": {
+            "title": "Need Help?",
+            "content": "Contact us via chat or email at support@consultinity.com"
           }
         }
       },
@@ -3753,12 +4478,90 @@
           "title": "Benötigen Sie Hilfe?",
           "content": "Kontaktieren Sie uns per Chat oder E-Mail unter support@consultinity.com"
         }
+      },
+      "difficulty": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
       }
     },
     "difficulty": {
       "beginner": "Anfänger",
       "intermediate": "Fortgeschritten",
       "advanced": "Experte"
+    },
+    "search": {
+      "placeholder": "Search help...",
+      "noResults": "No results for",
+      "tryDifferentKeywords": "Try different keywords",
+      "suggestions": "Suggestions",
+      "recentSearches": "Recent Searches",
+      "clear": "Clear",
+      "popular": "Popular",
+      "types": {
+        "module": "Module",
+        "card": "Documentation",
+        "faq": "FAQ",
+        "video": "Video"
+      },
+      "filters": {
+        "all": "All",
+        "module": "Modules",
+        "card": "Docs",
+        "faq": "FAQs",
+        "video": "Videos"
+      },
+      "footer": {
+        "navigate": "navigate",
+        "select": "select",
+        "close": "close",
+        "results": "results"
+      }
+    },
+    "feedback": {
+      "title": "Was this helpful?",
+      "yes": "Yes",
+      "no": "No",
+      "addComment": "Add feedback",
+      "commentPlaceholder": "Tell us how we can improve...",
+      "submit": "Submit",
+      "skip": "Skip",
+      "thanks": "Thank you for your feedback!",
+      "error": "Failed to submit feedback"
+    },
+    "toggle": {
+      "open": "Open Help Center",
+      "close": "Close Help Center"
+    },
+    "video": {
+      "watched": "Watched",
+      "chapters": "Chapters",
+      "settings": "Settings",
+      "speed": "Speed",
+      "controls": {
+        "play": "Play (k)",
+        "pause": "Pause (k)",
+        "mute": "Mute (m)",
+        "unmute": "Unmute (m)",
+        "fullscreen": "Fullscreen (f)",
+        "exitFullscreen": "Exit fullscreen (f)",
+        "prev10": "-10s",
+        "next10": "+10s"
+      },
+      "shortcuts": "Space/K: Play · ←/→: Seek · M: Mute · F: Fullscreen"
+    },
+    "whatsNew": {
+      "title": "What's New",
+      "version": "Version",
+      "features": "New Features",
+      "improvements": "Improvements",
+      "fixes": "Bug Fixes",
+      "breaking": "Breaking Changes",
+      "dontShow": "Don't show for this version",
+      "gotIt": "Got it!",
+      "learnMore": "Learn More",
+      "changelog": "View full changelog",
+      "watchDemo": "Watch demo"
     }
   },
   "search": {
@@ -3798,7 +4601,65 @@
     "submit": "Absenden",
     "skip": "Überspringen",
     "thanks": "Vielen Dank für Ihr Feedback!",
-    "error": "Feedback konnte nicht gesendet werden"
+    "error": {
+      "submit": "Failed to submit feedback"
+    },
+    "tabs": {
+      "report": "Report",
+      "pulse": "Quick",
+      "feature": "Feature"
+    },
+    "type": {
+      "bug": "Bug",
+      "idea": "Idea"
+    },
+    "severity": {
+      "label": "Severity"
+    },
+    "label": {
+      "bug": "Bug Description",
+      "idea": "Idea Description"
+    },
+    "placeholder": {
+      "bug": "Describe what happened and steps to reproduce...",
+      "idea": "Share your idea for improvement..."
+    },
+    "report": {
+      "intro": "Help us improve by reporting issues or sharing ideas."
+    },
+    "submitting": "Submitting...",
+    "success": {
+      "title": "Thank You!",
+      "message": "Thank you for your feedback. We will analyze it as soon as possible.",
+      "bugReported": "Bug reported! We'll investigate ASAP.",
+      "ideaSubmitted": "Great idea! Added to our backlog.",
+      "pulse": "Thanks for your feedback! 🎉",
+      "feature": "Feature request submitted!",
+      "featureWithAI": "Feature request submitted! AI found similar requests."
+    },
+    "intro": "Your feedback helps us improve the platform. Report a bug or share an idea.",
+    "footer": "Feedback sent as",
+    "pulse": {
+      "title": "How's your experience?",
+      "subtitle": "Quick feedback helps us improve",
+      "context": "Feedback for:",
+      "sorry": "Sorry to hear that!",
+      "tellUs": "Tell us what went wrong",
+      "commentPlaceholder": "What can we improve?"
+    },
+    "feature": {
+      "category": "Category",
+      "name": "Feature Name",
+      "namePlaceholder": "e.g., Dark mode, Export to PDF",
+      "description": "Description",
+      "descPlaceholder": "Describe the feature and how it would help you...",
+      "impact": "Business Impact",
+      "submit": "Submit Feature Request"
+    },
+    "ai": {
+      "insights": "AI Insights",
+      "loading": "Loading AI insights..."
+    }
   },
   "toggle": {
     "open": "Hilfezentrum öffnen",
@@ -3872,5 +4733,1373 @@
         "requiredNewCompetencies": "Erforderliche neue Kompetenzen"
       }
     }
+  },
+  "discoveryTools": {
+    "title": "Discovery Tools",
+    "subtitle": "31 AI-powered tools for strategic, operational, and digital transformation",
+    "stats": {
+      "aiPowered": "AI-powered analysis",
+      "initiatives": "Generates initiatives",
+      "visualizations": "Interactive visualizations"
+    },
+    "explore": "Explore tools",
+    "howItWorks": {
+      "title": "How Discovery Tools Work"
+    },
+    "strategic": {
+      "title": "Strategic Analysis Tools",
+      "subtitle": "10 classic strategic frameworks powered by AI"
+    },
+    "operational": {
+      "title": "Operational Excellence Tools",
+      "subtitle": "10 Lean and process excellence tools powered by AI"
+    },
+    "digital": {
+      "title": "Digital Transformation Tools",
+      "subtitle": "10 technology readiness and automation assessment tools"
+    },
+    "processAutomation": {
+      "title": "Process Automation by AI",
+      "subtitle": "Interactive workshop for process optimization and automation"
+    }
+  },
+  "portfolio": {
+    "title": "Initiatives",
+    "subtitle": "Manage initiatives from idea to execution",
+    "views": {
+      "list": "List",
+      "kanban": "Kanban",
+      "timeline": "Timeline",
+      "matrix": "Matrix"
+    },
+    "emptyState": {
+      "title": "No initiatives yet",
+      "description": "Create your first initiative or generate from assessment to start building your portfolio.",
+      "createFirst": "New Initiative"
+    },
+    "newInitiative": "New Initiative",
+    "filters": {
+      "allProjects": "All Projects",
+      "allStatuses": "All Statuses",
+      "allOwners": "All Owners",
+      "allQuarters": "All Quarters",
+      "search": "Search initiatives..."
+    },
+    "stats": {
+      "total": "Total Initiatives",
+      "inProgress": "In Progress",
+      "approved": "Approved",
+      "totalBudget": "Total Budget"
+    },
+    "kanban": {
+      "draft": "Draft",
+      "planning": "Planning",
+      "review": "Review",
+      "approved": "Approved",
+      "executing": "Executing"
+    },
+    "timeline": {
+      "today": "Today",
+      "criticalPath": "Critical Path",
+      "dependencies": "Dependencies"
+    },
+    "matrix": {
+      "quickWins": "Quick Wins",
+      "majorInvest": "Major Investment",
+      "niceToHave": "Nice to Have",
+      "avoid": "Avoid/Reduce"
+    },
+    "sidePanel": {
+      "overview": "Overview",
+      "financials": "Financials",
+      "stakeholders": "Stakeholders",
+      "risks": "Risks",
+      "timeline": "Timeline",
+      "activity": "Activity"
+    },
+    "actions": {
+      "newInitiative": "New Initiative",
+      "bulkActions": "Bulk Actions",
+      "export": "Export",
+      "refresh": "Refresh"
+    },
+    "empty": {
+      "title": "No initiatives yet",
+      "description": "Create your first initiative or generate from assessment"
+    }
+  },
+  "superadmin": {
+    "overview": "Overview",
+    "customers": "Customers",
+    "aiPlatform": "AI Platform",
+    "revenue": "Revenue",
+    "system": "System"
+  },
+  "myWork": {
+    "title": "My Work",
+    "tasks": "Tasks",
+    "decisions": "Decisions",
+    "projects": "Projects",
+    "notifications": "Notifications",
+    "overdue": "Overdue",
+    "today": "Today",
+    "thisWeek": "This Week",
+    "urgent": "Urgent",
+    "newTask": "New Task",
+    "newDecision": "New Decision",
+    "myDecisions": "My Decisions",
+    "awaitingOthers": "Awaiting Others",
+    "projectNotifications": "Project",
+    "personalNotifications": "Personal",
+    "allNotifications": "All",
+    "markAllRead": "Mark all read",
+    "noTasks": "No tasks found",
+    "noDecisions": "No decisions found",
+    "noNotifications": "No notifications"
+  },
+  "tour": {
+    "skip": "Skip tour",
+    "back": "Back",
+    "next": "Next",
+    "startExploring": "Start Exploring",
+    "welcome": {
+      "title": "Welcome to Consultinity",
+      "subtitle": "What brings you here today?"
+    },
+    "roles": {
+      "ceo": "CEO / Executive",
+      "ceoDesc": "Strategic oversight & decision making",
+      "cto": "CTO / Tech Lead",
+      "ctoDesc": "Technology transformation",
+      "consultant": "Consultant",
+      "consultantDesc": "Client advisory & strategy",
+      "investor": "Investor",
+      "investorDesc": "Due diligence & evaluation"
+    },
+    "steps": {
+      "dashboard": {
+        "title": "Your Command Center",
+        "description": "Get a 360° view of your transformation progress. Real-time metrics, AI insights, and action items—all in one place."
+      },
+      "assessment": {
+        "title": "AI-Powered Assessment",
+        "description": "Our AI analyzes your organization like a Harvard MBA graduate who's read every business book. Get instant maturity scores and gap analysis."
+      },
+      "roadmap": {
+        "title": "Strategic Roadmap",
+        "description": "Built on McKinsey, BCG, and Bain methodologies. AI generates transformation roadmaps with clear ROI, priorities, and timelines."
+      },
+      "collaboration": {
+        "title": "Team Collaboration",
+        "description": "Tasks, decisions, and accountability—all tracked. Your team stays aligned with AI-managed workflows and reminders."
+      },
+      "complete": {
+        "title": "You're All Set!",
+        "description": "Explore freely. Remember: AI recommends, but you decide. Every strategic decision remains in your hands."
+      }
+    }
+  },
+  "admin": {
+    "title": "ADMIN",
+    "panel": "Panel",
+    "role": "Admin",
+    "backToApp": "Back to App",
+    "modules": {
+      "overview": "Overview",
+      "overviewDesc": "Dashboard, metrics, and analytics for your organization",
+      "team": "Team",
+      "teamDesc": "Manage users, invitations, work modes, and external consultants",
+      "workspace": "Workspace",
+      "workspaceDesc": "Manage projects, knowledge base, playbooks, and bulk operations",
+      "ai": "AI",
+      "aiDesc": "LLM configuration, health monitoring, and token management",
+      "settings": "Settings",
+      "settingsDesc": "Organization profile, billing, security, and feedback management"
+    },
+    "tabs": {
+      "dashboard": "Dashboard",
+      "metrics": "Metrics",
+      "analytics": "Analytics",
+      "users": "Users",
+      "invitations": "Invitations",
+      "groups": "Groups",
+      "roles": "Roles",
+      "licenses": "Licenses",
+      "workMode": "Work Mode",
+      "consultants": "Consultants",
+      "projects": "Projects",
+      "knowledge": "Knowledge",
+      "templates": "Templates",
+      "defaults": "Defaults",
+      "playbookRuns": "Playbook Runs",
+      "bulkOps": "Bulk Ops",
+      "llmConfig": "LLM Config",
+      "aiHealth": "AI Health",
+      "helpAnalytics": "Help Analytics",
+      "tokenManagement": "Tokens",
+      "organization": "Organization",
+      "branding": "Branding",
+      "integrations": "Integrations",
+      "api": "API",
+      "billing": "Billing",
+      "payment": "Payment",
+      "tax": "Tax",
+      "alerts": "Alerts",
+      "security": "Security",
+      "governance": "Governance",
+      "audit": "Audit",
+      "feedback": "Feedback"
+    },
+    "licenses": {
+      "title": "License Management",
+      "totalSeats": "Total Seats",
+      "usedSeats": "Used",
+      "available": "Available",
+      "utilization": "Utilization",
+      "byType": "Licenses by Type",
+      "searchUsers": "Search users...",
+      "allLicenses": "All Licenses",
+      "noLicense": "No License",
+      "user": "User",
+      "currentLicense": "Current License",
+      "assignedDate": "Assigned",
+      "actions": "Actions",
+      "none": "No license",
+      "noUsersFound": "No users found",
+      "bulkAssign": "Assign",
+      "bulkAssignTitle": "Bulk Assign Licenses",
+      "bulkAssignDesc": "Assign license to selected users",
+      "selectLicense": "Select License Type",
+      "removeLicense": "Remove License",
+      "assign": "Assign",
+      "fetchError": "Failed to load license data",
+      "assigned": "License updated",
+      "assignError": "Failed to update license",
+      "bulkAssigned": "licenses updated",
+      "bulkAssignError": "Failed to update some licenses"
+    },
+    "dataGovernance": {
+      "title": "Data Governance",
+      "description": "Configure data retention, residency, and compliance settings",
+      "residency": "Data Residency",
+      "residencyDesc": "Primary region where your data is stored",
+      "crossBorder": "Cross-Border Data Transfer",
+      "crossBorderDesc": "Allow data processing in other regions for performance",
+      "crossBorderNote": "Data will only be stored and processed in the selected region (GDPR compliant)",
+      "encryption": "Encryption",
+      "retention": "Data Retention Policies",
+      "retentionDesc": "Configure how long different types of data are kept",
+      "auditRetention": "Audit Log Retention",
+      "auditRetentionDesc": "Security and compliance audit logs",
+      "warning": "Important",
+      "warningText": "Changing data retention policies will affect data available for compliance audits. Purged data cannot be recovered.",
+      "saved": "Data governance settings saved",
+      "saveError": "Failed to save settings"
+    },
+    "audit": {
+      "title": "Audit & Compliance",
+      "description": "Export audit logs and generate compliance reports",
+      "tabs": {
+        "export": "Export",
+        "scheduled": "Scheduled",
+        "anomalies": "Anomalies"
+      },
+      "quickExport": "Quick Export Audit Log",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "format": "Format",
+      "exportBtn": "Export Audit Log",
+      "complianceReports": "Compliance Reports",
+      "generateReport": "Generate Report",
+      "recentExports": "Recent Exports",
+      "addSchedule": "Add Scheduled Report",
+      "anomalyInfo": "Anomaly Detection Active",
+      "anomalyInfoDesc": "AI-powered monitoring detects unusual patterns in user activity and data access.",
+      "resolve": "Mark Resolved",
+      "resolved": "Resolved",
+      "exportStarted": "Export started. You will be notified when ready.",
+      "exportError": "Failed to start export",
+      "reportStarted": "Report generation started.",
+      "reportError": "Failed to generate report"
+    },
+    "feedback": {
+      "title": "User Feedback",
+      "items": "items",
+      "empty": "No feedback received yet"
+    },
+    "team": {
+      "title": "Team",
+      "subtitle": "Manage users, groups, invitations, and permissions",
+      "tabs": {
+        "users": "Users",
+        "groups": "Groups",
+        "invitations": "Invitations",
+        "roles": "Roles",
+        "consultants": "Consultants"
+      },
+      "owner": {
+        "badge": "Owner",
+        "protected": "Protected: Account Owner",
+        "cannotDelete": "Cannot delete Account Owner. Transfer ownership first.",
+        "cannotDeactivate": "Cannot deactivate Account Owner. Transfer ownership first.",
+        "transfer": "Transfer Ownership",
+        "transferTitle": "Transfer Ownership",
+        "transferWarning": "Transferring ownership will give another user full control over this organization, including billing and the ability to delete the organization. This action cannot be undone by you.",
+        "selectNewOwner": "Select New Owner",
+        "selectAdmin": "Select an Admin...",
+        "noEligible": "No eligible candidates. The new owner must be an Admin.",
+        "reason": "Reason (optional)",
+        "reasonPlaceholder": "e.g., Leaving the company, Role change...",
+        "confirm": "Transfer Ownership",
+        "transferring": "Transferring...",
+        "success": "Ownership transferred successfully"
+      }
+    },
+    "security": {
+      "title": "Security & Compliance",
+      "subtitle": "Authentication, access control, audit logs, and data management",
+      "tabs": {
+        "settings": "Security Settings",
+        "authentication": "SSO & Auth",
+        "access": "API Keys",
+        "audit": "Audit Log",
+        "data": "Data Management",
+        "feedback": "Feedback"
+      },
+      "settings": {
+        "title": "Security Settings",
+        "overview": "Overview",
+        "2fa": "2FA",
+        "password": "Password Policy",
+        "sessions": "Sessions",
+        "history": "Login History"
+      },
+      "2fa": {
+        "title": "Two-Factor Authentication",
+        "require": "Require 2FA for All Users",
+        "requireDesc": "When enabled, all users must set up two-factor authentication to access the system.",
+        "status": "User 2FA Status",
+        "enabled": "Enabled",
+        "notEnabled": "Not Enabled",
+        "adoption": "2FA Adoption",
+        "usersEnabled": "users enabled"
+      },
+      "password": {
+        "title": "Password Requirements",
+        "minLength": "Minimum Password Length",
+        "characters": "characters",
+        "requireUppercase": "Require uppercase letter (A-Z)",
+        "requireNumber": "Require number (0-9)",
+        "requireSpecial": "Require special character (!@#$%^&*)",
+        "expiry": "Password Expiry (days, 0 = never)"
+      },
+      "sessions": {
+        "title": "Session Settings",
+        "timeout": "Session Timeout (minutes)",
+        "maxPerUser": "Max Sessions Per User",
+        "active": "Active Sessions",
+        "terminate": "Terminate session",
+        "terminateAll": "Terminate All",
+        "noSessions": "No active sessions"
+      },
+      "loginHistory": {
+        "title": "Login History",
+        "success": "Successful login",
+        "failed": "Failed login",
+        "noHistory": "No login history"
+      }
+    },
+    "overview": {
+      "title": "Overview",
+      "subtitle": "Dashboard, metrics, and analytics for your organization",
+      "tabs": {
+        "dashboard": "Dashboard",
+        "metrics": "Metrics",
+        "analytics": "Analytics"
+      }
+    },
+    "organization": {
+      "title": "Organization",
+      "subtitle": "Profile, branding, ownership, and regional settings",
+      "tabs": {
+        "profile": "Profile & Branding",
+        "ownership": "Ownership"
+      }
+    },
+    "workspace": {
+      "title": "Workspace",
+      "subtitle": "Projects, knowledge base, and playbooks"
+    },
+    "ai": {
+      "title": "AI & Intelligence",
+      "subtitle": "AI configuration, health monitoring, and analytics"
+    },
+    "billing": {
+      "title": "Billing & Subscription",
+      "subtitle": "Plans, payments, invoices, and spending controls"
+    },
+    "roles": {
+      "title": "Roles & Permissions",
+      "subtitle": "Manage access levels and permissions for your organization",
+      "infoTitle": "About Roles",
+      "infoContent": "Roles define what actions users can perform. System roles provide a base set of permissions, while custom roles can be tailored to your organization's needs.",
+      "systemRoles": "System Roles",
+      "customRoles": "Custom Roles",
+      "system": "System",
+      "users": "users",
+      "permissions": "permissions",
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "createRole": "Create Role",
+      "createNewRole": "Create New Role",
+      "editRole": "Edit Role",
+      "selectToEdit": "Select a Role",
+      "selectToEditDesc": "Select a role from the list to view or edit its permissions",
+      "name": "Role Name",
+      "namePlaceholder": "Enter role name",
+      "nameRequired": "Role name is required",
+      "color": "Color",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe this role",
+      "permissionsMatrix": "Permissions",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "systemWarning": "System roles cannot be renamed or deleted. You can only customize permissions.",
+      "created": "Role created successfully",
+      "updated": "Role updated successfully",
+      "deleted": "Role deleted successfully",
+      "permissionsUpdated": "Role permissions updated",
+      "cannotDeleteSystem": "Cannot delete system roles",
+      "hasUsers": "Cannot delete role with assigned users",
+      "loadError": "Failed to load roles",
+      "saveError": "Failed to save role",
+      "deleteError": "Failed to delete role",
+      "noResults": "No roles found"
+    },
+    "templates": {
+      "title": "Templates",
+      "subtitle": "Manage project and task templates",
+      "infoTitle": "About Templates",
+      "infoContent": "Templates help standardize project structures. Create templates based on proven methodologies or customize them for your organization.",
+      "create": "Create Template",
+      "createNew": "Create Template",
+      "editTemplate": "Edit Template",
+      "selectToEdit": "Select a Template",
+      "selectToEditDesc": "Select a template from the list to edit or create a new one",
+      "name": "Template Name",
+      "namePlaceholder": "Enter template name",
+      "nameRequired": "Template name is required",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe this template",
+      "duration": "Estimated Duration",
+      "durationPlaceholder": "e.g., 3 months",
+      "phases": "Phases / Stages",
+      "addPhase": "Add Phase",
+      "phaseName": "Phase name",
+      "noTasks": "No tasks in this phase yet. Tasks can be added when creating a project from this template.",
+      "searchPlaceholder": "Search templates...",
+      "noResults": "No templates found",
+      "loadError": "Failed to load templates",
+      "created": "Template created",
+      "updated": "Template updated",
+      "deleted": "Template deleted",
+      "duplicated": "Template duplicated",
+      "exported": "Template exported",
+      "imported": "Template imported",
+      "importError": "Invalid template file",
+      "cannotDeleteDefault": "Cannot delete default templates"
+    },
+    "defaults": {
+      "title": "Workspace Defaults",
+      "subtitle": "Configure default settings for projects and tasks",
+      "infoTitle": "About Defaults",
+      "infoContent": "Set default values for new projects and tasks. These settings apply organization-wide but can be overridden at the project level.",
+      "projectDefaults": "Project Defaults",
+      "projectDefaultsDesc": "Settings for new projects",
+      "taskDefaults": "Task Defaults",
+      "taskDefaultsDesc": "Settings for new tasks",
+      "workflowStates": "Workflow States",
+      "workflowStatesDesc": "Default task statuses",
+      "timeDateSettings": "Time & Date",
+      "timeDateSettingsDesc": "Regional preferences",
+      "defaultView": "Default View",
+      "defaultPrivacy": "Default Privacy",
+      "public": "Public (visible to all)",
+      "team": "Team (visible to team members)",
+      "private": "Private (invite only)",
+      "estimationUnit": "Estimation Unit",
+      "hours": "Hours",
+      "days": "Days",
+      "points": "Story Points",
+      "autoAssignCreator": "Auto-assign project creator",
+      "enableTimeTracking": "Enable time tracking",
+      "enableDependencies": "Enable task dependencies",
+      "defaultPriority": "Default Priority",
+      "defaultDueOffset": "Default Due Date Offset",
+      "daysFromCreation": "days from creation",
+      "defaultAssignee": "Default Assignee",
+      "taskCreator": "Task Creator",
+      "projectManager": "Project Manager",
+      "unassigned": "Unassigned",
+      "autoAddToMyWork": "Auto-add to My Work when assigned",
+      "timezone": "Timezone",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "weekStart": "Week Starts On",
+      "workingDays": "Working Days",
+      "workingHours": "Working Hours",
+      "unsavedChanges": "You have unsaved changes",
+      "saved": "Settings saved successfully",
+      "loadError": "Failed to load settings",
+      "saveError": "Failed to save settings"
+    },
+    "branding": {
+      "title": "Branding",
+      "subtitle": "Customize your organization's appearance",
+      "infoTitle": "About Branding",
+      "infoContent": "Customize the look and feel of your organization's workspace. Upload logos, set colors, and configure the login page.",
+      "logos": "Logos",
+      "colors": "Colors",
+      "typography": "Typography",
+      "loginPage": "Login Page",
+      "emailTemplates": "Email",
+      "logosTitle": "Logo Settings",
+      "logoLight": "Light Mode Logo",
+      "logoLightDesc": "Displayed on light backgrounds",
+      "logoDark": "Dark Mode Logo",
+      "logoDarkDesc": "Displayed on dark backgrounds",
+      "logoIcon": "Logo Icon",
+      "logoIconDesc": "Square icon for compact spaces",
+      "favicon": "Favicon",
+      "faviconDesc": "Browser tab icon (32x32)",
+      "uploadImage": "Upload Image",
+      "colorsTitle": "Color Settings",
+      "colorPresets": "Quick Presets",
+      "primaryColor": "Primary Color",
+      "secondaryColor": "Secondary Color",
+      "accentColor": "Accent Color",
+      "backgroundColor": "Background Color",
+      "textColor": "Text Color",
+      "preview": "Preview",
+      "typographyTitle": "Typography Settings",
+      "bodyFont": "Body Font",
+      "headingsFont": "Headings Font",
+      "customCss": "Custom CSS (Advanced)",
+      "customCssNote": "Use with caution. May override default styles.",
+      "typographyPreview": "Typography Preview",
+      "loginPageTitle": "Login Page Customization",
+      "loginTitle": "Login Page Title",
+      "loginTitlePlaceholder": "Welcome to Your Workspace",
+      "loginSubtitle": "Login Page Subtitle",
+      "loginSubtitlePlaceholder": "Sign in to continue",
+      "loginLogo": "Login Page Logo",
+      "loginLogoDesc": "Logo shown on the login page",
+      "customDomain": "Custom Domain",
+      "customDomainNote": "Contact support to configure DNS for custom domains.",
+      "emailTitle": "Email Template Branding",
+      "emailLogo": "Email Header Logo",
+      "emailLogoDesc": "Logo shown in email headers",
+      "emailFromName": "Email From Name",
+      "emailFromNamePlaceholder": "Your Company Name",
+      "emailFooter": "Email Footer Text",
+      "emailFooterPlaceholder": "Company Name\n123 Street, City, Country\ncontact@company.com",
+      "emailPreview": "Email Preview",
+      "unsavedChanges": "You have unsaved changes",
+      "saved": "Branding settings saved",
+      "saveError": "Failed to save branding settings",
+      "invalidFileType": "Please select an image file",
+      "fileTooLarge": "Image must be less than 2MB",
+      "uploadError": "Failed to upload image"
+    },
+    "integrations": {
+      "title": "Integrations",
+      "subtitle": "Connect with external services and webhooks",
+      "infoTitle": "About Integrations",
+      "infoContent": "Connect your workspace with external services. Set up webhooks to receive real-time notifications or connect third-party apps.",
+      "webhooks": "Webhooks",
+      "connectedApps": "Connected Apps",
+      "addWebhook": "Add Webhook",
+      "createWebhook": "Create Webhook",
+      "editWebhook": "Edit Webhook",
+      "selectOrCreate": "Select or Create",
+      "selectOrCreateDesc": "Select a webhook to edit or create a new one",
+      "webhookName": "Webhook Name",
+      "webhookNamePlaceholder": "My Webhook",
+      "endpointUrl": "Endpoint URL",
+      "signingSecret": "Signing Secret",
+      "events": "Events",
+      "activateImmediately": "Activate immediately",
+      "test": "Test",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "connectRedirect": "Redirecting to authorization...",
+      "disconnected": "Integration disconnected",
+      "requiredFields": "Name and URL are required",
+      "selectEvents": "Select at least one event",
+      "searchPlaceholder": "Search integrations...",
+      "noWebhooks": "No webhooks configured",
+      "webhookCreated": "Webhook created",
+      "webhookUpdated": "Webhook updated",
+      "webhookDeleted": "Webhook deleted",
+      "webhookEnabled": "Webhook enabled",
+      "webhookDisabled": "Webhook disabled",
+      "testingWebhook": "Testing webhook...",
+      "testSuccess": "Webhook test successful",
+      "testFailed": "Webhook test failed",
+      "loadError": "Failed to load integrations",
+      "saveError": "Failed to save webhook"
+    }
+  },
+  "aiChat": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "subtitle": {
+      "morning": "Ready to drive your transformation forward?",
+      "afternoon": "Let's make progress on your initiatives",
+      "evening": "Review your transformation journey"
+    },
+    "placeholder": "Ask anything...",
+    "frozenPlaceholder": "AI temporarily unavailable",
+    "listening": "Listening...",
+    "send": "Send",
+    "actions": {
+      "assess": "Assess",
+      "generate": "Generate",
+      "plan": "Plan",
+      "report": "Report",
+      "rename": "Rename",
+      "star": "Pin to top",
+      "unstar": "Unpin",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "delete": "Delete",
+      "export": "Export"
+    },
+    "history": "History",
+    "newSession": "New Strategy Session",
+    "searchPlaceholder": "Search conversations...",
+    "noConversations": "No conversations yet",
+    "noResults": "No conversations found",
+    "startNewChat": "Start a new chat to begin",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "confirmDelete": "Are you sure you want to delete this conversation?",
+    "sections": {
+      "pinned": "Pinned",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This Week",
+      "lastMonth": "Last 30 Days",
+      "older": "Older",
+      "archived": "Archived",
+      "byProject": "By Project"
+    },
+    "menu": {
+      "addFiles": "Add Files & Media",
+      "tools": "Tools & Integrations",
+      "uploadFile": "Upload File",
+      "pasteContent": "Paste Content",
+      "addLink": "Add Link / URL",
+      "enterUrl": "Enter URL",
+      "fromPmo": "From Your PMO Data",
+      "importAssessment": "Import Assessment",
+      "importInitiative": "Import Initiative",
+      "importRoadmap": "Import Roadmap",
+      "importReport": "Import Report",
+      "aiModes": "AI Modes",
+      "deepResearch": "Deep Research",
+      "webSearch": "Web Search",
+      "showReasoning": "Show Reasoning",
+      "pmoTools": "PMO Tools",
+      "startAssessment": "Start Assessment",
+      "generateInitiatives": "Generate Initiatives",
+      "calculateRoi": "Calculate ROI",
+      "buildReport": "Build Report",
+      "connections": "Connections",
+      "manageConnectors": "Manage Connectors",
+      "knowledgeBases": "Knowledge Bases"
+    },
+    "sources": "Sources",
+    "suggestions": {
+      "title": "Suggested for you",
+      "startAssessment": "Start your digital maturity assessment"
+    },
+    "startRecording": "Voice input",
+    "stopRecording": "Stop",
+    "voiceModeOn": "Voice conversation active - click to disable",
+    "voiceModeOff": "Enable voice conversation"
+  },
+  "billing": {
+    "paymentMethods": {
+      "title": "Payment Methods",
+      "description": "Manage your saved payment methods",
+      "securityNote": "Your payment information is securely processed by Stripe. We never store your full card details.",
+      "empty": "No payment methods saved",
+      "add": "Add Card",
+      "addFirst": "Add Your First Card",
+      "default": "Default",
+      "setDefault": "Set Default",
+      "defaultSet": "Default payment method updated",
+      "defaultError": "Failed to update default",
+      "expires": "Expires",
+      "removeConfirm": "Are you sure you want to remove this payment method?",
+      "removed": "Payment method removed",
+      "removeError": "Failed to remove payment method",
+      "fetchError": "Failed to load payment methods"
+    },
+    "addCard": {
+      "title": "Add Payment Method",
+      "subtitle": "Securely add a new card",
+      "secureNote": "Secured by Stripe",
+      "holderName": "Cardholder Name",
+      "cardNumber": "Card Number",
+      "expiry": "Expiry",
+      "cvc": "CVC",
+      "submit": "Add Card",
+      "processing": "Processing...",
+      "success": "Card added successfully",
+      "error": "Failed to add card",
+      "setupError": "Failed to initialize card form",
+      "invalidCard": "Please enter a valid card number",
+      "invalidExpiry": "Please enter a valid expiry date",
+      "invalidCvc": "Please enter a valid CVC",
+      "termsNote": "By adding a card, you agree to our Terms of Service and authorize future charges according to your subscription."
+    },
+    "subscription": {
+      "currentPlan": "CURRENT PLAN",
+      "trial": "TRIAL",
+      "trialEnds": "Trial ends",
+      "availablePlans": "Available Plans",
+      "popular": "Most Popular",
+      "current": "Current",
+      "yourPlan": "Your Current Plan",
+      "upgrade": "Upgrade",
+      "switch": "Switch",
+      "select": "Select",
+      "confirmUpgrade": "Confirm Upgrade",
+      "confirmChange": "Confirm Plan Change",
+      "newPrice": "New Monthly Price",
+      "discountCode": "Discount Code",
+      "apply": "Apply",
+      "invalidDiscount": "Invalid discount code",
+      "proratedNote": "You will be charged the prorated difference immediately.",
+      "downgradeNote": "Changes will take effect at the end of your current billing period.",
+      "confirm": "Confirm Change",
+      "changed": "Subscription updated successfully",
+      "changeError": "Failed to update subscription",
+      "fetchError": "Failed to load subscription data"
+    },
+    "alerts": {
+      "title": "Usage Alerts & Limits",
+      "description": "Configure notifications when you approach usage limits",
+      "emailNotifications": "Email Notifications",
+      "emailNotificationsDesc": "Receive alerts via email",
+      "tokenUsage": "Token Usage Alerts",
+      "storageUsage": "Storage Usage Alerts",
+      "threshold80": "Alert at 80% usage",
+      "threshold90": "Alert at 90% usage",
+      "threshold100": "Alert at 100% usage",
+      "storageThreshold80": "Alert at 80% storage",
+      "storageThreshold90": "Alert at 90% storage",
+      "storageThreshold100": "Alert at 100% storage",
+      "costCap": "Monthly Cost Cap",
+      "costCapDesc": "Set a hard limit on monthly spending (overage charges will be blocked)",
+      "noCap": "No limit",
+      "autoUpgrade": "Auto-Upgrade",
+      "autoUpgradeDesc": "Automatically upgrade plan when limits are reached",
+      "selectPlan": "Select upgrade plan...",
+      "saved": "Alert settings saved",
+      "saveError": "Failed to save settings",
+      "fetchError": "Failed to load settings"
+    },
+    "tax": {
+      "title": "Tax & Invoice Settings",
+      "description": "Configure your tax ID and billing information for invoices",
+      "taxId": "Tax ID / VAT Number",
+      "taxIdType": "Tax ID Type",
+      "selectType": "Select type...",
+      "taxIdNumber": "Tax ID Number",
+      "taxExempt": "Tax Exempt",
+      "taxExemptDesc": "Check if your organization is tax exempt",
+      "billingAddress": "Billing Address",
+      "billingName": "Company / Name",
+      "billingEmail": "Billing Email",
+      "addressLine1": "Address Line 1",
+      "addressLine2": "Address Line 2",
+      "city": "City",
+      "state": "State / Region",
+      "postalCode": "Postal Code",
+      "country": "Country",
+      "selectCountry": "Select...",
+      "invoiceCustomization": "Invoice Customization",
+      "invoicePrefix": "Invoice Prefix",
+      "poNumber": "Default PO Number",
+      "saved": "Tax settings saved",
+      "saveError": "Failed to save settings",
+      "fetchError": "Failed to load tax settings"
+    }
+  },
+  "initiative": {
+    "autoFill": "Auto-fill with AI",
+    "charterTitle": "Initiative Charter",
+    "idLabel": "ID:",
+    "newInitiative": "New Initiative",
+    "progressLabel": "Progress:",
+    "readinessLabel": "Readiness:",
+    "tabs": {
+      "overview": "Overview",
+      "tasks": "Tasks",
+      "definition": "Definition & Scope",
+      "execution": "Execution & Risks",
+      "economics": "Value & Finance",
+      "governance": "Governance",
+      "team": "Team",
+      "discussion": "Discussion",
+      "history": "History",
+      "intelligence": "Intelligence"
+    },
+    "decisionToMake": "Decision to be made",
+    "decisionOwner": "Decision Owner",
+    "oneLiner": "Executive One-Liner",
+    "problemStatement": "Problem Statement (The Why)",
+    "symptom": "Symptom",
+    "rootCause": "Root Cause",
+    "costOfInaction": "Cost of Inaction",
+    "fullDescription": "Full Description (Legacy)",
+    "nameLabel": "Initiative Name",
+    "strategicIntentLabel": "Strategic Intent",
+    "strategicFitTitle": "Strategic Fit",
+    "alignmentWithAxis": "Alignment with Axis",
+    "corporateGoal": "Corporate Goal",
+    "painPoint": "Pain Point",
+    "charterReadiness": "Charter Readiness",
+    "incompleteLabel": "Incomplete:",
+    "targetStateSnapshot": "Target State Snapshot (After Initiative)",
+    "processChanges": "Process Changes",
+    "behaviorChanges": "Behavior Changes",
+    "capabilityChanges": "Capability Changes",
+    "addBullet": "+ Add bullet",
+    "evidenceTitle": "Evidence & Attachments",
+    "strategicChangeLog": "Strategic Change Log",
+    "addAttachmentMock": "+ Add Attachment (Mock)",
+    "addLogEntry": "+ Add Log Entry",
+    "strategicRoadmapAttributes": "Strategic Roadmap Attributes",
+    "strategicRole": "Strategic Role",
+    "placementReason": "Placement Reason",
+    "autoFillWithAI": "Auto-fill with AI",
+    "effortProfileLabel": "Effort Profile (1-5)",
+    "analytical": "Analytical",
+    "operational": "Operational",
+    "changeMgmt": "Change Mgmt",
+    "successCriteriaTyped": "Success Criteria (Typed)",
+    "autoSuggest": "Auto-Suggest",
+    "metric": "Metric",
+    "behavior": "Behavior",
+    "process": "Process",
+    "capability": "Capability",
+    "criteriaDescriptionPlaceholder": "Criteria description...",
+    "addCriteria": "+ Add Criteria",
+    "explicitAssumptions": "Explicit Assumptions",
+    "organizational": "Organizational",
+    "dataTech": "Data / Tech",
+    "budgetResources": "Budget / Resources",
+    "peopleSkills": "People / Skills",
+    "keyDeliverables": "Key Deliverables",
+    "addDeliverable": "+ Add Deliverable",
+    "scopeGuard": "Scope Guard (Target)",
+    "inScope": "In Scope",
+    "outOfScope": "Out of Scope",
+    "timelineMilestones": "Timeline & Milestones",
+    "autoFillExecution": "Auto-fill Execution",
+    "killCriteriaMandatory": "Kill Criteria (Mandatory) *",
+    "stopConditions": "Stop Conditions",
+    "killCriteriaPlaceholder": "Describe conditions to stop this initiative...",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "pilotEnd": "Pilot End",
+    "milestonesAndGates": "Key Milestones & Gates",
+    "milestoneNamePlaceholder": "Milestone name...",
+    "decisionGate": "Decision Gate",
+    "decision": "Decision:",
+    "continue": "Continue",
+    "adjust": "Adjust",
+    "stop": "Stop",
+    "requiredCompetencies": "Required Competencies",
+    "competenciesPlaceholder": "Search or add competencies...",
+    "keyRisks": "Key Risks",
+    "keyRisksDescription": "Identify and track critical risks for this initiative.",
+    "riskDescriptionPlaceholder": "Risk description...",
+    "mitigationStrategyPlaceholder": "Mitigation strategy...",
+    "maxRisksReached": "Max 5 Risks reached",
+    "addRisk": "+ Add Risk",
+    "financialCase": "Financial Case",
+    "capexLabel": "CAPEX",
+    "opexLabel": "OPEX",
+    "annualBenefitLabel": "Annual Benefit",
+    "roiLabel": "ROI (Calculated)",
+    "strategicValue": "Strategic Value",
+    "businessValueLabel": "Business Value Description",
+    "businessValuePlaceholder": "Describe major business impact...",
+    "ownershipAccountability": "Ownership & Accountability",
+    "businessOwner": "Business Owner",
+    "executionOwner": "Execution Owner",
+    "executiveSponsor": "Executive Sponsor",
+    "sponsor": "Sponsor",
+    "assignedTeam": "Assigned Team",
+    "addMember": "Add Member",
+    "rolePlaceholder": "Role...",
+    "actions": "Actions",
+    "businessValue": "Business Value",
+    "valueDriver": "Value Driver",
+    "selectDriverPlaceholder": "Select Driver...",
+    "costOptimization": "Cost Optimization",
+    "revenueGrowth": "Revenue Growth",
+    "capitalEfficiency": "Capital Efficiency",
+    "riskReduction": "Risk Reduction",
+    "strategicCapability": "Strategic Capability",
+    "confidenceLevel": "Confidence Level",
+    "confidencePlaceholder": "Confidence...",
+    "capexEst": "CAPEX Est. ($)",
+    "opexEst": "OPEX Est. ($)",
+    "valueTiming": "Value Timing",
+    "expectedRealizationPlaceholder": "Expected Realization...",
+    "valueTimingImmediate": "Immediate (<3mo)",
+    "valueTimingShortTerm": "Short term (3-12mo)",
+    "valueTimingLongTerm": "Long term (>12mo)",
+    "financialSummary": "Financial Summary",
+    "capabilityPlay": "CAPABILITY PLAY",
+    "cashPlay": "CASH PLAY",
+    "totalInvestment": "Total Investment",
+    "missingValueDriverWarning": "Missing Value Driver for Investment",
+    "socialImpact": "Social Impact",
+    "rolesOwnership": "Roles & Ownership",
+    "businessOwnerDescription": "Accountable for VALUE delivery",
+    "executionOwnerDescription": "Accountable for DELIVERY",
+    "sponsorDescription": "Final APPROVAL authority",
+    "selectBusinessOwnerPlaceholder": "Select Business Owner...",
+    "selectExecutionOwnerPlaceholder": "Select Execution Owner...",
+    "selectSponsorPlaceholder": "Select Sponsor...",
+    "approvalWorkflow": "Approval Workflow",
+    "currentStatus": "Current Status",
+    "nextAction": "Next Action",
+    "nextActionDraft": "Complete charter and submit to",
+    "nextActionPlanning": "Finalize details and submit for",
+    "nextActionReview": "Awaiting",
+    "sponsorApproval": "Sponsor approval",
+    "nextActionApproved": "Ready to start",
+    "nextActionExecuting": "Complete all tasks to mark as",
+    "completedSuccessfully": "Initiative completed successfully",
+    "decisionRequired": "Decision Required",
+    "viewBrief": "View Brief",
+    "governanceAuditTrail": "Governance Audit Trail",
+    "noGovernanceEvents": "No governance events recorded yet.",
+    "teamMembers": "Team Members",
+    "selectMember": "Select member...",
+    "noTeamMembersAssigned": "No team members assigned yet",
+    "allocation": "Allocation",
+    "relatedInitiatives": "Related Initiatives",
+    "linkInitiative": "Link Initiative",
+    "noLinkedInitiatives": "No linked initiatives",
+    "initiativeIdOrNamePlaceholder": "Initiative ID or name...",
+    "addCommentPlaceholder": "Add a comment or question...",
+    "postComment": "Post Comment",
+    "noCommentsYet": "No comments yet",
+    "startDiscussion": "Start the discussion!",
+    "exportCharter": "Export Charter",
+    "cloneAsTemplate": "Clone as Template",
+    "versionHistory": "Version History",
+    "currentVersion": "Current Version",
+    "live": "LIVE",
+    "initialCreation": "Initial creation"
+  },
+  "intelligence": {
+    "title": "Organizational Learning",
+    "autoGenerate": "Auto-Generate Insights",
+    "analyzing": "Analyzing...",
+    "learnedTitle": "What we learned (Successes)",
+    "learnedPlaceholder": "Document key insights that drove success...",
+    "surprisedTitle": "What surprised us (Unexpected)",
+    "surprisedPlaceholder": "Document unexpected challenges or outcomes...",
+    "differentlyTitle": "What we would do differently",
+    "differentlyPlaceholder": "Actionable advice for future comparisons...",
+    "patternsTitle": "Cross-Initiative Patterns",
+    "noPatterns": "No patterns detected yet.",
+    "noPatternsDesc": "Run AI analysis to compare with other initiatives.",
+    "detectPatterns": "Detect Patterns",
+    "detectedPatternsLabel": "Detected Patterns",
+    "knowledgeGraphTitle": "BCG Knowledge Graph",
+    "knowledgeGraphSharing": "This initiative shares",
+    "knowledgeGraphSimilarity": "similarity in \"Change Resistance\" patterns with",
+    "viewRelated": "View Related Initiative"
+  },
+  "dashboard": {
+    "title": "Execution Dashboard",
+    "program": "Transformation Program",
+    "lastUpdated": "Last updated:",
+    "justNow": "Just now",
+    "setup": {
+      "title": "Quick Start",
+      "subtitle": "Get the most out of Consultinity",
+      "done": "Done",
+      "next": "Next",
+      "actions": {
+        "chat": {
+          "title": "Try AI Assistant",
+          "description": "Ask your first question to the AI"
+        },
+        "assessment": {
+          "title": "Start Assessment",
+          "description": "Begin your digital readiness diagnosis"
+        },
+        "roadmap": {
+          "title": "View Roadmap",
+          "description": "Explore your transformation timeline"
+        }
+      }
+    },
+    "tabs": {
+      "overview": "Overview",
+      "progress": "Progress",
+      "ai": "AI Command",
+      "report": "Report"
+    },
+    "stats": {
+      "healthScore": "Health Score",
+      "healthy": "Transformation Healthy",
+      "activeInitiatives": "Active Initiatives",
+      "inProgress": "In Progress",
+      "valueRealized": "Value Realized",
+      "ofTarget": "of Target",
+      "criticalRisks": "Critical Risks",
+      "needAttention": "Need Attention"
+    },
+    "valueTrajectory": "Value Realization Trajectory",
+    "milestone": "Milestone",
+    "current": "Current",
+    "liveActivity": "Live Activity",
+    "time": {
+      "ago": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    },
+    "generateReport": "Generate Report",
+    "downloadPdf": "Download PDF",
+    "initiativeTracking": "Initiative Tracking",
+    "onTrack": "On Track",
+    "atRisk": "At Risk",
+    "table": {
+      "initiative": "Initiative",
+      "owner": "Owner",
+      "status": "Status",
+      "progress": "Progress",
+      "dueDate": "Due Date"
+    },
+    "unassigned": "Unassigned",
+    "aiCommand": {
+      "title": "AI Command Center",
+      "proactiveInsights": "Proactive Insights",
+      "description": "Ask complex questions about your transformation data. The AI has access to your KPIs, Risks, and Roadmap.",
+      "placeholder": "Ask a question..."
+    },
+    "finalReport": {
+      "title": "Use The Final Report",
+      "description": "Generate a comprehensive, board-ready PDF report encapsulating your entire Digital Transformation Strategy.",
+      "sections": "Sections",
+      "options": "Options",
+      "ready": "READY",
+      "soon": "SOON",
+      "generate": "Generate Final Report",
+      "pdfDoc": "PDF Document",
+      "powerPoint": "PowerPoint"
+    },
+    "reportSections": {
+      "summary": "Executive Summary",
+      "maturity": "Maturity Assessment Results",
+      "roadmap": "Strategic Initiatives Roadmap",
+      "financial": "Financial Case (ROI, NPV)",
+      "risk": "Risk & Change Management"
+    },
+    "widgetsComingSoon": "Coming Soon"
+  },
+  "status": {
+    "DRAFT": "Draft",
+    "PLANNING": "Planning",
+    "REVIEW": "In Review",
+    "APPROVED": "Approved",
+    "EXECUTING": "Executing",
+    "DONE": "Done",
+    "CANCELLED": "Cancelled",
+    "ARCHIVED": "Archived",
+    "BLOCKED": "Blocked"
+  },
+  "role": {
+    "CONTRIBUTOR": "Contributor",
+    "REVIEWER": "Reviewer",
+    "SME": "SME",
+    "STAKEHOLDER": "Stakeholder",
+    "OBSERVER": "Observer"
+  },
+  "relation": {
+    "DEPENDS_ON": "Depends on",
+    "BLOCKS": "Blocks",
+    "RELATED_TO": "Related to",
+    "PARENT_OF": "Parent of",
+    "CHILD_OF": "Child of"
+  },
+  "ai": {
+    "applyProposedSchedule": "Apply Proposed Schedule",
+    "autoGenerateInsights": "Auto-Generate Insights",
+    "observations": "Key Observations & Risks",
+    "recommendations": "Recommended Actions",
+    "optimization": "Optimization Strategy"
+  },
+  "frameworks": {
+    "common": {
+      "current": "Current",
+      "target": "Target",
+      "gap": "Gap",
+      "score": "Score",
+      "overall": "Overall",
+      "dimensions": "Dimensions",
+      "categories": "Categories",
+      "recommendations": "Recommendations",
+      "gapAnalysis": "Gap Analysis",
+      "topPriorities": "Top Priorities",
+      "maturityLevel": "Maturity Level",
+      "importPDF": "Import PDF",
+      "manualEntry": "Manual Entry",
+      "generateReport": "Generate Report",
+      "viewReport": "View Report",
+      "exportPDF": "Export PDF",
+      "saveProgress": "Save Progress",
+      "legalNotice": "Legal Notice",
+      "educationalPurpose": "Educational Purpose"
+    },
+    "DRD": {
+      "name": "DRD",
+      "fullName": "Digital Readiness Diagnosis",
+      "description": "7-axis digital maturity assessment based on Digital Pathfinder methodology",
+      "axes": {
+        "processes": "Digital Processes",
+        "digitalProducts": "Digital Products",
+        "businessModels": "Business Models",
+        "dataManagement": "Data Management",
+        "culture": "Organizational Culture",
+        "cybersecurity": "Cybersecurity",
+        "aiMaturity": "AI Maturity"
+      }
+    },
+    "SIRI": {
+      "name": "SIRI",
+      "fullName": "Smart Industry Readiness Index",
+      "description": "Industry 4.0 readiness assessment - 3 Building Blocks × 8 Dimensions",
+      "legalNotice": "SIRI (Smart Industry Readiness Index) is a tool developed by Singapore Economic Development Board (EDB) in collaboration with TÜV SÜD. The use of SIRI structure in Consultinity is for educational purposes only and serves to learn Industry 4.0 methodology. Official SIRI certification requires an accredited assessor.",
+      "buildingBlocks": {
+        "process": "Process",
+        "technology": "Technology",
+        "organization": "Organization"
+      },
+      "dimensions": {
+        "operations": "Operations",
+        "supplyChain": "Supply Chain",
+        "productLifecycle": "Product Lifecycle",
+        "automation": "Automation",
+        "connectivity": "Connectivity",
+        "intelligence": "Intelligence",
+        "talentReadiness": "Talent Readiness",
+        "structureManagement": "Structure & Management"
+      },
+      "levels": {
+        "0": "Not Present",
+        "1": "Defined",
+        "2": "Digital",
+        "3": "Connected",
+        "4": "Automated",
+        "5": "Intelligent"
+      }
+    },
+    "ADMA": {
+      "name": "ADMA",
+      "fullName": "Advanced Digital Maturity Assessment",
+      "description": "European Digital Innovation Hubs framework - 5 Pillars × 12 Dimensions",
+      "legalNotice": "ADMA (Advanced Digital Maturity Assessment) is a tool developed by the European Commission as part of the Digital Innovation Hubs program. Use in Consultinity is for educational purposes.",
+      "pillars": {
+        "strategy": "Strategy & Organization",
+        "smartProducts": "Smart Products",
+        "smartOperations": "Smart Operations",
+        "smartSupply": "Smart Supply Chain",
+        "dataDriven": "Data-Driven Services"
+      },
+      "dimensions": {
+        "digitalStrategy": "Digital Strategy",
+        "digitalInvestments": "Digital Investments",
+        "digitalCulture": "Digital Culture",
+        "productFeatures": "Smart Product Features",
+        "productData": "Product Data Usage",
+        "productionTech": "Production Technologies",
+        "productionIT": "Production IT",
+        "supplyIntegration": "Supply Chain Integration",
+        "supplyVisibility": "Supply Chain Visibility",
+        "dataCollection": "Data Collection",
+        "dataAnalytics": "Data Analytics",
+        "dataServices": "Data-Based Services"
+      },
+      "levels": {
+        "1": "Newcomer",
+        "2": "Beginner",
+        "3": "Intermediate",
+        "4": "Experienced",
+        "5": "Expert"
+      }
+    },
+    "CMMI": {
+      "name": "CMMI",
+      "fullName": "Capability Maturity Model Integration",
+      "description": "Process improvement framework - 5 Maturity Levels × 20 Practice Areas",
+      "legalNotice": "CMMI is a trademark of ISACA (formerly CMMI Institute). Official CMMI certification requires an accredited Lead Appraiser. Implementation in Consultinity is for educational purposes.",
+      "categories": {
+        "doing": "Doing",
+        "managing": "Managing",
+        "enabling": "Enabling"
+      },
+      "practiceAreas": {
+        "EST": "Estimating",
+        "PAD": "Planning",
+        "MC": "Monitor & Control",
+        "PI": "Peer Reviews",
+        "PQA": "Process Quality Assurance",
+        "RDM": "Requirements Development & Management",
+        "RM": "Requirements Management",
+        "TS": "Technical Solution",
+        "VER": "Verification",
+        "VAL": "Validation",
+        "CAR": "Causal Analysis & Resolution",
+        "CM": "Configuration Management",
+        "DAR": "Decision Analysis & Resolution",
+        "RSKM": "Risk & Opportunity Management",
+        "SAM": "Supplier Agreement Management",
+        "GOV": "Governance",
+        "II": "Implementation Infrastructure",
+        "OT": "Organizational Training",
+        "PCM": "Process Management",
+        "MPM": "Managing Performance & Measurement"
+      },
+      "levels": {
+        "1": "Initial",
+        "2": "Managed",
+        "3": "Defined",
+        "4": "Quantitatively Managed",
+        "5": "Optimizing"
+      }
+    },
+    "LEAN": {
+      "name": "Lean 4.0",
+      "fullName": "DBR77 Lean 4.0 Assessment",
+      "description": "Proprietary DBR77 method: Measure → Optimize → Automate",
+      "legalNotice": "The DBR77 Lean 4.0 method (Measure-Optimize-Automate) is a proprietary Consultinity methodology combining classic Lean tools with automation and AI potential assessment.",
+      "phases": {
+        "measure": "Measure",
+        "optimize": "Optimize",
+        "automate": "Automate"
+      },
+      "assessmentTypes": {
+        "processes": "Processes",
+        "workstations": "Workstations",
+        "management": "Management Practices"
+      },
+      "wastes": {
+        "transportation": "Transportation",
+        "inventory": "Inventory",
+        "motion": "Motion",
+        "waiting": "Waiting",
+        "overproduction": "Overproduction",
+        "overProcessing": "Over-Processing",
+        "defects": "Defects",
+        "skills": "Unused Skills"
+      },
+      "roleEvolution": {
+        "unchanged": "Unchanged",
+        "augmented": "AI-Augmented",
+        "transformed": "Transformed",
+        "redistributed": "Redistributed"
+      },
+      "metrics": {
+        "tasksPerDay": "Tasks/day",
+        "avgTaskTime": "Avg. task time",
+        "errorRate": "Error rate",
+        "overtimeHours": "Overtime hours",
+        "digitalMaturity": "Digital Maturity",
+        "automationPotential": "Automation Potential",
+        "estimatedSavings": "Estimated Savings"
+      }
+    }
+  },
+  "widgets": {
+    "help": {
+      "title": "Help Center",
+      "tooltip": "Help Center"
+    },
+    "documents": {
+      "title": "Document Library",
+      "tooltip": "Documents"
+    },
+    "feedback": {
+      "title": "Feedback / Bug Report",
+      "tooltip": "Feedback"
+    }
+  },
+  "onboarding": {
+    "checklist": {
+      "title": "Getting Started",
+      "completed": "completed",
+      "more": "more steps",
+      "dismiss": "I'll explore on my own",
+      "profile": {
+        "title": "Complete your profile",
+        "description": "Add your name and company info"
+      },
+      "firstChat": {
+        "title": "Try AI Assistant",
+        "description": "Ask your first question"
+      },
+      "firstAssessment": {
+        "title": "Start an assessment",
+        "description": "Begin your digital readiness diagnosis"
+      },
+      "firstInitiative": {
+        "title": "Create an initiative",
+        "description": "Plan your first transformation project"
+      },
+      "roadmap": {
+        "title": "Explore Roadmap",
+        "description": "View your transformation timeline"
+      },
+      "inviteTeam": {
+        "title": "Invite your team",
+        "description": "Collaborate with colleagues"
+      },
+      "billing": {
+        "title": "Set up billing",
+        "description": "Configure payment method"
+      }
+    }
+  },
+  "documents": {
+    "library": "Document Library",
+    "projectDocs": "Project",
+    "myDocs": "My Docs",
+    "upload": "Add Document",
+    "uploading": "Uploading...",
+    "noProjectDocs": "No project documents",
+    "noUserDocs": "No user documents",
+    "download": "Download",
+    "moveToProject": "Move to project",
+    "delete": "Delete",
+    "projectHint": "Documents available to everyone in the project",
+    "userHint": "Your private documents",
+    "confirmDelete": "Are you sure you want to delete this document?"
   }
 }

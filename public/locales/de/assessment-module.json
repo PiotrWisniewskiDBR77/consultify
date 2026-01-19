@@ -1,0 +1,154 @@
+{
+  "assessmentModule": {
+    "hub": {
+      "title": "[DE] Assessment Hub",
+      "subtitle": "[DE] Unified Multi-Framework Assessment Overview",
+      "overallReadiness": "[DE] Overall Digital Readiness",
+      "basedOn": "[DE] Based on {{count}} assessment(s) across {{modules}} module(s)",
+      "strengths": "[DE] Strengths",
+      "priorityGaps": "[DE] Priority Gaps",
+      "quickActions": "[DE] Quick Actions",
+      "startRapidLean": "[DE] Start RapidLean Assessment",
+      "uploadExternal": "[DE] Upload External Assessment",
+      "uploadGeneric": "[DE] Upload Generic Report",
+      "noData": "[DE] No assessment data available. Start your first assessment to see insights."
+    },
+    "rapidLean": {
+      "title": "[DE] RapidLean Assessment",
+      "subtitle": "[DE] 18-Question Lean Maturity Evaluation",
+      "dimensions": {
+        "value_stream": "[DE] Value Stream Efficiency",
+        "waste_elimination": "[DE] Waste Elimination (7+1 Wastes)",
+        "flow_pull": "[DE] Flow & Pull Systems",
+        "quality_source": "[DE] Quality at Source (Jidoka)",
+        "continuous_improvement": "[DE] Continuous Improvement Culture",
+        "visual_management": "[DE] Visual Management"
+      },
+      "wizard": {
+        "progress": "[DE] Question {{current}} / {{total}}",
+        "dimension": "[DE] Dimension {{current}}/6: {{name}}",
+        "helpTooltip": "[DE] Show help for this question",
+        "scale": {
+          "1": "[DE] Ad-Hoc",
+          "2": "[DE] Emerging",
+          "3": "[DE] Defined",
+          "4": "[DE] Managed",
+          "5": "[DE] World-Class"
+        },
+        "complete": "[DE] Complete Assessment",
+        "next": "[DE] Next",
+        "back": "[DE] Back",
+        "cancel": "[DE] Cancel"
+      },
+      "results": {
+        "title": "[DE] RapidLean Results",
+        "overallScore": "[DE] Overall Lean Maturity",
+        "benchmark": "[DE] Benchmark",
+        "gap": "[DE] Gap",
+        "ahead": "[DE] Ahead",
+        "dimensionBreakdown": "[DE] Dimension Breakdown",
+        "topGaps": "[DE] Priority Improvement Areas",
+        "aiRecommendations": "[DE] AI Recommendations"
+      }
+    },
+    "externalDigital": {
+      "title": "[DE] External Digital Assessments",
+      "subtitle": "[DE] SIRI, ADMA, CMMI Framework Uploads",
+      "selectFramework": "[DE] Select Framework",
+      "frameworks": {
+        "SIRI": "[DE] SIRI (Smart Industry Readiness Index)",
+        "ADMA": "[DE] ADMA (ASEAN Digital Masterplan)",
+        "CMMI": "[DE] CMMI (Capability Maturity Model)",
+        "DIGITAL_OTHER": "[DE] Other Digital Framework"
+      },
+      "upload": {
+        "title": "[DE] Upload Assessment Report",
+        "version": "[DE] Framework Version (e.g., SIRI 2.0)",
+        "date": "[DE] Assessment Date",
+        "dropzone": "[DE] Drop {{framework}} PDF here or click to select",
+        "processing": "[DE] AI will auto-extract scores and map to DRD framework",
+        "maxSize": "[DE] Max 10MB"
+      },
+      "status": {
+        "uploaded": "[DE] Uploaded",
+        "processing": "[DE] Processing...",
+        "mapped": "[DE] Mapped",
+        "error": "[DE] Error"
+      },
+      "confidence": "[DE] Mapping Confidence"
+    },
+    "genericReports": {
+      "title": "[DE] Generic Assessment Reports",
+      "subtitle": "[DE] ISO Audits, Consulting Reports, Compliance Documents",
+      "upload": {
+        "title": "[DE] Upload New Report",
+        "reportTitle": "[DE] Report Title (optional)",
+        "reportType": "[DE] Report Type",
+        "consultantName": "[DE] Consultant Name (optional)",
+        "reportDate": "[DE] Report Date",
+        "dropzone": "[DE] Drag & drop file here, or click to select",
+        "supportedFormats": "[DE] Supports: PDF, Word (.docx, .doc), Excel (.xlsx, .xls) • Max 10MB"
+      },
+      "types": {
+        "ISO_AUDIT": "[DE] ISO Audit",
+        "CONSULTING": "[DE] Consulting Report",
+        "COMPLIANCE": "[DE] Compliance Report",
+        "LEAN": "[DE] Lean Assessment",
+        "OTHER": "[DE] Other"
+      },
+      "search": "[DE] Search reports...",
+      "filter": {
+        "all": "[DE] All Types",
+        "sortBy": "[DE] Sort By"
+      },
+      "detail": {
+        "aiSummary": "[DE] AI Summary",
+        "tags": "[DE] Tags",
+        "uploaded": "[DE] Uploaded",
+        "close": "[DE] Close"
+      },
+      "noReports": "[DE] No reports found"
+    },
+    "gapAnalysis": {
+      "title": "[DE] Gap Analysis & Initiatives",
+      "subtitle": "[DE] Cross-Framework Analysis & AI Initiative Generation",
+      "coverage": "[DE] Assessment Coverage",
+      "modules": {
+        "drd": "[DE] DRD",
+        "rapidLean": "[DE] RapidLean",
+        "external": "[DE] External",
+        "reports": "[DE] Reports"
+      },
+      "generator": {
+        "title": "[DE] AI Initiative Generator",
+        "description": "[DE] Generate actionable initiatives from identified gaps",
+        "requiresMultiple": "[DE] Complete at least 2 assessments to generate initiatives",
+        "generate": "[DE] Generate Initiatives",
+        "generating": "[DE] Generating..."
+      },
+      "initiatives": {
+        "title": "[DE] Generated Initiative Drafts",
+        "priority": "[DE] Priority",
+        "gapJustification": "[DE] Gap Justification",
+        "sources": "[DE] Sources"
+      }
+    },
+    "benchmarking": {
+      "title": "[DE] Benchmark Comparison",
+      "yourScore": "[DE] Your Score",
+      "industryAvg": "[DE] Industry Avg",
+      "vsBenchmark": "[DE] vs. benchmark",
+      "percentile": {
+        "top10": "[DE] Top 10%",
+        "top25": "[DE] Top 25%",
+        "aboveAvg": "[DE] Above Avg",
+        "belowAvg": "[DE] Below Avg",
+        "bottom25": "[DE] Bottom 25%"
+      }
+    },
+    "trends": {
+      "title": "[DE] Score Evolution Over Time",
+      "noData": "[DE] No historical data available. Complete reassessments to track trends."
+    }
+  }
+}

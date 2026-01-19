@@ -203,7 +203,7 @@ export const OrganizationsView: React.FC = () => {
 
   // Filtered Data
   const filteredOrgs = organizations.filter((org) => {
-    const name = String(org.name || org.organization_name || 'Unknown Organization');
+    const name = String(org.name || (org as any).organization_name || 'Unknown Organization');
     return (
       name.toLowerCase().includes(searchTerm.toLowerCase()) || (org.id || '').includes(searchTerm)
     );

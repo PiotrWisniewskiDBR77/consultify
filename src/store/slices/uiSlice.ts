@@ -1,9 +1,9 @@
 import { StateCreator } from 'zustand';
 
+import { getRouteFromAppView } from '../../routes/routeConfig';
 import { AppView } from '../../types';
 import { NavigationOptions } from '../../types/workspace';
 import { AppState } from '../useAppStore';
-import { getRouteFromAppView } from '../../routes/routeConfig';
 
 export interface UISlice {
   currentView: AppView;

@@ -37,6 +37,10 @@ export interface ChatProject {
   description?: string;
   color: string;
   icon: string;
+  ownership: 'personal' | 'team';
+  teamId?: string;
+  instructions?: string;
+  createdBy?: string;
   conversationCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -59,13 +63,15 @@ interface ChatProjectState {
   projects: ChatProject[];
   activeProjectId: string | null;
   expandedProjectIds: string[];
+  activeTab: 'personal' | 'team';
+  counts: { personal: number; team: number };
 
   // UI State
   isLoading: boolean;
   error: string | null;
 
   // Actions - Fetch
-  fetchProjects: () => Promise<void>;
+  fetchProjects: (ownership?: 'personal' | 'team') => Promise<void>;
   fetchProjectWithConversations: (id: string) => Promise<ChatProjectWithConversations | null>;
 
   // Actions - CRUD
@@ -74,25 +80,32 @@ interface ChatProjectState {
     description?: string;
     color?: string;
     icon?: string;
+    ownership?: 'personal' | 'team';
+    teamId?: string;
+    instructions?: string;
   }) => Promise<ChatProject>;
   updateProject: (
     id: string,
-    updates: Partial<Pick<ChatProject, 'name' | 'description' | 'color' | 'icon'>>
+    updates: Partial<Pick<ChatProject, 'name' | 'description' | 'color' | 'icon' | 'instructions'>>
   ) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
+  updateProjectInstructions: (id: string, instructions: string | null) => Promise<void>;
 
   // Actions - Conversation Management
   moveConversationToProject: (conversationId: string, projectId: string | null) => Promise<void>;
 
   // Actions - UI
   setActiveProject: (id: string | null) => void;
+  setActiveTab: (tab: 'personal' | 'team') => void;
   toggleProjectExpanded: (id: string) => void;
   setExpandedProjects: (ids: string[]) => void;
   clearError: () => void;
 
-  // Helpers
+  // Helpers / Getters
   getProjectById: (id: string) => ChatProject | undefined;
   getConversationsByProjectId: (projectId: string) => Conversation[];
+  getPersonalProjects: () => ChatProject[];
+  getTeamProjects: () => ChatProject[];
 }
 
 // ==================== STORE IMPLEMENTATION ====================
@@ -104,17 +117,23 @@ export const useChatProjectStore = create<ChatProjectState>()(
       projects: [],
       activeProjectId: null,
       expandedProjectIds: [],
+      activeTab: 'personal',
+      counts: { personal: 0, team: 0 },
       isLoading: false,
       error: null,
 
       // ==================== FETCH ====================
 
-      fetchProjects: async () => {
+      fetchProjects: async (ownership?: 'personal' | 'team') => {
         set({ isLoading: true, error: null });
         try {
-          const result = await Api.getChatProjects();
+          const result = await Api.getChatProjects(ownership);
           const projects = result.projects.map(mapApiProject);
-          set({ projects, isLoading: false });
+          set({
+            projects,
+            counts: result.counts || { personal: 0, team: 0 },
+            isLoading: false,
+          });
         } catch (err: any) {
           console.error('[ChatProjectStore] Fetch error:', err);
           set({ error: err.message || 'Failed to fetch projects', isLoading: false });
@@ -193,6 +212,22 @@ export const useChatProjectStore = create<ChatProjectState>()(
         }
       },
 
+      updateProjectInstructions: async (id, instructions) => {
+        try {
+          await Api.updateProjectInstructions(id, instructions);
+
+          set((state) => ({
+            projects: state.projects.map((p) =>
+              p.id === id ? { ...p, instructions: instructions || undefined, updatedAt: new Date() } : p
+            ),
+          }));
+        } catch (err: any) {
+          console.error('[ChatProjectStore] Update instructions error:', err);
+          set({ error: err.message || 'Failed to update instructions' });
+          throw err;
+        }
+      },
+
       // ==================== CONVERSATION MANAGEMENT ====================
 
       moveConversationToProject: async (conversationId, projectId) => {
@@ -229,6 +264,12 @@ export const useChatProjectStore = create<ChatProjectState>()(
         set({ activeProjectId: id });
       },
 
+      setActiveTab: (tab) => {
+        set({ activeTab: tab });
+        // Optionally fetch projects for the new tab
+        get().fetchProjects(tab);
+      },
+
       toggleProjectExpanded: (id) => {
         set((state) => ({
           expandedProjectIds: state.expandedProjectIds.includes(id)
@@ -257,6 +298,14 @@ export const useChatProjectStore = create<ChatProjectState>()(
         const conversations = useConversationStore.getState().conversations;
         return conversations.filter((c: any) => c.chatProjectId === projectId);
       },
+
+      getPersonalProjects: () => {
+        return get().projects.filter((p) => p.ownership === 'personal');
+      },
+
+      getTeamProjects: () => {
+        return get().projects.filter((p) => p.ownership === 'team');
+      },
     }),
     {
       name: 'consultinity-chat-projects',
@@ -264,6 +313,7 @@ export const useChatProjectStore = create<ChatProjectState>()(
       partialize: (state) => ({
         activeProjectId: state.activeProjectId,
         expandedProjectIds: state.expandedProjectIds,
+        activeTab: state.activeTab,
       }),
     }
   )
@@ -278,6 +328,10 @@ function mapApiProject(api: any): ChatProject {
     description: api.description,
     color: api.color || '#6366f1',
     icon: api.icon || 'folder',
+    ownership: api.ownership || 'personal',
+    teamId: api.team_id || api.teamId,
+    instructions: api.instructions,
+    createdBy: api.created_by || api.createdBy,
     conversationCount: api.conversation_count || api.conversationCount || 0,
     createdAt: new Date(api.created_at || api.createdAt),
     updatedAt: new Date(api.updated_at || api.updatedAt),

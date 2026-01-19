@@ -13,6 +13,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { AIMessageHistory } from '@/services/ai/gemini';
+import { Api } from '@/services/api';
+
 import { AIAssessmentSidebar } from '../components/assessment/AIAssessmentSidebar';
 import { AssessmentAxisWorkspace } from '../components/assessment/AssessmentAxisWorkspace';
 import { AssessmentModuleHub, HubTab } from '../components/assessment/AssessmentModuleHub';
@@ -21,8 +24,6 @@ import { AssessmentSummaryWorkspace } from '../components/assessment/AssessmentS
 import { AssessmentWizard } from '../components/assessment/AssessmentWizard';
 import { SplitLayout } from '../components/layout/SplitLayout';
 import { useAIStream } from '../hooks/useAIStream';
-import { AIMessageHistory } from '@/services/ai/gemini';
-import { Api } from '@/services/api';
 import { useAppStore } from '../store/useAppStore';
 import {
   AppView,

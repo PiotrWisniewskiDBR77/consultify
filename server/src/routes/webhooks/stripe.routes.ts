@@ -7,16 +7,15 @@
 
 import { NextFunction, Request, Response, Router } from 'express';
 import express from 'express';
-import Stripe from 'stripe';
 import type { Stripe as StripeTypes } from 'stripe';
+import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
-import logger from '../../utils/Logger.js';
-
+import * as PartnerCommissionService from '../../services/partnerCommissionService.js';
 // Partner services for commission tracking
 import * as PartnerReferralService from '../../services/partnerReferralService.js';
-import * as PartnerCommissionService from '../../services/partnerCommissionService.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 
 const router = Router();
 

@@ -472,7 +472,7 @@ export async function initDb(): Promise<void> {
         throw e;
       }
     };
-    
+
     // Helper function to check if a column exists in a table
     const columnExists = async (tableName: string, columnName: string): Promise<boolean> => {
       try {
@@ -488,7 +488,11 @@ export async function initDb(): Promise<void> {
     };
 
     // Helper function for queries that can fail gracefully (e.g., index creation on non-existent columns)
-    const querySafe = async (sql: string, params?: unknown[], errorMessage?: string): Promise<boolean> => {
+    const querySafe = async (
+      sql: string,
+      params?: unknown[],
+      errorMessage?: string
+    ): Promise<boolean> => {
       const adapted = adaptQuery(sql);
       try {
         await getPool().query(adapted, params);
@@ -970,7 +974,9 @@ export async function initDb(): Promise<void> {
         await query(`ALTER TABLE invitations ADD COLUMN token_hash TEXT`);
         // Add unique constraint separately if needed
         try {
-          await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_token_hash_unique ON invitations(token_hash) WHERE token_hash IS NOT NULL`);
+          await query(
+            `CREATE UNIQUE INDEX IF NOT EXISTS idx_invitations_token_hash_unique ON invitations(token_hash) WHERE token_hash IS NOT NULL`
+          );
         } catch {
           // Unique constraint might already exist or fail, that's OK
         }
@@ -984,7 +990,7 @@ export async function initDb(): Promise<void> {
     }
 
     await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token)`);
-    
+
     // Only create index on token_hash if the column exists
     try {
       const columnCheck = await getPool().query(
@@ -992,7 +998,9 @@ export async function initDb(): Promise<void> {
          WHERE table_name = 'invitations' AND column_name = 'token_hash'`
       );
       if (columnCheck.rows.length > 0) {
-        await query(`CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash)`);
+        await query(
+          `CREATE INDEX IF NOT EXISTS idx_invitations_token_hash ON invitations(token_hash)`
+        );
       }
     } catch (indexError: unknown) {
       // Index creation failed, log but don't fail initialization
@@ -1001,7 +1009,7 @@ export async function initDb(): Promise<void> {
         logger.warn('[Postgres] Could not create token_hash index:', err.message);
       }
     }
-    
+
     await query(`CREATE INDEX IF NOT EXISTS idx_invitations_email ON invitations(email)`);
     await querySafe(
       `CREATE INDEX IF NOT EXISTS idx_invitations_org_status ON invitations(organization_id, status)`,
@@ -1476,7 +1484,9 @@ export async function initDb(): Promise<void> {
         await query(`ALTER TABLE refresh_tokens ADD COLUMN token_hash TEXT NOT NULL`);
         // Add unique constraint separately
         try {
-          await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_hash_unique ON refresh_tokens(token_hash)`);
+          await query(
+            `CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_hash_unique ON refresh_tokens(token_hash)`
+          );
         } catch {
           // Unique constraint might already exist, that's OK
         }
@@ -1490,7 +1500,7 @@ export async function initDb(): Promise<void> {
     }
 
     await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`);
-    
+
     // Only create index on token_hash if the column exists
     try {
       const columnCheck = await getPool().query(
@@ -1498,7 +1508,9 @@ export async function initDb(): Promise<void> {
          WHERE table_name = 'refresh_tokens' AND column_name = 'token_hash'`
       );
       if (columnCheck.rows.length > 0) {
-        await query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`);
+        await query(
+          `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`
+        );
       }
     } catch (indexError: unknown) {
       // Index creation failed, log but don't fail initialization
@@ -1507,7 +1519,7 @@ export async function initDb(): Promise<void> {
         logger.warn('[Postgres] Could not create token_hash index on refresh_tokens:', err.message);
       }
     }
-    
+
     await query(
       `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_family ON refresh_tokens(token_family)`
     );

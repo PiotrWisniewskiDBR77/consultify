@@ -28,7 +28,6 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
-
 // Enterprise System Components
 import {
   EnterpriseAnalyticsPanel,

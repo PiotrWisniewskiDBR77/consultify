@@ -13,6 +13,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Api } from '@/services/api';
+
 import { useAppStore } from '../store/useAppStore';
 
 interface Tier {

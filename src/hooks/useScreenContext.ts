@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { useAIContext } from '@/contexts/AIContext';
+
 import { AIContextPersona, ScreenContextPayload } from '../types/AIContract';
 
 // Global sequence counter

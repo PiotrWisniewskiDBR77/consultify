@@ -50,138 +50,88 @@ type TranslationFn = (key: string, options?: any) => any;
 
 export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuItem[] {
   return [
+    // 1. Czat - podstawowa rozmowa z AI
     {
       id: 'AI_CHAT',
-      label: t('sidebar.aiChat', 'AI Chat'),
+      label: t('sidebar.aiChat', 'Chat'),
       icon: React.createElement(MessageSquare, { size: 20 }),
       viewId: AppView.AI_CHAT,
     },
+    // 2. My Work - moja praca, zadania, inbox
     {
       id: 'MY_WORK',
       label: t('myWork.title', 'My Work'),
       icon: React.createElement(Briefcase, { size: 20 }),
       viewId: AppView.MY_WORK,
     },
+    // 3. Wywiad - ustrukturyzowana rozmowa z AI konsultantem (Discovery Consultant)
     {
-      id: 'PROJECT_INTELLIGENCE',
-      label: t('sidebar.projectIntelligence', 'Project Intelligence'),
-      icon: React.createElement(Brain, { size: 20 }),
-      viewId: AppView.PROJECT_INTELLIGENCE,
-      badge: 'beta',
+      id: 'INTERVIEW',
+      label: t('sidebar.interview', 'Interview'),
+      icon: React.createElement(ClipboardList, { size: 20 }),
+      viewId: AppView.DISCOVERY_CONSULTANT,
     },
-    // Ecosystem affiliate dashboard (Phase G)
+    // 3. Narzędzia - 31 narzędzi Discovery Tools
+    {
+      id: 'DISCOVERY_TOOLS',
+      label: t('sidebar.discoveryTools', 'Tools'),
+      icon: React.createElement(Wrench, { size: 20 }),
+      viewId: AppView.DISCOVERY_TOOLS,
+      badge: 'new',
+    },
+    // 4. Ocena - wybór frameworka wewnątrz modułu
+    {
+      id: 'MODULE_ASSESSMENT',
+      label: t('sidebar.assessment', 'Assessment'),
+      icon: React.createElement(CheckCircle2, { size: 20 }),
+      viewId: AppView.ASSESSMENT_OVERVIEW,
+    },
+    // 5. Inicjatywy - zarządzanie inicjatywami
+    {
+      id: 'MODULE_INITIATIVES',
+      label: t('sidebar.initiatives', 'Initiatives'),
+      icon: React.createElement(Lightbulb, { size: 20 }),
+      viewId: AppView.PORTFOLIO_ROADMAP,
+    },
+    // 6. Wdrożenie - realizacja zatwierdzonych inicjatyw
+    {
+      id: 'MODULE_EXECUTION',
+      label: t('sidebar.execution', 'Execution'),
+      icon: React.createElement(Rocket, { size: 20 }),
+      viewId: AppView.IMPLEMENTATION,
+    },
+    // 7. Realizacja - śledzenie efektów zrealizowanych inicjatyw
+    {
+      id: 'MODULE_BENEFITS',
+      label: t('sidebar.benefits', 'Benefits'),
+      icon: React.createElement(TrendingUp, { size: 20 }),
+      viewId: AppView.BENEFITS_REALIZATION,
+    },
+    // 8. Ekonomia - analiza ekonomiczna
+    {
+      id: 'MODULE_ECONOMICS',
+      label: t('sidebar.economics', 'Economics'),
+      icon: React.createElement(Calculator, { size: 20 }),
+      viewId: AppView.ECONOMICS,
+    },
+    // 9. Raporty
+    {
+      id: 'MODULE_REPORTS',
+      label: t('sidebar.reports', 'Reports'),
+      icon: React.createElement(BookOpen, { size: 20 }),
+      viewId: AppView.FULL_STEP6_REPORTS,
+    },
+    // Ecosystem affiliate dashboard (Phase G - conditional)
     ...(journeyState === 'ECOSYSTEM_NODE'
       ? [
           {
             id: 'AFFILIATE_DASHBOARD',
             label: t('sidebar.affiliateDashboard', 'Ecosystem Impact'),
-            icon: React.createElement(TrendingUp, { size: 20 }),
+            icon: React.createElement(Map, { size: 20 }),
             viewId: AppView.AFFILIATE_DASHBOARD,
           },
         ]
       : []),
-    {
-      id: 'MODULE_2',
-      label: t('sidebar.assessment'),
-      icon: React.createElement(CheckCircle2, { size: 20 }),
-      subItems: [
-        {
-          id: 'M2_DRD',
-          label: t('sidebar.assessmentDRD'),
-          viewId: AppView.ASSESSMENT_DRD,
-          icon: React.createElement(Activity, { size: 16 }),
-        },
-        {
-          id: 'M2_SIRI',
-          label: t('sidebar.assessmentSIRI'),
-          viewId: AppView.ASSESSMENT_SIRI,
-          icon: React.createElement(Cpu, { size: 16 }),
-        },
-        {
-          id: 'M2_ADMA',
-          label: t('sidebar.assessmentADMA'),
-          viewId: AppView.ASSESSMENT_ADMA,
-          icon: React.createElement(Database, { size: 16 }),
-        },
-        {
-          id: 'M2_CMMI',
-          label: t('sidebar.assessmentCMMI'),
-          viewId: AppView.ASSESSMENT_CMMI,
-          icon: React.createElement(Layers, { size: 16 }),
-        },
-        {
-          id: 'M2_LEAN',
-          label: t('sidebar.assessmentLean'),
-          viewId: AppView.ASSESSMENT_LEAN,
-          icon: React.createElement(Workflow, { size: 16 }),
-        },
-      ],
-    },
-    {
-      id: 'MODULE_PORTFOLIO',
-      label: t('sidebar.portfolioRoadmap', 'Initiatives'),
-      icon: React.createElement(Lightbulb, { size: 20 }),
-      viewId: AppView.PORTFOLIO_ROADMAP,
-      requiresView: AppView.FULL_STEP1_ASSESSMENT,
-    },
-    {
-      id: 'MODULE_4',
-      label: t('sidebar.implementation'),
-      icon: React.createElement(Rocket, { size: 20 }),
-      viewId: AppView.IMPLEMENTATION,
-      requiresView: AppView.PORTFOLIO_ROADMAP,
-    },
-    {
-      id: 'MODULE_BENEFITS',
-      label: t('sidebar.benefitsRealization'),
-      icon: React.createElement(Map, { size: 20 }),
-      viewId: AppView.BENEFITS_REALIZATION,
-      requiresView: AppView.IMPLEMENTATION,
-    },
-    {
-      id: 'MODULE_ECONOMICS',
-      label: t('sidebar.economics'),
-      icon: React.createElement(Calculator, { size: 20 }),
-      viewId: AppView.ECONOMICS,
-      requiresView: AppView.FULL_STEP5_EXECUTION,
-    },
-    {
-      id: 'MODULE_7',
-      label: t('sidebar.module7'),
-      icon: React.createElement(BookOpen, { size: 20 }),
-      viewId: AppView.FULL_STEP6_REPORTS,
-      requiresView: AppView.FULL_STEP5_EXECUTION,
-      badge: 'beta',
-    },
-    {
-      id: 'MODULE_TOOLS',
-      label: t('sidebar.tools'),
-      icon: React.createElement(Wrench, { size: 20 }),
-      badge: 'beta',
-      subItems: [
-        {
-          id: 'TOOLS_AI_ADVISOR',
-          label: t('sidebar.aiAdvisor', 'AI Advisor'),
-          viewId: AppView.AI_ACTION_PROPOSALS,
-          requiresView: AppView.MY_WORK,
-          icon: React.createElement(Sparkles, { size: 16 }),
-        },
-        {
-          id: 'TOOLS_AUTOMATION',
-          label: t('sidebar.automationScheme', 'Schemat automatyzacji'),
-          viewId: AppView.KPI_OKR_DASHBOARD,
-          requiresView: AppView.MY_WORK,
-          icon: React.createElement(Workflow, { size: 16 }),
-        },
-        {
-          id: 'TOOLS_STUDIO',
-          label: t('sidebar.studio', 'Studio'),
-          viewId: AppView.STUDIO,
-          requiresView: AppView.MY_WORK,
-          icon: React.createElement(Palette, { size: 16 }),
-        },
-      ],
-    },
   ];
 }
 

@@ -1,14 +1,15 @@
 // @ts-nocheck
-import SignalEngine from './signalEngine.js';
-import RecommendationEngine from './recommendationEngine.js';
-import SimulationEngine from './simulationEngine.js';
-import ActionProposalMapper from './actionProposalMapper.js';
+import { getDatabase } from '../database/index.js';
 // PolicyEngine is imported lazily if needed in the future
 // const PolicyEngine = await import('./policyEngine.js');
 import * as auditLogger from '../utils/auditLogger.js';
-import { getDatabase } from '../database/index.js';
+import ActionProposalMapper from './actionProposalMapper.js';
+import RecommendationEngine from './recommendationEngine.js';
+import SignalEngine from './signalEngine.js';
+import SimulationEngine from './simulationEngine.js';
 const db = getDatabase();
 import { v4 as uuidv4 } from 'uuid';
+
 import AiService from '../services/aiService.js';
 
 interface ActionProposal {

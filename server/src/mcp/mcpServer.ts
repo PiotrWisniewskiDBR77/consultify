@@ -12,6 +12,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../src/database/index.js';
 const db = getDatabase();
 
@@ -758,7 +759,7 @@ const MCPServer = {
     const todayTasks = await MCPServer._getTodaysTasks(userId, organizationId);
     const overdueTasks = await MCPServer._getOverdueTasks(userId, organizationId);
 
-    let contextData = {
+    const contextData = {
       todaysTasks: todayTasks.tasks,
       overdueTasks: overdueTasks.tasks,
     };

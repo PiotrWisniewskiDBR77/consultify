@@ -11,12 +11,12 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       proxy: {
         '/api': {
-          target: 'http://127.0.0.1:3005',
+          target: 'http://127.0.0.1:3001',
           changeOrigin: true,
           secure: false,
         },
         '/uploads': {
-          target: 'http://127.0.0.1:3005',
+          target: 'http://127.0.0.1:3001',
           changeOrigin: true,
           secure: false,
         },
@@ -67,7 +67,10 @@ export default defineConfig(({ mode }) => {
         output: {
           // Ensure recharts loads as a separate async chunk
           chunkFileNames: (chunkInfo) => {
-            if (chunkInfo.name === 'charts' || chunkInfo.moduleIds.some((id) => id.includes('recharts'))) {
+            if (
+              chunkInfo.name === 'charts' ||
+              chunkInfo.moduleIds.some((id) => id.includes('recharts'))
+            ) {
               return 'assets/charts-[hash].js';
             }
             return 'assets/[name]-[hash].js';

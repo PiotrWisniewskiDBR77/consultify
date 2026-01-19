@@ -5,11 +5,11 @@
 
 import { Router } from 'express';
 
+import assessmentRoutes from './assessment.routes.js';
 import assessmentHubRoutes from './assessment-hub.routes.js';
 import assessmentLevelAttachmentsRoutes from './assessment-level-attachments.routes.js';
 import assessmentReportsRoutes from './assessment-reports.routes.js';
 import assessmentWorkflowRoutes from './assessment-workflow.routes.js';
-import assessmentRoutes from './assessment.routes.js';
 import assessmentsRoutes from './assessments.routes.js';
 
 const router = Router();

@@ -1,6 +1,7 @@
+import { Activity, AlertTriangle, ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { CheckCircle2, AlertTriangle, XCircle, ArrowRight, Activity } from 'lucide-react';
-import { FullSession, AppView, InitiativeStatus } from '../../types';
+
+import { AppView, FullSession, InitiativeStatus } from '../../types';
 
 interface DashboardExecutionSnapshotProps {
   session: FullSession | null | undefined;
@@ -40,21 +41,34 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
   }, [safeSession]);
 
   const currentPhase = useMemo(() => {
-    if (!safeSession.step2Completed) return { name: 'Assessment', number: 1, description: 'Defining baseline maturity and gaps.' };
+    if (!safeSession.step2Completed)
+      return { name: 'Assessment', number: 1, description: 'Defining baseline maturity and gaps.' };
     if (!safeSession.step3Completed)
       return { name: 'Roadmap', number: 2, description: 'Planning initiatives' };
     if (!safeSession.step5Completed)
-      return { name: 'Pilot Execution', number: 3, description: 'Testing solutions in controlled environment.' };
-    return { name: 'Full Rollout', number: 4, description: 'Scaling solutions across organization.' };
+      return {
+        name: 'Pilot Execution',
+        number: 3,
+        description: 'Testing solutions in controlled environment.',
+      };
+    return {
+      name: 'Full Rollout',
+      number: 4,
+      description: 'Scaling solutions across organization.',
+    };
   }, [safeSession]);
 
   // Initiative Statistics
   const initiativeStats = useMemo(() => {
     const inits = safeSession.initiatives || [];
-    const inProgress = inits.filter((i) => i.status === InitiativeStatus.EXECUTING || i.status === InitiativeStatus.PLANNING).length;
+    const inProgress = inits.filter(
+      (i) => i.status === InitiativeStatus.EXECUTING || i.status === InitiativeStatus.PLANNING
+    ).length;
     const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length;
     const delayed = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length;
-    const todo = inits.filter((i) => i.status === InitiativeStatus.DRAFT || i.status === InitiativeStatus.REVIEW).length;
+    const todo = inits.filter(
+      (i) => i.status === InitiativeStatus.DRAFT || i.status === InitiativeStatus.REVIEW
+    ).length;
 
     return { total: inits.length, inProgress, done, delayed, todo };
   }, [safeSession]);
@@ -80,12 +94,16 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
       {/* Project Status Overview */}
       <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">Project Status Overview</h2>
+        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">
+          Project Status Overview
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* Overall Progress */}
           <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
-            <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">Overall Progress</h3>
+            <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">
+              Overall Progress
+            </h3>
             <div className="flex items-end gap-2 mb-4">
               <span className="text-4xl font-bold text-navy-900 dark:text-white">
                 {progressStats.toFixed(0)}%
@@ -101,14 +119,14 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
 
           {/* Current Phase */}
           <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
-            <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">Current Phase</h3>
+            <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wide mb-2">
+              Current Phase
+            </h3>
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
               {currentPhase.name}
             </div>
             <p className="text-xs text-slate-400">{currentPhase.description}</p>
-            <div className="mt-2 text-xs text-slate-500">
-              Phase {currentPhase.number}/6
-            </div>
+            <div className="mt-2 text-xs text-slate-500">Phase {currentPhase.number}/6</div>
           </div>
 
           {/* Priority Alerts */}
@@ -137,7 +155,9 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
         {/* Initiative Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 text-center">
-            <div className="text-3xl font-bold text-navy-900 dark:text-white">{initiativeStats.total}</div>
+            <div className="text-3xl font-bold text-navy-900 dark:text-white">
+              {initiativeStats.total}
+            </div>
             <div className="text-xs text-slate-500 mt-1">Total Initiatives</div>
           </div>
           <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
@@ -147,11 +167,15 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
             <div className="text-xs text-slate-500 mt-1">In Progress</div>
           </div>
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{initiativeStats.done}</div>
+            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              {initiativeStats.done}
+            </div>
             <div className="text-xs text-slate-500 mt-1">Completed</div>
           </div>
           <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-center">
-            <div className="text-3xl font-bold text-red-600 dark:text-red-400">{initiativeStats.delayed}</div>
+            <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+              {initiativeStats.delayed}
+            </div>
             <div className="text-xs text-slate-500 mt-1">Delayed</div>
           </div>
         </div>
@@ -160,7 +184,9 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
       {/* Live Active Initiatives */}
       <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-navy-900 dark:text-white">Live Active Initiatives</h3>
+          <h3 className="text-xl font-bold text-navy-900 dark:text-white">
+            Live Active Initiatives
+          </h3>
           <button
             onClick={() => onNavigate(AppView.FULL_STEP2_INITIATIVES)}
             className="text-sm font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400 flex items-center gap-2"
@@ -184,14 +210,19 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-navy-900 dark:text-white">{initiative.name}</h4>
+                    <h4 className="font-semibold text-navy-900 dark:text-white">
+                      {initiative.name}
+                    </h4>
                     {initiative.description && (
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{initiative.description}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                        {initiative.description}
+                      </p>
                     )}
                     <div className="flex items-center gap-4 mt-2">
                       <span
                         className={`text-xs px-2 py-1 rounded ${
-                          initiative.status === InitiativeStatus.EXECUTING || initiative.status === InitiativeStatus.PLANNING
+                          initiative.status === InitiativeStatus.EXECUTING ||
+                          initiative.status === InitiativeStatus.PLANNING
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                             : initiative.status === InitiativeStatus.BLOCKED
                               ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
@@ -201,7 +232,9 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                         {initiative.status}
                       </span>
                       {initiative.priority && (
-                        <span className="text-xs text-slate-500">Priority: {initiative.priority}</span>
+                        <span className="text-xs text-slate-500">
+                          Priority: {initiative.priority}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -214,7 +247,9 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
 
       {/* Key Performance Indicators */}
       <div className="bg-white dark:bg-navy-900 rounded-2xl p-6 border border-slate-200 dark:border-white/10 shadow-sm">
-        <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-6">Key Performance Indicators</h3>
+        <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-6">
+          Key Performance Indicators
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
             <div className="text-sm text-slate-500 mb-2">Cycle Time</div>
@@ -222,11 +257,15 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
           </div>
           <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
             <div className="text-sm text-slate-500 mb-2">Budget Usage</div>
-            <div className="text-3xl font-bold text-navy-900 dark:text-white">{kpis.budgetUsage}</div>
+            <div className="text-3xl font-bold text-navy-900 dark:text-white">
+              {kpis.budgetUsage}
+            </div>
           </div>
           <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-6">
             <div className="text-sm text-slate-500 mb-2">ROI Realized</div>
-            <div className="text-3xl font-bold text-navy-900 dark:text-white">{kpis.roiRealized}</div>
+            <div className="text-3xl font-bold text-navy-900 dark:text-white">
+              {kpis.roiRealized}
+            </div>
           </div>
         </div>
       </div>

@@ -1,11 +1,11 @@
 /**
  * CookieSettingsWrapper - Wrapper with API integration for Cookie settings
  */
+import { RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { RefreshCw } from 'lucide-react';
 import { CookieSettings, CookieSettingsManager } from './CookieSettingsManager';
 
 const API_URL = import.meta.env.VITE_API_URL || '';

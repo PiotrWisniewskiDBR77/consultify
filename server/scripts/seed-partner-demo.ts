@@ -9,6 +9,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../src/database/Database.js';
 
 interface SeedConfig {
@@ -269,4 +270,4 @@ if (require.main === module) {
     .catch(() => process.exit(1));
 }
 
-export { seedPartnerDemo, SeedConfig };
+export { SeedConfig, seedPartnerDemo };

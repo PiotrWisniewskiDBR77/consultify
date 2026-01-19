@@ -435,15 +435,15 @@ function createEmptyGraph(triggerSignal = '') {
 }
 
 export {
-  NODE_TYPES,
-  EDGE_LABELS,
-  stepsToGraph,
-  graphToSteps,
-  validateDAG,
-  getAllPaths,
-  findDeadEnds,
-  findBranchesWithoutElse,
   createEmptyGraph,
+  EDGE_LABELS,
+  findBranchesWithoutElse,
+  findDeadEnds,
+  getAllPaths,
+  graphToSteps,
+  NODE_TYPES,
+  stepsToGraph,
+  validateDAG,
 };
 
 export default {

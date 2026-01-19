@@ -15,9 +15,9 @@
 import { EventEmitter } from 'events';
 
 import logger from '../utils/Logger.js';
+import { getDatabaseMetrics } from './DatabaseMetrics.js';
 import type { IDatabase } from './IDatabase.js';
 import { getSlowQueryLogger } from './SlowQueryLogger.js';
-import { getDatabaseMetrics } from './DatabaseMetrics.js';
 
 interface PoolConfig {
   minConnections: number;

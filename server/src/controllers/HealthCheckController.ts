@@ -39,14 +39,12 @@ export class HealthCheckController {
     // Check Redis connectivity (non-blocking, timeout after 50ms)
     // Use Promise.race to avoid blocking the healthcheck
     try {
-      const redisCheck = import('../services/ai/redisClient.js').then(
-        ({ isRedisConnected }) => isRedisConnected() ? 'connected' : 'disconnected'
-      ).catch(() => 'error');
-      
-      const timeout = new Promise<string>((resolve) => 
-        setTimeout(() => resolve('timeout'), 50)
-      );
-      
+      const redisCheck = import('../services/ai/redisClient.js')
+        .then(({ isRedisConnected }) => (isRedisConnected() ? 'connected' : 'disconnected'))
+        .catch(() => 'error');
+
+      const timeout = new Promise<string>((resolve) => setTimeout(() => resolve('timeout'), 50));
+
       health.redis = await Promise.race([redisCheck, timeout]);
     } catch (error) {
       health.redis = 'error';

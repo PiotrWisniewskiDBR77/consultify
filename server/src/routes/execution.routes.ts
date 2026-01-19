@@ -14,19 +14,19 @@ const router = Router();
 
 // Service interfaces
 interface ExecutionServiceInterface {
-    getExecutionSummary?: (projectId: string) => Promise<unknown>;
-    getBlockedTasks?: (projectId: string) => Promise<unknown>;
-    checkDecisionGate?: (projectId: string, targetPhase: string) => Promise<unknown>;
+  getExecutionSummary?: (projectId: string) => Promise<unknown>;
+  getBlockedTasks?: (projectId: string) => Promise<unknown>;
+  checkDecisionGate?: (projectId: string, targetPhase: string) => Promise<unknown>;
 }
 
 // Dynamic import for ExecutionService (may not be migrated yet)
 let ExecutionService: ExecutionServiceInterface | null = null;
 
 try {
-    const executionModule = await import('../../services/executionService.js');
-    ExecutionService = (executionModule.default || executionModule) as ExecutionServiceInterface;
+  const executionModule = await import('../../services/executionService.js');
+  ExecutionService = (executionModule.default || executionModule) as ExecutionServiceInterface;
 } catch {
-    console.warn('[Execution Routes] ExecutionService not available');
+  console.warn('[Execution Routes] ExecutionService not available');
 }
 
 /**
@@ -34,21 +34,23 @@ try {
  * Get execution summary for a project
  */
 router.get(
-    '/:projectId/summary',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!ExecutionService?.getExecutionSummary) {
-            return res.status(503).json({ error: 'Execution service not available' });
-        }
+  '/:projectId/summary',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!ExecutionService?.getExecutionSummary) {
+      return res.status(503).json({ error: 'Execution service not available' });
+    }
 
-        try {
-            const projectId = Array.isArray(req.params.projectId) ? req.params.projectId[0] : req.params.projectId;
-            const summary = await ExecutionService.getExecutionSummary(projectId);
-            res.json(summary);
-        } catch (err: unknown) {
-            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-        }
-    }),
+    try {
+      const projectId = Array.isArray(req.params.projectId)
+        ? req.params.projectId[0]
+        : req.params.projectId;
+      const summary = await ExecutionService.getExecutionSummary(projectId);
+      res.json(summary);
+    } catch (err: unknown) {
+      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+    }
+  })
 );
 
 /**
@@ -56,22 +58,22 @@ router.get(
  * Get blocked tasks with reasons
  */
 router.get(
-    '/:projectId/blockers',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!ExecutionService?.getBlockedTasks) {
-            return res.status(503).json({ error: 'Execution service not available' });
-        }
+  '/:projectId/blockers',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!ExecutionService?.getBlockedTasks) {
+      return res.status(503).json({ error: 'Execution service not available' });
+    }
 
-        try {
-            const { projectId } = req.params;
-            const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
-            const blockers = await ExecutionService.getBlockedTasks(projectIdStr);
-            res.json(blockers);
-        } catch (err: unknown) {
-            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-        }
-    }),
+    try {
+      const { projectId } = req.params;
+      const projectIdStr = Array.isArray(projectId) ? projectId[0] : projectId;
+      const blockers = await ExecutionService.getBlockedTasks(projectIdStr);
+      res.json(blockers);
+    } catch (err: unknown) {
+      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+    }
+  })
 );
 
 /**
@@ -79,22 +81,24 @@ router.get(
  * Check if project can advance phase (Decision Gate)
  */
 router.post(
-    '/:projectId/gate-check',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        if (!ExecutionService?.checkDecisionGate) {
-            return res.status(503).json({ error: 'Execution service not available' });
-        }
+  '/:projectId/gate-check',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!ExecutionService?.checkDecisionGate) {
+      return res.status(503).json({ error: 'Execution service not available' });
+    }
 
-        try {
-            const { targetPhase } = req.body;
-            const projectId = Array.isArray(req.params.projectId) ? req.params.projectId[0] : req.params.projectId;
-            const result = await ExecutionService.checkDecisionGate(projectId, targetPhase);
-            res.json(result);
-        } catch (err: unknown) {
-            return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-        }
-    }),
+    try {
+      const { targetPhase } = req.body;
+      const projectId = Array.isArray(req.params.projectId)
+        ? req.params.projectId[0]
+        : req.params.projectId;
+      const result = await ExecutionService.checkDecisionGate(projectId, targetPhase);
+      res.json(result);
+    } catch (err: unknown) {
+      return res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+    }
+  })
 );
 
 export default router;

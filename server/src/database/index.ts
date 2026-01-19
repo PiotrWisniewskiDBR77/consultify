@@ -3,12 +3,12 @@
  * Exports connection pool, health monitor, metrics, and database instance
  */
 
-import { ConnectionPool } from './ConnectionPool.js';
+import logger from '../utils/Logger.js';
 import { ConnectionHealthMonitor } from './ConnectionHealthMonitor.js';
+import { ConnectionPool } from './ConnectionPool.js';
 import { createDatabase } from './Database.js';
 import { getDatabaseMetrics } from './DatabaseMetrics.js';
 import { getSlowQueryLogger } from './SlowQueryLogger.js';
-import logger from '../utils/Logger.js';
 
 let connectionPool: ConnectionPool | null = null;
 let healthMonitor: ConnectionHealthMonitor | null = null;
@@ -105,9 +105,9 @@ export async function shutdownConnectionPool(): Promise<void> {
 }
 
 // Export everything from Database.ts
-export * from './Database.js';
-export * from './IDatabase.js';
-export { ConnectionPool } from './ConnectionPool.js';
 export { ConnectionHealthMonitor } from './ConnectionHealthMonitor.js';
-export { SlowQueryLogger, getSlowQueryLogger } from './SlowQueryLogger.js';
+export { ConnectionPool } from './ConnectionPool.js';
+export * from './Database.js';
 export { DatabaseMetrics, getDatabaseMetrics } from './DatabaseMetrics.js';
+export * from './IDatabase.js';
+export { getSlowQueryLogger, SlowQueryLogger } from './SlowQueryLogger.js';

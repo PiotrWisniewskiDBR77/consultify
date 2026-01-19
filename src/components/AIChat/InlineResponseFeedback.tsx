@@ -3,12 +3,12 @@
  *
  * Inline feedback component for AI responses.
  * Shows thumbs up/down initially, then detailed options after rating.
- * Integrates with FeedbackLearningService for AI improvement.
+ * Integrates with FeedbackLearningService and AILearningService for AI improvement.
  *
- * @version 2.0.0
+ * @version 3.0.0 - Extended with accuracy and helpfulness feedback
  */
 
-import { Check, ChevronDown, ChevronUp, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, MessageSquare, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -24,11 +24,18 @@ interface InlineResponseFeedbackProps {
   focusMode?: string;
   onFeedback: (feedback: ResponseFeedback) => void;
   compact?: boolean;
+  // Extended props for learning
+  query?: string;
+  response?: string;
+  modelUsed?: string;
+  instructionsUsed?: string[];
 }
 
-type LengthFeedback = 'too_short' | 'just_right' | 'too_long';
-type DetailFeedback = 'too_basic' | 'just_right' | 'too_detailed';
+type LengthFeedback = 'too-short' | 'just-right' | 'too-long';
+type DetailFeedback = 'too-little' | 'just-right' | 'too-much';
 type StyleFeedback = 'too-formal' | 'just-right' | 'too-casual';
+type AccuracyFeedback = 'accurate' | 'partially-accurate' | 'inaccurate';
+type HelpfulnessFeedback = 'very-helpful' | 'somewhat-helpful' | 'not-helpful';
 
 export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
   messageId,
@@ -39,16 +46,24 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
   focusMode,
   onFeedback,
   compact = false,
+  query,
+  response,
+  modelUsed,
+  instructionsUsed,
 }) => {
   const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
   const [rating, setRating] = useState<'positive' | 'negative' | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showCommentField, setShowCommentField] = useState(false);
 
   // Detailed feedback
   const [lengthFeedback, setLengthFeedback] = useState<LengthFeedback | null>(null);
   const [detailFeedback, setDetailFeedback] = useState<DetailFeedback | null>(null);
   const [styleFeedback, setStyleFeedback] = useState<StyleFeedback | null>(null);
+  const [accuracyFeedback, setAccuracyFeedback] = useState<AccuracyFeedback | null>(null);
+  const [helpfulnessFeedback, setHelpfulnessFeedback] = useState<HelpfulnessFeedback | null>(null);
+  const [comment, setComment] = useState('');
 
   const handleInitialRating = (r: 'positive' | 'negative') => {
     setRating(r);
@@ -76,24 +91,51 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
     // Send to parent
     onFeedback(feedback);
 
-    // Send to learning service
+    // Send to legacy learning service
     await FeedbackLearningService.submitFeedback({
       messageId,
       conversationId: conversationId || '',
       rating: r,
-      lengthFeedback: lengthFeedback ? 
-        (lengthFeedback === 'too_short' ? 'too-short' : 
-         lengthFeedback === 'just_right' ? 'just-right' : 
-         'too-long') as 'too-short' | 'just-right' | 'too-long' : undefined,
-      detailFeedback: detailFeedback ?
-        (detailFeedback === 'too_basic' ? 'too-little' :
-         detailFeedback === 'just_right' ? 'just-right' :
-         'too-much') as 'too-little' | 'just-right' | 'too-much' : undefined,
+      lengthFeedback: lengthFeedback || undefined,
+      detailFeedback: detailFeedback || undefined,
       styleFeedback: styleFeedback || undefined,
       responseLength,
       focusMode,
       workspaceContext,
     });
+
+    // Send extended feedback to new AILearningService
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('/api/ai/learning/interaction', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          conversationId: conversationId || '',
+          messageId,
+          query,
+          response,
+          rating: r,
+          lengthFeedback: lengthFeedback || undefined,
+          detailFeedback: detailFeedback || undefined,
+          styleFeedback: styleFeedback || undefined,
+          accuracyFeedback: accuracyFeedback || undefined,
+          helpfulnessFeedback: helpfulnessFeedback || undefined,
+          comment: comment || undefined,
+          responseLength,
+          focusMode,
+          workspaceContext,
+          modelUsed,
+          instructionsUsed,
+        }),
+      });
+    } catch (error) {
+      // Silently fail - don't interrupt user experience
+      console.warn('Failed to send extended feedback:', error);
+    }
   };
 
   const handleSubmitDetailed = () => {
@@ -130,11 +172,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           </button>
           <button
             onClick={() => handleInitialRating('negative')}
-            className={`p-1 rounded transition-colors ${
-              rating !== null && rating !== 'positive'
-                ? 'bg-red-100 dark:bg-red-900/30 text-red-500'
-                : 'hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500'
-            }`}
+            className="p-1 rounded transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 dark:text-slate-500 hover:text-red-500"
             title={t('chat.actions.notHelpful', 'Niepomocne')}
           >
             <ThumbsDown size={12} />
@@ -169,7 +207,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           {t('chat.feedback.length', 'Długość odpowiedzi:')}
         </span>
         <div className="flex gap-1">
-          {(['too_short', 'just_right', 'too_long'] as LengthFeedback[]).map((opt) => (
+          {(['too-short', 'just-right', 'too-long'] as LengthFeedback[]).map((opt) => (
             <button
               key={opt}
               onClick={() => setLengthFeedback(opt)}
@@ -179,9 +217,9 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {opt === 'too_short' && t('chat.feedback.tooShort', 'Za krótka')}
-              {opt === 'just_right' && t('chat.feedback.justRight', 'W sam raz')}
-              {opt === 'too_long' && t('chat.feedback.tooLong', 'Za długa')}
+              {opt === 'too-short' && t('chat.feedback.tooShort', 'Za krótka')}
+              {opt === 'just-right' && t('chat.feedback.justRight', 'W sam raz')}
+              {opt === 'too-long' && t('chat.feedback.tooLong', 'Za długa')}
             </button>
           ))}
         </div>
@@ -193,7 +231,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           {t('chat.feedback.detail', 'Poziom szczegółowości:')}
         </span>
         <div className="flex gap-1">
-          {(['too_basic', 'just_right', 'too_detailed'] as DetailFeedback[]).map((opt) => (
+          {(['too-little', 'just-right', 'too-much'] as DetailFeedback[]).map((opt) => (
             <button
               key={opt}
               onClick={() => setDetailFeedback(opt)}
@@ -203,12 +241,83 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {opt === 'too_basic' && t('chat.feedback.tooLittle', 'Za mało')}
-              {opt === 'just_right' && t('chat.feedback.justRight', 'W sam raz')}
-              {opt === 'too_detailed' && t('chat.feedback.tooMuch', 'Za dużo')}
+              {opt === 'too-little' && t('chat.feedback.tooLittle', 'Za mało')}
+              {opt === 'just-right' && t('chat.feedback.justRight', 'W sam raz')}
+              {opt === 'too-much' && t('chat.feedback.tooMuch', 'Za dużo')}
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Accuracy feedback - NEW */}
+      <div className="space-y-1">
+        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+          {t('chat.feedback.accuracy', 'Dokładność informacji:')}
+        </span>
+        <div className="flex gap-1">
+          {(['accurate', 'partially-accurate', 'inaccurate'] as AccuracyFeedback[]).map((opt) => (
+            <button
+              key={opt}
+              onClick={() => setAccuracyFeedback(opt)}
+              className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
+                accuracyFeedback === opt
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              {opt === 'accurate' && t('chat.feedback.accurate', 'Dokładne')}
+              {opt === 'partially-accurate' && t('chat.feedback.partiallyAccurate', 'Częściowo')}
+              {opt === 'inaccurate' && t('chat.feedback.inaccurate', 'Niedokładne')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Helpfulness feedback - NEW */}
+      <div className="space-y-1">
+        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+          {t('chat.feedback.helpfulness', 'Przydatność:')}
+        </span>
+        <div className="flex gap-1">
+          {(['very-helpful', 'somewhat-helpful', 'not-helpful'] as HelpfulnessFeedback[]).map((opt) => (
+            <button
+              key={opt}
+              onClick={() => setHelpfulnessFeedback(opt)}
+              className={`px-2 py-0.5 text-[10px] rounded transition-colors ${
+                helpfulnessFeedback === opt
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              {opt === 'very-helpful' && t('chat.feedback.veryHelpful', 'Bardzo')}
+              {opt === 'somewhat-helpful' && t('chat.feedback.somewhatHelpful', 'Trochę')}
+              {opt === 'not-helpful' && t('chat.feedback.notHelpful', 'Wcale')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Comment field toggle - NEW */}
+      <div className="space-y-1">
+        <button
+          onClick={() => setShowCommentField(!showCommentField)}
+          className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+        >
+          <MessageSquare size={10} />
+          {showCommentField 
+            ? t('chat.feedback.hideComment', 'Ukryj komentarz')
+            : t('chat.feedback.addComment', 'Dodaj komentarz')
+          }
+        </button>
+        {showCommentField && (
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder={t('chat.feedback.commentPlaceholder', 'Opisz co było nie tak...')}
+            className="w-full px-2 py-1.5 text-[10px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded resize-none"
+            rows={2}
+          />
+        )}
       </div>
 
       {/* Submit */}

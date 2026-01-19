@@ -11,6 +11,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { formatChatError } from '@/services/ai/errorMessages';
 import { sendMessageToAI } from '@/services/ai/gemini';
+
 import { useAppStore } from '../store/useAppStore';
 import { AIMessageHistory, FullSession } from '../types';
 

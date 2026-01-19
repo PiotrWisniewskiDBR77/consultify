@@ -3,7 +3,8 @@
  * Assessment Hub Routes
  * Main CRUD operations for assessments - mounted at /api/assessments
  */
-import { Router, Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
+
 import { getDatabase } from '../../database/index.js';
 import logger from '../../utils/Logger.js';
 

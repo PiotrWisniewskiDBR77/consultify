@@ -39,6 +39,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
+
 import { AIRecommendationsPanel } from '../components/Economics/AIRecommendationsPanel';
 import { AnalysisCatalog } from '../components/Economics/AnalysisCatalog';
 import { AnalysisCompareView } from '../components/Economics/AnalysisCompareView';
@@ -51,7 +53,6 @@ import { PDFExportModal } from '../components/Economics/PDFExportModal';
 import { DigitizationAnalysis } from '../components/Economics/types';
 import { VersionHistoryPanel } from '../components/Economics/VersionHistoryPanel';
 import { SplitLayout } from '../components/layout/SplitLayout';
-import { Api } from '@/services/api';
 
 type EconomicsTab = 'catalog' | 'tool' | 'results' | 'financial' | 'compare';
 

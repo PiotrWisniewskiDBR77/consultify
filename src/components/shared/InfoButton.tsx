@@ -46,6 +46,7 @@ interface InfoButtonProps {
   cardId: string;
   position?: 'top-right' | 'header-inline';
   size?: 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'ghost' | 'outline';
   className?: string;
   showLabel?: boolean;
   label?: string;

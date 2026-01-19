@@ -18,8 +18,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SplitLayout } from '../layout/SplitLayout';
 import { AppView } from '../../types';
+import { SplitLayout } from '../layout/SplitLayout';
 import { RapidLeanWorkspace } from './RapidLeanWorkspace';
 
 interface AssessmentHubProps {

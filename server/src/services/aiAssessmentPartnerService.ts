@@ -6,13 +6,14 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+
 import {
-  validateOrFallback,
-  GapAnalysisSchema,
   EvidenceSchema,
+  GapAnalysisSchema,
   InitiativeListSchema,
   PrioritizedListSchema,
   ROIEstimateSchema,
+  validateOrFallback,
 } from '../utils/aiSchemaValidator.js';
 
 // AI THINKING_PARTNER Mode Configuration
@@ -1427,7 +1428,7 @@ class AIAssessmentPartnerService {
 // Singleton instance
 const aiAssessmentPartner = new AIAssessmentPartnerService();
 
-export { AIAssessmentPartnerService, aiAssessmentPartner, DRD_AXES, AI_PARTNER_CONFIG };
+export { AI_PARTNER_CONFIG, aiAssessmentPartner, AIAssessmentPartnerService, DRD_AXES };
 
 export default {
   AIAssessmentPartnerService,

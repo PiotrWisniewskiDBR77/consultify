@@ -27,8 +27,8 @@ interface ExperimentServiceInterface {
 }
 
 // Dynamic imports for services (may not be migrated yet)
-let CohortService: CohortServiceInterface | null = null;
-let ExperimentService: ExperimentServiceInterface | null = null;
+const CohortService: CohortServiceInterface | null = null;
+const ExperimentService: ExperimentServiceInterface | null = null;
 
 // try {
 //     const cohortModule = (await import('../services/cohortService.js')) as any;

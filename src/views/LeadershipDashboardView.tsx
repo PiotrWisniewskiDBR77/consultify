@@ -11,9 +11,10 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { SplitLayout } from '../components/layout/SplitLayout';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
+
+import { SplitLayout } from '../components/layout/SplitLayout';
 import { useAppStore } from '../store/useAppStore';
 
 interface HealthData {

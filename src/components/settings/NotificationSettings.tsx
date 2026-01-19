@@ -106,7 +106,10 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
     const fetchIntegrations = async () => {
       if (!currentUser.organizationId) return;
       try {
-        const data: Integration[] = await Api.getIntegrations(currentUser.organizationId);
+        const response = await Api.getIntegrations(currentUser.organizationId);
+        const data: Integration[] = Array.isArray(response)
+          ? response
+          : response.integrations || [];
         setIntegrations(data.filter((i) => i.status === 'active' || !i.status));
       } catch (err) {
         console.error('Failed to fetch integrations', err);

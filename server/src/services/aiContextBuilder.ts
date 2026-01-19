@@ -15,11 +15,17 @@ let _pmoHealthServiceOverride: any = null;
 let _aiActionExecutorOverride: any = null;
 let _aiSettingsServiceOverride: any = null;
 let _knowledgeServiceOverride: any = null;
+let _webSearchServiceOverride: any = null;
+let _knowledgeHubServiceOverride: any = null;
+let _instructionServiceOverride: any = null;
 
 let _pmoHealthService: any = null;
 let _aiActionExecutor: any = null;
 let _aiSettingsService: any = null;
 let _knowledgeService: any = null;
+let _webSearchService: any = null;
+let _knowledgeHubService: any = null;
+let _instructionService: any = null;
 
 // Interfaces
 export interface ContextOptions {
@@ -103,6 +109,45 @@ async function getKnowledgeService() {
   return _knowledgeService;
 }
 
+async function getWebSearchService() {
+  if (_webSearchServiceOverride) return _webSearchServiceOverride;
+  if (!_webSearchService) {
+    try {
+      const mod = (await import('./ai/webSearchService.js')) as any;
+      _webSearchService = mod.default || mod.WebSearchService || mod;
+    } catch (e: unknown) {
+      logger.warn('[AIContextBuilder] WebSearchService not available');
+    }
+  }
+  return _webSearchService;
+}
+
+async function getKnowledgeHubService() {
+  if (_knowledgeHubServiceOverride) return _knowledgeHubServiceOverride;
+  if (!_knowledgeHubService) {
+    try {
+      const mod = (await import('./ai/knowledgeHubService.js')) as any;
+      _knowledgeHubService = mod.default || mod.KnowledgeHubService || mod;
+    } catch (e: unknown) {
+      logger.warn('[AIContextBuilder] KnowledgeHubService not available');
+    }
+  }
+  return _knowledgeHubService;
+}
+
+async function getInstructionService() {
+  if (_instructionServiceOverride) return _instructionServiceOverride;
+  if (!_instructionService) {
+    try {
+      const mod = (await import('./ai/instructionService.js')) as any;
+      _instructionService = mod.default || mod.InstructionService || mod;
+    } catch (e: unknown) {
+      logger.warn('[AIContextBuilder] InstructionService not available');
+    }
+  }
+  return _instructionService;
+}
+
 export const AIContextBuilder = {
   /**
    * Set dependencies for testing
@@ -116,6 +161,9 @@ export const AIContextBuilder = {
     if (deps.AIActionExecutor) _aiActionExecutorOverride = deps.AIActionExecutor;
     if (deps.AISettingsService) _aiSettingsServiceOverride = deps.AISettingsService;
     if (deps.KnowledgeService) _knowledgeServiceOverride = deps.KnowledgeService;
+    if (deps.WebSearchService) _webSearchServiceOverride = deps.WebSearchService;
+    if (deps.KnowledgeHubService) _knowledgeHubServiceOverride = deps.KnowledgeHubService;
+    if (deps.InstructionService) _instructionServiceOverride = deps.InstructionService;
   },
 
   /**
@@ -569,17 +617,91 @@ export const AIContextBuilder = {
   },
 
   /**
-   * Layer 6: External Context
+   * Layer 6: External Context (with Web Search integration)
    */
-  _buildExternalContext: async (organizationId: string, _focusMode: string = 'all') => {
+  _buildExternalContext: async (
+    organizationId: string,
+    focusMode: string = 'all',
+    query?: string
+  ) => {
     const policies: any =
       (await get(`SELECT internet_enabled FROM ai_policies WHERE organization_id = ?`, [
         organizationId,
       ])) || {};
+    
+    const internetEnabled = policies.internet_enabled === 1;
+    
+    // If web search is enabled and we have a query, perform web search
+    let webSearchResults = null;
+    if (internetEnabled && (focusMode === 'web' || focusMode === 'all') && query) {
+      try {
+        const WebSearchService = await getWebSearchService();
+        if (WebSearchService && WebSearchService.isAvailable && WebSearchService.isAvailable()) {
+          logger.info('[AIContextBuilder] Performing web search for query');
+          const org: any = await get(
+            `SELECT name, industry FROM organizations WHERE id = ?`,
+            [organizationId]
+          );
+          webSearchResults = await WebSearchService.buildWebContext(query, {
+            name: org?.name,
+            industry: org?.industry,
+          });
+        }
+      } catch (error: any) {
+        logger.warn('[AIContextBuilder] Web search failed:', error.message);
+      }
+    }
+    
     return {
-      internetEnabled: policies.internet_enabled === 1,
-      externalSourcesUsed: [],
+      internetEnabled,
+      externalSourcesUsed: webSearchResults ? ['web_search'] : [],
+      webSearchContext: webSearchResults || null,
+      webSearchEnabled: focusMode === 'web',
     };
+  },
+
+  /**
+   * Build Knowledge Hub context
+   */
+  _buildKnowledgeHubContext: async (organizationId: string, projectId: string | null) => {
+    try {
+      const KnowledgeHubService = await getKnowledgeHubService();
+      if (!KnowledgeHubService || !KnowledgeHubService.buildKnowledgeContext) {
+        return null;
+      }
+      
+      return await KnowledgeHubService.buildKnowledgeContext(organizationId, { projectId });
+    } catch (error: any) {
+      logger.warn('[AIContextBuilder] Failed to build Knowledge Hub context:', error.message);
+      return null;
+    }
+  },
+
+  /**
+   * Build Instructions context
+   */
+  _buildInstructionsContext: async (
+    userId: string,
+    organizationId: string,
+    projectId: string | null,
+    scope: 'all' | 'chat' | 'assessment' | 'report' = 'all'
+  ) => {
+    try {
+      const InstructionService = await getInstructionService();
+      if (!InstructionService || !InstructionService.getEffectiveInstructions) {
+        return null;
+      }
+      
+      return await InstructionService.getEffectiveInstructions(
+        userId,
+        organizationId,
+        projectId,
+        scope
+      );
+    } catch (error: any) {
+      logger.warn('[AIContextBuilder] Failed to build Instructions context:', error.message);
+      return null;
+    }
   },
 
   /**

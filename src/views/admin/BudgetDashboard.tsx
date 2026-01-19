@@ -3,22 +3,24 @@
  * Organization admins can view their budget status and expenses
  */
 
-import React, { useState } from 'react';
+import './BudgetDashboard.css';
+
 import { useQuery } from '@tanstack/react-query';
-import { Line, Pie } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
   ArcElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
 } from 'chart.js';
+import React, { useState } from 'react';
+import { Line, Pie } from 'react-chartjs-2';
+
 import api from '../../services/api';
-import './BudgetDashboard.css';
 
 ChartJS.register(
   CategoryScale,
@@ -82,7 +84,7 @@ export const BudgetDashboard: React.FC = () => {
 
   // Calculate category breakdown
   const categoryTotals = expensesData?.reduce(
-    (acc, expense) => {
+    (acc: Record<string, number>, expense: any) => {
       acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
       return acc;
     },
@@ -95,7 +97,7 @@ export const BudgetDashboard: React.FC = () => {
       expensesData
         ?.slice()
         .reverse()
-        .map((e) => new Date(e.recordedAt).toLocaleDateString()) || [],
+        .map((e: any) => new Date(e.recordedAt).toLocaleDateString()) || [],
     datasets: [
       {
         label: 'Expenses Over Time',
@@ -103,7 +105,7 @@ export const BudgetDashboard: React.FC = () => {
           expensesData
             ?.slice()
             .reverse()
-            .reduce((acc, expense) => {
+            .reduce((acc: number[], expense: any) => {
               const last = acc.length > 0 ? acc[acc.length - 1] : 0;
               acc.push(last + expense.amount);
               return acc;
@@ -291,7 +293,7 @@ export const BudgetDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {expensesData.map((expense) => (
+                {expensesData.map((expense: any) => (
                   <tr key={expense.id}>
                     <td>{new Date(expense.recordedAt).toLocaleDateString()}</td>
                     <td>

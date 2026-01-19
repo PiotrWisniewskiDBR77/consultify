@@ -5,7 +5,14 @@
  * Displays pain points, insights, opportunities, and recommendations.
  */
 
+import 'reactflow/dist/style.css';
+
+import { LayoutGrid, Maximize2, Minimize2, Plus, Save, ZoomIn, ZoomOut } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
+  addEdge,
+  applyNodeChanges,
   Background,
   BackgroundVariant,
   Connection,
@@ -17,15 +24,8 @@ import {
   Panel,
   ReactFlow,
   ReactFlowProvider,
-  addEdge,
-  applyNodeChanges,
   useReactFlow,
 } from 'reactflow';
-import 'reactflow/dist/style.css';
-
-import { LayoutGrid, Maximize2, Minimize2, Plus, Save, ZoomIn, ZoomOut } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { useDiscoveryStore } from '@/store/useDiscoveryStore';
 import {

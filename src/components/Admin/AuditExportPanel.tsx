@@ -2,7 +2,7 @@
  * AuditExportPanel - Export audit logs and compliance reports
  */
 
-import { Download, FileText, Calendar } from 'lucide-react';
+import { Calendar, Download, FileText } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 

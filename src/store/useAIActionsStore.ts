@@ -90,7 +90,7 @@ export const useAIActionsStore = create<AIActionsState>()(
         try {
           const result = await Api.getPendingAIActions(projectId);
           const actions = result.actions?.map(mapApiAction) || [];
-          const pendingCount = actions.filter((a) => a.status === 'proposed').length;
+          const pendingCount = actions.filter((a: any) => a.status === 'proposed').length;
 
           set({
             actions: mergeActions(get().actions, actions),

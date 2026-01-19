@@ -16,13 +16,14 @@ import {
   Pencil,
   Plus,
   Search,
+  Settings,
   Trash2,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useChatProjectStore, ChatProject } from '../../store/useChatProjectStore';
+import { ChatProject, useChatProjectStore } from '../../store/useChatProjectStore';
 import {
   Conversation,
   groupConversations,
@@ -30,6 +31,8 @@ import {
 } from '../../store/useConversationStore';
 import { ConversationList } from './ConversationList';
 import { ConversationSearch } from './ConversationSearch';
+import { ProjectInstructionsModal } from './ProjectInstructionsModal';
+import { ProjectTabs } from './ProjectTabs';
 
 interface ChatHistorySidebarProps {
   projectId?: string;
@@ -65,18 +68,25 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const {
     projects,
     expandedProjectIds,
+    activeTab,
     isLoading: isLoadingProjects,
     fetchProjects,
     createProject,
     deleteProject,
     toggleProjectExpanded,
     getConversationsByProjectId,
+    getPersonalProjects,
+    getTeamProjects,
   } = useChatProjectStore();
 
   // Local state
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [projectMenuId, setProjectMenuId] = useState<string | null>(null);
+  const [instructionsProject, setInstructionsProject] = useState<ChatProject | null>(null);
+
+  // Filter projects by active tab
+  const filteredProjects = activeTab === 'personal' ? getPersonalProjects() : getTeamProjects();
 
   // Fetch conversations and projects on mount
   useEffect(() => {
@@ -115,13 +125,16 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const handleCreateProject = useCallback(async () => {
     if (!newProjectName.trim()) return;
     try {
-      await createProject({ name: newProjectName.trim() });
+      await createProject({
+        name: newProjectName.trim(),
+        ownership: activeTab,
+      });
       setNewProjectName('');
       setShowNewProjectInput(false);
     } catch (err) {
       console.error('[ChatHistorySidebar] Failed to create project:', err);
     }
-  }, [newProjectName, createProject]);
+  }, [newProjectName, createProject, activeTab]);
 
   // Handle delete project
   const handleDeleteProject = useCallback(
@@ -157,7 +170,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 shadow-2xl
                 flex flex-col
                 transition-transform duration-300 ease-in-out
-                ${isSidebarOpen ? 'translate-x-0 w-80' : '-translate-x-full w-80'}
+                ${isSidebarOpen ? 'translate-x-0 w-80 pointer-events-auto' : '-translate-x-full w-80 pointer-events-none'}
                 ${className}
             `}
       >
@@ -195,8 +208,13 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           />
         </div>
 
+        {/* Project Tabs */}
+        {!searchQuery && (
+          <ProjectTabs className="mx-3 mb-2" />
+        )}
+
         {/* Folders Section (Chat organization - NOT PMO Projects) */}
-        {!searchQuery && projects.length > 0 && (
+        {!searchQuery && filteredProjects.length > 0 && (
           <div className="px-3 pb-3 border-b border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between mb-2 px-1">
               <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
@@ -241,7 +259,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
             {/* Project List */}
             <div className="space-y-0.5">
-              {projects.map((project) => {
+              {filteredProjects.map((project) => {
                 const isExpanded = expandedProjectIds.includes(project.id);
                 const projectConversations = getConversationsByProjectId(project.id);
 
@@ -258,9 +276,23 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                       <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
                         {project.name}
                       </span>
+                      {project.instructions && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500" title={t('aiChat.hasInstructions', 'Ma instrukcje')} />
+                      )}
                       <span className="text-xs text-slate-400 dark:text-slate-500">
                         {project.conversationCount}
                       </span>
+                      {/* Instructions button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setInstructionsProject(project);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-purple-500 dark:text-slate-400 dark:hover:text-purple-400 rounded transition-all"
+                        title={t('aiChat.instructions.title', 'Instrukcje projektu')}
+                      >
+                        <Settings size={14} />
+                      </button>
                       <div className="relative">
                         <button
                           onClick={(e) => {
@@ -274,7 +306,18 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
                         {/* Project Menu */}
                         {projectMenuId === project.id && (
-                          <div className="absolute right-0 top-full mt-1 z-50 w-32 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1">
+                          <div className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-navy-800 rounded-lg shadow-lg border border-slate-200 dark:border-navy-700 py-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setInstructionsProject(project);
+                                setProjectMenuId(null);
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
+                            >
+                              <Settings size={14} />
+                              {t('aiChat.instructions.title', 'Instrukcje')}
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -325,7 +368,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
         )}
 
         {/* Create First Folder Section */}
-        {!searchQuery && projects.length === 0 && (
+        {!searchQuery && filteredProjects.length === 0 && (
           <div className="px-3 pb-3 border-b border-slate-200 dark:border-navy-700">
             <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 px-1">
               {t('aiChat.folders', 'Foldery')}
@@ -425,6 +468,15 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Project Instructions Modal */}
+      {instructionsProject && (
+        <ProjectInstructionsModal
+          project={instructionsProject}
+          isOpen={!!instructionsProject}
+          onClose={() => setInstructionsProject(null)}
+        />
+      )}
     </>
   );
 };

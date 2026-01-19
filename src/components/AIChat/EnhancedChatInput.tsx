@@ -19,8 +19,10 @@ import { AudioWaveform, Mic, Plus, Send, Square, StopCircle, Wrench } from 'luci
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CloudFile, useCloudIntegrations } from '../../hooks/useCloudIntegrations';
 import { useAppStore } from '../../store/useAppStore';
 import { AddFilesMenu } from './AddFilesMenu';
+import { CloudFilePicker } from './CloudFilePicker';
 import { ToolsMenu } from './ToolsMenu';
 
 // ============================================================================
@@ -54,6 +56,17 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 }) => {
   const { t } = useTranslation();
   const { aiFreezeStatus } = useAppStore();
+
+  // Cloud integrations
+  const {
+    connectedProviderIds,
+    openFilePicker,
+    connectProvider,
+    isPickerOpen,
+    activeProvider,
+    closeFilePicker,
+    selectFile,
+  } = useCloudIntegrations();
 
   // Input state
   const [value, setValue] = useState('');
@@ -476,9 +489,35 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     setAttachments((prev) => [...prev, ...files]);
   }, []);
 
-  const handlePmoImport = useCallback((type: string, data: any) => {
-    setAttachments((prev) => [...prev, { type: `pmo:${type}`, data }]);
-  }, []);
+  // Cloud file selection handler - opens file picker for connected provider
+  const handleCloudFileSelect = useCallback(
+    (provider: string, _fileId: string, _fileName: string) => {
+      openFilePicker(provider as 'google-drive' | 'onedrive' | 'dropbox');
+    },
+    [openFilePicker]
+  );
+
+  // Cloud connection handler - redirects to integrations settings
+  const handleConnectCloud = useCallback(
+    (provider: string) => {
+      connectProvider(provider as 'google-drive' | 'onedrive' | 'dropbox');
+    },
+    [connectProvider]
+  );
+
+  // Handle file selection from cloud picker
+  const handleCloudFilePickerSelect = useCallback(
+    async (file: CloudFile) => {
+      if (!activeProvider) return;
+
+      const downloadedFile = await selectFile(file, activeProvider);
+      if (downloadedFile) {
+        setAttachments((prev) => [...prev, downloadedFile]);
+      }
+      closeFilePicker();
+    },
+    [activeProvider, selectFile, closeFilePicker]
+  );
 
   // ========================================================================
   // Render
@@ -585,7 +624,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           <div className="flex items-center gap-1">
             <AddFilesMenu
               onFileSelect={handleFileSelect}
-              onPmoImport={handlePmoImport}
+              onCloudFileSelect={handleCloudFileSelect}
+              onConnectCloud={handleConnectCloud}
+              connectedProviders={connectedProviderIds}
               disabled={isDisabled}
             />
             <ToolsMenu
@@ -657,6 +698,16 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Cloud File Picker Modal */}
+      {activeProvider && (
+        <CloudFilePicker
+          isOpen={isPickerOpen}
+          onClose={closeFilePicker}
+          provider={activeProvider}
+          onFileSelect={handleCloudFilePickerSelect}
+        />
+      )}
     </div>
   );
 };

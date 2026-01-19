@@ -6,6 +6,7 @@
  */
 
 import type { Response } from 'express';
+
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';

@@ -125,12 +125,8 @@ server_stdout.log
 test_results*.log
 tests_*.log
 integration-results.json
-e2e-results.xml
-
-# Debug screenshots
-debug-*.png
-
-# Test result files
+e2e-results.xml# Debug screenshots
+debug-*.png# Test result files
 test-results-*.txt# Coverage directories
 coverage-*/# Additional ignores
 *.bak
@@ -138,3 +134,6 @@ coverage/.tmp
 .nx/
 junit.xml# Quarantine folder for duplicate files
 _quarantine/
+
+# Database files (handled separately)
+*.db

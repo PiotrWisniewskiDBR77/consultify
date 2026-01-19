@@ -54,22 +54,19 @@ async function loadRecharts() {
 }
 
 // Export a proxy object that delays property access until recharts is loaded
-const rechartsProxy = new Proxy(
-  {} as any,
-  {
-    get(_target, prop) {
-      // Return a function that loads recharts and then accesses the property
-      return async (...args: any[]) => {
-        const recharts = await loadRecharts();
-        const value = (recharts as any)[prop];
-        if (typeof value === 'function') {
-          return value.bind(recharts);
-        }
-        return value;
-      };
-    },
-  }
-);
+const rechartsProxy = new Proxy({} as any, {
+  get(_target, prop) {
+    // Return a function that loads recharts and then accesses the property
+    return async (...args: any[]) => {
+      const recharts = await loadRecharts();
+      const value = (recharts as any)[prop];
+      if (typeof value === 'function') {
+        return value.bind(recharts);
+      }
+      return value;
+    };
+  },
+});
 
 // For named exports, we need to provide getters that load recharts
 export const Bar = (...args: any[]) => loadRecharts().then((m) => m.Bar(...args));
@@ -78,20 +75,25 @@ export const Line = (...args: any[]) => loadRecharts().then((m) => m.Line(...arg
 export const LineChart = (...args: any[]) => loadRecharts().then((m) => m.LineChart(...args));
 export const Pie = (...args: any[]) => loadRecharts().then((m) => m.Pie(...args));
 export const PieChart = (...args: any[]) => loadRecharts().then((m) => m.PieChart(...args));
-export const ResponsiveContainer = (...args: any[]) => loadRecharts().then((m) => m.ResponsiveContainer(...args));
+export const ResponsiveContainer = (...args: any[]) =>
+  loadRecharts().then((m) => m.ResponsiveContainer(...args));
 export const XAxis = (...args: any[]) => loadRecharts().then((m) => m.XAxis(...args));
 export const YAxis = (...args: any[]) => loadRecharts().then((m) => m.YAxis(...args));
-export const CartesianGrid = (...args: any[]) => loadRecharts().then((m) => m.CartesianGrid(...args));
+export const CartesianGrid = (...args: any[]) =>
+  loadRecharts().then((m) => m.CartesianGrid(...args));
 export const Tooltip = (...args: any[]) => loadRecharts().then((m) => m.Tooltip(...args));
 export const Legend = (...args: any[]) => loadRecharts().then((m) => m.Legend(...args));
 export const Cell = (...args: any[]) => loadRecharts().then((m) => m.Cell(...args));
 export const Area = (...args: any[]) => loadRecharts().then((m) => m.Area(...args));
 export const AreaChart = (...args: any[]) => loadRecharts().then((m) => m.AreaChart(...args));
-export const ComposedChart = (...args: any[]) => loadRecharts().then((m) => m.ComposedChart(...args));
+export const ComposedChart = (...args: any[]) =>
+  loadRecharts().then((m) => m.ComposedChart(...args));
 export const Radar = (...args: any[]) => loadRecharts().then((m) => m.Radar(...args));
 export const RadarChart = (...args: any[]) => loadRecharts().then((m) => m.RadarChart(...args));
-export const ReferenceLine = (...args: any[]) => loadRecharts().then((m) => m.ReferenceLine(...args));
-export const ReferenceArea = (...args: any[]) => loadRecharts().then((m) => m.ReferenceArea(...args));
+export const ReferenceLine = (...args: any[]) =>
+  loadRecharts().then((m) => m.ReferenceLine(...args));
+export const ReferenceArea = (...args: any[]) =>
+  loadRecharts().then((m) => m.ReferenceArea(...args));
 export const ReferenceDot = (...args: any[]) => loadRecharts().then((m) => m.ReferenceDot(...args));
 
 // Default export

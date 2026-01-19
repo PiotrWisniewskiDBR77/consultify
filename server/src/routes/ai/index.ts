@@ -28,6 +28,11 @@ import aiExplainRoutes from './aiExplain.routes.js';
 import aiLearningRoutes from './aiLearning.routes.js';
 import aiMemoryRoutesV2 from './aiMemory.routes.js';
 import aiPlaybooksRoutes from './aiPlaybooks.routes.js';
+// AI Context Intelligence System - new routes
+import knowledgeHubRoutes from './knowledge-hub.routes.js';
+import instructionsRoutes from './instructions.routes.js';
+import webSearchRoutes from './web-search.routes.js';
+import aiLearningExtendedRoutes from './ai-learning-extended.routes.js';
 
 const router = Router();
 
@@ -55,5 +60,11 @@ router.use('/coach', aiCoachRoutes);
 router.use('/explain', aiExplainRoutes);
 router.use('/learning', aiLearningRoutes);
 router.use('/playbooks', aiPlaybooksRoutes);
+
+// AI Context Intelligence System - new routes
+router.use('/knowledge-hub', knowledgeHubRoutes);
+router.use('/instructions', instructionsRoutes);
+router.use('/web-search', webSearchRoutes);
+router.use('/learning-extended', aiLearningExtendedRoutes);
 
 export default router;

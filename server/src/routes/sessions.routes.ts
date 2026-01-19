@@ -19,41 +19,41 @@ const router = Router();
  * Get all active sessions for current user
  */
 router.get(
-    '/',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+  '/',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        const currentSessionId = (req as AuthRequest & { sessionId?: string }).sessionId;
+    const currentSessionId = (req as AuthRequest & { sessionId?: string }).sessionId;
 
-        const sessions = await dbAll<{
-            id: string;
-            device: string;
-            ip_address: string;
-            last_active: string;
-            created_at: string;
-        }>(
-            `SELECT id, device, ip_address, last_active, created_at
+    const sessions = await dbAll<{
+      id: string;
+      device: string;
+      ip_address: string;
+      last_active: string;
+      created_at: string;
+    }>(
+      `SELECT id, device, ip_address, last_active, created_at
          FROM active_sessions 
          WHERE user_id = ?
          ORDER BY last_active DESC`,
-            [userId],
-        );
+      [userId]
+    );
 
-        // Mark current session
-        const sessionsWithCurrent = sessions.map((s) => ({
-            ...s,
-            isCurrent: s.id === currentSessionId,
-        }));
+    // Mark current session
+    const sessionsWithCurrent = sessions.map((s) => ({
+      ...s,
+      isCurrent: s.id === currentSessionId,
+    }));
 
-        return res.json({
-            success: true,
-            data: sessionsWithCurrent,
-        });
-    }),
+    return res.json({
+      success: true,
+      data: sessionsWithCurrent,
+    });
+  })
 );
 
 /**
@@ -61,32 +61,32 @@ router.get(
  * Create a new session (called on login)
  */
 router.post(
-    '/',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+  '/',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        const { device, ipAddress } = req.body;
+    const { device, ipAddress } = req.body;
 
-        const id = uuidv4();
-        const runResult = await dbRun(
-            `INSERT INTO active_sessions (id, user_id, device, ip_address, last_active, created_at)
+    const id = uuidv4();
+    const runResult = await dbRun(
+      `INSERT INTO active_sessions (id, user_id, device, ip_address, last_active, created_at)
          VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
-            [id, userId, device || 'Unknown Device', ipAddress || req.ip],
-        );
+      [id, userId, device || 'Unknown Device', ipAddress || req.ip]
+    );
 
-        if (!runResult.success) {
-            throw new Error(runResult.error || 'Failed to create session');
-        }
+    if (!runResult.success) {
+      throw new Error(runResult.error || 'Failed to create session');
+    }
 
-        res.json({
-            success: true,
-            data: { sessionId: id },
-        });
-    }),
+    res.json({
+      success: true,
+      data: { sessionId: id },
+    });
+  })
 );
 
 /**
@@ -94,32 +94,32 @@ router.post(
  * Update session last_active timestamp
  */
 router.put(
-    '/:id/activity',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+  '/:id/activity',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-        if (!id) {
-            return res.status(400).json({ success: false, error: 'id is required' });
-        }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+      return res.status(400).json({ success: false, error: 'id is required' });
+    }
 
-        const runResult = await dbRun(
-            `UPDATE active_sessions 
+    const runResult = await dbRun(
+      `UPDATE active_sessions 
          SET last_active = datetime('now')
          WHERE id = ? AND user_id = ?`,
-            [id, userId],
-        );
+      [id, userId]
+    );
 
-        if (!runResult.success) {
-            throw new Error(runResult.error || 'Failed to update session activity');
-        }
+    if (!runResult.success) {
+      throw new Error(runResult.error || 'Failed to update session activity');
+    }
 
-        return res.json({ success: true });
-    }),
+    return res.json({ success: true });
+  })
 );
 
 /**
@@ -127,30 +127,33 @@ router.put(
  * Terminate a specific session
  */
 router.delete(
-    '/:id',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+  '/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-        if (!id) {
-            return res.status(400).json({ success: false, error: 'id is required' });
-        }
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+      return res.status(400).json({ success: false, error: 'id is required' });
+    }
 
-        const runResult = await dbRun(`DELETE FROM active_sessions WHERE id = ? AND user_id = ?`, [id, userId]);
+    const runResult = await dbRun(`DELETE FROM active_sessions WHERE id = ? AND user_id = ?`, [
+      id,
+      userId,
+    ]);
 
-        if (!runResult.success) {
-            throw new Error(runResult.error || 'Failed to terminate session');
-        }
+    if (!runResult.success) {
+      throw new Error(runResult.error || 'Failed to terminate session');
+    }
 
-        return res.json({
-            success: true,
-            message: 'Session terminated',
-        });
-    }),
+    return res.json({
+      success: true,
+      message: 'Session terminated',
+    });
+  })
 );
 
 /**
@@ -158,30 +161,30 @@ router.delete(
  * Terminate all sessions except current
  */
 router.delete(
-    '/',
-    verifyToken,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const userId = req.user?.id;
-        if (!userId) {
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
+  '/',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
 
-        const currentSessionId = (req as AuthRequest & { sessionId?: string }).sessionId;
+    const currentSessionId = (req as AuthRequest & { sessionId?: string }).sessionId;
 
-        const runResult = await dbRun(`DELETE FROM active_sessions WHERE user_id = ? AND id != ?`, [
-            userId,
-            currentSessionId || '',
-        ]);
+    const runResult = await dbRun(`DELETE FROM active_sessions WHERE user_id = ? AND id != ?`, [
+      userId,
+      currentSessionId || '',
+    ]);
 
-        if (!runResult.success) {
-            throw new Error(runResult.error || 'Failed to terminate sessions');
-        }
+    if (!runResult.success) {
+      throw new Error(runResult.error || 'Failed to terminate sessions');
+    }
 
-        return res.json({
-            success: true,
-            message: 'All other sessions terminated',
-        });
-    }),
+    return res.json({
+      success: true,
+      message: 'All other sessions terminated',
+    });
+  })
 );
 
 export default router;

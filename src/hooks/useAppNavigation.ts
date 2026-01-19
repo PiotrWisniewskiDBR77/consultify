@@ -12,9 +12,9 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { getRouteFromAppView } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView } from '@/types';
-import { getRouteFromAppView } from '@/routes/routeConfig';
 
 /**
  * Hook for navigating between views

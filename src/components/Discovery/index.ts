@@ -7,28 +7,29 @@
 // Main components
 export { DiscoveryCanvas } from './DiscoveryCanvas';
 export { DiscoveryConsultantView } from './DiscoveryConsultantView';
-export { RecommendationPanel } from './RecommendationPanel';
 export { DiscoveryFooterActions } from './DiscoveryFooterActions';
 export { DiscoveryHeader } from './DiscoveryHeader';
+export { DiscoveryToolsHub } from './DiscoveryToolsHub';
 export { ProjectConversionModal } from './ProjectConversionModal';
+export { RecommendationPanel } from './RecommendationPanel';
 
 // Node components
 export * from './nodes';
 
 // Hooks
-export { useDiscoverySync } from './hooks/useDiscoverySync';
 export { useAutoLayout } from './hooks/useAutoLayout';
+export { useDiscoverySync } from './hooks/useDiscoverySync';
 
 // AI Configuration
 export { DISCOVERY_SYSTEM_PROMPT, DISCOVERY_WELCOME_MESSAGE } from './ai/discoveryPrompts';
 
 // Types re-export
 export type {
-  DiscoveryNode,
-  DiscoveryEdge,
-  DiscoverySession,
-  DiscoveryPhase,
-  TransformationType,
   ClientContext,
+  DiscoveryEdge,
+  DiscoveryNode,
+  DiscoveryPhase,
   DiscoveryRecommendations,
+  DiscoverySession,
+  TransformationType,
 } from '@/types/discovery';

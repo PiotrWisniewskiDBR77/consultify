@@ -38,10 +38,10 @@ import {
   Users,
 } from 'lucide-react';
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
-import { PartnerLayout, type Breadcrumb } from '../../components/Partner/PartnerLayout';
+import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
 import { PartnerSection } from '../../components/Partner/PartnerSidebar';
 import { Api } from '../../services/api';
 import { cn } from '../../utils/cn';

@@ -212,7 +212,9 @@ export class BillingCommandService {
     }
 
     if (billing?.stripe_customer_id) {
-      return (await deps.stripe.customers.retrieve(billing.stripe_customer_id)) as StripeTypes.Customer;
+      return (await deps.stripe.customers.retrieve(
+        billing.stripe_customer_id
+      )) as StripeTypes.Customer;
     }
 
     // GAP-INVOICE-002: Get tax settings to include VAT ID

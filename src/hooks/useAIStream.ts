@@ -1,9 +1,41 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Api } from '@/services/api';
+
 import { useAppStore } from '../store/useAppStore';
 import { parseArtifactsFromResponse, useArtifactsStore } from '../store/useArtifactsStore';
 import { Artifact, FocusMode, ThinkingStep } from '../types';
+
+// ==================== TTS UTILITIES ====================
+
+/**
+ * Clean text for TTS (remove markdown, code blocks, etc.)
+ */
+const cleanTextForTTS = (text: string): string => {
+  return (
+    text
+      // Remove code blocks
+      .replace(/```[\s\S]*?```/g, '')
+      // Remove inline code
+      .replace(/`[^`]+`/g, '')
+      // Remove markdown headers
+      .replace(/^#{1,6}\s+/gm, '')
+      // Remove bold/italic markers
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      // Remove links but keep text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Remove bullet points
+      .replace(/^[-*+]\s+/gm, '')
+      // Remove numbered lists markers
+      .replace(/^\d+\.\s+/gm, '')
+      // Remove extra whitespace
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
+};
 
 // ==================== THINKING EXTRACTION UTILITIES ====================
 
@@ -122,6 +154,7 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
     setCurrentStreamContent,
     currentStreamContent,
     isBotTyping,
+    aiConfig,
   } = useAppStore();
 
   const { addArtifact } = useArtifactsStore();
@@ -138,6 +171,14 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
   const thinkingRef = useRef<ThinkingStep[]>([]);
   const artifactsRef = useRef<Artifact[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const synthesisRef = useRef<SpeechSynthesis | null>(null);
+
+  // Initialize speech synthesis
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      synthesisRef.current = window.speechSynthesis;
+    }
+  }, []);
 
   // Get current language
   const currentLanguage = localStorage.getItem('i18nextLng') || 'pl';
@@ -211,6 +252,64 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
   }
 
   /**
+   * Speak text using Web Speech API
+   */
+  const speakText = useCallback(
+    (text: string) => {
+      if (!synthesisRef.current || !aiConfig.textToSpeech) return;
+
+      // Cancel any ongoing speech
+      synthesisRef.current.cancel();
+
+      // Clean text for better TTS output
+      const cleanedText = cleanTextForTTS(text);
+      if (!cleanedText) return;
+
+      const utterance = new SpeechSynthesisUtterance(cleanedText);
+
+      // Get voices and find the best match
+      const voices = synthesisRef.current.getVoices();
+
+      // If user selected a voice, use it
+      if (aiConfig.ttsVoice) {
+        const selectedVoice = voices.find((v) => v.voiceURI === aiConfig.ttsVoice);
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          utterance.lang = selectedVoice.lang;
+        }
+      } else {
+        // Auto-detect Polish or use default
+        const polishChars = (text.match(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g) || []).length;
+        const isPolish = polishChars > 2;
+
+        if (isPolish) {
+          const polishVoice = voices.find((v) => v.lang.startsWith('pl'));
+          if (polishVoice) {
+            utterance.voice = polishVoice;
+            utterance.lang = 'pl-PL';
+          }
+        } else {
+          const englishVoice = voices.find((v) => v.lang.startsWith('en'));
+          if (englishVoice) {
+            utterance.voice = englishVoice;
+            utterance.lang = 'en-US';
+          }
+        }
+      }
+
+      // Apply rate and pitch from config
+      utterance.rate = aiConfig.ttsRate ?? 1.0;
+      utterance.pitch = aiConfig.ttsPitch ?? 1.0;
+      utterance.volume = 1.0;
+
+      // Start speaking
+      synthesisRef.current.speak(utterance);
+      console.log('[TTS] Speaking response...');
+    },
+    [aiConfig.textToSpeech, aiConfig.ttsVoice, aiConfig.ttsRate, aiConfig.ttsPitch]
+  );
+
+  /**
    * Start streaming with enhanced features
    */
   const startStream = useCallback(
@@ -234,6 +333,24 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
       contentRef.current = '';
       thinkingRef.current = [];
       artifactsRef.current = [];
+
+      // Build AI options from global config
+      const aiOptions = {
+        deepResearch: aiConfig.deepResearch,
+        webSearch: aiConfig.webSearch,
+        showReasoning: aiConfig.showReasoning || aiConfig.maxMode,
+        knowledgeSources: aiConfig.knowledgeSources,
+        responseStyle: aiConfig.responseStyle || 'normal',
+        ...overrideOptions,
+      };
+
+      console.log('[useAIStream] Starting with AI config:', {
+        deepResearch: aiOptions.deepResearch,
+        webSearch: aiOptions.webSearch,
+        showReasoning: aiOptions.showReasoning,
+        knowledgeSources: aiOptions.knowledgeSources,
+        responseStyle: aiOptions.responseStyle,
+      });
 
       try {
         await Api.chatWithAIStream(
@@ -265,6 +382,11 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
             // Update store
             updateLastChatMessage(cleanContent || contentRef.current);
 
+            // Text-to-Speech: Read the response aloud if enabled
+            if (aiConfig.textToSpeech) {
+              speakText(cleanContent || contentRef.current);
+            }
+
             // Callback
             if (effectiveOptions.onStreamDone) {
               effectiveOptions.onStreamDone(
@@ -283,7 +405,7 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
           currentLanguage,
           // Pass the thinking handler
           processThought,
-          overrideOptions // Pass options to API
+          aiOptions // Pass AI configuration to API
         );
       } catch (error) {
         console.error('AI Stream Error:', error);
@@ -304,10 +426,21 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
       setCurrentStreamContent,
       processChunk,
       processThought,
+      speakText,
       options,
       currentLanguage,
+      aiConfig,
     ]
   );
+
+  /**
+   * Stop TTS playback
+   */
+  const stopTTS = useCallback(() => {
+    if (synthesisRef.current) {
+      synthesisRef.current.cancel();
+    }
+  }, []);
 
   /**
    * Abort current stream
@@ -317,6 +450,8 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+    // Stop any TTS playback
+    stopTTS();
     setIsBotTyping(false);
     setCurrentStreamContent('');
     setStreamProgress(0);
@@ -415,5 +550,6 @@ export const useAIStream = (options: UseAIStreamOptions = {}) => {
     abortStream,
     resumeFromPartial,
     checkPartialResponse,
+    stopTTS,
   };
 };

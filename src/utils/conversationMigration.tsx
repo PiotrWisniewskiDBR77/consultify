@@ -6,6 +6,7 @@
  */
 
 import { Api } from '@/services/api';
+
 import { ChatMessage } from '../types';
 
 const MIGRATION_KEY = 'consultinity-conversations-migrated';

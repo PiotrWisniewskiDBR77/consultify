@@ -4,9 +4,9 @@
  * Tests for the Partner Portal API endpoints
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import express, { Express } from 'express';
 import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock services
 vi.mock('../../../../src/services/partnerReferralService', () => ({
@@ -48,9 +48,9 @@ vi.mock('../../../../src/services/partnerConfigService', () => ({
   },
 }));
 
-import PartnerReferralService from '../../../../src/services/partnerReferralService';
 import PartnerCommissionService from '../../../../src/services/partnerCommissionService';
 import PartnerConfigService from '../../../../src/services/partnerConfigService';
+import PartnerReferralService from '../../../../src/services/partnerReferralService';
 
 describe('Partner Routes', () => {
   let app: Express;

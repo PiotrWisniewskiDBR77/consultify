@@ -1,10 +1,11 @@
 import { AlertTriangle, CheckCircle2, ChevronRight, Lock, ShieldCheck } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { ChatPanel } from '../components/layout/ChatPanel';
-import { useAIStream } from '../hooks/useAIStream';
 import { AIMessageHistory } from '@/services/ai/gemini';
 import { Api } from '@/services/api'; // Using Api service for consistency
+
+import { ChatPanel } from '../components/layout/ChatPanel';
+import { useAIStream } from '../hooks/useAIStream';
 import { useAppStore } from '../store/useAppStore';
 import { AppView, ChatMessage, FullSession, SessionMode } from '../types';
 interface Module1ContextViewProps {

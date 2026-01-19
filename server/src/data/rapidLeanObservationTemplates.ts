@@ -476,12 +476,12 @@ function getAllTemplates() {
 }
 
 export {
-  RAPID_LEAN_OBSERVATION_TEMPLATES,
-  OBSERVATION_TO_SCORE_MAPPING,
-  OBSERVATION_TO_DRD_MAPPING,
+  getAllTemplates,
   getTemplateById,
   getTemplatesByDimension,
-  getAllTemplates,
+  OBSERVATION_TO_DRD_MAPPING,
+  OBSERVATION_TO_SCORE_MAPPING,
+  RAPID_LEAN_OBSERVATION_TEMPLATES,
 };
 
 export default {

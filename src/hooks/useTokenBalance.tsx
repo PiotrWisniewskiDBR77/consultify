@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
+
 import { useAppStore } from '../store/useAppStore';
 
 interface TokenBalanceState {

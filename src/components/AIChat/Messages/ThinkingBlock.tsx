@@ -46,7 +46,20 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  // Auto-expand during streaming, collapse after completion
+  const [isExpanded, setIsExpanded] = useState(isStreaming || defaultExpanded);
+  
+  // Auto-collapse when streaming finishes
+  React.useEffect(() => {
+    if (isStreaming) {
+      setIsExpanded(true);
+    }
+    // When streaming finishes, keep expanded for a moment then collapse
+    if (!isStreaming && steps.length > 0 && steps.every(s => s.status === 'done')) {
+      const timer = setTimeout(() => setIsExpanded(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isStreaming, steps]);
 
   // Calculate progress
   const completedSteps = steps.filter((s) => s.status === 'done').length;

@@ -26,12 +26,12 @@ import { Api } from '../../services/api';
 import { BulkOperationsView } from '../admin/BulkOperationsView';
 import {
   ContractManagementView,
-  CustomerLifecycleView,
-  CustomerSuccessPlaybooksView,
   CustomerAnalyticsView,
-  CustomerComplianceView,
   CustomerAutomationView,
   CustomerCommunicationView,
+  CustomerComplianceView,
+  CustomerLifecycleView,
+  CustomerSuccessPlaybooksView,
 } from './customers';
 import { OrganizationsView } from './OrganizationsView';
 import { SecurityModuleView } from './security/SecurityModuleView';

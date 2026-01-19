@@ -28,8 +28,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { Initiative } from '../types/domain';
 import { InitiativeStatus } from '../types/core';
+import { Initiative } from '../types/domain';
 import { StatusTransitionDropdown } from './PMO/StatusTransitionDropdown';
 
 type Quarter = string;

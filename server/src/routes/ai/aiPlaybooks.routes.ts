@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { verifyToken, requireSuperAdmin } from '../../middleware/auth.middleware.js';
+
 import { AIPlaybooksController } from '../../controllers/ai/AIPlaybooksController.js';
+import { requireSuperAdmin, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();

@@ -15,7 +15,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 if (!verifyToken || typeof verifyToken !== 'function') {
   const error = new Error(
     `verifyToken middleware is not properly exported from auth.middleware.js. ` +
-    `Type: ${typeof verifyToken}, Value: ${verifyToken}`
+      `Type: ${typeof verifyToken}, Value: ${verifyToken}`
   );
   console.error('[NotificationsRoutes] Critical error:', error);
   throw error;

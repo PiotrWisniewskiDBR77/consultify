@@ -3,7 +3,7 @@
  * This is a simplified version to test routing
  */
 
-import { Calculator, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
+import { BarChart3, Calculator, DollarSign, TrendingUp } from 'lucide-react';
 import React from 'react';
 
 export const EconomicsViewPlaceholder: React.FC = () => {

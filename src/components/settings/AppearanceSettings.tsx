@@ -24,6 +24,12 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  changeLanguage,
+  LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGES,
+  type SupportedLanguage,
+} from '../../i18n';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
@@ -517,16 +523,21 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
         <div className="flex flex-wrap gap-2">
           {(() => {
             // SuperAdmin: only Polish and English
-            // Regular users: all 6 languages
+            // Regular users: all supported languages
             const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPERADMIN';
-            const allLanguages = [
-              { code: 'en', label: 'English', flag: '🇬🇧' },
-              { code: 'pl', label: 'Polski', flag: '🇵🇱' },
-              { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
-              { code: 'es', label: 'Español', flag: '🇪🇸' },
-              { code: 'ar', label: 'العربية', flag: '🇸🇦' },
-              { code: 'ja', label: '日本語', flag: '🇯🇵' },
-            ];
+            const languageFlags: Record<SupportedLanguage, string> = {
+              en: '🇬🇧',
+              pl: '🇵🇱',
+              de: '🇩🇪',
+              es: '🇪🇸',
+              ar: '🇸🇦',
+              ja: '🇯🇵',
+            };
+            const allLanguages = SUPPORTED_LANGUAGES.map((code) => ({
+              code,
+              label: LANGUAGE_NAMES[code],
+              flag: languageFlags[code],
+            }));
             const availableLanguages = isSuperAdmin
               ? allLanguages.filter((lang) => ['en', 'pl'].includes(lang.code))
               : allLanguages;
@@ -536,7 +547,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
             return (
               <button
                 key={lang.code}
-                onClick={() => i18n.changeLanguage(lang.code)}
+                onClick={() => changeLanguage(lang.code)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
                   isSelected
                     ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500'

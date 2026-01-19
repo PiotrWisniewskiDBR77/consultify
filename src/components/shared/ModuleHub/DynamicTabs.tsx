@@ -1,7 +1,7 @@
 /**
  * DynamicTabs
  * Row of open document tabs with close buttons
- * 
+ *
  * Design:
  * - List button and document tabs use consistent bordered style
  * - Active tab has purple border
@@ -132,7 +132,11 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
       {/* List button - same style as tabs */}
       <button
         onClick={onShowList}
-        className={isListActive ? TAB_ACTIVE.replace('border-l-2', '') : TAB_INACTIVE.replace('border-l-2', '')}
+        className={
+          isListActive
+            ? TAB_ACTIVE.replace('border-l-2', '')
+            : TAB_INACTIVE.replace('border-l-2', '')
+        }
       >
         <ListIcon size={14} />
         <span>List</span>
@@ -157,21 +161,26 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
             onClick={() => onSelectDocument(doc.id)}
           >
             {/* Type Badge */}
-            <span className={`font-mono text-xs ${isActive ? 'text-primary-300' : 'text-slate-500'}`}>
+            <span
+              className={`font-mono text-xs ${isActive ? 'text-primary-300' : 'text-slate-500'}`}
+            >
               {doc.subType}
             </span>
-            
+
             {/* Name (truncated) */}
             <span className="max-w-[120px] truncate">{doc.name}</span>
-            
+
             {/* Status Dot */}
             <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
-            
+
             {/* Unsaved indicator */}
             {doc.hasUnsavedChanges && (
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" title="Unsaved changes" />
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"
+                title="Unsaved changes"
+              />
             )}
-            
+
             {/* Close Button */}
             <button
               onClick={(e) => {
@@ -198,9 +207,10 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
             className={`
               flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium
               border transition-all duration-200
-              ${activeInOverflow 
-                ? 'bg-primary-500/15 border-primary-500 text-primary-400' 
-                : 'bg-navy-800 border-navy-600 text-slate-400 hover:text-white hover:border-slate-500'
+              ${
+                activeInOverflow
+                  ? 'bg-primary-500/15 border-primary-500 text-primary-400'
+                  : 'bg-navy-800 border-navy-600 text-slate-400 hover:text-white hover:border-slate-500'
               }
             `}
           >
@@ -211,10 +221,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
           {/* Dropdown Menu */}
           {showOverflowMenu && (
             <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowOverflowMenu(false)}
-              />
+              <div className="fixed inset-0 z-40" onClick={() => setShowOverflowMenu(false)} />
               <div className="absolute top-full right-0 mt-1 z-50 min-w-[200px] bg-navy-800 border border-navy-600 rounded-lg shadow-xl overflow-hidden">
                 {overflowDocs.map((doc) => {
                   const isActive = doc.id === activeDocumentId;
@@ -229,9 +236,10 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
                       }}
                       className={`
                         flex items-center gap-2 px-3 py-2 cursor-pointer
-                        ${isActive 
-                          ? 'bg-primary-500/15 text-primary-400' 
-                          : 'text-slate-300 hover:bg-navy-700'
+                        ${
+                          isActive
+                            ? 'bg-primary-500/15 text-primary-400'
+                            : 'text-slate-300 hover:bg-navy-700'
                         }
                       `}
                     >

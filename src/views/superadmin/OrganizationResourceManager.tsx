@@ -3,11 +3,13 @@
  * Manage individual organization resources, budgets, and quotas
  */
 
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../services/api';
-import ResourceLimitInput from '../../components/superadmin/ResourceLimitInput';
 import './OrganizationResourceManager.css';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+
+import ResourceLimitInput from '../../components/SuperAdmin/ResourceLimitInput';
+import api from '../../services/api';
 
 interface OrgResourceData {
   organization: {
@@ -159,7 +161,7 @@ export const OrganizationResourceManager: React.FC = () => {
           className="org-selector"
         >
           <option value="">Select Organization...</option>
-          {organizations?.map((org) => (
+          {organizations?.map((org: any) => (
             <option key={org.id} value={org.id}>
               {org.name}
             </option>
@@ -304,7 +306,7 @@ export const OrganizationResourceManager: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {resourceData.recentExpenses?.map((expense) => (
+                  {resourceData.recentExpenses?.map((expense: any) => (
                     <tr key={expense.id}>
                       <td>{new Date(expense.recordedAt).toLocaleDateString()}</td>
                       <td>

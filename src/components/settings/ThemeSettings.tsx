@@ -6,14 +6,14 @@
  * @version 2.0
  */
 
-import { Check, Monitor, Moon, Palette, Sun, Sparkles } from 'lucide-react';
+import { Check, Monitor, Moon, Palette, Sparkles, Sun } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 import Api from '../../services/api';
-import { SettingsDivider, SettingsSection, SettingsFormRow } from './shared';
+import { SettingsDivider, SettingsFormRow, SettingsSection } from './shared';
 
 interface ThemeSettingsProps {
   className?: string;

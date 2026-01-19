@@ -3,8 +3,9 @@
  * Reusable skeleton loaders for different layouts
  */
 
-import React from 'react';
 import './LoadingSkeleton.css';
+
+import React from 'react';
 
 export const TableSkeleton: React.FC<{ rows?: number; columns?: number }> = ({
   rows = 5,

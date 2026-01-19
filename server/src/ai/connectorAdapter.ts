@@ -7,9 +7,9 @@
  * Respects sandbox mode and dry-run flags.
  */
 
-import * as auditLogger from '../utils/auditLogger.js';
-import * as connectorService from '../services/connectorService.js';
 import * as connectorRegistry from '../services/connectorRegistry.js';
+import * as connectorService from '../services/connectorService.js';
+import * as auditLogger from '../utils/auditLogger.js';
 
 // Dependency injection container (for deterministic unit tests)
 const deps = {

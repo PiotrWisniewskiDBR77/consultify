@@ -15,6 +15,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDemo } from '../../hooks/useDemo';
+import { changeLanguage, SUPPORTED_LANGUAGES } from '../../i18n';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, SessionMode } from '../../types';
 
@@ -167,17 +168,18 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               <div className="flex gap-1">
                 {(() => {
                   // SuperAdmin: only Polish and English
-                  // Regular users: all 6 languages
+                  // Regular users: all supported languages
                   const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPERADMIN';
-                  const allLanguages = ['en', 'pl', 'de', 'es', 'ar', 'ja'];
-                  const availableLanguages = isSuperAdmin ? ['en', 'pl'] : allLanguages;
+                  const availableLanguages = isSuperAdmin
+                    ? SUPPORTED_LANGUAGES.filter((lang) => ['en', 'pl'].includes(lang))
+                    : SUPPORTED_LANGUAGES;
                   return availableLanguages;
                 })().map((lang) => (
                   <button
                     key={lang}
                     onClick={(e) => {
                       e.stopPropagation();
-                      i18n.changeLanguage(lang);
+                      changeLanguage(lang);
                     }}
                     className={`text-[10px] px-2 py-1 rounded border transition-colors font-medium uppercase min-w-[32px] ${
                       i18n.language?.startsWith(lang)

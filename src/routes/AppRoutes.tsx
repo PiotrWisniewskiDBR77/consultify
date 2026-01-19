@@ -3,18 +3,19 @@ import { Loader2 } from 'lucide-react';
 import React, { Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
-import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
+import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
+import { AuthLayout } from '@/layouts/AuthLayout';
+import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
-import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
-import { AuthLayout } from '@/layouts/AuthLayout';
-import { MainLayout } from '@/layouts/MainLayout';
+
 import { ROUTES } from './routeConfig';
 
 // Lazy load views for new routes
@@ -40,7 +41,52 @@ const AssessmentHubDashboard = React.lazy(() =>
   }))
 );
 
-// Transformation Modules
+// Discovery Tools Module - New Hub
+const DiscoveryToolsHub = React.lazy(() =>
+  import('@/components/Discovery/DiscoveryToolsHub').then((m) => ({ default: m.DiscoveryToolsHub }))
+);
+// Legacy Discovery Tools Views (keeping for backward compatibility)
+const DiscoveryToolsView = React.lazy(() =>
+  import('@/views/discovery-tools/DiscoveryToolsView').then((m) => ({
+    default: m.DiscoveryToolsView,
+  }))
+);
+const StrategicToolsView = React.lazy(() =>
+  import('@/views/discovery-tools/StrategicToolsView').then((m) => ({
+    default: m.StrategicToolsView,
+  }))
+);
+const OperationalToolsView = React.lazy(() =>
+  import('@/views/discovery-tools/OperationalToolsView').then((m) => ({
+    default: m.OperationalToolsView,
+  }))
+);
+const DigitalToolsView = React.lazy(() =>
+  import('@/views/discovery-tools/DigitalToolsView').then((m) => ({ default: m.DigitalToolsView }))
+);
+const ProcessAutomationView = React.lazy(() =>
+  import('@/views/discovery-tools/ProcessAutomationView').then((m) => ({
+    default: m.ProcessAutomationView,
+  }))
+);
+
+// Assessment Module - New Hub
+const AssessmentHub = React.lazy(() =>
+  import('@/components/assessment/AssessmentHub').then((m) => ({ default: m.AssessmentHub }))
+);
+
+// Transformation Modules - New Hubs (ModuleHub pattern)
+const InitiativesHub = React.lazy(() =>
+  import('@/components/Initiatives/InitiativesHub').then((m) => ({ default: m.InitiativesHub }))
+);
+const ExecutionHub = React.lazy(() =>
+  import('@/components/Execution/ExecutionHub').then((m) => ({ default: m.ExecutionHub }))
+);
+const BenefitsHub = React.lazy(() =>
+  import('@/components/Benefits/BenefitsHub').then((m) => ({ default: m.BenefitsHub }))
+);
+
+// Legacy views (kept for backward compatibility)
 const FullInitiativesView = React.lazy(() =>
   import('@/views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView }))
 );
@@ -540,14 +586,79 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Project Intelligence */}
+        {/* Interview (formerly Project Intelligence) */}
         <Route
           path={ROUTES.PROJECT_INTELLIGENCE}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Project Intelligence']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Interview']}>
               <AnimationWrapper variant="slideUp">
                 <ProjectIntelligenceView />
               </AnimationWrapper>
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.INTERVIEW}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Interview']}>
+              <AnimationWrapper variant="slideUp">
+                <ProjectIntelligenceView />
+              </AnimationWrapper>
+            </MainLayout>
+          }
+        />
+
+        {/* Discovery Tools Module - New Hub */}
+        <Route
+          path={ROUTES.DISCOVERY_TOOLS.ROOT}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Discovery Tools']} noPadding>
+              <DiscoveryToolsHub />
+            </MainLayout>
+          }
+        />
+        {/* Discovery Tools - Strategic Tools with ToolWorkspace */}
+        <Route
+          path={ROUTES.DISCOVERY_TOOLS.STRATEGIC}
+          element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Strategic Analysis']}
+              noPadding
+            >
+              <StrategicToolsView />
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.DISCOVERY_TOOLS.OPERATIONAL}
+          element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Operational Tools']}
+              noPadding
+            >
+              <DiscoveryToolsHub initialTab="list" />
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.DISCOVERY_TOOLS.DIGITAL}
+          element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Digital Transformation']}
+              noPadding
+            >
+              <DiscoveryToolsHub initialTab="list" />
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.DISCOVERY_TOOLS.PROCESS_AUTOMATION}
+          element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || ['Discovery Tools', 'Process Automation']}
+              noPadding
+            >
+              <DiscoveryToolsHub initialTab="list" />
             </MainLayout>
           }
         />
@@ -585,48 +696,24 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Assessment with nested framework routes */}
+        {/* Assessment Module - New Hub */}
         <Route
           path={`${ROUTES.ASSESSMENT.ROOT}/*`}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Assessment']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <Routes>
-                    <Route
-                      index
-                      element={
-                        <AssessmentHubDashboard
-                          organizationId={currentUser?.organizationId || ''}
-                          projectId="default"
-                        />
-                      }
-                    />
-                    <Route path="drd" element={<AssessmentModuleHub framework="DRD" />} />
-                    <Route path="siri" element={<AssessmentModuleHub framework="SIRI" />} />
-                    <Route path="adma" element={<AssessmentModuleHub framework="ADMA" />} />
-                    <Route path="cmmi" element={<AssessmentModuleHub framework="CMMI" />} />
-                    <Route path="lean" element={<AssessmentModuleHub framework="LEAN" />} />
-                    <Route
-                      path="overview"
-                      element={
-                        <AssessmentHubDashboard
-                          organizationId={currentUser?.organizationId || ''}
-                          projectId="default"
-                        />
-                      }
-                    />
-                    <Route
-                      path="summary"
-                      element={
-                        <AssessmentHubDashboard
-                          organizationId={currentUser?.organizationId || ''}
-                          projectId="default"
-                        />
-                      }
-                    />
-                  </Routes>
-                </AnimationWrapper>
+                <Routes>
+                  {/* Main Assessment Hub - unified view */}
+                  <Route index element={<AssessmentHub />} />
+                  <Route path="overview" element={<AssessmentHub />} />
+                  <Route path="summary" element={<AssessmentHub />} />
+                  {/* Framework-specific routes (backward compatibility) */}
+                  <Route path="drd" element={<AssessmentHub />} />
+                  <Route path="siri" element={<AssessmentHub />} />
+                  <Route path="adma" element={<AssessmentHub />} />
+                  <Route path="cmmi" element={<AssessmentHub />} />
+                  <Route path="lean" element={<AssessmentHub />} />
+                </Routes>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -636,10 +723,8 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.INITIATIVES}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']}>
-              <AnimationWrapper variant="slideUp">
-                <FullInitiativesView />
-              </AnimationWrapper>
+            <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']} noPadding>
+              <InitiativesHub />
             </MainLayout>
           }
         />
@@ -656,10 +741,8 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.PORTFOLIO}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Portfolio']}>
-              <AnimationWrapper variant="slideUp">
-                <PortfolioView />
-              </AnimationWrapper>
+            <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']} noPadding>
+              <PortfolioView />
             </MainLayout>
           }
         />
@@ -686,10 +769,8 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.EXECUTION}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
-              <AnimationWrapper variant="slideUp">
-                <FullExecutionView />
-              </AnimationWrapper>
+            <MainLayout breadcrumbs={breadcrumbs || ['Execution']} noPadding>
+              <ExecutionHub />
             </MainLayout>
           }
         />
@@ -736,10 +817,8 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.BENEFITS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Benefits']}>
-              <AnimationWrapper variant="slideUp">
-                <BenefitsRealizationView />
-              </AnimationWrapper>
+            <MainLayout breadcrumbs={breadcrumbs || ['Benefits']} noPadding>
+              <BenefitsHub />
             </MainLayout>
           }
         />

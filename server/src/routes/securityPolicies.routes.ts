@@ -10,7 +10,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
 
-let policies = [
+const policies = [
   {
     id: 'password-policy',
     name: 'Password Policy',

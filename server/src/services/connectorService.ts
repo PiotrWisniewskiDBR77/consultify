@@ -7,11 +7,12 @@
  * Handles encryption of secrets and RBAC enforcement.
  */
 
-import db from '../database/Database.js';
-import secretsVault from './secretsVault.js';
-import connectorRegistry from './connectorRegistry.js';
-import * as auditLogger from '../utils/auditLogger.js';
 import { v4 as uuidv4 } from 'uuid';
+
+import db from '../database/Database.js';
+import * as auditLogger from '../utils/auditLogger.js';
+import connectorRegistry from './connectorRegistry.js';
+import secretsVault from './secretsVault.js';
 
 // Dependency injection container
 const deps = {

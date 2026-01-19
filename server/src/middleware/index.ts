@@ -85,6 +85,7 @@ export { validateBody } from './validation.middleware.js';
 
 // Specialized Middleware
 export { demoGuard } from './demoGuard.middleware.js';
+export { errorHandler } from './errorHandler.js';
 export {
   logStatusChange,
   setDependencies as setPMOValidationDependencies,
@@ -110,4 +111,3 @@ export {
   transitionState,
   USER_STATES,
 } from './userStateGuard.middleware.js'; // Re-export error handler from existing location
-export { errorHandler } from './errorHandler.js';

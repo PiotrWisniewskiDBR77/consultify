@@ -12,7 +12,7 @@ const router = Router();
  * Get dashboard overview with widgets and stats
  */
 router.get('/', (req: Request, res: Response) => {
-    res.json({ success: true, data: { widgets: [], stats: {} } });
+  res.json({ success: true, data: { widgets: [], stats: {} } });
 });
 
 /**
@@ -20,7 +20,7 @@ router.get('/', (req: Request, res: Response) => {
  * Get dashboard statistics
  */
 router.get('/stats', (req: Request, res: Response) => {
-    res.json({ success: true, data: { users: 0, projects: 0, tasks: 0 } });
+  res.json({ success: true, data: { users: 0, projects: 0, tasks: 0 } });
 });
 
 export default router;

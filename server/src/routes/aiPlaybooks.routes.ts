@@ -7,7 +7,7 @@
  * TODO: Fully migrate to TypeScript
  */
 
-import { Router, type RequestHandler } from 'express';
+import { type RequestHandler, Router } from 'express';
 // Import the JS implementation for now (will be fully migrated later)
 // const module = await import('../../routes/aiPlaybooks.js');
 // const aiPlaybooksRoutesJS = module.default || module;

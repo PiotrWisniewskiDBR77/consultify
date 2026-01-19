@@ -32,7 +32,10 @@ const ProviderIcons: Record<string, React.ReactNode> = {
   onedrive: (
     <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
       <path d="M10.5 18.5h8.25a3.75 3.75 0 001.41-7.23 5.25 5.25 0 00-10.32 0A3.75 3.75 0 0010.5 18.5z" />
-      <path d="M6.75 18.5h1.5a4.5 4.5 0 018.68-1.66 3 3 0 00-3.18-4.59 6 6 0 00-11.5 1.5A4.5 4.5 0 006.75 18.5z" opacity="0.7" />
+      <path
+        d="M6.75 18.5h1.5a4.5 4.5 0 018.68-1.66 3 3 0 00-3.18-4.59 6 6 0 00-11.5 1.5A4.5 4.5 0 006.75 18.5z"
+        opacity="0.7"
+      />
     </svg>
   ),
   dropbox: (
@@ -116,16 +119,44 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
 
       // Demo data for now
       await new Promise((resolve) => setTimeout(resolve, 500));
-      
+
       const demoFiles: CloudFile[] = [
         { id: '1', name: 'Dokumenty projektowe', mimeType: 'folder', size: 0, isFolder: true },
         { id: '2', name: 'Prezentacje', mimeType: 'folder', size: 0, isFolder: true },
-        { id: '3', name: 'Raport Q4 2025.pdf', mimeType: 'application/pdf', size: 2453000, isFolder: false, modifiedAt: '2025-12-15' },
-        { id: '4', name: 'Budżet projektu.xlsx', mimeType: 'application/vnd.ms-excel', size: 156000, isFolder: false, modifiedAt: '2025-12-10' },
-        { id: '5', name: 'Notatki ze spotkania.docx', mimeType: 'application/msword', size: 45000, isFolder: false, modifiedAt: '2025-12-08' },
-        { id: '6', name: 'Screenshot.png', mimeType: 'image/png', size: 890000, isFolder: false, modifiedAt: '2025-12-05' },
+        {
+          id: '3',
+          name: 'Raport Q4 2025.pdf',
+          mimeType: 'application/pdf',
+          size: 2453000,
+          isFolder: false,
+          modifiedAt: '2025-12-15',
+        },
+        {
+          id: '4',
+          name: 'Budżet projektu.xlsx',
+          mimeType: 'application/vnd.ms-excel',
+          size: 156000,
+          isFolder: false,
+          modifiedAt: '2025-12-10',
+        },
+        {
+          id: '5',
+          name: 'Notatki ze spotkania.docx',
+          mimeType: 'application/msword',
+          size: 45000,
+          isFolder: false,
+          modifiedAt: '2025-12-08',
+        },
+        {
+          id: '6',
+          name: 'Screenshot.png',
+          mimeType: 'image/png',
+          size: 890000,
+          isFolder: false,
+          modifiedAt: '2025-12-05',
+        },
       ];
-      
+
       setFiles(demoFiles);
     } catch (error) {
       console.error('Failed to load files:', error);
@@ -220,10 +251,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
         {/* Search */}
         <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-700">
           <div className="relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder={t('common.search', 'Szukaj...')}
@@ -280,9 +308,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
                       {formatSize(file.size)}
                     </span>
                   )}
-                  {file.isFolder && (
-                    <ChevronRight size={16} className="text-slate-400 shrink-0" />
-                  )}
+                  {file.isFolder && <ChevronRight size={16} className="text-slate-400 shrink-0" />}
                 </button>
               ))}
             </div>

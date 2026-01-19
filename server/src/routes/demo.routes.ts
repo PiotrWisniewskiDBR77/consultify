@@ -9,12 +9,12 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import {
+  checkUserDemoPreference,
   DEMO_ORG_ID,
   DEMO_ORG_NAME,
   getDemoOrganization,
   getDemoStats,
   setUserDemoPreference,
-  checkUserDemoPreference,
 } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
