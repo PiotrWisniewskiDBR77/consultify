@@ -123,5 +123,3 @@ export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
 
   return viewTypeMap[view] || 'empty';
 }
-
-export default WorkspaceContext;
