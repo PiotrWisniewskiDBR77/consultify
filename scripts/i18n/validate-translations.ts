@@ -576,7 +576,7 @@ function flattenObject(obj: any, prefix = ''): Record<string, string> {
 
 function setNestedValue(obj: any, path: string, value: string): void {
   const keys = path
-    .split(/\.(?![^\[]*\])/)
+    .split(/\.(?![^[]*])/)
     .map((k) => {
       const match = k.match(/^(.+?)\[(\d+)\]$/);
       if (match) {
@@ -661,7 +661,8 @@ function isLikelyUntranslated(sourceValue: string, targetValue: string, locale: 
     }
 
     const words = sourceValue.split(/\s+/).filter((w) => w.length > 0);
-    if (words.length >= 3 && /^[\x00-\x7F]+$/.test(sourceValue)) {
+    // Check if string is ASCII only (no non-ASCII characters)
+    if (words.length >= 3 && !/[^\u0020-\u007E]/.test(sourceValue)) {
       return true;
     }
   }
