@@ -53,6 +53,13 @@ router.get('/', InitiativeController.getInitiatives);
 router.post('/', validateBody(CreateInitiativeSchema), InitiativeController.createInitiative);
 
 /**
+ * GET /api/initiatives/by-status/:statuses
+ * Get initiatives filtered by comma-separated statuses
+ * Used by Benefits module - MUST be before /:id route
+ */
+router.get('/by-status/:statuses', InitiativeController.getInitiativesByStatus);
+
+/**
  * GET /api/initiatives/:id
  * Get single initiative by ID
  */
@@ -137,5 +144,21 @@ router.post('/:id/move', InitiativeController.moveInitiative);
  * Archive initiative
  */
 router.post('/:id/archive', InitiativeController.archiveInitiative);
+
+// ==========================================
+// BENEFITS MODULE: KPI ENDPOINTS
+// ==========================================
+
+/**
+ * GET /api/initiatives/:id/kpis
+ * Get KPIs for an initiative
+ */
+router.get('/:id/kpis', InitiativeController.getInitiativeKpis);
+
+/**
+ * POST /api/initiatives/:id/kpis
+ * Create a new KPI for an initiative
+ */
+router.post('/:id/kpis', InitiativeController.createInitiativeKpi);
 
 export default router;
