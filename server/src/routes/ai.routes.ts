@@ -240,25 +240,51 @@ router.post(
         // Partial resume logic handled by sending previous content to client
       }
 
+      // Extract projectId and screenContext from request context
+      const projectId = (context as any)?.projectId || 
+                       (context as any)?.workspaceContext?.projectId ||
+                       (req.body as any)?.projectId || null;
+      
+      const screenContext = (context as any)?.screenContext ||
+                           (context as any)?.workspaceContext ||
+                           (req.body as any)?.screenContext || null;
+      
+      const focusMode = (context as any)?.focusMode || 
+                       (req.body as any)?.focusMode || 'all';
+
       const pipelineRequest = {
         type: 'chat',
         userId: req.userId,
         organizationId: req.organizationId,
+        projectId, // Pass projectId for context building
         prompt: message,
         messages: (history || []).map((m) => ({
           role: m.role === 'model' ? 'assistant' : m.role,
           content: (m as { parts?: Array<{ text: string }> }).parts?.[0]?.text || m.content || '',
         })),
         capability: 'chat',
-        screenContext:
-          (context as { screenContext?: unknown })?.screenContext ||
-          (req.body as { screenContext?: unknown }).screenContext,
+        screenContext, // Full screen context for AI awareness
+        focusMode, // Focus mode for context filtering
+        context: {
+          projectId,
+          screenContext,
+          focusMode,
+          conversationId,
+          ...context,
+        },
         stream: true,
         options: {
           role: roleName,
           systemInstruction: enhancedSystemInstruction,
         },
       };
+      
+      logger.info(`[AI Stream] Processing request for user ${req.userId}`, {
+        projectId,
+        focusMode,
+        hasScreenContext: !!screenContext,
+        screenId: screenContext?.screenId || screenContext?.currentScreen || 'unknown',
+      });
 
       const response = await (aiPipeline as any).process(
         pipelineRequest,
