@@ -6,7 +6,9 @@
 
 import { Bot, Cpu, FileText, Lightbulb, Settings, Target, Workflow, Zap } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '@/routes/routeConfig';
 import {
   CategoryButton,
   FilterableTable,
@@ -380,6 +382,8 @@ interface DiscoveryToolsHubProps {
 }
 
 export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab = 'list' }) => {
+  const navigate = useNavigate();
+
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -664,8 +668,26 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({ initialTab
                   <button
                     key={key}
                     onClick={() => {
-                      console.log('Start tool:', key);
+                      console.log('[DiscoveryToolsHub] Start tool:', key, 'category:', selectedCategory);
                       setSelectedCategory(null);
+                      // Navigate to strategic tools view with tool parameter
+                      if (selectedCategory === 'strategic') {
+                        // Map short codes to tool IDs
+                        const toolIdMap: Record<string, string> = {
+                          SWT: 'dynamic-swot',
+                          PTR: 'market-forces',
+                          ANS: 'growth-paths',
+                          VCH: 'value-chain',
+                          BCG: 'portfolio-priority',
+                          AMB: 'ambition-decomposer',
+                          FOC: 'focus-tradeoff',
+                          RSK: 'risk-uncertainty',
+                          CAP: 'capability-mapper',
+                          NAR: 'narrative-engine',
+                        };
+                        const toolId = toolIdMap[key] || key.toLowerCase();
+                        navigate(`${ROUTES.DISCOVERY_TOOLS.STRATEGIC}?tool=${toolId}`);
+                      }
                     }}
                     className={`
                       flex items-center gap-3 w-full p-3 rounded-lg

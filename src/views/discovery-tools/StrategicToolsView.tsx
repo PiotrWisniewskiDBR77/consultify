@@ -30,11 +30,14 @@ import {
   Target,
   TrendingUp,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { useAppStore } from '@/store/useAppStore';
+import { ToolType } from '@/store/useToolStore';
 import { AppView } from '@/types';
+import { ToolWorkspace } from '@/components/DiscoveryTools';
 
 interface StrategicTool {
   id: string;
@@ -193,18 +196,59 @@ const STRATEGIC_TOOLS: StrategicTool[] = [
 export const StrategicToolsView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { setCurrentView } = useAppStore();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isPolish = i18n.language === 'pl';
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [activeTool, setActiveTool] = useState<ToolType | null>(null);
+
+  // Handle tool query parameter from URL
+  useEffect(() => {
+    const toolParam = searchParams.get('tool');
+    if (toolParam) {
+      console.log('[StrategicToolsView] Tool param from URL:', toolParam);
+      // Auto-open the tool if it's supported
+      if (toolParam === 'dynamic-swot' || toolParam === 'market-forces') {
+        setActiveTool(toolParam as ToolType);
+        setSelectedTool(toolParam);
+      }
+      // Clear the URL parameter after processing
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleBack = () => {
-    setCurrentView(AppView.DISCOVERY_TOOLS);
+    if (activeTool) {
+      // Go back to tool list
+      setActiveTool(null);
+      setSelectedTool(null);
+    } else {
+      // Go back to Discovery Tools main view
+      setCurrentView(AppView.DISCOVERY_TOOLS);
+    }
   };
 
   const handleStartTool = (toolId: string) => {
-    // TODO: Navigate to tool wizard view
-    console.log('Starting tool:', toolId);
+    console.log('[StrategicToolsView] Starting tool:', toolId);
     setSelectedTool(toolId);
+    // Only open workspace for implemented tools
+    if (toolId === 'dynamic-swot' || toolId === 'market-forces') {
+      console.log('[StrategicToolsView] Setting active tool:', toolId);
+      setActiveTool(toolId as ToolType);
+    }
   };
+
+  // If a tool is active, show the workspace
+  if (activeTool) {
+    return (
+      <ToolWorkspace
+        toolType={activeTool}
+        onBack={handleBack}
+        onCreateInitiative={() => {
+          console.log('Create initiative clicked');
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-full bg-slate-50 dark:bg-navy-950">
@@ -244,20 +288,28 @@ export const StrategicToolsView: React.FC = () => {
           {STRATEGIC_TOOLS.map((tool) => {
             const Icon = tool.icon;
             const isSelected = selectedTool === tool.id;
+            const isImplemented = tool.id === 'dynamic-swot' || tool.id === 'market-forces';
 
             return (
               <div
                 key={tool.id}
                 className={`
-                  p-5 rounded-xl border-2 transition-all cursor-pointer
+                  p-5 rounded-xl border-2 transition-all cursor-pointer relative
                   ${
                     isSelected
                       ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
                       : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-emerald-300'
                   }
+                  ${!isImplemented ? 'opacity-60' : ''}
                 `}
                 onClick={() => handleStartTool(tool.id)}
               >
+                {/* Coming soon badge for non-implemented tools */}
+                {!isImplemented && (
+                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-slate-200 dark:bg-navy-700 text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Wkrótce' : 'Coming Soon'}
+                  </div>
+                )}
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
                     <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">

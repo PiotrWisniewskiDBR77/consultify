@@ -617,7 +617,7 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        {/* Discovery Tools - Legacy routes for backward compatibility */}
+        {/* Discovery Tools - Strategic Tools with ToolWorkspace */}
         <Route
           path={ROUTES.DISCOVERY_TOOLS.STRATEGIC}
           element={
@@ -625,7 +625,7 @@ export const AppRoutes: React.FC = () => {
               breadcrumbs={breadcrumbs || ['Discovery Tools', 'Strategic Analysis']}
               noPadding
             >
-              <DiscoveryToolsHub initialTab="list" />
+              <StrategicToolsView />
             </MainLayout>
           }
         />
