@@ -804,12 +804,53 @@
       }
     },
     "sidePanel": {
+      "title": "Help Center",
+      "fullDocs": "Full Documentation",
       "tabs": {
-        "ai": "AI Assistant",
         "overview": "Overview",
-        "howto": "How to Use",
         "faq": "FAQ",
-        "video": "Videos"
+        "knowledge": "Knowledge Base"
+      },
+      "overview": {
+        "title": "Welcome to Consultinity",
+        "intro": "Your complete PMO platform for digital transformation. Assess, plan, and track your organization's journey to digital excellence with AI-powered insights and proven methodologies.",
+        "watchVideo": "Watch Introduction Video",
+        "videoDuration": "3 min overview",
+        "guides": "Quick Guides",
+        "guidesList": {
+          "gettingStarted": "Getting Started",
+          "assessment": "How to Run an Assessment",
+          "initiatives": "Managing Initiatives",
+          "reports": "Creating Reports",
+          "aiFeatures": "AI Features Guide"
+        },
+        "whatToKnow": "What to Know",
+        "tip1": "Start with an assessment to understand your digital maturity",
+        "tip2": "Use AI insights to prioritize initiatives",
+        "tip3": "Track progress with real-time dashboards and reports"
+      },
+      "faq": {
+        "searchPlaceholder": "Search questions...",
+        "noResults": "No matching questions found.",
+        "noFAQ": "No FAQ available."
+      },
+      "knowledge": {
+        "title": "Knowledge Base",
+        "description": "Comprehensive resources about digital transformation tools, methodologies, and best practices.",
+        "comingSoon": "Coming Soon",
+        "categories": {
+          "tools": "Digital Transformation Tools",
+          "methodologies": "Methodologies (DRD, SIRI, Lean)",
+          "caseStudies": "Case Studies",
+          "bestPractices": "Best Practices"
+        },
+        "notify": {
+          "title": "Get notified when ready",
+          "placeholder": "Your email",
+          "button": "Notify Me",
+          "success": "You'll be notified when the Knowledge Base launches!",
+          "description": "Receive an email when our comprehensive knowledge base with tools, methodologies, and case studies is ready."
+        }
       },
       "modules": {
         "dashboard": {
